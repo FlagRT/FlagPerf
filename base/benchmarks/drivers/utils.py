@@ -5,15 +5,39 @@
 # -*- coding: UTF-8 -*-
 import torch
 
+from . import ascend as ascend_driver
+from .events import benchmark_measurement_finish, benchmark_measurement_start
+
 # mthreads torch_musa import
 try:
     import torch_musa
 except ImportError:
     pass
 
+
+def _vendor_name(vendor):
+    return vendor.split("/", 1)[0].lower()
+
+
+def bootstrap_vendor(vendor):
+    """Initialize only the runtime extension required by the selected vendor."""
+    if _vendor_name(vendor) == "ascend":
+        ascend_driver.initialize()
+
+
+def accelerator_device(vendor, local_rank):
+    """Resolve the explicit device for vendors that require an adapter."""
+    if _vendor_name(vendor) == "ascend":
+        return ascend_driver.device(local_rank)
+    return local_rank
+
+
 def set_ieee_float32(vendor):
     if vendor == "nvidia":
         torch.backends.cuda.matmul.allow_tf32 = False
+    elif _vendor_name(vendor) == "ascend":
+        print("Ascend FP32 uses Torch-FL backend defaults; strict IEEE FP32 "
+              "mode is not enforced")
     elif "cambricon" in vendor:
         torch.backends.mlu.matmul.allow_tf32 = False
         torch.backends.cnnl.allow_tf32 = False
@@ -26,6 +50,8 @@ def set_ieee_float32(vendor):
 def unset_ieee_float32(vendor):
     if vendor == "nvidia":
         torch.backends.cuda.matmul.allow_tf32 = True
+    elif _vendor_name(vendor) == "ascend":
+        pass
     elif "cambricon" in vendor:
         torch.backends.mlu.matmul.allow_tf32 = True
         torch.backends.cnnl.allow_tf32 = True
@@ -36,8 +62,10 @@ def unset_ieee_float32(vendor):
 
 
 def host_device_sync(vendor):
-    if vendor == "nvidia":
+    if _vendor_name(vendor) == "nvidia":
         torch.cuda.synchronize()
+    elif _vendor_name(vendor) == "ascend":
+        ascend_driver.synchronize()
     elif "mthreads" in vendor:
         torch.musa.synchronize()
     else:
@@ -46,7 +74,9 @@ def host_device_sync(vendor):
 
 
 def multi_device_sync(vendor):
-    if vendor == "nvidia":
+    if _vendor_name(vendor) == "nvidia":
+        torch.distributed.barrier()
+    elif _vendor_name(vendor) == "ascend":
         torch.distributed.barrier()
     elif "mthreads" in vendor:
         torch.distributed.barrier()

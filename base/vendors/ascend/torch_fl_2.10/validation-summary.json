@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "validated_at": "2026-08-23T14:17:53Z",
+  "image": "flagrt/ascend-operator-runtime:0.1.0-cann9.0-py311-torch2.10-arm64",
+  "image_id": "sha256:f0a54a68b99ecde67140507f00ce012a569241ce96664af1a1f47b41c057a06f",
+  "profile": "ascend910_smoke",
+  "status": "passed",
+  "privileged_root": true,
+  "device": "flagos:0",
+  "device_count": 16,
+  "runtime": {
+    "driver": "25.5.0",
+    "firmware": "7.8.0.5.216",
+    "cann": "9.0.0",
+    "toolbox": "26.1.0",
+    "python": "3.11.15",
+    "torch": "2.10.0+cpu"
+  },
+  "compatibility": "Compatible",
+  "cases": {
+    "dmi-version": "passed",
+    "dmi-compatibility": "passed",
+    "computation-INT8": "passed",
+    "computation-FP32": "passed",
+    "computation-FP16": "passed",
+    "computation-BF16": "passed",
+    "main_memory-bandwidth": "passed",
+    "main_memory-capacity": "passed",
+    "interconnect-h2d": "passed",
+    "flaggems-canary": "passed"
+  },
+  "failed_cases": [],
+  "fallback_count": 0,
+  "flaggems_dispatch_evidence": "abs -> flagos_python",
+  "local_result": "base/result/20260823T141659Z/summary.json",
+  "scope": "Functional smoke only; measured values are not release performance baselines."
+}

@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "validated_at": "2026-08-25",
+  "scope": "single-node Ascend A3 toolkit only",
+  "baseline": {
+    "image": "flagrt/ascend-operator-runtime:0.1.0-cann9.0-py311-torch2.10-arm64",
+    "cann": "9.0.0",
+    "dmi": "26.1.0",
+    "driver": "25.5.0",
+    "firmware": "7.8.0.5.216",
+    "compatibility": "Compatible",
+    "cards": 8,
+    "chips_per_card": 2,
+    "logical_devices": 16
+  },
+  "evidence_runs": {
+    "capacity": "base/result/20260825T035141Z/toolkit-evidence/manifest.json",
+    "p2p": "base/result/20260825T035220Z/toolkit-evidence/manifest.json",
+    "int8": "base/result/20260825T035442Z/toolkit-evidence/manifest.json",
+    "d2d": "base/result/20260825T035613Z/toolkit-evidence/manifest.json",
+    "legacy_probe_raw_stdout": {
+      "compute": "base/result/20260825T033348Z/toolkit-evidence/legacy-comparison/computation-INT8/legacy.stdout",
+      "h2d": "base/result/20260825T033348Z/toolkit-evidence/legacy-comparison/interconnect-h2d/legacy.stdout",
+      "p2p_intraserver": "base/result/20260825T033348Z/toolkit-evidence/legacy-comparison/interconnect-P2P_intraserver/legacy.stdout",
+      "d2d": "base/result/20260825T035613Z/toolkit-evidence/legacy-comparison/main_memory-bandwidth/legacy.stdout"
+    }
+  },
+  "results": {
+    "main_memory-capacity": {
+      "status": "passed",
+      "raw_metrics": 16,
+      "raw_capacity_mb_per_chip": 65536,
+      "legacy_derived_mib": 131072,
+      "hbm_diagnosis": "passed"
+    },
+    "interconnect-P2P_intraserver": {
+      "status": "passed",
+      "unidirectional_pairs": 56,
+      "unidirectional_range_gbps": [328.98, 329.63],
+      "bidirectional_pairs": 56,
+      "bidirectional_range_gbps": [539.95, 545.03],
+      "signal_quality_diagnosis": "passed"
+    },
+    "computation-INT8": {
+      "status": "partial",
+      "value": 11679.2646484375,
+      "unit": "TOPS",
+      "aiflops_diagnosis": "unsupported: DMI threshold configuration has no matching A3/910C entry"
+    },
+    "main_memory-bandwidth": {
+      "status": "partial",
+      "raw_metrics": 400,
+      "devices": 16,
+      "range_gbps": [1513.970581, 1541.802368],
+      "legacy_derived_gbps": 3066,
+      "bandwidth_diagnosis": "unsupported: DMI threshold configuration has no matching A3/910C entry"
+    }
+  },
+  "fixed_position_findings": {
+    "compute_line_4_column_4": "matches the one metric in this DMI 26.1 normal layout, but changes when warnings are inserted and is not a stable interface",
+    "d2d_line_30_column_3": "matches the 25th and final Device 0 trial; it discards the other 24 trials and is layout-dependent",
+    "h2d_line_6_column_4": "matches the current all-device metric but is layout-dependent",
+    "p2p_intraserver_line_22_column_2": "matches one bidirectional matrix cell out of 112 directed pairs; it is not a whole-node aggregate",
+    "p2p_interserver_line_14": "not tested because cross-node cases are explicitly out of scope",
+    "int8_unit": "confirmed wrong in the legacy wrapper: DMI reports TOPS@INT8, not TFLOPS"
+  },
+  "incremental_validation_20260826": {
+    "status": "partial",
+    "evidence": "base/result/20260826T134846Z/toolkit-evidence/manifest.json",
+    "report": "base/result/20260826T134846Z/report.md",
+    "image": "flagrt/ascend-operator-runtime:0.2.0-cann9.0-py311-torch2.10-arm64",
+    "image_id": "sha256:892284fecf448ea354b0630dc8de6762f78b1e7adfc8d0227be9ea901fc4aa92",
+    "selection": {
+      "source": "device-ids",
+      "selected_device_ids": [2, 3],
+      "physical_npus": [1],
+      "excluded_device_ids": [0, 1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    },
+    "results": {
+      "interconnect-d2h": {
+        "status": "passed",
+        "values_gbps": [42.839875, 43.087775],
+        "transfer_size_bytes": 536870912,
+        "execute_times": 50,
+        "bandwidth_diagnosis": "passed"
+      },
+      "interconnect-h2d-latency": {
+        "status": "passed",
+        "metric_count": 8,
+        "sizes_bytes": [512, 4096, 65536, 1048576],
+        "range_ns": [681.339966, 825.675964]
+      },
+      "interconnect-d2h-latency": {
+        "status": "passed",
+        "metric_count": 8,
+        "sizes_bytes": [512, 4096, 65536, 1048576],
+        "range_ns": [758.764404, 830.03595]
+      },
+      "interconnect-P2P_intraserver-latency": {
+        "status": "partial",
+        "metric_count": 0,
+        "attempted_directed_pairs": ["2->3", "3->2"],
+        "sizes_bytes": [512, 4096, 65536, 1048576],
+        "reason": "DMI 26.1 returned structured software/internal error code 2 for every selected pair and size while returning process rc 0"
+      },
+      "interconnect-MPI_intraserver": {
+        "status": "passed",
+        "collective": "all_reduce",
+        "datatype": "fp32",
+        "op": "sum",
+        "ranks": 2,
+        "message_range_bytes": [8192, 67108864],
+        "metric_count": 14,
+        "algorithm_bandwidth_range_gbps": [0.11962, 117.07022],
+        "correctness": "14/14 success"
+      }
+    },
+    "health": "pre/post driver, CANN, device and HBM checks passed with complete coverage",
+    "boundary": "single node, logical Devices 2 and 3, HCCL capped at 64 MiB; not a 16-Device or 1-GiB baseline"
+  },
+  "limitations": [
+    "D2D and HBM capacity legacy x2 transforms are preserved and intentionally unexplained.",
+    "The DMI device diagnosis reports that lost-card diagnosis is unavailable in Docker; other pre/post health items passed.",
+    "The 2026-08-25 baseline did not cover single-node HCCL; the 2026-08-26 incremental probe covers only two ranks through 64 MiB. All cross-node cases remain unmodified and unvalidated."
+  ]
+}

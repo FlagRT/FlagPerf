@@ -51,8 +51,9 @@ def main(config, case_config, rank, world_size, local_rank):
     k = case_config.K
     
     
-    matrixA = torch.randn(m, n, dtype=torch.float16).to(local_rank)
-    matrixB = torch.randn(n, k, dtype=torch.float16).to(local_rank)
+    device = accelerator_device(config.vendor, local_rank)
+    matrixA = torch.randn(m, n, dtype=torch.float16).to(device)
+    matrixB = torch.randn(n, k, dtype=torch.float16).to(device)
     
     host_device_sync(config.vendor)
     multi_device_sync(config.vendor)
@@ -69,6 +70,7 @@ def main(config, case_config, rank, world_size, local_rank):
     
     host_device_sync(config.vendor)
     multi_device_sync(config.vendor)
+    measurement_event = benchmark_measurement_start()
     start_time = time.perf_counter()
     
     for _ in range(case_config.ITERS):
@@ -77,6 +79,7 @@ def main(config, case_config, rank, world_size, local_rank):
     host_device_sync(config.vendor)
     multi_device_sync(config.vendor)
     end_time = time.perf_counter()
+    benchmark_measurement_finish(measurement_event)
     
     exec_time = end_time - start_time
     
@@ -88,6 +91,7 @@ def main(config, case_config, rank, world_size, local_rank):
 
 if __name__ == "__main__":    
     config = parse_args()
+    bootstrap_vendor(config.vendor)
     with open("case_config.yaml", "r") as file:
         case_config = yaml.safe_load(file)
     with open(os.path.join(config.vendor, "case_config.yaml"), "r") as file:
@@ -111,4 +115,3 @@ if __name__ == "__main__":
         multi_device_sync(config.vendor)
         
     dist.destroy_process_group()
-

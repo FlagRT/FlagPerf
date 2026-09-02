@@ -1,0 +1,153 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-09-02T02:57:02Z",
+  "release_stage": "candidate",
+  "overall_status": "partial",
+  "image": "flagrt/ascend-operator-runtime-comm:0.1.3-cann9.0-py311-torch2.10-flagcx0.13.0g55eb2ffp2-arm64",
+  "image_id": "sha256:c97112c3775526705203facf43586c3ff402bc40418ca9c3bdeb9c5504dc8920",
+  "parent_image_id": "sha256:892284fecf448ea354b0630dc8de6762f78b1e7adfc8d0227be9ea901fc4aa92",
+  "source": {
+    "flagcx_commit": "55eb2ffff6988ae1db5e6ecb325472aecc93d238",
+    "flagcx_json_commit": "a0e9fb1e638cfbb5b8b556b7c51eaa81977bad48",
+    "source_artifacts_sha256": "7282804fd3745d30561be45548278f40d3df6f87f2cf1240037848b986d0fb14",
+    "downstream_patch_sha256": "bc84ea26eee3783085ac140e8792455433299fb0bb2330ec9d2680b6d2b7736d",
+    "event_patch_sha256": "524654689fdfe896c2f935f89e884bca4c57e50cd263cc145659e3b8b8ac7f0a",
+    "qualification_verifier_sha256": "8055c276f531032b8cc5e84fd9bbf0ef992a388771c3e39ac97a451fd5bbb6e5",
+    "qualification_runner_sha256": "832aaea3a957e8f19dab0fd9c6dc942e07a3186367cbb7010c07d8ee895504be",
+    "acl_event_probe_sha256": "eb1e7439a64a1a92d39000ca085ac9176961437ef13153f5b11d367640e12cd7"
+  },
+  "artifacts": {
+    "wheel_sha256": "362bcae24bd8fcad0d424f59088d790230a25169af85e29079a5ae4118ff8dc9",
+    "flagcx_extension_sha256": "d25fef63870b11fede0062b391d956812c66a0bc8525e793085fcb6966225469",
+    "libflagcx_sha256": "7a1a243d577980d8635cc4ccb8d8619c27d5f48690364581cd497e9a883df895"
+  },
+  "gates": {
+    "c0_supply_chain_and_build": {
+      "status": "passed",
+      "scope": "Pinned parent image, FlagCX commit, json submodule and downstream patch; Docker build used --network=none."
+    },
+    "c1_static_abi_and_import": {
+      "status": "passed",
+      "scope": "FlagCX 0.13.0; libflagos/libascendcl/libhccl resolved; torch_npu absent; legacy unavailable stream symbols absent; driver-mounted import registered flagcx for flagos. No NPU Device was mapped."
+    },
+    "base_offline_regression": {
+      "status": "passed",
+      "scope": "58/58 unittest cases passed in the exact candidate image with --network=none, read-only Base source mount and no NPU Device mapping."
+    },
+    "c2_two_rank_sentinel": {
+      "status": "passed",
+      "scope": "Three default-stream repeats passed on each authorized intra-NPU SIO pair. Both ranks selected public backend flagos and inner backend flagcx, with exact bidirectional payload equality for 1, 4, 257 and 65536 FP32 elements.",
+      "evidence": [
+        {
+          "device_ids": [
+            12,
+            13
+          ],
+          "npu_ids": [
+            6
+          ],
+          "path": "base/result/flagcx-qualification-20260902T023335Z/summary.json",
+          "sha256": "67e723c2b6648aa1ac7c2280e52acad42fe0c4a7ccd3b699e4005a26b1e56a60"
+        },
+        {
+          "device_ids": [
+            14,
+            15
+          ],
+          "npu_ids": [
+            7
+          ],
+          "path": "base/result/flagcx-qualification-20260902T022812Z/summary.json",
+          "sha256": "46875480f68e47124325c5d74177e8aad453db29bc560f572f8607f5b0338088"
+        }
+      ]
+    },
+    "c3_stream_timeout_cleanup": {
+      "status": "partial",
+      "scope": "Nondefault-stream sentinel passed twice on Device14/15 and once on Device12/13. Direct ACL event A/B on Device14 reproduced timeline wait rc=207000 while the sync-event lifecycle returned all zeros. A separate deterministic stalled-container gate on Device14/15 observed rc=124/timed_out=true, removed the exact container, confirmed it absent, released the lease and passed postflight. This does not claim peer-failure or hung-collective diagnosis.",
+      "evidence": [
+        {
+          "kind": "nondefault-stream",
+          "device_ids": [
+            14,
+            15
+          ],
+          "path": "base/result/flagcx-qualification-20260902T023514Z/summary.json",
+          "sha256": "6d90e5fc3e51ed6c5fb3a89f8b099d147f9d9ead96d22bc0883a14f3c48bffce"
+        },
+        {
+          "kind": "nondefault-stream",
+          "device_ids": [
+            12,
+            13
+          ],
+          "path": "base/result/flagcx-qualification-20260902T023628Z/summary.json",
+          "sha256": "508edd95d3d05bc94e36c4d6d0a8ba23c327b3a5517dbae5c41a75cc4ed520cd"
+        },
+        {
+          "kind": "executor-timeout-cleanup",
+          "device_ids": [
+            14,
+            15
+          ],
+          "path": "base/result/flagcx-qualification-20260902T024151Z/summary.json",
+          "sha256": "9248a4d3012dbeccc081febd70f6d2f3524d10d503d7872c1dc3abdb887f49dd"
+        },
+        {
+          "kind": "acl-event-flag-ab",
+          "device_ids": [
+            14,
+            15
+          ],
+          "path": "base/result/flagcx-qualification-20260902T025111Z/summary.json",
+          "sha256": "bf75403381eb331711dc4b1470579e8187eeaba49c71c5b2e0d168f6e67665a3"
+        }
+      ]
+    },
+    "c4_flagperf_bounded_smoke": {
+      "status": "passed",
+      "scope": "Bounded two-rank Base P2P smoke passed with monitor=off on both authorized SIO pairs, including execution, complete rank result parsing, zero CPU fallback and postflight. A separate monitor=on run on Device14/15 preserved measurement=passed while monitoring=partial and overall=partial because the short exact window contained only 1/10 valid workload samples per Device.",
+      "evidence": [
+        {
+          "device_ids": [
+            14,
+            15
+          ],
+          "monitor": "off",
+          "path": "base/result/benchmark-20260902T023839Z/summary.json",
+          "sha256": "ec8c42f38ecfe69c98aa27ad5b4a592bd80aabb299587b7e846d5e5e1e4872e4"
+        },
+        {
+          "device_ids": [
+            12,
+            13
+          ],
+          "monitor": "off",
+          "path": "base/result/benchmark-20260902T023925Z/summary.json",
+          "sha256": "9930f50bc371cf0c43f3c2dc5651fddce5fe00275f97316538a533032a089d3e"
+        },
+        {
+          "device_ids": [
+            14,
+            15
+          ],
+          "monitor": "on",
+          "status": "partial",
+          "measurement_status": "passed",
+          "monitoring_status": "partial",
+          "path": "base/result/benchmark-20260902T023721Z/summary.json",
+          "sha256": "bcf933cae527eab4b4d6ba98747ceee856d8e60aacff6b649f6f7bbe26bd6073"
+        }
+      ]
+    },
+    "c5_formal_single_node": {
+      "status": "not-run"
+    },
+    "c6_multinode_and_soak": {
+      "status": "not-run"
+    }
+  },
+  "production_eligible": false,
+  "candidate_execution_requires": "--allow-candidate-runtime",
+  "rollback_profile": "torch_fl_2.10"
+}

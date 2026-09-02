@@ -12,4 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-echo "ASCEND PLACEHOLDER ENV.SH"
+# Benchmark setup only validates the PyTorch runtime; DMI remains a Toolkit case.
+python3 -c 'import torch_fl; import torch; assert hasattr(torch, "flagos")'

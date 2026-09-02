@@ -46,8 +46,19 @@
 │             └── requirements.txt
 ├── configs
 │   └── host.yaml
-├── container_main.py
-├── run.py
+├── benchmark_worker.py
+├── generate_benchmark_report.py # Benchmark Markdown/SVG 确定性报告生成器
+├── container_main.py          # 迁移期兼容 shim
+├── executors
+│   ├── benchmark.py
+│   ├── common.py
+│   └── toolkit.py
+├── run.py                     # 当前统一宿主入口
+├── run_toolkit.py             # 迁移期 Toolkit 兼容入口
+├── run_local.py               # 已弃用兼容入口
+├── legacy
+│   ├── cluster_run.py
+│   └── container_main.py
 ├── toolkits
 │   └── computation-FP32
 │       └── nvidia
@@ -87,13 +98,16 @@
 
    此文件每次运行时自由更改填写，无需适配或更新提交
 
-3. container_main.py
+3. benchmark_worker.py / container_main.py
 
-   此文件为容器内主进程，负责根据host.yaml启动对应评测样例主进程
+   `benchmark_worker.py` 是当前容器内 Benchmark worker，使用 argv list 启动 `torchrun`；
+   `container_main.py` 仅在迁移期兼容旧 Benchmark/Toolkit 容器命令。
 
 4. run.py
 
-   此文件为FlagPerf评测主进程，负责根据host.yaml启动并准备集群环境，启动container_main.py
+   当前统一宿主 facade，提供 `benchmark run`、`toolkit run` 和 `report` 子命令；领域编排由
+   `executors/benchmark.py` 与 `executors/toolkit.py` 分别实现。原 `host.yaml` 集群编排器位于
+   `legacy/cluster_run.py`，只在兼容期保留。
 
 5. toolkits
 
@@ -114,7 +128,86 @@
    2. \<vendor\>_monitor.py，用于对AI芯片进行温度、功率、显存使用等方面的监控，可参考给出的英伟达实现方案
    3. \<framework\>，包含对应运行时环境
 
-## 运行时流程
+## 当前统一入口
+
+面向使用者的环境准备、启动命令、参数、结果读取和常见风险集中在
+[`base/README.md`](../../base/README.md)。本节说明统一入口的工程职责和迁移边界。
+
+统一入口要求显式选择设备，并在正式执行前进行宿主 preflight；`--dry-run` 只生成静态计划，不读取
+NPU 状态或启动 Docker：
+
+```bash
+python3 base/run.py benchmark run \
+  --case computation-FP16 \
+  --npu-ids 1 \
+  --monitor on \
+  --dry-run
+
+python3 base/run.py toolkit run \
+  --case computation-FP16 \
+  --npu-ids 1 \
+  --allow-privileged-root \
+  --allow-disruptive-dmi
+
+python3 base/run.py report --run-id <RUN_ID>
+```
+
+Ascend 单机 P2P 使用独立 communication candidate，不允许沿用通用 operator runtime。当前
+`interconnect-P2P_intraserver/ascend/runtime_requirements.json` 要求
+`torch_fl_2.10_flagcx`、单节点和恰好两 rank；Case 对外 backend 仍是 Torch-FL `flagos`，FlagCX
+只是 `ProcessGroupFlagOS` 的内部数据面。静态计划示例：
+
+```bash
+python3 base/run.py benchmark run \
+  --config base/configs/ascend910_cann9_p2p_candidate.yaml \
+  --case interconnect-P2P_intraserver \
+  --device-ids 14,15 --nproc-per-node 2 \
+  --case-config base/benchmarks/interconnect-P2P_intraserver/ascend/case_config.smoke.yaml \
+  --allow-candidate-runtime --dry-run
+```
+
+`--allow-candidate-runtime` 只允许执行未晋级镜像，不会把 manifest 改成 passed；候选阶段的
+`--case-config` 还必须命中 `runtime_requirements.json` 中的 SHA-256 allowlist。当前 p2 candidate 已在
+NPU6 Device12/13 和 NPU7 Device14/15 完成 C2 双 rank sentinel 与 C4 有界 Case smoke；非默认 stream
+及 executor timeout 清理已验证，但 peer failure/hung collective、正式性能与跨机/长稳仍未验收。
+因此 manifest 仍为 `validated=false`，正式 run 仍必须提供 `--allow-privileged-root`、经过 preflight 的
+两个空闲 Device、有界 `--case-config` 和 `--allow-candidate-runtime`。
+
+Benchmark 的宿主控制流为
+`run.py -> BenchmarkExecutor -> Docker -> benchmark_worker.py -> torchrun -> Case`；Toolkit 为
+`run.py -> ToolkitExecutor -> evidence_runner.py -> DMI/npu-smi/HCCL`。两条路径共享设备选择、
+`flock` lease、容器与外层证据能力，但保持参数、权限和领域结果分离。
+
+Benchmark 的 `--monitor {on,off}` 默认为 `on`。宿主只对当次 preflight 映射出的所选物理 NPU 执行
+低频 `npu-smi info -t usages`，worker 和 Rank 只记录 torchrun/原 Case 计时窗事件；不会调用 DMI，
+也不会为凑足监控样本自动延长或重跑 workload。显式 `off` 用于监控开销 A/B 或明确的无监控实验。
+
+### Benchmark 报告
+
+每次 Benchmark 结束后，`generate_benchmark_report.py` 会从 `summary.json`、
+`benchmark-result.json`、`benchmark-monitor/summary.json`、原始监控 JSONL、精确窗口事件、
+`resolved-plan.json`、Case 配置快照、pre/postflight 和原始日志生成 `report.md`、
+`report_monitor.md`、按指标分组的 Rank SVG 与监控 timeline SVG。主报告展示实验/执行/测量/监控/
+postflight/报告六类独立状态、设备与 Rank 范围、原始指标、同次运行 Rank 统计、运行时锁、权限、
+资源租约、限制及带 SHA-256 的证据索引。
+
+监控报告保存 AICore、AIVector、HBM 占用、HBM 带宽和 NPU Utilization 五项原值，并将其对齐到
+Rank→NPU/Chip/逻辑 Device 的精确测量窗。默认目标间隔 1 秒，每目标测量窗内至少 10 个有效样本；
+缺事件、缺字段、窗口不嵌套或样本不足会让监控状态降级，不能用监控成功替代 Benchmark 结果解析。
+长结果的展示层每目标最多确定性投影 64 个样本，统计和 JSONL 仍保留全部有效/原始事实。
+
+报告只是原始证据的确定性阅读视图，不改变实验状态，也不把一次通过结果描述为稳定性能基线。
+可在不重跑硬件的情况下重新生成：
+
+```bash
+python3 base/generate_benchmark_report.py \
+  --result-dir base/result/benchmark-<UTC_RUN_ID>
+```
+
+## 旧集群入口配置与流程（迁移期）
+
+以下 `host.yaml` 与 `BENCHMARKS_OR_TOOLKITS` 流程描述的是迁移到
+`base/legacy/cluster_run.py` 的原 Base 集群入口，不是当前推荐命令。
 
 ### 运行前工作
 
@@ -164,15 +257,13 @@ CASES:
 
 * 此运行流程为FlagPerf自动进行，在此仅供研发人员调试参考，不需手动执行。
 
-1. 在FlagPerf/base/执行python3 run.py【此步骤需手动执行】
-2. run.py启动并准备好集群容器环境
-3. run.py在每一个主机的物理机环境启动监控
-4. run.py在每一个主机的容器内自动启动container_main.py并自动给定所需命令行参数
-5. container_main.py根据配置，执行torchrun benchmarks/....../main.py --args或bash toolkits/....../main.sh启动评测任务
-6. 容器内评测任务结束后，run.py关闭所有运行时容器，关闭监控
-7. run.py将所有主机的log文件复制到master节点
-8. run.py调用各厂商提供analysis.py文件，获取规格化结果
-9. run.py将评测指标结果打印到标准输出，将详细规格化结果以json形式保存至master节点的log目录
+1. 在 FlagPerf/base/ 执行 `python3 legacy/cluster_run.py`【此步骤需手动执行】；
+2. legacy cluster runner 启动并准备好集群容器环境；
+3. legacy cluster runner 在每一个主机的物理机环境启动监控；
+4. 容器内兼容 `container_main.py` 根据模式启动旧 worker；
+5. Benchmark 执行 `torchrun benchmarks/.../main.py`，Toolkit 执行旧 `bash main.sh`；
+6. 容器内任务结束后，legacy cluster runner 关闭容器和监控；
+7. 日志复制到 master 节点并由旧 analysis.py 处理。
 
 ## 厂商适配文档
 

@@ -1,0 +1,100 @@
+diff --git a/plugin/torch/flagcx/include/event_flagcx.hpp b/plugin/torch/flagcx/include/event_flagcx.hpp
+index c84f1c1..e5a4827 100644
+--- a/plugin/torch/flagcx/include/event_flagcx.hpp
++++ b/plugin/torch/flagcx/include/event_flagcx.hpp
+@@ -14,5 +14,9 @@
+ #endif
+ #include <flagos.h>
++#if defined(USE_ASCEND_ADAPTOR)
++// Torch-FL af502974 exports its Ascend stream registry with this stable C ABI.
++extern "C" void *GetCurrentStream(int device_index);
++#endif
+ #elif USE_NVIDIA_ADAPTOR
+ #include <ATen/cuda/CUDAEvent.h>
+ #include <cuda_runtime.h>
+@@ -171,8 +176,7 @@ public:
+   }
+ 
+   void record(const int deviceId) override {
+-    auto stream =
+-        reinterpret_cast<aclrtStream>(GetCurrentStreamForDevice(deviceId));
++    auto stream = reinterpret_cast<aclrtStream>(GetCurrentStream(deviceId));
+     TORCH_CHECK(aclrtRecordEvent(event_, stream) == ACL_SUCCESS,
+                 "aclrtRecordEvent failed");
+   }
+@@ -184,8 +188,7 @@ public:
+   }
+ 
+   void block(const int deviceId) override {
+-    auto stream =
+-        reinterpret_cast<aclrtStream>(GetCurrentStreamForDevice(deviceId));
++    auto stream = reinterpret_cast<aclrtStream>(GetCurrentStream(deviceId));
+     TORCH_CHECK(aclrtStreamWaitEvent(stream, event_) == ACL_SUCCESS,
+                 "aclrtStreamWaitEvent failed");
+   }
+diff --git a/plugin/torch/flagcx/include/stream_guard_flagcx.hpp b/plugin/torch/flagcx/include/stream_guard_flagcx.hpp
+index 38cf91a..4e0a44e 100644
+--- a/plugin/torch/flagcx/include/stream_guard_flagcx.hpp
++++ b/plugin/torch/flagcx/include/stream_guard_flagcx.hpp
+@@ -10,6 +10,10 @@
+ #error "The FlagOS torch backend supports only Ascend and Enflame"
+ #endif
+ #include <flagos.h>
++#if defined(USE_ASCEND_ADAPTOR)
++extern "C" void *GetCurrentStream(int device_index);
++extern "C" void SetCurrentStream(int device_index, void *stream);
++#endif
+ #elif USE_NVIDIA_ADAPTOR
+ #include <c10/core/impl/InlineStreamGuard.h>
+ #include <c10/cuda/CUDAGuard.h>
+@@ -97,7 +101,12 @@ public:
+       : originalStream_(stream), currentStream_(nullptr), deviceId_(deviceId),
+ #ifdef FLAGCX_TORCH_BACKEND_FLAGOS
+         guard_(*reinterpret_cast<Stream_t *>(stream)),
++#if defined(USE_ASCEND_ADAPTOR)
++        previous_(reinterpret_cast<Stream_t>(GetCurrentStream(deviceId))),
++#else
+-        previous_(GetCurrentStreamForDevice(deviceId)), previousDevice_(0)
++        previous_(GetCurrentStreamForDevice(deviceId)),
++#endif
++        previousDevice_(0)
+ #elif USE_NVIDIA_ADAPTOR
+         guard_(
+             at::cuda::getStreamFromExternal(*(cudaStream_t *)stream, deviceId))
+@@ -142,7 +150,11 @@ public:
+ #ifdef FLAGCX_TORCH_BACKEND_FLAGOS
+     GetDevice(&previousDevice_);
+     SetDevice(deviceId_);
++#if defined(USE_ASCEND_ADAPTOR)
++    SetCurrentStream(deviceId_, guard_);
++#else
+     SetCurrentStreamForDevice(deviceId_, guard_);
++#endif
+ #endif
+ #ifdef USE_SUNRISE_ADAPTOR
+     torchpt::set_current_stream(guard_.unwrap());
+@@ -150,8 +162,12 @@ public:
+ #endif
+   }
+ #ifdef FLAGCX_TORCH_BACKEND_FLAGOS
+   ~flagcxStreamGuard() {
++#if defined(USE_ASCEND_ADAPTOR)
++    SetCurrentStream(deviceId_, previous_);
++#else
+     SetCurrentStreamForDevice(deviceId_, previous_);
++#endif
+     SetDevice(previousDevice_);
+   }
+ #elif USE_SUNRISE_ADAPTOR
+@@ -174,7 +190,11 @@ public:
+   void reset_stream(flagcxStream_t stream) {
+ #ifdef FLAGCX_TORCH_BACKEND_FLAGOS
+     guard_ = *reinterpret_cast<Stream_t *>(stream);
++#if defined(USE_ASCEND_ADAPTOR)
++    SetCurrentStream(deviceId_, guard_);
++#else
+     SetCurrentStreamForDevice(deviceId_, guard_);
++#endif
+ #elif USE_NVIDIA_ADAPTOR
+     guard_.reset_stream(
+         at::cuda::getStreamFromExternal(*(cudaStream_t *)stream, deviceId_));

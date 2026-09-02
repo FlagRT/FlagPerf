@@ -12,13 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-source /usr/local/Ascend/toolbox/set_env.sh
-source /usr/local/Ascend/ascend-toolkit/set_env.sh
-export LD_LIBRARY_PATH=/usr/local/Ascend/driver/lib64/driver/:$LD_LIBRARY_PATH
-LOG_PATH=`pwd`
-ascend-dmi --bw -t d2d -q > ${LOG_PATH}/test_result.log 2>&1
-RESULT=$(awk 'NR>29 && NR<31 {print $3}' ${LOG_PATH}/test_result.log)
-RESULT_INT=$(printf "%.0f" "$RESULT")
-RESULT_A3=$(expr $RESULT_INT \* 2)
-echo "[FlagPerf Result] main_memory-bandwidth=${RESULT_A3} GB/s"
-rm -rf ${LOG_PATH}/test_result.log
+set -euo pipefail
+
+if [[ -f /usr/local/Ascend/toolbox/set_env.sh ]]; then
+    # shellcheck disable=SC1091
+    source /usr/local/Ascend/toolbox/set_env.sh
+fi
+if [[ -f /usr/local/Ascend/ascend-toolkit/set_env.sh ]]; then
+    # shellcheck disable=SC1091
+    source /usr/local/Ascend/ascend-toolkit/set_env.sh
+fi
+export LD_LIBRARY_PATH="/usr/local/Ascend/driver/lib64/driver/:${LD_LIBRARY_PATH:-}"
+
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+exec python3 "${SCRIPT_DIR}/../../../_common/ascend/A3/evidence_runner.py" \
+    --cases "main_memory-bandwidth"

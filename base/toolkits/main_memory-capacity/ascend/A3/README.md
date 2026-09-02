@@ -1,39 +1,33 @@
-# 参评AI芯片信息
+# Ascend A3 HBM 容量属性实验
 
-* 厂商：华为技术有限公司
-* 产品名称：Atlas 800T A3
-* 产品型号：/
-* TDP：/
+本 Case 读取设备管理接口报告的 HBM 容量属性，不通过逐步分配内存寻找 OOM 边界，因此它不是“当前可分配显存”测试。
 
-# 所用服务器配置
+## 测量协议
 
-* 服务器数量：1
-* 单服务器内使用卡数：1
-* 服务器型号：/
-* 操作系统版本：openEuler 22.03 (LTS-SP4)
-* 操作系统内核：5.10.0-216.0.0.115.oe2203sp4.aarch64
-* CPU：/
-* docker版本：此评测样例无需docker环境
-* 内存：2TiB
-* 服务器间AI芯片直连规格及带宽：此评测样例无需服务器间通信
+runner 根据本机 `/dev/davinciN` 发现结果枚举 A3 card/chip 候选，并保存每次命令：
 
-# 评测结果
+```bash
+npu-smi info -t memory -i <card> -c <chip>
+```
 
-## 核心评测结果
+解析只匹配带名称的 `HBM Capacity(MB)` 字段。每个成功读取的 card/chip 都以 `scope=chip`、
+逻辑 Device、原样 `MB` 数值、完整 stdout/stderr 和退出码进入 manifest；Case 级
+`capacity_scope` 明确记录 `metric_scope=chip`、`aggregation=none` 和全部目标。同时运行 DMI
+`hbm` 健康诊断，避免把容量属性等同于 HBM 健康。
 
-| 评测项  | 主存储容量测试值  | 主存储容量标定值 | 测试标定比例 |
-| ---- | ----------------- | -------- | ------ |
-| 评测结果 | / | / | / |
+当前实现已移除旧脚本的 `card0/chip0 ×2` 兼容标量和错误的 MiB 标签，逐 chip
+`HBM Capacity(MB)` 是唯一权威容量结果。它不隐式报告 card 或整机容量；若后续需要更大 scope，
+必须基于实时 map 枚举结果另行显式求和。完整分析见
+`personal/Ascend-Base-Toolkit-D2D-and-capacity-x2-analysis.md`。
 
-## 能耗监控结果
+```bash
+python3 base/run.py toolkit run --case main_memory-capacity --npu-ids 1 \\
+  --allow-privileged-root --allow-disruptive-dmi
+```
 
-此评测样例中无意义
+本 Case 仅限单机，不报告 allocator 碎片、业务可用容量或跨机容量。
 
-## 其他重要监控结果
-
-| 监控项  | 系统平均CPU占用 | 系统平均内存占用 |
-| ---- | --------- | -------- |
-| 监控结果 | /    | /   |
-
-# 厂商测试工具原理说明
-使用npu-smi工具可直接查询HBM内存容量以及使用情况
+容量是静态属性，不生成伪造的利用率 timeline。默认作证区保存每个目标的
+`HBM Capacity(MB)`、时钟、温度等 `memory` 原字段，并补采 `npu-smi info -t ecc`
+中的 ECC/隔离页原字段，关联本轮 pre/post HBM health。任何不支持项均保留原始命令、
+退出码和输出并使监控为 `partial`，但不会修改已经成功取得的容量原值。

@@ -1,41 +1,36 @@
-# 参评AI芯片信息
+# Ascend A3 INT8 算力实验
 
-* 厂商：华为技术有限公司
-* 产品名称：Atlas 800T A3
-* 产品型号：/
-* TDP：/
+本 Case 的正确单位是 **TOPS**。DMI 26.1.0 实际表头为 `TOPS@INT8`；旧脚本把同一数值写成 `TFLOPS`，属于已确认的单位错误，现已修复。
 
-# 所用服务器配置
+## 测量协议
 
-* 服务器数量：1
-* 单服务器内使用卡数：1
-* 服务器型号：/
-* 操作系统版本：openEuler 22.03 (LTS-SP4)
-* 操作系统内核：5.10.0-216.0.0.115.oe2203sp4.aarch64
-* CPU：/
-* docker版本：此评测样例无需docker环境
-* 内存：2TiB
-* 服务器间AI芯片直连规格及带宽：此评测样例无需服务器间通信
+```bash
+ascend-dmi -f -t int8 --all --et 80 -q --fmt json
+```
 
-# 评测结果
+解析器必须找到 `INT8` 与 `TOPS` 语义；若输出声称 `TFLOPS@INT8` 或没有可识别单位，实验失败。已保存的 DMI 26.1.0 原始样例包含：
 
-## 核心评测结果
+```text
+Device  Execute Times  Duration(ms)  TOPS@INT8  Power(W)
+0/1     72,000,000     283           1462.402   342.4
+```
 
-| 评测项  | INT8算力测试值   | INT8算力标定值  | 测试标定比例 |
-| ---- | ----------- | ---------- | ------ |
-| 评测结果 | / | / | / |
+该样例用于证明旧标签错误和进行 parser 回归，不代表本次全机结果。
+JSON 数值的厂商原始字面量保存为 `value_raw`，报告原样显示；兼容数值字段不用于舍入或替换该原文。
 
-## 能耗监控结果
+主 INT8 TOPS 测量期间，runner 按物理 NPU 并行轮询 `npu-smi info -t usages`，逐 Chip
+保存 AICore、AIVector、HBM Bandwidth、NPU Utilization 原始时序。每个目标 Chip 至少需要
+10 个四字段完整样本；不足时最多追加一次相同 `--et 80` 负载。追加 TOPS 原值仅作监控窗口证据，
+不替换主 TOPS，也不做任何聚合。
 
-| 监控项  | 系统平均功耗  | 系统最大功耗  | 系统功耗标准差 | 单机TDP | 单卡平均功耗  | 单卡最大功耗 | 单卡功耗标准差 | 单卡TDP |
-| ---- | ------- | ------- | ------- | ----- | ------- | ------ | ------- | ----- |
-| 监控结果 | / | / | /   | /     | / | / | /   | /  |
+```mermaid
+flowchart LR
+  V[版本兼容] --> H[pre-health]
+  H --> M[INT8 --all / TOPS + npu-smi 同窗采样]
+  M --> R[原始 TOPS + monitor JSONL]
+  R --> D[aiflops 诊断]
+  D --> P[post-health]
+  P --> J[JSON + stdout/stderr + rc + topo]
+```
 
-## 其他重要监控结果
-
-| 监控项  | 系统平均CPU占用 | 系统平均内存占用 | 单卡平均温度  | 单卡平均显存占用 |
-| ---- | --------- | -------- | ------- | -------- |
-| 监控结果 | / | /   | / | /   |
-
-# 厂商测试工具原理说明
-使用ascend-dmi工具，通过构造矩阵乘“A(m,k)*B(k,n)”并执行一定次数的方式，根据运算量与执行多次矩阵乘所耗费时间来计算整卡或处理器中AI Core的算力值
+推荐通过 `python3 base/run.py toolkit run --case computation-INT8 --npu-ids 1 --allow-privileged-root --allow-disruptive-dmi` 运行，并按当次 `npu-smi info -m` 调整物理 NPU ID。仅限单机，不含压力、复位和跨机测试。`report_monitor.md` 展示直接标注原值的逐 Chip 静态 timeline 和 `Sxx` 逐样本表；监控完整不等于理论峰值，AIVector 低不自动失败。

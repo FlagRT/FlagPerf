@@ -38,7 +38,9 @@ def parse_args():
     
 
 def main(config, case_config, rank, world_size, local_rank):    
-    if "mthreads" in config.vendor:
+    if config.vendor.split("/", 1)[0].lower() == "ascend":
+        device = accelerator_device(config.vendor, local_rank)
+    elif "mthreads" in config.vendor:
         device = torch.device('musa:{}'.format(local_rank))
     else:
         device = torch.device('cuda:{}'.format(local_rank))
@@ -48,6 +50,7 @@ def main(config, case_config, rank, world_size, local_rank):
     allocated_tensors = []
 
     print(f"Init tensor size: {byte_size} MiB...")
+    measurement_event = benchmark_measurement_start()
 
     while byte_size >= min_byte_size:
         try:
@@ -70,6 +73,8 @@ def main(config, case_config, rank, world_size, local_rank):
             else:
                 raise
 
+    benchmark_measurement_finish(measurement_event)
+
     start = time.time()
     while time.time() <= start + 300:
         foo_str = "Waiting for power monitor"
@@ -82,6 +87,7 @@ def main(config, case_config, rank, world_size, local_rank):
 
 if __name__ == "__main__":    
     config = parse_args()
+    bootstrap_vendor(config.vendor)
     with open("case_config.yaml", "r") as file:
         case_config = yaml.safe_load(file)
     with open(os.path.join(config.vendor, "case_config.yaml"), "r") as file:
@@ -109,6 +115,3 @@ if __name__ == "__main__":
                 print(r"[FlagPerf Result]Rank {} BI-V150 has 2 chips and overall GPU main_memory-capacity=".format(dist.get_rank()) + str(gib*2) + "GiB")
         if "iluvatar" not in config.vendor:
             multi_device_sync(config.vendor)
-
-
-

@@ -1,41 +1,40 @@
-# 参评AI芯片信息
+# Ascend A3 D2D 主存带宽实验
 
-* 厂商：华为技术有限公司
-* 产品名称：Atlas 800T A3
-* 产品型号：/
-* TDP：/
+本 Case 使用 DMI `d2d` 测量 Device 内部数据搬运带宽。权威结果是 manifest 中的原始逐设备 `GB/s` 序列，不再固定读取第 30 行。
 
-# 所用服务器配置
+## 测量与输出
 
-* 服务器数量：1
-* 单服务器内使用卡数：1
-* 服务器型号：/
-* 操作系统版本：openEuler 22.03 (LTS-SP4)
-* 操作系统内核：5.10.0-216.0.0.115.oe2203sp4.aarch64
-* CPU：/
-* docker版本：此评测样例无需docker环境
-* 内存：2TiB
-* 服务器间AI芯片直连规格及带宽：此评测样例无需服务器间通信
+默认先执行：
 
-# 评测结果
+```bash
+ascend-dmi --bw -t d2d -d <device> -q --fmt json
+```
 
-## 核心评测结果
+DMI 26.1 在 A3 D2D 模式下固定 size 和 execute-times，显式传入这两个参数会被拒绝。runner 因此先保存默认 Device 0 的完整序列，再对其余已发现逻辑设备逐一追加 `-d <id>`；任一设备不支持或缺失即记为 `partial`，不会把 Device 0 写成全机平均。
 
-| 评测项  | 主存储带宽测试值(8卡平均)    | 主存储带宽标定值（8卡平均） | 测试标定比例 |
-| ---- | ----------- | -------- | ------ |
-| 评测结果 | / | / | /  |
+| 字段 | 含义 |
+|---|---|
+| `metrics[]` | DMI 原始带宽、逻辑 Device、`scope=logical-device`、单位和来源格式 |
+| `bandwidth_scope` | `metric_scope=logical-device`、`aggregation=none`、所选 Device 集合和 DMI 来源 |
+| `[FlagPerf Result]` | 逐逻辑 Device 原样输出 DMI GB/s，不四舍五入、不乘二 |
+| `diagnosis` | DMI `bandwidth` 厂商诊断引用 |
 
-## 能耗监控结果
+后续核验确认：DMI 原始逐 Device 值才是权威测量；旧 `×2` 不能解释为一次单 Device 运行得到的
+双 chip/card 实测带宽。当前实现已移除该倍率和 legacy 单标量，标准输出逐逻辑 Device 保留 DMI
+原值。旧 README 的“8 卡平均”没有代码证据，已取消。完整分析见
+`personal/Ascend-Base-Toolkit-D2D-and-capacity-x2-analysis.md`。
 
-| 监控项  | 系统平均功耗  | 系统最大功耗  | 系统功耗标准差 | 单机TDP | 单卡平均功耗  | 单卡最大功耗 | 单卡功耗标准差 | 单卡TDP |
-| ---- | ------- | ------- | ------- | ----- | ------- | ------ | ------- | ----- |
-| 监控结果 | / | / | /   | /     | / | / | /   | /  |
+推荐运行：
 
-## 其他重要监控结果
+```bash
+python3 base/run.py toolkit run --case main_memory-bandwidth --npu-ids 1 \\
+  --allow-privileged-root --allow-disruptive-dmi
+```
 
-| 监控项  | 系统平均CPU占用 | 系统平均内存占用 | 单卡平均温度  | 单卡平均显存占用 |
-| ---- | --------- | -------- | ------- | -------- |
-| 监控结果 | / | /   | / | /   |
+结果同时保存版本兼容、pre/post health、拓扑、stdout、stderr、退出码和厂商 bandwidth 诊断。本轮仅限单机。
 
-# 厂商测试工具原理说明
-使用ascend-dmi工具，d2d带宽测试结果通过数据读写总量/消耗时间获取
+默认还在每条 D2D workload 窗口并行采集 `npu-smi info -t usages`，以厂商字段
+`HBM Bandwidth Usage Rate(%)` 作为主要作证数据，`NPU Utilization(%)` 仅作同期上下文。
+每个目标至少要求 10 个有效样本且主 DMI 窗口至少重叠 1 个样本；样本不足可原命令追加一次，
+但追加 DMI 原值不并入主结果。不计算平均值、兑现率或理论峰值比例。可用
+`--data-movement-monitor off` 关闭，此时监控状态为 `not-run`。

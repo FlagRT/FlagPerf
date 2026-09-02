@@ -1,0 +1,17 @@
+diff --git a/plugin/torch/flagcx/include/event_flagcx.hpp b/plugin/torch/flagcx/include/event_flagcx.hpp
+index e5a4827..f3e5dd1 100644
+--- a/plugin/torch/flagcx/include/event_flagcx.hpp
++++ b/plugin/torch/flagcx/include/event_flagcx.hpp
+@@ -155,7 +155,11 @@ class flagcxCannEvent : public flagcxEvent {
+ public:
+ #ifdef FLAGCX_TORCH_BACKEND_FLAGOS
+   flagcxCannEvent() {
+-    TORCH_CHECK(aclrtCreateEventWithFlag(&event_, ACL_EVENT_TIME_LINE) ==
++    // CANN 9 returns 207000 when aclrtStreamWaitEvent consumes a timeline
++    // event recorded on Torch-FL's application stream.  A sync event is the
++    // supported cross-stream dependency primitive and matches Torch-FL's
++    // native AclEvent implementation.
++    TORCH_CHECK(aclrtCreateEventWithFlag(&event_, ACL_EVENT_SYNC) ==
+                     ACL_SUCCESS,
+                 "aclrtCreateEventWithFlag failed");
+   }

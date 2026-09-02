@@ -12,6 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-source /usr/local/Ascend/toolbox/set_env.sh
-echo "ASCEND PLACEHOLDER ENV.SH"
-ascend-dmi -f -t fp16
+# Benchmark setup only validates the PyTorch runtime; DMI remains a Toolkit case.
+python3 -c 'import torch_fl; import torch; assert hasattr(torch, "flagos")'

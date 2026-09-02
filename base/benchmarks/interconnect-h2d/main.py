@@ -49,13 +49,27 @@ def main(config, case_config, rank, world_size, local_rank):
 
     Melements = case_config.Melements
     torchsize = (Melements, 1024, 1024)
-    
+    device = accelerator_device(config.vendor, local_rank)
+
+    pin_memory = getattr(case_config, "PIN_MEMORY", False)
+    non_blocking = getattr(case_config, "NON_BLOCKING", False)
+    reuse_destination = getattr(case_config, "REUSE_DESTINATION", False)
+
     if "mthreads" in config.vendor:
-        tensor = torch.rand(torchsize, dtype=torch.float32).pin_memory()
+        pin_memory = True
+        non_blocking = True
     elif "iluvatar" in config.vendor:
-        tensor = torch.rand(torchsize, dtype=torch.float32, pin_memory=True)
-    else:    
-        tensor = torch.rand(torchsize, dtype=torch.float32)
+        pin_memory = True
+
+    tensor = torch.rand(torchsize, dtype=torch.float32)
+    if pin_memory:
+        tensor = tensor.pin_memory()
+
+    destination = None
+    if reuse_destination:
+        destination = torch.empty(
+            torchsize, dtype=torch.float32, device=device
+        )
     #print(f"Memory address of tensor in rank {rank} and local rank {local_rank}: {tensor.data_ptr()}")
 
 
@@ -63,27 +77,37 @@ def main(config, case_config, rank, world_size, local_rank):
     multi_device_sync(config.vendor)
     if rank == 0:
         print("start warmup")
+        print(
+            "H2D transfer semantics: host_memory={}, api={}, "
+            "non_blocking={}".format(
+                "pinned" if pin_memory else "pageable",
+                "copy_" if reuse_destination else "to",
+                non_blocking,
+            )
+        )
     
     for _ in range(case_config.WARMUP):
-        if "mthreads" in config.vendor:
-            _tensor = tensor.to(local_rank, non_blocking=True)
+        if reuse_destination:
+            destination.copy_(tensor, non_blocking=non_blocking)
         else:
-            _tensor = tensor.to(local_rank)
+            _tensor = tensor.to(device, non_blocking=non_blocking)
 
 
     host_device_sync(config.vendor)
     multi_device_sync(config.vendor)
+    measurement_event = benchmark_measurement_start()
     start_time = time.perf_counter()
 
     for _ in range(case_config.ITERS):
-        if "mthreads" in config.vendor:
-            _tensor = tensor.to(local_rank, non_blocking=True)
+        if reuse_destination:
+            destination.copy_(tensor, non_blocking=non_blocking)
         else:
-            _tensor = tensor.to(local_rank)
+            _tensor = tensor.to(device, non_blocking=non_blocking)
     
     host_device_sync(config.vendor)
     multi_device_sync(config.vendor)
     end_time = time.perf_counter()
+    benchmark_measurement_finish(measurement_event)
 
     elapsed_time = end_time - start_time
 
@@ -97,6 +121,7 @@ def main(config, case_config, rank, world_size, local_rank):
 
 if __name__ == "__main__":    
     config = parse_args()
+    bootstrap_vendor(config.vendor)
     with open("case_config.yaml", "r") as file:
         case_config = yaml.safe_load(file)
     with open(os.path.join(config.vendor, "case_config.yaml"), "r") as file:

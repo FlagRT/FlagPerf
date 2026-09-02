@@ -1,41 +1,35 @@
-# 参评AI芯片信息
+# Ascend A3 FP16 算力实验
 
-* 厂商：华为技术有限公司
-* 产品名称：Atlas 800T A3
-* 产品型号：/
-* TDP：/
+本 Case 使用 MindCluster DMI 26.1.0 测量单机全设备的厂商 FP16 矩阵乘能力。它和 Base Torch FP16 的 shape、软件路径与计时边界不同，不能仅因单位相同就直接相除。
 
-# 所用服务器配置
+## 测量协议
 
-* 服务器数量：1
-* 单服务器内使用卡数：1
-* 服务器型号：/
-* 操作系统版本：openEuler 22.03 (LTS-SP4)
-* 操作系统内核：5.10.0-216.0.0.115.oe2203sp4.aarch64
-* CPU：/
-* docker版本：此评测样例无需docker环境
-* 内存：2TiB
-* 服务器间AI芯片直连规格及带宽：此评测样例无需服务器间通信
+```bash
+ascend-dmi -f -t fp16 --all --et 80 -q --fmt json
+```
 
-# 评测结果
+DMI 输出单位为 `TFLOPS@FP16`。解析器按 JSON 字段或带单位的表头定位指标，允许前置告警和空行，不再固定读取第 4 行第 4 列。保存的 26.1.0 单设备样例 `0/1 ... 752.465 TFLOPS` 只用于 parser 回归，不作为整机标定值。
+JSON 数值的厂商原始字面量保存为 `value_raw`，报告原样显示；兼容数值字段不用于舍入或替换该原文。
 
-## 核心评测结果
+同一 DMI 进程窗口内按物理 NPU 并行执行 `npu-smi info -t usages`，原样保存逐 Chip
+`Aicore Usage Rate(%)`、`Aivector Usage Rate(%)`、`HBM Bandwidth Usage Rate(%)` 和
+`NPU Utilization(%)`。监控完整只表示每个目标 Chip 至少有 10 个完整样本且主 DMI 窗口有样本，
+不表示达到理论峰值；AIVector 较低也不自动构成失败。
 
-| 评测项  | FP16算力测试值   | FP16算力标定值  | 测试标定比例 |
-| ---- | ----------- | ---------- | ------ |
-| 评测结果 | / | / | / |
+| 证据 | 用途 |
+|---|---|
+| DMI version/compatibility | 证明工具与软件栈身份 |
+| pre/post health | 排除明显设备异常和测试后状态变化 |
+| microbenchmark stdout/stderr/rc | 保留原始连续数值与失败信息 |
+| aiflops diagnosis | 用厂商阈值判断算力健康 |
+| npu-smi topology | 绑定设备与本机拓扑 |
+| npu-smi usages JSONL | 同窗 AIC/AIV/HBM/NPU 原始时间序列 |
 
-## 能耗监控结果
+推荐运行：
 
-| 监控项  | 系统平均功耗  | 系统最大功耗  | 系统功耗标准差 | 单机TDP | 单卡平均功耗  | 单卡最大功耗 | 单卡功耗标准差 | 单卡TDP |
-| ---- | ------- | ------- | ------- | ----- | ------- | ------ | ------- | ----- |
-| 监控结果 | / | / | /   | /     | / | / | /   | /  |
+```bash
+python3 base/run.py toolkit run --case computation-FP16 --npu-ids 1 \\
+  --allow-privileged-root --allow-disruptive-dmi
+```
 
-## 其他重要监控结果
-
-| 监控项  | 系统平均CPU占用 | 系统平均内存占用 | 单卡平均温度  | 单卡平均显存占用 |
-| ---- | --------- | -------- | ------- | -------- |
-| 监控结果 | / | /   | / | /   |
-
-# 厂商测试工具原理说明
-使用ascend-dmi工具，通过构造矩阵乘“A(m,k)*B(k,n)”并执行一定次数的方式，根据运算量与执行多次矩阵乘所耗费时间来计算整卡或处理器中AI Core的算力值
+完整证据位于结果目录的 `toolkit-evidence/manifest.json`。本 Case 仅限单机；不运行压力测试、复位或跨机通信。若单次样本不足，runner 最多追加一次相同 `--et 80` 负载；追加 TFLOPS 不替换主结果。`report_monitor.md` 提供直接显示原值的逐 Chip 静态 timeline 和 `Sxx` 逐样本表；`--compute-monitor off` 仅用于开关 A/B。

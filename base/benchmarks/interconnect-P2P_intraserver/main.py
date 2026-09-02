@@ -47,7 +47,8 @@ def main(config, case_config, rank, world_size, local_rank, select_gpus):
     
     Melements = case_config.Melements
     torchsize = (Melements, 1024, 1024)
-    tensor = torch.rand(torchsize, dtype=torch.float32).to(local_rank)
+    device = accelerator_device(config.vendor, local_rank)
+    tensor = torch.rand(torchsize, dtype=torch.float32).to(device)
 
     host_device_sync(config.vendor)
     multi_device_sync(config.vendor)
@@ -62,6 +63,7 @@ def main(config, case_config, rank, world_size, local_rank, select_gpus):
         
     host_device_sync(config.vendor)
     multi_device_sync(config.vendor)
+    measurement_event = benchmark_measurement_start()
     start_time = time.perf_counter()
 
     for _ in range(case_config.ITERS):
@@ -72,6 +74,7 @@ def main(config, case_config, rank, world_size, local_rank, select_gpus):
     host_device_sync(config.vendor)
     multi_device_sync(config.vendor)
     end_time = time.perf_counter()
+    benchmark_measurement_finish(measurement_event)
     
     elapsed_time = end_time - start_time
 
@@ -84,6 +87,7 @@ def main(config, case_config, rank, world_size, local_rank, select_gpus):
 
 if __name__ == "__main__":    
     config = parse_args()
+    bootstrap_vendor(config.vendor)
     with open("case_config.yaml", "r") as file:
         case_config = yaml.safe_load(file)
     with open(os.path.join(config.vendor, "case_config.yaml"), "r") as file:
@@ -91,6 +95,8 @@ if __name__ == "__main__":
     case_config.update(case_config_vendor)
     case_config = Namespace(**case_config)
     select_gpus = [0, 1]
+    if "LOCAL_RANK" in os.environ:
+        accelerator_device(config.vendor, int(os.environ["LOCAL_RANK"]))
     dist.init_process_group(backend=case_config.DIST_BACKEND)  
     rank = dist.get_rank()
     world_size = dist.get_world_size()
@@ -104,5 +110,4 @@ if __name__ == "__main__":
         multi_device_sync(config.vendor)
         
     dist.destroy_process_group()
-
 

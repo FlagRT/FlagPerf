@@ -1,0 +1,8 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
+
+# Candidate-only bounded smoke: one 4 MiB FP32 tensor, not a performance run.
+Melements: 1
+WARMUP: 2
+ITERS: 10
+DIST_BACKEND: "flagos"

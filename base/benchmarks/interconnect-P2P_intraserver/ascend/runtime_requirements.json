@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "runtime_profile": "torch_fl_2.10_flagcx",
+  "runtime_role": "communication",
+  "distributed_backend": "flagos",
+  "candidate_requires_case_override": true,
+  "candidate_allowed_case_configs": [
+    {
+      "path": "ascend/case_config.smoke.yaml",
+      "sha256": "e79af6697825c708d2f7e096a1639ca73d7a58848bb04674dfbbf49cb3218de3"
+    }
+  ],
+  "process_scope": {
+    "nnodes": 1,
+    "nproc_per_node": 2
+  },
+  "validation_stage": "candidate"
+}

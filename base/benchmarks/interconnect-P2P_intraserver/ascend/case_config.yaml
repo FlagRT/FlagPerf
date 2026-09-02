@@ -1,0 +1,6 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
+
+# Public Case contract stays on Torch-FL's ProcessGroupFlagOS.  That wrapper
+# selects the pinned FlagCX Ascend adaptor as its inner device data plane.
+DIST_BACKEND: "flagos"
