@@ -1,5 +1,5 @@
 schema_version: 1
-release_stage: candidate
+release_stage: validated
 
 image:
   repository: flagrt/ascend-operator-runtime-comm
@@ -9,9 +9,9 @@ image:
 parent_runtime:
   profile: torch_fl_2.10
   image: flagrt/ascend-operator-runtime:0.2.0-cann9.0-py311-torch2.10-arm64
-  image_id: sha256:892284fecf448ea354b0630dc8de6762f78b1e7adfc8d0227be9ea901fc4aa92
+  image_id: sha256:d948410966b0dfdfaf4f9c95b9b14bdb7c4279cb85ccd7f9157f0fb5d1c6d397
   stack_lock_sha256: fca4071f8a7bb7771184f18cda1c4ca2b948642ba4a2f8641ea5e9d63ecc7150
-  image_manifest_sha256: 518123399a3f74415cc478e23f92fcdf68b60be38d99408013bdeeef922dfd98
+  image_manifest_sha256: b3de6b711947eaab42268eb9fa16956ac4a397751d8e2ba06a3174fd1f4d23cf
 
 runtime:
   architecture: aarch64
@@ -51,11 +51,12 @@ distributed_contract:
   public_backend: flagos
   process_group: torch_fl.comm.process_group.ProcessGroupFlagOS
   required_inner_backend: FlagCX
-  initial_scope: single-node-two-rank
+  qualified_scope: single-node-two-rank-forward
 
 artifact_hashes:
   source_files: source-artifacts.sha256
   built_artifacts: validation-summary.json
   qualification_verifier: verify_flagcx_p2p.py
+  formal_qualification: p2p-qualification.json
 validated_image: image-manifest.json
 rollback_profile: torch_fl_2.10

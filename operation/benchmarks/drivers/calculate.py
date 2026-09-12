@@ -4,7 +4,6 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 import time
-from triton.testing import do_bench as kernel_bench
 import os
 import subprocess
 
@@ -64,6 +63,7 @@ def do_test(exec_func, exec_args, sync_func, config, case_config, bp=False):
 
     cputime_raw = end_time - start_time
 
+    from triton.testing import do_bench as kernel_bench
     kerneltime_raw = kernel_bench(lambda: do(exec_func, exec_args, bp),
                                   warmup=case_config.KERNELWARMUP,
                                   rep=case_config.KERNELITERS,

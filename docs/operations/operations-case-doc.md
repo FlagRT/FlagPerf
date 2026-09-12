@@ -18,6 +18,20 @@
 
 为了评估AI芯片在原生算子和Triton算子（[FlagGems](https://github.com/FlagOpen/FlagGems)）方面的支持程度和性能，FlagPerf 设计并实现了针对各个算子在 AI 芯片的评测方案。具体的评测方案细节可以向 FlagPerf 团队索取评测方案文档，这里仅介绍厂商适配需关注的详细内容。厂商按照本文档完成适配后，评测时会自动生成相关指标结果。
 
+## 当前公共入口
+
+单机算子评测使用 `python3 operation/run.py list|run|report`，通过 CLI 指定 vendor、设备、
+Case、dtype、实现路径和规模，不读取 `host.yaml` 或初始化 SSH。
+完整命令、状态与计时约定见 [Operation 指南](../../operation/README.md)，
+Ascend 环境和硬件边界见 [Ascend 指南](../ascend/README.md)。
+
+原 `benchmarks/<case>/main.py` 仍提供算子与输入构造；`build_case` 被新 worker 和旧 Case 主入口
+共用。公共生命周期和证据位于 `runtime/`，厂商策略位于 `vendors/<vendor>/adapter.py`。
+新 CLI 的短时 profile 会显式记录有效配置，不能与旧集群 YAML 的大规模结果不加区分地比较。
+
+下文保留原 SSH 集群适配约定，只适用于显式调用 `operation/legacy/cluster_run.py` 的方式。
+它不代表当前通用 CLI 的启动流程。
+
 ## 工程组织形式
 算子评测相关代码均在FlagPerf/operation目录下, 整体结构如下：
 ```
@@ -31,8 +45,9 @@
 │   │           ├── case_config.yaml
 │   │           ├── env.sh
 │   │           └── requirements.txt
-├── configs
-│   └── host.yaml
+├── legacy
+│   ├── host.yaml
+│   └── cluster_run.py
 ├── container_main.py
 ├── run.py
 └── vendors
@@ -56,8 +71,8 @@
     * requirements.txt，可厂商自定义pip安装包，会由FlagPerf自动执行
     * README.md，记录厂商此样例使用服务器的规格、芯片规格，并记录评测结果中可以公开的部分
 
-2、configs
-下设一个文件host.yaml，存放各主机IP，端口，FlagPerf路径等信息
+2、legacy
+下设兼容配置 host.yaml，存放各主机IP，端口，FlagPerf路径等信息
 
 此文件每次运行时自由更改填写，无需适配或更新提交
 
@@ -65,9 +80,9 @@
 
 此文件为容器内主进程，负责根据host.yaml启动对应评测样例主进程
 
-4、run.py
+4、legacy/cluster_run.py
 
-此文件为FlagPerf评测主进程，负责根据host.yaml启动并准备集群环境，启动container_main.py
+此文件为旧 SSH 集群评测主进程，负责根据host.yaml启动并准备集群环境，启动container_main.py
 
 5、vendors
 

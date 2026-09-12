@@ -130,8 +130,9 @@
 
 ## 当前统一入口
 
-面向使用者的环境准备、启动命令、参数、结果读取和常见风险集中在
-[`base/README.md`](../../base/README.md)。本节说明统一入口的工程职责和迁移边界。
+面向使用者的环境准备、启动命令和结果读取见
+[`base/README.md`](../../base/README.md)；公开支持范围见
+[`Ascend 适配指南`](../ascend/README.md)。
 
 统一入口要求显式选择设备，并在正式执行前进行宿主 preflight；`--dry-run` 只生成静态计划，不读取
 NPU 状态或启动 Docker：
@@ -152,26 +153,13 @@ python3 base/run.py toolkit run \
 python3 base/run.py report --run-id <RUN_ID>
 ```
 
-Ascend 单机 P2P 使用独立 communication candidate，不允许沿用通用 operator runtime。当前
-`interconnect-P2P_intraserver/ascend/runtime_requirements.json` 要求
-`torch_fl_2.10_flagcx`、单节点和恰好两 rank；Case 对外 backend 仍是 Torch-FL `flagos`，FlagCX
-只是 `ProcessGroupFlagOS` 的内部数据面。静态计划示例：
+Ascend 单机 P2P 使用独立 communication runtime；标准 operator runtime 不可替代。
+Case 保留 FP32 blocking send/recv 和原 `2×bytes/time` 公式，公共 backend 为 `flagos`，
+FlagCX 是内部数据面。入口要求恰好两 rank 和哈希允许的配置，实时 preflight 验证设备与拓扑。
 
-```bash
-python3 base/run.py benchmark run \
-  --config base/configs/ascend910_cann9_p2p_candidate.yaml \
-  --case interconnect-P2P_intraserver \
-  --device-ids 14,15 --nproc-per-node 2 \
-  --case-config base/benchmarks/interconnect-P2P_intraserver/ascend/case_config.smoke.yaml \
-  --allow-candidate-runtime --dry-run
-```
-
-`--allow-candidate-runtime` 只允许执行未晋级镜像，不会把 manifest 改成 passed；候选阶段的
-`--case-config` 还必须命中 `runtime_requirements.json` 中的 SHA-256 allowlist。当前 p2 candidate 已在
-NPU6 Device12/13 和 NPU7 Device14/15 完成 C2 双 rank sentinel 与 C4 有界 Case smoke；非默认 stream
-及 executor timeout 清理已验证，但 peer failure/hung collective、正式性能与跨机/长稳仍未验收。
-因此 manifest 仍为 `validated=false`，正式 run 仍必须提供 `--allow-privileged-root`、经过 preflight 的
-两个空闲 Device、有界 `--case-config` 和 `--allow-candidate-runtime`。
+正式协议 `p2p-single-node-v1` 的方向、矩阵、45/60 秒测量窗、5% 方差/监控扰动阈值、
+资格记录和运行命令统一维护在 [P2P 协议](../ascend/p2p.md)。校准不构成性能基线，
+历史资格不是新主机或新镜像的自动认证。计划、配置、公开资格记录的哈希关联可在独立克隆中检查。
 
 Benchmark 的宿主控制流为
 `run.py -> BenchmarkExecutor -> Docker -> benchmark_worker.py -> torchrun -> Case`；Toolkit 为

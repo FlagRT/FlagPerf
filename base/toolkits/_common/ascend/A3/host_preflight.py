@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Fail-closed Ascend host inventory and occupancy preflight."""
 
 from __future__ import annotations
@@ -20,6 +22,9 @@ from typing import Any
 DEVICE_NODE_RE = re.compile(r"davinci(\d+)$")
 MAP_ROW_RE = re.compile(
     r"^\s*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\S+)\s*$"
+)
+PROCESS_ROW_RE = re.compile(
+    r"^\|\s*(\d+)\s+(\d+)\s*\|\s*(\d+)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|"
 )
 
 
@@ -160,6 +165,53 @@ def parse_map_logic_ids(text: str) -> list[int]:
     return [item["logic_id"] for item in parse_device_map(text)]
 
 
+def parse_npu_processes(text: str) -> list[dict[str, Any]]:
+    """Parse the process table from ``npu-smi info`` without guessing rows."""
+    header_found = False
+    processes: list[dict[str, Any]] = []
+    for line in text.splitlines():
+        if all(label in line for label in (
+            "NPU", "Chip", "Process id", "Process name", "Process memory",
+        )):
+            header_found = True
+            continue
+        if not header_found:
+            continue
+        match = PROCESS_ROW_RE.match(line)
+        if not match:
+            continue
+        npu_id, chip_id, process_id = map(int, match.groups()[:3])
+        memory_match = re.search(r"\d+", match.group(5))
+        processes.append({
+            "npu_id": npu_id,
+            "chip_id": chip_id,
+            "process_id": process_id,
+            "process_name": match.group(4).strip(),
+            "process_memory_mb": int(memory_match.group()) if memory_match else None,
+        })
+    if not header_found:
+        raise PreflightError("npu-smi process table is missing; occupancy is unknown")
+    return processes
+
+
+def selected_npu_processes(
+    processes: list[dict[str, Any]], device_map: list[dict[str, Any]],
+    selected_devices: list[int],
+) -> list[dict[str, Any]]:
+    endpoint_to_device = {
+        (item["npu_id"], item["chip_id"]): item["logic_id"]
+        for item in device_map if item["logic_id"] in set(selected_devices)
+    }
+    selected = []
+    for process in processes:
+        logic_id = endpoint_to_device.get((process["npu_id"], process["chip_id"]))
+        if logic_id is not None:
+            selected.append({**process, "logic_id": logic_id})
+    return sorted(selected, key=lambda item: (
+        item["logic_id"], item["process_id"], item["process_name"],
+    ))
+
+
 def resolve_selection(
     expected: list[int], device_map: list[dict[str, Any]],
     *, requested_npu_ids: list[int] | None = None,
@@ -244,6 +296,7 @@ def run_preflight(
     try:
         command_stdout: dict[str, str] = {}
         for label, command in {
+            "npu-smi-info": ["npu-smi", "info"],
             "npu-smi-list": ["npu-smi", "info", "-l"],
             "npu-smi-map": ["npu-smi", "info", "-m"],
             "npu-smi-topology": ["npu-smi", "info", "-t", "topo"],
@@ -274,10 +327,31 @@ def run_preflight(
         )
         summary["selection"] = selection
 
+        selected_devices = selection["selected_device_ids"]
+        processes = parse_npu_processes(command_stdout["npu-smi-info"])
+        summary["npu_processes"] = processes
+        selected_processes = selected_npu_processes(
+            processes, device_map, selected_devices,
+        )
+        if selected_processes:
+            summary["occupancy"] = {
+                "status": "occupied",
+                "checked_device_ids": selected_devices,
+                "sources": ["npu-smi-info"],
+                "processes": selected_processes,
+            }
+            raise PreflightError(
+                "selected Ascend devices have npu-smi processes: "
+                + ", ".join(
+                    f"Device{item['logic_id']} pid={item['process_id']} "
+                    f"name={item['process_name']}"
+                    for item in selected_processes
+                )
+            )
+
         fuser = shutil.which("fuser")
         if not fuser:
             raise PreflightError("fuser is unavailable; device occupancy is unknown")
-        selected_devices = selection["selected_device_ids"]
         device_paths = [f"/dev/davinci{device}" for device in selected_devices]
         occupancy = command_record(root, [fuser, *device_paths], "occupancy")
         summary["commands"]["occupancy"] = {
@@ -293,6 +367,7 @@ def run_preflight(
             )
         summary["occupancy"] = {
             "status": "idle", "checked_device_ids": selected_devices,
+            "sources": ["npu-smi-info", "fuser"], "processes": [],
         }
         summary["status"] = "passed"
     except Exception as exc:

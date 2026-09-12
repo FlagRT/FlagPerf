@@ -1,37 +1,61 @@
 {
   "schema_version": 1,
-  "validated_at": "2026-08-23T14:17:53Z",
-  "image": "flagrt/ascend-operator-runtime:0.1.0-cann9.0-py311-torch2.10-arm64",
-  "image_id": "sha256:f0a54a68b99ecde67140507f00ce012a569241ce96664af1a1f47b41c057a06f",
-  "profile": "ascend910_smoke",
+  "validated_at": "2026-09-03T09:34:14Z",
+  "image": "flagrt/ascend-operator-runtime:0.2.0-cann9.0-py311-torch2.10-arm64",
+  "image_id": "sha256:d948410966b0dfdfaf4f9c95b9b14bdb7c4279cb85ccd7f9157f0fb5d1c6d397",
+  "profile": "ascend910_fp16_full",
   "status": "passed",
+  "validation_coverage": "partial",
   "privileged_root": true,
-  "device": "flagos:0",
-  "device_count": 16,
+  "physical_npu_ids": [
+    7
+  ],
+  "logical_device_ids": [
+    14,
+    15
+  ],
   "runtime": {
     "driver": "25.5.0",
-    "firmware": "7.8.0.5.216",
     "cann": "9.0.0",
     "toolbox": "26.1.0",
     "python": "3.11.15",
     "torch": "2.10.0+cpu"
   },
-  "compatibility": "Compatible",
-  "cases": {
-    "dmi-version": "passed",
-    "dmi-compatibility": "passed",
-    "computation-INT8": "passed",
-    "computation-FP32": "passed",
-    "computation-FP16": "passed",
-    "computation-BF16": "passed",
-    "main_memory-bandwidth": "passed",
-    "main_memory-capacity": "passed",
-    "interconnect-h2d": "passed",
-    "flaggems-canary": "passed"
+  "case": {
+    "name": "computation-FP16",
+    "matrix_shape": [
+      8192,
+      8192,
+      8192
+    ],
+    "warmup_iterations": 100,
+    "measurement_iterations": 50000,
+    "expected_ranks": [
+      0,
+      1
+    ],
+    "observed_ranks": [
+      0,
+      1
+    ],
+    "rank_tflops": {
+      "0": 285.22,
+      "1": 285.22
+    }
   },
-  "failed_cases": [],
+  "execution_status": "passed",
+  "measurement_status": "passed",
+  "monitoring_status": "passed",
+  "monitor_primary_samples": {
+    "7/0/14": 184,
+    "7/1/15": 184
+  },
+  "host_preflight_status": "passed",
+  "host_postflight_status": "passed",
+  "report_status": "passed",
   "fallback_count": 0,
-  "flaggems_dispatch_evidence": "abs -> flagos_python",
-  "local_result": "base/result/20260823T141659Z/summary.json",
-  "scope": "Functional smoke only; measured values are not release performance baselines."
+  "wall_clock_duration_s": 229.423,
+  "scope": "Current rebuilt-image acceptance covers the full default two-rank FP16 Base benchmark on NPU7. It does not claim a rerun of every Base case or a release performance baseline.",
+  "evidence_availability": "maintainer-attestation; original raw log not distributed",
+  "hardware_revalidated_during_integration": false
 }

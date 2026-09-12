@@ -23,7 +23,7 @@
 3. 如何安全选卡、运行和读取结果；
 4. 哪些结论已有实机证据，哪些仍只是实现或离线验证。
 
-文末保留压缩后的版本变更与阶段验收档案。历史记录不能覆盖正文的当前实现口径。
+公开环境、验证边界及维护方法见 [Ascend 指南](../../docs/ascend/README.md)。历史摘要不代表本次重验。
 
 ---
 
@@ -35,7 +35,7 @@
 `npu-smi info -m` 为准：
 
 ```bash
-cd /home/kzhang520/fgw/runtime-team/FlagPerf_advance
+cd FlagPerf
 
 python3 base/run.py toolkit run \
   --npu-ids 1 \
@@ -659,50 +659,16 @@ command/stdout/stderr、manifest 和 metrics 保持原样，因此展示压缩�
 | Markdown/SVG 投影 | [`generate_toolkit_report.py`](../generate_toolkit_report.py) |
 | 离线回归 | [`_common/ascend/A3/tests/`](_common/ascend/A3/tests/) |
 | 精简实机摘要 | [`toolkit-validation-summary.json`](../vendors/ascend/torch_fl_2.10/toolkit-validation-summary.json) |
-| advance 总体记录 | [`personal/FlagPerf-advance.md`](../../../personal/FlagPerf-advance.md) |
+| 当前支持范围 | [Ascend 指南](../../docs/ascend/README.md) |
 
 ---
 
-## 16. 变更与阶段验收档案
+## 16. 维护与验证范围
 
-本节只解释当前机制如何形成。若历史文字与前文冲突，以前文和当前代码为准。
+当前 Toolkit 提供单节点、显式选卡的厂商测量和诊断；默认集合与 HCCL opt-in 以 CLI 为准。
+测量、同期监控、厂商诊断和健康状态分别保存，支持 Markdown/SVG 报告。
+只有原始证据、选择范围、版本和参数都满足协议时才能解释数值；历史摘要不能证明当前全部 Case 通过。
 
-### 16.1 V1：证据链、报告与精确选卡（2026-08-25）
-
-- 最初 8 个单机 DMI/npu-smi Case 接入共享 runner；
-- 以语义 parser 替代固定行号，修正 INT8 单位，移除 D2D/容量标准路径 `×2`；
-- 引入环境、拓扑、pre/post health、诊断、原始流、rc 和 SHA-256；
-- 增加 host preflight、NPU/Device 选择器、状态分层和确定性报告；
-- NPU1→Device 2/3 的 FP16/P2P 最小闭环验证物理 NPU 算力粒度与显式 pair；
-- 当时的 8-Case、schema 1/2、0.1.0 等描述均是阶段状态。
-
-### 16.2 V2：D2H、传输时延与单节点 HCCL（2026-08-26）
-
-- 新增 D2H 带宽、H2D/D2H/P2P 时延；
-- 单机 MPI Case 改为 FP32/SUM AllReduce，显式 opt-in；
-- 镜像升级为 0.2.0，内含 MPICH 与 CANN 9.0.0 `all_reduce_test`；
-- Device 2/3 小探针验证 D2H、H2D/D2H 时延和 8 KiB–64 MiB 两 rank HCCL；
-- P2P latency 返回结构化错误码 2，正确状态为 `partial`；
-- 没有验证 16 Device、默认 1 GiB 或跨节点能力。
-
-### 16.3 V3：计算与数据搬运作证监控（2026-08-27）
-
-- 计算加入 `usages` 同窗原始时间序列、采样覆盖和一次追加 workload；
-- D2D 加入 HBM usage，H2D/D2H/P2P/HCCL 加入 HCCS Rx/Tx 与 route coverage；
-- HBM 容量加入 memory/ECC 静态 guard；
-- manifest 升为 schema 3，报告升为 schema 6，监控报告统一计算和搬运证据；
-- Device 2/3 的四种计算在 schema 2/report schema 5 阶段形成实机 passed 结果；
-- 数据搬运监控完成代码与 fixture 回归，但没有形成 schema 3 正向实机闭环；
-- 随后补齐报告生成器对 schema 3 的兼容，并保留未知 schema fail-closed。该修复不改变测量协议。
-
----
-
-## 17. 最终结论
-
-当前 Ascend A3 / 910C Base Toolkit 是一套单节点、显式授权、可选卡、证据优先的厂商工具适配层：
-13 个 Case 由共享 runner 管理，默认运行 12 个，HCCL 显式 opt-in，两个跨节点 Case 尚未迁入。
-它把测量、同期监控、厂商诊断和健康覆盖分开保存，并生成可追溯的 Markdown/SVG 报告。
-
-可以放心使用的前提不是“脚本能启动”，而是：环境与 selection 通过 preflight、Case 命令和覆盖
-满足协议、原始证据完整、状态按四层语义阅读，并且结论不超过该次 manifest 声明的设备、参数和
-版本。没有新实机证据时，schema 3 数据搬运监控、全机 HCCL、跨节点和稳定性能基线仍必须标为未验收。
+本次发布整理执行了离线契约回归，没有重新运行硬件。公开验证方法见
+[验证与维护](../../docs/ascend/validation.md)，正式文档变更见 [变更记录](../../docs/CHANGELOG.md)。
+此前实验摘要保持原有镜像身份和范围，不将其重写成此次源码的硬件验收。

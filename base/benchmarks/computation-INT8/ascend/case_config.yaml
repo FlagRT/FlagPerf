@@ -16,6 +16,9 @@ M: 8192
 N: 8192
 K: 8192
 DIST_BACKEND: "gloo"
+# Daily run budget: target <120 s end-to-end; hardware validation required.
+WARMUP: 10
+ITERS: 100
 SCALE_A: 1.0
 SCALE_B: 1.0
 OUTPUT_DTYPE: "bfloat16"

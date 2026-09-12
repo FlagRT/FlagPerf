@@ -239,15 +239,19 @@ def validate_case_runtime_requirements(
                 f"Benchmark Case {request.case} requires exactly {exact_nproc} "
                 f"local ranks, got {request.nproc_per_node}"
             )
-    if (
-        requirements.get("candidate_requires_case_override") is True
-        and request.case_config is None
-    ):
+    requires_override = requirements.get(
+        "requires_case_override",
+        requirements.get("candidate_requires_case_override", False),
+    )
+    if requires_override is True and request.case_config is None:
         raise ConfigurationError(
             f"Benchmark Case {request.case} requires an explicit bounded "
-            "--case-config while its communication runtime is a candidate"
+            "--case-config under its communication runtime contract"
         )
-    allowed_configs = requirements.get("candidate_allowed_case_configs", [])
+    allowed_configs = requirements.get(
+        "allowed_case_configs",
+        requirements.get("candidate_allowed_case_configs", []),
+    )
     if request.case_config is not None and allowed_configs:
         actual_sha256 = sha256(request.case_config.expanduser().resolve())
         allowed_sha256 = {
@@ -257,7 +261,7 @@ def validate_case_runtime_requirements(
         }
         if actual_sha256 not in allowed_sha256:
             raise ConfigurationError(
-                f"Benchmark Case {request.case} candidate override is not in "
+                f"Benchmark Case {request.case} override is not in "
                 "the repository-owned bounded configuration allowlist"
             )
 

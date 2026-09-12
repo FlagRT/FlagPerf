@@ -9,4 +9,5 @@ training/result/*
 inference/result/*
 base/result/*
 operation/result/*
+operation/Note.md
 inference/onnxs/*

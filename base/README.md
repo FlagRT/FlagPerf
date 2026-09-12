@@ -41,6 +41,8 @@ Torch-FL 拥有 PyTorch PrivateUse1/`torch.flagos`，不要在该镜像中安装
 `torch_npu`。锁文件、镜像身份和验证边界位于
 [`vendors/ascend/torch_fl_2.10/`](vendors/ascend/torch_fl_2.10/)。
 
+镜像获取方式、本地 image ID 与公开分发限制见 [Ascend 环境指南](../docs/ascend/README.md)。
+
 运行前确认：
 
 1. Docker daemon 可用；
@@ -106,6 +108,9 @@ Ascend 适配器只负责 Torch-FL 初始化、`flagos:<local_rank>` 设备选�
 | `--timeout` | 容器硬超时，默认 3600 秒 |
 | `--allow-high-risk-case` | 显式允许容量/OOM/长时间 Case |
 
+Ascend 默认采用短时 warmup/ITERS，容量 Case 的结束等待默认关闭；工作负载和实际配置写入结果。
+这些设置未在此次同步中逐 Case 实测，两分钟是目标，容量探测仍可能超时。
+
 `main_memory-capacity` 必须额外传入 `--allow-high-risk-case`。不要在共享机器上用完整参数
 直接试跑该 Case。
 
@@ -129,32 +134,25 @@ python3 base/run.py toolkit run \
 完整 Case、参数、证据和限制见
 [`toolkits/ASCEND_A3_910C_TEST_MECHANISM.md`](toolkits/ASCEND_A3_910C_TEST_MECHANISM.md)。
 
-## 5. FlagCX P2P candidate
+## 5. FlagCX 单机 P2P
 
-Ascend 单机 P2P Benchmark 不能使用标准 operator runtime。它要求独立 communication
-candidate、单节点、恰好两个 rank，以及仓库 allowlist 中的有界 Case 配置：
+P2P 使用独立 communication runtime、单节点和恰好两个 rank，Case 配置必须命中仓库哈希
+allowlist。正式协议为 `p2p-single-node-v1`，其限定范围、校准、故障检查及恢复方法集中在
+[P2P 协议](../docs/ascend/p2p.md)。单次功能检查计划：
 
 ```bash
 python3 base/run.py benchmark run \
-  --config base/configs/ascend910_cann9_p2p_candidate.yaml \
+  --config base/configs/ascend910_cann9_p2p.yaml \
   --case interconnect-P2P_intraserver \
-  --device-ids 14,15 \
-  --nproc-per-node 2 \
+  --device-ids 14,15 --nproc-per-node 2 \
   --case-config base/benchmarks/interconnect-P2P_intraserver/ascend/case_config.smoke.yaml \
-  --monitor off \
-  --allow-privileged-root \
-  --allow-candidate-runtime \
-  --dry-run
+  --monitor off --dry-run
 ```
 
-确认静态计划、设备空闲和授权后才可移除 `--dry-run`。公共 distributed backend 仍为
-Torch-FL `flagos`，FlagCX 是其内部通信数据面。`--allow-candidate-runtime` 只允许执行候选
-镜像，不会将 manifest 晋级为 passed。
-
-当前 candidate 已完成 C2 双 rank sentinel 和 C4 有界 Base smoke，但 peer failure、hung
-collective、正式性能、跨机和长稳尚未验收。因此
-[`vendors/ascend/torch_fl_2.10_flagcx/validation-summary.json`](vendors/ascend/torch_fl_2.10_flagcx/validation-summary.json)
-仍记录 `overall_status=partial`、`production_eligible=false`。
+实际执行时移除 `--dry-run` 并传入 `--allow-privileged-root`。当前锁定通信镜像在既定单机范围内
+已资格化；更换为未验证镜像仍需要独立验证和候选运行授权。
+功能检查结果不能当作正式性能基线，资格矩阵不是日常两分钟测试。
+本次同步沿用历史资格记录，未重跑 NPU；原始日志未随仓库分发。
 
 ## 6. 结果、报告和退出码
 

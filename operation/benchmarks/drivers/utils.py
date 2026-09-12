@@ -51,3 +51,9 @@ def multi_device_sync(vendor):
             "unspecified vendor {}, using default pytorch \"torch.distributed.barrier\""
             .format(vendor))
         torch.distributed.barrier()
+
+
+def get_device(vendor):
+    # Direct legacy entrypoints retain the vendor PyTorch build's original ordinal semantics.
+    # The portable worker supplies an explicit device to build_case instead.
+    return 0

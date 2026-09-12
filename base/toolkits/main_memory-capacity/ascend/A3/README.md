@@ -17,11 +17,10 @@ npu-smi info -t memory -i <card> -c <chip>
 
 当前实现已移除旧脚本的 `card0/chip0 ×2` 兼容标量和错误的 MiB 标签，逐 chip
 `HBM Capacity(MB)` 是唯一权威容量结果。它不隐式报告 card 或整机容量；若后续需要更大 scope，
-必须基于实时 map 枚举结果另行显式求和。完整分析见
-`personal/Ascend-Base-Toolkit-D2D-and-capacity-x2-analysis.md`。
+必须基于实时 map 枚举结果另行显式求和。测量和证据口径见 [Toolkit 使用手册](../../../ASCEND_A3_910C_TEST_MECHANISM.md)。
 
 ```bash
-python3 base/run.py toolkit run --case main_memory-capacity --npu-ids 1 \\
+python3 base/run.py toolkit run --case main_memory-capacity --npu-ids 1 \
   --allow-privileged-root --allow-disruptive-dmi
 ```
 

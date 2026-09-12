@@ -1,4 +1,4 @@
-# 当前 FlagPerf_advance 实现（CANN 9 / Torch-FL）
+# 当前 FlagPerf 实现（CANN 9 / Torch-FL）
 
 当前 Ascend Base INT8 Case 入口是本目录的 `main.py`。Base 正式编排入口
 `base/benchmark_worker.py` 会优先选择该 vendor-specific 实现，而其他厂商继续使用上一级通用

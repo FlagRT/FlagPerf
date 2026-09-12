@@ -1,0 +1,9 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
+
+# P2P calibration only: 256 MiB per send, 64 GiB one-way payload in the timer.
+# This is calibration-only and does not satisfy the qualified formal protocol.
+Melements: 64
+WARMUP: 20
+ITERS: 256
+DIST_BACKEND: "flagos"

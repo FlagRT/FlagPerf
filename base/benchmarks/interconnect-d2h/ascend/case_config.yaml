@@ -13,5 +13,9 @@
 # limitations under the License.
 
 DIST_BACKEND: "gloo"
+# Daily run budget: target <120 s end-to-end; hardware validation required.
+Melements: 1024
+WARMUP: 10
+ITERS: 100
 PIN_MEMORY: true
 NON_BLOCKING: false

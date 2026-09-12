@@ -3,16 +3,77 @@
   "runtime_profile": "torch_fl_2.10_flagcx",
   "runtime_role": "communication",
   "distributed_backend": "flagos",
-  "candidate_requires_case_override": true,
-  "candidate_allowed_case_configs": [
+  "requires_case_override": true,
+  "allowed_case_configs": [
     {
       "path": "ascend/case_config.smoke.yaml",
-      "sha256": "e79af6697825c708d2f7e096a1639ca73d7a58848bb04674dfbbf49cb3218de3"
+      "sha256": "e79af6697825c708d2f7e096a1639ca73d7a58848bb04674dfbbf49cb3218de3",
+      "scope": "bounded-smoke"
+    },
+    {
+      "path": "ascend/case_config.p2p-calibration-4m.yaml",
+      "sha256": "07c491f84e4aac39bb701be24c038e9de37496112632e29ac5d494f001a885a5",
+      "scope": "p2p-calibration-only"
+    },
+    {
+      "path": "ascend/case_config.p2p-calibration-16m.yaml",
+      "sha256": "ced8b918df5f482827860ae22e1768630ab50ebf6b905fafd14e2320c9766e50",
+      "scope": "p2p-calibration-only"
+    },
+    {
+      "path": "ascend/case_config.p2p-calibration-64m.yaml",
+      "sha256": "fc46ebf232ee1edc85e9e630a4d6a32eb301d9c4cf2c96411be3373a3bdcf26d",
+      "scope": "p2p-calibration-only"
+    },
+    {
+      "path": "ascend/case_config.p2p-calibration-256m.yaml",
+      "sha256": "4c4312c092bfe59a83bc0e68fce68cfca64aeb2a49ef2892cff1c65dafc04fa8",
+      "scope": "p2p-calibration-only"
+    },
+    {
+      "path": "ascend/case_config.p2p-sio-4m.yaml",
+      "sha256": "7874be376797965993615678f217cfba93a2720d9939c5d6708c1076b4042748",
+      "scope": "p2p-qualification"
+    },
+    {
+      "path": "ascend/case_config.p2p-sio-16m.yaml",
+      "sha256": "e46f771c7abfb429acf474fbda78aea0878b5c2de25b4e7711fe52e10872b247",
+      "scope": "p2p-qualification"
+    },
+    {
+      "path": "ascend/case_config.p2p-sio-64m.yaml",
+      "sha256": "b4a57ba60cef90490411bbc1b80423b22d17823f3150645c28f2a8891ebff6f7",
+      "scope": "p2p-qualification"
+    },
+    {
+      "path": "ascend/case_config.p2p-sio-256m.yaml",
+      "sha256": "80b1c20b3cde3d24d0ab1b24ec5905006cfd742b33bfd39d0b7004ee97a9a5b6",
+      "scope": "p2p-qualification"
+    },
+    {
+      "path": "ascend/case_config.p2p-hccs-sw-4m.yaml",
+      "sha256": "da50aca669dea8c1a29e32e716f8b8282672728f28cc702f02cf9af15fe3ba6b",
+      "scope": "p2p-qualification"
+    },
+    {
+      "path": "ascend/case_config.p2p-hccs-sw-16m.yaml",
+      "sha256": "0a348e3c8b4f8faeddc34def02d8682e8391b1350bbf2335c0f5857ce91a955b",
+      "scope": "p2p-qualification"
+    },
+    {
+      "path": "ascend/case_config.p2p-hccs-sw-64m.yaml",
+      "sha256": "6062f31e81f8a6b2e051a1dd6f2e6f5a75fc40e8371ecb5740244a54e4129909",
+      "scope": "p2p-qualification"
+    },
+    {
+      "path": "ascend/case_config.p2p-hccs-sw-256m.yaml",
+      "sha256": "d4c85de2313f74eb070a6c3fc2d1fda5e3d1da439d80d699c325be6c670789da",
+      "scope": "p2p-qualification"
     }
   ],
   "process_scope": {
     "nnodes": 1,
     "nproc_per_node": 2
   },
-  "validation_stage": "candidate"
+  "validation_stage": "formal"
 }

@@ -1,0 +1,33 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
+name: Ascend public contracts
+
+on:
+  pull_request:
+    paths:
+      - 'base/**'
+      - 'operation/**'
+      - 'docs/**'
+      - 'tests/test_public_distribution.py'
+      - '.github/workflows/ascend-contracts.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  public-checkout:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Validate public CLI, records and documentation
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m unittest discover -s tests -p test_public_distribution.py -v
+      - name: Validate device-free Toolkit contracts
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m unittest discover -s base/toolkits/_common/ascend/A3/tests -v

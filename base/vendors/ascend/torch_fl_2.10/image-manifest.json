@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "image": "flagrt/ascend-operator-runtime:0.2.0-cann9.0-py311-torch2.10-arm64",
-  "image_id": "sha256:892284fecf448ea354b0630dc8de6762f78b1e7adfc8d0227be9ea901fc4aa92",
-  "config_image": "sha256:e7405ae2f0aae858b2f770d369f9c1e94d8020f1c63d71bfd12f453430f54c10",
+  "image_id": "sha256:d948410966b0dfdfaf4f9c95b9b14bdb7c4279cb85ccd7f9157f0fb5d1c6d397",
+  "config_image": "sha256:53ee6c79f8c623293f199dbab58b74c222ef781fe63369ad2a09ae4e6793d765",
   "platform": "linux/arm64",
   "base": "harbor.baai.ac.cn/flagos-dev/pytorch-plugin-fl@sha256:a36a302204e282411dd46bd3f1edd64f7fce7190020bb4511e8b409ac8d4ba29",
   "python_source": "quay.io/ascend/vllm-ascend@sha256:5cf8a2b6db8b06eb1bc7fc7d191d667aebf2b197351bdba13f776918c11ec7a7",
@@ -12,6 +12,5 @@
   "mpich_source_sha256": "4a862d87bc95c3fc5a9a49365e5cc1b6c06d72da879475817011a11e0a1c68c2",
   "validated": true,
   "validation_status": "partial",
-  "validation_scope": "static runtime checks plus single-node logical Devices 2,3; D2H, H2D/D2H latency and 2-rank HCCL passed; DMI P2P latency returned error code 2",
-  "validation_evidence": "base/result/20260826T134846Z/toolkit-evidence/manifest.json"
+  "validation_scope": "Rebuilt after server migration from the locked CANN 9.0.0 supply chain. Full default computation-FP16 (8192x8192x8192, warmup 100, iterations 50000) passed on physical NPU7 / logical Device14,15 with two ranks, 285.22 TFLOPS per rank, zero FlagOS CPU fallback, exact-window monitoring passed with 184 samples per device, and host preflight/postflight plus report generation passed. Other Base cases were not rerun for this rebuilt image."
 }

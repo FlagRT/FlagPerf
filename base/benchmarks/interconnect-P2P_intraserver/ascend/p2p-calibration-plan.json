@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "stage": "p2p-calibration-only",
+  "formal_baseline_eligible": false,
+  "case": "interconnect-P2P_intraserver",
+  "runtime_profile": "torch_fl_2.10_flagcx",
+  "runtime_config": "base/configs/ascend910_cann9_p2p.yaml",
+  "measurement_contract": {
+    "workload": "one-way blocking torch.distributed send/recv",
+    "dtype": "float32",
+    "reported_formula": "legacy 2 * bytes / elapsed_time",
+    "one_way_payload_bytes_per_point": 68719476736,
+    "monitor": "off",
+    "repeats": 1,
+    "purpose": "estimate per-iteration time before pinning qualified formal configurations"
+  },
+  "topology_evidence": {
+    "sha256": "9735d3a45f899c718c03df39962939d27cf2b986377f1fe7b5900236b0bc5bf7",
+    "current_preflight_must_match": true,
+    "availability": "not-distributed; original artifact identified by sha256"
+  },
+  "representative_pairs": [
+    {
+      "id": "sio-intra-npu",
+      "device_ids": [
+        14,
+        15
+      ],
+      "physical_npu_ids": [
+        7
+      ],
+      "expected_path": "SIO",
+      "direction": "14-to-15-only"
+    },
+    {
+      "id": "hccs-sw-inter-npu",
+      "device_ids": [
+        12,
+        14
+      ],
+      "physical_npu_ids": [
+        6,
+        7
+      ],
+      "expected_path": "HCCS_SW",
+      "direction": "12-to-14-only"
+    }
+  ],
+  "size_points": [
+    {
+      "message_bytes": 4194304,
+      "melements": 1,
+      "warmup": 20,
+      "iterations": 16384,
+      "config": "base/benchmarks/interconnect-P2P_intraserver/ascend/case_config.p2p-calibration-4m.yaml",
+      "sha256": "07c491f84e4aac39bb701be24c038e9de37496112632e29ac5d494f001a885a5"
+    },
+    {
+      "message_bytes": 16777216,
+      "melements": 4,
+      "warmup": 20,
+      "iterations": 4096,
+      "config": "base/benchmarks/interconnect-P2P_intraserver/ascend/case_config.p2p-calibration-16m.yaml",
+      "sha256": "ced8b918df5f482827860ae22e1768630ab50ebf6b905fafd14e2320c9766e50"
+    },
+    {
+      "message_bytes": 67108864,
+      "melements": 16,
+      "warmup": 20,
+      "iterations": 1024,
+      "config": "base/benchmarks/interconnect-P2P_intraserver/ascend/case_config.p2p-calibration-64m.yaml",
+      "sha256": "fc46ebf232ee1edc85e9e630a4d6a32eb301d9c4cf2c96411be3373a3bdcf26d"
+    },
+    {
+      "message_bytes": 268435456,
+      "melements": 64,
+      "warmup": 20,
+      "iterations": 256,
+      "config": "base/benchmarks/interconnect-P2P_intraserver/ascend/case_config.p2p-calibration-256m.yaml",
+      "sha256": "4c4312c092bfe59a83bc0e68fce68cfca64aeb2a49ef2892cff1c65dafc04fa8"
+    }
+  ],
+  "formal_followup": {
+    "minimum_measurement_seconds_per_run": 45,
+    "target_measurement_seconds_per_run": 60,
+    "minimum_repeats_per_topology_size_cell": 3,
+    "monitor_ab_size_bytes": 67108864,
+    "monitor_ab_order": [
+      "off",
+      "on",
+      "on",
+      "off",
+      "off",
+      "on"
+    ],
+    "maximum_cv_pct": 5.0,
+    "maximum_absolute_monitor_median_delta_pct": 5.0,
+    "requires_repository_pinned_formal_configs": true
+  },
+  "claim_boundary": "Calibration estimates iteration cost; it does not qualify a runtime or establish a stable performance baseline."
+}

@@ -1,54 +1,34 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-09-02T02:57:02Z",
-  "release_stage": "candidate",
-  "overall_status": "partial",
+  "generated_at": "2026-09-04T12:14:44Z",
+  "release_stage": "validated",
+  "overall_status": "passed",
   "image": "flagrt/ascend-operator-runtime-comm:0.1.3-cann9.0-py311-torch2.10-flagcx0.13.0g55eb2ffp2-arm64",
-  "image_id": "sha256:c97112c3775526705203facf43586c3ff402bc40418ca9c3bdeb9c5504dc8920",
-  "parent_image_id": "sha256:892284fecf448ea354b0630dc8de6762f78b1e7adfc8d0227be9ea901fc4aa92",
-  "source": {
-    "flagcx_commit": "55eb2ffff6988ae1db5e6ecb325472aecc93d238",
-    "flagcx_json_commit": "a0e9fb1e638cfbb5b8b556b7c51eaa81977bad48",
-    "source_artifacts_sha256": "7282804fd3745d30561be45548278f40d3df6f87f2cf1240037848b986d0fb14",
-    "downstream_patch_sha256": "bc84ea26eee3783085ac140e8792455433299fb0bb2330ec9d2680b6d2b7736d",
-    "event_patch_sha256": "524654689fdfe896c2f935f89e884bca4c57e50cd263cc145659e3b8b8ac7f0a",
-    "qualification_verifier_sha256": "8055c276f531032b8cc5e84fd9bbf0ef992a388771c3e39ac97a451fd5bbb6e5",
-    "qualification_runner_sha256": "832aaea3a957e8f19dab0fd9c6dc942e07a3186367cbb7010c07d8ee895504be",
-    "acl_event_probe_sha256": "eb1e7439a64a1a92d39000ca085ac9176961437ef13153f5b11d367640e12cd7"
-  },
+  "image_id": "sha256:3b9e08f231d0e80d37341e375e6bb13066e03a67794b78a3d2874c1770c6b6bc",
+  "parent_image_id": "sha256:d948410966b0dfdfaf4f9c95b9b14bdb7c4279cb85ccd7f9157f0fb5d1c6d397",
   "artifacts": {
-    "wheel_sha256": "362bcae24bd8fcad0d424f59088d790230a25169af85e29079a5ae4118ff8dc9",
-    "flagcx_extension_sha256": "d25fef63870b11fede0062b391d956812c66a0bc8525e793085fcb6966225469",
-    "libflagcx_sha256": "7a1a243d577980d8635cc4ccb8d8619c27d5f48690364581cd497e9a883df895"
+    "wheel_sha256": "eb7a26765586de3491cf6410eb9d38ef02fe71a6b3b1aa7dd776a62db74f914a",
+    "flagcx_extension_sha256": "9ddcd6ededced4867e858ca96a24082046779ff7797b583f8bb3ebfb825abc94",
+    "libflagcx_sha256": "7a1a243d577980d8635cc4ccb8d8619c27d5f48690364581cd497e9a883df895",
+    "libflagcx_matches_previous": true
   },
   "gates": {
-    "c0_supply_chain_and_build": {
+    "supply_chain_and_build": {
       "status": "passed",
-      "scope": "Pinned parent image, FlagCX commit, json submodule and downstream patch; Docker build used --network=none."
+      "scope": "Pinned parent image, FlagCX and json commits, and two pinned downstream patches; Docker build used --network=none."
     },
-    "c1_static_abi_and_import": {
+    "static_abi_and_import": {
       "status": "passed",
-      "scope": "FlagCX 0.13.0; libflagos/libascendcl/libhccl resolved; torch_npu absent; legacy unavailable stream symbols absent; driver-mounted import registered flagcx for flagos. No NPU Device was mapped."
+      "scope": "FlagCX 0.13.0; required libflagos/libascendcl/libhccl linkage resolved; torch_npu absent; unavailable legacy stream symbols absent."
     },
     "base_offline_regression": {
       "status": "passed",
-      "scope": "58/58 unittest cases passed in the exact candidate image with --network=none, read-only Base source mount and no NPU Device mapping."
+      "scope": "After formal promotion, 72/72 unittest cases passed in the exact rebuilt communication image with --network=none, read-only Base source, and no NPU mapping; focused P2P host tests passed 28/28, and all eight official workload configs passed unified Base dry-run without --allow-candidate-runtime."
     },
-    "c2_two_rank_sentinel": {
+    "two_rank_sentinel": {
       "status": "passed",
-      "scope": "Three default-stream repeats passed on each authorized intra-NPU SIO pair. Both ranks selected public backend flagos and inner backend flagcx, with exact bidirectional payload equality for 1, 4, 257 and 65536 FP32 elements.",
+      "scope": "Three default-stream repeats passed on exclusively idle physical NPU7 / logical Device14,15. Both ranks selected public backend flagos and inner backend flagcx, with exact bidirectional payload equality for 1, 4, 257 and 65536 FP32 elements.",
       "evidence": [
-        {
-          "device_ids": [
-            12,
-            13
-          ],
-          "npu_ids": [
-            6
-          ],
-          "path": "base/result/flagcx-qualification-20260902T023335Z/summary.json",
-          "sha256": "67e723c2b6648aa1ac7c2280e52acad42fe0c4a7ccd3b699e4005a26b1e56a60"
-        },
         {
           "device_ids": [
             14,
@@ -57,32 +37,44 @@
           "npu_ids": [
             7
           ],
-          "path": "base/result/flagcx-qualification-20260902T022812Z/summary.json",
-          "sha256": "46875480f68e47124325c5d74177e8aad453db29bc560f572f8607f5b0338088"
+          "repeats": 3,
+          "sha256": "198a4576c595e1c27f812275075055d9a57210d952c2231bfd49a3120d3c60b6",
+          "availability": "not-distributed; original artifact identified by sha256"
         }
       ]
     },
-    "c3_stream_timeout_cleanup": {
-      "status": "partial",
-      "scope": "Nondefault-stream sentinel passed twice on Device14/15 and once on Device12/13. Direct ACL event A/B on Device14 reproduced timeline wait rc=207000 while the sync-event lifecycle returned all zeros. A separate deterministic stalled-container gate on Device14/15 observed rc=124/timed_out=true, removed the exact container, confirmed it absent, released the lease and passed postflight. This does not claim peer-failure or hung-collective diagnosis.",
+    "stream_timeout_cleanup": {
+      "status": "passed",
+      "scope": "On exclusively idle physical NPU7 / logical Device14,15, two nondefault-stream sentinel repeats passed with exact payload equality; deterministic executor timeout cleanup passed; direct ACL event A/B reproduced timeline wait rc=207000 while sync-event create/record/wait/synchronize/destroy returned zero; injected peer exit 42 caused torchrun to terminate the waiting rank and return nonzero before the host deadline; two real unmatched FlagCX recv operations remained blocked for 8.364 seconds before the 30-second host deadline, after which the exact container was removed. Every gate released its lease and passed postflight. This validates bounded lifecycle behavior on this pair, not root-cause diagnosis, retry, multi-node recovery, or soak.",
       "evidence": [
+        {
+          "kind": "peer-failure",
+          "device_ids": [
+            14,
+            15
+          ],
+          "sha256": "ae0db59c9ffe84e2856bf63e85a25e70a19714048f2e05319aa088b6a85a6a6f",
+          "availability": "not-distributed; original artifact identified by sha256"
+        },
+        {
+          "kind": "hung-p2p",
+          "device_ids": [
+            14,
+            15
+          ],
+          "hung_observation_s": 8.364,
+          "sha256": "dbac1bf124a092ffbddba74371f73e8c4ef0082958a168dfe4c41d606066a9c4",
+          "availability": "not-distributed; original artifact identified by sha256"
+        },
         {
           "kind": "nondefault-stream",
           "device_ids": [
             14,
             15
           ],
-          "path": "base/result/flagcx-qualification-20260902T023514Z/summary.json",
-          "sha256": "6d90e5fc3e51ed6c5fb3a89f8b099d147f9d9ead96d22bc0883a14f3c48bffce"
-        },
-        {
-          "kind": "nondefault-stream",
-          "device_ids": [
-            12,
-            13
-          ],
-          "path": "base/result/flagcx-qualification-20260902T023628Z/summary.json",
-          "sha256": "508edd95d3d05bc94e36c4d6d0a8ba23c327b3a5517dbae5c41a75cc4ed520cd"
+          "repeats": 2,
+          "sha256": "f2f3ffed658ed399849e68030fa1266c5c3092df141ac91053bf7d0d7377b7cd",
+          "availability": "not-distributed; original artifact identified by sha256"
         },
         {
           "kind": "executor-timeout-cleanup",
@@ -90,8 +82,8 @@
             14,
             15
           ],
-          "path": "base/result/flagcx-qualification-20260902T024151Z/summary.json",
-          "sha256": "9248a4d3012dbeccc081febd70f6d2f3524d10d503d7872c1dc3abdb887f49dd"
+          "sha256": "35e5ecf34771f8098efcf1ead8bfaaf62f92e79cddb6f09d11e0243e35191a0e",
+          "availability": "not-distributed; original artifact identified by sha256"
         },
         {
           "kind": "acl-event-flag-ab",
@@ -99,55 +91,119 @@
             14,
             15
           ],
-          "path": "base/result/flagcx-qualification-20260902T025111Z/summary.json",
-          "sha256": "bf75403381eb331711dc4b1470579e8187eeaba49c71c5b2e0d168f6e67665a3"
+          "sha256": "5d5c095fc171aa362ac0afe4d6641fef9dbdc963516a7269f056f4e4c2003a92",
+          "availability": "not-distributed; original artifact identified by sha256"
         }
-      ]
+      ],
+      "protocol_calibration": {
+        "status": "failed-as-designed",
+        "reason": "The initial 10-second total deadline expired before both ranks emitted unmatched-recv readiness. The gate correctly rejected rc=124 without rank semantics. The corrected protocol records readiness timestamps and requires at least five seconds of observed blocking.",
+        "sha256": "537af2bca20e794c2dd8d92e9e3d0c31b41bcc7ef5cb25fee7110c412a91e799",
+        "availability": "not-distributed; original artifact identified by sha256"
+      }
     },
-    "c4_flagperf_bounded_smoke": {
+    "flagperf_bounded_smoke": {
       "status": "passed",
-      "scope": "Bounded two-rank Base P2P smoke passed with monitor=off on both authorized SIO pairs, including execution, complete rank result parsing, zero CPU fallback and postflight. A separate monitor=on run on Device14/15 preserved measurement=passed while monitoring=partial and overall=partial because the short exact window contained only 1/10 valid workload samples per Device.",
+      "scope": "Bounded 4 MiB, two-warmup, ten-iteration Base P2P smoke passed on physical NPU7 / logical Device14,15 with monitor=off. Execution, complete two-rank result parsing, zero CPU fallback, postflight and report generation passed. The 27.61/27.72 GB/s values use the legacy 2xbytes/time formula and are functional smoke results, not a performance baseline.",
       "evidence": [
         {
           "device_ids": [
             14,
             15
           ],
-          "monitor": "off",
-          "path": "base/result/benchmark-20260902T023839Z/summary.json",
-          "sha256": "ec8c42f38ecfe69c98aa27ad5b4a592bd80aabb299587b7e846d5e5e1e4872e4"
-        },
-        {
-          "device_ids": [
-            12,
-            13
+          "npu_ids": [
+            7
           ],
           "monitor": "off",
-          "path": "base/result/benchmark-20260902T023925Z/summary.json",
-          "sha256": "9930f50bc371cf0c43f3c2dc5651fddce5fe00275f97316538a533032a089d3e"
-        },
-        {
-          "device_ids": [
-            14,
-            15
-          ],
-          "monitor": "on",
-          "status": "partial",
-          "measurement_status": "passed",
-          "monitoring_status": "partial",
-          "path": "base/result/benchmark-20260902T023721Z/summary.json",
-          "sha256": "bcf933cae527eab4b4d6ba98747ceee856d8e60aacff6b649f6f7bbe26bd6073"
+          "sha256": "dd3ce5818ee9ac428cc54d235dd1c1be8d7c80012a6c44038f8c5ba5ff8a9b4a",
+          "availability": "not-distributed; original artifact identified by sha256"
         }
       ]
     },
-    "c5_formal_single_node": {
-      "status": "not-run"
-    },
-    "c6_multinode_and_soak": {
-      "status": "not-run"
+    "p2p_qualification_single_node": {
+      "status": "passed",
+      "protocol_id": "p2p-single-node-v1",
+      "release_role": "official-single-node-p2p",
+      "scope": "On physical NPU7 / logical Device14,15 for SIO and physical NPU6,7 / logical Device12,14 for HCCS_SW, all 24 monitor-off size-curve runs and six interleaved SIO 64 MiB monitor A/B runs passed execution, two-rank result, zero-fallback, topology, measurement-window and postflight audits. Each of eight topology-size cells has three independent repeats; CV ranges from 0.000% to 2.063% against the fixed 5% limit. Monitor-off/on medians are 306.17/306.18 GB/s, a +0.0033% delta against the fixed absolute 5% limit. The three monitor-on runs collected 60, 61 and 60 valid samples per selected Device against a requirement of 10. Successful child wall time totals 47.02 minutes; elapsed time from the first child start through investigation, audited resume and final completion is 53.10 minutes. Values retain the original legacy 2xbytes/time formula.",
+      "evidence": {
+        "sha256": "a0e3926f6c6c89989527af33d457a3e154a3db25d819903f564311e9fb8f09a7",
+        "run_count": 30,
+        "measurement_minutes": 29.734,
+        "successful_child_wall_minutes": 47.024,
+        "first_to_last_child_minutes": 53.096,
+        "resume_count": 1,
+        "preserved_failed_attempts": 1,
+        "availability": "not-distributed; original artifact identified by sha256"
+      },
+      "formal_plan": {
+        "status": "qualified",
+        "path": "base/benchmarks/interconnect-P2P_intraserver/ascend/p2p-qualification-plan.json",
+        "sha256": "1acd13b31d23ccdcfff48cc71c6db6949bc38bba375559aee59179826322801a",
+        "size_curve_runs": 24,
+        "monitor_ab_runs": 6,
+        "target_measurement_seconds_per_run": 60,
+        "minimum_measurement_seconds_per_run": 45
+      },
+      "protocol_history": [
+        {
+          "status": "failed",
+          "reason": "The original task 14 container exited 137/SIGKILL during warmup before rank metrics. It was not a runner timeout; Docker recorded exit 137 but no Docker OOM event, and the visible kernel journal had no OOM record, so the cause remains unproven. The failure record remains in the formal summary.",
+          "sha256": "cf090cb74f1adaf89c2775de391a03848a71c01e74d50df0a707cf2c48fd00f3",
+          "availability": "not-distributed; original artifact identified by sha256"
+        },
+        {
+          "status": "passed-diagnostic-only",
+          "reason": "An independent retry of the same HCCS_SW 4 MiB workload passed at 40.70 GB/s per rank. It was not inserted into the formal result; the formal session was resumed through the fail-closed runner and re-audited all prior children.",
+          "sha256": "cc5066bc0638bfafcca5ec669ae372e789a3fcc8c99f5cb8c2bae130835892dd",
+          "availability": "not-distributed; original artifact identified by sha256"
+        }
+      ],
+      "qualification_attestation": {
+        "path": "base/vendors/ascend/torch_fl_2.10_flagcx/p2p-qualification.json",
+        "sha256": "01d58b248f612ac81ce595e5b817e251c9c4c30cb9b230e90e8aa6db2edbdc34"
+      },
+      "claim_boundary": "This is the official formal P2P workload and release gate for the declared single-node forward-direction scope. "
     }
   },
-  "production_eligible": false,
-  "candidate_execution_requires": "--allow-candidate-runtime",
-  "rollback_profile": "torch_fl_2.10"
+  "formal_execution_eligible": true,
+  "production_eligible": true,
+  "formal_host_config": "base/configs/ascend910_cann9_p2p.yaml",
+  "formal_protocol": "p2p-single-node-v1",
+  "excluded_scope": [
+    "reverse-direction communication",
+    "multi-node communication",
+    "long-duration soak"
+  ],
+  "excluded_scope_is_release_blocking": false,
+  "rollback_profile": "torch_fl_2.10",
+  "publication": {
+    "prepared_at": "2026-09-12",
+    "record_type": "maintainer-attestation",
+    "source_attestation_sha256": "8c53357ddf7a113ca466333f671f53d1ab48fabb4ada91c2c359600388dfbe8e",
+    "raw_evidence_available_in_this_checkout": false,
+    "hardware_revalidated_during_integration": false,
+    "boundary": "Protocol naming was normalized; workload, thresholds, directions and recorded image identity are unchanged. Original raw artifacts are not redistributed or renamed. This record is not independent reproduction of the measurements.",
+    "source_hash_boundary": "measured_source_hashes identify historical source; current runtime and protocol files have separate hashes."
+  },
+  "measured_source_hashes": {
+    "flagcx_commit": "55eb2ffff6988ae1db5e6ecb325472aecc93d238",
+    "flagcx_json_commit": "a0e9fb1e638cfbb5b8b556b7c51eaa81977bad48",
+    "source_artifacts_sha256": "7282804fd3745d30561be45548278f40d3df6f87f2cf1240037848b986d0fb14",
+    "source_artifacts_match_previous": true,
+    "downstream_patch_sha256": "bc84ea26eee3783085ac140e8792455433299fb0bb2330ec9d2680b6d2b7736d",
+    "event_patch_sha256": "524654689fdfe896c2f935f89e884bca4c57e50cd263cc145659e3b8b8ac7f0a",
+    "qualification_verifier_sha256": "8055c276f531032b8cc5e84fd9bbf0ef992a388771c3e39ac97a451fd5bbb6e5",
+    "qualification_runner_sha256": "eff20de21d1204aa64245a51b6709b221baba6237011921cee9a0769bab0d8fd",
+    "fault_probe_sha256": "f5753ca59179df3d9ecfb59ceda88f7bc093eb80de61becfcb6e3259b82d5072",
+    "host_preflight_sha256": "54372ee4baba1db5f6941b9b4f913f6e5cf768c511e8c0d5f5f19239dc4652bf",
+    "p2p_calibration_runner_sha256": "da5c81babf993fde5f96d1a86cbbdf3a3d1e82ef842aabe4212856d0d70c812d",
+    "benchmark_executor_sha256": "8484faddf72bb8e022b1cd4ab92cfbdd0ccd469ded83edbced5998882a476ad6",
+    "p2p_qualification_runner_sha256": "bf2840190188bbf0152fddd3b4a59d9987c08a1148ade57c3babf2c9b810eec7",
+    "p2p_calibration_plan_sha256": "f7af1968e06e94b5060aad9cd761851f60231272215974d16fed058bbe36b0ab",
+    "p2p_qualification_plan_sha256": "e477556d0423dc41372875554896df8df5cc277bc6bd07c7e1423989adcd8b99",
+    "p2p_qualification_qualification_sha256": "8c53357ddf7a113ca466333f671f53d1ab48fabb4ada91c2c359600388dfbe8e",
+    "p2p_formal_host_config_sha256": "695ee546661c034bc943d78d954c63e4a5589f62d1f3f75710bd1ae9e652e88c",
+    "p2p_runtime_requirements_sha256": "0d9952789d88b288b99382f11bb2ca60c425611e19644f788d07305d3547136e",
+    "stack_lock_sha256": "f26abcb517ccb40bcf5ef1050d70652e1582f135f030e4f20e5b39ab705bb9a5"
+  }
 }

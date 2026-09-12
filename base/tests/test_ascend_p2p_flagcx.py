@@ -21,21 +21,47 @@ if str(BENCHMARKS_DIR) not in sys.path:
     sys.path.insert(0, str(BENCHMARKS_DIR))
 
 import run as base_run  # noqa: E402
-from executors.common import (  # noqa: E402
-    ConfigurationError,
-    runtime_lock_record,
-    validate_runtime_identity,
-)
+from executors.common import runtime_lock_record, validate_runtime_identity  # noqa: E402
 
 
 QUALIFIER_PATH = (
     BASE_DIR / "vendors" / "ascend" / "torch_fl_2.10_flagcx" /
-    "qualify_candidate.py"
+    "qualify_runtime.py"
+)
+CALIBRATOR_PATH = (
+    BASE_DIR / "vendors" / "ascend" / "torch_fl_2.10_flagcx" /
+    "run_p2p_calibration.py"
+)
+FORMAL_RUNNER_PATH = (
+    BASE_DIR / "vendors" / "ascend" / "torch_fl_2.10_flagcx" /
+    "run_p2p_qualification.py"
+)
+QUALIFICATION_PLAN_PATH = (
+    BASE_DIR / "benchmarks" / "interconnect-P2P_intraserver" / "ascend" /
+    "p2p-qualification-plan.json"
 )
 
 
 def load_qualifier_module():
     spec = importlib.util.spec_from_file_location("test_flagcx_qualifier", QUALIFIER_PATH)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def load_calibrator_module():
+    spec = importlib.util.spec_from_file_location(
+        "test_flagcx_p2p_calibrator", CALIBRATOR_PATH,
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def load_formal_runner_module():
+    spec = importlib.util.spec_from_file_location(
+        "test_flagcx_p2p_qualification", FORMAL_RUNNER_PATH,
+    )
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
@@ -133,8 +159,8 @@ class AscendP2PCaseTest(unittest.TestCase):
 
 class FlagCXRuntimeControlTest(unittest.TestCase):
     def setUp(self):
-        self.candidate_config = (
-            BASE_DIR / "configs" / "ascend910_cann9_p2p_candidate.yaml"
+        self.formal_config = (
+            BASE_DIR / "configs" / "ascend910_cann9_p2p.yaml"
         )
         self.smoke_config = (
             BASE_DIR / "benchmarks" / "interconnect-P2P_intraserver" /
@@ -153,17 +179,16 @@ class FlagCXRuntimeControlTest(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("requires runtime profile", stderr.getvalue())
 
-    def test_candidate_plan_records_lock_contract_and_explicit_permission(self):
+    def test_formal_plan_records_validated_lock_without_candidate_permission(self):
         stdout = io.StringIO()
         with redirect_stdout(stdout):
             code = base_run.main([
                 "benchmark", "run",
-                "--config", str(self.candidate_config),
+                "--config", str(self.formal_config),
                 "--case", "interconnect-P2P_intraserver",
                 "--device-ids", "14,15",
                 "--nproc-per-node", "2",
                 "--case-config", str(self.smoke_config),
-                "--allow-candidate-runtime",
                 "--dry-run",
             ])
         self.assertEqual(code, 0)
@@ -176,14 +201,15 @@ class FlagCXRuntimeControlTest(unittest.TestCase):
             plan["runtime_requirements"]["requirements"]["distributed_backend"],
             "flagos",
         )
-        self.assertTrue(plan["permissions"]["candidate_runtime"])
+        self.assertTrue(plan["runtime_lock"]["image_manifest"]["validated"])
+        self.assertFalse(plan["permissions"]["candidate_runtime"])
 
-    def test_candidate_plan_rejects_any_rank_count_other_than_two(self):
+    def test_formal_plan_rejects_any_rank_count_other_than_two(self):
         stderr = io.StringIO()
         with redirect_stderr(stderr):
             code = base_run.main([
                 "benchmark", "run",
-                "--config", str(self.candidate_config),
+                "--config", str(self.formal_config),
                 "--case", "interconnect-P2P_intraserver",
                 "--device-ids", "14,15",
                 "--nproc-per-node", "1",
@@ -193,12 +219,12 @@ class FlagCXRuntimeControlTest(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("requires exactly 2 local ranks", stderr.getvalue())
 
-    def test_candidate_plan_rejects_unbounded_default_case_config(self):
+    def test_formal_plan_rejects_unbounded_default_case_config(self):
         stderr = io.StringIO()
         with redirect_stderr(stderr):
             code = base_run.main([
                 "benchmark", "run",
-                "--config", str(self.candidate_config),
+                "--config", str(self.formal_config),
                 "--case", "interconnect-P2P_intraserver",
                 "--device-ids", "14,15",
                 "--nproc-per-node", "2",
@@ -207,7 +233,7 @@ class FlagCXRuntimeControlTest(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("explicit bounded --case-config", stderr.getvalue())
 
-    def test_candidate_plan_rejects_modified_smoke_config(self):
+    def test_formal_plan_rejects_modified_smoke_config(self):
         with tempfile.TemporaryDirectory() as temporary:
             modified = Path(temporary) / "case_config.yaml"
             modified.write_text(
@@ -220,18 +246,17 @@ class FlagCXRuntimeControlTest(unittest.TestCase):
             with redirect_stderr(stderr):
                 code = base_run.main([
                     "benchmark", "run",
-                    "--config", str(self.candidate_config),
+                    "--config", str(self.formal_config),
                     "--case", "interconnect-P2P_intraserver",
                     "--device-ids", "14,15",
                     "--nproc-per-node", "2",
                     "--case-config", str(modified),
-                    "--allow-candidate-runtime",
                     "--dry-run",
                 ])
         self.assertEqual(code, 2)
         self.assertIn("bounded configuration allowlist", stderr.getvalue())
 
-    def test_candidate_requires_explicit_permission_until_promoted(self):
+    def test_formal_runtime_is_validated_without_candidate_permission(self):
         lock = runtime_lock_record("torch_fl_2.10_flagcx")
         image_id = lock["image_manifest"]["image_id"]
         self.assertTrue(image_id.startswith("sha256:"))
@@ -239,14 +264,13 @@ class FlagCXRuntimeControlTest(unittest.TestCase):
             "image": lock["image_manifest"]["image"],
             "runtime_profile": "torch_fl_2.10_flagcx",
         }
-        with self.assertRaisesRegex(ConfigurationError, "unvalidated candidate"):
-            validate_runtime_identity(
-                config, {"Id": image_id},
-            )
         validated = validate_runtime_identity(
-            config, {"Id": image_id}, allow_candidate=True,
+            config, {"Id": image_id},
         )
-        self.assertFalse(validated["image_manifest"]["validated"])
+        self.assertTrue(validated["image_manifest"]["validated"])
+        self.assertEqual(
+            validated["image_manifest"]["release_stage"], "validated",
+        )
 
     def test_build_contract_is_pinned_and_excludes_torch_npu(self):
         profile = BASE_DIR / "vendors" / "ascend" / "torch_fl_2.10_flagcx"
@@ -280,12 +304,276 @@ class FlagCXRuntimeControlTest(unittest.TestCase):
             self.assertTrue((profile / artifact).is_file(), artifact)
             self.assertIn(artifact, stack_lock)
 
-    def test_candidate_environment_includes_hccl_initialization_control(self):
-        config = json.loads(self.candidate_config.read_text(encoding="utf-8"))
+    def test_formal_environment_includes_hccl_initialization_control(self):
+        config = json.loads(self.formal_config.read_text(encoding="utf-8"))
         self.assertEqual(config["runtime_environment"], {
             "FLAGCX_TORCH_BACKEND": "flagos",
             "HCCL_WHITELIST_DISABLE": "1",
         })
+
+    def test_p2p_calibration_configs_are_pinned_but_not_formal_results(self):
+        calibrator = load_calibrator_module()
+        plan = calibrator.load_and_validate_plan(calibrator.DEFAULT_PLAN)
+        matrix = calibrator.build_matrix(
+            plan, None, master_port=29921, timeout=300,
+        )
+        self.assertFalse(plan["formal_baseline_eligible"])
+        self.assertEqual(
+            {item["expected_path"] for item in matrix}, {"SIO", "HCCS_SW"},
+        )
+        self.assertEqual(len(matrix), 8)
+        self.assertEqual(
+            sorted({item["message_bytes"] for item in matrix}),
+            [4194304, 16777216, 67108864, 268435456],
+        )
+        requirements = json.loads((
+            BENCHMARKS_DIR / "interconnect-P2P_intraserver" / "ascend" /
+            "runtime_requirements.json"
+        ).read_text(encoding="utf-8"))
+        allowed = {
+            item["sha256"]: item.get("scope")
+            for item in requirements["allowed_case_configs"]
+        }
+        for point in plan["size_points"]:
+            self.assertEqual(allowed[point["sha256"]], "p2p-calibration-only")
+
+    def test_p2p_calibration_defaults_to_nonexecuting_plan(self):
+        calibrator = load_calibrator_module()
+        stdout = io.StringIO()
+        with redirect_stdout(stdout):
+            code = calibrator.main([])
+        output = json.loads(stdout.getvalue())
+        self.assertEqual(code, 0)
+        self.assertEqual(output["mode"], "plan-only")
+        self.assertFalse(output["formal_baseline_eligible"])
+        self.assertEqual(output["run_count"], 8)
+        self.assertTrue(all(
+            "--allow-candidate-runtime" not in item["command"]
+            and "--allow-privileged-root" in item["command"]
+            and item["command"][item["command"].index("--monitor") + 1] == "off"
+            for item in output["matrix"]
+        ))
+
+    def test_p2p_calibration_rejects_config_hash_drift(self):
+        calibrator = load_calibrator_module()
+        plan = json.loads(calibrator.DEFAULT_PLAN.read_text(encoding="utf-8"))
+        plan["size_points"][0]["sha256"] = "0" * 64
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "plan.json"
+            path.write_text(json.dumps(plan), encoding="utf-8")
+            with self.assertRaisesRegex(
+                calibrator.CalibrationError, "config hash drifted",
+            ):
+                calibrator.load_and_validate_plan(path)
+
+    def test_p2p_qualification_plan_is_pinned_and_nonexecuting_by_default(self):
+        formal = load_formal_runner_module()
+        plan = formal.load_and_validate_plan(formal.DEFAULT_PLAN)
+        self.assertEqual(plan["_protocol_id"], "p2p-single-node-v1")
+        self.assertEqual(plan["status"], "qualified")
+        self.assertEqual(set(formal.PROTOCOLS), {"p2p-single-node-v1"})
+        tasks = formal.build_tasks(
+            plan, master_port=30021, result_root=BASE_DIR / "result",
+        )
+        self.assertEqual(len(tasks), 30)
+        self.assertTrue(all(
+            task["phase"] == "size-curve" and task["monitor"] == "off"
+            for task in tasks[:24]
+        ))
+        self.assertEqual(
+            [task["monitor"] for task in tasks[24:]],
+            ["off", "on", "on", "off", "off", "on"],
+        )
+        stdout = io.StringIO()
+        with redirect_stdout(stdout):
+            code = formal.main([])
+        output = json.loads(stdout.getvalue())
+        self.assertEqual(code, 0)
+        self.assertEqual(output["mode"], "plan-only")
+        self.assertEqual(output["run_count"], 30)
+        self.assertEqual(output["estimated_total_measurement_minutes"], 30)
+
+    def test_p2p_qualification_preserves_matrix_and_pinned_window(self):
+        formal = load_formal_runner_module()
+        plan = formal.load_and_validate_plan(QUALIFICATION_PLAN_PATH)
+        tasks = formal.build_tasks(
+            plan, master_port=30121, result_root=BASE_DIR / "result",
+        )
+        self.assertEqual(plan["_protocol_id"], "p2p-single-node-v1")
+        self.assertEqual(
+            plan["measurement_contract"]["minimum_measurement_seconds_per_run"],
+            45,
+        )
+        self.assertEqual(
+            plan["measurement_contract"]["target_measurement_seconds_per_run"],
+            60,
+        )
+        self.assertEqual(len(tasks), 30)
+        self.assertEqual(len(plan["matrix"]), 8)
+        self.assertEqual(
+            [task["monitor"] for task in tasks[24:]],
+            ["off", "on", "on", "off", "off", "on"],
+        )
+
+        requirements = json.loads((
+            BENCHMARKS_DIR / "interconnect-P2P_intraserver" / "ascend" /
+            "runtime_requirements.json"
+        ).read_text(encoding="utf-8"))
+        allowed = {
+            item["sha256"]: item.get("scope")
+            for item in requirements["allowed_case_configs"]
+        }
+        for item in plan["matrix"]:
+            self.assertEqual(allowed[item["sha256"]], "p2p-qualification")
+
+        stdout = io.StringIO()
+        with redirect_stdout(stdout):
+            code = formal.main(["--plan", str(QUALIFICATION_PLAN_PATH)])
+        output = json.loads(stdout.getvalue())
+        self.assertEqual(code, 0)
+        self.assertEqual(output["protocol_id"], "p2p-single-node-v1")
+        self.assertEqual(output["mode"], "plan-only")
+        self.assertEqual(output["run_count"], 30)
+        self.assertEqual(output["estimated_total_measurement_minutes"], 30)
+        self.assertTrue(all(
+            "--allow-candidate-runtime" not in item["command"]
+            and "--allow-privileged-root" in item["command"]
+            for item in output["tasks"]
+        ))
+
+    def test_p2p_qualification_rejects_window_below_protocol_minimum(self):
+        formal = load_formal_runner_module()
+        plan = json.loads(QUALIFICATION_PLAN_PATH.read_text(encoding="utf-8"))
+        plan["measurement_contract"]["minimum_measurement_seconds_per_run"] = 44
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "compact-plan.json"
+            path.write_text(json.dumps(plan), encoding="utf-8")
+            with self.assertRaisesRegex(
+                formal.common.CalibrationError, "measurement contract drifted",
+            ):
+                formal.load_and_validate_plan(path)
+
+    def test_p2p_qualification_rejects_scope_and_threshold_changes(self):
+        formal = load_formal_runner_module()
+        for field in ("matrix", "acceptance", "monitor_ab"):
+            plan = json.loads(QUALIFICATION_PLAN_PATH.read_text(encoding="utf-8"))
+            if field == "matrix":
+                plan[field][0]["device_ids"] = [0, 1]
+            elif field == "acceptance":
+                plan[field]["maximum_cv_pct_per_topology_size_cell"] = 100.0
+            else:
+                plan[field]["message_bytes"] = 4194304
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as temporary:
+                path = Path(temporary) / "plan.json"
+                path.write_text(json.dumps(plan), encoding="utf-8")
+                with self.assertRaisesRegex(formal.common.CalibrationError, "drifted"):
+                    formal.load_and_validate_plan(path)
+
+    def test_p2p_qualification_rejects_missing_distributable_evidence(self):
+        formal = load_formal_runner_module()
+        plan = json.loads(QUALIFICATION_PLAN_PATH.read_text(encoding="utf-8"))
+        plan["calibration_evidence"]["path"] = "base/vendors/ascend/missing-evidence.json"
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "plan.json"
+            path.write_text(json.dumps(plan), encoding="utf-8")
+            with self.assertRaisesRegex(formal.common.CalibrationError, "calibration evidence"):
+                formal.load_and_validate_plan(path)
+
+    def test_p2p_resume_preserves_failure_and_reaudits_completed_runs(self):
+        formal = load_formal_runner_module()
+        plan = formal.load_and_validate_plan(QUALIFICATION_PLAN_PATH)
+        with tempfile.TemporaryDirectory() as temporary:
+            result_root = Path(temporary)
+            tasks = formal.build_tasks(
+                plan, master_port=30121, result_root=result_root,
+            )
+            session = result_root / "flagcx-p2p-qualification-test"
+            session.mkdir()
+            snapshot = session / QUALIFICATION_PLAN_PATH.name
+            snapshot.write_bytes(QUALIFICATION_PLAN_PATH.read_bytes())
+
+            def record_for(task, returncode, audit=None):
+                record = {
+                    "phase": task["phase"],
+                    "monitor": task["monitor"],
+                    "pair_id": task["cell"]["pair_id"],
+                    "message_bytes": task["cell"]["message_bytes"],
+                    "repeat": task.get("repeat"),
+                    "sequence": task.get("sequence"),
+                    "command": task["command"],
+                    "returncode": returncode,
+                    "child_result": str(session / "child"),
+                }
+                if audit is not None:
+                    record["audit"] = audit
+                return record
+
+            audit = {"runtime_image_id": "sha256:candidate"}
+            summary = {
+                "schema_version": 1,
+                "kind": "flagcx-p2p-qualification",
+                "protocol_id": "p2p-single-node-v1",
+                "status": "failed",
+                "error": "formal child execution failed",
+                "formal_execution_eligible": True,
+                "production_eligible": True,
+                "plan": {
+                    "path": snapshot.name,
+                    "sha256": plan["_sha256"],
+                },
+                "runs": [
+                    record_for(tasks[0], 0, audit),
+                    record_for(tasks[1], 137),
+                ],
+            }
+            formal.common.write_json(session / "summary.json", summary)
+            with mock.patch.object(formal, "audit_child", return_value=audit):
+                _, resumed, start_index, runtime_id = formal.prepare_resumed_session(
+                    plan, tasks, result_root, session,
+                )
+            self.assertEqual(start_index, 1)
+            self.assertEqual(runtime_id, "sha256:candidate")
+            self.assertEqual(resumed["status"], "running")
+            self.assertNotIn("error", resumed)
+            self.assertEqual(len(resumed["runs"]), 1)
+            self.assertEqual(resumed["failed_attempts"][0]["returncode"], 137)
+            self.assertEqual(resumed["failed_attempts"][0]["task_index"], 2)
+
+    def test_p2p_qualification_aggregate_enforces_variance_and_monitor_delta(self):
+        formal = load_formal_runner_module()
+        plan = formal.load_and_validate_plan(formal.DEFAULT_PLAN)
+        runs = []
+        for item in plan["matrix"]:
+            for repeat in range(1, 4):
+                runs.append({
+                    "phase": "size-curve", "monitor": "off",
+                    "pair_id": item["pair_id"],
+                    "message_bytes": item["message_bytes"],
+                    "repeat": repeat, "audit": {"rank_mean_gb_s": 100.0},
+                })
+        for sequence, monitor in enumerate(plan["monitor_ab"]["order"], start=1):
+            runs.append({
+                "phase": "monitor-ab", "monitor": monitor,
+                "pair_id": plan["monitor_ab"]["pair_id"],
+                "message_bytes": plan["monitor_ab"]["message_bytes"],
+                "sequence": sequence,
+                "audit": {"rank_mean_gb_s": 102.0 if monitor == "on" else 100.0},
+            })
+        self.assertEqual(formal.aggregate(plan, runs)["status"], "passed")
+        runs[2]["audit"]["rank_mean_gb_s"] = 120.0
+        self.assertEqual(formal.aggregate(plan, runs)["status"], "failed")
+
+    def test_p2p_topology_parser_uses_explicit_matrix_direction(self):
+        calibrator = load_calibrator_module()
+        topology = """\
+        Phy-ID0    X          SIO        HCCS_SW
+        Phy-ID1    SIO        X          HCCS_SW
+        Phy-ID2    HCCS_SW    HCCS_SW    X
+        """
+        self.assertEqual(calibrator.topology_path(topology, 0, 1), "SIO")
+        self.assertEqual(calibrator.topology_path(topology, 0, 2), "HCCS_SW")
+        with self.assertRaises(calibrator.CalibrationError):
+            calibrator.topology_path(topology, 3, 0)
 
 
 class FlagCXQualificationRunnerTest(unittest.TestCase):
@@ -350,7 +638,7 @@ class FlagCXQualificationRunnerTest(unittest.TestCase):
         }
         command = qualifier.build_container_command(
             config, (14, 15), container_name="flagcx-timeout-test",
-            master_port=29821, gate="c3-timeout-cleanup",
+            master_port=29821, gate="timeout-cleanup",
         )
         self.assertEqual(command[-1], "exec sleep 600")
 
@@ -360,15 +648,17 @@ class FlagCXQualificationRunnerTest(unittest.TestCase):
             "timeout_cleanup": {
                 "remove_returncode": 0,
                 "inspect_returncode": 1,
+                "absence_confirmed": True,
             },
         })
-        with self.assertRaisesRegex(RuntimeError, "still exists"):
+        with self.assertRaisesRegex(RuntimeError, "absence is unproven"):
             qualifier.validate_expected_timeout_record({
                 "returncode": 124,
                 "timed_out": True,
                 "timeout_cleanup": {
                     "remove_returncode": 0,
                     "inspect_returncode": 0,
+                    "absence_confirmed": False,
                 },
             })
 
@@ -394,6 +684,145 @@ class FlagCXQualificationRunnerTest(unittest.TestCase):
         probe["results"][1]["wait_rc"] = 207000
         with self.assertRaisesRegex(RuntimeError, "sync event wait_rc failed"):
             qualifier.validate_acl_event_records([probe])
+
+    def test_peer_failure_gate_requires_both_ranks_and_fail_fast(self):
+        qualifier = load_qualifier_module()
+        records = [{
+            "schema_version": 1,
+            "kind": "flagcx-fault-injection",
+            "fault": "peer-exit",
+            "rank": 0,
+            "world_size": 2,
+            "public_backend": "flagos",
+            "inner_backend": "ProcessGroupFlagCX",
+            "role": "peer-waiter",
+            "peer": 1,
+        }, {
+            "schema_version": 1,
+            "kind": "flagcx-fault-injection",
+            "fault": "peer-exit",
+            "rank": 1,
+            "world_size": 2,
+            "public_backend": "flagos",
+            "inner_backend": "ProcessGroupFlagCX",
+            "role": "injected-exit",
+            "injected_exit_code": 42,
+        }]
+        qualifier.validate_peer_failure_record({
+            "returncode": 1, "timed_out": False,
+            "container_postcondition": {
+                "inspect_returncode": 1, "absence_confirmed": True,
+            },
+        }, records)
+        with self.assertRaisesRegex(RuntimeError, "before the host deadline"):
+            qualifier.validate_peer_failure_record({
+                "returncode": 124, "timed_out": True,
+                "container_postcondition": {
+                    "inspect_returncode": 1, "absence_confirmed": True,
+                },
+            }, records)
+        with self.assertRaisesRegex(RuntimeError, "absence is unproven"):
+            qualifier.validate_peer_failure_record({
+                "returncode": 1, "timed_out": False,
+                "container_postcondition": {
+                    "inspect_returncode": 0, "absence_confirmed": False,
+                },
+            }, records)
+
+    def test_hung_p2p_gate_requires_real_waiters_and_cleanup(self):
+        qualifier = load_qualifier_module()
+        records = [{
+            "schema_version": 1,
+            "kind": "flagcx-fault-injection",
+            "fault": "hung-p2p",
+            "rank": rank,
+            "world_size": 2,
+            "public_backend": "flagos",
+            "inner_backend": "ProcessGroupFlagCX",
+            "role": "recv-waiter",
+            "peer": 1 - rank,
+            "observed_at": "2026-09-04T06:32:10Z",
+        } for rank in (0, 1)]
+        qualifier.validate_hung_p2p_record({
+            "returncode": 124,
+            "timed_out": True,
+            "timeout_observed_at": "2026-09-04T06:32:20Z",
+            "timeout_cleanup": {
+                "remove_returncode": 0,
+                "inspect_returncode": 1,
+                "absence_confirmed": True,
+            },
+        }, records)
+        records[1]["peer"] = 1
+        with self.assertRaisesRegex(RuntimeError, "wait evidence drifted"):
+            qualifier.validate_hung_p2p_record({
+                "returncode": 124,
+                "timed_out": True,
+                "timeout_observed_at": "2026-09-04T06:32:20Z",
+                "timeout_cleanup": {
+                    "remove_returncode": 0,
+                    "inspect_returncode": 1,
+                    "absence_confirmed": True,
+                },
+            }, records)
+
+    def test_hung_p2p_gate_requires_a_real_observation_interval(self):
+        qualifier = load_qualifier_module()
+        records = [{
+            "schema_version": 1,
+            "kind": "flagcx-fault-injection",
+            "fault": "hung-p2p",
+            "rank": rank,
+            "world_size": 2,
+            "public_backend": "flagos",
+            "inner_backend": "ProcessGroupFlagCX",
+            "role": "recv-waiter",
+            "peer": 1 - rank,
+            "observed_at": "2026-09-04T06:32:18Z",
+        } for rank in (0, 1)]
+        with self.assertRaisesRegex(RuntimeError, "minimum interval"):
+            qualifier.validate_hung_p2p_record({
+                "returncode": 124,
+                "timed_out": True,
+                "timeout_observed_at": "2026-09-04T06:32:20Z",
+                "timeout_cleanup": {
+                    "remove_returncode": 0,
+                    "inspect_returncode": 1,
+                    "absence_confirmed": True,
+                },
+            }, records)
+
+    def test_container_absence_rejects_daemon_failures(self):
+        qualifier = load_qualifier_module()
+        self.assertTrue(qualifier.docker_absence_confirmed(
+            1, "", "Error: No such object: exact-name",
+        ))
+        self.assertFalse(qualifier.docker_absence_confirmed(
+            1, "", "Cannot connect to the Docker daemon",
+        ))
+
+    def test_fault_gate_commands_mount_the_snapshot(self):
+        qualifier = load_qualifier_module()
+        config = {
+            "image": "candidate:locked",
+            "shm_size": "1g",
+            "runtime_environment": {},
+            "required_devices": [],
+            "host_mounts": [],
+        }
+        probe = Path("/evidence/verify_flagcx_faults.py")
+        for gate, fault in (
+            ("peer-failure", "peer-exit"),
+            ("hung-p2p", "hung-p2p"),
+        ):
+            command = qualifier.build_container_command(
+                config, (14, 15), container_name="flagcx-fault-test",
+                master_port=29821, gate=gate, fault_probe_path=probe,
+            )
+            self.assertIn(
+                f"{probe}:/opt/flagrt/verify_flagcx_faults.py:ro", command,
+            )
+            self.assertTrue(command[-1].endswith(f"--fault {fault}"))
 
 
 if __name__ == "__main__":

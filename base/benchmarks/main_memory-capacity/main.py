@@ -76,7 +76,7 @@ def main(config, case_config, rank, world_size, local_rank):
     benchmark_measurement_finish(measurement_event)
 
     start = time.time()
-    while time.time() <= start + 300:
+    while time.time() < start + getattr(case_config, "POST_TEST_WAIT_SECONDS", 300):
         foo_str = "Waiting for power monitor"
     
     if local_rank == 0:

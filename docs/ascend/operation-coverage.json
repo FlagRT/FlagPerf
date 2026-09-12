@@ -1,0 +1,2197 @@
+{
+  "schema_version": 1,
+  "observed_at": "2026-09-09",
+  "prepared_at": "2026-09-12",
+  "record_type": "sanitized-historical-coverage",
+  "status": "failed",
+  "runtime_image_id": "sha256:d948410966b0dfdfaf4f9c95b9b14bdb7c4279cb85ccd7f9157f0fb5d1c6d397",
+  "logical_device_ids": [
+    14
+  ],
+  "physical_npu_ids": [
+    7
+  ],
+  "counts": {
+    "blocked": 24,
+    "failed": 5,
+    "not-applicable": 420,
+    "partial": 2,
+    "passed": 277
+  },
+  "applicable_combinations": 308,
+  "source_summary_sha256": "6e7203de97bb00270823248037c1605b7e5f1638960a796df19d7f6ffe22ca91",
+  "source_runs": [
+    {
+      "manifest_sha256": "8823b2420709426361eb0429656cd511a749a815639b1885458c8a1a5f4d2b66",
+      "status": "failed",
+      "summary_sha256": "c84b1e91af813310007be8e74f9a4f0668f5ec86d229e15d0511e12c18880f09"
+    },
+    {
+      "manifest_sha256": "e8359d411d6873ed8cfe5eb30fca468343d238cde6825b76f8b28a8690c56bc0",
+      "status": "passed",
+      "summary_sha256": "e09a115d5e3e6d5589094373a1da0ac3efaf91685773ddd1e1cc5abe8afb6bc2"
+    }
+  ],
+  "source_artifacts_verified_during_integration": true,
+  "raw_evidence_distributed": false,
+  "hardware_revalidated_during_integration": false,
+  "boundary": "Historical multi-run aggregation, not a rerun of every combination on the integrated source. Fixed correctness and route evidence gates remain in force.",
+  "coverage": [
+    {
+      "case": "abs",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "abs",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "abs",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "abs",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "abs",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "abs",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "add",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "add",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "add",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "add",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "add",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "add",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "addmm",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "addmm",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "addmm",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "addmm",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "addmm",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "addmm",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "failed"
+    },
+    {
+      "case": "all",
+      "dtype": "INT64",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "all",
+      "dtype": "INT64",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "amax",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "blocked"
+    },
+    {
+      "case": "amax",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "amax",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "blocked"
+    },
+    {
+      "case": "amax",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "amax",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "blocked"
+    },
+    {
+      "case": "amax",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "argmax",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "argmax",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "argmax",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "argmax",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "argmax",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "argmax",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "bitwise_and",
+      "dtype": "BOOL",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "bitwise_and",
+      "dtype": "BOOL",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "bitwise_and",
+      "dtype": "INT16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "bitwise_and",
+      "dtype": "INT16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "bitwise_and",
+      "dtype": "INT32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "bitwise_and",
+      "dtype": "INT32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "bitwise_not",
+      "dtype": "BOOL",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "bitwise_not",
+      "dtype": "BOOL",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "bitwise_not",
+      "dtype": "INT16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "bitwise_not",
+      "dtype": "INT16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "bitwise_not",
+      "dtype": "INT32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "bitwise_not",
+      "dtype": "INT32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "bitwise_or",
+      "dtype": "BOOL",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "bitwise_or",
+      "dtype": "BOOL",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "bitwise_or",
+      "dtype": "INT16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "bitwise_or",
+      "dtype": "INT16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "bitwise_or",
+      "dtype": "INT32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "bitwise_or",
+      "dtype": "INT32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "bmm",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "bmm",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "bmm",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "bmm",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "bmm",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "bmm",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "failed"
+    },
+    {
+      "case": "cos",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "cos",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "cos",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "cos",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "cos",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "cos",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "cross_entropy_loss",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "cross_entropy_loss",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "cross_entropy_loss",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "cross_entropy_loss",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "cross_entropy_loss",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "cross_entropy_loss",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "div",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "div",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "div",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "div",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "div",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "div",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "dropout",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "blocked"
+    },
+    {
+      "case": "dropout",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "dropout",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "blocked"
+    },
+    {
+      "case": "dropout",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "dropout",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "blocked"
+    },
+    {
+      "case": "dropout",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "eq",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "eq",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "eq",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "eq",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "eq",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "eq",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "exp",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "exp",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "exp",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "exp",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "exp",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "exp",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "ge",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "ge",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "ge",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "ge",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "ge",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "ge",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "gelu",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "gelu",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "gelu",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "gelu",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "gelu",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "gelu",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "group_norm",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "group_norm",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "group_norm",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "group_norm",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "group_norm",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "group_norm",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "gt",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "gt",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "gt",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "gt",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "gt",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "gt",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "isinf",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "isinf",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "isinf",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "isinf",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "isinf",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "isinf",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "isnan",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "isnan",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "blocked"
+    },
+    {
+      "case": "isnan",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "isnan",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "blocked"
+    },
+    {
+      "case": "isnan",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "isnan",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "blocked"
+    },
+    {
+      "case": "layer_norm",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "layer_norm",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "layer_norm",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "layer_norm",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "layer_norm",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "layer_norm",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "le",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "le",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "le",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "le",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "le",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "le",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "linear",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "linear",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "partial"
+    },
+    {
+      "case": "linear",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "linear",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "partial"
+    },
+    {
+      "case": "linear",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "linear",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "failed"
+    },
+    {
+      "case": "log_softmax",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "log_softmax",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "log_softmax",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "log_softmax",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "log_softmax",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "log_softmax",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "lt",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "lt",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "lt",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "lt",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "lt",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "lt",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "max",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "max",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "max",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "max",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "max",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "max",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "mean",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "mean",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "mean",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "mean",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "mean",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "mean",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "min",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "min",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "min",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "min",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "min",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "min",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "mm",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "blocked"
+    },
+    {
+      "case": "mm",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "mm",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "blocked"
+    },
+    {
+      "case": "mm",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "mm",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "blocked"
+    },
+    {
+      "case": "mm",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "failed"
+    },
+    {
+      "case": "mul",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "blocked"
+    },
+    {
+      "case": "mul",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "mul",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "blocked"
+    },
+    {
+      "case": "mul",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "mul",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "blocked"
+    },
+    {
+      "case": "mul",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "mv",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "mv",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "mv",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "mv",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "mv",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "mv",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "failed"
+    },
+    {
+      "case": "native_dropout",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "blocked"
+    },
+    {
+      "case": "native_dropout",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "native_dropout",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "blocked"
+    },
+    {
+      "case": "native_dropout",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "native_dropout",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "blocked"
+    },
+    {
+      "case": "native_dropout",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "native_group_norm",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "native_group_norm",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "native_group_norm",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "native_group_norm",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "native_group_norm",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "native_group_norm",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "ne",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "ne",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "ne",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "ne",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "ne",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "ne",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "neg",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "neg",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "neg",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "neg",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "neg",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "neg",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "outer",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "blocked"
+    },
+    {
+      "case": "outer",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "outer",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "blocked"
+    },
+    {
+      "case": "outer",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "outer",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "blocked"
+    },
+    {
+      "case": "outer",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "pow",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "pow",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "pow",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "pow",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "pow",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "pow",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "prod",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "prod",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "prod",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "prod",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "prod",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "prod",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "reciprocal",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "reciprocal",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "reciprocal",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "reciprocal",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "reciprocal",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "reciprocal",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "relu",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "relu",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "relu",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "relu",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "relu",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "relu",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "rsqrt",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "rsqrt",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "rsqrt",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "rsqrt",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "rsqrt",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "rsqrt",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "rsub",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "rsub",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "blocked"
+    },
+    {
+      "case": "rsub",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "rsub",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "blocked"
+    },
+    {
+      "case": "rsub",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "rsub",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "blocked"
+    },
+    {
+      "case": "sigmoid",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "sigmoid",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "sigmoid",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "sigmoid",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "sigmoid",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "sigmoid",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "silu",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "silu",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "silu",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "silu",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "silu",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "silu",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "sin",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "sin",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "sin",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "sin",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "sin",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "sin",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "softmax",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "softmax",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "softmax",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "softmax",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "softmax",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "softmax",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "sub",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "sub",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "sub",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "sub",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "sub",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "sub",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "sum",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "sum",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "sum",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "sum",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "sum",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "sum",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "tanh",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "tanh",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "tanh",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "tanh",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "tanh",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "tanh",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "triu",
+      "dtype": "BF16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "triu",
+      "dtype": "BF16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "triu",
+      "dtype": "FP16",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "triu",
+      "dtype": "FP16",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "triu",
+      "dtype": "FP32",
+      "oplib": "flaggems",
+      "device_id": 14,
+      "status": "passed"
+    },
+    {
+      "case": "triu",
+      "dtype": "FP32",
+      "oplib": "nativetorch",
+      "device_id": 14,
+      "status": "passed"
+    }
+  ]
+}

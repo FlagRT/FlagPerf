@@ -40,6 +40,7 @@ from executors.toolkit import docker_inspect, run_host_preflight  # noqa: E402
 
 DEFAULT_CONFIG = BASE_DIR / "configs" / "ascend910_cann9_p2p_candidate.yaml"
 SAFE_RUN_ID_RE = re.compile(r"[A-Za-z0-9_.-]+")
+MIN_HUNG_OBSERVATION_S = 5.0
 
 
 def artifact_ref(path: Path, root: Path) -> dict[str, Any]:
@@ -113,8 +114,108 @@ def validate_expected_timeout_record(record: dict[str, Any]) -> None:
         raise RuntimeError("timeout cleanup gate did not record container cleanup")
     if cleanup.get("remove_returncode") != 0:
         raise RuntimeError(f"timed-out container removal failed: {cleanup}")
-    if cleanup.get("inspect_returncode") == 0:
-        raise RuntimeError(f"timed-out container still exists: {cleanup}")
+    if cleanup.get("absence_confirmed") is not True:
+        raise RuntimeError(f"timed-out container absence is unproven: {cleanup}")
+
+
+def docker_absence_confirmed(returncode: int, stdout: str, stderr: str) -> bool:
+    """Distinguish an absent container from an unavailable/broken daemon."""
+    message = f"{stdout}\n{stderr}".lower()
+    return returncode == 1 and (
+        "no such container" in message or "no such object" in message
+    )
+
+
+def validate_fault_records(
+    records: list[dict[str, Any]], *, expected_fault: str,
+) -> None:
+    """Require both ranks to prove entry into the intended real P2P fault."""
+    faults = [
+        record for record in records
+        if record.get("kind") == "flagcx-fault-injection"
+    ]
+    ranks = [record.get("rank") for record in faults]
+    if len(ranks) != 2 or set(ranks) != {0, 1}:
+        raise RuntimeError(f"fault probe must report ranks [0, 1], got {ranks}")
+    for record in faults:
+        if record.get("fault") != expected_fault:
+            raise RuntimeError(f"fault probe mode drifted: {record}")
+        if record.get("world_size") != 2:
+            raise RuntimeError(f"fault probe world size drifted: {record}")
+        if record.get("public_backend") != "flagos":
+            raise RuntimeError(f"fault probe public backend drifted: {record}")
+        if "flagcx" not in str(record.get("inner_backend", "")).lower():
+            raise RuntimeError(f"fault probe did not select FlagCX: {record}")
+    by_rank = {record["rank"]: record for record in faults}
+    if expected_fault == "peer-exit":
+        if by_rank[0].get("role") != "peer-waiter" or by_rank[0].get("peer") != 1:
+            raise RuntimeError(f"peer-exit waiter evidence drifted: {by_rank[0]}")
+        if (
+            by_rank[1].get("role") != "injected-exit"
+            or by_rank[1].get("injected_exit_code") != 42
+        ):
+            raise RuntimeError(f"peer-exit injection evidence drifted: {by_rank[1]}")
+    elif expected_fault == "hung-p2p":
+        for rank, peer in ((0, 1), (1, 0)):
+            if (
+                by_rank[rank].get("role") != "recv-waiter"
+                or by_rank[rank].get("peer") != peer
+            ):
+                raise RuntimeError(f"hung-P2P wait evidence drifted: {by_rank[rank]}")
+
+
+def validate_peer_failure_record(
+    record: dict[str, Any], semantic_records: list[dict[str, Any]],
+) -> None:
+    """Require an injected peer exit to fail fast without host timeout."""
+    if (
+        record.get("timed_out") is True
+        or record.get("returncode") in (None, 0, 124)
+    ):
+        raise RuntimeError(
+            "peer-failure gate must return nonzero before the host deadline"
+        )
+    postcondition = record.get("container_postcondition")
+    if (
+        not isinstance(postcondition, dict)
+        or postcondition.get("absence_confirmed") is not True
+    ):
+        raise RuntimeError(
+            "peer-failure container absence is unproven after docker run returned"
+        )
+    validate_fault_records(semantic_records, expected_fault="peer-exit")
+
+
+def validate_hung_p2p_record(
+    record: dict[str, Any], semantic_records: list[dict[str, Any]],
+) -> None:
+    """Require both ranks to enter unmatched recv before bounded cleanup."""
+    validate_expected_timeout_record(record)
+    validate_fault_records(semantic_records, expected_fault="hung-p2p")
+    timeout_at_raw = record.get("timeout_observed_at")
+    wait_times_raw = [
+        item.get("observed_at") for item in semantic_records
+        if item.get("kind") == "flagcx-fault-injection"
+    ]
+    try:
+        timeout_at = datetime.fromisoformat(
+            str(timeout_at_raw).replace("Z", "+00:00")
+        )
+        wait_times = [
+            datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+            for value in wait_times_raw
+        ]
+    except ValueError as exc:
+        raise RuntimeError("hung-P2P timing evidence is invalid") from exc
+    if len(wait_times) != 2:
+        raise RuntimeError("hung-P2P timing evidence must cover both ranks")
+    observed_s = (timeout_at - max(wait_times)).total_seconds()
+    if observed_s < MIN_HUNG_OBSERVATION_S:
+        raise RuntimeError(
+            "hung-P2P wait was not observed for the minimum interval: "
+            f"observed={observed_s:.3f}s, required={MIN_HUNG_OBSERVATION_S:.3f}s"
+        )
+    record["hung_observation_s"] = round(observed_s, 4)
 
 
 def validate_acl_event_records(records: list[dict[str, Any]]) -> None:
@@ -158,7 +259,7 @@ def validate_acl_event_records(records: list[dict[str, Any]]) -> None:
 def build_container_command(
     config: dict[str, Any], device_ids: tuple[int, int], *,
     container_name: str, master_port: int, gate: str,
-    acl_probe_path: Path | None = None,
+    acl_probe_path: Path | None = None, fault_probe_path: Path | None = None,
 ) -> list[str]:
     selected_nodes = [Path(f"/dev/davinci{device}") for device in device_ids]
     command = [
@@ -178,18 +279,31 @@ def build_container_command(
         path = Path(mount)
         if path.exists():
             command.extend(["-v", f"{path}:{path}:ro"])
-    if gate == "c3-acl-event-ab":
+    if gate == "acl-event-ab":
         if acl_probe_path is None:
-            raise ConfigurationError("c3-acl-event-ab requires a probe snapshot")
+            raise ConfigurationError("acl-event-ab requires a probe snapshot")
         command.extend([
             "-v", f"{acl_probe_path}:/opt/flagrt/verify_acl_event_flags.py:ro",
         ])
         verifier_args = ["exec", "python3", "/opt/flagrt/verify_acl_event_flags.py"]
-    elif gate == "c3-timeout-cleanup":
+    elif gate == "timeout-cleanup":
         # A deterministic stalled process exercises the host executor deadline,
         # exact-name container removal, lease release and postflight without
         # pretending to be a failed collective/peer diagnosis.
         verifier_args = ["exec", "sleep", "600"]
+    elif gate in {"peer-failure", "hung-p2p"}:
+        if fault_probe_path is None:
+            raise ConfigurationError(f"{gate} requires a fault probe snapshot")
+        command.extend([
+            "-v", f"{fault_probe_path}:/opt/flagrt/verify_flagcx_faults.py:ro",
+        ])
+        fault = "peer-exit" if gate == "peer-failure" else "hung-p2p"
+        verifier_args = [
+            "exec", "torchrun", "--nproc-per-node=2", "--nnodes=1",
+            "--node-rank=0", "--master-addr=127.0.0.1",
+            f"--master-port={master_port}",
+            "/opt/flagrt/verify_flagcx_faults.py", "--fault", fault,
+        ]
     else:
         verifier_args = [
             "exec", "torchrun", "--nproc-per-node=2", "--nnodes=1",
@@ -197,7 +311,7 @@ def build_container_command(
             f"--master-port={master_port}",
             "/opt/flagrt/verify_flagcx_p2p.py",
         ]
-        if gate == "c3-nondefault-stream":
+        if gate == "nondefault-stream":
             verifier_args.extend(["--stream-mode", "nondefault"])
     inner = shlex.join(verifier_args)
     command.extend([config["image"], "/bin/bash", "-lc", inner])
@@ -206,7 +320,7 @@ def build_container_command(
 
 def run_command(
     command: list[str], root: Path, label: str, *, timeout: int,
-    container_name: str,
+    container_name: str, confirm_absent: bool = False,
 ) -> dict[str, Any]:
     started_at = utc_now()
     started = time.perf_counter()
@@ -222,6 +336,7 @@ def run_command(
         returncode = proc.returncode
     except subprocess.TimeoutExpired as exc:
         timed_out = True
+        timeout_observed_at = utc_now()
         stdout = exc.stdout or ""
         stderr = exc.stderr or ""
         if isinstance(stdout, bytes):
@@ -270,10 +385,38 @@ def run_command(
             "remove_returncode": remove_returncode,
             "inspect_command": ["docker", "container", "inspect", container_name],
             "inspect_returncode": inspect.returncode,
+            "absence_confirmed": docker_absence_confirmed(
+                inspect.returncode, inspect.stdout or "", inspect.stderr or "",
+            ),
             "stdout": artifact_ref(cleanup_stdout_path, root),
             "stderr": artifact_ref(cleanup_stderr_path, root),
         }
         returncode = 124
+    container_postcondition = None
+    if confirm_absent and not timed_out:
+        inspect = subprocess.run(
+            ["docker", "container", "inspect", container_name], text=True,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False,
+            timeout=30,
+        )
+        inspect_stdout_path = root / f"{label}.container-inspect.stdout"
+        inspect_stderr_path = root / f"{label}.container-inspect.stderr"
+        inspect_stdout_path.write_text(
+            inspect.stdout or "", encoding="utf-8", errors="replace",
+        )
+        inspect_stderr_path.write_text(
+            inspect.stderr or "", encoding="utf-8", errors="replace",
+        )
+        container_postcondition = {
+            "container_name": container_name,
+            "inspect_command": ["docker", "container", "inspect", container_name],
+            "inspect_returncode": inspect.returncode,
+            "absence_confirmed": docker_absence_confirmed(
+                inspect.returncode, inspect.stdout or "", inspect.stderr or "",
+            ),
+            "stdout": artifact_ref(inspect_stdout_path, root),
+            "stderr": artifact_ref(inspect_stderr_path, root),
+        }
     stdout_path = root / f"{label}.stdout"
     stderr_path = root / f"{label}.stderr"
     stdout_path.write_text(stdout, encoding="utf-8", errors="replace")
@@ -289,8 +432,12 @@ def run_command(
         "stdout": artifact_ref(stdout_path, root),
         "stderr": artifact_ref(stderr_path, root),
     }
+    if timed_out:
+        record["timeout_observed_at"] = timeout_observed_at
     if timeout_cleanup is not None:
         record["timeout_cleanup"] = timeout_cleanup
+    if container_postcondition is not None:
+        record["container_postcondition"] = container_postcondition
     write_json(root / f"{label}.command.json", record)
     return record | {"stdout_text": stdout, "stderr_text": stderr}
 
@@ -335,7 +482,9 @@ def render_report(summary: dict[str, Any], result_dir: Path) -> None:
         "sentinel gate 只证明所选双 Device、当前镜像和当前小消息集合的通信正确性；"
         "timeout-cleanup gate 只证明 executor deadline、精确容器清理、租约释放与 postflight。"
         "ACL event A/B gate 只证明所选本地 Device 上两个 event flag 的直接 API 行为。"
-        "它们都不是性能基线，也不代表其他拓扑、多节点、peer failure 或长稳能力。",
+        "peer-failure gate 证明受控 peer 退出能在 host deadline 前失败；hung-P2P gate 证明真实"
+        "未配对 recv 会被 deadline 截止并完成精确清理。它们都不是性能基线，也不代表其他拓扑、"
+        "多节点、错误根因诊断或长稳能力。",
         "preflight、postflight、命令、stdout/stderr 和 SHA-256 均保存在本目录。",
         "",
     ])
@@ -354,10 +503,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--device-ids", required=True)
     parser.add_argument(
         "--gate", choices=(
-            "c2-sentinel", "c3-nondefault-stream", "c3-timeout-cleanup",
-            "c3-acl-event-ab",
+            "sentinel", "nondefault-stream", "timeout-cleanup",
+            "acl-event-ab", "peer-failure", "hung-p2p",
         ),
-        default="c2-sentinel",
+        default="sentinel",
     )
     parser.add_argument("--repeats", type=int, default=3)
     parser.add_argument("--master-port", type=int, default=29821)
@@ -375,7 +524,10 @@ def execute(args: argparse.Namespace) -> int:
         raise ConfigurationError("qualification requires --allow-candidate-runtime")
     if args.repeats < 1 or args.repeats > 10:
         raise ConfigurationError("--repeats must be between 1 and 10")
-    if args.gate in {"c3-timeout-cleanup", "c3-acl-event-ab"} and args.repeats != 1:
+    if args.gate in {
+        "timeout-cleanup", "acl-event-ab", "peer-failure",
+        "hung-p2p",
+    } and args.repeats != 1:
         raise ConfigurationError(f"{args.gate} requires exactly one repeat")
     if args.timeout < 10 or args.timeout > 600:
         raise ConfigurationError("--timeout must be between 10 and 600 seconds")
@@ -450,29 +602,39 @@ def execute(args: argparse.Namespace) -> int:
         lease.acquire()
         summary["device_lease"] = lease.record()
         acl_probe_path = None
-        if args.gate == "c3-acl-event-ab":
+        fault_probe_path = None
+        if args.gate == "acl-event-ab":
             acl_probe_path = result_dir / "verify_acl_event_flags.py"
             shutil.copyfile(PROFILE_DIR / acl_probe_path.name, acl_probe_path)
             summary["probe_source"] = artifact_ref(acl_probe_path, result_dir)
+        elif args.gate in {"peer-failure", "hung-p2p"}:
+            fault_probe_path = result_dir / "verify_flagcx_faults.py"
+            shutil.copyfile(PROFILE_DIR / fault_probe_path.name, fault_probe_path)
+            summary["probe_source"] = artifact_ref(fault_probe_path, result_dir)
         for attempt in range(1, args.repeats + 1):
             gate_token = args.gate.replace("-", "")
             name = f"flagcx-{gate_token}-{run_timestamp().lower()}-{attempt}"
             command = build_container_command(
                 config, device_ids, container_name=name,
                 master_port=args.master_port + attempt - 1, gate=args.gate,
-                acl_probe_path=acl_probe_path,
+                acl_probe_path=acl_probe_path, fault_probe_path=fault_probe_path,
             )
             command_record = run_command(
                 command, result_dir, f"attempt-{attempt}", timeout=args.timeout,
                 container_name=name,
+                confirm_absent=args.gate == "peer-failure",
             )
             rank_records = parse_rank_record_lines(command_record["stdout_text"])
             semantic_records = parse_json_objects(command_record["stdout_text"])
             attempt_status = "passed"
             try:
-                if args.gate == "c3-timeout-cleanup":
+                if args.gate == "timeout-cleanup":
                     validate_expected_timeout_record(command_record)
-                elif args.gate == "c3-acl-event-ab":
+                elif args.gate == "peer-failure":
+                    validate_peer_failure_record(command_record, semantic_records)
+                elif args.gate == "hung-p2p":
+                    validate_hung_p2p_record(command_record, semantic_records)
+                elif args.gate == "acl-event-ab":
                     if command_record["returncode"] != 0:
                         raise RuntimeError(
                             "ACL event probe container returned "
@@ -487,7 +649,7 @@ def execute(args: argparse.Namespace) -> int:
                         )
                     expected_stream = (
                         "nondefault"
-                        if args.gate == "c3-nondefault-stream" else "default"
+                        if args.gate == "nondefault-stream" else "default"
                     )
                     validate_sentinel_records(
                         rank_records, expected_stream_mode=expected_stream,

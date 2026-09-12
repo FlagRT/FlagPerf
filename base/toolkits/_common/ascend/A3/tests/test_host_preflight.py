@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 from __future__ import annotations
 
 import importlib.util
@@ -13,6 +15,10 @@ SPEC = importlib.util.spec_from_file_location("ascend_host_preflight", MODULE_PA
 assert SPEC and SPEC.loader
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
+
+EMPTY_PROCESS_TABLE = """\
+| NPU     Chip              | Process id    | Process name             | Process memory(MB)      |
+"""
 
 class HostPreflightTests(unittest.TestCase):
     def test_parse_id_spec_accepts_ranges_and_rejects_ambiguity(self) -> None:
@@ -35,6 +41,21 @@ class HostPreflightTests(unittest.TestCase):
 1 0 2 2 Ascend910
 """
         self.assertEqual(MODULE.parse_map_logic_ids(text), [0, 1, 2])
+
+    def test_parse_npu_processes_and_map_selected_devices(self) -> None:
+        text = EMPTY_PROCESS_TABLE + """\
+| 7       0                 | 1444272       | sglangschedul            | 60970                   |
+| 7       1                 | 1444275       | sglangschedul            | 60970                   |
+"""
+        processes = MODULE.parse_npu_processes(text)
+        mapping = MODULE.parse_device_map(
+            "7 0 14 14 Ascend910\n7 1 15 15 Ascend910\n"
+        )
+        selected = MODULE.selected_npu_processes(processes, mapping, [14, 15])
+        self.assertEqual([item["logic_id"] for item in selected], [14, 15])
+        self.assertEqual(selected[0]["process_id"], 1444272)
+        with self.assertRaisesRegex(MODULE.PreflightError, "table is missing"):
+            MODULE.parse_npu_processes("unstructured output")
 
     def test_resolve_physical_and_logical_selection(self) -> None:
         mapping = MODULE.parse_device_map(
@@ -65,6 +86,8 @@ class HostPreflightTests(unittest.TestCase):
 
         def record(_root, _command, label, timeout=120):
             del timeout
+            if label == "npu-smi-info":
+                return {"returncode": 0, "stdout_text": EMPTY_PROCESS_TABLE, "stderr_text": ""}
             if label == "npu-smi-map":
                 return {"returncode": 0, "stdout_text": map_text, "stderr_text": ""}
             if label == "occupancy":
@@ -93,6 +116,8 @@ class HostPreflightTests(unittest.TestCase):
 
         def record(_root, command, label, timeout=120):
             del timeout
+            if label == "npu-smi-info":
+                return {"returncode": 0, "stdout_text": EMPTY_PROCESS_TABLE, "stderr_text": ""}
             if label == "npu-smi-map":
                 return {"returncode": 0, "stdout_text": map_text, "stderr_text": ""}
             if label == "occupancy":
@@ -116,6 +141,8 @@ class HostPreflightTests(unittest.TestCase):
 
         def record(_root, _command, label, timeout=120):
             del timeout
+            if label == "npu-smi-info":
+                return {"returncode": 0, "stdout_text": EMPTY_PROCESS_TABLE, "stderr_text": ""}
             if label == "npu-smi-map":
                 return {"returncode": 0, "stdout_text": map_text, "stderr_text": ""}
             if label == "occupancy":
@@ -134,5 +161,39 @@ class HostPreflightTests(unittest.TestCase):
             )
         self.assertEqual(saved["status"], "failed")
         self.assertIn("1234", saved["error"])
+
+    def test_run_preflight_rejects_npu_smi_process_missed_by_fuser(self) -> None:
+        map_text = "7 0 14 14 Ascend910\n7 1 15 15 Ascend910\n"
+        process_text = EMPTY_PROCESS_TABLE + (
+            "| 7 0 | 1444272 | sglangschedul | 60970 |\n"
+            "| 7 1 | 1444275 | sglangschedul | 60970 |\n"
+        )
+
+        def record(_root, _command, label, timeout=120):
+            del timeout
+            if label == "npu-smi-info":
+                return {"returncode": 0, "stdout_text": process_text, "stderr_text": ""}
+            if label == "npu-smi-map":
+                return {"returncode": 0, "stdout_text": map_text, "stderr_text": ""}
+            if label == "occupancy":
+                self.fail("fuser must not run after npu-smi proves occupancy")
+            return {"returncode": 0, "stdout_text": "ok", "stderr_text": ""}
+
+        with tempfile.TemporaryDirectory() as temporary, \
+                mock.patch.object(MODULE, "discover_device_ids", return_value=[14, 15]), \
+                mock.patch.object(MODULE, "command_record", side_effect=record), \
+                mock.patch.object(MODULE.socket, "gethostname", return_value="node-d"):
+            with self.assertRaisesRegex(MODULE.PreflightError, "sglangschedul"):
+                MODULE.run_preflight(
+                    Path(temporary), [14, 15], requested_device_ids=[14, 15],
+                )
+            saved = MODULE.json.loads(
+                (Path(temporary) / "node-d" / "summary.json").read_text()
+            )
+        self.assertEqual(saved["occupancy"]["status"], "occupied")
+        self.assertEqual(
+            [item["logic_id"] for item in saved["occupancy"]["processes"]],
+            [14, 15],
+        )
 if __name__ == "__main__":
     unittest.main()

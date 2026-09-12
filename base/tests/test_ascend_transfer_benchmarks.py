@@ -53,6 +53,30 @@ class FakeTensor:
 
 
 class AscendTransferBenchmarkTest(unittest.TestCase):
+    def test_capacity_wait_override_preserves_oom_search(self):
+        module = load_case_module("main_memory-capacity")
+        for wait in (0, None):
+            with self.subTest(wait=wait):
+                values = {"INITSIZE": 2}
+                if wait is not None:
+                    values["POST_TEST_WAIT_SECONDS"] = wait
+                # One successful allocation, then OOM at 2 and 1 MiB.
+                ticks = (0, 1) if wait == 0 else (0, 1, 301)
+                with mock.patch.object(module.torch, "empty", side_effect=[
+                    object(), RuntimeError("out of memory"),
+                    RuntimeError("out of memory"),
+                ]) as allocate, mock.patch.object(
+                    module, "accelerator_device", return_value="flagos:0"
+                ), mock.patch.object(module, "benchmark_measurement_start"), \
+                        mock.patch.object(module, "benchmark_measurement_finish"), \
+                        mock.patch.object(module.time, "time", side_effect=ticks) as clock:
+                    result = module.main(
+                        Namespace(vendor="ascend"), Namespace(**values), 0, 1, 0
+                    )
+                self.assertEqual(result, 2)
+                self.assertEqual(allocate.call_count, 3)
+                self.assertEqual(clock.call_count, len(ticks))
+
     def test_d2d_preserves_clone_workload_and_uses_adapter_device(self):
         module = load_case_module("main_memory-bandwidth")
         tensor = FakeTensor()

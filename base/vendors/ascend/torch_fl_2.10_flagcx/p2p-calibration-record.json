@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "record_type": "maintainer-attestation",
+  "status": "passed",
+  "formal_baseline_eligible": false,
+  "runtime_image_id": "sha256:3b9e08f231d0e80d37341e375e6bb13066e03a67794b78a3d2874c1770c6b6bc",
+  "source_summary_sha256": "9b63d7b5fa3946c61d22009e305497b4711a89a43cb004e3e2f1d566b1f8acef",
+  "source_plan_sha256": "e477556d0423dc41372875554896df8df5cc277bc6bd07c7e1423989adcd8b99",
+  "raw_evidence_available_in_this_checkout": false,
+  "hardware_revalidated_during_integration": false,
+  "boundary": "Recorded calibration status inherited from the pinned source plan; original summary is unavailable here. Fixed qualification workloads are distributed separately and may be rerun. Calibration alone is not a performance baseline."
+}

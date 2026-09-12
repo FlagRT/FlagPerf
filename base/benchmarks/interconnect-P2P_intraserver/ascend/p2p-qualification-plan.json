@@ -1,0 +1,195 @@
+{
+  "schema_version": 1,
+  "protocol_id": "p2p-single-node-v1",
+  "stage": "p2p-single-node-qualification",
+  "status": "qualified",
+  "case": "interconnect-P2P_intraserver",
+  "runtime_profile": "torch_fl_2.10_flagcx",
+  "runtime_config": "base/configs/ascend910_cann9_p2p.yaml",
+  "qualification_evidence": {
+    "path": "base/vendors/ascend/torch_fl_2.10_flagcx/p2p-qualification.json",
+    "sha256": "01d58b248f612ac81ce595e5b817e251c9c4c30cb9b230e90e8aa6db2edbdc34"
+  },
+  "calibration_evidence": {
+    "path": "base/vendors/ascend/torch_fl_2.10_flagcx/p2p-calibration-record.json",
+    "sha256": "6562c34809cb2f1cd934753352719959e78e9866b06df18a55c376f368f89b90",
+    "status": "passed",
+    "formal_baseline_eligible": false,
+    "record_type": "maintainer-attestation"
+  },
+  "measurement_contract": {
+    "workload": "original one-way blocking torch.distributed send/recv",
+    "dtype": "float32",
+    "reported_formula": "legacy 2 * bytes / elapsed_time",
+    "minimum_measurement_seconds_per_run": 45,
+    "target_measurement_seconds_per_run": 60,
+    "warmup_iterations": 100,
+    "size_curve_repeats": 3,
+    "size_curve_monitor": "off",
+    "timeout_seconds": 180,
+    "automatic_workload_extension": false
+  },
+  "matrix": [
+    {
+      "pair_id": "sio-intra-npu",
+      "device_ids": [
+        14,
+        15
+      ],
+      "physical_npu_ids": [
+        7
+      ],
+      "expected_path": "SIO",
+      "direction": "14-to-15-only",
+      "message_bytes": 4194304,
+      "iterations": 280000,
+      "config": "base/benchmarks/interconnect-P2P_intraserver/ascend/case_config.p2p-sio-4m.yaml",
+      "sha256": "7874be376797965993615678f217cfba93a2720d9939c5d6708c1076b4042748"
+    },
+    {
+      "pair_id": "sio-intra-npu",
+      "device_ids": [
+        14,
+        15
+      ],
+      "physical_npu_ids": [
+        7
+      ],
+      "expected_path": "SIO",
+      "direction": "14-to-15-only",
+      "message_bytes": 16777216,
+      "iterations": 277000,
+      "config": "base/benchmarks/interconnect-P2P_intraserver/ascend/case_config.p2p-sio-16m.yaml",
+      "sha256": "e46f771c7abfb429acf474fbda78aea0878b5c2de25b4e7711fe52e10872b247"
+    },
+    {
+      "pair_id": "sio-intra-npu",
+      "device_ids": [
+        14,
+        15
+      ],
+      "physical_npu_ids": [
+        7
+      ],
+      "expected_path": "SIO",
+      "direction": "14-to-15-only",
+      "message_bytes": 67108864,
+      "iterations": 137000,
+      "config": "base/benchmarks/interconnect-P2P_intraserver/ascend/case_config.p2p-sio-64m.yaml",
+      "sha256": "b4a57ba60cef90490411bbc1b80423b22d17823f3150645c28f2a8891ebff6f7"
+    },
+    {
+      "pair_id": "sio-intra-npu",
+      "device_ids": [
+        14,
+        15
+      ],
+      "physical_npu_ids": [
+        7
+      ],
+      "expected_path": "SIO",
+      "direction": "14-to-15-only",
+      "message_bytes": 268435456,
+      "iterations": 35000,
+      "config": "base/benchmarks/interconnect-P2P_intraserver/ascend/case_config.p2p-sio-256m.yaml",
+      "sha256": "80b1c20b3cde3d24d0ab1b24ec5905006cfd742b33bfd39d0b7004ee97a9a5b6"
+    },
+    {
+      "pair_id": "hccs-sw-inter-npu",
+      "device_ids": [
+        12,
+        14
+      ],
+      "physical_npu_ids": [
+        6,
+        7
+      ],
+      "expected_path": "HCCS_SW",
+      "direction": "12-to-14-only",
+      "message_bytes": 4194304,
+      "iterations": 281000,
+      "config": "base/benchmarks/interconnect-P2P_intraserver/ascend/case_config.p2p-hccs-sw-4m.yaml",
+      "sha256": "da50aca669dea8c1a29e32e716f8b8282672728f28cc702f02cf9af15fe3ba6b"
+    },
+    {
+      "pair_id": "hccs-sw-inter-npu",
+      "device_ids": [
+        12,
+        14
+      ],
+      "physical_npu_ids": [
+        6,
+        7
+      ],
+      "expected_path": "HCCS_SW",
+      "direction": "12-to-14-only",
+      "message_bytes": 16777216,
+      "iterations": 291000,
+      "config": "base/benchmarks/interconnect-P2P_intraserver/ascend/case_config.p2p-hccs-sw-16m.yaml",
+      "sha256": "0a348e3c8b4f8faeddc34def02d8682e8391b1350bbf2335c0f5857ce91a955b"
+    },
+    {
+      "pair_id": "hccs-sw-inter-npu",
+      "device_ids": [
+        12,
+        14
+      ],
+      "physical_npu_ids": [
+        6,
+        7
+      ],
+      "expected_path": "HCCS_SW",
+      "direction": "12-to-14-only",
+      "message_bytes": 67108864,
+      "iterations": 115000,
+      "config": "base/benchmarks/interconnect-P2P_intraserver/ascend/case_config.p2p-hccs-sw-64m.yaml",
+      "sha256": "6062f31e81f8a6b2e051a1dd6f2e6f5a75fc40e8371ecb5740244a54e4129909"
+    },
+    {
+      "pair_id": "hccs-sw-inter-npu",
+      "device_ids": [
+        12,
+        14
+      ],
+      "physical_npu_ids": [
+        6,
+        7
+      ],
+      "expected_path": "HCCS_SW",
+      "direction": "12-to-14-only",
+      "message_bytes": 268435456,
+      "iterations": 30000,
+      "config": "base/benchmarks/interconnect-P2P_intraserver/ascend/case_config.p2p-hccs-sw-256m.yaml",
+      "sha256": "d4c85de2313f74eb070a6c3fc2d1fda5e3d1da439d80d699c325be6c670789da"
+    }
+  ],
+  "monitor_ab": {
+    "pair_id": "sio-intra-npu",
+    "message_bytes": 67108864,
+    "config": "base/benchmarks/interconnect-P2P_intraserver/ascend/case_config.p2p-sio-64m.yaml",
+    "sha256": "b4a57ba60cef90490411bbc1b80423b22d17823f3150645c28f2a8891ebff6f7",
+    "order": [
+      "off",
+      "on",
+      "on",
+      "off",
+      "off",
+      "on"
+    ]
+  },
+  "acceptance": {
+    "all_child_execution_measurement_postflight": "passed",
+    "all_monitor_on_runs_monitoring": "passed",
+    "expected_ranks": [
+      0,
+      1
+    ],
+    "maximum_fallback_count": 0,
+    "maximum_cv_pct_per_topology_size_cell": 5.0,
+    "maximum_absolute_monitor_median_delta_pct": 5.0,
+    "current_topology_must_match": true,
+    "all_artifact_hashes_must_match": true
+  },
+  "estimated_total_measurement_minutes": 30,
+  "claim_boundary": "Qualified single-node FP32 blocking send/recv protocol: SIO Device14-to-15 and HCCS_SW Device12-to-14, 4/16/64/256 MiB, three repeats, fixed 45/60 s minimum/target window and monitor A/B. Original raw measurements are not distributed. New hosts require current preflight and topology verification; reverse direction, multi-node communication and soak are outside this qualification."
+}

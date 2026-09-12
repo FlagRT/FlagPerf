@@ -21,13 +21,12 @@ DMI 26.1 在 A3 D2D 模式下固定 size 和 execute-times，显式传入这两�
 
 后续核验确认：DMI 原始逐 Device 值才是权威测量；旧 `×2` 不能解释为一次单 Device 运行得到的
 双 chip/card 实测带宽。当前实现已移除该倍率和 legacy 单标量，标准输出逐逻辑 Device 保留 DMI
-原值。旧 README 的“8 卡平均”没有代码证据，已取消。完整分析见
-`personal/Ascend-Base-Toolkit-D2D-and-capacity-x2-analysis.md`。
+原值。旧 README 的“8 卡平均”没有代码证据，已取消。测量和证据口径见 [Toolkit 使用手册](../../../ASCEND_A3_910C_TEST_MECHANISM.md)。
 
 推荐运行：
 
 ```bash
-python3 base/run.py toolkit run --case main_memory-bandwidth --npu-ids 1 \\
+python3 base/run.py toolkit run --case main_memory-bandwidth --npu-ids 1 \
   --allow-privileged-root --allow-disruptive-dmi
 ```
 

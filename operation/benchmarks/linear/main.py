@@ -52,36 +52,27 @@ def parse_args():
     return args
 
 
-def main(config, case_config):
-    correctness = do_correctness(config.case_name)
-    correctness = correctness == 0
-    dtype = {
-        "FP32": torch.float32,
-        "FP16": torch.float16,
-        "BF16": torch.bfloat16,
-        "INT32": torch.int32,
-        "INT16": torch.int16,
-        "BOOL": torch.bool
-        }
-    set_ieee_float32(config.vendor)
-
+def build_case(config, case_config):
+    """Original workload construction shared by legacy and the CLI worker."""
+    dtype = {'FP32': torch.float32, 'FP16': torch.float16, 'BF16': torch.bfloat16, 'INT32': torch.int32, 'INT16': torch.int16, 'BOOL': torch.bool}
     m = case_config.M
     n = case_config.N
     k = case_config.K
-
-
-    w = torch.nn.Linear(n, k, bias=False, dtype=dtype[config.dataformat]).to(0)
-    x = torch.randn(m, n, dtype=dtype[config.dataformat]).to(0)
-
-    latency_nowarm, latency_warm, cputime, kerneltime = do_test(
-        w, (x, ), host_device_sync, config, case_config)
-
+    w = torch.nn.Linear(n, k, bias=False, dtype=dtype[config.dataformat]).to(config.device)
+    x = torch.randn(m, n, dtype=dtype[config.dataformat]).to(config.device)
     op2flops = lambda x: x * 2 * m * n * k
+    return w, (x,), False, op2flops
 
-    perf_result = cal_perf(cputime, kerneltime, op2flops,
-                           config.spectflops)
-    print_result(config, config.case_name, *perf_result, correctness,
-                 latency_nowarm, latency_warm)
+
+def main(config, case_config):
+    correctness = do_correctness(config.case_name) == 0
+    config.device = get_device(config.vendor)
+    set_ieee_float32(config.vendor)
+    execute, inputs, bp, op2flops = build_case(config, case_config)
+    latency_nowarm, latency_warm, cputime, kerneltime = do_test(
+        execute, inputs, host_device_sync, config, case_config, bp=bp)
+    perf_result = cal_perf(cputime, kerneltime, op2flops, config.spectflops, bp=bp)
+    print_result(config, config.case_name, *perf_result, correctness, latency_nowarm, latency_warm)
 
 
 if __name__ == "__main__":

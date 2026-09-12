@@ -16,3 +16,6 @@ M: 8192
 N: 8192
 K: 8192
 DIST_BACKEND: "gloo"
+# Daily run budget: target <120 s end-to-end; hardware validation required.
+WARMUP: 100
+ITERS: 1000

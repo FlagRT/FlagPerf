@@ -53,42 +53,30 @@ def parse_args():
     return args
 
 
-def main(config, case_config):
-    correctness = do_correctness(config.case_name)
-    correctness = correctness == 0
-    dtype = {
-        "FP32": torch.float32,
-        "FP16": torch.float16,
-        "BF16": torch.bfloat16,
-        "INT32": torch.int32,
-        "INT16": torch.int16,
-        "BOOL": torch.bool
-        }
-    set_ieee_float32(config.vendor)
-
-
+def build_case(config, case_config):
+    """Original workload construction shared by legacy and the CLI worker."""
+    dtype = {'FP32': torch.float32, 'FP16': torch.float16, 'BF16': torch.bfloat16, 'INT32': torch.int32, 'INT16': torch.int16, 'BOOL': torch.bool}
     m = case_config.M
     n = case_config.N
-    # default shape: (M * 80, N * 80)
     shape = (m * 80, n * 80)
-
     if config.vendor == 'kunlunxin':
-        # if `Shape' specified in `case_config.yaml', use it
-        if case_config.__contains__('Shape') and case_config.Shape is not None:
+        if getattr(case_config, 'Shape', None) is not None:
             shape = case_config.Shape
-
-    a = torch.randn(shape, dtype=dtype[config.dataformat]).to(0)
+    a = torch.randn(shape, dtype=dtype[config.dataformat]).to(config.device)
     print(f'Shape for performance_test: {a.shape}')
-
-    latency_nowarm, latency_warm, cputime, kerneltime = do_test(
-        torch.argmax, (a, 1), host_device_sync, config, case_config)
-
     op2flops = lambda x: x * math.prod(shape)
+    return torch.argmax, (a, 1), False, op2flops
 
-    perf_result = cal_perf(cputime, kerneltime, op2flops,
-                           config.spectflops)
-    print_result(config, config.case_name, *perf_result, correctness,
-                 latency_nowarm, latency_warm)
+
+def main(config, case_config):
+    correctness = do_correctness(config.case_name) == 0
+    config.device = get_device(config.vendor)
+    set_ieee_float32(config.vendor)
+    execute, inputs, bp, op2flops = build_case(config, case_config)
+    latency_nowarm, latency_warm, cputime, kerneltime = do_test(
+        execute, inputs, host_device_sync, config, case_config, bp=bp)
+    perf_result = cal_perf(cputime, kerneltime, op2flops, config.spectflops, bp=bp)
+    print_result(config, config.case_name, *perf_result, correctness, latency_nowarm, latency_warm)
 
 
 if __name__ == "__main__":
