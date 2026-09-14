@@ -1,0 +1,5 @@
+{
+  "schema_version": 1,
+  "supported": false,
+  "unsupported_reason": "当前 Ascend 910C/A3 不支持本 Case 所需的原生 FP8 GEMM；转为 FP16/BF16 计算不能作为原生 FP8 算力结果"
+}

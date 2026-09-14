@@ -129,6 +129,7 @@ def status_text(value: Any) -> str:
         "passed": "通过",
         "partial": "部分完成",
         "failed": "失败",
+        "skipped": "跳过",
         "running": "运行中",
         "not_started": "未开始",
         "not_available": "不可用",
@@ -632,6 +633,8 @@ def postflight_status(summary: dict[str, Any]) -> Any:
 
 
 def conclusion_reasons(summary: dict[str, Any], result: dict[str, Any]) -> list[str]:
+    if summary.get("status") == "skipped":
+        return [str(summary.get("skip_reason", "Case 不适用"))]
     reasons: list[str] = []
     execution = summary.get("execution_status")
     measurement = summary.get("measurement_status")
@@ -989,7 +992,12 @@ def render_report(
     complete_semantic_evidence = bool(metrics) and (
         not expected or observed == expected
     ) and result.get("fallback_count", 0) == 0
-    if status == "passed" and complete_semantic_evidence:
+    if status == "skipped":
+        conclusion = (
+            f"本次 `{case_name}` 在启动前跳过：{summary.get('skip_reason', 'Case 不适用')}。"
+            "未启动容器、访问设备或产生性能测量；此状态不代表测试通过。"
+        )
+    elif status == "passed" and complete_semantic_evidence:
         conclusion = (
             f"本次 `{case_name}` 的容器执行和语义结果解析均通过，"
             f"已获得 {len(observed)}/{len(expected) if expected else len(observed)} 个预期 rank 的结果。"

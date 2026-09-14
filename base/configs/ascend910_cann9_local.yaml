@@ -10,7 +10,7 @@
     8, 9, 10, 11, 12, 13, 14, 15
   ],
   "result_root": "result",
-  "toolbox_host_path": "/usr/local/Ascend/toolbox",
+  "toolbox_host_path": "/home/kzhang520/Ascend/toolbox",
   "required_devices": [
     "/dev/davinci_manager",
     "/dev/hisi_hdc",

@@ -15,3 +15,6 @@
 DIST_BACKEND: "gloo"
 # Daily run budget: target <120 s end-to-end; hardware validation required.
 POST_TEST_WAIT_SECONDS: 0
+# Skip allocations already larger than free HBM; still allocate and hold real
+# tensors until the final 1 MiB attempt fails. Never report the queried size.
+BOUND_REQUEST_BY_FREE_MEMORY: true

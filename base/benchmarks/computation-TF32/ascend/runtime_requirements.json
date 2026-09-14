@@ -1,0 +1,5 @@
+{
+  "schema_version": 1,
+  "supported": false,
+  "unsupported_reason": "TF32 Case 未原生适配 Ascend，暂时跳过；Ascend HF32 不在本 Case 的当前适配范围内"
+}

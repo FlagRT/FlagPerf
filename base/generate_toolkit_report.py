@@ -1393,8 +1393,20 @@ def render_report(root: Path, summary: dict[str, Any], manifest: dict[str, Any] 
             f"- **厂商诊断层：** 通过 {diagnoses['passed']}、不支持 {diagnoses['unsupported']}、未执行 {diagnoses['not-run']}、失败 {diagnoses['failed']}、缺失 {diagnoses['missing']}。",
             f"- **最终 Case 状态：** 通过 {statuses['passed']}、部分完成 {statuses['partial']}、失败 {statuses['failed']}。",
         ])
-        if measurements["passed"] == len(cases) and statuses["partial"] and diagnoses["failed"] == 0:
-            lines.append("- **关键解释：** 本轮所有性能测量均形成有效指标；总体 `partial` 来自厂商诊断阈值不支持，而不是测量命令失败。")
+        if overall == "partial" and measurements["passed"] == len(cases):
+            gaps = []
+            if monitoring["partial"] or monitoring["failed"]:
+                gaps.append("监控证据不完整或采集失败")
+            if diagnoses["unsupported"]:
+                gaps.append("厂商诊断不支持")
+            if diagnoses["partial"] or diagnoses["failed"] or diagnoses["missing"]:
+                gaps.append("厂商诊断部分完成、失败或证据缺失")
+            detail = (
+                "已记录的证据缺口包括：" + "；".join(gaps) + "。"
+                if gaps else
+                "Case 分层状态未明确说明总体 partial 的原因，请检查健康检查及外层错误。"
+            )
+            lines.append("- **关键解释：** 本轮所有性能测量均形成有效指标；" + detail)
     else:
         stage = summary.get("failure_stage", "unknown")
         lines.append(f"- **未形成 Case manifest。** 运行在 `{stage}` 阶段终止；已有证据和错误见下文。")

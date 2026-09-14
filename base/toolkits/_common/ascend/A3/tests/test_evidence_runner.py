@@ -22,6 +22,36 @@ def fixture(name: str) -> str:
     return (HERE / "fixtures" / name).read_text(encoding="utf-8")
 
 
+class P2PDefaultTests(unittest.TestCase):
+    def test_default_pairs_and_sizes_for_selected_and_all_devices(self):
+        for selection in (list(range(8, 16)), None):
+            with self.subTest(selection=selection), tempfile.TemporaryDirectory() as tmp:
+                with mock.patch.object(MODULE, "discovered_devices", return_value=list(range(8, 16))):
+                    runner = MODULE.Runner(Path(tmp), [], False, selected_devices=selection)
+                self.assertEqual(runner.latency_sizes, (512, 4096, 65536, 1048576))
+                def command(root, directory, argv, **kwargs):
+                    src, dst = argv[argv.index("--ds") + 1], argv[argv.index("--dd") + 1]
+                    self.assertLess(int(src), int(dst))
+                    self.assertEqual(argv[argv.index("-s") + 1], "65536")
+                    return {"returncode": 0, "stdout_text": json.dumps({"Latency": [{
+                        "src_device_id": src, "dst_device_id": dst,
+                        "latency": "500 ns", "size": "65536 Bytes", "type": "Peer to Peer Test"
+                    }]}), "stderr_text": ""}
+                with mock.patch.object(MODULE, "command_record", side_effect=command) as call:
+                    metrics, commands, coverage = runner.run_p2p_latency_sweep(Path(tmp))
+                self.assertEqual(call.call_count, 28)
+                self.assertEqual(len(metrics), 28)
+                self.assertIsNone(coverage["coverage_error"])
+                self.assertFalse(coverage["sweep_scope"]["reverse_pairs_inferred"])
+
+    def test_explicit_size_override(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with mock.patch.object(MODULE, "discovered_devices", return_value=[8, 9]):
+                runner = MODULE.Runner(Path(tmp), [], False, latency_sizes=(512, 4096))
+            self.assertEqual(runner.p2p_latency_sizes, (512, 4096))
+            self.assertEqual(runner.latency_sizes, (512, 4096))
+
+
 class ParserTests(unittest.TestCase):
     def test_npu_smi_usages_parses_two_chips_by_labels(self) -> None:
         text = """

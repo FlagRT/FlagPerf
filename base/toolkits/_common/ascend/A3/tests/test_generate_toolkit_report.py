@@ -213,6 +213,34 @@ class ReportTests(unittest.TestCase):
     def test_short_error_is_not_rewritten(self) -> None:
         self.assertEqual(MODULE.human_error("single actionable error"), "single actionable error")
 
+    def test_partial_explanation_uses_recorded_layer_status(self) -> None:
+        scenarios = [
+            ("partial", "passed", ["监控证据不完整"], ["厂商诊断不支持"]),
+            ("passed", "unsupported", ["厂商诊断不支持"], ["监控证据不完整"]),
+            ("partial", "unsupported", ["监控证据不完整", "厂商诊断不支持"], []),
+            ("passed", "failed", ["厂商诊断部分完成、失败或证据缺失"], ["厂商诊断不支持"]),
+            ("not-run", "not-run", ["未明确说明"], ["厂商诊断不支持", "监控证据不完整"]),
+        ]
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            fixture_result(root)
+            summary = json.loads((root / "summary.json").read_text())
+            manifest = json.loads((root / "toolkit-evidence/manifest.json").read_text())
+            for monitoring, diagnosis, expected, absent in scenarios:
+                with self.subTest(monitoring=monitoring, diagnosis=diagnosis):
+                    manifest["status"] = "partial"
+                    for case in manifest["cases"].values():
+                        case.update(status="partial", measurement_status="passed",
+                                    monitoring_status=monitoring, diagnosis_status=diagnosis)
+                    report = MODULE.render_report(root, summary, manifest, [])
+                    explanation = next(line for line in report.splitlines() if "关键解释" in line)
+                    for text in expected:
+                        self.assertIn(text, explanation)
+                    for text in absent:
+                        self.assertNotIn(text, explanation)
+                    manifest["status"] = "passed"
+                    self.assertNotIn("关键解释", MODULE.render_report(root, summary, manifest, []))
+
     def test_partial_report_separates_measurement_and_diagnosis(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

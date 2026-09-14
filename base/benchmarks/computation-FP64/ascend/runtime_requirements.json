@@ -1,0 +1,5 @@
+{
+  "schema_version": 1,
+  "supported": false,
+  "unsupported_reason": "当前 Ascend 910C/A3 不支持本 Case 所需的原生 FP64 GEMM；Torch-FL 的 FP64 转 FP32 路径不能作为 FP64 算力结果"
+}

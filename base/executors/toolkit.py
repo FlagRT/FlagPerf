@@ -19,6 +19,7 @@ import sys
 import time
 from typing import Any
 
+from executors.progress import RunProgress
 from executors.common import (
     BaseRunContext,
     DeviceLease,
@@ -32,6 +33,24 @@ from executors.common import (
 BASE_DIR = Path(__file__).resolve().parents[1]
 REPORT_SCHEMA_VERSION = 6
 P2P_LATENCY_CASE = "interconnect-P2P_intraserver-latency"
+MIN_TOOLBOX_VERSION = (26, 1, 0)
+
+
+def validate_toolbox_version(install_info: str) -> str:
+    """Require an identifiable ToolBox release at least 26.1.0."""
+    versions = re.findall(r"^version\s*=\s*(\S+)\s*$", install_info, re.MULTILINE)
+    if len(versions) != 1:
+        fail("ToolBox version is missing or ambiguous; required >= 26.1.0")
+    version = versions[0]
+    # Vendor RC numbering replaces the patch component, e.g. 7.2.RC1.
+    match = re.fullmatch(r"(\d+)\.(\d+)\.(?:(\d+)|RC(\d+))", version)
+    if match is None:
+        fail(f"Unrecognized ToolBox version {version!r}; required >= 26.1.0")
+    major, minor, patch, rc = match.groups()
+    actual = (int(major), int(minor), int(patch or 0), 0 if rc else 1)
+    if actual < (*MIN_TOOLBOX_VERSION, 1):
+        fail(f"ToolBox version {version} is below the required minimum 26.1.0")
+    return version
 
 
 def container_namespace_args(cases: list[str] | None) -> list[str]:
@@ -77,8 +96,8 @@ def add_cli_arguments(
               "selected devices, or all inventory devices when no selector is given"),
     )
     parser.add_argument(
-        "--latency-sizes", default="512,4096,65536,1048576",
-        help="Ascend toolkit latency sizes in bytes (K/M/G suffixes are binary)",
+        "--latency-sizes", default=None,
+        help="Override latency sizes; default P2P: 64K, H2D/D2H: 512,4K,64K,1M",
     )
     parser.add_argument("--hccl-min-bytes", default="8K")
     parser.add_argument("--hccl-max-bytes", default="1G")
@@ -129,7 +148,7 @@ class ToolkitRunRequest:
     compute_monitor: str
     data_movement_monitor: str
     allow_disruptive_dmi: bool
-    latency_sizes: str
+    latency_sizes: str | None
     hccl_min_bytes: str
     hccl_max_bytes: str
     allow_privileged_root: bool
@@ -397,6 +416,10 @@ def execute_toolkit(
             toolbox_host_path=str(toolbox_host_path),
             toolbox_install_info=toolbox_version_file.read_text(encoding="utf-8"),
         )
+        final_summary["toolbox_minimum_version"] = "26.1.0"
+        final_summary["toolbox_version"] = validate_toolbox_version(
+            final_summary["toolbox_install_info"]
+        )
 
         stage = "device-inventory"
         missing = [path for path in config["required_devices"] if not Path(path).exists()]
@@ -525,13 +548,14 @@ def execute_toolkit(
                 " --device-ids " + ",".join(map(str, resolved))
                 + " --selection-source " + source
             )
+        latency_args = f"--latency-sizes {shlex.quote(args.latency_sizes)} " if args.latency_sizes else ""
         inner = (
             toolbox_setup
             + "source /usr/local/Ascend/toolbox/set_env.sh && "
             f"exec python3 {runner} "
             "--output /workspace/FlagPerf/results/toolkit-evidence "
             f"--allow-disruptive-dmi{legacy}{device_selection} "
-            f"--latency-sizes {shlex.quote(args.latency_sizes)} "
+            f"{latency_args}"
             f"--hccl-min-bytes {shlex.quote(args.hccl_min_bytes)} "
             f"--hccl-max-bytes {shlex.quote(args.hccl_max_bytes)} "
             f"--compute-monitor {args.compute_monitor} "
@@ -563,14 +587,19 @@ def execute_toolkit(
         final_summary["device_lease"] = lease.record()
         try:
             try:
-                proc = subprocess.run(
-                    command,
-                    text=True,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    check=False,
-                    timeout=args.timeout,
-                )
+                with RunProgress(
+                    "Toolkit",
+                    events=result_dir / "toolkit-evidence" / "progress.jsonl",
+                ) as progress:
+                    proc = subprocess.run(
+                        command,
+                        text=True,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,
+                        check=False,
+                        timeout=args.timeout,
+                    )
+                    progress.finished(proc.returncode)
             except subprocess.TimeoutExpired as exc:
                 output = exc.stdout or ""
                 if isinstance(output, bytes):

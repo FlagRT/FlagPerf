@@ -53,20 +53,34 @@ def main(config, case_config, rank, world_size, local_rank):
     measurement_event = benchmark_measurement_start()
 
     while byte_size >= min_byte_size:
+        if (config.vendor.split("/", 1)[0].lower() == "ascend"
+                and getattr(case_config, "BOUND_REQUEST_BY_FREE_MEMORY", False)):
+            byte_size = ascend_driver.capacity_request_mib(byte_size)
+            print(f"Attempt allocation: {byte_size} MiB; held={total_allocated} MiB", flush=True)
         try:
             tensor = torch.empty(((byte_size * 1024 * 1024) // 4), dtype=torch.float32, device=device)
             allocated_tensors.append(tensor)
             total_allocated += byte_size
             print(f"Allocated: {total_allocated} MiB")
         except RuntimeError as e:
-            if "out of memory" in str(e):
-                if "mthreads" in config.vendor:
+            is_ascend = config.vendor.split("/", 1)[0].lower() == "ascend"
+            allocation_failed = (
+                ascend_driver.is_allocation_failure(e) if is_ascend
+                else "out of memory" in str(e)
+            )
+            if allocation_failed:
+                if is_ascend:
+                    print(f"Ascend allocation failed at {byte_size} MiB; "
+                          f"allocated={total_allocated} MiB; raw error: {e}")
+                    if byte_size == min_byte_size and total_allocated == 0:
+                        raise
+                elif "mthreads" in config.vendor:
                     print(f"MUSA OOM at tensor size {byte_size} MiB. Allocated:{total_allocated} MiB")
                 else:
                     print(f"CUDA OOM at tensor size {byte_size} MiB. Allocated:{total_allocated} MiB")
                 byte_size //= 2
                 if byte_size < min_byte_size:
-                    print("Tensor size == 1 Byte, finish test.")
+                    print("Reached the 1 MiB allocation granularity, finish test.")
                     break
                 else:
                     print(f"Reduce tensor size to {byte_size} MiB")

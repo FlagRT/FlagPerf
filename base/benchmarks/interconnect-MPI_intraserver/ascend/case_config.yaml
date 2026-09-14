@@ -1,0 +1,5 @@
+# Locked FlagCX communication runtime; 4 MiB per rank, bounded daily run.
+DIST_BACKEND: "flagos"
+Melements: 1
+WARMUP: 10
+ITERS: 100

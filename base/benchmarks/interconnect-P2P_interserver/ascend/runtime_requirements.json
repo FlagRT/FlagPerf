@@ -1,0 +1,5 @@
+{
+  "schema_version": 1,
+  "supported": false,
+  "unsupported_reason": "跨机 P2P 不在当前 Ascend 单宿主统一入口的适配范围内；该入口固定 nnodes=1"
+}

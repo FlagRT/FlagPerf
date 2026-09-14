@@ -15,11 +15,52 @@
 """Minimal Torch-FL adapter for the existing FlagPerf Base cases."""
 
 import importlib
+import re
+import ctypes
 
 import torch
 
 
 _INITIALIZED = False
+
+
+def is_allocation_failure(error):
+    """Recognize OOM plus the locked Torch-FL allocator's untyped failure.
+
+    The compatibility message does not retain the ACL error code. Log the raw
+    error at the call site; never classify unrelated RuntimeErrors as OOM.
+    """
+    return (
+        isinstance(error, torch.OutOfMemoryError)
+        or "out of memory" in str(error).lower()
+        or re.fullmatch(
+            r"CachingDeviceAllocator: failed to allocate \d+ bytes on device \d+",
+            str(error).strip(),
+        ) is not None
+    )
+
+
+def capacity_request_mib(request_mib):
+    """Bound a real allocation attempt using current-device free HBM.
+
+    This is only a search hint, never the reported capacity. The caller keeps
+    successful tensors alive and still attempts 1 MiB when the hint is zero.
+    """
+    runtime = ctypes.CDLL("libascendcl.so")
+    query = runtime.aclrtGetMemInfo
+    query.argtypes = [ctypes.c_int, ctypes.POINTER(ctypes.c_size_t),
+                      ctypes.POINTER(ctypes.c_size_t)]
+    query.restype = ctypes.c_int
+    free, total = ctypes.c_size_t(), ctypes.c_size_t()
+    # ACL_HBM_MEM = 1 in the locked CANN 9 acl_rt.h.
+    rc = query(1, ctypes.byref(free), ctypes.byref(total))
+    if rc != 0:
+        raise RuntimeError(f"aclrtGetMemInfo failed: {rc}")
+    if total.value == 0 or free.value > total.value:
+        raise RuntimeError("aclrtGetMemInfo returned invalid HBM sizes")
+    # Free HBM is not necessarily one allocatable block. Taking at most half
+    # avoids a slow near-total request while converging to the same 1 MiB tail.
+    return max(1, min(request_mib, free.value // (2 * 1024 * 1024)))
 
 
 def initialize():

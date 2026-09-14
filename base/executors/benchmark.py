@@ -28,6 +28,7 @@ from generate_benchmark_report import (
     REPORT_SCHEMA_VERSION as BENCHMARK_REPORT_SCHEMA_VERSION,
     generate_and_record as generate_and_record_benchmark_report,
 )
+from executors.progress import RunProgress
 from executors.common import (
     BASE_DIR,
     BaseRunContext,
@@ -216,6 +217,8 @@ def validate_case_runtime_requirements(
     if record is None:
         return
     requirements = record["requirements"]
+    if requirements.get("supported") is False:
+        return
     required_profile = requirements.get("runtime_profile")
     actual_profile = config.get("runtime_profile", "torch_fl_2.10")
     if required_profile and actual_profile != required_profile:
@@ -239,6 +242,10 @@ def validate_case_runtime_requirements(
                 f"Benchmark Case {request.case} requires exactly {exact_nproc} "
                 f"local ranks, got {request.nproc_per_node}"
             )
+    minimum = process_scope.get("min_nproc_per_node")
+    if minimum is not None and request.nproc_per_node is not None:
+        if request.nproc_per_node < minimum:
+            raise ConfigurationError(f"Benchmark Case {request.case} requires at least {minimum} local ranks")
     requires_override = requirements.get(
         "requires_case_override",
         requirements.get("candidate_requires_case_override", False),
@@ -272,6 +279,9 @@ def validate_resolved_process_scope(
     if record is None:
         return
     process_scope = record["requirements"].get("process_scope", {})
+    minimum = process_scope.get("min_nproc_per_node")
+    if minimum is not None and nproc < minimum:
+        raise ConfigurationError(f"Benchmark Case {case} requires at least {minimum} local ranks")
     for field, actual in (("nnodes", nnodes), ("nproc_per_node", nproc)):
         expected = process_scope.get(field)
         if expected is not None and actual != expected:
@@ -373,6 +383,11 @@ class BenchmarkExecutor:
         config_path, config = load_host_config(request.context.config)
         runtime_requirements = case_runtime_requirement_record(request)
         validate_case_runtime_requirements(request, config, runtime_requirements)
+        requirements = runtime_requirements["requirements"] if runtime_requirements else {}
+        applicability = {
+            "status": "skipped" if requirements.get("supported") is False else "applicable",
+            "reason": requirements.get("unsupported_reason"),
+        }
         return {
             "schema_version": 1,
             "kind": "benchmark",
@@ -382,6 +397,7 @@ class BenchmarkExecutor:
             "runtime_identity": {"image_id": "deferred-until-image-inspection"},
             "runtime_lock": runtime_lock_record(config.get("runtime_profile")),
             "runtime_requirements": runtime_requirements,
+            "applicability": applicability,
             "selection_request": request.context.selection_request(),
             "selection_note": (
                 "physical-to-logical mapping and idle state are resolved only "
@@ -439,6 +455,24 @@ class BenchmarkExecutor:
             "report_generation": {"status": "not_started"},
         }
         write_json(result_dir / "summary.json", summary)
+        if static_plan["applicability"]["status"] == "skipped":
+            reason = static_plan["applicability"]["reason"]
+            summary.update({
+                "status": "skipped", "execution_status": "not-run",
+                "measurement_status": "not-run", "monitoring_status": "not-run",
+                "skip_reason": reason, "finished_at": utc_now(),
+                "benchmark_result": "benchmark-result.json",
+                "wall_clock_duration_s": round(time.perf_counter() - wall_started, 4),
+            })
+            write_json(result_dir / "summary.json", summary)
+            write_json(result_dir / "benchmark-result.json", {
+                "schema_version": 1, "case": request.case, "status": "skipped",
+                "skip_reason": reason, "metrics": [],
+            })
+            generate_benchmark_report(result_dir)
+            print(f"SKIPPED: {request.case}: {reason}")
+            print(f"Result directory: {result_dir}")
+            return 0
         stage = "case-configuration"
         try:
             stored_case_config = snapshot_case_configuration(request, result_dir)
@@ -679,14 +713,16 @@ class BenchmarkExecutor:
             container_started_monotonic_ns = time.monotonic_ns()
             try:
                 try:
-                    proc = subprocess.run(
-                        command,
-                        text=True,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.STDOUT,
-                        check=False,
-                        timeout=request.context.timeout,
-                    )
+                    with RunProgress("Benchmark", case=request.case) as progress:
+                        proc = subprocess.run(
+                            command,
+                            text=True,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT,
+                            check=False,
+                            timeout=request.context.timeout,
+                        )
+                        progress.finished(proc.returncode)
                     runner_log = proc.stdout or ""
                     returncode = proc.returncode
                 except subprocess.TimeoutExpired as exc:

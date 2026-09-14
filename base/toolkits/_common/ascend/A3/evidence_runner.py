@@ -52,7 +52,7 @@ from __future__ import annotations
 import argparse
 from datetime import datetime, timezone
 import hashlib
-from itertools import combinations, permutations
+from itertools import combinations
 import json
 import math
 import os
@@ -1215,7 +1215,7 @@ class Runner:
         self, root: Path, cases: list[str], legacy_probe: bool,
         selected_devices: list[int] | None = None,
         selection_source: str = "default-all",
-        latency_sizes: tuple[int, ...] = DEFAULT_LATENCY_SIZES,
+        latency_sizes: tuple[int, ...] | None = None,
         hccl_min_bytes: int = 8 << 10,
         hccl_max_bytes: int = 1 << 30,
         compute_monitor: bool = True,
@@ -1228,7 +1228,8 @@ class Runner:
         self.explicit_selection = selected_devices is not None
         self.devices = sorted(selected_devices) if selected_devices is not None else list(self.inventory_devices)
         self.selection_source = selection_source
-        self.latency_sizes = latency_sizes
+        self.latency_sizes = latency_sizes or DEFAULT_LATENCY_SIZES
+        self.p2p_latency_sizes = latency_sizes or (65536,)
         self.hccl_min_bytes = hccl_min_bytes
         self.hccl_max_bytes = hccl_max_bytes
         self.compute_monitor = compute_monitor
@@ -1255,7 +1256,8 @@ class Runner:
             "diagnostics": {}, "cases": {},
             "legacy_probe": legacy_probe,
             "parameters": {
-                "latency_sizes_bytes": list(latency_sizes),
+                "latency_sizes_bytes": list(self.latency_sizes),
+                "p2p_latency_sizes_bytes": list(self.p2p_latency_sizes),
                 "hccl_min_bytes": hccl_min_bytes,
                 "hccl_max_bytes": hccl_max_bytes,
                 "hccl_factor": 2, "hccl_warmup": 10, "hccl_iterations": 20,
@@ -2024,29 +2026,11 @@ class Runner:
         metrics: list[dict[str, Any]] = []
         commands: list[dict[str, Any]] = []
         errors: list[str] = []
-        if not self.explicit_selection:
-            size = self.latency_sizes[0]
-            command = ["ascend-dmi", "-l", "-t", "p2p", "-s", str(size), "-q"]
-            record = command_record(self.root, directory / f"matrix-size-{size}", command,
-                                    timeout=1800, label="microbenchmark", required=False)
-            commands.append(self._public_command(record))
-            if record["returncode"] == 0:
-                try:
-                    metrics = parse_p2p_latency_matrix(record["stdout_text"], size)
-                except EvidenceError as exc:
-                    errors.append(str(exc))
-            else:
-                errors.append(f"P2P latency matrix returned {record['returncode']}")
-            return metrics, commands, {
-                "sweep_scope": {"mode": "full-device-512B-matrix", "sizes_bytes": [size],
-                                "reverse_pairs_inferred": False},
-                "coverage_error": "; ".join(errors) or None,
-            }
-        pairs = list(permutations(self.devices, 2))
+        pairs = list(combinations(sorted(self.devices), 2))
         if not pairs:
             return [], [], {"coverage_error": "P2P latency requires at least two selected Devices"}
         for source, destination in pairs:
-            for size in self.latency_sizes:
+            for size in self.p2p_latency_sizes:
                 command = ["ascend-dmi", "-l", "-t", "p2p", "-s", str(size),
                            "--ds", str(source), "--dd", str(destination),
                            "-q", "--fmt", "json"]
@@ -2065,12 +2049,13 @@ class Runner:
                     ))
                 except EvidenceError as exc:
                     errors.append(f"{source}->{destination}, {size} bytes: {exc}")
-        expected = {(str(a), str(b), size) for a, b in pairs for size in self.latency_sizes}
+        expected = {(str(a), str(b), size) for a, b in pairs for size in self.p2p_latency_sizes}
         observed = {(item["source_device"], item["destination_device"], item["size_bytes"])
                     for item in metrics}
         missing = sorted(expected - observed)
         return metrics, commands, {
-            "sweep_scope": {"mode": "selected-directed-pairs", "expected_points": len(expected),
+            "sweep_scope": {"mode": "selected-unordered-pairs", "pair_order": "ascending source-to-destination",
+                            "sizes_bytes": list(self.p2p_latency_sizes), "expected_points": len(expected),
                             "completed_points": len(observed), "missing_points": missing,
                             "reverse_pairs_inferred": False},
             "coverage_error": "; ".join(errors) or (
@@ -2415,9 +2400,22 @@ class Runner:
             write_json(directory / "metrics.json", result)
             self.save()
 
+    def progress(self, phase: str, completed: int, *, case: str | None = None) -> None:
+        """Append display events only; progress failure must not affect evidence."""
+        event = {"phase": phase, "completed": completed, "total": len(self.cases)}
+        if case is not None:
+            event.update(case=case, index=completed + 1, case_started=time.monotonic())
+        try:
+            with (self.root / "progress.jsonl").open("a", encoding="utf-8") as stream:
+                stream.write(json.dumps(event) + "\n")
+        except OSError:
+            pass
+
     def run(self) -> int:
         self.root.mkdir(parents=True, exist_ok=False)
         self.save()
+        self.progress("preflight", 0)
+        completed = 0
         fatal: Exception | None = None
         fatal_partial = False
         post_health_error: Exception | None = None
@@ -2436,7 +2434,11 @@ class Runner:
             self.collect_topology()
             self.collect_health("pre")
             for case in self.cases:
+                self.progress("running", completed, case=case)
                 self.run_case(case)
+                completed += 1
+                self.progress("case-finished: " + case, completed)
+            self.progress("diagnostics", completed)
             self.collect_diagnostics()
             for case, result in self.manifest["cases"].items():
                 if result["diagnosis"] is None:
@@ -2483,6 +2485,7 @@ class Runner:
         finally:
             if "pre" in self.manifest["health"]:
                 try:
+                    self.progress("postflight", completed)
                     self.collect_health("post")
                 except Exception as exc:
                     post_health_error = exc
@@ -2500,6 +2503,7 @@ class Runner:
             returncode = 0
         self.manifest["finished_at"] = utc_now()
         self.save()
+        self.progress(self.manifest["status"], completed)
         print(json.dumps({
             "status": self.manifest["status"],
             "manifest": str(self.root / "manifest.json"),
@@ -2524,7 +2528,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--device-ids")
     parser.add_argument(
         "--latency-sizes", type=parse_latency_sizes,
-        default=DEFAULT_LATENCY_SIZES,
+        default=None,
         help="comma-separated byte sizes; K/M/G use binary powers",
     )
     parser.add_argument("--hccl-min-bytes", type=parse_byte_size, default=8 << 10)

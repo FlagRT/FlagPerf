@@ -49,7 +49,20 @@ def main(config, case_config, rank, world_size, local_rank):
         
     Melements = case_config.Melements
     torchsize = (Melements, 1024, 1024)
-    tensor = torch.ones(torchsize, dtype=torch.float32).to(local_rank)
+    device = accelerator_device(config.vendor, local_rank)
+    if config.vendor.split("/", 1)[0].lower() == "ascend":
+        # Validate nonzero SUM once, outside warmup and measurement. All ranks
+        # inspect the entire result; zeros keep repeated in-place SUM finite.
+        tensor = torch.full(torchsize, float(rank + 1), dtype=torch.float32).to(device)
+        dist.all_reduce(tensor, op=dist.ReduceOp.SUM)
+        host_device_sync(config.vendor)
+        expected = world_size * (world_size + 1) // 2
+        if not torch.all(tensor.cpu() == expected).item():
+            raise RuntimeError(f"AllReduce SUM correctness failed on rank {rank}")
+        print(f"Rank {rank}: AllReduce SUM correctness passed; expected={expected}")
+        tensor = torch.zeros(torchsize, dtype=torch.float32).to(device)
+    else:
+        tensor = torch.ones(torchsize, dtype=torch.float32).to(device)
 
     host_device_sync(config.vendor)
     multi_device_sync(config.vendor)
@@ -62,6 +75,7 @@ def main(config, case_config, rank, world_size, local_rank):
     host_device_sync(config.vendor)
     multi_device_sync(config.vendor)
     
+    measurement_event = benchmark_measurement_start()
     start_time = time.perf_counter()
 
     for _ in range(case_config.ITERS):
@@ -70,6 +84,10 @@ def main(config, case_config, rank, world_size, local_rank):
     host_device_sync(config.vendor)
     multi_device_sync(config.vendor)
     end_time = time.perf_counter()
+    benchmark_measurement_finish(measurement_event)
+    if config.vendor.split("/", 1)[0].lower() == "ascend":
+        if not torch.all(tensor.cpu() == 0).item():
+            raise RuntimeError(f"AllReduce timed output corrupted on rank {rank}")
 
     elapsed_time = end_time - start_time
 
@@ -100,6 +118,7 @@ def main(config, case_config, rank, world_size, local_rank):
 
 if __name__ == "__main__":    
     config = parse_args()
+    bootstrap_vendor(config.vendor)
     with open("case_config.yaml", "r") as file:
         case_config = yaml.safe_load(file)
     with open(os.path.join(config.vendor, "case_config.yaml"), "r") as file:
@@ -107,7 +126,13 @@ if __name__ == "__main__":
     case_config.update(case_config_vendor)
     case_config = Namespace(**case_config)
 
-    dist.init_process_group(backend=case_config.DIST_BACKEND)  
+    if config.vendor.split("/", 1)[0].lower() == "ascend":
+        if case_config.DIST_BACKEND != "flagos":
+            raise ValueError("Ascend AllReduce requires the FlagCX flagos backend")
+        if int(os.environ.get("WORLD_SIZE", "1")) < 2:
+            raise ValueError("AllReduce requires at least two ranks")
+        accelerator_device(config.vendor, int(os.environ["LOCAL_RANK"]))
+    dist.init_process_group(backend=case_config.DIST_BACKEND)
     rank = dist.get_rank()
     world_size = dist.get_world_size()
     local_rank = rank % config.node_size
