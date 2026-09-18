@@ -21,7 +21,7 @@ import sys
 import time
 
 ROOT = Path(__file__).resolve().parent
-PREFIX = Path('/root/miniconda/envs/python310_torch29_cuda')
+PREFIX = Path(json.loads((ROOT/'stack.lock.yaml').read_text())['conda_prefix'])
 PACKAGES = ('torch', 'torch-xray', 'torch-xmlir', 'xmlir', 'xtorch-ops',
             'torch-plugin', 'flag-gems', 'flagtree', 'triton', 'flagcx',
             'vllm', 'vllm-plugin-fl')

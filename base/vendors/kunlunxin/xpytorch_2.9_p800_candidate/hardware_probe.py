@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Isolated PR0 probes. Run only inside an explicitly reserved one-card container.
+"""Isolated PR0 probes. Run only inside an explicitly selected-device container.
 
 The supervisor starts with -S. Only gated worker processes enable site hooks.
 This produces candidate evidence, never a validated runtime or a benchmark.
@@ -19,6 +19,7 @@ import sys
 import time
 
 from verify_runtime import ROOT, PREFIX, sha256, validate_manifest, validate_packages, normalize
+from device_mapping import validate_device_set, resolve_logical_devices
 
 STAGES = ('import_device', 'fp32', 'seed', 'memory', 'pinned_copy', 'event')
 
@@ -29,30 +30,22 @@ def require(condition, message):
 
 
 def validate_binding(binding, environ, nodes, now=None):
-    require(binding.get('schema_version') == 1, 'binding schema must be 1')
-    physical = binding.get('host_physical_id')
-    require(type(physical) is int and 0 <= physical <= 7, 'physical card must be 0..7')
-    container_node = binding.get('container_node')
-    host_node = binding.get('host_device_node', '')
-    require(bool(re.fullmatch(r'/dev/xpu[0-7]', host_node)), 'invalid host device node')
-    require(container_node == host_node, 'unsupported container node mapping')
-    require(binding.get('device_minor') == int(host_node[-1]), 'device minor mismatch')
-    require(bool(re.fullmatch(r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}',
-                              binding.get('uuid', ''))), 'device UUID required')
-    require(binding.get('logical_device') == 0, 'single-card logical device must be 0')
+    require(binding.get('schema_version') in (1, 2), 'binding schema must be 1 or 2')
+    devices = binding['devices'] if binding['schema_version'] == 2 else [binding]
+    validate_device_set(devices)
+    if binding['schema_version'] == 1:
+        require(binding.get('logical_device') == 0, 'single-card logical device must be 0')
     require(bool(binding.get('reservation_reference')), 'reservation reference required')
-    require(bool(re.fullmatch(r'[0-9a-fA-F]{4}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}\.[0-7]',
-                              binding.get('pci_bdf', ''))), 'host PCI BDF required')
     start = datetime.fromisoformat(binding['reservation_start'].replace('Z', '+00:00'))
     end = datetime.fromisoformat(binding['reservation_end'].replace('Z', '+00:00'))
     require(start.tzinfo is not None and end.tzinfo is not None, 'reservation needs timezone')
     now = now or datetime.now(timezone.utc)
     require(start <= now < end, 'outside reservation window')
     visible = binding.get('cuda_visible_devices')
-    require(visible == '0', 'single-card visibility must be zero')
+    require(visible == ','.join(str(i) for i in range(len(devices))), 'visibility must enumerate selected subset')
     require(environ.get('CUDA_VISIBLE_DEVICES') == visible, 'visibility must match binding')
     require(environ.get('XPU_VISIBLE_DEVICES') is None and binding.get('xpu_visible_devices') is None, 'native XPU visibility must be unset')
-    require(set(nodes) == {container_node, '/dev/xpuctrl'}, 'unexpected or missing device nodes')
+    require(set(nodes) == {d['container_node'] for d in devices} | {'/dev/xpuctrl'}, 'unexpected or missing device nodes')
     require(environ.get('XPU_EVENT_KL3_ENABLE') is None, 'KL3 must be unset for native probe')
     require(environ.get('USE_FLAGGEMS') in (None, '', '0'), 'FlagGems is a separate qualification scope')
     return end
@@ -89,14 +82,36 @@ def worker(stage, binding, output_dir):
                       'visible_devices': os.environ.get('CUDA_VISIBLE_DEVICES'),
                       'loaded_libraries': loaded_libraries()}), flush=True)
     require(torch.cuda.is_available(), 'cuda-compatible P800 backend unavailable')
-    require(torch.cuda.device_count() == 1, 'expected exactly one visible accelerator')
-    torch.cuda.set_device(0)
-    device = torch.device('cuda:0')
-    name = torch.cuda.get_device_name(0)
+    devices = binding['devices'] if binding['schema_version'] == 2 else [binding]
+    properties_by_index = [torch.cuda.get_device_properties(i) for i in range(torch.cuda.device_count())]
+    resolved = resolve_logical_devices(devices, [p.uuid for p in properties_by_index])
+    if stage == 'mapping':
+        # Enumerate and validate the entire UUID set before allocating on any card.
+        per_device = []
+        for item in resolved:
+            index = item['logical_device']
+            torch.cuda.set_device(index)
+            device = torch.device(f'cuda:{index}')
+            a = torch.tensor([[1., 2.], [3., 4.]], device=device)
+            b = torch.tensor([[5., 6.], [7., 8.]], device=device)
+            output = a @ b
+            torch.cuda.synchronize(device)
+            require(output.device == device, 'matmul output on wrong device')
+            require(output.cpu().tolist() == [[19., 22.], [43., 50.]], 'per-device FP32 incorrect')
+            per_device.append(dict(item, result=output.cpu().tolist(), device=str(device)))
+        faulthandler.cancel_dump_traceback_later()
+        return {'stage': stage, 'passed': True, 'devices': per_device,
+                'scope': 'selected-device mapping and independent tiny FP32; no collectives',
+                'loaded_libraries': loaded_libraries()}
+    require(len(resolved) == 1, 'full API probes require one selected device')
+    index = resolved[0]['logical_device']
+    torch.cuda.set_device(index)
+    device = torch.device(f'cuda:{index}')
+    name = torch.cuda.get_device_name(index)
     # This XPYTORCH build exposes the generic label GPU even on P800.
     # Host PCI identity plus actual opened nodes must establish the mapping.
     require('P800' in name.upper() or name == 'GPU', f'unexpected accelerator: {name}')
-    properties = torch.cuda.get_device_properties(0)
+    properties = properties_by_index[index]
     require(str(properties.uuid).lower() == binding['uuid'], 'framework UUID differs from selected physical card')
     print('checkpoint: device properties read', flush=True)
     result = {'stage': stage, 'torch': torch.__version__, 'device': str(device),
@@ -223,7 +238,8 @@ def main():
     parser.add_argument('--inspect-json', type=Path, required=True)
     parser.add_argument('--output-dir', type=Path, required=True)
     parser.add_argument('--timeout', type=float, default=45)
-    parser.add_argument('--stage', choices=STAGES+('route_control',), help=argparse.SUPPRESS)
+    parser.add_argument('--mapping-only', action='store_true')
+    parser.add_argument('--stage', choices=STAGES+('route_control', 'mapping'), help=argparse.SUPPRESS)
     args = parser.parse_args()
     require(sys.flags.no_site, 'use bootstrap or python -S; gate must precede site hooks')
     require(args.allow_candidate, 'explicit --allow-candidate required')
@@ -232,6 +248,7 @@ def main():
                       json.loads(args.inspect_json.read_text()))
     binding = json.loads(args.binding_json.read_text())
     end = validate_binding(binding, os.environ, [str(p) for p in Path('/dev').glob('xpu*')])
+    require(binding['schema_version'] == 1 or args.mapping_only, 'multi-device binding requires mapping-only mode')
     if args.stage:
         result = worker(args.stage, binding, args.output_dir)
         (args.output_dir/f'{args.stage}.json').write_text(json.dumps(result, indent=2)+'\n')
@@ -240,11 +257,12 @@ def main():
     args.output_dir.mkdir(parents=True, exist_ok=False)
     summary = {'validated': False, 'release_stage': 'candidate', 'binding': binding,
                'image_id': json.loads((ROOT/'image-manifest.json').read_text())['image_id'],
-               'stages': [], 'status': 'running', 'scope': 'native single-card PR0 probes',
+               'stages': [], 'status': 'running',
+               'scope': 'selected-device mapping smoke' if args.mapping_only else 'native single-card PR0 probes',
                'physical_mapping_verified': False, 'cpu_fallback_excluded': False}
     summary_path = args.output_dir/'summary.json'
-    stages = STAGES
-    if os.environ.get('P800_PROFILE_ROUTE') == '1':
+    stages = ('mapping',) if args.mapping_only else STAGES
+    if not args.mapping_only and os.environ.get('P800_PROFILE_ROUTE') == '1':
         stages = ('import_device', 'route_control')+STAGES[1:]
     for stage in stages:
         remaining = (end-datetime.now(timezone.utc)).total_seconds()
@@ -255,6 +273,8 @@ def main():
                 '--allow-candidate', '--binding-json', str(args.binding_json.resolve()),
                 '--inspect-json', str(args.inspect_json.resolve()),
                 '--output-dir', str(args.output_dir.resolve()), '--stage', stage]
+        if args.mapping_only:
+            argv.append('--mapping-only')
         record = run_isolated(argv, args.output_dir, stage, args.timeout)
         stderr = (args.output_dir/f'{stage}.stderr.log').read_text()
         record['native_api_summary_present'] = 'API calls end' in stderr

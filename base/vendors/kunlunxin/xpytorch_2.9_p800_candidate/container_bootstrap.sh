@@ -3,10 +3,10 @@
 # Licensed under the Apache License, Version 2.0 (the "License").
 set -euo pipefail
 PROFILE_ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-RUNTIME_PREFIX=/root/miniconda/envs/python310_torch29_cuda
+RUNTIME_PREFIX=$(python3 -S -c 'import json,sys; print(json.load(open(sys.argv[1]))["conda_prefix"])' "$PROFILE_ROOT/stack.lock.yaml")
 test -x "$RUNTIME_PREFIX/bin/python"
 test -x "$RUNTIME_PREFIX/bin/torchrun"
-source /root/miniconda/bin/activate "$RUNTIME_PREFIX"
+source "$(dirname -- "$(dirname -- "$RUNTIME_PREFIX")")/bin/activate" "$RUNTIME_PREFIX"
 export PYTHONDONTWRITEBYTECODE=1
 export PYTHONNOUSERSITE=1
 # -S bypasses executable .pth/sitecustomize in the no-device audit.
