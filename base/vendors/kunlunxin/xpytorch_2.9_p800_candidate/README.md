@@ -1,125 +1,111 @@
 # P800 M1 candidate runtime (PR0)
 
-This standalone qualification profile does not yet connect P800 to the Base
-executor. M1 is retained for hardware qualification, not approved for formal
-benchmarks. See `qualification-record.json` for remaining gates. The lock is
-JSON-compatible YAML, readable with the Python standard library.
+M1 passes the bounded single-card PR0 smoke checks and is retained for further
+Base development. This standalone profile is not connected to the Base executor
+and is not approved for formal benchmarks. Day 1 technical smoke and the image
+decision are complete; maintainer compatibility confirmation remains open.
+`image-manifest.json` remains `validated: false`, with no formal validation scope.
 
-Day 1 is **incomplete**. Static preparation is complete; real single-card
-import/FP32/CPU-reference/sync, seed/memory/pinned/OOM API checks, physical mapping
-and CPU-fallback exclusion have not been verified. Maintainer questions are
-prepared but unsent. The version discrepancy is recorded, not resolved.
-There is no hardware-based go/no-go decision yet.
+## Development and evidence
 
-## Completed on 2026-09-18
+Develop directly on `zhiyu/kunlunxin-p800` in
+`/home/kzhang519/Zhiyu/runtime-team/FlagPerf`, based on `origin/dev-1.0` at
+`3e7c558b6f56e6ea5f9c8b318852d97d1517a14c`. Do not create another worktree.
+Use Conventional Commits without attribution trailers.
 
-- Created `zhiyu/kunlunxin-p800` from `origin/dev-1.0` at
-  `3e7c558b6f56e6ea5f9c8b318852d97d1517a14c`.
-- Develop directly on that branch in
-  `/home/kzhang519/Zhiyu/runtime-team/FlagPerf`. The former linked worktree was
-  removed after preserving the PR0 commits and copying/verifying raw evidence.
-  Use `git switch zhiyu/kunlunxin-p800`; no additional clone/worktree is needed.
-- Inspected the immutable M1 image; collected package, editable installation,
-  startup hook, vendor version, library hash and pre-import `ldd` evidence.
-- Collected host OS/kernel, driver/header, device nodes and `xpu-smi -q/-m` in
-  `base/result/p800-pr0-20260918/` (ignored raw operational artifacts).
-- Hardware probes have NOT run: reserved card and time window are pending.
+The immutable image is
+`flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev:202608`, ID
+`sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975`.
+The lock is JSON-compatible YAML, readable with the Python standard library.
 
-The no-device audit uses `python -S` to avoid executable `.pth` hooks. An audit
-exit of zero means inventory/lock collection succeeded, not hardware approval.
-`evidence/static-audit.json` retains unresolved `ldd` dependencies. Loader
-behavior must be checked in the eventual workers' `loaded_libraries` output.
-The recorded XRE/XHPC version mismatch also needs maintainer confirmation.
+Static inventory is in `evidence/static-audit.json`; portable single-card
+evidence and its review are in `evidence/day1/`. Full operational logs, including
+failed attempts, remain under ignored `base/result/p800-pr0-20260918*` directories.
+Read `qualification-record.json` for status and unsent maintainer questions.
 
-## Static audit
+## Observed API and mapping (2026-09-18)
 
-Run an owned, disposable container using the manifest's immutable image ID,
-no network, no device mappings, read-only source and root filesystem, a small
-`/tmp` tmpfs, and `/bin/bash` as entrypoint. Execute:
+| Item | Observed behavior |
+|---|---|
+| Host identity | xpu-smi index 2, PCI `0000:1c:00.0`, UUID `09d75c76-1b13-5686-a3d2-a9647e48f619` |
+| Actual device node | `/dev/xpu3` (major 195, minor 3), plus `/dev/xpuctrl` |
+| Container/runtime | Nonprivileged, capabilities dropped; `CUDA_VISIBLE_DEVICES=0`, device `cuda:0`, device count 1 |
+| Initialization | Explicit Conda activation, site hooks, `torch` and `torch_xmlir` imports |
+| FP32 | 32×32, CPU FP64 reference, rtol/atol 1e-4, maximum absolute error `6.6186313503191485e-06` |
+| Seed | `torch.cuda.manual_seed_all(519)`, exact repeat |
+| Memory | `torch.cuda.mem_get_info(0)`: total 103079215104 bytes; OOM exception API exists, allocation failure NOT exercised |
+| Pinned copy | 1024-byte H2D/D2H round trip matches exactly with full synchronization |
+| Event | Completes after device synchronization, but elapsed time is 0; unsuitable for Perf timing |
+| Environment | `XPU_EVENT_KL3_ENABLE` and `XPU_VISIBLE_DEVICES` unset; `USE_FLAGGEMS=0` |
+
+**Never equate xpu-smi index with node minor.** Query `xpu-smi -i INDEX -q`,
+match its PCI BDF against the machine inventory, then use its Minor Number and
+UUID. The framework reports a generic `GPU` name and zero PCI fields; its UUID
+must match the selected host card before allocating tensors. One mapped node is
+enumerated as logical zero. The launcher implements these checks.
+
+Native tracing showed 4 `cu_xpu_launch_async` calls for the input-only control
+and 8 for the same preparation plus 4 matmuls. Combined with matching UUID,
+opened nodes, correct output and actual Kunlun libraries, this supports P800
+execution for this FP32 smoke. It is not a named-kernel trace or proof that every
+internal operation avoids CPU execution. The raw supervisor keeps its broad
+`cpu_fallback_excluded` flag false; the scoped review is separate. PyTorch
+profiler exposed CPU events only, and combining it with native tracing caused a
+subscriber conflict. Do not enable both together.
+
+The worker's loaded-library paths and hashes resolve the earlier pre-import
+`ldd` uncertainty: runtime uses the Conda `xcudart/lib/*.kunlun` libraries and
+`torch_xmlir/xccl/so/libbkcl.so`. This does not establish collective support or
+resolve XRE 5.13 versus XHPC metadata requiring 5.18.
+
+## Reproduce a bounded single-card probe
+
+Obtain authorization for an idle card, then run from the repository root. The
+launcher rechecks memory, utilization and open device handles. Its advisory lock
+coordinates only instances of this tool; it is not a team-wide reservation.
+Replace all placeholders; previous card numbers and windows are not reusable
+reservations.
+
+```bash
+sudo -v
+python3 base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/launch_qualification.py \
+  --card SMI_INDEX --profile-route \
+  --reservation-end 'END_TIME_WITH_TIMEZONE' \
+  --reservation-reference 'AUTHORIZATION_OR_RESERVATION_REFERENCE' \
+  --result-dir base/result/UNIQUE_PR0_ATTEMPT
+```
+
+The result directory must be new. The window must cover the default 360-second
+container timeout plus 30 seconds for cleanup. The launcher records the commit,
+working-tree status, script hashes, immutable image, host identity, actual Docker
+device spec, per-stage output, selected-card telemetry and postflight state.
+It removes only its own container. Keep failed attempt directories; never reset
+cards or modify another user's container. No host driver library mount is needed.
+
+The container has no network, a read-only source and root filesystem, bounded
+writable cache/tmp, and a group-writable result directory. Only the selected
+node and control node are mapped. Bootstrap explicitly unsets KL3 and native XPU
+visibility. The supervisor starts with `python -S`, checks image/binding/time
+before site hooks, and uses isolated workers with a 45-second stage timeout.
+`--profile-route` adds a seventh, input-only control stage and native API counters.
+
+Use `perf_counter` with synchronization before and after the measurement window
+for subsequent performance work. PR0 numbers include initialization/JIT costs
+and are not throughput results. No large allocations, FlagGems qualification,
+collectives, other precisions, Base end-to-end case or Ascend regression were run.
+
+## Static audit and offline checks
+
+In an owned no-device, no-network container using the manifest image, read-only
+source and /bin/bash entrypoint, the static audit command is:
 
 ```bash
 bash /workspace/FlagPerf/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/container_bootstrap.sh \
   --static --inspect-json /workspace/FlagPerf/base/result/p800-pr0-20260918/image-inspect.json
 ```
 
-The inspect JSON must come from a fresh host `docker image inspect`, and the
-container must use that exact ID. Do not overwrite or modify existing team
-containers. Do not mount host driver libraries without a verified requirement.
-
-## Reserved single-card probes
-
-Before launching: confirm reservation, save fresh target-card telemetry, verify
-idle state and PCI BDF, and create a binding JSON with these keys:
-
-```json
-{
-  "schema_version": 1,
-  "host_physical_id": 3,
-  "container_node": "/dev/xpu3",
-  "logical_device": 0,
-  "pci_bdf": "0000:83:00.0",
-  "reservation_reference": "REPLACE_WITH_CONFIRMED_RESERVATION",
-  "reservation_start": "2026-01-01T00:00:00+08:00",
-  "reservation_end": "2026-01-01T00:10:00+08:00"
-}
-```
-
-These deliberately expired example values are not a reservation. Replace every
-value with the actual reservation/mapping. Use an owned nonprivileged container
-with ONLY same-number `/dev/xpuN` and `/dev/xpuctrl`, `CUDA_VISIBLE_DEVICES=N`,
-no network, read-only source, a writable output mount, and a bounded writable
-cache/tmp location if the runtime requires it. Unset `XPU_EVENT_KL3_ENABLE` and
-do not enable FlagGems. No all-card mapping or host configuration changes.
-
-Inside that container, run with an external container lifetime limit of 360s
-(and 10s kill grace), using a fresh output directory:
-
-```bash
-bash /workspace/FlagPerf/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/container_bootstrap.sh \
-  --allow-candidate --inspect-json /evidence/image-inspect.json \
-  --binding-json /evidence/binding.json --output-dir /results/attempt-001 --timeout 45
-```
-
-An external timeout must stop and remove only this attempt's named container;
-terminating the Docker CLI alone does not guarantee the container is stopped.
-Save postflight telemetry and confirm no owned container or allocation remains.
-Keep all failed attempt directories. Do not reset cards.
-
-The host launcher now performs selected-card `xpu-smi` and open-handle preflight,
-checks the immutable image, creates a nonprivileged one-card container, records
-its actual Docker identity/device spec, samples target-card telemetry, enforces
-the container timeout, and removes only that attempt's container. It uses a
-per-card advisory lock; the lock does not reserve resources from other users.
-The launcher has not yet been exercised with hardware. After confirming a card
-and window, run from the repository root (replace all placeholders):
-
-```bash
-sudo -v
-python3 base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/launch_qualification.py \
-  --card PHYSICAL_CARD --reservation-end 'END_TIME_WITH_TIMEZONE' \
-  --reservation-reference 'CONFIRMED_RESERVATION' \
-  --result-dir base/result/UNIQUE_PR0_ATTEMPT
-```
-
-The result directory must not already exist. The window must cover the default
-360-second container timeout plus 30 seconds for cleanup. Host binding evidence
-still needs comparison with the framework's device identity; Docker mapping
-alone cannot establish that the framework used the intended physical card.
-
-The supervisor validates identity and binding before enabling Python site hooks.
-Each phase uses a fresh worker process and includes import and teardown in its
-timeout. Core import/device or FP32 failure stops further phases. The remaining
-probes record seed, memory/OOM API (no OOM allocation), pinned copies and event
-timing. Timing zero is recorded as unusable; use wall time plus full device
-synchronization for subsequent performance work. No throughput claim is made.
-
-Tensor device checks alone cannot exclude internal CPU fallback or prove the
-host mapping. Review target-card telemetry, device properties and actual loaded
-libraries before marking these gates complete. The summary deliberately keeps
-`physical_mapping_verified` and `cpu_fallback_excluded` false. No probe promotes
-this candidate automatically. FlagCX collectives and FlagGems are separate work.
-
-## Offline checks
+Obtain the inspect JSON from a fresh host `docker image inspect`. Static audit
+uses `python -S` and does not import accelerator packages or imply hardware approval.
 
 ```bash
 python3 -S -m unittest discover \
@@ -127,15 +113,12 @@ python3 -S -m unittest discover \
 bash -n base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/container_bootstrap.sh
 ```
 
-The initial 12 tests cover image/lock checks, reservation/device input gates,
-and worker timeout/exit behavior. Four added tests cover the host inventory
-parser (quoted product, PCI domain, missing/duplicate devices, malformed output).
-These checks do not exercise torch operators, P800 hardware, live Docker
-lifecycle, the Base executor or the full Ascend regression suite.
+24 offline tests cover image/package locks, binding/UUID/minor/visibility gates,
+time windows, worker failure/timeout, and host identity parsing. They do not
+simulate hardware success or verify the entire Docker lifecycle.
 
-Team source references are pinned at
-`runtime-team@e740bf78c08e1463c3920959e47dad3ed348118c`: device-context P800
-backend/conformance, memory `device-smoke_p800.py`, and isolated probe patterns.
-This implementation uses explicit-device synchronization, assertions, small
-allocations and subprocess timeouts; it does not copy the legacy timing,
-swallowed-error or print-only correctness behavior.
+Team references are pinned at
+`runtime-team@e740bf78c08e1463c3920959e47dad3ed348118c`: device-context P800 API and
+conformance, memory device/copy probes, and isolated process patterns. Perf adds
+explicit-device synchronization, assertions, bounded allocation and evidence;
+legacy timing and swallowed-error behavior are not reused.

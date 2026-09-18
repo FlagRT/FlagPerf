@@ -1,0 +1,14 @@
+{
+  "head": "f38d2684e359bebf8a91cc9df9a498cbded0fc78",
+  "status": "",
+  "profile_sha256": {
+    "container_bootstrap.sh": "aee5578a682b1ddef41a99b1d5a402c8ff5e1efe6b8109c764e3bca99003131a",
+    "hardware_probe.py": "8dd7a7342929400fffba15db207bb02f90ce2020fcae0138e4732f4d1f1dc222",
+    "image-manifest.json": "ab59dc1cd14b65a28ffaef7b1b21b1d0b51f5334619301659d4123a5c681acbf",
+    "launch_qualification.py": "f7839f607bf472ead1ef7d1bb6148a12b9c26e5ca24fe7cf5df82474f8239b3a",
+    "qualification-record.json": "9633898d7e553f661e192585df54b3955d3babbb2adb038287e3628971f5ee63",
+    "stack.lock.yaml": "612ce7ad17b9924c53d6e8437bf499c7fdf0d5fa5b6cc925925ce2ddf21ae017",
+    "test_qualification.py": "ae75a0f0ab7b17b0f650bf0703a0e64656836cbd0876afd8a624dfab838fadb1",
+    "verify_runtime.py": "3061de4b4e20b1b4f365095de4a1f96f7c258dc1da7ba04012468889bee0d088"
+  }
+}

@@ -1,0 +1,13 @@
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+==704== API calls begin:
+cbid=   3, name=                              cuDeviceGet, count=          1, totalNsec=              330, avgNsec=        330, totalSec= 0.000000
+cbid=   4, name=                         cuDeviceGetCount, count=          1, totalNsec=              120, avgNsec=        120, totalSec= 0.000000
+cbid=   9, name=                     cuDeviceGetAttribute, count=         21, totalNsec=             2470, avgNsec=        117, totalSec= 0.000002
+cbid= 135, name=                         cuGetExportTable, count=          1, totalNsec=              310, avgNsec=        310, totalSec= 0.000000
+cbid= 242, name=                          cuMemGetInfo_v2, count=          1, totalNsec=            19469, avgNsec=      19469, totalSec= 0.000019
+cbid= 303, name=                          cuCtxSetCurrent, count=          1, totalNsec=              650, avgNsec=        650, totalSec= 0.000001
+cbid= 386, name=                 cuDevicePrimaryCtxRetain, count=          1, totalNsec=         11761861, avgNsec=   11761861, totalSec= 0.011762
+cbid= 392, name=               cuDevicePrimaryCtxGetState, count=          4, totalNsec=              690, avgNsec=        172, totalSec= 0.000001
+cbid= 482, name=                          cuDeviceGetUuid, count=          1, totalNsec=              120, avgNsec=        120, totalSec= 0.000000
+==704== API calls end :

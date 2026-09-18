@@ -1,0 +1,104 @@
+{
+  "validated": false,
+  "release_stage": "candidate",
+  "binding": {
+    "schema_version": 1,
+    "host_physical_id": 2,
+    "container_node": "/dev/xpu3",
+    "logical_device": 0,
+    "cuda_visible_devices": "0",
+    "xpu_visible_devices": null,
+    "pci_bdf": "0000:1c:00.0",
+    "serial": "02K15K0263D00327",
+    "reservation_start": "2026-09-18T12:02:17.576433+00:00",
+    "reservation_end": "2026-09-18T20:20:00+08:00",
+    "reservation_reference": "user-authorized-idle-card-selection",
+    "host_device_node": "/dev/xpu3",
+    "device_minor": 3,
+    "uuid": "09d75c76-1b13-5686-a3d2-a9647e48f619"
+  },
+  "image_id": "sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975",
+  "stages": [
+    {
+      "stage": "import_device",
+      "returncode": 0,
+      "timed_out": false,
+      "duration_seconds": 8.179276307113469,
+      "stdout": "import_device.stdout.log",
+      "stderr": "import_device.stderr.log",
+      "native_api_summary_present": true,
+      "native_kernel_launch_calls": 1,
+      "passed": true
+    },
+    {
+      "stage": "route_control",
+      "returncode": 0,
+      "timed_out": false,
+      "duration_seconds": 8.179607549216598,
+      "stdout": "route_control.stdout.log",
+      "stderr": "route_control.stderr.log",
+      "native_api_summary_present": true,
+      "native_kernel_launch_calls": 4,
+      "passed": true
+    },
+    {
+      "stage": "fp32",
+      "returncode": 0,
+      "timed_out": false,
+      "duration_seconds": 9.482627651188523,
+      "stdout": "fp32.stdout.log",
+      "stderr": "fp32.stderr.log",
+      "native_api_summary_present": true,
+      "native_kernel_launch_calls": 8,
+      "passed": true
+    },
+    {
+      "stage": "seed",
+      "returncode": 0,
+      "timed_out": false,
+      "duration_seconds": 8.178999353200197,
+      "stdout": "seed.stdout.log",
+      "stderr": "seed.stderr.log",
+      "native_api_summary_present": true,
+      "native_kernel_launch_calls": 2,
+      "passed": true
+    },
+    {
+      "stage": "memory",
+      "returncode": 0,
+      "timed_out": false,
+      "duration_seconds": 8.078808309976012,
+      "stdout": "memory.stdout.log",
+      "stderr": "memory.stderr.log",
+      "native_api_summary_present": true,
+      "native_kernel_launch_calls": 0,
+      "passed": true
+    },
+    {
+      "stage": "pinned_copy",
+      "returncode": 0,
+      "timed_out": false,
+      "duration_seconds": 8.429617356043309,
+      "stdout": "pinned_copy.stdout.log",
+      "stderr": "pinned_copy.stderr.log",
+      "native_api_summary_present": true,
+      "native_kernel_launch_calls": 0,
+      "passed": true
+    },
+    {
+      "stage": "event",
+      "returncode": 0,
+      "timed_out": false,
+      "duration_seconds": 8.030066431034356,
+      "stdout": "event.stdout.log",
+      "stderr": "event.stderr.log",
+      "native_api_summary_present": true,
+      "native_kernel_launch_calls": 2,
+      "passed": true
+    }
+  ],
+  "status": "probes_passed_review_required",
+  "scope": "native single-card PR0 probes",
+  "physical_mapping_verified": false,
+  "cpu_fallback_excluded": false
+}

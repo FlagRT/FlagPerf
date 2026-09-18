@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "host_physical_id": 2,
+  "container_node": "/dev/xpu3",
+  "logical_device": 0,
+  "cuda_visible_devices": "0",
+  "xpu_visible_devices": null,
+  "pci_bdf": "0000:1c:00.0",
+  "serial": "02K15K0263D00327",
+  "reservation_start": "2026-09-18T12:02:17.576433+00:00",
+  "reservation_end": "2026-09-18T20:20:00+08:00",
+  "reservation_reference": "user-authorized-idle-card-selection",
+  "host_device_node": "/dev/xpu3",
+  "device_minor": 3,
+  "uuid": "09d75c76-1b13-5686-a3d2-a9647e48f619"
+}

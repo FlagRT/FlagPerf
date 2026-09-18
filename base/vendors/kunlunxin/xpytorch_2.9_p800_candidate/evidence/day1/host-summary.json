@@ -1,0 +1,49 @@
+{
+  "status": "exited",
+  "container_name": "zhiyu-p800-pr0-27a9f34b0583",
+  "card": 2,
+  "validated": false,
+  "reservation_end": "2026-09-18T20:20:00+08:00",
+  "exit_code": 0,
+  "state": {
+    "Status": "exited",
+    "Running": false,
+    "Paused": false,
+    "Restarting": false,
+    "OOMKilled": false,
+    "Dead": false,
+    "Pid": 0,
+    "ExitCode": 0,
+    "Error": "",
+    "StartedAt": "2026-09-18T12:02:22.73680718Z",
+    "FinishedAt": "2026-09-18T12:03:21.971607101Z"
+  },
+  "stop": {
+    "argv": [
+      "sudo",
+      "-n",
+      "docker",
+      "stop",
+      "-t",
+      "5",
+      "df706eb225712ae8197ea8735e5868c23945e15cd6df700895f29472ccd75fa1"
+    ],
+    "returncode": 0,
+    "stdout": "df706eb225712ae8197ea8735e5868c23945e15cd6df700895f29472ccd75fa1\n",
+    "stderr": ""
+  },
+  "remove": {
+    "argv": [
+      "sudo",
+      "-n",
+      "docker",
+      "rm",
+      "-f",
+      "df706eb225712ae8197ea8735e5868c23945e15cd6df700895f29472ccd75fa1"
+    ],
+    "returncode": 0,
+    "stdout": "df706eb225712ae8197ea8735e5868c23945e15cd6df700895f29472ccd75fa1\n",
+    "stderr": ""
+  },
+  "container_absent": true
+}
