@@ -5,6 +5,12 @@ executor. M1 is retained for hardware qualification, not approved for formal
 benchmarks. See `qualification-record.json` for remaining gates. The lock is
 JSON-compatible YAML, readable with the Python standard library.
 
+Day 1 is **incomplete**. Static preparation is complete; real single-card
+import/FP32/CPU-reference/sync, seed/memory/pinned/OOM API checks, physical mapping
+and CPU-fallback exclusion have not been verified. Maintainer questions are
+prepared but unsent. The version discrepancy is recorded, not resolved.
+There is no hardware-based go/no-go decision yet.
+
 ## Completed on 2026-09-18
 
 - Created `zhiyu/kunlunxin-p800` from `origin/dev-1.0` at
@@ -79,6 +85,11 @@ terminating the Docker CLI alone does not guarantee the container is stopped.
 Save postflight telemetry and confirm no owned container or allocation remains.
 Keep all failed attempt directories. Do not reset cards.
 
+No integrated host launcher currently automates occupancy checks, Docker launch,
+container lifetime or postflight cleanup. These are operator steps. Binding and
+inspect input consistency checks do not independently attest the live container's
+identity or physical mapping.
+
 The supervisor validates identity and binding before enabling Python site hooks.
 Each phase uses a fresh worker process and includes import and teardown in its
 timeout. Core import/device or FP32 failure stops further phases. The remaining
@@ -99,6 +110,10 @@ python3 -S -m unittest discover \
   -s base/vendors/kunlunxin/xpytorch_2.9_p800_candidate -p 'test_*.py' -v
 bash -n base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/container_bootstrap.sh
 ```
+
+The saved 12-test pass covers image/lock checks, reservation/device input gates,
+and worker timeout/exit behavior only. It does not exercise torch operators,
+P800 hardware, the Base executor or the full Ascend regression suite.
 
 Team source references are pinned at
 `runtime-team@e740bf78c08e1463c3920959e47dad3ed348118c`: device-context P800
