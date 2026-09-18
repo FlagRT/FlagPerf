@@ -176,7 +176,7 @@ def main():
         observed = json.loads(args.inspect_json.read_text()) if args.inspect_json else None
         validate_manifest(manifest, observed)
         if not args.static:
-            raise ValueError('hardware stages not yet implemented; use --static')
+            raise ValueError('use --static here; hardware stages are in hardware_probe.py')
         if not sys.flags.no_site:
             raise ValueError('static audit requires python -S (use container_bootstrap.sh)')
         result['audit'] = static_audit()

@@ -85,10 +85,26 @@ terminating the Docker CLI alone does not guarantee the container is stopped.
 Save postflight telemetry and confirm no owned container or allocation remains.
 Keep all failed attempt directories. Do not reset cards.
 
-No integrated host launcher currently automates occupancy checks, Docker launch,
-container lifetime or postflight cleanup. These are operator steps. Binding and
-inspect input consistency checks do not independently attest the live container's
-identity or physical mapping.
+The host launcher now performs selected-card `xpu-smi` and open-handle preflight,
+checks the immutable image, creates a nonprivileged one-card container, records
+its actual Docker identity/device spec, samples target-card telemetry, enforces
+the container timeout, and removes only that attempt's container. It uses a
+per-card advisory lock; the lock does not reserve resources from other users.
+The launcher has not yet been exercised with hardware. After confirming a card
+and window, run from the repository root (replace all placeholders):
+
+```bash
+sudo -v
+python3 base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/launch_qualification.py \
+  --card PHYSICAL_CARD --reservation-end 'END_TIME_WITH_TIMEZONE' \
+  --reservation-reference 'CONFIRMED_RESERVATION' \
+  --result-dir base/result/UNIQUE_PR0_ATTEMPT
+```
+
+The result directory must not already exist. The window must cover the default
+360-second container timeout plus 30 seconds for cleanup. Host binding evidence
+still needs comparison with the framework's device identity; Docker mapping
+alone cannot establish that the framework used the intended physical card.
 
 The supervisor validates identity and binding before enabling Python site hooks.
 Each phase uses a fresh worker process and includes import and teardown in its
@@ -111,9 +127,11 @@ python3 -S -m unittest discover \
 bash -n base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/container_bootstrap.sh
 ```
 
-The saved 12-test pass covers image/lock checks, reservation/device input gates,
-and worker timeout/exit behavior only. It does not exercise torch operators,
-P800 hardware, the Base executor or the full Ascend regression suite.
+The initial 12 tests cover image/lock checks, reservation/device input gates,
+and worker timeout/exit behavior. Four added tests cover the host inventory
+parser (quoted product, PCI domain, missing/duplicate devices, malformed output).
+These checks do not exercise torch operators, P800 hardware, live Docker
+lifecycle, the Base executor or the full Ascend regression suite.
 
 Team source references are pinned at
 `runtime-team@e740bf78c08e1463c3920959e47dad3ed348118c`: device-context P800

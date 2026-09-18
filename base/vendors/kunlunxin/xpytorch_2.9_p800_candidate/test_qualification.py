@@ -10,6 +10,7 @@ import unittest
 
 from hardware_probe import validate_binding, run_isolated
 from verify_runtime import ROOT, validate_manifest, validate_packages
+from launch_qualification import selected_device, normalize_bdf
 
 
 class QualificationTests(unittest.TestCase):
@@ -74,6 +75,27 @@ class QualificationTests(unittest.TestCase):
             self.assertEqual(result['returncode'], 7)
             self.assertFalse(result['timed_out'])
             self.assertIn('failed', (Path(path)/'fixture.stdout.log').read_text())
+
+    def test_xpu_inventory_quoted_product_and_pci_domain(self):
+        line = '00000000:16:00.0 1 1 SERIAL 37 0 0 0 93 1450 1450 1450 1450 1450 1450 0 96 0 98304 0 FW "P800 OAM" 0'
+        card = selected_device(line, 1)
+        self.assertEqual(card['pci_bdf'], '0000:16:00.0')
+        self.assertEqual(card['used_memory_mib'], 0)
+        self.assertEqual(card['total_memory_mib'], 98304)
+
+    def test_xpu_inventory_missing_or_duplicate_card(self):
+        line = '00000000:16:00.0 1 1 SERIAL 37 0 0 0 93 1450 1450 1450 1450 1450 1450 0 96 0 98304 0 FW "P800 OAM" 0'
+        for raw, card in [(line, 2), (line+'\n'+line, 1)]:
+            with self.assertRaises(ValueError):
+                selected_device(raw, card)
+
+    def test_xpu_inventory_rejects_unknown_format(self):
+        with self.assertRaises(ValueError):
+            selected_device('unexpected output', 1)
+
+    def test_pci_domain_does_not_truncate(self):
+        with self.assertRaises(ValueError):
+            normalize_bdf('12345678:16:00.0')
 
     @unittest.skipUnless(os.name == 'posix', 'process-group timeout requires Linux')
     def test_hung_worker_is_killed(self):

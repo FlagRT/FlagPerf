@@ -8,7 +8,8 @@
   "team_source_commit": "e740bf78c08e1463c3920959e47dad3ed348118c",
   "branch": "zhiyu/kunlunxin-p800",
   "static_inventory": "passed",
-  "offline_tests": {"passed": 12, "scope": "identity, lock, binding, reservation and worker timeout/exit"},
+  "offline_tests": {"passed": 16, "scope": "identity, lock, binding, reservation, worker timeout/exit and host inventory parser"},
+  "host_launcher": "implemented_not_hardware_verified",
   "hardware": "not_run_awaiting_reserved_card_and_window",
   "day1_status": "incomplete",
   "day1_acceptance": {
