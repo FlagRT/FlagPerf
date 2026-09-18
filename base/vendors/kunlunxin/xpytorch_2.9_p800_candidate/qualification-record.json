@@ -6,7 +6,7 @@
   "validation_scope": [],
   "flagperf_base_commit": "3e7c558b6f56e6ea5f9c8b318852d97d1517a14c",
   "team_source_commit": "e740bf78c08e1463c3920959e47dad3ed348118c",
-  "branch": "zhiyu/p800-base-runtime",
+  "branch": "zhiyu/kunlunxin-p800",
   "static_inventory": "passed",
   "offline_tests": {"passed": 12, "scope": "identity, lock, binding, reservation and worker timeout/exit"},
   "hardware": "not_run_awaiting_reserved_card_and_window",

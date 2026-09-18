@@ -7,12 +7,12 @@ JSON-compatible YAML, readable with the Python standard library.
 
 ## Completed on 2026-09-18
 
-- Created `zhiyu/p800-base-runtime` from `origin/dev-1.0` at
+- Created `zhiyu/kunlunxin-p800` from `origin/dev-1.0` at
   `3e7c558b6f56e6ea5f9c8b318852d97d1517a14c`.
 - Develop directly on that branch in
   `/home/kzhang519/Zhiyu/runtime-team/FlagPerf`. The former linked worktree was
   removed after preserving the PR0 commits and copying/verifying raw evidence.
-  Use `git switch zhiyu/p800-base-runtime`; no additional clone/worktree is needed.
+  Use `git switch zhiyu/kunlunxin-p800`; no additional clone/worktree is needed.
 - Inspected the immutable M1 image; collected package, editable installation,
   startup hook, vendor version, library hash and pre-import `ldd` evidence.
 - Collected host OS/kernel, driver/header, device nodes and `xpu-smi -q/-m` in
