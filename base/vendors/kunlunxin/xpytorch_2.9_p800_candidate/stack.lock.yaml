@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "release_stage": "candidate",
+  "validated": false,
+  "image_manifest": "image-manifest.json",
+  "conda_prefix": "/root/miniconda/envs/python310_torch29_cuda",
+  "python": "3.10.18",
+  "packages": {
+    "torch": "2.9.0+cu129",
+    "torch-xray": "2.0.4",
+    "xmlir": "1.0.0.1",
+    "xtorch-ops": "0.1.2640+9bc36a18",
+    "torch-plugin": "0.1.0",
+    "flag-gems": "5.3.4.post1.dev12+g4fa5805b8",
+    "flagtree": "0.6.1+xpu3.6",
+    "flagcx": "0.10.0",
+    "vllm": "0.13.0",
+    "vllm-plugin-fl": "0.1.0"
+  },
+  "vendor_metadata": {
+    "XPYTORCH": "XMLIR--bc1b1dc6f-dev+2026032411",
+    "XTDK": "3.6.0.1",
+    "XRE": "5.13.0.0",
+    "XCCL": "20260209_9",
+    "xhpc_declared_dependency": {"XTDK": "3.6.27.1", "XRE": "5.18.0.0", "XCCL": "3.0.7.4"}
+  },
+  "host_observed": {
+    "os": "Ubuntu 24.04.2 LTS",
+    "kernel": "6.8.0-87-generic",
+    "driver": "5.0.21.47",
+    "xpu_smi_runtime": "10.2",
+    "header_runtime": "5.0.21"
+  },
+  "qualification": "qualification-record.json"
+}
