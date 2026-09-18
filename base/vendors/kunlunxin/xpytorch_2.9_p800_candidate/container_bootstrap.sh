@@ -13,4 +13,5 @@ export PYTHONNOUSERSITE=1
 if [[ "${1:-}" == "--static" ]]; then
     exec "$RUNTIME_PREFIX/bin/python" -S "$PROFILE_ROOT/verify_runtime.py" "$@"
 fi
+unset XPU_EVENT_KL3_ENABLE XPU_VISIBLE_DEVICES
 exec "$RUNTIME_PREFIX/bin/python" -S "$PROFILE_ROOT/hardware_probe.py" "$@"

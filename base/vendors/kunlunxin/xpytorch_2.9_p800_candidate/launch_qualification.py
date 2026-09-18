@@ -5,13 +5,15 @@ from datetime import datetime, timezone
 import fcntl
 import json
 import os
+import re
 from pathlib import Path
 import shlex
+import stat
 import subprocess
 import time
 import uuid
 
-from verify_runtime import ROOT, validate_manifest
+from verify_runtime import ROOT, sha256, validate_manifest
 
 
 def command(argv, timeout=20):
@@ -60,6 +62,18 @@ def selected_device(raw, card):
     return matches[0]
 
 
+def device_identity(raw, expected_bdf):
+    bdf = re.search(r'^XPU\s+([0-9a-fA-F:.]+)\s*$', raw, re.M)
+    minor = re.search(r'^\s*Minor Number\s*:\s*(\d+)\s*$', raw, re.M)
+    uid = re.search(r'^\s*XPU UUID\s*:\s*GPU-([0-9a-fA-F-]+)\s*$', raw, re.M)
+    if not bdf or not minor or not uid or normalize_bdf(bdf[1]) != expected_bdf:
+        raise ValueError('query identity missing or PCI mismatch')
+    if int(minor[1]) not in range(8):
+        raise ValueError('unexpected device minor')
+    return {'host_device_node': f'/dev/xpu{minor[1]}', 'device_minor': int(minor[1]),
+            'uuid': uid[1].lower()}
+
+
 def save(path, data):
     path.write_text(json.dumps(data, indent=2)+'\n')
 
@@ -71,7 +85,10 @@ def main():
     parser.add_argument('--reservation-reference', required=True)
     parser.add_argument('--result-dir', type=Path, required=True)
     parser.add_argument('--container-timeout', type=int, default=360)
+    parser.add_argument('--profile-route', action='store_true', help='compare native FP32 kernel launch counters with a control')
     args = parser.parse_args()
+    # The runtime enumerates the sole mapped node as logical device zero.
+    visibility = 0
     end = datetime.fromisoformat(args.reservation_end.replace('Z', '+00:00'))
     now = datetime.now(timezone.utc)
     if end.tzinfo is None or (end-now).total_seconds() < args.container_timeout+30:
@@ -82,6 +99,9 @@ def main():
         raise ValueError('reservation reference required')
     result_dir = args.result_dir.resolve()
     result_dir.mkdir(parents=True, exist_ok=False)
+    # Container root has no DAC_OVERRIDE after cap-drop; grant only the host
+    # result group write access rather than adding broad capabilities.
+    result_dir.chmod(0o770)
     manifest = json.loads((ROOT/'image-manifest.json').read_text())
     repo = ROOT.parents[3]
     profile = '/workspace/FlagPerf/'+str(ROOT.relative_to(repo))
@@ -105,28 +125,56 @@ def main():
         selected = selected_device(preflight['stdout'], args.card)
         if selected['used_memory_mib'] or selected['utilization_percent']:
             raise RuntimeError('selected card is occupied')
-        users = command(['sudo', '-n', 'fuser', f'/dev/xpu{args.card}'])
+        query = command(['xpu-smi', '-i', str(args.card), '-q'])
+        save(result_dir/'selected-device-query.json', query)
+        if query['returncode']:
+            raise RuntimeError('selected device identity query failed')
+        identity = device_identity(query['stdout'], selected['pci_bdf'])
+        host_node = identity['host_device_node']
+        node_stat = Path(host_node).stat()
+        if not stat.S_ISCHR(node_stat.st_mode) or os.minor(node_stat.st_rdev) != identity['device_minor']:
+            raise ValueError('host node minor does not match query')
+        container_card = identity['device_minor']
+        users = command(['sudo', '-n', 'fuser', host_node])
+        users['processes'] = []
+        for token in users['stdout'].split():
+            pid = int(token)
+            try:
+                comm = Path(f'/proc/{pid}/comm').read_text().strip()
+            except FileNotFoundError:
+                comm = None
+            users['processes'].append({'pid': pid, 'comm': comm})
         save(result_dir/'device-users.json', users)
-        if users['returncode'] != 1 or users['stdout'].strip() or users['stderr'].strip():
+        # Read-only xpu-smi sampling briefly opens nodes too. A vanished process
+        # or known management sampler is not an active workload reservation.
+        if users['returncode'] not in (0, 1) or any(p['comm'] not in (None, 'xpu-smi', 'xpu_smi') for p in users['processes']):
             raise RuntimeError('selected device has open handles or occupancy check failed')
+        if users['returncode'] == 1 and users['stderr'].strip():
+            raise RuntimeError('device handle check reported an error')
         binding = dict(schema_version=1, host_physical_id=args.card,
-                       container_node=f'/dev/xpu{args.card}', logical_device=0,
+                       container_node=f'/dev/xpu{container_card}', logical_device=0,
+                       cuda_visible_devices=str(visibility),
+                       xpu_visible_devices=None,
                        pci_bdf=selected['pci_bdf'], serial=selected['serial'],
                        reservation_start=now.isoformat(), reservation_end=end.isoformat(),
                        reservation_reference=args.reservation_reference)
+        binding.update(identity)
         save(result_dir/'binding.json', binding)
         save(result_dir/'code-identity.json', {
             'head': checked(['git', '-C', str(repo), 'rev-parse', 'HEAD']).strip(),
-            'status': checked(['git', '-C', str(repo), 'status', '--short'])})
+            'status': checked(['git', '-C', str(repo), 'status', '--short']),
+            'profile_sha256': {p.name: sha256(p) for p in sorted(ROOT.iterdir())
+                               if p.is_file() and p.suffix in ('.py', '.sh', '.json', '.yaml')}})
         argv = docker+['create', '--name', name, '--label', 'owner=zhiyu', '--label', 'task=p800-pr0',
-                      '--network', 'none', '--cap-drop', 'ALL', '--security-opt', 'no-new-privileges',
+                      '--network', 'none', '--security-opt', 'no-new-privileges',
+                      '--group-add', str(os.getgid()),
                       '--read-only', '--pids-limit', '512', '--shm-size', '128m',
                       '--tmpfs', '/tmp:rw,nosuid,size=512m',
                       '--tmpfs', '/root/.cache:rw,nosuid,size=512m',
-                      '--device', f'/dev/xpu{args.card}:/dev/xpu{args.card}',
+                      '--device', f'{host_node}:/dev/xpu{container_card}',
                       '--device', '/dev/xpuctrl:/dev/xpuctrl',
-                      '--env', f'CUDA_VISIBLE_DEVICES={args.card}',
-                      '--env', 'XPU_EVENT_KL3_ENABLE=', '--env', 'USE_FLAGGEMS=0',
+                      '--env', f'CUDA_VISIBLE_DEVICES={visibility}',
+                      '--env', 'USE_FLAGGEMS=0',
                       '--env', 'PYTHONDONTWRITEBYTECODE=1', '--env', 'XDG_CACHE_HOME=/tmp/cache',
                       '--env', 'TRITON_CACHE_DIR=/tmp/triton',
                       '--mount', f'type=bind,src={repo},dst=/workspace/FlagPerf,readonly',
@@ -134,14 +182,17 @@ def main():
                       '--entrypoint', '/bin/bash', manifest['image_id'], profile+'/container_bootstrap.sh',
                       '--allow-candidate', '--inspect-json', '/results/image-inspect.json',
                       '--binding-json', '/results/binding.json', '--output-dir', '/results/probes']
+        argv[4:4] = ['--cap-drop', 'ALL']
+        if args.profile_route:
+            argv[4:4] = ['--env', 'P800_PROFILE_ROUTE=1', '--env', 'XPU_ENABLE_PROFILER_TRACING=1']
         save(result_dir/'launch-command.json', argv)
         cid = checked(argv).strip()
         actual = json.loads(checked(docker+['inspect', cid]))[0]
         devices = actual['HostConfig']['Devices']
-        expected = {f'/dev/xpu{args.card}', '/dev/xpuctrl'}
+        expected = {(host_node, f'/dev/xpu{container_card}'), ('/dev/xpuctrl', '/dev/xpuctrl')}
         if actual['Image'] != manifest['image_id'] or actual['HostConfig']['Privileged']:
             raise RuntimeError('container image or privilege mismatch')
-        if {d['PathOnHost'] for d in devices} != expected or any(d['PathOnHost'] != d['PathInContainer'] for d in devices):
+        if {(d['PathOnHost'], d['PathInContainer']) for d in devices} != expected:
             raise RuntimeError('container mapping mismatch')
         save(result_dir/'container-binding.json', {'id': cid, 'image': actual['Image'], 'devices': devices,
                                                   'privileged': actual['HostConfig']['Privileged']})

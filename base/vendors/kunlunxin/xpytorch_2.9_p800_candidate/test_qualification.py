@@ -10,7 +10,7 @@ import unittest
 
 from hardware_probe import validate_binding, run_isolated
 from verify_runtime import ROOT, validate_manifest, validate_packages
-from launch_qualification import selected_device, normalize_bdf
+from launch_qualification import selected_device, normalize_bdf, device_identity
 
 
 class QualificationTests(unittest.TestCase):
@@ -18,12 +18,14 @@ class QualificationTests(unittest.TestCase):
         self.manifest = json.loads((ROOT/'image-manifest.json').read_text())
         self.inspect = json.loads((ROOT/'evidence/image-inspect.json').read_text())
         self.binding = dict(schema_version=1, host_physical_id=3, container_node='/dev/xpu3',
+                            host_device_node='/dev/xpu3', device_minor=3, cuda_visible_devices='0',
+                            uuid='09d75c76-1b13-5686-a3d2-a9647e48f619',
                             logical_device=0, pci_bdf='0000:83:00.0', reservation_reference='offline-fixture',
                             reservation_start='2026-09-18T00:00:00Z', reservation_end='2026-09-18T02:00:00Z')
         self.now = datetime(2026, 9, 18, 1, tzinfo=timezone.utc)
 
     def binding_check(self, binding=None, environ=None, nodes=None, now=None):
-        return validate_binding(binding or self.binding, environ or {'CUDA_VISIBLE_DEVICES': '3'},
+        return validate_binding(binding or self.binding, environ or {'CUDA_VISIBLE_DEVICES': '0'},
                                 nodes or ['/dev/xpu3', '/dev/xpuctrl'], now or self.now)
 
     def test_exact_image(self):
@@ -58,7 +60,7 @@ class QualificationTests(unittest.TestCase):
 
     def test_reject_wrong_visibility(self):
         with self.assertRaisesRegex(ValueError, 'visibility'):
-            self.binding_check(environ={'CUDA_VISIBLE_DEVICES': '0'})
+            self.binding_check(environ={'CUDA_VISIBLE_DEVICES': '3'})
 
     def test_reject_expired_reservation(self):
         with self.assertRaisesRegex(ValueError, 'reservation'):
@@ -66,7 +68,7 @@ class QualificationTests(unittest.TestCase):
 
     def test_reject_kl3(self):
         with self.assertRaisesRegex(ValueError, 'KL3'):
-            self.binding_check(environ={'CUDA_VISIBLE_DEVICES': '3', 'XPU_EVENT_KL3_ENABLE': '1'})
+            self.binding_check(environ={'CUDA_VISIBLE_DEVICES': '0', 'XPU_EVENT_KL3_ENABLE': '1'})
 
     def test_worker_exit_and_logs(self):
         with tempfile.TemporaryDirectory() as path:
@@ -96,6 +98,44 @@ class QualificationTests(unittest.TestCase):
     def test_pci_domain_does_not_truncate(self):
         with self.assertRaises(ValueError):
             normalize_bdf('12345678:16:00.0')
+
+    def test_physical_index_is_not_device_minor(self):
+        raw = 'XPU 00000000:1C:00.0\n    Minor Number : 3\n    XPU UUID : GPU-09d75c76-1b13-5686-a3d2-a9647e48f619\n'
+        identity = device_identity(raw, '0000:1c:00.0')
+        self.assertEqual(identity['host_device_node'], '/dev/xpu3')
+        self.assertEqual(identity['device_minor'], 3)
+
+    def test_query_pci_must_match_selected_card(self):
+        raw = 'XPU 00000000:1C:00.0\n    Minor Number : 3\n    XPU UUID : GPU-09d75c76-1b13-5686-a3d2-a9647e48f619\n'
+        with self.assertRaises(ValueError):
+            device_identity(raw, '0000:16:00.0')
+
+    def test_query_needs_uuid_and_minor(self):
+        with self.assertRaises(ValueError):
+            device_identity('XPU 00000000:1C:00.0', '0000:1c:00.0')
+
+    def test_binding_supports_nonidentity_minor_mapping(self):
+        self.binding.update(host_physical_id=2, host_device_node='/dev/xpu3',
+                            cuda_visible_devices='0')
+        self.binding_check(environ={'CUDA_VISIBLE_DEVICES': '0'})
+
+    def test_native_visibility_must_match_record(self):
+        with self.assertRaisesRegex(ValueError, 'native XPU visibility'):
+            self.binding_check(environ={'CUDA_VISIBLE_DEVICES': '0', 'XPU_VISIBLE_DEVICES': '1'})
+
+    def test_binding_rejects_missing_uuid(self):
+        del self.binding['uuid']
+        with self.assertRaisesRegex(ValueError, 'UUID'):
+            self.binding_check()
+
+    def test_binding_rejects_wrong_minor(self):
+        self.binding['device_minor'] = 2
+        with self.assertRaisesRegex(ValueError, 'minor'):
+            self.binding_check()
+
+    def test_empty_kl3_is_not_unset(self):
+        with self.assertRaisesRegex(ValueError, 'KL3'):
+            self.binding_check(environ={'CUDA_VISIBLE_DEVICES': '0', 'XPU_EVENT_KL3_ENABLE': ''})
 
     @unittest.skipUnless(os.name == 'posix', 'process-group timeout requires Linux')
     def test_hung_worker_is_killed(self):
