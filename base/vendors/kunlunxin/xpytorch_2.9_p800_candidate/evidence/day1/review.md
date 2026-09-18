@@ -1,8 +1,9 @@
 # Day 1 single-card evidence review — 2026-09-18
 
-Decision: retain M1 for further candidate development. Technical smoke and the
-image go/no-go are complete. Maintainer compatibility confirmation is pending;
-formal validation stays false. No performance result is claimed.
+Decision: retain M1 for further candidate development. The user subsequently
+accepted the tested version combination and confirmed image availability and
+observed card-2 execution on 2026-09-18. Day 1 development acceptance is complete;
+formal benchmark validation stays false. No performance result is claimed.
 
 ## Final attempt and identity
 
@@ -69,11 +70,10 @@ other containers was used. Failed attempts remain in ignored raw directories.
 
 ## Remaining gates
 
-- Resolve Driver/XPU-RT/header/XRE/XHPC version relationships with maintainers;
-  questions are prepared, no messages have been sent.
-- Verify registry distribution and reproducibility of the local digest.
-- Obtain named-kernel or equivalent stronger route evidence where formal case
-  qualification requires comprehensive fallback exclusion.
+- The version combination is user-accepted; maintainer questions remain as
+  reference. No messages were sent and no vendor certification is claimed.
+- Same-image availability and card-2 execution are user-confirmed. No registry
+  pull or named-kernel trace was performed by the agent; neither blocks Day 1.
 - Qualify other shapes/precisions, FlagGems and FlagCX separately. The loaded
   BKCL library does not prove collectives work.
 - Implement later Base provider/driver/executor integration and performance

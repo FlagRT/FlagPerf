@@ -2,16 +2,19 @@
 
 M1 passes the bounded single-card PR0 smoke checks and is retained for further
 Base development. This standalone profile is not connected to the Base executor
-and is not approved for formal benchmarks. Day 1 technical smoke and the image
-decision are complete; maintainer compatibility confirmation remains open.
+and has not yet produced formal benchmark results. Day 1 is complete for
+development: the user accepts the tested version combination, confirms that
+recipients can obtain the same image, and confirms observing execution on card 2.
+These are explicit user decisions/observations, not vendor certification or a
+registry pull/named-kernel trace performed by this tool.
 `image-manifest.json` remains `validated: false`, with no formal validation scope.
 
 ## Development and evidence
 
-Develop directly on `zhiyu/kunlunxin-p800` in
-`/home/kzhang519/Zhiyu/runtime-team/FlagPerf`, based on `origin/dev-1.0` at
+Development branch: `zhiyu/kunlunxin-p800`, based on `origin/dev-1.0` at
 `3e7c558b6f56e6ea5f9c8b318852d97d1517a14c`. Do not create another worktree.
-Use Conventional Commits without attribution trailers.
+Use Conventional Commits without attribution trailers. Recipients may place the
+checkout anywhere; the launcher discovers its repository root with Git.
 
 The immutable image is
 `flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev:202608`, ID
@@ -21,7 +24,8 @@ The lock is JSON-compatible YAML, readable with the Python standard library.
 Static inventory is in `evidence/static-audit.json`; portable single-card
 evidence and its review are in `evidence/day1/`. Full operational logs, including
 failed attempts, remain under ignored `base/result/p800-pr0-20260918*` directories.
-Read `qualification-record.json` for status and unsent maintainer questions.
+Read `qualification-record.json` for accepted conditions and scoped results.
+Maintainer questions remain as reference, not a prerequisite for development.
 
 ## Observed API and mapping (2026-09-18)
 
@@ -56,7 +60,42 @@ subscriber conflict. Do not enable both together.
 The worker's loaded-library paths and hashes resolve the earlier pre-import
 `ldd` uncertainty: runtime uses the Conda `xcudart/lib/*.kunlun` libraries and
 `torch_xmlir/xccl/so/libbkcl.so`. This does not establish collective support or
-resolve XRE 5.13 versus XHPC metadata requiring 5.18.
+explain XRE 5.13 versus XHPC metadata requiring 5.18. The user has accepted this
+observed combination; this metadata question does not block continued work.
+
+## Portable single/multi-device selection
+
+`device_mapping.py` implements host identity validation and the framework UUID
+join for both paths. There is no fixed card count, index-to-node table or assumed
+framework ordering. Each run queries the selected indices, validates PCI/UUID/
+minor and actual character devices, rejects duplicate identities, locks UUIDs in
+stable order, and rechecks occupancy/identity before creating the container.
+Any open device handle now rejects the launch, including transient samplers.
+
+For a small multi-device check, use the same launcher with these selection flags
+(and the time/reference/result arguments shown below):
+
+```bash
+--cards FIRST_SMI_INDEX SECOND_SMI_INDEX --mapping-only
+```
+
+All visible framework UUIDs must exactly equal the selected host UUIDs before
+tensor work. `requested_rank` preserves the caller's card order;
+`logical_device` comes from observed framework enumeration. Future distributed
+workers must use the resolved logical device for their requested rank, not
+blindly use `cuda:LOCAL_RANK`.
+
+Hardware verification at code `f632019c`: selecting `6,2` resolved to nodes
+`/dev/xpu5,/dev/xpu3` and logical devices `1,0`. Independent tiny FP32 and readback
+passed on both. This verifies mapping in a two-device container, not concurrent
+multi-rank communication or AllReduce. See `evidence/mapping/`.
+
+Card IDs, repository paths and container owner are dynamic. The Conda prefix is
+read from `stack.lock.yaml` by bootstrap and verifier; the privilege prefix is
+configurable with `--privilege-command` (default `sudo -n`, empty for direct
+Docker/fuser access). Image identity and component versions remain intentionally
+locked for reproducibility. This profile targets the recorded M1 stack; a
+different stack needs its own reviewed lock and runtime qualification.
 
 ## Reproduce a bounded single-card probe
 
@@ -113,8 +152,8 @@ python3 -S -m unittest discover \
 bash -n base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/container_bootstrap.sh
 ```
 
-24 offline tests cover image/package locks, binding/UUID/minor/visibility gates,
-time windows, worker failure/timeout, and host identity parsing. They do not
+32 offline tests cover image/package locks, binding/UUID/minor/visibility gates,
+time windows, worker failure/timeout, host identity parsing and reordered multi-device sets. They do not
 simulate hardware success or verify the entire Docker lifecycle.
 
 Team references are pinned at

@@ -1,0 +1,17 @@
+{
+  "id": "196848aa958b23df1b9be3d77f35c6e5107ffa3c9bc4c923f0a7226850f8284f",
+  "image": "sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975",
+  "devices": [
+    {
+      "PathOnHost": "/dev/xpu3",
+      "PathInContainer": "/dev/xpu3",
+      "CgroupPermissions": "rwm"
+    },
+    {
+      "PathOnHost": "/dev/xpuctrl",
+      "PathInContainer": "/dev/xpuctrl",
+      "CgroupPermissions": "rwm"
+    }
+  ],
+  "privileged": false
+}

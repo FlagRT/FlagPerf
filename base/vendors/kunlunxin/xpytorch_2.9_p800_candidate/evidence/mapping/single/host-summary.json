@@ -1,0 +1,51 @@
+{
+  "status": "exited",
+  "container_name": "flagperf-p800-pr0-015c646738c7",
+  "cards": [
+    2
+  ],
+  "validated": false,
+  "reservation_end": "2026-09-18T20:45:00+08:00",
+  "exit_code": 0,
+  "state": {
+    "Status": "exited",
+    "Running": false,
+    "Paused": false,
+    "Restarting": false,
+    "OOMKilled": false,
+    "Dead": false,
+    "Pid": 0,
+    "ExitCode": 0,
+    "Error": "",
+    "StartedAt": "2026-09-18T12:26:30.85238669Z",
+    "FinishedAt": "2026-09-18T12:27:30.808984787Z"
+  },
+  "stop": {
+    "argv": [
+      "sudo",
+      "-n",
+      "docker",
+      "stop",
+      "-t",
+      "5",
+      "196848aa958b23df1b9be3d77f35c6e5107ffa3c9bc4c923f0a7226850f8284f"
+    ],
+    "returncode": 0,
+    "stdout": "196848aa958b23df1b9be3d77f35c6e5107ffa3c9bc4c923f0a7226850f8284f\n",
+    "stderr": ""
+  },
+  "remove": {
+    "argv": [
+      "sudo",
+      "-n",
+      "docker",
+      "rm",
+      "-f",
+      "196848aa958b23df1b9be3d77f35c6e5107ffa3c9bc4c923f0a7226850f8284f"
+    ],
+    "returncode": 0,
+    "stdout": "196848aa958b23df1b9be3d77f35c6e5107ffa3c9bc4c923f0a7226850f8284f\n",
+    "stderr": ""
+  },
+  "container_absent": true
+}

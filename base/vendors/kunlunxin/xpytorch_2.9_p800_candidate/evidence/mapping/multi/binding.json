@@ -1,0 +1,28 @@
+{
+  "schema_version": 2,
+  "cuda_visible_devices": "0,1",
+  "xpu_visible_devices": null,
+  "reservation_start": "2026-09-18T12:23:01.433176+00:00",
+  "reservation_end": "2026-09-18T20:45:00+08:00",
+  "reservation_reference": "user-authorized-single-and-multi-device-mapping-check",
+  "devices": [
+    {
+      "host_device_node": "/dev/xpu5",
+      "device_minor": 5,
+      "uuid": "9e24d168-db57-5cd9-8cfb-aea4ae898897",
+      "host_physical_id": 6,
+      "container_node": "/dev/xpu5",
+      "pci_bdf": "0000:b6:00.0",
+      "serial": "02K15K0263D002N9"
+    },
+    {
+      "host_device_node": "/dev/xpu3",
+      "device_minor": 3,
+      "uuid": "09d75c76-1b13-5686-a3d2-a9647e48f619",
+      "host_physical_id": 2,
+      "container_node": "/dev/xpu3",
+      "pci_bdf": "0000:1c:00.0",
+      "serial": "02K15K0263D00327"
+    }
+  ]
+}

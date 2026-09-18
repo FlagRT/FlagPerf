@@ -1,0 +1,28 @@
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+==83== API calls begin:
+cbid=   1, name=                                   cuInit, count=          1, totalNsec=             1520, avgNsec=       1520, totalSec= 0.000002
+cbid=   2, name=                       cuDriverGetVersion, count=          1, totalNsec=              150, avgNsec=        150, totalSec= 0.000000
+cbid=   3, name=                              cuDeviceGet, count=          2, totalNsec=              520, avgNsec=        260, totalSec= 0.000001
+cbid=   4, name=                         cuDeviceGetCount, count=          2, totalNsec=              220, avgNsec=        110, totalSec= 0.000000
+cbid=   5, name=                          cuDeviceGetName, count=          4, totalNsec=            36550, avgNsec=       9137, totalSec= 0.000037
+cbid=   9, name=                     cuDeviceGetAttribute, count=         30, totalNsec=             2590, avgNsec=         86, totalSec= 0.000003
+cbid=  17, name=                         cuCtxSynchronize, count=          1, totalNsec=             1430, avgNsec=       1430, totalSec= 0.000001
+cbid= 118, name=                            cuEventCreate, count=          2, totalNsec=             1470, avgNsec=        735, totalSec= 0.000001
+cbid= 124, name=                           cuStreamCreate, count=          1, totalNsec=              950, avgNsec=        950, totalSec= 0.000001
+cbid= 135, name=                         cuGetExportTable, count=         10, totalNsec=             1470, avgNsec=        147, totalSec= 0.000001
+cbid= 243, name=                            cuMemAlloc_v2, count=          1, totalNsec=            99989, avgNsec=      99989, totalSec= 0.000100
+cbid= 245, name=                             cuMemFree_v2, count=          2, totalNsec=           320768, avgNsec=     160384, totalSec= 0.000321
+cbid= 277, name=                     cuMemcpyHtoDAsync_v2, count=          2, totalNsec=            90790, avgNsec=      45395, totalSec= 0.000091
+cbid= 303, name=                          cuCtxSetCurrent, count=          4, totalNsec=             4340, avgNsec=       1085, totalSec= 0.000004
+cbid= 370, name=              cuCtxGetStreamPriorityRange, count=          1, totalNsec=              280, avgNsec=        280, totalSec= 0.000000
+cbid= 386, name=                 cuDevicePrimaryCtxRetain, count=          2, totalNsec=         15971415, avgNsec=    7985707, totalSec= 0.015971
+cbid= 392, name=               cuDevicePrimaryCtxGetState, count=         14, totalNsec=             5320, avgNsec=        380, totalSec= 0.000005
+cbid= 482, name=                          cuDeviceGetUuid, count=          1, totalNsec=              120, avgNsec=        120, totalSec= 0.000000
+cbid= 499, name=                      cuStreamIsCapturing, count=          2, totalNsec=             1070, avgNsec=        535, totalSec= 0.000001
+cbid= 566, name=                     cu_xpu_launch_config, count=          4, totalNsec=              330, avgNsec=         82, totalSec= 0.000000
+cbid= 567, name=               cu_xpu_launch_argument_set, count=         12, totalNsec=             1089, avgNsec=         90, totalSec= 0.000001
+cbid= 568, name=                      cu_xpu_launch_async, count=          4, totalNsec=           127419, avgNsec=      31854, totalSec= 0.000127
+cbid= 569, name=                              cu_xpu_wait, count=          8, totalNsec=            47750, avgNsec=       5968, totalSec= 0.000048
+cbid= 572, name=                             cuMemAllocEx, count=          6, totalNsec=           289147, avgNsec=      48191, totalSec= 0.000289
+==83== API calls end :

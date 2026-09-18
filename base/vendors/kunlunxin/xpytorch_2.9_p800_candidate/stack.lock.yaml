@@ -42,12 +42,12 @@
     "cuda_visible_devices": "0",
     "unset_environment": ["XPU_EVENT_KL3_ENABLE", "XPU_VISIBLE_DEVICES"],
     "USE_FLAGGEMS": "0",
-    "mapping": "xpu-smi index -> queried PCI/UUID/Minor Number -> /dev/xpuMINOR -> logical zero",
+    "mapping": "xpu-smi indices -> queried PCI/UUID/minor -> exact nodes -> observed framework UUID join; single-device logical zero",
     "framework_identity": "UUID; name is GPU and PCI properties are zero",
     "event_timing_usable": false,
     "timer": "perf_counter bracketed by torch.cuda.synchronize(device)",
     "loaded_library_evidence": "evidence/day1/fp32.json",
-    "scope": "single-card native FP32 32x32 smoke; not formal benchmark qualification"
+    "scope": "single-card native FP32 32x32 smoke; selected two-device identity and tiny FP32; not formal benchmark qualification"
   },
   "qualification": "qualification-record.json"
 }
