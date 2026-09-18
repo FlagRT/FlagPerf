@@ -5,6 +5,12 @@
   "image_manifest": "image-manifest.json",
   "conda_prefix": "/root/miniconda/envs/python310_torch29_cuda",
   "python": "3.10.18",
+  "source_observations": {
+    "triton_literal_version": "3.6.0",
+    "flagcx_git_head": "3b43bdb237fc93736eddf3e118edf32f664b7861",
+    "flagcx_worktree_dirty": false,
+    "flagcx_binary_build_identity_verified": false
+  },
   "packages": {
     "torch": "2.9.0+cu129",
     "torch-xray": "2.0.4",

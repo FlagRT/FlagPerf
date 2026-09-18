@@ -6,6 +6,7 @@ PR0 only: not a Base driver and not an automatic candidate promotion tool.
 from __future__ import annotations
 
 import argparse
+import ast
 import hashlib
 from importlib import metadata
 import json
@@ -71,6 +72,12 @@ def run_command(argv, timeout=20):
             'stdout': result.stdout, 'stderr': result.stderr}
 
 
+def validate_packages(packages, locked):
+    return [f'{name}: expected {version}, got {packages.get(name, {}).get("version")}'
+            for name, version in locked.items()
+            if packages.get(name, {}).get('version') != version]
+
+
 def static_audit():
     # Explicit search path: no site processing and no importlib.find_spec on a package.
     site = PREFIX / 'lib/python3.10/site-packages'
@@ -105,6 +112,23 @@ def static_audit():
         candidates = [p / n for p in sorted(search_paths) for n in (name, name + '.py')]
         modules[name] = [str(p) for p in candidates if p.exists()]
     xmlir = site / 'torch_xmlir'
+    source_files = []
+    for path in [site/'triton/__init__.py', site/'torch_xmlir/__init__.py',
+                 Path('/env/FlagCX/plugin/torch/flagcx/__init__.py'),
+                 Path('/env/FlagCX/plugin/torch/_build_config.py')]:
+        if path.is_file():
+            item = {'path': str(path), 'sha256': sha256(path)}
+            for statement in ast.parse(path.read_text()).body:
+                if isinstance(statement, ast.Assign) and any(isinstance(t, ast.Name) and t.id == '__version__' for t in statement.targets):
+                    if isinstance(statement.value, ast.Constant):
+                        item['literal_version'] = statement.value.value
+            source_files.append(item)
+    editable_sources = []
+    for source in (Path('/env/FlagCX'), Path('/env/xvllm-plugin-FL')):
+        if source.is_dir():
+            editable_sources.append({'path': str(source),
+                                     'git_head': run_command(['git', '-c', f'safe.directory={source}', '-C', str(source), 'rev-parse', 'HEAD']),
+                                     'git_status': run_command(['git', '-c', f'safe.directory={source}', '-C', str(source), 'status', '--short'])})
     versions = []
     libraries = []
     if xmlir.is_dir():
@@ -129,6 +153,7 @@ def static_audit():
             'inventory_errors': errors, 'unresolved_ldd_paths': unresolved,
             'library_qualification': 'pending runtime loader verification',
             'metadata_search_paths': [str(p) for p in sorted(search_paths)],
+            'source_files': source_files, 'editable_sources': editable_sources,
             'architecture': platform.machine(), 'site_processing_disabled': bool(sys.flags.no_site),
             'torchrun': {'path': str(PREFIX / 'bin/torchrun'),
                          'exists': (PREFIX / 'bin/torchrun').is_file()},
@@ -155,6 +180,8 @@ def main():
         if not sys.flags.no_site:
             raise ValueError('static audit requires python -S (use container_bootstrap.sh)')
         result['audit'] = static_audit()
+        lock = json.loads((ROOT / 'stack.lock.yaml').read_text())
+        result['audit']['inventory_errors'].extend(validate_packages(result['audit']['packages'], lock['packages']))
         result['status'] = 'failed' if result['audit']['inventory_errors'] else 'passed'
         result['status_meaning'] = 'inventory collection only; hardware and library qualification pending'
     except Exception as exc:

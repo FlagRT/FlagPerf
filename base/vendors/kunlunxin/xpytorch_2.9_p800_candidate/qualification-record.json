@@ -8,6 +8,7 @@
   "team_source_commit": "e740bf78c08e1463c3920959e47dad3ed348118c",
   "branch": "zhiyu/p800-base-runtime",
   "static_inventory": "passed",
+  "offline_tests": {"passed": 12, "scope": "identity, lock, binding, reservation and worker timeout/exit"},
   "hardware": "not_run_awaiting_reserved_card_and_window",
   "decision": "retain M1 for hardware qualification; formal qualification blocked",
   "raw_evidence_directory": "base/result/p800-pr0-20260918",
@@ -19,7 +20,8 @@
     "Resolve host XPU-RT 10.2/header 5.0.21/XRE 5.13/XHPC dependency 5.18 compatibility with maintainer",
     "Verify actual loaded libraries: pre-import ldd reports unresolved XRE dependencies",
     "Confirm image distribution source; registry pull not verified",
-    "FlagCX installation metadata found, but build/source identity and collectives not qualified"
+    "FlagCX source HEAD recorded as 3b43bdb237fc93736eddf3e118edf32f664b7861, but binary build correspondence and collectives not qualified",
+    "vllm-plugin-FL source Git audit denied by ownership check; vLLM is outside this Base PR0 scope"
   ],
   "maintainer_questions_unsent": [
     "For driver 5.0.21.47, what is the supported interpretation of xpu-smi runtime 10.2 versus XPURT_VERSION_STR 5.0.21?",

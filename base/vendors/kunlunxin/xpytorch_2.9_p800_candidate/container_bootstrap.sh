@@ -13,4 +13,4 @@ export PYTHONNOUSERSITE=1
 if [[ "${1:-}" == "--static" ]]; then
     exec "$RUNTIME_PREFIX/bin/python" -S "$PROFILE_ROOT/verify_runtime.py" "$@"
 fi
-exec "$RUNTIME_PREFIX/bin/python" "$PROFILE_ROOT/verify_runtime.py" "$@"
+exec "$RUNTIME_PREFIX/bin/python" -S "$PROFILE_ROOT/hardware_probe.py" "$@"
