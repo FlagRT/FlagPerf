@@ -93,8 +93,12 @@ class ManagedContainer:
             raise RuntimeError("container mounts differ from planned paths/permissions")
         if host.get('NetworkMode') != 'none' or not host.get('ReadonlyRootfs') or 'ALL' not in (host.get('CapDrop') or []):
             raise RuntimeError("container isolation policy drift")
-        if not any(str(s).startswith('no-new-privileges') for s in host.get('SecurityOpt') or []):
+        if not any(s in ('no-new-privileges', 'no-new-privileges=true') for s in host.get('SecurityOpt') or []):
             raise RuntimeError("container missing no-new-privileges")
+        if host.get('IpcMode') != 'private' or host.get('PidMode') not in ('', None):
+            raise RuntimeError('container namespace policy drift')
+        if host.get('CapAdd') or host.get('DeviceRequests') or host.get('DeviceCgroupRules'):
+            raise RuntimeError('container has additional capabilities or device grants')
         return record
 
     def start(self):

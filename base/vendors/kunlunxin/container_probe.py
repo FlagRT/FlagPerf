@@ -2,6 +2,7 @@
 import argparse
 from datetime import datetime, timezone
 import hashlib
+import faulthandler
 import json
 import os
 from pathlib import Path
@@ -86,14 +87,20 @@ def main():
         save(output / 'runtime-bindings.json', bindings)
         binding = records[0]
         index = binding['framework_logical_id']
+        faulthandler.dump_traceback_later(40, repeat=True)
+        print('checkpoint: UUID set verified; selecting device', flush=True)
         torch.cuda.set_device(index)
         device = torch.device(binding['framework_device_name'])
+        print('checkpoint: creating four-element tensor', flush=True)
         tensor = torch.ones(4, device=device)
+        print('checkpoint: synchronizing device', flush=True)
         torch.cuda.synchronize(device)
         require(tensor.device == device and tensor.cpu().tolist() == [1.0] * 4, 'wrong device or tensor readback')
+        print('checkpoint: tensor readback passed', flush=True)
         del tensor
         torch.cuda.empty_cache()
         torch.cuda.synchronize(device)
+        faulthandler.cancel_dump_traceback_later()
         libraries = []
         for line in Path('/proc/self/maps').read_text().splitlines():
             parts = line.split(maxsplit=5)

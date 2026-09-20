@@ -28,7 +28,7 @@ class KunlunxinProvider:
         if config.get('runtime_environment') != {'USE_FLAGGEMS': '0'}:
             raise ConfigurationError('P800 runtime_environment must be exactly USE_FLAGGEMS=0')
         if config.get('shm_size') != '128m':
-            raise ConfigurationError('P800 bounded probe requires shm_size=128m')
+            raise ConfigurationError('P800 bounded probe requires shm_size=512m')
 
     def validate_selection(self, context):
         context.validate(require_selection=True)
@@ -61,8 +61,8 @@ class KunlunxinProvider:
         devices = [(d['host_device_node'], d['container_node'], 'rwm') for d in host['devices']]
         devices.append(('/dev/xpuctrl', '/dev/xpuctrl', 'rwm'))
         args = ['--network=none', '--ipc=private', '--cap-drop=ALL', '--security-opt=no-new-privileges',
-                '--read-only', '--pids-limit=128', '--shm-size=128m', '--group-add', str(os.getgid()),
-                '--tmpfs', '/tmp:rw,nosuid,size=128m', '--tmpfs', '/root/.cache:rw,nosuid,size=128m',
+                '--read-only', '--pids-limit=512', '--shm-size=512m', '--group-add', str(os.getgid()),
+                '--tmpfs', '/tmp:rw,nosuid,size=512m', '--tmpfs', '/root/.cache:rw,nosuid,size=512m',
                 '--env', 'CUDA_VISIBLE_DEVICES=' + ','.join(str(i) for i in range(len(host['devices']))),
                 '--env', 'USE_FLAGGEMS=0', '--env', 'PYTHONDONTWRITEBYTECODE=1',
                 '--env', 'PYTHONNOUSERSITE=1', '--env', 'XDG_CACHE_HOME=/tmp/cache',

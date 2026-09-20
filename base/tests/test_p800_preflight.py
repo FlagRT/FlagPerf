@@ -230,7 +230,7 @@ class LifecycleTests(unittest.TestCase):
         commands = Mock()
         cid = 'a'*64
         record = {'Id': cid, 'Config': {'Labels': {'flagperf.run_id': 'fixture'}}, 'Image': 'sha256:'+'b'*64,
-                  'HostConfig': {'Privileged': False, 'Devices': [], 'NetworkMode': 'none', 'ReadonlyRootfs': True,
+                  'HostConfig': {'IpcMode': 'private', 'Privileged': False, 'Devices': [], 'NetworkMode': 'none', 'ReadonlyRootfs': True,
                                  'CapDrop': ['ALL'], 'SecurityOpt': ['no-new-privileges']}, 'Mounts': [],
                   'State': {'Running': False, 'Status': 'exited', 'ExitCode': 0}}
         container = ManagedContainer(commands, root, 'fixture-name', 'fixture')
@@ -242,7 +242,10 @@ class LifecycleTests(unittest.TestCase):
                      lambda r: r['Config']['Labels'].update({'flagperf.run_id': 'other'}),
                      lambda r: r['HostConfig'].update(Devices=[dict(PathOnHost='/dev/extra', PathInContainer='/dev/extra', CgroupPermissions='rwm')]),
                      lambda r: r['HostConfig'].update(NetworkMode='host'), lambda r: r['HostConfig'].update(ReadonlyRootfs=False),
-                     lambda r: r['HostConfig'].update(SecurityOpt=[])]
+                     lambda r: r['HostConfig'].update(SecurityOpt=[]),
+                     lambda r: r['HostConfig'].update(SecurityOpt=['no-new-privileges=false']),
+                     lambda r: r['HostConfig'].update(IpcMode='host'),
+                     lambda r: r['HostConfig'].update(CapAdd=['SYS_ADMIN'])]
         for index, mutate in enumerate(mutations):
             with self.subTest(index=index), tempfile.TemporaryDirectory() as tmp:
                 container, commands, record, expected = self.fixture(Path(tmp)); mutate(record)
@@ -338,6 +341,8 @@ class ExecutionTests(unittest.TestCase):
                 (out/'probe.json').write_text(json.dumps(dict(status='passed', run_id=ctx['run_id'], context_sha256=h, binding=bindings[0])))
                 return 0
             container=Mock(); container.wait.side_effect=wait
+            if mode == 'create-failed': container.create.side_effect=RuntimeError('fixture create failure')
+            if mode == 'start-failed': container.start.side_effect=RuntimeError('fixture start failure')
             container.cleanup.return_value={'container_absent': mode != 'cleanup-failed', 'status': 'failed' if mode == 'cleanup-failed' else 'passed'}
             if mode == 'cleanup-exception': container.cleanup.side_effect=OSError('fixture disk error')
             manifest=json.loads((BASE/'vendors/kunlunxin/xpytorch_2.9_p800_candidate/image-manifest.json').read_text())
@@ -366,6 +371,13 @@ class ExecutionTests(unittest.TestCase):
 
     def test_normal_postflight_before_release_and_deterministic_report(self):
         code, summary=self.run_fixture('normal'); self.assertEqual(code,0); self.assertEqual(summary['status'],'passed')
+
+    def test_create_and_start_failure_cleanup(self):
+        for mode in ('create-failed', 'start-failed'):
+            with self.subTest(mode=mode):
+                code, summary = self.run_fixture(mode)
+                self.assertEqual(code, 1)
+                self.assertEqual(summary['cleanup_status'], 'passed')
 
     def test_partial_monitor_is_not_pass(self):
         code, summary=self.run_fixture('partial'); self.assertEqual(code,2); self.assertEqual(summary['status'],'partial')
