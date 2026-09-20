@@ -3,8 +3,9 @@
 """Explicit host capability registration, not device autodetection."""
 from base.vendors.protocol import ConfigurationError, VendorProvider
 from base.vendors.ascend.provider import AscendProvider
+from base.vendors.kunlunxin.provider import KunlunxinProvider
 
-PROVIDERS: dict[str, VendorProvider] = {"ascend": AscendProvider()}
+PROVIDERS = {"ascend": AscendProvider(), "kunlunxin": KunlunxinProvider()}
 
 
 def get_provider(vendor: str) -> VendorProvider:

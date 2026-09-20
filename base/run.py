@@ -48,6 +48,9 @@ def build_parser() -> argparse.ArgumentParser:
         "run", help="plan or execute a Benchmark from the host",
     )
     add_benchmark_arguments(benchmark_run)
+    from executors.preflight import add_cli_arguments as add_preflight_arguments
+    preflight = benchmark_actions.add_parser("preflight", help="bounded vendor identity qualification, without a performance case")
+    add_preflight_arguments(preflight)
 
     toolkit = domains.add_parser(
         "toolkit", help="vendor measurement and diagnosis Toolkit operations",
@@ -78,6 +81,10 @@ def generate_report(run_id: str, result_root: Path) -> int:
         raise ConfigurationError(f"run summary does not exist: {summary_path}")
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
     kind = summary.get("kind")
+    if kind == "benchmark-preflight":
+        from executors.preflight import render_report
+        render_report(root)
+        return 0
     # Results produced before the unified facade did not carry ``kind``.
     # Prefer the explicit discriminator, then fall back to durable artifacts so
     # report regeneration remains backward compatible without rewriting the
@@ -112,6 +119,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 2
     args = parser.parse_args(arguments)
     try:
+        if args.domain == "benchmark" and args.action == "preflight":
+            from executors.preflight import execute
+            return execute(args)
         if args.domain == "benchmark" and args.action == "run":
             request = BenchmarkRunRequest.from_namespace(args)
             return BenchmarkExecutor().execute(request)

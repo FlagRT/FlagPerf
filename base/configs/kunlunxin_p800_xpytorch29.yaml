@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "vendor": "kunlunxin",
+  "chip": "P800",
+  "runtime_profile": "xpytorch_2.9_p800_candidate",
+  "image": "flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev:202608",
+  "shm_size": "128m",
+  "requires_privileged_root": false,
+  "expected_device_ids": [0, 1, 2, 3, 4, 5, 6, 7],
+  "result_root": "result",
+  "required_devices": ["/dev/xpuctrl"],
+  "host_mounts": [],
+  "runtime_environment": {"USE_FLAGGEMS": "0"}
+}

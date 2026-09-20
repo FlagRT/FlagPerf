@@ -30,7 +30,7 @@ assert 'torch' not in sys.modules
         self.assertEqual(proc.returncode, 0, proc.stderr)
 
     def test_registry_does_not_guess_unknown_vendor(self):
-        for name in ("kunlunxin", "unknown", "../ascend", None):
+        for name in ("unknown", "../ascend", None):
             with self.subTest(name=name), self.assertRaises(ConfigurationError):
                 get_provider(name)
 

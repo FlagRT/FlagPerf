@@ -12,6 +12,7 @@ import json
 import os
 from pathlib import Path
 import re
+import stat
 import sys
 from typing import Any, Iterable
 
@@ -279,9 +280,13 @@ class DeviceLease:
         kind: str,
         root: Path = DEFAULT_LEASE_ROOT,
         resource_keys: Iterable[str] = (),
+        compatibility_paths: Iterable[Path] = (),
     ) -> None:
         self.device_ids = tuple(sorted(set(device_ids)))
         self.resource_keys = tuple(sorted(set(resource_keys)))
+        self.compatibility_paths = tuple(sorted(set(Path(p) for p in compatibility_paths)))
+        if any(not p.is_absolute() for p in self.compatibility_paths):
+            raise DeviceLeaseError("compatibility lock paths must be absolute")
         if any(not isinstance(key, str) or not key or "/" not in key for key in self.resource_keys):
             raise DeviceLeaseError("resource keys require vendor/physical-resource identity")
         if not self.device_ids and not self.resource_keys:
@@ -297,9 +302,15 @@ class DeviceLease:
         try:
             names = [f"logical-device-{item}.lock" for item in self.device_ids]
             names += ["resource-" + hashlib.sha256(key.encode()).hexdigest() + ".lock" for key in self.resource_keys]
-            for name in sorted(names):
-                path = self.root / name
-                stream = path.open("a+", encoding="utf-8")
+            paths = sorted(set(self.root / name for name in names) | set(self.compatibility_paths))
+            for path in paths:
+                name = str(path)
+                fd = os.open(path, os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW | os.O_CLOEXEC, 0o666)
+                info = os.fstat(fd)
+                if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+                    os.close(fd)
+                    raise DeviceLeaseError("lease must be a regular file with one link")
+                stream = os.fdopen(fd, "r+", encoding="utf-8")
                 try:
                     fcntl.flock(stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
                 except BlockingIOError as exc:
@@ -328,7 +339,7 @@ class DeviceLease:
                 stream.write(metadata + "\n")
                 stream.flush()
                 os.fsync(stream.fileno())
-        except Exception:
+        except BaseException:
             self.release()
             raise
 
@@ -336,6 +347,7 @@ class DeviceLease:
         return {
             "backend": "flock",
             "root": str(self.root),
+            "compatibility_paths": [str(p) for p in self.compatibility_paths],
             "device_ids": list(self.device_ids),
                     "resource_keys": list(self.resource_keys),
             "run_id": self.run_id,
