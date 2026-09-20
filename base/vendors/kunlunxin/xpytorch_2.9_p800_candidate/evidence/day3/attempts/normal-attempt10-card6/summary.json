@@ -1,0 +1,32 @@
+{
+  "cleanup_status": "passed",
+  "container_exit_code": 0,
+  "device_bindings": [
+    {
+      "container_device_node": "/dev/xpu5",
+      "framework_device_name": "cuda:0",
+      "framework_local_rank": 0,
+      "framework_logical_id": 0,
+      "host_device_node": "/dev/xpu5",
+      "host_physical_id": 6,
+      "legacy_logical_id": null,
+      "pci_bdf": "0000:b6:00.0",
+      "request_index": 0,
+      "resource_key": "kunlunxin/9e24d168-db57-5cd9-8cfb-aea4ae898897",
+      "serial_or_uuid": "9e24d168-db57-5cd9-8cfb-aea4ae898897",
+      "vendor": "kunlunxin"
+    }
+  ],
+  "finished_at": "2026-09-20T11:20:42.428216Z",
+  "kind": "benchmark-preflight",
+  "lease_released": true,
+  "measurement_status": "not-run",
+  "monitoring_status": "partial",
+  "postflight_status": "passed",
+  "probe_mode": "identity",
+  "run_id": "preflight-7e5d96200bf54154983492b121470ac0",
+  "schema_version": 1,
+  "started_at": "2026-09-20T11:20:08.893443Z",
+  "status": "partial",
+  "vendor": "kunlunxin"
+}

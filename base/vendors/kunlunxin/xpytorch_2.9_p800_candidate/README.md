@@ -1,8 +1,10 @@
 # P800 M1 candidate runtime (PR0)
 
 M1 passes the bounded single-card PR0 smoke checks and is retained for further
-Base development. This standalone profile is not connected to the Base executor
-and has not yet produced formal benchmark results. Day 1 is complete for
+Base development. The unified Base `benchmark preflight` entrypoint now connects
+this profile to bounded identity, telemetry and cleanup qualification. It has
+not produced formal benchmark results. See the [preflight runbook](../../../docs/p800-preflight.md)
+and [Day 3 evidence review](evidence/day3/review.md). Day 1 is complete for
 development: the user accepts the tested version combination, confirms that
 recipients can obtain the same image, and confirms observing execution on card 2.
 These are explicit user decisions/observations, not vendor certification or a
@@ -35,7 +37,7 @@ Maintainer questions remain as reference, not a prerequisite for development.
 | Actual device node | `/dev/xpu3` (major 195, minor 3), plus `/dev/xpuctrl` |
 | Container/runtime | Nonprivileged, capabilities dropped; `CUDA_VISIBLE_DEVICES=0`, device `cuda:0`, device count 1 |
 | Initialization | Explicit Conda activation, site hooks, `torch` and `torch_xmlir` imports |
-| FP32 | 32×32, CPU FP64 reference, rtol/atol 1e-4, maximum absolute error `6.6186313503191485e-06` |
+| FP32 | 32脳32, CPU FP64 reference, rtol/atol 1e-4, maximum absolute error `6.6186313503191485e-06` |
 | Seed | `torch.cuda.manual_seed_all(519)`, exact repeat |
 | Memory | `torch.cuda.mem_get_info(0)`: total 103079215104 bytes; OOM exception API exists, allocation failure NOT exercised |
 | Pinned copy | 1024-byte H2D/D2H round trip matches exactly with full synchronization |

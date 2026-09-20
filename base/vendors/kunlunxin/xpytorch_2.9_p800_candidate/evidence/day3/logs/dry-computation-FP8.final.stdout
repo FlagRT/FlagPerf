@@ -1,0 +1,181 @@
+{
+  "applicability": {
+    "reason": "\u5f53\u524d Ascend 910C/A3 \u4e0d\u652f\u6301\u672c Case \u6240\u9700\u7684\u539f\u751f FP8 GEMM\uff1b\u8f6c\u4e3a FP16/BF16 \u8ba1\u7b97\u4e0d\u80fd\u4f5c\u4e3a\u539f\u751f FP8 \u7b97\u529b\u7ed3\u679c",
+    "status": "skipped"
+  },
+  "case": "computation-FP8",
+  "case_assets": {
+    "case": "computation-FP8",
+    "case_name": "computation-FP8",
+    "chip": null,
+    "configurations": {
+      "generic": {
+        "bytes": 653,
+        "relative_path": "benchmarks/computation-FP8/case_config.yaml",
+        "sha256": "a299308c594c20454b73d370a2960d5a54a20c45c3481d44b82812113dc085af"
+      }
+    },
+    "entrypoint": {
+      "bytes": 4895,
+      "relative_path": "benchmarks/computation-FP8/main.py",
+      "sha256": "e3638e0534ce422cb48b70d867c19864ef1f22c65e17c13158407223327b7d95"
+    },
+    "environments": [],
+    "merged_config": {
+      "DIST_BACKEND": "mpi",
+      "ITERS": 10000,
+      "K": 4096,
+      "M": 4096,
+      "N": 4096,
+      "WARMUP": 100
+    },
+    "requirement_files": [
+      {
+        "bytes": 201,
+        "relative_path": "benchmarks/computation-FP8/ascend/runtime_requirements.json",
+        "sha256": "d23e75b1b588bac6b6c3b36cbdd9cf1d43bb97d98cfa00540c7b727eb1b80575"
+      }
+    ],
+    "requirements": {
+      "schema_version": 1,
+      "supported": false,
+      "unsupported_reason": "\u5f53\u524d Ascend 910C/A3 \u4e0d\u652f\u6301\u672c Case \u6240\u9700\u7684\u539f\u751f FP8 GEMM\uff1b\u8f6c\u4e3a FP16/BF16 \u8ba1\u7b97\u4e0d\u80fd\u4f5c\u4e3a\u539f\u751f FP8 \u7b97\u529b\u7ed3\u679c"
+    },
+    "schema_version": 1,
+    "selector": "ascend",
+    "vendor": "ascend"
+  },
+  "case_config": {
+    "generic": {
+      "bytes": 653,
+      "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/computation-FP8/case_config.yaml",
+      "relative_path": "benchmarks/computation-FP8/case_config.yaml",
+      "sha256": "a299308c594c20454b73d370a2960d5a54a20c45c3481d44b82812113dc085af"
+    }
+  },
+  "context": {
+    "config": "base/configs/ascend910_cann9_local.yaml",
+    "device_ids": "14",
+    "dry_run": true,
+    "npu_ids": null,
+    "physical_device_ids": null,
+    "result_root": null,
+    "timeout": 3600
+  },
+  "host_config": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/configs/ascend910_cann9_local.yaml",
+  "image": "flagrt/ascend-operator-runtime:0.2.0-cann9.0-py311-torch2.10-arm64",
+  "kind": "benchmark",
+  "mode": "static-dry-run",
+  "monitoring": {
+    "automatic_workload_extension": false,
+    "collector": "npu-smi info -t usages",
+    "command_timeout_s": 5,
+    "coverage_window": "rank-local exact measurement window",
+    "enabled": true,
+    "metric_fields": [
+      {
+        "key": "aicore_usage_rate_pct",
+        "label": "Aicore Usage Rate(%)",
+        "unit": "%"
+      },
+      {
+        "key": "aivector_usage_rate_pct",
+        "label": "Aivector Usage Rate(%)",
+        "unit": "%"
+      },
+      {
+        "key": "hbm_usage_rate_pct",
+        "label": "HBM Usage Rate(%)",
+        "unit": "%"
+      },
+      {
+        "key": "hbm_bandwidth_usage_rate_pct",
+        "label": "HBM Bandwidth Usage Rate(%)",
+        "unit": "%"
+      },
+      {
+        "key": "npu_utilization_pct",
+        "label": "NPU Utilization(%)",
+        "unit": "%"
+      }
+    ],
+    "required_fields": [
+      "Aicore Usage Rate(%)",
+      "Aivector Usage Rate(%)",
+      "HBM Usage Rate(%)",
+      "HBM Bandwidth Usage Rate(%)",
+      "NPU Utilization(%)"
+    ],
+    "required_samples_per_target": 10,
+    "target_interval_s": 1.0,
+    "target_resource": "benchmark-npu-core",
+    "vendor": "ascend",
+    "vendor_display_name": "Ascend"
+  },
+  "nproc_per_node": 1,
+  "permissions": {
+    "active_dmi": false,
+    "candidate_runtime": false,
+    "ipc_namespace": "host",
+    "network": "host",
+    "pid_namespace": "private",
+    "privileged_root": false
+  },
+  "runtime_identity": {
+    "image_id": "deferred-until-image-inspection"
+  },
+  "runtime_lock": {
+    "image_manifest": {
+      "image": "flagrt/ascend-operator-runtime:0.2.0-cann9.0-py311-torch2.10-arm64",
+      "image_id": "sha256:d948410966b0dfdfaf4f9c95b9b14bdb7c4279cb85ccd7f9157f0fb5d1c6d397",
+      "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/vendors/ascend/torch_fl_2.10/image-manifest.json",
+      "release_stage": null,
+      "schema_version": 1,
+      "sha256": "b3de6b711947eaab42268eb9fa16956ac4a397751d8e2ba06a3174fd1f4d23cf",
+      "validated": true,
+      "validation_scope": "Rebuilt after server migration from the locked CANN 9.0.0 supply chain. Full default computation-FP16 (8192x8192x8192, warmup 100, iterations 50000) passed on physical NPU7 / logical Device14,15 with two ranks, 285.22 TFLOPS per rank, zero FlagOS CPU fallback, exact-window monitoring passed with 184 samples per device, and host preflight/postflight plus report generation passed. Other Base cases were not rerun for this rebuilt image.",
+      "validation_status": "partial"
+    },
+    "runtime_profile": "torch_fl_2.10",
+    "stack_lock": {
+      "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/vendors/ascend/torch_fl_2.10/stack.lock.yaml",
+      "sha256": "fca4071f8a7bb7771184f18cda1c4ca2b948642ba4a2f8641ea5e9d63ecc7150"
+    },
+    "vendor": "ascend"
+  },
+  "runtime_requirements": {
+    "bytes": 201,
+    "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/computation-FP8/ascend/runtime_requirements.json",
+    "relative_path": "benchmarks/computation-FP8/ascend/runtime_requirements.json",
+    "requirements": {
+      "schema_version": 1,
+      "supported": false,
+      "unsupported_reason": "\u5f53\u524d Ascend 910C/A3 \u4e0d\u652f\u6301\u672c Case \u6240\u9700\u7684\u539f\u751f FP8 GEMM\uff1b\u8f6c\u4e3a FP16/BF16 \u8ba1\u7b97\u4e0d\u80fd\u4f5c\u4e3a\u539f\u751f FP8 \u7b97\u529b\u7ed3\u679c"
+    },
+    "sha256": "d23e75b1b588bac6b6c3b36cbdd9cf1d43bb97d98cfa00540c7b727eb1b80575",
+    "sources": [
+      {
+        "bytes": 201,
+        "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/computation-FP8/ascend/runtime_requirements.json",
+        "relative_path": "benchmarks/computation-FP8/ascend/runtime_requirements.json",
+        "sha256": "d23e75b1b588bac6b6c3b36cbdd9cf1d43bb97d98cfa00540c7b727eb1b80575"
+      }
+    ]
+  },
+  "schema_version": 1,
+  "selection_note": "physical-to-logical mapping and idle state are resolved only by the side-effecting host preflight",
+  "selection_request": {
+    "expression": "14",
+    "requested_ids": [
+      14
+    ],
+    "resolution_status": "static",
+    "selected_device_ids": [
+      14
+    ],
+    "source": "device-ids"
+  },
+  "vendor": "ascend",
+  "vendor_display_name": "Ascend",
+  "worker": "benchmark_worker.py"
+}

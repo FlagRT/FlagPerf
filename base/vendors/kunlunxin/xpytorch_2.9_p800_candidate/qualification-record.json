@@ -65,5 +65,27 @@
     "Is XPYTORCH XMLIR--bc1b1dc6f-dev+2026032411 supported with this M1 image, including XRE 5.13 and XHPC metadata requiring 5.18?",
     "Which XRE/XCCL shared-library paths and FlagCX build are authoritative for this image?",
     "What is the canonical registry digest or reproducible distribution source for M1?"
-  ]
+  ],
+  "day3": {
+    "date": "2026-09-20",
+    "status": "complete_for_single_card_preflight_development",
+    "tested_code_commit": "e936db64446d62c73b380317fd37b80fcacfee1a",
+    "entrypoint": "base/run.py benchmark preflight",
+    "normal_attempt": "normal-attempt12-card6",
+    "timeout_attempt": "timeout-attempt02-card6",
+    "physical_id": 6,
+    "uuid": "9e24d168-db57-5cd9-8cfb-aea4ae898897",
+    "host_device_node": "/dev/xpu5",
+    "framework_logical_id": 0,
+    "valid_observation_samples": 16,
+    "offline_tests": {
+      "base": 154,
+      "pr0": 32,
+      "toolkit": 80
+    },
+    "runtime_promoted": false,
+    "performance_qualified": false,
+    "open_item": "Physical card 1 synchronization timed out in bounded probes; cause unproven. Do not infer all-card health.",
+    "review": "evidence/day3/review.md"
+  }
 }

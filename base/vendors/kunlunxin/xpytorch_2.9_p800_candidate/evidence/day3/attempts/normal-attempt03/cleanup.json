@@ -1,0 +1,88 @@
+{
+  "commands": [
+    {
+      "argv": [
+        "sudo",
+        "-n",
+        "docker",
+        "ps",
+        "-a",
+        "--no-trunc",
+        "--filter",
+        "id=e4d808cf59d7244be19b2277a1f3508b5c367a68467b3dc25f75071778c0cc65",
+        "--format",
+        "{{.ID}}"
+      ],
+      "finished_monotonic_s": 3743717.162031272,
+      "returncode": 0,
+      "started_at": "2026-09-20T11:09:40.178701+00:00",
+      "started_monotonic_s": 3743717.098552807,
+      "stderr": "",
+      "stdout": "e4d808cf59d7244be19b2277a1f3508b5c367a68467b3dc25f75071778c0cc65\n",
+      "timed_out": false,
+      "timeout_s": 3
+    },
+    {
+      "argv": [
+        "sudo",
+        "-n",
+        "docker",
+        "stop",
+        "-t",
+        "2",
+        "e4d808cf59d7244be19b2277a1f3508b5c367a68467b3dc25f75071778c0cc65"
+      ],
+      "finished_monotonic_s": 3743722.302408972,
+      "returncode": 124,
+      "started_at": "2026-09-20T11:09:40.375279+00:00",
+      "started_monotonic_s": 3743717.29513262,
+      "stderr": "",
+      "stdout": "",
+      "timed_out": true,
+      "timeout_s": 5
+    },
+    {
+      "argv": [
+        "sudo",
+        "-n",
+        "docker",
+        "rm",
+        "-f",
+        "e4d808cf59d7244be19b2277a1f3508b5c367a68467b3dc25f75071778c0cc65"
+      ],
+      "finished_monotonic_s": 3743723.25138442,
+      "returncode": 0,
+      "started_at": "2026-09-20T11:09:45.382571+00:00",
+      "started_monotonic_s": 3743722.302421751,
+      "stderr": "",
+      "stdout": "e4d808cf59d7244be19b2277a1f3508b5c367a68467b3dc25f75071778c0cc65\n",
+      "timed_out": false,
+      "timeout_s": 5
+    },
+    {
+      "argv": [
+        "sudo",
+        "-n",
+        "docker",
+        "ps",
+        "-a",
+        "--no-trunc",
+        "--filter",
+        "id=e4d808cf59d7244be19b2277a1f3508b5c367a68467b3dc25f75071778c0cc65",
+        "--format",
+        "{{.ID}}"
+      ],
+      "finished_monotonic_s": 3743723.315653251,
+      "returncode": 0,
+      "started_at": "2026-09-20T11:09:46.331542+00:00",
+      "started_monotonic_s": 3743723.251394729,
+      "stderr": "",
+      "stdout": "",
+      "timed_out": false,
+      "timeout_s": 3
+    }
+  ],
+  "container_absent": true,
+  "container_id": "e4d808cf59d7244be19b2277a1f3508b5c367a68467b3dc25f75071778c0cc65",
+  "status": "passed"
+}

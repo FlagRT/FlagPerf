@@ -1,0 +1,47 @@
+{
+  "base": [
+    "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-pr1-20260920-162724/cpu-test-venv/bin/python",
+    "-B",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "base/tests",
+    "-v"
+  ],
+  "pr0": [
+    "python3",
+    "-S",
+    "-B",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "base/vendors/kunlunxin/xpytorch_2.9_p800_candidate",
+    "-p",
+    "test_*.py",
+    "-v"
+  ],
+  "toolkit": [
+    "python3",
+    "-B",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "base/toolkits/_common/ascend/A3/tests",
+    "-v"
+  ],
+  "public": [
+    "python3",
+    "-B",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "tests",
+    "-p",
+    "test_public_distribution.py",
+    "-v"
+  ]
+}

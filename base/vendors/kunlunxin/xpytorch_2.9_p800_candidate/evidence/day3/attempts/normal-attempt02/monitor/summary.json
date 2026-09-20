@@ -1,0 +1,40 @@
+{
+  "clock_domain": "same-host Linux monotonic",
+  "collector": "xpu-smi -m and selected -q",
+  "extensions": [],
+  "parsed_samples": {
+    "bytes": 30213,
+    "path": "monitor/samples.jsonl",
+    "sha256": "b777cc32728b1662865c8a3de7db82f483f573c815ffa5f50ff05c453bdb2bb8"
+  },
+  "portable_projection": "Hashes refer to projected files. Original monitor summary retained as summary.source.json.",
+  "primary_sample_counts_by_target": {
+    "kunlunxin/b3509946-0bc6-5744-bd7c-a0b87dadef02": 0
+  },
+  "raw_samples": {
+    "bytes": 525683,
+    "path": "monitor/samples.raw.jsonl",
+    "sha256": "d33ffa95491353671d6471ecdd451617423d6341c3b7aee49889f9839f1acdde"
+  },
+  "reasons": [
+    "kunlunxin/b3509946-0bc6-5744-bd7c-a0b87dadef02: 0/10 valid samples"
+  ],
+  "sample_counts_by_target": {
+    "kunlunxin/b3509946-0bc6-5744-bd7c-a0b87dadef02": 0
+  },
+  "schema_version": 2,
+  "status": "partial",
+  "target_resource": null,
+  "targets": [
+    {
+      "device_id": "kunlunxin/b3509946-0bc6-5744-bd7c-a0b87dadef02",
+      "pci_bdf": "0000:16:00.0",
+      "physical_id": 1,
+      "uuid": "b3509946-0bc6-5744-bd7c-a0b87dadef02"
+    }
+  ],
+  "total_sample_commands": 242,
+  "vendor": "kunlunxin",
+  "window_semantics": "bounded identity probe observation, not performance measurement",
+  "workload_windows": []
+}

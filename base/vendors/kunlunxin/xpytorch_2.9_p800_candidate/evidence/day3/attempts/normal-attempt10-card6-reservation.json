@@ -1,0 +1,14 @@
+{
+  "physical_id": 6,
+  "selected_record": {
+    "physical_id": 6,
+    "pci_bdf": "0000:b6:00.0",
+    "serial": "02K15K0263D002N9",
+    "used_memory_mib": 0,
+    "total_memory_mib": 98304,
+    "utilization_percent": 0
+  },
+  "selected_at": "2026-09-20T11:20:08.796309+00:00",
+  "end": "2026-09-20T12:00:08.796333+00:00",
+  "reference": "User authorized Day3 single idle P800 bounded identity and cleanup qualification; select idle at execution"
+}

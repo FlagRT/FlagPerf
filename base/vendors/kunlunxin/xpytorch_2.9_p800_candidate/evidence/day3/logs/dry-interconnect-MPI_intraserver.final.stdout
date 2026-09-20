@@ -1,0 +1,202 @@
+{
+  "applicability": {
+    "reason": null,
+    "status": "applicable"
+  },
+  "case": "interconnect-MPI_intraserver",
+  "case_assets": {
+    "case": "interconnect-MPI_intraserver",
+    "case_name": "interconnect-MPI_intraserver",
+    "chip": null,
+    "configurations": {
+      "ascend": {
+        "bytes": 132,
+        "relative_path": "benchmarks/interconnect-MPI_intraserver/ascend/case_config.yaml",
+        "sha256": "a8df1fe4081cb58ff528c0cc95d4168fb61bdba9052e29d5ae052d3a215f29ab"
+      },
+      "generic": {
+        "bytes": 645,
+        "relative_path": "benchmarks/interconnect-MPI_intraserver/case_config.yaml",
+        "sha256": "4084480e3af08ab4c7a2c18d1256f9f951d58c5242ffb032657a65cdc68b9afd"
+      }
+    },
+    "entrypoint": {
+      "bytes": 5776,
+      "relative_path": "benchmarks/interconnect-MPI_intraserver/main.py",
+      "sha256": "7b2cd8c23e76c4a9de5c434e1316624831449bdd126f5836fda543750102f509"
+    },
+    "environments": [],
+    "merged_config": {
+      "DIST_BACKEND": "flagos",
+      "ITERS": 100,
+      "Melements": 1,
+      "WARMUP": 10
+    },
+    "requirement_files": [
+      {
+        "bytes": 200,
+        "relative_path": "benchmarks/interconnect-MPI_intraserver/ascend/runtime_requirements.json",
+        "sha256": "6c4881f43c1f64d4eb6e712d30fc9e4b1802f629cff71d392c4c5c815eac785c"
+      }
+    ],
+    "requirements": {
+      "distributed_backend": "flagos",
+      "process_scope": {
+        "min_nproc_per_node": 2,
+        "nnodes": 1
+      },
+      "runtime_profile": "torch_fl_2.10_flagcx",
+      "runtime_role": "communication",
+      "schema_version": 1
+    },
+    "schema_version": 1,
+    "selector": "ascend",
+    "vendor": "ascend"
+  },
+  "case_config": {
+    "ascend": {
+      "bytes": 132,
+      "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/interconnect-MPI_intraserver/ascend/case_config.yaml",
+      "relative_path": "benchmarks/interconnect-MPI_intraserver/ascend/case_config.yaml",
+      "sha256": "a8df1fe4081cb58ff528c0cc95d4168fb61bdba9052e29d5ae052d3a215f29ab"
+    },
+    "generic": {
+      "bytes": 645,
+      "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/interconnect-MPI_intraserver/case_config.yaml",
+      "relative_path": "benchmarks/interconnect-MPI_intraserver/case_config.yaml",
+      "sha256": "4084480e3af08ab4c7a2c18d1256f9f951d58c5242ffb032657a65cdc68b9afd"
+    }
+  },
+  "context": {
+    "config": "base/configs/ascend910_cann9_p2p.yaml",
+    "device_ids": "14,15",
+    "dry_run": true,
+    "npu_ids": null,
+    "physical_device_ids": null,
+    "result_root": null,
+    "timeout": 3600
+  },
+  "host_config": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/configs/ascend910_cann9_p2p.yaml",
+  "image": "flagrt/ascend-operator-runtime-comm:0.1.3-cann9.0-py311-torch2.10-flagcx0.13.0g55eb2ffp2-arm64",
+  "kind": "benchmark",
+  "mode": "static-dry-run",
+  "monitoring": {
+    "automatic_workload_extension": false,
+    "collector": "npu-smi info -t usages",
+    "command_timeout_s": 5,
+    "coverage_window": "rank-local exact measurement window",
+    "enabled": true,
+    "metric_fields": [
+      {
+        "key": "aicore_usage_rate_pct",
+        "label": "Aicore Usage Rate(%)",
+        "unit": "%"
+      },
+      {
+        "key": "aivector_usage_rate_pct",
+        "label": "Aivector Usage Rate(%)",
+        "unit": "%"
+      },
+      {
+        "key": "hbm_usage_rate_pct",
+        "label": "HBM Usage Rate(%)",
+        "unit": "%"
+      },
+      {
+        "key": "hbm_bandwidth_usage_rate_pct",
+        "label": "HBM Bandwidth Usage Rate(%)",
+        "unit": "%"
+      },
+      {
+        "key": "npu_utilization_pct",
+        "label": "NPU Utilization(%)",
+        "unit": "%"
+      }
+    ],
+    "required_fields": [
+      "Aicore Usage Rate(%)",
+      "Aivector Usage Rate(%)",
+      "HBM Usage Rate(%)",
+      "HBM Bandwidth Usage Rate(%)",
+      "NPU Utilization(%)"
+    ],
+    "required_samples_per_target": 10,
+    "target_interval_s": 1.0,
+    "target_resource": "benchmark-npu-core",
+    "vendor": "ascend",
+    "vendor_display_name": "Ascend"
+  },
+  "nproc_per_node": 2,
+  "permissions": {
+    "active_dmi": false,
+    "candidate_runtime": false,
+    "ipc_namespace": "host",
+    "network": "host",
+    "pid_namespace": "private",
+    "privileged_root": false
+  },
+  "runtime_identity": {
+    "image_id": "deferred-until-image-inspection"
+  },
+  "runtime_lock": {
+    "image_manifest": {
+      "image": "flagrt/ascend-operator-runtime-comm:0.1.3-cann9.0-py311-torch2.10-flagcx0.13.0g55eb2ffp2-arm64",
+      "image_id": "sha256:3b9e08f231d0e80d37341e375e6bb13066e03a67794b78a3d2874c1770c6b6bc",
+      "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/vendors/ascend/torch_fl_2.10_flagcx/image-manifest.json",
+      "release_stage": "validated",
+      "schema_version": 1,
+      "sha256": "fb3a4428855e59568703721d9cb43054d94df692c8390710aadf6d7b5c2ce157",
+      "validated": true,
+      "validation_scope": "Qualified for the declared single-node two-rank P2P scope using the original FP32 one-way blocking send/recv Case and the official p2p-single-node-v1 workload: SIO Device14-to-15 on physical NPU7 and HCCS_SW Device12-to-14 across physical NPU6/NPU7, at 4, 16, 64 and 256 MiB. Build, ABI, sentinel, lifecycle and smoke checks and the 30-run P2P qualification matrix passed, including three repeats per topology-size cell, zero fallback, topology/postflight audits and monitor A/B. Reverse direction, multi-node communication and long-duration soak are explicitly outside the declared release scope and are not pending gates.",
+      "validation_status": "p2p-formal-passed"
+    },
+    "runtime_profile": "torch_fl_2.10_flagcx",
+    "stack_lock": {
+      "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/vendors/ascend/torch_fl_2.10_flagcx/stack.lock.yaml",
+      "sha256": "3c251d5ce00b499c8177c0c4165f9055254c2f2442cdfa40115ecaad71c79779"
+    },
+    "vendor": "ascend"
+  },
+  "runtime_requirements": {
+    "bytes": 200,
+    "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/interconnect-MPI_intraserver/ascend/runtime_requirements.json",
+    "relative_path": "benchmarks/interconnect-MPI_intraserver/ascend/runtime_requirements.json",
+    "requirements": {
+      "distributed_backend": "flagos",
+      "process_scope": {
+        "min_nproc_per_node": 2,
+        "nnodes": 1
+      },
+      "runtime_profile": "torch_fl_2.10_flagcx",
+      "runtime_role": "communication",
+      "schema_version": 1
+    },
+    "sha256": "6c4881f43c1f64d4eb6e712d30fc9e4b1802f629cff71d392c4c5c815eac785c",
+    "sources": [
+      {
+        "bytes": 200,
+        "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/interconnect-MPI_intraserver/ascend/runtime_requirements.json",
+        "relative_path": "benchmarks/interconnect-MPI_intraserver/ascend/runtime_requirements.json",
+        "sha256": "6c4881f43c1f64d4eb6e712d30fc9e4b1802f629cff71d392c4c5c815eac785c"
+      }
+    ]
+  },
+  "schema_version": 1,
+  "selection_note": "physical-to-logical mapping and idle state are resolved only by the side-effecting host preflight",
+  "selection_request": {
+    "expression": "14,15",
+    "requested_ids": [
+      14,
+      15
+    ],
+    "resolution_status": "static",
+    "selected_device_ids": [
+      14,
+      15
+    ],
+    "source": "device-ids"
+  },
+  "vendor": "ascend",
+  "vendor_display_name": "Ascend",
+  "worker": "benchmark_worker.py"
+}

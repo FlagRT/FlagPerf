@@ -527,3 +527,16 @@ Host
 
 架构、适配规则和旧集群流程见
 [`../docs/base/base-case-doc.md`](../docs/base/base-case-doc.md)。
+
+## P800 standalone preflight
+
+`python3 base/run.py benchmark preflight` checks P800 identity, a four-element
+native tensor readback, observation telemetry and bounded cleanup without a
+performance case. Its preflight schema 1 is separate from Benchmark results.
+Real execution requires explicit single-card physical selection, candidate
+opt-in, a current reservation window and a new result directory.
+
+See the [runbook and Day 4 integration contract](docs/p800-preflight.md) and
+[Day 3 evidence review](vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day3/review.md).
+P800 FP32 case/driver integration is pending; missing contracts reject before
+device access. This command does not produce TFLOPS or promote runtime validation.

@@ -1,9 +1,9 @@
-# Benchmark vendor control plane (PR1)
+# Benchmark vendor control plane
 
 PR1 prepares the host/worker/monitor/report contracts for additional vendors.
-The production registry still contains only Ascend. Kunlunxin host requests fail
-explicitly until PR2 implements and qualifies its provider. No P800 performance
-support or new runtime validation is implied by this refactor.
+The registry contains Ascend performance execution and Kunlunxin standalone
+preflight capability. P800 performance contracts and driver integration remain
+separate work; registration does not promote the candidate runtime.
 
 ## Provider responsibilities
 
@@ -97,9 +97,9 @@ available on the P800 development host. PR1 does not run Ascend hardware or
 occupy P800 cards. See the [Day 2 review](../vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day2/review.md)
 for exact tested commit, commands, outcomes and retained failures.
 
-PR2 must implement the real P800 provider/profile, xpu-smi parser and host checks,
-reuse Day 1 UUID/minor resolution, validate container visibility and framework
-identity, supply device bindings and monitor targets, and interlock with the PR0
-`/tmp/flagperf-p800-<UUID>.lock` protocol before registering production support.
-P800 driver dispatch and timed performance cases remain later work. The existing
-candidate manifest stays unvalidated with no expanded validation scope.
+PR2 adds the [bounded P800 preflight](p800-preflight.md), including two-phase
+UUID binding, PR0-compatible locks, exact device mapping, telemetry and cleanup.
+`PreflightProvider` is an optional capability separate from case execution.
+The preflight summary and runtime binding use schema 1 with their own kind;
+probe observation uses monitor schema 2 without performance measurement events.
+See the linked runbook for invocation, failure handling and Day 4 integration.

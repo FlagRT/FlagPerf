@@ -1,0 +1,19 @@
+{
+  "cleanup_status": "passed",
+  "container_exit_code": 1,
+  "error": "container probe exited nonzero: 1",
+  "error_type": "RuntimeError",
+  "failure_stage": "container-probe",
+  "finished_at": "2026-09-20T11:03:41.141824Z",
+  "kind": "benchmark-preflight",
+  "lease_released": true,
+  "measurement_status": "not-run",
+  "monitoring_status": "partial",
+  "postflight_status": "passed",
+  "probe_mode": "identity",
+  "run_id": "preflight-8ece664bfc0c4b98928c61c22e45abd9",
+  "schema_version": 1,
+  "started_at": "2026-09-20T11:03:29.457331Z",
+  "status": "failed",
+  "vendor": "kunlunxin"
+}

@@ -16,3 +16,5 @@
 
 使用命令集中在各领域指南；环境和支持声明集中在 Ascend 指南；协议阈值以代码及配置为准。
 变更行为、默认参数或验证范围时，同时更新对应指南和变更记录，避免复制多套相互冲突的命令表。
+
+P800 single-card identity, telemetry and cleanup: [bounded preflight](../base/docs/p800-preflight.md).

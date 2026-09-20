@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "normal_attempt": "normal-attempt12-card6",
+  "timeout_attempt": "timeout-attempt02-card6",
+  "tested_code_commit": "e936db64446d62c73b380317fd37b80fcacfee1a",
+  "checks": [
+    {
+      "attempt": "normal-attempt12-card6",
+      "container_absent": true,
+      "lock_reacquired": true,
+      "lease": {
+        "backend": "flock",
+        "root": "/tmp/flagperf-base-device-leases",
+        "compatibility_paths": [
+          "/tmp/flagperf-p800-9e24d168-db57-5cd9-8cfb-aea4ae898897.lock"
+        ],
+        "device_ids": [],
+        "resource_keys": [
+          "kunlunxin/9e24d168-db57-5cd9-8cfb-aea4ae898897"
+        ],
+        "run_id": "day3-acceptance-review",
+        "pid": 1026712,
+        "acquired_at": "2026-09-20T11:29:05.179966Z"
+      },
+      "report_deterministic": true,
+      "experiment_summary_unchanged": true,
+      "experiment_status": "passed"
+    },
+    {
+      "attempt": "timeout-attempt02-card6",
+      "container_absent": true,
+      "lock_reacquired": true,
+      "lease": {
+        "backend": "flock",
+        "root": "/tmp/flagperf-base-device-leases",
+        "compatibility_paths": [
+          "/tmp/flagperf-p800-9e24d168-db57-5cd9-8cfb-aea4ae898897.lock"
+        ],
+        "device_ids": [],
+        "resource_keys": [
+          "kunlunxin/9e24d168-db57-5cd9-8cfb-aea4ae898897"
+        ],
+        "run_id": "day3-acceptance-review",
+        "pid": 1026712,
+        "acquired_at": "2026-09-20T11:29:05.257350Z"
+      },
+      "report_deterministic": true,
+      "experiment_summary_unchanged": true,
+      "experiment_status": "failed"
+    }
+  ]
+}

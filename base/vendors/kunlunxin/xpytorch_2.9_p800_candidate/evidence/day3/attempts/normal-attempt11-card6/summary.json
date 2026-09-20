@@ -1,0 +1,18 @@
+{
+  "cleanup_status": "not-created",
+  "error": "device has open handles or handle check failed",
+  "error_type": "RuntimeError",
+  "failure_stage": "host-preflight",
+  "finished_at": "2026-09-20T11:22:39.673491Z",
+  "kind": "benchmark-preflight",
+  "lease_released": false,
+  "measurement_status": "not-run",
+  "monitoring_status": "not-run",
+  "postflight_status": "not-run",
+  "probe_mode": "identity",
+  "run_id": "preflight-1060c5620ac542bfaded17e36bffbcb5",
+  "schema_version": 1,
+  "started_at": "2026-09-20T11:22:36.255387Z",
+  "status": "failed",
+  "vendor": "kunlunxin"
+}

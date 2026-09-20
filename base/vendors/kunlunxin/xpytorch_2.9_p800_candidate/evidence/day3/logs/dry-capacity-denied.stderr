@@ -1,0 +1,1 @@
+ERROR: Benchmark Case main_memory-capacity is high risk; explicitly pass --allow-high-risk-case after reserving an isolated device

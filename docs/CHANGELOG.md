@@ -1,5 +1,18 @@
 # 适配与文档变更记录
 
+## 2026-09-20 — P800 bounded Base preflight (PR2, local branch)
+
+Added case-independent P800 preflight, strict host identity/occupancy checks,
+PR0-compatible UUID leases, gated container UUID binding, bounded owned-container
+cleanup and target telemetry. Single-card identity/readback and a controlled
+120-second timeout cleanup drill passed on physical card 6. Base 154, PR0 32 and
+Toolkit 80 tests passed; Ascend planning retained 10 applicable/5 skipped cases.
+Physical card 1 synchronization timeouts remain unresolved and recorded.
+Candidate validation and performance scope are unchanged; FP32 driver/case work
+remains separate. No push or published PR.
+See [runbook](../base/docs/p800-preflight.md) and
+[Day 3 evidence](../base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day3/review.md).
+
 ## 2026-09-20 — Base vendor control plane (PR1, local branch)
 
 Static vendor providers now own runtime/preflight/container/monitor policies.

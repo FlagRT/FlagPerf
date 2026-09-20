@@ -1,0 +1,17 @@
+{
+  "argv": [
+    "sudo",
+    "-n",
+    "docker",
+    "logs",
+    "e7922022ef09a77c6719e838259436f5e8e8cd9294304bffa7b63abdaa1d7daa"
+  ],
+  "finished_monotonic_s": 3743354.884352093,
+  "returncode": 0,
+  "started_at": "2026-09-20T11:03:37.897200+00:00",
+  "started_monotonic_s": 3743354.817053733,
+  "stderr": "",
+  "stdout": "{\"schema_version\": 1, \"status\": \"failed\", \"started_monotonic_ns\": 3743354564544104, \"run_id\": \"preflight-8ece664bfc0c4b98928c61c22e45abd9\", \"context_sha256\": \"d510b4fa65493492e3fa50a1642b925d174a5e0c4363790bb82c3914495f5150\", \"error\": \"Invalid isoformat string: '2026-09-20T11:03:36.664506Z'\", \"error_type\": \"ValueError\", \"finished_monotonic_ns\": 3743354564749980}\n",
+  "timed_out": false,
+  "timeout_s": 3
+}
