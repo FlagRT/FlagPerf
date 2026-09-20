@@ -305,41 +305,9 @@ def generate_report_safely(result_dir: Path) -> dict[str, Any]:
         return current["report_generation"]
 
 
-def docker_inspect(image: str) -> dict[str, Any]:
-    proc = subprocess.run(
-        ["docker", "image", "inspect", image], text=True,
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False,
-    )
-    if proc.returncode != 0:
-        fail(f"image is unavailable: {image}: {proc.stderr.strip()}")
-    return json.loads(proc.stdout)[0]
-
-
-def run_host_preflight(
-    result_dir: Path, expected_device_ids: list[int], *,
-    npu_ids: str | None = None, device_ids: str | None = None,
-    label: str = "host-preflight",
-) -> Path:
-    helper = BASE_DIR / "toolkits" / "_common" / "ascend" / "A3" / "host_preflight.py"
-    output = result_dir / label
-    command = [
-        sys.executable, str(helper), "--output", str(output),
-        "--expected-device-ids", ",".join(map(str, expected_device_ids)),
-    ]
-    if npu_ids is not None:
-        command.extend(["--npu-ids", npu_ids])
-    if device_ids is not None:
-        command.extend(["--device-ids", device_ids])
-    proc = subprocess.run(
-        command,
-        text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False,
-    )
-    if proc.stdout:
-        print(proc.stdout, end="" if proc.stdout.endswith("\n") else "\n")
-    summaries = list(output.glob("*/summary.json"))
-    if proc.returncode != 0 or len(summaries) != 1:
-        fail("Ascend host preflight failed; inspect " + str(output))
-    return summaries[0]
+# Compatibility names retained for Toolkit callers and tests.
+from executors.host import docker_inspect
+from vendors.ascend.provider import run_host_preflight
 
 
 def execute_toolkit(
