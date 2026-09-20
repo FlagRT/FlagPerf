@@ -322,7 +322,7 @@ class BenchmarkReportTests(unittest.TestCase):
             fixture_monitor(root)
             monitor_path = root / "benchmark-monitor" / "summary.json"
             monitor = json.loads(monitor_path.read_text(encoding="utf-8"))
-            monitor["schema_version"] = 2
+            monitor["schema_version"] = max(report_generator.SUPPORTED_MONITOR_SCHEMA_VERSIONS) + 1
             write_json(monitor_path, monitor)
 
             with self.assertRaisesRegex(

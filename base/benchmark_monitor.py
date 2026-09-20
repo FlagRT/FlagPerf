@@ -1,6 +1,6 @@
 # Copyright 2026 FlagOS Contributors
 # Licensed under the Apache License, Version 2.0.
-"""Benchmark-specific lifecycle and evidence contract for Ascend monitoring."""
+"""Benchmark-specific lifecycle and vendor-neutral evidence contract."""
 
 from __future__ import annotations
 
@@ -10,18 +10,22 @@ from pathlib import Path
 import stat
 from typing import Any, Sequence
 
-from monitoring.ascend_usage import (
-    BENCHMARK_USAGE_FIELDS,
-    DEFAULT_COMMAND_TIMEOUT_S,
-    DEFAULT_INTERVAL_S,
-    DEFAULT_MIN_SAMPLES_PER_TARGET,
-    UsageMonitor,
-    artifact_ref,
-    write_json,
-)
+from executors.common import write_json, sha256_file
+from vendors.registry import get_provider
+from vendors.protocol import DeviceBinding
+
+UsageMonitor = Any
 
 
-MONITOR_SCHEMA_VERSION = 1
+def artifact_ref(path: Path, root: Path) -> dict[str, Any]:
+    return {"path": path.relative_to(root).as_posix(), "sha256": sha256_file(path), "bytes": path.stat().st_size}
+
+
+def selected_provider(provider=None):
+    # Compatibility default for pre-provider Ascend monitor callers.
+    return provider if provider is not None else get_provider("ascend")
+
+MONITOR_SCHEMA_VERSION = 2
 EVENT_DIRECTORY_MODE = 0o1777
 EVENT_FILE_MODE = 0o644
 
@@ -57,56 +61,16 @@ def _write_container_window(
     return path
 
 
-def monitor_policy(enabled: bool) -> dict[str, Any]:
-    return {
-        "enabled": enabled,
-        "collector": "npu-smi info -t usages",
-        "required_fields": list(BENCHMARK_USAGE_FIELDS),
-        "target_interval_s": DEFAULT_INTERVAL_S,
-        "command_timeout_s": DEFAULT_COMMAND_TIMEOUT_S,
-        "required_samples_per_target": DEFAULT_MIN_SAMPLES_PER_TARGET,
-        "coverage_window": "rank-local exact measurement window",
-        "automatic_workload_extension": False,
-    }
+def monitor_policy(enabled: bool, *, provider=None) -> dict[str, Any]:
+    return selected_provider(provider).monitor_policy(enabled)
 
 
-def resolve_monitor_targets(
-    preflight: dict[str, Any], selected_device_ids: Sequence[int],
-) -> list[dict[str, int]]:
-    selected = {int(item) for item in selected_device_ids}
-    device_map = preflight.get("actual_device_map")
-    if not isinstance(device_map, list):
-        raise RuntimeError("host preflight did not preserve the npu-smi device map")
-    targets = [
-        {
-            "npu_id": int(item["npu_id"]),
-            "chip_id": int(item["chip_id"]),
-            "logic_id": int(item["logic_id"]),
-        }
-        for item in device_map
-        if isinstance(item, dict)
-        and isinstance(item.get("logic_id"), int)
-        and int(item["logic_id"]) in selected
-    ]
-    targets.sort(key=lambda item: (
-        item["npu_id"], item["chip_id"], item["logic_id"]
-    ))
-    observed = {item["logic_id"] for item in targets}
-    if observed != selected:
-        raise RuntimeError(
-            "host preflight did not map every selected logical Device to an "
-            f"NPU/Chip target: expected={sorted(selected)}, observed={sorted(observed)}"
-        )
-    return targets
+def resolve_monitor_targets(preflight, selected_device_ids, *, provider=None):
+    return selected_provider(provider).monitor_targets(preflight, selected_device_ids)
 
 
-def create_usage_monitor(targets: Sequence[dict[str, int]]) -> UsageMonitor:
-    return UsageMonitor(
-        targets,
-        field_specs=BENCHMARK_USAGE_FIELDS,
-        interval_s=DEFAULT_INTERVAL_S,
-        command_timeout_s=DEFAULT_COMMAND_TIMEOUT_S,
-    )
+def create_usage_monitor(targets, *, provider=None):
+    return selected_provider(provider).create_monitor(targets)
 
 
 def _read_json(path: Path) -> dict[str, Any] | None:
@@ -166,7 +130,10 @@ def finalize_benchmark_monitor(
     container_record: dict[str, Any],
     selected_device_ids: Sequence[int],
     expected_ranks: int,
+    *, provider=None, bindings: Sequence[DeviceBinding] | None = None,
 ) -> dict[str, Any]:
+    provider = selected_provider(provider)
+    policy = provider.monitor_policy(True)
     events_dir = result_dir / "benchmark-events"
     monitor_dir = result_dir / "benchmark-monitor"
     reasons: list[str] = []
@@ -203,7 +170,10 @@ def finalize_benchmark_monitor(
             ):
                 reasons.append("torchrun window is not nested in the container window")
 
-    targets_by_logic = {item["logic_id"]: item for item in monitor.targets}
+    by_rank = {binding.framework_local_rank: binding for binding in bindings or []}
+    if bindings is not None and (len(by_rank) != expected_ranks or set(by_rank) != set(range(expected_ranks))):
+        raise RuntimeError("device binding local ranks are not unique and complete")
+    observed_local_ranks = set()
     rank_device_map: list[dict[str, int]] = []
     measurement_windows: list[dict[str, Any]] = []
     measurement_refs: list[dict[str, Any]] = []
@@ -227,22 +197,23 @@ def finalize_benchmark_monitor(
         ):
             reasons.append(f"measurement event local_rank is invalid for rank {rank}")
             continue
-        logic_id = int(selected_device_ids[local_rank])
-        target = targets_by_logic.get(logic_id)
-        if target is None:
-            reasons.append(
-                f"measurement event rank {rank} maps to unknown Device {logic_id}"
-            )
+        if local_rank in observed_local_ranks:
+            reasons.append(f"duplicate measurement local_rank {local_rank}")
             continue
+        observed_local_ranks.add(local_rank)
+        binding = by_rank.get(local_rank)
+        target = provider.rank_target(monitor.targets, selected_device_ids, local_rank, binding)
+        if target is None:
+            reasons.append(f"measurement event rank {rank} maps to an unknown device")
+            continue
+        identity = provider.measurement_identity(target, binding)
         window = _relative_window(
             event,
             monitor,
             "measurement",
             rank=rank,
             local_rank=local_rank,
-            logical_device_id=logic_id,
-            npu_id=target["npu_id"],
-            chip_id=target["chip_id"],
+            **identity,
         )
         if window is None:
             reasons.append(f"measurement event clock window is invalid for rank {rank}")
@@ -255,9 +226,7 @@ def finalize_benchmark_monitor(
         rank_device_map.append({
             "rank": rank,
             "local_rank": local_rank,
-            "logic_id": logic_id,
-            "npu_id": target["npu_id"],
-            "chip_id": target["chip_id"],
+            **identity,
         })
     event_artifacts["measurements"] = measurement_refs
 
@@ -266,19 +235,20 @@ def finalize_benchmark_monitor(
         monitor_dir,
         measurement_windows,
         [],
-        min_samples_per_target=DEFAULT_MIN_SAMPLES_PER_TARGET,
+        min_samples_per_target=policy["required_samples_per_target"],
         primary_role="measurement",
         window_semantics=(
-            "npu-smi command intervals overlapping each rank's exact original "
+            "collector command intervals overlapping each rank's exact original "
             "Benchmark timer window; vendor statistic integration semantics are "
             "not inferred"
         ),
-        target_resource="benchmark-npu-core",
+        target_resource=policy["target_resource"],
     )
     result.update({
         "schema_version": MONITOR_SCHEMA_VERSION,
-        "policy": monitor_policy(True),
-        "required_samples_per_target": DEFAULT_MIN_SAMPLES_PER_TARGET,
+        "vendor": provider.name,
+        "policy": policy,
+        "required_samples_per_target": policy["required_samples_per_target"],
         "clock_domain": "same-host Linux monotonic clock, validated by nesting",
         "lifecycle_windows": lifecycle_windows,
         "rank_device_map": rank_device_map,
@@ -305,11 +275,13 @@ def finalize_benchmark_monitor_safely(
     expected_ranks: int,
     targets: Sequence[dict[str, int]],
     initial_result: dict[str, Any] | None,
+    *, provider=None, bindings: Sequence[DeviceBinding] | None = None,
 ) -> dict[str, Any]:
     """Finalize monitoring without allowing observer failures to escape."""
     if monitor is None:
         result = initial_result or write_monitor_terminal_summary(
             result_dir,
+            provider=provider,
             status="failed",
             enabled=True,
             targets=targets,
@@ -325,6 +297,7 @@ def finalize_benchmark_monitor_safely(
             )
             result = write_monitor_terminal_summary(
                 result_dir,
+                provider=provider,
                 status="failed",
                 enabled=True,
                 targets=targets,
@@ -339,6 +312,7 @@ def finalize_benchmark_monitor_safely(
             container_record,
             selected_device_ids,
             expected_ranks,
+            provider=provider, bindings=bindings,
         )
     except Exception as exc:
         reasons = [
@@ -354,6 +328,7 @@ def finalize_benchmark_monitor_safely(
             )
         return write_monitor_terminal_summary(
             result_dir,
+            provider=provider,
             status="failed",
             enabled=True,
             targets=targets,
@@ -368,12 +343,14 @@ def write_monitor_terminal_summary(
     enabled: bool,
     targets: Sequence[dict[str, int]],
     reason: str,
+    provider=None,
 ) -> dict[str, Any]:
     result = {
         "schema_version": MONITOR_SCHEMA_VERSION,
         "status": status,
-        "policy": monitor_policy(enabled),
-        "collector": "npu-smi info -t usages",
+        "vendor": selected_provider(provider).name,
+        "policy": monitor_policy(enabled, provider=provider),
+        "collector": monitor_policy(enabled, provider=provider)["collector"],
         "targets": list(targets),
         "workload_windows": [],
         "lifecycle_windows": [],

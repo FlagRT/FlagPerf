@@ -58,6 +58,34 @@ class VendorTests(unittest.TestCase):
         self.assertEqual([b.legacy_logical_id for b in bindings], [15, 14])
         self.assertNotEqual(bindings[0].resource_key, bindings[1].resource_key)
 
+    def test_physical_preflight_expands_in_request_order_without_rewriting_raw(self):
+        provider = get_provider("ascend")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            raw = root / "raw.json"
+            raw.write_text(json.dumps({"actual_device_map": [
+                {"npu_id": 2, "chip_id": 0, "logic_id": 4},
+                {"npu_id": 2, "chip_id": 1, "logic_id": 5},
+                {"npu_id": 6, "chip_id": 0, "logic_id": 12},
+                {"npu_id": 6, "chip_id": 1, "logic_id": 13}],
+                "selection": {"source": "npu-ids", "requested_ids": [2, 6],
+                              "selected_device_ids": [4, 5, 12, 13]}}))
+            original = raw.read_bytes()
+            with patch("vendors.ascend.provider.run_host_preflight", return_value=raw):
+                path = provider.preflight(root, {"expected_device_ids": [4, 5, 12, 13]},
+                                          BaseRunContext(physical_device_ids="6,2"))
+                record = json.loads(path.read_text())
+                selected = record["selection"]["selected_device_ids"]
+                self.assertEqual(selected, [12, 13, 4, 5])
+                bindings = provider.bindings(record, selected)
+                self.assertEqual([b.request_index for b in bindings], [0, 0, 1, 1])
+                self.assertEqual([b.framework_local_rank for b in bindings], [0, 1, 2, 3])
+                args = provider.docker_args({"required_devices": [], "host_mounts": []}, bindings)
+                self.assertIn("ASCEND_RT_VISIBLE_DEVICES=12,13,4,5", args)
+                self.assertEqual(raw.read_bytes(), original)
+                self.assertEqual(provider.preflight(root, {"expected_device_ids": [4, 5, 12, 13]},
+                                                   BaseRunContext(npu_ids="6,2")), raw)
+
     def test_new_lease_interlocks_with_legacy_and_releases_partial_acquisition(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -86,6 +114,24 @@ class VendorTests(unittest.TestCase):
                     lease("fixture/uuid-a").acquire()
                 with lease("other/uuid-a"):
                     pass
+
+    def test_unknown_driver_vendor_never_calls_cuda(self):
+        import subprocess
+        script = """
+import sys
+sys.path.insert(0, BENCHMARKS)
+from unittest.mock import patch
+from drivers import utils
+with patch.object(utils.torch.cuda,'synchronize',side_effect=AssertionError('CUDA fallback')) as sync:
+    for operation in (utils.bootstrap_vendor, utils.host_device_sync, utils.multi_device_sync,
+                      utils.set_ieee_float32, utils.unset_ieee_float32):
+        try: operation('unknown')
+        except ValueError: pass
+        else: raise AssertionError('unknown vendor was accepted')
+    sync.assert_not_called()
+""".replace('BENCHMARKS',repr(str(BASE/'benchmarks')))
+        proc=subprocess.run([sys.executable,'-B','-c',script],capture_output=True,text=True)
+        self.assertEqual(proc.returncode,0,proc.stderr)
 
 
 if __name__ == "__main__":

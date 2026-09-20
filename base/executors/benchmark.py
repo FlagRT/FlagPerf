@@ -31,6 +31,7 @@ from generate_benchmark_report import (
 from executors.progress import RunProgress
 from executors.common import (
     BASE_DIR,
+    DEFAULT_HOST_CONFIG,
     BaseRunContext,
     ConfigurationError,
     DeviceLease,
@@ -42,7 +43,19 @@ from executors.common import (
     validate_runtime_identity,
     write_json,
 )
-from executors.toolkit import docker_inspect, run_host_preflight
+from executors.host import docker_inspect
+from vendors.registry import get_provider
+from benchmarks.case_assets import resolve_case_assets, portable_assets
+
+
+def run_host_preflight(result_dir, config, context, *, label="host-preflight"):
+    return get_provider(config["vendor"]).preflight(result_dir, config, context, label=label)
+
+
+def request_assets(request, config=None):
+    if config is None:
+        _, config = load_host_config(request.context.config)
+    return resolve_case_assets(BASE_DIR, request.case, config["vendor"], request.case_config)
 
 
 RESULT_RE = re.compile(
@@ -57,15 +70,16 @@ HIGH_RISK_CASES = {"main_memory-capacity"}
 def add_cli_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--config", type=Path,
-        default=BASE_DIR / "configs" / "ascend910_cann9_local.yaml",
-        help="Ascend host/runtime profile",
+        default=DEFAULT_HOST_CONFIG,
+        help="vendor host/runtime profile",
     )
     parser.add_argument("--case", required=True, help="Base Benchmark Case name")
     parser.add_argument(
         "--case-config", type=Path,
-        help="read-only Ascend Case YAML override mounted into the container",
+        help="read-only Case YAML override merged after vendor and chip layers",
     )
     selection = parser.add_mutually_exclusive_group()
+    selection.add_argument("--physical-device-ids", help="host physical device IDs/ranges")
     selection.add_argument(
         "--npu-ids", help="physical NPU IDs/ranges, for example 7 or 1-3",
     )
@@ -84,7 +98,7 @@ def add_cli_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--monitor", choices=("on", "off"), default="on",
         help=(
-            "collect selected-device npu-smi usage evidence; enabled by "
+            "collect selected-device vendor usage evidence; enabled by "
             "default and independently statused"
         ),
     )
@@ -125,6 +139,7 @@ class BenchmarkRunRequest:
                 config=args.config,
                 npu_ids=args.npu_ids,
                 device_ids=args.device_ids,
+                physical_device_ids=args.physical_device_ids,
                 result_root=args.result_root,
                 timeout=args.timeout,
                 dry_run=args.dry_run,
@@ -158,7 +173,7 @@ class BenchmarkRunRequest:
             raise ConfigurationError("--master-port must be between 1 and 65535")
         if self.monitor not in ("on", "off"):
             raise ConfigurationError("--monitor must be on or off")
-        if self.case in HIGH_RISK_CASES and not self.allow_high_risk_case:
+        if case_name in HIGH_RISK_CASES and not self.allow_high_risk_case:
             raise ConfigurationError(
                 f"Benchmark Case {self.case} is high risk; explicitly pass "
                 "--allow-high-risk-case after reserving an isolated device"
@@ -184,29 +199,9 @@ def file_record(path: Path) -> dict[str, Any]:
 def case_runtime_requirement_record(
     request: BenchmarkRunRequest,
 ) -> dict[str, Any] | None:
-    """Load an optional, repository-owned Case/runtime compatibility contract."""
-    case_name = request.case.split(":", 1)[0]
-    path = (
-        BASE_DIR / "benchmarks" / case_name / "ascend" /
-        "runtime_requirements.json"
-    )
-    if not path.is_file():
-        return None
-    try:
-        requirements = json.loads(path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
-        raise ConfigurationError(
-            f"Benchmark runtime requirements are invalid JSON: {path}: {exc}"
-        ) from exc
-    if requirements.get("schema_version") != 1:
-        raise ConfigurationError(
-            "unsupported Benchmark runtime requirement schema: "
-            f"{requirements.get('schema_version')}"
-        )
-    return {
-        **file_record(path.resolve()),
-        "requirements": requirements,
-    }
+    assets = request_assets(request)
+    return {**assets["requirement_files"][-1],
+            "sources": assets["requirement_files"], "requirements": assets["requirements"]}
 
 
 def validate_case_runtime_requirements(
@@ -220,7 +215,7 @@ def validate_case_runtime_requirements(
     if requirements.get("supported") is False:
         return
     required_profile = requirements.get("runtime_profile")
-    actual_profile = config.get("runtime_profile", "torch_fl_2.10")
+    actual_profile = config.get("runtime_profile", get_provider(config["vendor"]).default_runtime_profile)
     if required_profile and actual_profile != required_profile:
         raise ConfigurationError(
             f"Benchmark Case {request.case} requires runtime profile "
@@ -291,18 +286,7 @@ def validate_resolved_process_scope(
 
 
 def case_configuration_records(request: BenchmarkRunRequest) -> dict[str, Any]:
-    case_name = request.case.split(":", 1)[0]
-    case_dir = BASE_DIR / "benchmarks" / case_name
-    records: dict[str, Any] = {}
-    for label, path in (
-        ("generic", case_dir / "case_config.yaml"),
-        ("ascend", case_dir / "ascend" / "case_config.yaml"),
-    ):
-        if path.is_file():
-            records[label] = file_record(path.resolve())
-    if request.case_config is not None:
-        records["override"] = file_record(request.case_config.expanduser().resolve())
-    return records
+    return request_assets(request)["configurations"]
 
 
 def snapshot_case_configuration(
@@ -381,6 +365,9 @@ class BenchmarkExecutor:
     def plan(self, request: BenchmarkRunRequest) -> dict[str, Any]:
         request.validate()
         config_path, config = load_host_config(request.context.config)
+        provider = get_provider(config["vendor"])
+        provider.validate_selection(request.context)
+        assets = request_assets(request, config)
         runtime_requirements = case_runtime_requirement_record(request)
         validate_case_runtime_requirements(request, config, runtime_requirements)
         requirements = runtime_requirements["requirements"] if runtime_requirements else {}
@@ -395,7 +382,7 @@ class BenchmarkExecutor:
             "host_config": str(config_path),
             "image": config["image"],
             "runtime_identity": {"image_id": "deferred-until-image-inspection"},
-            "runtime_lock": runtime_lock_record(config.get("runtime_profile")),
+            "runtime_lock": runtime_lock_record(config.get("runtime_profile"), vendor=provider.name),
             "runtime_requirements": runtime_requirements,
             "applicability": applicability,
             "selection_request": request.context.selection_request(),
@@ -404,7 +391,10 @@ class BenchmarkExecutor:
                 "by the side-effecting host preflight"
             ),
             "case": request.case,
-            "case_config": case_configuration_records(request),
+            "vendor": provider.name,
+            "vendor_display_name": provider.display_name,
+            "case_assets": portable_assets(assets),
+            "case_config": assets["configurations"],
             "nproc_per_node": (
                 request.nproc_per_node
                 if request.nproc_per_node is not None
@@ -412,13 +402,11 @@ class BenchmarkExecutor:
             ),
             "permissions": {
                 "privileged_root": request.allow_privileged_root,
-                "network": "host",
-                "ipc_namespace": "host",
-                "pid_namespace": "private",
+                **provider.container_policy(config),
                 "active_dmi": False,
                 "candidate_runtime": request.allow_candidate_runtime,
             },
-            "monitoring": monitor_policy(request.monitor == "on"),
+            "monitoring": monitor_policy(request.monitor == "on", provider=provider),
             "worker": "benchmark_worker.py",
             "context": context_record(request.context),
         }
@@ -434,12 +422,15 @@ class BenchmarkExecutor:
         self, request: BenchmarkRunRequest, static_plan: dict[str, Any],
     ) -> int:
         config_path, config = load_host_config(request.context.config)
+        provider = get_provider(config["vendor"])
         wall_started = time.perf_counter()
         run_id = "benchmark-" + run_timestamp()
         result_dir = request.context.resolved_result_root(config) / run_id
         result_dir.mkdir(parents=True, exist_ok=False)
         summary: dict[str, Any] = {
-            "schema_version": 2,
+            "schema_version": 3,
+            "vendor": provider.name,
+            "vendor_display_name": provider.display_name,
             "run_id": run_id,
             "kind": "benchmark",
             "case": request.case,
@@ -456,6 +447,7 @@ class BenchmarkExecutor:
         }
         write_json(result_dir / "summary.json", summary)
         if static_plan["applicability"]["status"] == "skipped":
+            write_json(result_dir / "resolved-plan.json", static_plan)
             reason = static_plan["applicability"]["reason"]
             summary.update({
                 "status": "skipped", "execution_status": "not-run",
@@ -474,16 +466,17 @@ class BenchmarkExecutor:
             print(f"Result directory: {result_dir}")
             return 0
         stage = "case-configuration"
+        lease = None
         try:
+            assets = request_assets(request, config)
+            if portable_assets(assets) != static_plan["case_assets"]:
+                raise ConfigurationError("case assets changed after static planning")
             stored_case_config = snapshot_case_configuration(request, result_dir)
+            write_json(result_dir / "case-assets.json", portable_assets(assets))
             summary["case_config"] = stored_case_config
             write_json(result_dir / "summary.json", summary)
 
             stage = "authorization"
-            if config.get("vendor") != "ascend":
-                raise ConfigurationError(
-                    f"BenchmarkExecutor currently supports ascend, got {config.get('vendor')}"
-                )
             if config.get("requires_privileged_root") and not request.allow_privileged_root:
                 raise ConfigurationError(
                     "this host profile requires a privileged root container; "
@@ -509,14 +502,12 @@ class BenchmarkExecutor:
                 if not Path(path).exists()
             ]
             if missing:
-                raise RuntimeError(f"required Ascend devices are missing: {missing}")
+                raise RuntimeError(f"required vendor devices are missing: {missing}")
 
             stage = "host-preflight"
             preflight_path = run_host_preflight(
                 result_dir,
-                config["expected_device_ids"],
-                npu_ids=request.context.npu_ids,
-                device_ids=request.context.device_ids,
+                config, request.context,
             )
             preflight = json.loads(preflight_path.read_text(encoding="utf-8"))
             selection = preflight.get("selection")
@@ -535,11 +526,13 @@ class BenchmarkExecutor:
                 request.case, static_plan.get("runtime_requirements"),
                 nnodes=1, nproc=nproc,
             )
-            selected_nodes = [Path(f"/dev/davinci{item}") for item in selected_ids]
+            bindings = provider.bindings(preflight, selected_ids)
+            selected_nodes = [Path(item.host_device_node) for item in bindings]
+            summary["device_bindings"] = [item.record() for item in bindings]
             missing_selected = [str(path) for path in selected_nodes if not path.exists()]
             if missing_selected:
                 raise RuntimeError(
-                    f"selected Ascend device nodes are missing: {missing_selected}"
+                    f"selected device nodes are missing: {missing_selected}"
                 )
             summary["selection"] = selection
             summary["host_preflight"] = {
@@ -548,7 +541,7 @@ class BenchmarkExecutor:
             }
             monitor_target_error = None
             try:
-                monitor_targets = resolve_monitor_targets(preflight, selected_ids)
+                monitor_targets = resolve_monitor_targets(preflight, selected_ids, provider=provider)
             except Exception as exc:
                 monitor_targets = []
                 monitor_target_error = (
@@ -557,7 +550,7 @@ class BenchmarkExecutor:
                 )
             summary["monitoring"] = {
                 "status": summary["monitoring_status"],
-                "policy": monitor_policy(request.monitor == "on"),
+                "policy": monitor_policy(request.monitor == "on", provider=provider),
                 "targets": monitor_targets,
             }
             monitor_exchange_error = None
@@ -582,50 +575,23 @@ class BenchmarkExecutor:
             ).lower()
             command = [
                 "docker", "run", "--rm", "--name", container_name,
-                "--network=host", "--ipc=host",
+                *provider.docker_args(config, bindings),
                 f"--shm-size={config['shm_size']}",
-                "-e", f"ASCEND_RT_VISIBLE_DEVICES={','.join(map(str, selected_ids))}",
-                "-e", "GEMS_VENDOR=ascend",
-                "-e", "TRITON_ENABLE_TASKQUEUE=false",
                 "-e", "DO_NOT_TRACK=1",
-                "-e", "FLAGOS_LOG_FALLBACK=1",
                 "-e", "PYTHONDONTWRITEBYTECODE=1",
                 "-v", f"{BASE_DIR}:/workspace/FlagPerf/base:ro",
                 "-v", f"{result_dir}:/workspace/FlagPerf/results:rw",
                 "-w", "/workspace/FlagPerf/base",
             ]
-            for name, value in sorted(
-                config.get("runtime_environment", {}).items()
-            ):
-                command.extend(["-e", f"{name}={value}"])
             if request.allow_privileged_root:
                 command.append("--privileged")
-            for device in [*config["required_devices"], *map(str, selected_nodes)]:
-                command.append(f"--device={device}:{device}:rwm")
-            for mount in config["host_mounts"]:
-                path = Path(mount)
-                if path.exists():
-                    command.extend(["-v", f"{path}:{path}:ro"])
-            if request.case_config is not None:
-                override = request.case_config.expanduser().resolve()
-                destination = (
-                    f"/workspace/FlagPerf/base/benchmarks/{case_name}/"
-                    "ascend/case_config.yaml"
-                )
-                command.extend(["-v", f"{override}:{destination}:ro"])
-
-            env_script = BASE_DIR / "benchmarks" / case_name / "ascend" / "env.sh"
-            setup = ""
-            if env_script.is_file():
-                setup = (
-                    "source "
-                    + shlex.quote(
-                        f"/workspace/FlagPerf/base/benchmarks/{case_name}/ascend/env.sh"
-                    )
-                    + " && "
-                )
+            setup = provider.bootstrap(BASE_DIR, config)
+            container_probe = provider.container_preflight(config, bindings)
+            if container_probe:
+                setup += shlex.join(container_probe) + " && "
             worker_args = [
-                "python3", "/workspace/FlagPerf/base/benchmark_worker.py",
+                provider.worker_python(config), "/workspace/FlagPerf/base/benchmark_worker.py",
+                "--case-assets", "/workspace/FlagPerf/results/case-assets.json",
                 "--case_name", request.case,
                 "--nnodes", "1",
                 "--nproc_per_node", str(nproc),
@@ -633,7 +599,7 @@ class BenchmarkExecutor:
                 "--master_addr", "127.0.0.1",
                 "--master_port", str(request.master_port),
                 "--host_addr", host_addr,
-                "--vendor", "ascend",
+                "--vendor", provider.name,
                 "--bench_or_tool", "BENCHMARK",
                 "--perf_path", "/workspace/FlagPerf/base",
                 "--log_dir", "/workspace/FlagPerf/results",
@@ -661,7 +627,9 @@ class BenchmarkExecutor:
             write_json(result_dir / "summary.json", summary)
 
             stage = "container-run"
-            lease = DeviceLease(selected_ids, run_id=run_id, kind="benchmark")
+            lease = DeviceLease(
+                [item.legacy_logical_id for item in bindings if item.legacy_logical_id is not None],
+                resource_keys=[item.resource_key for item in bindings], run_id=run_id, kind="benchmark")
             lease.acquire()
             summary["device_lease"] = lease.record()
             timed_out = False
@@ -671,6 +639,7 @@ class BenchmarkExecutor:
                 if monitor_setup_error is not None:
                     monitor_result = write_monitor_terminal_summary(
                         result_dir,
+                        provider=provider,
                         status="failed",
                         enabled=True,
                         targets=monitor_targets,
@@ -678,7 +647,7 @@ class BenchmarkExecutor:
                     )
                 else:
                     try:
-                        usage_monitor = create_usage_monitor(monitor_targets)
+                        usage_monitor = create_usage_monitor(monitor_targets, provider=provider)
                         usage_monitor.start()
                     except Exception as exc:
                         reasons = [
@@ -696,6 +665,7 @@ class BenchmarkExecutor:
                         usage_monitor = None
                         monitor_result = write_monitor_terminal_summary(
                             result_dir,
+                            provider=provider,
                             status="failed",
                             enabled=True,
                             targets=monitor_targets,
@@ -704,6 +674,7 @@ class BenchmarkExecutor:
             else:
                 monitor_result = write_monitor_terminal_summary(
                     result_dir,
+                    provider=provider,
                     status="not-run",
                     enabled=False,
                     targets=monitor_targets,
@@ -778,6 +749,7 @@ class BenchmarkExecutor:
                         nproc,
                         monitor_targets,
                         monitor_result if usage_monitor is None else None,
+                        provider=provider, bindings=bindings,
                     )
                 summary["monitoring"] = monitor_result
                 summary["monitoring_status"] = monitor_result["status"]
@@ -802,8 +774,8 @@ class BenchmarkExecutor:
                 "container_returncode": returncode,
                 "timed_out": timed_out,
                 "fallback_count": (
-                    runner_log.count("[flagos cpu_fallback]")
-                    + benchmark_log.count("[flagos cpu_fallback]")
+                    sum(runner_log.count(marker) + benchmark_log.count(marker)
+                        for marker in provider.fallback_markers)
                 ),
                 "benchmark_log": (
                     str(benchmark_log_path.relative_to(result_dir))
@@ -828,9 +800,7 @@ class BenchmarkExecutor:
             try:
                 postflight_path = run_host_preflight(
                     result_dir,
-                    config["expected_device_ids"],
-                    npu_ids=request.context.npu_ids,
-                    device_ids=request.context.device_ids,
+                    config, request.context,
                     label="host-postflight",
                 )
                 postflight = json.loads(postflight_path.read_text(encoding="utf-8"))
@@ -862,6 +832,8 @@ class BenchmarkExecutor:
             })
             write_json(result_dir / "summary.json", summary)
         except Exception as exc:
+            if lease is not None:
+                lease.release()
             monitor_summary_path = (
                 result_dir / "benchmark-monitor" / "summary.json"
             )
@@ -873,6 +845,7 @@ class BenchmarkExecutor:
                 )
                 monitor_result = write_monitor_terminal_summary(
                     result_dir,
+                    provider=provider,
                     status="not-run",
                     enabled=request.monitor == "on",
                     targets=targets,

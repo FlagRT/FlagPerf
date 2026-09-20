@@ -119,11 +119,9 @@ def main(config, case_config, rank, world_size, local_rank):
 if __name__ == "__main__":    
     config = parse_args()
     bootstrap_vendor(config.vendor)
-    with open("case_config.yaml", "r") as file:
-        case_config = yaml.safe_load(file)
-    with open(os.path.join(config.vendor, "case_config.yaml"), "r") as file:
-        case_config_vendor = yaml.safe_load(file)
-    case_config.update(case_config_vendor)
+    from pathlib import Path
+    from case_assets import load_case_config
+    case_config = load_case_config(Path.cwd(), config.vendor)
     case_config = Namespace(**case_config)
 
     if config.vendor.split("/", 1)[0].lower() == "ascend":

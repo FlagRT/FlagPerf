@@ -26,6 +26,9 @@
 
 当前统一入口只承诺 **Ascend 单宿主**。原多机入口保存在
 [`legacy/cluster_run.py`](legacy/cluster_run.py)，仅用于迁移兼容。
+Benchmark 控制面通过静态 Vendor Provider 接入厂商策略；生产 registry 当前仅注册
+Ascend。P800 provider 尚未接入，不能用本次离线回归宣称 P800 正式性能已验证。
+接口、配置兼容变化与后续接入步骤见 [控制面迁移说明](docs/vendor-control-plane.md)。
 
 
 ## 阅读导航
@@ -154,11 +157,14 @@ python3 base/run.py toolkit run \
 ```
 
 示例中的 NPU 7 不是固定要求。正式运行前必须按当前宿主拓扑替换为已授权的空闲物理
-NPU ID；也可改用 `--device-ids 14,15` 一类逻辑 Device 集合。两种选择器互斥。
+NPU ID；也可改用 `--device-ids 14,15` 一类逻辑 Device 集合。Benchmark 的
+`--physical-device-ids`、`--npu-ids`、`--device-ids` 三者互斥；Toolkit 保留后两者。
 
 ### 物理 NPU、逻辑 Device 与 rank
 
 - `--npu-ids 7`：选择物理 NPU，正式 preflight 按实时映射展开其逻辑 Device。
+- `--physical-device-ids 7`：Benchmark 的通用物理选择器，保留请求顺序；在 Ascend
+  上与 `--npu-ids 7` 选择同一物理资源，最终 rank 数仍按展开后的逻辑 Device 数计算。
 - `--device-ids 14,15`：直接选择逻辑 Device；支持逗号和范围，如 `2,3,6-9`。
 - Benchmark 默认每个所选逻辑 Device 启动一个进程（rank）。若显式填写
   `--nproc-per-node`，必须等于解析后的逻辑 Device 数。
@@ -224,7 +230,7 @@ Ascend 适配器负责 Torch-FL 初始化、`flagos:<local_rank>` 设备选择�
 | 参数 | 含义 |
 | --- | --- |
 | `--case` | 必填的 Base Benchmark Case |
-| `--case-config` | 只读挂载的 Ascend Case YAML 覆盖文件 |
+| `--case-config` | 保存到本轮结果中的 Case YAML 快照，作为配置合并的最后一层 |
 | `--nproc-per-node` | 本机 torchrun rank 数；默认等于解析出的逻辑 Device 数 |
 | `--monitor on\|off` | 是否采集独立状态的同窗监控，默认 `on` |
 | `--timeout` | 容器硬超时，默认 3600 秒 |
@@ -267,9 +273,11 @@ python3 base/run.py benchmark run \
 ### 3.3 调整矩阵大小和迭代次数
 
 先区分两个配置：`--config` 选宿主/镜像，`--case-config` 选测试工作量。
-Case 先读取通用 `benchmarks/<CASE>/case_config.yaml`，再用 Ascend 配置覆盖同名字段。
-传入 `--case-config` 时，该文件**替换容器中的 Ascend 配置文件**，不是在原 Ascend
-配置上再叠加一层。因此建议复制完整 Ascend 配置后修改，保留 `DIST_BACKEND` 等字段。
+Case 按 `generic < vendor < chip < override` 顺序覆盖同名字段；芯片层通过
+`--case CASE:CHIP` 显式选择。`--case-config` 现在是最后一层，省略的字段保留前面
+各层的值，不再替换厂商配置文件。宿主保存配置快照与 `case-assets.json`，worker
+及实际 Case 消费同一解析合同，并校验来源文件 SHA256。能力 requirements 独立于
+工作量 YAML，override 不能绕过 runtime、rank 或 unsupported 门禁。
 
 例如，制作一次用于检查运行链路的小规模 FP16 测试：
 
@@ -422,9 +430,15 @@ python3 base/run.py benchmark run \
 
 - `summary.json`：外层状态、运行时、设备、权限和生命周期；
 - `resolved-plan.json`：正式 preflight 后解析出的完整执行计划；
+- `case-assets.json`：Benchmark 的配置、入口、环境脚本和 requirements 来源及 SHA256；
 - `benchmark-result.json` 或 `toolkit-evidence/manifest.json`：领域测量事实；
 - `report.md`、`report_monitor.md` 和 `report-assets/`：确定性阅读视图；
 - Case 配置快照、原始日志、pre/postflight 和 SHA-256 索引。
+
+新 Benchmark summary 使用 schema 3，同窗监控使用 schema 2；测量结果 schema 1
+和报告元数据 schema 3 保持。离线报告继续接受旧 Ascend summary 1/2 和 monitor 1，
+不改写历史证据。启动前 skip 的 `resolved-plan.json` 是静态计划，尚无实机绑定；
+完整 Case 资产合同在进入执行阶段时保存。详细字段与兼容边界见控制面迁移说明。
 
 离线重建报告：
 

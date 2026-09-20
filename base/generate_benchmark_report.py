@@ -17,10 +17,15 @@ import sys
 from typing import Any, Iterable
 
 
+from benchmark_report_schema import (
+    render_report as neutral_report, render_monitor_report as neutral_monitor_report,
+    monitor_svg as neutral_monitor_svg,
+)
+
 REPORT_SCHEMA_VERSION = 3
-SUPPORTED_SUMMARY_SCHEMA_VERSIONS = (1, 2)
+SUPPORTED_SUMMARY_SCHEMA_VERSIONS = (1, 2, 3)
 SUPPORTED_RESULT_SCHEMA_VERSIONS = (1,)
-SUPPORTED_MONITOR_SCHEMA_VERSIONS = (1,)
+SUPPORTED_MONITOR_SCHEMA_VERSIONS = (1, 2)
 
 
 class ReportError(RuntimeError):
@@ -1282,19 +1287,17 @@ def generate_benchmark_report(result_dir: Path) -> dict[str, Any]:
     monitor_asset = write_asset(
         root,
         "benchmark-monitor-usage.svg",
-        monitor_usage_svg(
-            visible_monitor_samples(samples, monitor_windows(monitor))[0],
-            monitor_windows(monitor),
-        ),
+        (neutral_monitor_svg(samples, monitor) if summary_version == 3 else monitor_usage_svg(
+            visible_monitor_samples(samples, monitor_windows(monitor))[0], monitor_windows(monitor))),
     )
     assets = [*rank_assets, *([monitor_asset] if monitor_asset is not None else [])]
 
     report_path = root / "report.md"
     monitor_report_path = root / "report_monitor.md"
-    atomic_write(report_path, render_report(root, summary, result, rank_assets))
+    atomic_write(report_path, (neutral_report if summary_version == 3 else render_report)(root, summary, result, rank_assets))
     atomic_write(
         monitor_report_path,
-        render_monitor_report(root, summary, monitor, samples, monitor_asset),
+        (neutral_monitor_report if summary_version == 3 else render_monitor_report)(root, summary, monitor, samples, monitor_asset),
     )
     result_path = root / "benchmark-result.json"
     metadata = {

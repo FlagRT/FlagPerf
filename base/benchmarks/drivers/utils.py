@@ -16,7 +16,10 @@ except ImportError:
 
 
 def _vendor_name(vendor):
-    return vendor.split("/", 1)[0].lower()
+    name = vendor.split("/", 1)[0].lower()
+    if name not in {"nvidia", "ascend", "mthreads", "cambricon", "iluvatar", "metax", "dcu", "tsingmicro"}:
+        raise ValueError(f"unsupported runtime vendor: {name!r}")
+    return name
 
 
 def bootstrap_vendor(vendor):
@@ -33,6 +36,7 @@ def accelerator_device(vendor, local_rank):
 
 
 def set_ieee_float32(vendor):
+    _vendor_name(vendor)
     if vendor == "nvidia":
         torch.backends.cuda.matmul.allow_tf32 = False
     elif _vendor_name(vendor) == "ascend":
@@ -48,6 +52,7 @@ def set_ieee_float32(vendor):
 
 
 def unset_ieee_float32(vendor):
+    _vendor_name(vendor)
     if vendor == "nvidia":
         torch.backends.cuda.matmul.allow_tf32 = True
     elif _vendor_name(vendor) == "ascend":
@@ -68,8 +73,10 @@ def host_device_sync(vendor):
         ascend_driver.synchronize()
     elif "mthreads" in vendor:
         torch.musa.synchronize()
+    elif _vendor_name(vendor) == "cambricon":
+        torch.mlu.synchronize()
     else:
-        print("unspecified vendor {}, using default pytorch \"torch.cuda.synchronize\"".format(vendor))
+        # Explicit legacy CUDA-compatible adapters, never an unknown vendor.
         torch.cuda.synchronize()
 
 

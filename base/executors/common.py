@@ -55,7 +55,10 @@ def sha256_file(path: Path) -> str:
 
 def runtime_artifact_paths(runtime_profile: str | None = None, *, vendor: str = "ascend") -> tuple[Path, Path]:
     root = get_provider(vendor).runtime_root(BASE_DIR, runtime_profile)
-    return root / "stack.lock.yaml", root / "image-manifest.json"
+    paths = root / "stack.lock.yaml", root / "image-manifest.json"
+    if any(not path.resolve().is_relative_to(root) for path in paths):
+        raise ConfigurationError("runtime asset escapes locked profile")
+    return paths
 
 
 def runtime_lock_record(
@@ -143,7 +146,7 @@ def load_host_config(path: Path) -> tuple[Path, dict[str, Any]]:
     if (
         not isinstance(expected, list)
         or not expected
-        or any(not isinstance(item, int) or item < 0 for item in expected)
+        or any(type(item) is not int or item < 0 for item in expected)
         or len(expected) != len(set(expected))
     ):
         raise ConfigurationError(

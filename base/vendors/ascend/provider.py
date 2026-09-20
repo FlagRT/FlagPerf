@@ -3,6 +3,7 @@
 """Ascend host policy; importing this module is device-free."""
 from __future__ import annotations
 
+import json
 from pathlib import Path
 import subprocess
 import sys
@@ -34,14 +35,34 @@ class AscendProvider:
         context.validate(require_selection=True)
 
     def preflight(self, result_dir: Path, config: dict[str, Any], context: Any, *, label: str = "host-preflight") -> Path:
-        return run_host_preflight(result_dir, config["expected_device_ids"],
-                                  npu_ids=context.physical_device_ids or context.npu_ids,
-                                  device_ids=context.device_ids, label=label)
+        raw_path = run_host_preflight(result_dir, config["expected_device_ids"],
+                                     npu_ids=context.physical_device_ids or context.npu_ids,
+                                     device_ids=context.device_ids, label=label)
+        if context.physical_device_ids is None:
+            return raw_path
+        # Preserve the legacy preflight evidence and normalize only the new
+        # selector's order. One physical NPU can expand into multiple ranks.
+        record = json.loads(raw_path.read_text(encoding="utf-8"))
+        requested = context.selection_request()["requested_ids"]
+        selected = [item["logic_id"] for physical in requested
+                    for item in sorted(record["actual_device_map"], key=lambda item: item["logic_id"])
+                    if item["npu_id"] == physical]
+        if len(selected) != len(set(selected)) or set(selected) != set(record["selection"]["selected_device_ids"]):
+            raise RuntimeError("physical selection differs from verified Ascend preflight")
+        record["selection"].update(source="physical-device-ids", requested_ids=requested,
+                                   selected_npu_ids=requested, selected_device_ids=selected)
+        record["raw_preflight"] = str(raw_path.relative_to(result_dir))
+        path = result_dir / f"{label}-physical-selection.json"
+        path.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+        return path
 
     def bindings(self, preflight: dict[str, Any], selected: Sequence[int]) -> list[DeviceBinding]:
         targets = self.monitor_targets(preflight, selected)
         by_id = {item["logic_id"]: item for item in targets}
         inventory = {item["logic_id"]: item for item in preflight["actual_device_map"]}
+        selection = preflight.get("selection", {})
+        physical_request = selection.get("source") in ("physical-device-ids", "npu-ids")
+        requested = selection.get("requested_ids", [])
         result = []
         for rank, logical in enumerate(selected):
             item = by_id[logical]
@@ -53,11 +74,15 @@ class AscendProvider:
                 host_device_node=f"/dev/davinci{logical}",
                 container_device_node=f"/dev/davinci{logical}",
                 framework_local_rank=rank, framework_logical_id=rank,
-                framework_device_name=f"flagos:{rank}", request_index=rank,
+                framework_device_name=f"flagos:{rank}",
+                request_index=requested.index(item["npu_id"]) if physical_request else rank,
                 resource_key=f"ascend/npu-{item['npu_id']}/chip-{item['chip_id']}",
                 legacy_logical_id=logical,
             ))
         return result
+
+    def container_policy(self, config: dict[str, Any]) -> dict[str, Any]:
+        return {"network": "host", "ipc_namespace": "host", "pid_namespace": "private"}
 
     def docker_args(self, config: dict[str, Any], bindings: Sequence[DeviceBinding]) -> list[str]:
         selected = [item.legacy_logical_id for item in bindings]
@@ -111,6 +136,11 @@ class AscendProvider:
     def create_monitor(self, targets: Sequence[dict[str, Any]]) -> Any:
         from monitoring.ascend_usage import BENCHMARK_USAGE_FIELDS, UsageMonitor
         return UsageMonitor(targets, field_specs=BENCHMARK_USAGE_FIELDS, interval_s=1.0, command_timeout_s=5)
+
+    def rank_target(self, targets, selected, local_rank, binding):
+        logical = binding.legacy_logical_id if binding is not None else selected[local_rank]
+        matches = [item for item in targets if item["logic_id"] == logical]
+        return matches[0] if len(matches) == 1 else None
 
     def measurement_identity(self, target: dict[str, Any], binding: DeviceBinding | None) -> dict[str, Any]:
         value = {"logical_device_id": target["logic_id"], "npu_id": target["npu_id"], "chip_id": target["chip_id"]}
