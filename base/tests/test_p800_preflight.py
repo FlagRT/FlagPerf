@@ -187,6 +187,35 @@ class ContractTests(unittest.TestCase):
                          '--case', 'computation-FP32:P800', '--dry-run'])
         self.assertEqual(code, 2)
 
+    def test_supervisor_spawns_gated_no_site_child_and_propagates_failure(self):
+        from base.vendors.kunlunxin import container_probe as probe
+        manifest = json.loads((probe.runtime.ROOT/'image-manifest.json').read_text())
+        ctx = dict(run_id='fixture', timeout=120, image_identity={
+            'Id': manifest['image_id'], 'Architecture': 'amd64', 'RepoDigests': manifest['repo_digests']})
+        audit = {'python': '3.10.18', 'inventory_errors': [], 'packages': {}}
+        original_stat = Path.lstat
+        def node_stat(path, *args, **kwargs):
+            if str(path) in ('/dev/xpu3', '/dev/xpuctrl'):
+                return SimpleNamespace(st_mode=stat.S_IFCHR, st_rdev=os.makedev(240, 3))
+            return original_stat(path, *args, **kwargs)
+        for exit_code in (0, 7):
+            with self.subTest(exit_code=exit_code), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp); context = root/'context.json'; context.write_text(json.dumps(ctx))
+                with patch.object(sys, 'argv', ['probe', '--context', str(context), '--output', str(root)]), \
+                     patch.object(sys, 'flags', SimpleNamespace(no_site=1)), \
+                     patch.object(sys, 'executable', str(probe.runtime.PREFIX/'bin/python')), \
+                     patch.object(probe, 'validate_context', return_value=[DEVICE]), \
+                     patch.object(Path, 'lstat', node_stat), \
+                     patch.object(probe.runtime, 'static_audit', return_value=audit), \
+                     patch.object(probe.runtime, 'validate_packages', return_value=[]), \
+                     patch.object(probe.subprocess, 'run', return_value=SimpleNamespace(returncode=exit_code)) as run:
+                    self.assertEqual(probe.main(), exit_code)
+                    child = run.call_args.args[0]
+                    self.assertEqual(child[1], '-S'); self.assertIn('--worker', child)
+                    self.assertGreater(run.call_args.kwargs['timeout'], ctx['timeout'])
+                self.assertTrue((root/'runtime-audit.json').exists())
+                self.assertFalse((root/'probe.json').exists())  # parent cannot fabricate worker success
+
 
 class LeaseTests(unittest.TestCase):
     def test_pr0_flock_interlocks_both_directions_and_keeps_inode(self):
