@@ -1,0 +1,13 @@
+{
+  "image": true,
+  "runtime_identity": true,
+  "selection_request": true,
+  "case": true,
+  "nproc_per_node": true,
+  "permissions": true,
+  "worker": true,
+  "applicability": true,
+  "runtime_lock_existing_fields": true,
+  "runtime_lock_new_vendor_metadata": true,
+  "case_config_existing_fields": true
+}

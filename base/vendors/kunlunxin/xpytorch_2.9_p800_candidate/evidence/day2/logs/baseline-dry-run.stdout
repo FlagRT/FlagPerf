@@ -1,0 +1,92 @@
+{
+  "applicability": {
+    "reason": null,
+    "status": "applicable"
+  },
+  "case": "computation-FP32",
+  "case_config": {
+    "ascend": {
+      "bytes": 729,
+      "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/computation-FP32/ascend/case_config.yaml",
+      "sha256": "fd785c14f2cc5750ba1aa5e4dedc44ca5a3f7e92ffb1a93f02fa24dbea4cdeaf"
+    },
+    "generic": {
+      "bytes": 653,
+      "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/computation-FP32/case_config.yaml",
+      "sha256": "a299308c594c20454b73d370a2960d5a54a20c45c3481d44b82812113dc085af"
+    }
+  },
+  "context": {
+    "config": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/configs/ascend910_cann9_local.yaml",
+    "device_ids": "14",
+    "dry_run": true,
+    "npu_ids": null,
+    "result_root": null,
+    "timeout": 3600
+  },
+  "host_config": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/configs/ascend910_cann9_local.yaml",
+  "image": "flagrt/ascend-operator-runtime:0.2.0-cann9.0-py311-torch2.10-arm64",
+  "kind": "benchmark",
+  "mode": "static-dry-run",
+  "monitoring": {
+    "automatic_workload_extension": false,
+    "collector": "npu-smi info -t usages",
+    "command_timeout_s": 5,
+    "coverage_window": "rank-local exact measurement window",
+    "enabled": true,
+    "required_fields": [
+      "Aicore Usage Rate(%)",
+      "Aivector Usage Rate(%)",
+      "HBM Usage Rate(%)",
+      "HBM Bandwidth Usage Rate(%)",
+      "NPU Utilization(%)"
+    ],
+    "required_samples_per_target": 10,
+    "target_interval_s": 1.0
+  },
+  "nproc_per_node": 1,
+  "permissions": {
+    "active_dmi": false,
+    "candidate_runtime": false,
+    "ipc_namespace": "host",
+    "network": "host",
+    "pid_namespace": "private",
+    "privileged_root": false
+  },
+  "runtime_identity": {
+    "image_id": "deferred-until-image-inspection"
+  },
+  "runtime_lock": {
+    "image_manifest": {
+      "image": "flagrt/ascend-operator-runtime:0.2.0-cann9.0-py311-torch2.10-arm64",
+      "image_id": "sha256:d948410966b0dfdfaf4f9c95b9b14bdb7c4279cb85ccd7f9157f0fb5d1c6d397",
+      "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/vendors/ascend/torch_fl_2.10/image-manifest.json",
+      "release_stage": null,
+      "schema_version": 1,
+      "sha256": "b3de6b711947eaab42268eb9fa16956ac4a397751d8e2ba06a3174fd1f4d23cf",
+      "validated": true,
+      "validation_scope": "Rebuilt after server migration from the locked CANN 9.0.0 supply chain. Full default computation-FP16 (8192x8192x8192, warmup 100, iterations 50000) passed on physical NPU7 / logical Device14,15 with two ranks, 285.22 TFLOPS per rank, zero FlagOS CPU fallback, exact-window monitoring passed with 184 samples per device, and host preflight/postflight plus report generation passed. Other Base cases were not rerun for this rebuilt image.",
+      "validation_status": "partial"
+    },
+    "runtime_profile": "torch_fl_2.10",
+    "stack_lock": {
+      "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/vendors/ascend/torch_fl_2.10/stack.lock.yaml",
+      "sha256": "fca4071f8a7bb7771184f18cda1c4ca2b948642ba4a2f8641ea5e9d63ecc7150"
+    }
+  },
+  "runtime_requirements": null,
+  "schema_version": 1,
+  "selection_note": "physical-to-logical mapping and idle state are resolved only by the side-effecting host preflight",
+  "selection_request": {
+    "expression": "14",
+    "requested_ids": [
+      14
+    ],
+    "resolution_status": "static",
+    "selected_device_ids": [
+      14
+    ],
+    "source": "device-ids"
+  },
+  "worker": "benchmark_worker.py"
+}

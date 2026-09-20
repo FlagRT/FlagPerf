@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "stage": "Day 2 / PR1",
+  "scope": "CPU-only control-plane validation; no P800 or Ascend hardware performance workload",
+  "tested_code_commit": "893c60f94c466bf24fcfb72dcea273f079010591",
+  "baseline_commit": "e4715d77cec7908314215f49c11980673fb46f9e",
+  "base_tests": {
+    "baseline_passed": 91,
+    "final_passed": 120
+  },
+  "pr0_tests": {
+    "baseline_passed": 32,
+    "final_passed": 32
+  },
+  "toolkit_tests": {
+    "baseline_passed": 79,
+    "final_passed": 80
+  },
+  "case_dry_runs": {
+    "total": 15,
+    "applicable": 10,
+    "skipped": 5
+  },
+  "extra_dry_runs": {
+    "selectors_times_monitor_modes": 6,
+    "capacity_gate_expected_exit": 2
+  },
+  "runtime_candidate_promoted": false,
+  "day1_artifacts_unchanged": true,
+  "raw_evidence": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-pr1-20260920-162724",
+  "result": "passed",
+  "limitations": [
+    "No real Ascend hardware regression",
+    "No P800 provider registration or performance driver yet",
+    "CPU test environment differs from locked production accelerator runtime"
+  ],
+  "public_distribution": {
+    "tests": 7,
+    "passed": 6,
+    "failures": 1,
+    "baseline_failures": 1,
+    "note": "Preexisting private Toolbox path in Ascend host config; no new failure"
+  }
+}

@@ -1,0 +1,175 @@
+E...............................EEEE....E.E.EEEE.......................................
+======================================================================
+ERROR: test_ascend_benchmark_adapter (unittest.loader._FailedTest.test_ascend_benchmark_adapter)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_ascend_benchmark_adapter
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/unittest/loader.py", line 394, in _find_test_path
+    module = self._get_module_from_name(name)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/unittest/loader.py", line 337, in _get_module_from_name
+    __import__(name)
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/tests/test_ascend_benchmark_adapter.py", line 24, in <module>
+    from drivers import ascend  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/drivers/__init__.py", line 15, in <module>
+    from .utils import *
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/drivers/utils.py", line 6, in <module>
+    import torch
+ModuleNotFoundError: No module named 'torch'
+
+
+======================================================================
+ERROR: test_capacity_wait_override_preserves_oom_search (test_ascend_transfer_benchmarks.AscendTransferBenchmarkTest.test_capacity_wait_override_preserves_oom_search)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/tests/test_ascend_transfer_benchmarks.py", line 57, in test_capacity_wait_override_preserves_oom_search
+    module = load_case_module("main_memory-capacity")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/tests/test_ascend_transfer_benchmarks.py", line 27, in load_case_module
+    spec.loader.exec_module(module)
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/main_memory-capacity/main.py", line 11, in <module>
+    import torch
+ModuleNotFoundError: No module named 'torch'
+
+======================================================================
+ERROR: test_d2d_preserves_clone_workload_and_uses_adapter_device (test_ascend_transfer_benchmarks.AscendTransferBenchmarkTest.test_d2d_preserves_clone_workload_and_uses_adapter_device)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/tests/test_ascend_transfer_benchmarks.py", line 81, in test_d2d_preserves_clone_workload_and_uses_adapter_device
+    module = load_case_module("main_memory-bandwidth")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/tests/test_ascend_transfer_benchmarks.py", line 27, in load_case_module
+    spec.loader.exec_module(module)
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/main_memory-bandwidth/main.py", line 13, in <module>
+    import torch
+ModuleNotFoundError: No module named 'torch'
+
+======================================================================
+ERROR: test_d2h_reuses_pinned_destination (test_ascend_transfer_benchmarks.AscendTransferBenchmarkTest.test_d2h_reuses_pinned_destination)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/tests/test_ascend_transfer_benchmarks.py", line 140, in test_d2h_reuses_pinned_destination
+    module = load_case_module("interconnect-d2h")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/tests/test_ascend_transfer_benchmarks.py", line 27, in load_case_module
+    spec.loader.exec_module(module)
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/interconnect-d2h/main.py", line 12, in <module>
+    import torch
+ModuleNotFoundError: No module named 'torch'
+
+======================================================================
+ERROR: test_h2d_reuses_destination_and_pinned_source (test_ascend_transfer_benchmarks.AscendTransferBenchmarkTest.test_h2d_reuses_destination_and_pinned_source)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/tests/test_ascend_transfer_benchmarks.py", line 103, in test_h2d_reuses_destination_and_pinned_source
+    module = load_case_module("interconnect-h2d")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/tests/test_ascend_transfer_benchmarks.py", line 27, in load_case_module
+    spec.loader.exec_module(module)
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/interconnect-h2d/main.py", line 13, in <module>
+    import torch
+ModuleNotFoundError: No module named 'torch'
+
+======================================================================
+ERROR: test_allreduce_checks_nonzero_sum_and_keeps_timed_values_finite (test_benchmark_failure_fixes.FailureFixTests.test_allreduce_checks_nonzero_sum_and_keeps_timed_values_finite)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/tests/test_benchmark_failure_fixes.py", line 111, in test_allreduce_checks_nonzero_sum_and_keeps_timed_values_finite
+    module = load_case_module("interconnect-MPI_intraserver")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/tests/test_ascend_transfer_benchmarks.py", line 27, in load_case_module
+    spec.loader.exec_module(module)
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/interconnect-MPI_intraserver/main.py", line 13, in <module>
+    import torch
+ModuleNotFoundError: No module named 'torch'
+
+======================================================================
+ERROR: test_allreduce_rejects_wrong_nonzero_sum (test_benchmark_failure_fixes.FailureFixTests.test_allreduce_rejects_wrong_nonzero_sum)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/tests/test_benchmark_failure_fixes.py", line 127, in test_allreduce_rejects_wrong_nonzero_sum
+    module = load_case_module("interconnect-MPI_intraserver")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/tests/test_ascend_transfer_benchmarks.py", line 27, in load_case_module
+    spec.loader.exec_module(module)
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/interconnect-MPI_intraserver/main.py", line 13, in <module>
+    import torch
+ModuleNotFoundError: No module named 'torch'
+
+======================================================================
+ERROR: test_capacity_does_not_swallow_device_errors_or_report_zero_as_success (test_benchmark_failure_fixes.FailureFixTests.test_capacity_does_not_swallow_device_errors_or_report_zero_as_success)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/tests/test_benchmark_failure_fixes.py", line 70, in test_capacity_does_not_swallow_device_errors_or_report_zero_as_success
+    module = load_case_module("main_memory-capacity")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/tests/test_ascend_transfer_benchmarks.py", line 27, in load_case_module
+    spec.loader.exec_module(module)
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/main_memory-capacity/main.py", line 11, in <module>
+    import torch
+ModuleNotFoundError: No module named 'torch'
+
+======================================================================
+ERROR: test_capacity_hint_bounds_attempts_without_reporting_queried_capacity (test_benchmark_failure_fixes.FailureFixTests.test_capacity_hint_bounds_attempts_without_reporting_queried_capacity)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/tests/test_benchmark_failure_fixes.py", line 80, in test_capacity_hint_bounds_attempts_without_reporting_queried_capacity
+    module = load_case_module("main_memory-capacity")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/tests/test_ascend_transfer_benchmarks.py", line 27, in load_case_module
+    spec.loader.exec_module(module)
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/main_memory-capacity/main.py", line 11, in <module>
+    import torch
+ModuleNotFoundError: No module named 'torch'
+
+======================================================================
+ERROR: test_capacity_recovers_from_locked_allocator_error (test_benchmark_failure_fixes.FailureFixTests.test_capacity_recovers_from_locked_allocator_error)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/tests/test_benchmark_failure_fixes.py", line 60, in test_capacity_recovers_from_locked_allocator_error
+    module = load_case_module("main_memory-capacity")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/tests/test_ascend_transfer_benchmarks.py", line 27, in load_case_module
+    spec.loader.exec_module(module)
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/main_memory-capacity/main.py", line 11, in <module>
+    import torch
+ModuleNotFoundError: No module named 'torch'
+
+======================================================================
+ERROR: test_hbm_query_failures_propagate_and_zero_free_still_attempts_one_mib (test_benchmark_failure_fixes.FailureFixTests.test_hbm_query_failures_propagate_and_zero_free_still_attempts_one_mib)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/tests/test_benchmark_failure_fixes.py", line 92, in test_hbm_query_failures_propagate_and_zero_free_still_attempts_one_mib
+    module = load_case_module("main_memory-capacity")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/tests/test_ascend_transfer_benchmarks.py", line 27, in load_case_module
+    spec.loader.exec_module(module)
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/main_memory-capacity/main.py", line 11, in <module>
+    import torch
+ModuleNotFoundError: No module named 'torch'
+
+----------------------------------------------------------------------
+Ran 87 tests in 0.675s
+
+FAILED (errors=11)

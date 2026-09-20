@@ -1,0 +1,9 @@
+{
+  "tested_code_commit": "fac7cb575f93c72e14de44d89fdb3b0bfe916544",
+  "benchmark_vendor_hardcoding_absent": true,
+  "day1_profile_unchanged": true,
+  "diff_check_passed": true,
+  "hardware_workloads_run": false,
+  "docker_commands_run": false,
+  "note": "Earlier Toolkit test attempt missed migrated mocks and failed because npu-smi was absent; final tests mock the canonical implementation."
+}

@@ -1,5 +1,13 @@
 # 验证与维护
 
+For the 2026-09-20 PR1 control-plane refactor, see the separate
+[CPU-only validation record](../../base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day2/review.md)
+and [migration guide](../../base/docs/vendor-control-plane.md). Those tests use
+an isolated CPU PyTorch environment on klx; they do not supersede the historical
+locked-runtime or hardware evidence below. Toolkit test injection follows the
+moved preflight implementation, and the legacy command remains covered.
+
+
 ## 本次验证口径
 
 2026-09-12 的集成验证包括：源码/配置等价检查、公开入口规划、配置哈希与资格范围绑定、

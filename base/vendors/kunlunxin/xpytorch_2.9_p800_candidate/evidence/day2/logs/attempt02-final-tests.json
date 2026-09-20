@@ -1,0 +1,55 @@
+{
+  "tested_code_commit": "fac7cb575f93c72e14de44d89fdb3b0bfe916544",
+  "tests": [
+    {
+      "name": "final-base",
+      "command": [
+        "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-pr1-20260920-162724/cpu-test-venv/bin/python",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "base/tests",
+        "-p",
+        "test_*.py",
+        "-v"
+      ],
+      "exit_code": 0,
+      "test_count": 119
+    },
+    {
+      "name": "final-pr0",
+      "command": [
+        "python3",
+        "-S",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "base/vendors/kunlunxin/xpytorch_2.9_p800_candidate",
+        "-p",
+        "test_*.py",
+        "-v"
+      ],
+      "exit_code": 0,
+      "test_count": 32
+    },
+    {
+      "name": "final-toolkit",
+      "command": [
+        "python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "base/toolkits/_common/ascend/A3/tests",
+        "-v"
+      ],
+      "exit_code": 0,
+      "test_count": 80
+    }
+  ]
+}

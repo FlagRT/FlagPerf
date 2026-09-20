@@ -1,0 +1,12 @@
+{
+  "image": true,
+  "runtime_identity": true,
+  "runtime_lock": false,
+  "selection_request": true,
+  "case": true,
+  "nproc_per_node": true,
+  "permissions": true,
+  "worker": true,
+  "case_config": true,
+  "applicability": true
+}

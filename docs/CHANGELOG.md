@@ -1,5 +1,21 @@
 # 适配与文档变更记录
 
+## 2026-09-20 — Base vendor control plane (PR1, local branch)
+
+Static vendor providers now own runtime/preflight/container/monitor policies.
+Benchmark adds physical selection with compatible Ascend leases, shared case
+asset verification and evidence-driven reports. Case overrides now merge after
+vendor/chip defaults; summary 3 and monitor 2 retain old evidence readers.
+Production support remains Ascend-only; the P800 provider is the next stage.
+
+CPU-only validation: Base 120, PR0 32, Toolkit 80 tests passed; all 15 Ascend
+cases planned (10 applicable, 5 skipped). Operation vendor dry-runs also pass;
+the public-distribution suite retains one baseline private-path failure.
+No accelerator performance workload.
+See [migration](../base/docs/vendor-control-plane.md) and
+[Day 2 evidence](../base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day2/review.md).
+
+
 ## 2026-09-12 — Ascend Base 与 Operation 集成（待发布）
 
 - 同步 Base 短时默认配置、容量测试结束等待配置及 `npu-smi` 进程占用检查；保留设备 lease 和独立状态。

@@ -1,0 +1,21 @@
+{
+  "command": [
+    "python3",
+    "-B",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "tests",
+    "-p",
+    "test_public_distribution.py",
+    "-v"
+  ],
+  "baseline_tests": 7,
+  "final_tests": 7,
+  "baseline_failures": 1,
+  "final_failures": 1,
+  "known_existing_failure": "base/configs/ascend910_cann9_local.yaml contains a private Toolbox path; production host config retained",
+  "new_operation_import_regression_fixed": true,
+  "document_links_passed": true
+}

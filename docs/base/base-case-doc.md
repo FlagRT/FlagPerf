@@ -16,6 +16,11 @@
 
 # 基础规格评测研发与适配文档
 
+> Current host/worker integration uses static vendor providers and a shared
+> four-layer case contract. See [PR1 migration](../../base/docs/vendor-control-plane.md)
+> for required capability contracts, physical selection, override semantics and
+> evidence schema compatibility. The production registry still registers only Ascend.
+
 ## 评测方案简介
 
 为了对AI芯片这一芯片细分领域进行基础规格评测，本方案从算力、（内）存储、互联、能耗四大角度开展评测。

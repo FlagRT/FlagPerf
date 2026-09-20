@@ -1,0 +1,492 @@
+{
+  "tested_code_commit": "3f68dfd23657811964cff47e9f43beca6201f739",
+  "runs": [
+    {
+      "name": "dry-computation-BF16",
+      "command": [
+        "python3",
+        "-B",
+        "base/run.py",
+        "benchmark",
+        "run",
+        "--case",
+        "computation-BF16",
+        "--dry-run",
+        "--config",
+        "base/configs/ascend910_cann9_local.yaml",
+        "--device-ids",
+        "14",
+        "--nproc-per-node",
+        "1"
+      ],
+      "exit_code": 0,
+      "applicability": {
+        "reason": null,
+        "status": "applicable"
+      }
+    },
+    {
+      "name": "dry-computation-FP16",
+      "command": [
+        "python3",
+        "-B",
+        "base/run.py",
+        "benchmark",
+        "run",
+        "--case",
+        "computation-FP16",
+        "--dry-run",
+        "--config",
+        "base/configs/ascend910_cann9_local.yaml",
+        "--device-ids",
+        "14",
+        "--nproc-per-node",
+        "1"
+      ],
+      "exit_code": 0,
+      "applicability": {
+        "reason": null,
+        "status": "applicable"
+      }
+    },
+    {
+      "name": "dry-computation-FP32",
+      "command": [
+        "python3",
+        "-B",
+        "base/run.py",
+        "benchmark",
+        "run",
+        "--case",
+        "computation-FP32",
+        "--dry-run",
+        "--config",
+        "base/configs/ascend910_cann9_local.yaml",
+        "--device-ids",
+        "14",
+        "--nproc-per-node",
+        "1"
+      ],
+      "exit_code": 0,
+      "applicability": {
+        "reason": null,
+        "status": "applicable"
+      }
+    },
+    {
+      "name": "dry-computation-FP64",
+      "command": [
+        "python3",
+        "-B",
+        "base/run.py",
+        "benchmark",
+        "run",
+        "--case",
+        "computation-FP64",
+        "--dry-run",
+        "--config",
+        "base/configs/ascend910_cann9_local.yaml",
+        "--device-ids",
+        "14",
+        "--nproc-per-node",
+        "1"
+      ],
+      "exit_code": 0,
+      "applicability": {
+        "reason": "\u5f53\u524d Ascend 910C/A3 \u4e0d\u652f\u6301\u672c Case \u6240\u9700\u7684\u539f\u751f FP64 GEMM\uff1bTorch-FL \u7684 FP64 \u8f6c FP32 \u8def\u5f84\u4e0d\u80fd\u4f5c\u4e3a FP64 \u7b97\u529b\u7ed3\u679c",
+        "status": "skipped"
+      }
+    },
+    {
+      "name": "dry-computation-FP8",
+      "command": [
+        "python3",
+        "-B",
+        "base/run.py",
+        "benchmark",
+        "run",
+        "--case",
+        "computation-FP8",
+        "--dry-run",
+        "--config",
+        "base/configs/ascend910_cann9_local.yaml",
+        "--device-ids",
+        "14",
+        "--nproc-per-node",
+        "1"
+      ],
+      "exit_code": 0,
+      "applicability": {
+        "reason": "\u5f53\u524d Ascend 910C/A3 \u4e0d\u652f\u6301\u672c Case \u6240\u9700\u7684\u539f\u751f FP8 GEMM\uff1b\u8f6c\u4e3a FP16/BF16 \u8ba1\u7b97\u4e0d\u80fd\u4f5c\u4e3a\u539f\u751f FP8 \u7b97\u529b\u7ed3\u679c",
+        "status": "skipped"
+      }
+    },
+    {
+      "name": "dry-computation-INT8",
+      "command": [
+        "python3",
+        "-B",
+        "base/run.py",
+        "benchmark",
+        "run",
+        "--case",
+        "computation-INT8",
+        "--dry-run",
+        "--config",
+        "base/configs/ascend910_cann9_local.yaml",
+        "--device-ids",
+        "14",
+        "--nproc-per-node",
+        "1"
+      ],
+      "exit_code": 0,
+      "applicability": {
+        "reason": null,
+        "status": "applicable"
+      }
+    },
+    {
+      "name": "dry-computation-TF32",
+      "command": [
+        "python3",
+        "-B",
+        "base/run.py",
+        "benchmark",
+        "run",
+        "--case",
+        "computation-TF32",
+        "--dry-run",
+        "--config",
+        "base/configs/ascend910_cann9_local.yaml",
+        "--device-ids",
+        "14",
+        "--nproc-per-node",
+        "1"
+      ],
+      "exit_code": 0,
+      "applicability": {
+        "reason": "TF32 Case \u672a\u539f\u751f\u9002\u914d Ascend\uff0c\u6682\u65f6\u8df3\u8fc7\uff1bAscend HF32 \u4e0d\u5728\u672c Case \u7684\u5f53\u524d\u9002\u914d\u8303\u56f4\u5185",
+        "status": "skipped"
+      }
+    },
+    {
+      "name": "dry-interconnect-MPI_interserver",
+      "command": [
+        "python3",
+        "-B",
+        "base/run.py",
+        "benchmark",
+        "run",
+        "--case",
+        "interconnect-MPI_interserver",
+        "--dry-run",
+        "--config",
+        "base/configs/ascend910_cann9_local.yaml",
+        "--device-ids",
+        "14",
+        "--nproc-per-node",
+        "1"
+      ],
+      "exit_code": 0,
+      "applicability": {
+        "reason": "\u8de8\u673a AllReduce \u4e0d\u5728\u5f53\u524d Ascend \u5355\u5bbf\u4e3b\u7edf\u4e00\u5165\u53e3\u7684\u9002\u914d\u8303\u56f4\u5185\uff1b\u8be5\u5165\u53e3\u56fa\u5b9a nnodes=1",
+        "status": "skipped"
+      }
+    },
+    {
+      "name": "dry-interconnect-MPI_intraserver",
+      "command": [
+        "python3",
+        "-B",
+        "base/run.py",
+        "benchmark",
+        "run",
+        "--case",
+        "interconnect-MPI_intraserver",
+        "--dry-run",
+        "--config",
+        "base/configs/ascend910_cann9_p2p.yaml",
+        "--device-ids",
+        "14,15",
+        "--nproc-per-node",
+        "2"
+      ],
+      "exit_code": 0,
+      "applicability": {
+        "reason": null,
+        "status": "applicable"
+      }
+    },
+    {
+      "name": "dry-interconnect-P2P_interserver",
+      "command": [
+        "python3",
+        "-B",
+        "base/run.py",
+        "benchmark",
+        "run",
+        "--case",
+        "interconnect-P2P_interserver",
+        "--dry-run",
+        "--config",
+        "base/configs/ascend910_cann9_local.yaml",
+        "--device-ids",
+        "14",
+        "--nproc-per-node",
+        "1"
+      ],
+      "exit_code": 0,
+      "applicability": {
+        "reason": "\u8de8\u673a P2P \u4e0d\u5728\u5f53\u524d Ascend \u5355\u5bbf\u4e3b\u7edf\u4e00\u5165\u53e3\u7684\u9002\u914d\u8303\u56f4\u5185\uff1b\u8be5\u5165\u53e3\u56fa\u5b9a nnodes=1",
+        "status": "skipped"
+      }
+    },
+    {
+      "name": "dry-interconnect-P2P_intraserver",
+      "command": [
+        "python3",
+        "-B",
+        "base/run.py",
+        "benchmark",
+        "run",
+        "--case",
+        "interconnect-P2P_intraserver",
+        "--dry-run",
+        "--config",
+        "base/configs/ascend910_cann9_p2p.yaml",
+        "--device-ids",
+        "14,15",
+        "--nproc-per-node",
+        "2",
+        "--case-config",
+        "base/benchmarks/interconnect-P2P_intraserver/ascend/case_config.smoke.yaml"
+      ],
+      "exit_code": 0,
+      "applicability": {
+        "reason": null,
+        "status": "applicable"
+      }
+    },
+    {
+      "name": "dry-interconnect-d2h",
+      "command": [
+        "python3",
+        "-B",
+        "base/run.py",
+        "benchmark",
+        "run",
+        "--case",
+        "interconnect-d2h",
+        "--dry-run",
+        "--config",
+        "base/configs/ascend910_cann9_local.yaml",
+        "--device-ids",
+        "14",
+        "--nproc-per-node",
+        "1"
+      ],
+      "exit_code": 0,
+      "applicability": {
+        "reason": null,
+        "status": "applicable"
+      }
+    },
+    {
+      "name": "dry-interconnect-h2d",
+      "command": [
+        "python3",
+        "-B",
+        "base/run.py",
+        "benchmark",
+        "run",
+        "--case",
+        "interconnect-h2d",
+        "--dry-run",
+        "--config",
+        "base/configs/ascend910_cann9_local.yaml",
+        "--device-ids",
+        "14",
+        "--nproc-per-node",
+        "1"
+      ],
+      "exit_code": 0,
+      "applicability": {
+        "reason": null,
+        "status": "applicable"
+      }
+    },
+    {
+      "name": "dry-main_memory-bandwidth",
+      "command": [
+        "python3",
+        "-B",
+        "base/run.py",
+        "benchmark",
+        "run",
+        "--case",
+        "main_memory-bandwidth",
+        "--dry-run",
+        "--config",
+        "base/configs/ascend910_cann9_local.yaml",
+        "--device-ids",
+        "14",
+        "--nproc-per-node",
+        "1"
+      ],
+      "exit_code": 0,
+      "applicability": {
+        "reason": null,
+        "status": "applicable"
+      }
+    },
+    {
+      "name": "dry-main_memory-capacity",
+      "command": [
+        "python3",
+        "-B",
+        "base/run.py",
+        "benchmark",
+        "run",
+        "--case",
+        "main_memory-capacity",
+        "--dry-run",
+        "--config",
+        "base/configs/ascend910_cann9_local.yaml",
+        "--device-ids",
+        "14",
+        "--nproc-per-node",
+        "1",
+        "--allow-high-risk-case"
+      ],
+      "exit_code": 0,
+      "applicability": {
+        "reason": null,
+        "status": "applicable"
+      }
+    },
+    {
+      "name": "dry-selector-physical-device-ids-on",
+      "command": [
+        "python3",
+        "-B",
+        "base/run.py",
+        "benchmark",
+        "run",
+        "--case",
+        "computation-FP32",
+        "--physical-device-ids",
+        "6,2",
+        "--monitor",
+        "on",
+        "--dry-run"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "dry-selector-physical-device-ids-off",
+      "command": [
+        "python3",
+        "-B",
+        "base/run.py",
+        "benchmark",
+        "run",
+        "--case",
+        "computation-FP32",
+        "--physical-device-ids",
+        "6,2",
+        "--monitor",
+        "off",
+        "--dry-run"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "dry-selector-npu-ids-on",
+      "command": [
+        "python3",
+        "-B",
+        "base/run.py",
+        "benchmark",
+        "run",
+        "--case",
+        "computation-FP32",
+        "--npu-ids",
+        "7",
+        "--monitor",
+        "on",
+        "--dry-run"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "dry-selector-npu-ids-off",
+      "command": [
+        "python3",
+        "-B",
+        "base/run.py",
+        "benchmark",
+        "run",
+        "--case",
+        "computation-FP32",
+        "--npu-ids",
+        "7",
+        "--monitor",
+        "off",
+        "--dry-run"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "dry-selector-device-ids-on",
+      "command": [
+        "python3",
+        "-B",
+        "base/run.py",
+        "benchmark",
+        "run",
+        "--case",
+        "computation-FP32",
+        "--device-ids",
+        "14",
+        "--monitor",
+        "on",
+        "--dry-run"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "dry-selector-device-ids-off",
+      "command": [
+        "python3",
+        "-B",
+        "base/run.py",
+        "benchmark",
+        "run",
+        "--case",
+        "computation-FP32",
+        "--device-ids",
+        "14",
+        "--monitor",
+        "off",
+        "--dry-run"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "dry-capacity-denied",
+      "command": [
+        "python3",
+        "-B",
+        "base/run.py",
+        "benchmark",
+        "run",
+        "--case",
+        "main_memory-capacity",
+        "--device-ids",
+        "14",
+        "--dry-run"
+      ],
+      "exit_code": 2
+    }
+  ]
+}

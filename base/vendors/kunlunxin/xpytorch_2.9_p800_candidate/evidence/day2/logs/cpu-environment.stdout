@@ -1,0 +1,6 @@
+{
+  "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+  "torch": "2.5.1+cpu",
+  "cuda": null,
+  "pyyaml": "6.0.1"
+}
