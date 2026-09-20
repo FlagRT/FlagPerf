@@ -172,6 +172,8 @@ class ContractTests(unittest.TestCase):
         env = {'CUDA_VISIBLE_DEVICES': '0', 'USE_FLAGGEMS': '0'}
         nodes = ['/dev/xpu3', '/dev/xpuctrl']
         self.assertEqual(validate_context(ctx, env, nodes), [DEVICE])
+        zulu = dict(ctx, reservation_start=ctx['reservation_start'].replace('+00:00', 'Z'))
+        self.assertEqual(validate_context(zulu, env, nodes), [DEVICE])
         for c, e, n in ((ctx, env, nodes+['/dev/xpu4']), (ctx, dict(env, CUDA_VISIBLE_DEVICES='1'), nodes),
                         (ctx, dict(env, XPU_EVENT_KL3_ENABLE='1'), nodes), (dict(ctx, allow_candidate_runtime=False), env, nodes),
                         (dict(ctx, reservation_end=(now-timedelta(seconds=1)).isoformat()), env, nodes)):

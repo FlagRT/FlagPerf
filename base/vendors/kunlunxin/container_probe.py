@@ -32,8 +32,8 @@ def validate_context(context, environ, nodes, now=None):
     require(isinstance(context.get('run_id'), str) and context['run_id'], 'missing run identity')
     require(type(context.get('timeout')) is int and 30 <= context['timeout'] <= 180, 'invalid probe timeout')
     require(context.get('reservation_reference'), 'reservation reference required')
-    start = datetime.fromisoformat(context['reservation_start'])
-    end = datetime.fromisoformat(context['reservation_end'])
+    start = datetime.fromisoformat(context['reservation_start'].replace('Z', '+00:00'))
+    end = datetime.fromisoformat(context['reservation_end'].replace('Z', '+00:00'))
     require(start.tzinfo and end.tzinfo, 'reservation timezone required')
     require(start <= (now or datetime.now(timezone.utc)) < end, 'outside reservation')
     devices = context['host']['devices']
