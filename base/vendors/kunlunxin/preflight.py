@@ -54,8 +54,12 @@ def query_record(raw, bdf):
             0 <= values['free_memory_mib'] <= values['total_memory_mib'] and
             values['total_memory_mib'] > 0 and 0 <= values['utilization_percent'] <= 100):
         raise ValueError("invalid query telemetry range")
-    processes = one(raw, r"^    Processes\s*:\s*(.*?)\s*$", 'processes')
-    values['processes_empty'] = processes == 'None'
+    process_sections = re.findall(r'^    Processes(?:[ \t]*:[ \t]*(None))?[ \t]*$', raw, re.M)
+    if len(process_sections) != 1:
+        raise ValueError('missing or ambiguous query field: processes')
+    values['processes_empty'] = process_sections[0] == 'None'
+    if not values['processes_empty'] and not re.search(r'^        Process ID[ \t]*:[ \t]*[0-9]+[ \t]*$', raw, re.M):
+        raise ValueError('unrecognized nonempty process table')
     for field, pattern in [('temperature_c', r"^\s+XPU Current Temp\s*:\s*([0-9.]+) C\s*$"),
                            ('power_w', r"^\s+Power Draw\s*:\s*([0-9.]+) W\s*$")]:
         found = re.findall(pattern, raw, re.M)

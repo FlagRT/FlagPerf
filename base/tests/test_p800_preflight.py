@@ -102,7 +102,7 @@ class ParserTests(unittest.TestCase):
 
     def test_host_busy_handles_driver_inventory_fail_closed(self):
         for kwargs in ({'raw': machine(**{'17': 1})}, {'query': QUERY.replace('0 %', '1 %')},
-                       {'query': QUERY.replace(': None', ': fixture-process')},
+                       {'query': QUERY.replace('    Processes                             : None', '    Processes\n        Process ID                        : 123')},
                        {'query': QUERY.replace('5.0.21.47', '5.0.21.48')},
                        {'handles': result('42', 0)}, {'handles': result(code=1, stderr='permission denied')},
                        {'config': {'expected_device_ids': [0, 1]}}):
@@ -328,6 +328,13 @@ class MonitorTests(unittest.TestCase):
         monitor = self.monitor(); monitor.collect_once()
         self.assertTrue(monitor.samples[0]['valid'])
         self.assertEqual(monitor.samples[0]['values']['total_memory_mib'], 98304)
+
+    def test_active_process_table_is_valid_telemetry_but_not_idle(self):
+        active = QUERY.replace('    Processes                             : None', '    Processes\n        Process ID                        : 123')
+        self.assertFalse(host.query_record(active, DEVICE['pci_bdf'])['processes_empty'])
+        monitor = self.monitor(); monitor.commands.run.side_effect = [result(machine()), result(active)]
+        monitor.collect_once()
+        self.assertTrue(monitor.samples[0]['valid'])
 
     def test_failed_or_wrong_identity_samples_are_invalid_not_zero(self):
         for query in (result(code=124), result(QUERY.replace(UID, '00000000-0000-0000-0000-000000000002'))):
