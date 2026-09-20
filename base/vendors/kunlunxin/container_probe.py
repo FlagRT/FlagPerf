@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import stat
 import sys
+import subprocess
 import time
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
@@ -51,6 +52,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--context', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--worker', action='store_true', help=argparse.SUPPRESS)
     args = parser.parse_args()
     output = args.output
     result = {'schema_version': 1, 'status': 'failed', 'started_monotonic_ns': time.monotonic_ns()}
@@ -69,11 +71,18 @@ def main():
         manifest = json.loads((runtime.ROOT / 'image-manifest.json').read_text())
         runtime.validate_manifest(manifest, context['image_identity'])
         require(Path(sys.executable).resolve() == (runtime.PREFIX / 'bin/python').resolve(), 'wrong runtime Python')
-        audit = runtime.static_audit()
-        save(output / 'runtime-audit.json', audit)
-        require(audit['python'] == json.loads((runtime.ROOT / 'stack.lock.yaml').read_text())['python'], 'Python version drift')
-        require(not audit['inventory_errors'], 'runtime inventory audit failed')
-        require(not runtime.validate_packages(audit['packages'], json.loads((runtime.ROOT / 'stack.lock.yaml').read_text())['packages']), 'package identity drift')
+        if not args.worker:
+            audit = runtime.static_audit()
+            save(output / 'runtime-audit.json', audit)
+            require(audit['python'] == json.loads((runtime.ROOT / 'stack.lock.yaml').read_text())['python'], 'Python version drift')
+            require(not audit['inventory_errors'], 'runtime inventory audit failed')
+            require(not runtime.validate_packages(audit['packages'], json.loads((runtime.ROOT / 'stack.lock.yaml').read_text())['packages']), 'package identity drift')
+            # Keep accelerator initialization out of PID 1, as in PR0. The host
+            # owns the shorter absolute watchdog and removes the whole container.
+            worker = subprocess.run([sys.executable, '-S', str(Path(__file__).resolve()),
+                                     '--context', str(args.context), '--output', str(output), '--worker'],
+                                    timeout=context['timeout'] + 5, check=False)
+            return worker.returncode
         # Only after all side-effect-free checks may executable .pth hooks run.
         import site
         site.main()
