@@ -11,8 +11,8 @@ import stat
 from typing import Any, Sequence
 
 from executors.common import write_json, sha256_file
-from vendors.registry import get_provider
-from vendors.protocol import DeviceBinding
+from base.vendors.registry import get_provider
+from base.vendors.protocol import DeviceBinding
 
 UsageMonitor = Any
 

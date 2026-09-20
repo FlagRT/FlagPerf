@@ -44,7 +44,7 @@ from executors.common import (
     write_json,
 )
 from executors.host import docker_inspect
-from vendors.registry import get_provider
+from base.vendors.registry import get_provider
 from benchmarks.case_assets import resolve_case_assets, portable_assets
 
 

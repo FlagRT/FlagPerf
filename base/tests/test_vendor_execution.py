@@ -13,8 +13,8 @@ BASE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(BASE))
 import run
 from executors import benchmark, common
-from vendors.protocol import DeviceBinding, ConfigurationError, runtime_root
-from vendors.registry import PROVIDERS
+from base.vendors.protocol import DeviceBinding, ConfigurationError, runtime_root
+from base.vendors.registry import PROVIDERS
 from generate_benchmark_report import generate_and_record
 
 

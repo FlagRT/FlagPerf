@@ -9,11 +9,26 @@ from unittest.mock import patch
 BASE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(BASE))
 from executors.common import BaseRunContext, DeviceLease, DeviceLeaseError, load_host_config, runtime_artifact_paths
-from vendors.protocol import ConfigurationError
-from vendors.registry import get_provider
+from base.vendors.protocol import ConfigurationError
+from base.vendors.registry import get_provider
 
 
 class VendorTests(unittest.TestCase):
+    def test_shared_helpers_do_not_import_another_domains_vendor_package(self):
+        import subprocess
+        script = """
+import sys, types
+sys.path.insert(0, BASE_PATH)
+foreign = types.ModuleType('vendors')
+sys.modules['vendors'] = foreign
+from executors.common import runtime_lock_record
+assert runtime_lock_record()['vendor'] == 'ascend'
+assert sys.modules['vendors'] is foreign
+assert 'torch' not in sys.modules
+""".replace('BASE_PATH', repr(str(BASE)))
+        proc = subprocess.run([sys.executable, '-B', '-c', script], capture_output=True, text=True)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+
     def test_registry_does_not_guess_unknown_vendor(self):
         for name in ("kunlunxin", "unknown", "../ascend", None):
             with self.subTest(name=name), self.assertRaises(ConfigurationError):
@@ -71,7 +86,7 @@ class VendorTests(unittest.TestCase):
                 "selection": {"source": "npu-ids", "requested_ids": [2, 6],
                               "selected_device_ids": [4, 5, 12, 13]}}))
             original = raw.read_bytes()
-            with patch("vendors.ascend.provider.run_host_preflight", return_value=raw):
+            with patch("base.vendors.ascend.provider.run_host_preflight", return_value=raw):
                 path = provider.preflight(root, {"expected_device_ids": [4, 5, 12, 13]},
                                           BaseRunContext(physical_device_ids="6,2"))
                 record = json.loads(path.read_text())

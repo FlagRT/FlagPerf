@@ -307,7 +307,7 @@ def generate_report_safely(result_dir: Path) -> dict[str, Any]:
 
 # Compatibility names retained for Toolkit callers and tests.
 from executors.host import docker_inspect
-from vendors.ascend.provider import run_host_preflight
+from base.vendors.ascend.provider import run_host_preflight
 
 
 def execute_toolkit(

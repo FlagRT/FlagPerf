@@ -10,7 +10,7 @@ from unittest.mock import patch
 BASE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(BASE))
 from benchmarks.case_assets import resolve_case_assets, portable_assets, verify_worker_assets, load_case_config
-from vendors.protocol import ConfigurationError
+from base.vendors.protocol import ConfigurationError
 
 
 class CaseAssetsTests(unittest.TestCase):

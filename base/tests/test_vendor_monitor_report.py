@@ -12,7 +12,7 @@ from benchmark_monitor import finalize_benchmark_monitor, write_monitor_terminal
 from benchmark_report_schema import selected_samples
 from executors.common import write_json
 from generate_benchmark_report import generate_and_record
-from vendors.protocol import DeviceBinding
+from base.vendors.protocol import DeviceBinding
 
 
 class Provider:
@@ -74,7 +74,7 @@ class VendorMonitorReportTests(unittest.TestCase):
                     'skip_reason':'fixture capability' if status=='skipped' else None})
                 write_json(root/'benchmark-result.json',{'schema_version':1,'status':status,'metrics':[], 'missing_ranks':[1] if status=='partial' else []})
                 monitor=write_monitor_terminal_summary(root,status='not-run',enabled=False,targets=[],reason='fixture',provider=Provider())
-                with patch('vendors.registry.get_provider',side_effect=AssertionError('report must use stored evidence')):
+                with patch('base.vendors.registry.get_provider',side_effect=AssertionError('report must use stored evidence')):
                     generate_and_record(root)
                     first=(root/'report.md').read_bytes(),(root/'report_monitor.md').read_bytes()
                     generate_and_record(root)

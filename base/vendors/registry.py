@@ -1,8 +1,8 @@
 # Copyright 2026 FlagOS Contributors
 # Licensed under the Apache License, Version 2.0.
 """Explicit host capability registration, not device autodetection."""
-from vendors.protocol import ConfigurationError, VendorProvider
-from vendors.ascend.provider import AscendProvider
+from base.vendors.protocol import ConfigurationError, VendorProvider
+from base.vendors.ascend.provider import AscendProvider
 
 PROVIDERS: dict[str, VendorProvider] = {"ascend": AscendProvider()}
 

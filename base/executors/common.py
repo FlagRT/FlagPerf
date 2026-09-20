@@ -12,10 +12,15 @@ import json
 import os
 from pathlib import Path
 import re
+import sys
 from typing import Any, Iterable
 
-from vendors.protocol import ConfigurationError
-from vendors.registry import get_provider
+REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
+if str(REPOSITORY_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPOSITORY_ROOT))
+
+from base.vendors.protocol import ConfigurationError
+from base.vendors.registry import get_provider
 
 
 BASE_DIR = Path(__file__).resolve().parents[1]

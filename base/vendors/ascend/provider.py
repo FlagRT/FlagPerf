@@ -9,7 +9,7 @@ import subprocess
 import sys
 from typing import Any, Sequence
 
-from vendors.protocol import ConfigurationError, DeviceBinding, runtime_root
+from base.vendors.protocol import ConfigurationError, DeviceBinding, runtime_root
 
 
 class AscendProvider:

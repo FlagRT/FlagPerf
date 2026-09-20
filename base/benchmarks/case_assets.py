@@ -14,7 +14,9 @@ from typing import Any
 BASE_DIR = Path(__file__).resolve().parents[1]
 if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
-from vendors.protocol import ConfigurationError, checked_component
+if str(BASE_DIR.parent) not in sys.path:
+    sys.path.insert(0, str(BASE_DIR.parent))
+from base.vendors.protocol import ConfigurationError, checked_component
 
 
 def file_record(path: Path, base: Path, *, override: bool = False) -> dict[str, Any]:
