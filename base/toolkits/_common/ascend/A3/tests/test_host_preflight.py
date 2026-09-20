@@ -4,13 +4,17 @@ from __future__ import annotations
 
 import importlib.util
 from pathlib import Path
+import subprocess
+import sys
 import tempfile
 import unittest
 from unittest import mock
 
 
 HERE = Path(__file__).resolve().parent
-MODULE_PATH = HERE.parent / "host_preflight.py"
+# Patch dependencies where the implementation now lives. The legacy path is a
+# re-export shim, so patching its copied names would not intercept device calls.
+MODULE_PATH = HERE.parents[4] / "vendors" / "ascend" / "preflight.py"
 SPEC = importlib.util.spec_from_file_location("ascend_host_preflight", MODULE_PATH)
 assert SPEC and SPEC.loader
 MODULE = importlib.util.module_from_spec(SPEC)
@@ -21,6 +25,21 @@ EMPTY_PROCESS_TABLE = """\
 """
 
 class HostPreflightTests(unittest.TestCase):
+    def test_legacy_cli_preserves_help_and_early_error_contract(self) -> None:
+        legacy = HERE.parent / "host_preflight.py"
+        help_result = subprocess.run([sys.executable, str(legacy), "--help"],
+                                     capture_output=True, text=True)
+        self.assertEqual(help_result.returncode, 0, help_result.stderr)
+        self.assertIn("--npu-ids", help_result.stdout)
+        with tempfile.TemporaryDirectory() as temporary:
+            failure = subprocess.run([sys.executable, str(legacy), "--output", temporary,
+                                      "--expected-device-ids", "invalid"],
+                                     capture_output=True, text=True)
+            self.assertEqual(failure.returncode, 1)
+            self.assertTrue(failure.stderr.startswith("ERROR:"), failure.stderr)
+            self.assertNotIn("Traceback", failure.stderr)
+            self.assertEqual(list(Path(temporary).iterdir()), [])
+
     def test_parse_id_spec_accepts_ranges_and_rejects_ambiguity(self) -> None:
         self.assertEqual(MODULE.parse_id_spec("2,4-6,9"), [2, 4, 5, 6, 9])
         for value in ("", "1,,2", "3-1", "-1", "1,1", "1-3,3"):

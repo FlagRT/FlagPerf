@@ -6,4 +6,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
 from vendors.ascend.preflight import *  # noqa: F401,F403
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    try:
+        sys.exit(main())
+    except Exception as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        sys.exit(1)
