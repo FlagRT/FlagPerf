@@ -1,0 +1,16 @@
+{
+  "name": "attempt05-dry-capacity-denied",
+  "command": [
+    "python3",
+    "-B",
+    "base/run.py",
+    "benchmark",
+    "run",
+    "--case",
+    "main_memory-capacity",
+    "--device-ids",
+    "14",
+    "--dry-run"
+  ],
+  "exit_code": 2
+}

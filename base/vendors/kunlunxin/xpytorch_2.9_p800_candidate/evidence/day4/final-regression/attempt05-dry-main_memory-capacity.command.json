@@ -1,0 +1,25 @@
+{
+  "name": "attempt05-dry-main_memory-capacity",
+  "command": [
+    "python3",
+    "-B",
+    "base/run.py",
+    "benchmark",
+    "run",
+    "--case",
+    "main_memory-capacity",
+    "--dry-run",
+    "--config",
+    "base/configs/ascend910_cann9_local.yaml",
+    "--device-ids",
+    "14",
+    "--nproc-per-node",
+    "1",
+    "--allow-high-risk-case"
+  ],
+  "exit_code": 0,
+  "applicability": {
+    "reason": null,
+    "status": "applicable"
+  }
+}

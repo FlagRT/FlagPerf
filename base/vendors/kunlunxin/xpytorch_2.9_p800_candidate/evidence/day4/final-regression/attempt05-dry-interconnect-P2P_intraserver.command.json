@@ -1,0 +1,26 @@
+{
+  "name": "attempt05-dry-interconnect-P2P_intraserver",
+  "command": [
+    "python3",
+    "-B",
+    "base/run.py",
+    "benchmark",
+    "run",
+    "--case",
+    "interconnect-P2P_intraserver",
+    "--dry-run",
+    "--config",
+    "base/configs/ascend910_cann9_p2p.yaml",
+    "--device-ids",
+    "14,15",
+    "--nproc-per-node",
+    "2",
+    "--case-config",
+    "base/benchmarks/interconnect-P2P_intraserver/ascend/case_config.smoke.yaml"
+  ],
+  "exit_code": 0,
+  "applicability": {
+    "reason": null,
+    "status": "applicable"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "attempt05-dry-interconnect-MPI_interserver",
+  "command": [
+    "python3",
+    "-B",
+    "base/run.py",
+    "benchmark",
+    "run",
+    "--case",
+    "interconnect-MPI_interserver",
+    "--dry-run",
+    "--config",
+    "base/configs/ascend910_cann9_local.yaml",
+    "--device-ids",
+    "14",
+    "--nproc-per-node",
+    "1"
+  ],
+  "exit_code": 0,
+  "applicability": {
+    "reason": "\u8de8\u673a AllReduce \u4e0d\u5728\u5f53\u524d Ascend \u5355\u5bbf\u4e3b\u7edf\u4e00\u5165\u53e3\u7684\u9002\u914d\u8303\u56f4\u5185\uff1b\u8be5\u5165\u53e3\u56fa\u5b9a nnodes=1",
+    "status": "skipped"
+  }
+}

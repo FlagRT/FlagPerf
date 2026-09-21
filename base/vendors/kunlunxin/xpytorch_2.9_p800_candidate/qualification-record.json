@@ -142,5 +142,26 @@
     "performance_qualified": false,
     "runtime_promoted": false,
     "review": "evidence/day3-recheck/review.md"
+  },
+  "day4_fp32": {
+    "date": "2026-09-21",
+    "timezone": "Asia/Shanghai",
+    "tested_code_commit": "7bf4c9bf",
+    "physical_device_id": 6,
+    "uuid": "9e24d168-db57-5cd9-8cfb-aea4ae898897",
+    "host_device_node": "/dev/xpu5",
+    "framework_logical_id": 0,
+    "case": "computation-FP32:P800",
+    "shape": [4096, 4096, 4096],
+    "iterations": 20000,
+    "warmup": 10,
+    "repetitions": 5,
+    "median_tflops": 113.05773712582776,
+    "cv_percent": 0.08874402347040153,
+    "offline_tests": {"base": 176, "pr0": 32, "toolkit": 80},
+    "performance_qualified": true,
+    "runtime_promoted": false,
+    "scope": "Single-card native FP32 input/output; full small-matrix and sampled large-matrix CPU FP64 references, synchronized wall clock and target telemetry. No internal IEEE/peak/universal fallback/other dtype/collective claim.",
+    "review": "evidence/day4/review.md"
   }
 }

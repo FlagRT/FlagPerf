@@ -2,14 +2,20 @@
 
 M1 passes the bounded single-card PR0 smoke checks and is retained for further
 Base development. The unified Base `benchmark preflight` entrypoint now connects
-this profile to bounded identity, telemetry and cleanup qualification. It has
-not produced formal benchmark results. See the [preflight runbook](../../../docs/p800-preflight.md)
-and [Day 3 evidence review](evidence/day3/review.md). Day 1 is complete for
+this profile to bounded identity, telemetry and cleanup qualification. On
+2026-09-21 the unified `benchmark run` path passed five single-card native FP32
+4096-cubed repetitions on physical card 6: median 113.057737 TFLOPS, CV 0.088744%.
+See the [Day 4 review](evidence/day4/review.md) for the exact measurement and
+correctness scope, and the [FP32 runbook](../../../benchmarks/computation-FP32/kunlunxin/P800/README.md).
+The [preflight runbook](../../../docs/p800-preflight.md) and
+[Day 3 evidence review](evidence/day3/review.md) describe the separate identity gate. Day 1 is complete for
 development: the user accepts the tested version combination, confirms that
 recipients can obtain the same image, and confirms observing execution on card 2.
 These are explicit user decisions/observations, not vendor certification or a
 registry pull/named-kernel trace performed by this tool.
-`image-manifest.json` remains `validated: false`, with no formal validation scope.
+`image-manifest.json` remains `validated: false`, with empty aggregate validation scope;
+the new per-case qualification is recorded separately. No strict internal IEEE
+arithmetic, hardware peak, FlagGems, other precision or collective result is claimed.
 
 ## Targeted recheck before performance work (2026-09-20)
 

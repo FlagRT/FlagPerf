@@ -1,0 +1,22 @@
+{
+  "name": "attempt05-dry-selector-device-ids-on",
+  "command": [
+    "python3",
+    "-B",
+    "base/run.py",
+    "benchmark",
+    "run",
+    "--case",
+    "computation-FP32",
+    "--device-ids",
+    "14",
+    "--monitor",
+    "on",
+    "--dry-run"
+  ],
+  "exit_code": 0,
+  "applicability": {
+    "reason": null,
+    "status": "applicable"
+  }
+}

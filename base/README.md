@@ -19,16 +19,18 @@
 本目录提供 FlagPerf 的基础规格评测能力。当前推荐入口是统一宿主命令
 `python3 base/run.py`，但 Benchmark 与 Toolkit 仍使用独立执行器、权限和结果语义：
 
-- **Benchmark**：通过 PyTorch 2.10、Torch-FL 和原始 Base Case 测量 workload；
+- **Benchmark**：使用各 profile 锁定的框架和原始 Base Case；Ascend 为 PyTorch 2.10/Torch-FL，P800 为 PyTorch 2.9/XPYTORCH；
 - **Toolkit**：通过 MindCluster ToolBox、`ascend-dmi`、`npu-smi` 或 HCCL Test
   执行厂商测量和诊断；
 - **report**：从已有证据确定性重建 Markdown/SVG 报告，不重跑硬件。
 
-当前统一入口只承诺 **Ascend 单宿主**。原多机入口保存在
+当前统一入口支持 **Ascend 单宿主**，并接入 **P800 candidate 单卡原生 FP32**。原多机入口保存在
 [`legacy/cluster_run.py`](legacy/cluster_run.py)，仅用于迁移兼容。
 Benchmark 控制面通过静态 Vendor Provider 接入厂商策略；生产 registry 已注册
-Ascend 性能执行与 Kunlunxin 单卡预检查。P800 性能 case/driver 仍未接入，
-预检查通过不代表正式性能已验证。
+Ascend 性能执行与 Kunlunxin 单卡预检查/受控 FP32 性能执行。
+P800 的启动命令、正确性和计时合同见 [P800 FP32](benchmarks/computation-FP32/kunlunxin/P800/README.md)，
+实际资格结果见 [Day 4 审查](vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day4/review.md)。
+预检查与性能验收分别记录；其他 P800 精度、FlagGems、容量和通信仍待独立验收。
 接口、配置兼容变化与后续接入步骤见 [控制面迁移说明](docs/vendor-control-plane.md)。
 
 

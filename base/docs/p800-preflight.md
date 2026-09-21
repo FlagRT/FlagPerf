@@ -135,13 +135,18 @@ Preserve failed summaries; independent later idle/lock recovery is separate.
 
 See the [recheck evidence review](../vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day3-recheck/review.md).
 
-## Next performance integration
+## FP32 performance integration (2026-09-21)
 
-P800 `benchmark run --case computation-FP32:P800` still rejects its missing case
-contract before hardware access. Add the FP32 requirements, driver bootstrap,
-same-container binding verification and worker consumption separately. Use
-`framework_logical_id` from the verified binding, never `local_rank` as an ordinal.
-The future timer remains wall-clock bracketed by full target synchronization;
-PR0 event elapsed time was zero. Correctness, measurement-window monitoring,
-repeatability, multi-rank/collectives and broad CPU-fallback exclusion require
-their own qualification.
+P800 `benchmark run --case computation-FP32:P800` now uses the shared bounded
+lifecycle with its own case contract, driver and same-container binding check.
+The explicitly single-rank child executes the common FP32 entrypoint after
+runtime gates, using Gloo for CPU control only. `framework_logical_id` comes from
+the verified UUID join, never from `local_rank`.
+
+See the [FP32 runbook](../benchmarks/computation-FP32/kunlunxin/P800/README.md) and
+[Day 4 review](../vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day4/review.md).
+Five 4096-cubed native FP32 repetitions passed on card 6; this preflight command
+itself still does not measure performance. The performance timer uses wall-clock
+with full target synchronization, not PR0's zero-valued CUDA Event elapsed time.
+The manifest remains candidate. Other shapes/dtypes, FlagGems, multi-rank
+collectives and universal CPU-fallback exclusion are outside this qualification.

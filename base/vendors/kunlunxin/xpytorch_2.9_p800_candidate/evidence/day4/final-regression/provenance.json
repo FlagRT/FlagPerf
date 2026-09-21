@@ -1,0 +1,447 @@
+{
+  "attempt05-base.command.json": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-base.command.json",
+    "sha256": "cf9d65fbf3ccfe9f215328dc84a6d460a802cb069e0a71180ca5f41f18aaa41c",
+    "transform": "none"
+  },
+  "attempt05-base.stderr.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-base.stderr.log",
+    "sha256": "bc7cce81296d97475c6796c61a6805f2545e71bb3fce1d2ed36086eef9cdb044",
+    "transform": "none"
+  },
+  "attempt05-base.stdout.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-base.stdout.log",
+    "sha256": "076374e255b0a888a62cb889033b69272e2bd76eb767483d565f7af4756db3d7",
+    "transform": "none"
+  },
+  "attempt05-bootstrap.command.json": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-bootstrap.command.json",
+    "sha256": "e5aeb0134df336c535ad93e6c389412c734aedb4a54cf3d9955fc754bbc29a24",
+    "transform": "none"
+  },
+  "attempt05-bootstrap.stderr.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-bootstrap.stderr.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "transform": "none"
+  },
+  "attempt05-bootstrap.stdout.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-bootstrap.stdout.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "transform": "none"
+  },
+  "attempt05-dry-capacity-denied.command.json": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-capacity-denied.command.json",
+    "sha256": "d725cdf0193403b85f61642b190df77cc09ac2c0a5265bc2ea4718f887519f64",
+    "transform": "none"
+  },
+  "attempt05-dry-capacity-denied.stderr.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-capacity-denied.stderr.log",
+    "sha256": "719fdd9bf1139115998a6641d3b81ebd02e68604f67685cc8b9a70fc8f44ccba",
+    "transform": "none"
+  },
+  "attempt05-dry-capacity-denied.stdout.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-capacity-denied.stdout.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "transform": "none"
+  },
+  "attempt05-dry-computation-BF16.command.json": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-computation-BF16.command.json",
+    "sha256": "3b25b3edba4ff09ec8836414653c54bdfa5fc0b38601e23e5da4d81dbb924279",
+    "transform": "none"
+  },
+  "attempt05-dry-computation-BF16.stderr.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-computation-BF16.stderr.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "transform": "none"
+  },
+  "attempt05-dry-computation-BF16.stdout.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-computation-BF16.stdout.log",
+    "sha256": "194712580f05e1fd8d28fb21a46a139f3ad4ae271c36c1bb0261b724061b26a7",
+    "transform": "none"
+  },
+  "attempt05-dry-computation-FP16.command.json": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-computation-FP16.command.json",
+    "sha256": "e094d87b79232c481152b429e2563a3b7ff54de3659461c63d3e1437a5be67bc",
+    "transform": "none"
+  },
+  "attempt05-dry-computation-FP16.stderr.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-computation-FP16.stderr.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "transform": "none"
+  },
+  "attempt05-dry-computation-FP16.stdout.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-computation-FP16.stdout.log",
+    "sha256": "9dd0068c81bca2c19fb2f506d3c49d4a721be0703b88fac8b0e3a02fc51d171d",
+    "transform": "none"
+  },
+  "attempt05-dry-computation-FP32.command.json": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-computation-FP32.command.json",
+    "sha256": "2df92024fde10e8b31747ccb13df931eb62d50ed640edcc488f20e38ed41cf5d",
+    "transform": "none"
+  },
+  "attempt05-dry-computation-FP32.stderr.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-computation-FP32.stderr.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "transform": "none"
+  },
+  "attempt05-dry-computation-FP32.stdout.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-computation-FP32.stdout.log",
+    "sha256": "1b5f4f09ebcd17c45e46568ff92b3a492d974c56b0babeaba12ee9e724917792",
+    "transform": "none"
+  },
+  "attempt05-dry-computation-FP64.command.json": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-computation-FP64.command.json",
+    "sha256": "1d83d3ecf70e00718d8d02b34d060e6895e669ba1ab1559fda6cb00491777af6",
+    "transform": "none"
+  },
+  "attempt05-dry-computation-FP64.stderr.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-computation-FP64.stderr.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "transform": "none"
+  },
+  "attempt05-dry-computation-FP64.stdout.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-computation-FP64.stdout.log",
+    "sha256": "2f35fb19497937610d4bf43493e3979d46de633a91d565f411117edbf9e44d74",
+    "transform": "none"
+  },
+  "attempt05-dry-computation-FP8.command.json": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-computation-FP8.command.json",
+    "sha256": "0af3137bbd005da96ad84fae40ab6d1fb96b658754d3689e8b1cc534331e227e",
+    "transform": "none"
+  },
+  "attempt05-dry-computation-FP8.stderr.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-computation-FP8.stderr.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "transform": "none"
+  },
+  "attempt05-dry-computation-FP8.stdout.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-computation-FP8.stdout.log",
+    "sha256": "ea62ccbcadb4847d1cac3262b2637af072af5b1d6e9ccaf4110254c250b7d1a1",
+    "transform": "none"
+  },
+  "attempt05-dry-computation-INT8.command.json": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-computation-INT8.command.json",
+    "sha256": "4b96f5dd3d92569af75ba82703202b2be5c27f496ab4832eaff9e4d97de7b483",
+    "transform": "none"
+  },
+  "attempt05-dry-computation-INT8.stderr.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-computation-INT8.stderr.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "transform": "none"
+  },
+  "attempt05-dry-computation-INT8.stdout.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-computation-INT8.stdout.log",
+    "sha256": "7cb47cabf8a5db5a322e3e3a7e8a262247f67fd87249b82a61d38ed97c926fb3",
+    "transform": "none"
+  },
+  "attempt05-dry-computation-TF32.command.json": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-computation-TF32.command.json",
+    "sha256": "bef13f0e9616f5680f898afc9cfc322266d05a80999ddca999e8229ca850bbdb",
+    "transform": "none"
+  },
+  "attempt05-dry-computation-TF32.stderr.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-computation-TF32.stderr.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "transform": "none"
+  },
+  "attempt05-dry-computation-TF32.stdout.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-computation-TF32.stdout.log",
+    "sha256": "91dbcac82f107722299d15a6d1e74f0ec567a2a2be395d270a2dd84bef48f388",
+    "transform": "none"
+  },
+  "attempt05-dry-interconnect-MPI_interserver.command.json": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-interconnect-MPI_interserver.command.json",
+    "sha256": "5c7936aba3136fcd894025008c3b22621056e3339acb2de9c65e3377fb4d6000",
+    "transform": "none"
+  },
+  "attempt05-dry-interconnect-MPI_interserver.stderr.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-interconnect-MPI_interserver.stderr.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "transform": "none"
+  },
+  "attempt05-dry-interconnect-MPI_interserver.stdout.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-interconnect-MPI_interserver.stdout.log",
+    "sha256": "90262ccdd13389dee21f992e40ca98ad2f5edf1284c2ee2e817f277ab723e48d",
+    "transform": "none"
+  },
+  "attempt05-dry-interconnect-MPI_intraserver.command.json": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-interconnect-MPI_intraserver.command.json",
+    "sha256": "4c0fe2f8bc6b2fe096e452030243b03aa178fe2c48b365962b66c63e33e30856",
+    "transform": "none"
+  },
+  "attempt05-dry-interconnect-MPI_intraserver.stderr.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-interconnect-MPI_intraserver.stderr.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "transform": "none"
+  },
+  "attempt05-dry-interconnect-MPI_intraserver.stdout.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-interconnect-MPI_intraserver.stdout.log",
+    "sha256": "6bf5ad0dde0bc41ff0098cfb18aedeebda52d5e504a8d21e32b66d4593f6d142",
+    "transform": "none"
+  },
+  "attempt05-dry-interconnect-P2P_interserver.command.json": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-interconnect-P2P_interserver.command.json",
+    "sha256": "df84eba8640f3296fbc6ede9bf1ba186bd668a421bbb4ae8b94c59ab0c870c81",
+    "transform": "none"
+  },
+  "attempt05-dry-interconnect-P2P_interserver.stderr.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-interconnect-P2P_interserver.stderr.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "transform": "none"
+  },
+  "attempt05-dry-interconnect-P2P_interserver.stdout.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-interconnect-P2P_interserver.stdout.log",
+    "sha256": "0f79f2c03dac4a2923420ce4a587d6c405a0edb3cba42e2db89e03ec9976760f",
+    "transform": "none"
+  },
+  "attempt05-dry-interconnect-P2P_intraserver.command.json": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-interconnect-P2P_intraserver.command.json",
+    "sha256": "fa6d7024d70253e89a8d77f3ec1420949c8b688840b254222d06f92834303f88",
+    "transform": "none"
+  },
+  "attempt05-dry-interconnect-P2P_intraserver.stderr.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-interconnect-P2P_intraserver.stderr.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "transform": "none"
+  },
+  "attempt05-dry-interconnect-P2P_intraserver.stdout.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-interconnect-P2P_intraserver.stdout.log",
+    "sha256": "520d8b2aa191b63e2758bcc4ebbbf625e9eaf81a647f7649b1f7a92d4cd52033",
+    "transform": "none"
+  },
+  "attempt05-dry-interconnect-d2h.command.json": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-interconnect-d2h.command.json",
+    "sha256": "db02975d952aba5024c63661a4245c45a947354f4cf58087f996b35c7581f237",
+    "transform": "none"
+  },
+  "attempt05-dry-interconnect-d2h.stderr.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-interconnect-d2h.stderr.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "transform": "none"
+  },
+  "attempt05-dry-interconnect-d2h.stdout.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-interconnect-d2h.stdout.log",
+    "sha256": "f7098da05b01d26ba58e71398a7480e42a088ce304a58b5b29b708cfc3462200",
+    "transform": "none"
+  },
+  "attempt05-dry-interconnect-h2d.command.json": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-interconnect-h2d.command.json",
+    "sha256": "9e7ece89326d5438e2ce69936ebac1b7a3e016088830ecd80fb887d903b38a22",
+    "transform": "none"
+  },
+  "attempt05-dry-interconnect-h2d.stderr.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-interconnect-h2d.stderr.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "transform": "none"
+  },
+  "attempt05-dry-interconnect-h2d.stdout.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-interconnect-h2d.stdout.log",
+    "sha256": "232271d3f0c8ea43aaa0e5c93094c7c0973b892215dc0c68020d9cac7bbe2689",
+    "transform": "none"
+  },
+  "attempt05-dry-main_memory-bandwidth.command.json": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-main_memory-bandwidth.command.json",
+    "sha256": "8f3734e16b88a39fff5fcd2990c50cff090d31cf21c42acc9615373d88831981",
+    "transform": "none"
+  },
+  "attempt05-dry-main_memory-bandwidth.stderr.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-main_memory-bandwidth.stderr.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "transform": "none"
+  },
+  "attempt05-dry-main_memory-bandwidth.stdout.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-main_memory-bandwidth.stdout.log",
+    "sha256": "d0f23e6b70697c695c0d6fb68d81b322b47cdf190c66121869e9ee744fc923d1",
+    "transform": "none"
+  },
+  "attempt05-dry-main_memory-capacity.command.json": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-main_memory-capacity.command.json",
+    "sha256": "78674e3cd0af2e7e577599d54e9f65d69e8a53ceeb912d33e648045b65b2c045",
+    "transform": "none"
+  },
+  "attempt05-dry-main_memory-capacity.stderr.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-main_memory-capacity.stderr.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "transform": "none"
+  },
+  "attempt05-dry-main_memory-capacity.stdout.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-main_memory-capacity.stdout.log",
+    "sha256": "0e65e7da4699726baffcb797fee4d481c997864a495d40640fbf2301347c44f2",
+    "transform": "none"
+  },
+  "attempt05-dry-p800-off.command.json": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-p800-off.command.json",
+    "sha256": "e18976c5e43bfe7b9ee3986ab35d7ef471a9f704b677485499431e792749852e",
+    "transform": "none"
+  },
+  "attempt05-dry-p800-off.stderr.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-p800-off.stderr.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "transform": "none"
+  },
+  "attempt05-dry-p800-off.stdout.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-p800-off.stdout.log",
+    "sha256": "32dd943a2ffb70a4813b895349594a4d21c528a846675ad89c771e5909c4daa2",
+    "transform": "none"
+  },
+  "attempt05-dry-p800-on.command.json": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-p800-on.command.json",
+    "sha256": "fdd422a397baf80a711649a116ec9b5b4346247a6eea712f9ca0f0cf867fe609",
+    "transform": "none"
+  },
+  "attempt05-dry-p800-on.stderr.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-p800-on.stderr.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "transform": "none"
+  },
+  "attempt05-dry-p800-on.stdout.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-p800-on.stdout.log",
+    "sha256": "a274a17aff5e068a381ca5c1db7c97a2cd33c3b31e872579d1bd29f7a8e41c56",
+    "transform": "none"
+  },
+  "attempt05-dry-selector-device-ids-off.command.json": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-selector-device-ids-off.command.json",
+    "sha256": "55bf266d0f9426cefc019de43b03e0e3dadbd44c66c428dc3dad9df047ef7e61",
+    "transform": "none"
+  },
+  "attempt05-dry-selector-device-ids-off.stderr.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-selector-device-ids-off.stderr.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "transform": "none"
+  },
+  "attempt05-dry-selector-device-ids-off.stdout.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-selector-device-ids-off.stdout.log",
+    "sha256": "67f8a28a2c8bef74dbbaee067a288e3e7147f4ec9821a984713ea49ebc3029b8",
+    "transform": "none"
+  },
+  "attempt05-dry-selector-device-ids-on.command.json": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-selector-device-ids-on.command.json",
+    "sha256": "1f365926de5ec17badcf003ce198b1a53c7999431eae14dea4154df78ccbc54e",
+    "transform": "none"
+  },
+  "attempt05-dry-selector-device-ids-on.stderr.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-selector-device-ids-on.stderr.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "transform": "none"
+  },
+  "attempt05-dry-selector-device-ids-on.stdout.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-selector-device-ids-on.stdout.log",
+    "sha256": "894a67d376f223840842aa9512a0c8ff1fa433a36e0c9e2858927d818a2997d0",
+    "transform": "none"
+  },
+  "attempt05-dry-selector-npu-ids-off.command.json": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-selector-npu-ids-off.command.json",
+    "sha256": "cd79daf11743131c7289ed79a1b31ff23e38fda5178e86d01f9bf16f15ce98fa",
+    "transform": "none"
+  },
+  "attempt05-dry-selector-npu-ids-off.stderr.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-selector-npu-ids-off.stderr.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "transform": "none"
+  },
+  "attempt05-dry-selector-npu-ids-off.stdout.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-selector-npu-ids-off.stdout.log",
+    "sha256": "a888d82b99dc2f1d188a93f8724be04f9febdfdac6d4c3ddf70c1508b0dee97a",
+    "transform": "none"
+  },
+  "attempt05-dry-selector-npu-ids-on.command.json": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-selector-npu-ids-on.command.json",
+    "sha256": "6669164e64cc66542521773f52d1a49cfc0631d38c9e1324332904b73cabb7ab",
+    "transform": "none"
+  },
+  "attempt05-dry-selector-npu-ids-on.stderr.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-selector-npu-ids-on.stderr.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "transform": "none"
+  },
+  "attempt05-dry-selector-npu-ids-on.stdout.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-selector-npu-ids-on.stdout.log",
+    "sha256": "668300c8f181a0e0791bd7ceeaca22c705f722f2b939c41a634d25b916d8424d",
+    "transform": "none"
+  },
+  "attempt05-dry-selector-physical-device-ids-off.command.json": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-selector-physical-device-ids-off.command.json",
+    "sha256": "95c798db306b4e6c60d022728fe9a2a91276bbe61b341f5d6ac55e0c35a07080",
+    "transform": "none"
+  },
+  "attempt05-dry-selector-physical-device-ids-off.stderr.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-selector-physical-device-ids-off.stderr.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "transform": "none"
+  },
+  "attempt05-dry-selector-physical-device-ids-off.stdout.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-selector-physical-device-ids-off.stdout.log",
+    "sha256": "5a5a3a4695ae1509c44f0d7b7eea082210a69b7df80c0d621f579857d1b10486",
+    "transform": "none"
+  },
+  "attempt05-dry-selector-physical-device-ids-on.command.json": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-selector-physical-device-ids-on.command.json",
+    "sha256": "fe75c9a4427b06a8802527019a4da04c72fbfbd3f160079fbbbaec4653e7c402",
+    "transform": "none"
+  },
+  "attempt05-dry-selector-physical-device-ids-on.stderr.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-selector-physical-device-ids-on.stderr.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "transform": "none"
+  },
+  "attempt05-dry-selector-physical-device-ids-on.stdout.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-dry-selector-physical-device-ids-on.stdout.log",
+    "sha256": "04da47ce5b0e0d19391b130918cdc8950cb76ca4c4bcba72772d6ba57110a6b7",
+    "transform": "none"
+  },
+  "attempt05-pr0.command.json": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-pr0.command.json",
+    "sha256": "05164346bd5c76c630e0ac41eebbdd65795701679624e89eff7c6899ffabe9cb",
+    "transform": "none"
+  },
+  "attempt05-pr0.stderr.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-pr0.stderr.log",
+    "sha256": "562478a44f80dffe7145f16b7724b62bf1b730b959a15b23607a00556a3df482",
+    "transform": "none"
+  },
+  "attempt05-pr0.stdout.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-pr0.stdout.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "transform": "none"
+  },
+  "attempt05-toolkit.command.json": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-toolkit.command.json",
+    "sha256": "518b4d2e3acc89610cba86ddfe57560112fb17e0d4eceab282e80970ebc38624",
+    "transform": "none"
+  },
+  "attempt05-toolkit.stderr.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-toolkit.stderr.log",
+    "sha256": "e480f5f823c5f8ccd3d8bb10061f2dd83092f4c12d0f72dd3836bbb3ce31780a",
+    "transform": "none"
+  },
+  "attempt05-toolkit.stdout.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-toolkit.stdout.log",
+    "sha256": "44c79ad26e0b9689b7d040d1ab978faab2eedbbb26a58dd68122090c3c6d3ab3",
+    "transform": "none"
+  },
+  "attempt05-verification.json": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-verification.json",
+    "sha256": "b1e01330ba3a3693a90c3dc13443961d974b85ea1bbbfa36e50ff6282c81ea4c",
+    "transform": "none"
+  },
+  "attempt05-verification.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-verification.log",
+    "sha256": "1c51d504a6c3d6d90b04545ab9fd57f158371684d6f3bfd0be689ae8d8d9c026",
+    "transform": "none"
+  },
+  "attempt05-whitespace.command.json": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-whitespace.command.json",
+    "sha256": "14ddef8565728a17805a8e322a984f94a219b36a2f8a3d9e2926fd522d11f916",
+    "transform": "none"
+  },
+  "attempt05-whitespace.stderr.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-whitespace.stderr.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "transform": "none"
+  },
+  "attempt05-whitespace.stdout.log": {
+    "source": "base/result/p800-pr3-20260921-1011/attempt05-whitespace.stdout.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "transform": "none"
+  }
+}
