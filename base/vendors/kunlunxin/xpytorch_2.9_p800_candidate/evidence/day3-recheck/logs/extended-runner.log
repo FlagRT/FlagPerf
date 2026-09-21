@@ -1,0 +1,7 @@
+START extended-card6-attempt01
+END extended-card6-attempt01 passed None passed
+START extended-card7-attempt01
+END extended-card7-attempt01 passed None passed
+START extended-card1-attempt01
+END extended-card1-attempt01 failed bounded container execution timed out failed
+EXTENDED_FINISHED [{"card": 6, "normal_attempt": "extended-card6-attempt01", "status": "passed"}, {"card": 7, "normal_attempt": "extended-card7-attempt01", "status": "passed"}, {"card": 1, "normal_attempt": "extended-card1-attempt01", "status": "failed"}]

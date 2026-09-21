@@ -1,0 +1,17 @@
+{
+  "argv": [
+    "sudo",
+    "-n",
+    "fuser",
+    "/dev/xpu2"
+  ],
+  "finished_monotonic_s": 3747113.149671543,
+  "portable_projection": "selected physical device only; process IDs/names redacted; raw retained in source directory",
+  "returncode": 0,
+  "started_at": "2026-09-20T12:06:12.628180+00:00",
+  "started_monotonic_s": 3747109.548035634,
+  "stderr": "/dev/xpu2:          \n",
+  "stdout": "<redacted process identifiers>\n",
+  "timed_out": false,
+  "timeout_s": 10
+}

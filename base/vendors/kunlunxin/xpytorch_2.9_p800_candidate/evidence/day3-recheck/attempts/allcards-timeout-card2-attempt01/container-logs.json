@@ -1,0 +1,17 @@
+{
+  "argv": [
+    "sudo",
+    "-n",
+    "docker",
+    "logs",
+    "f5f0d2baafea0a2a43c4ed77798217b201c6a03b419b00ba9697e4a5d793fbd5"
+  ],
+  "finished_monotonic_s": 3748020.479693279,
+  "returncode": 0,
+  "started_at": "2026-09-20T12:21:23.493562+00:00",
+  "started_monotonic_s": 3748020.413415248,
+  "stderr": "XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded\n\u001b[35mSYMBOL_REWRITE \u001b[0m\u001b[32mtorch success\u001b[0m\n",
+  "stdout": "checkpoint: UUID set verified; selecting device\ncheckpoint: creating four-element tensor\ncheckpoint: synchronizing device\ncheckpoint: tensor readback passed\n",
+  "timed_out": false,
+  "timeout_s": 3
+}

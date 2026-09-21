@@ -1,0 +1,51 @@
+{
+  "allow_candidate_runtime": true,
+  "host": {
+    "devices": [
+      {
+        "container_node": "/dev/xpu6",
+        "device_major": 195,
+        "device_minor": 6,
+        "driver": "5.0.21.47",
+        "free_memory_mib": 98304,
+        "host_device_node": "/dev/xpu6",
+        "host_physical_id": 7,
+        "pci_bdf": "0000:bb:00.0",
+        "power_w": 93.0,
+        "processes_empty": true,
+        "serial": "02K15K0263D002GM",
+        "temperature_c": 43.0,
+        "total_memory_mib": 98304,
+        "used_memory_mib": 0,
+        "utilization_percent": 0,
+        "uuid": "4922595e-feb9-5762-9082-d8fd7f11abf5",
+        "xpu_smi_runtime": "10.2"
+      }
+    ],
+    "machine_memory_unit": "numerically-cross-checked-with-query-MiB",
+    "schema_version": 1,
+    "selection": {
+      "requested_ids": [
+        7
+      ],
+      "source": "physical-device-ids"
+    },
+    "status": "passed"
+  },
+  "image_identity": {
+    "Architecture": "amd64",
+    "Created": "2026-08-12T21:47:16.130386935+08:00",
+    "Id": "sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975",
+    "RepoDigests": [
+      "flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev@sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975"
+    ]
+  },
+  "kind": "benchmark-preflight",
+  "probe_mode": "identity",
+  "reservation_end": "2026-09-20T12:37:47.319046+00:00",
+  "reservation_reference": "User explicitly requested retesting idle physical cards 1,2,6,7 before next-day performance work; sequential bounded probes and cleanup drills",
+  "reservation_start": "2026-09-20T12:00:34.231265Z",
+  "run_id": "preflight-9621957656674cefb76198cb17cb7f44",
+  "schema_version": 1,
+  "timeout": 120
+}

@@ -87,5 +87,60 @@
     "performance_qualified": false,
     "open_item": "Physical card 1 synchronization timed out in bounded probes; cause unproven. Do not infer all-card health.",
     "review": "evidence/day3/review.md"
+  },
+  "day3_recheck": {
+    "date": "2026-09-20",
+    "tested_code_commit": "e936db64446d62c73b380317fd37b80fcacfee1a",
+    "repository_head_at_recheck": "80dd3f98b69bcca914325f4e51ce46df81131a1f",
+    "attempt_count": 33,
+    "cards": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "occupied_cards_not_workload_tested": [
+      0,
+      3,
+      4,
+      5
+    ],
+    "preferred_cards_for_fresh_preflight": [
+      6,
+      7
+    ],
+    "card1": "sync timeout reproduced with own monitor on/off; selected PCI kernel exceptions; root cause unproven",
+    "card2": "tensor and observation passed; historical uncorrectable ECC 8/8 and remap pending YES; avoid performance baseline",
+    "controlled_timeout_drills": [
+      {
+        "card": 2,
+        "attempt": "allcards-timeout-card2-attempt01",
+        "experiment_status": "failed",
+        "cleanup_drill": "passed",
+        "original_postflight": "passed"
+      },
+      {
+        "card": 6,
+        "attempt": "allcards-timeout-card6-attempt01",
+        "experiment_status": "failed",
+        "cleanup_drill": "passed",
+        "original_postflight": "passed"
+      },
+      {
+        "card": 7,
+        "attempt": "allcards-timeout-card7-attempt01",
+        "experiment_status": "failed",
+        "cleanup_drill": "passed",
+        "original_postflight": "passed"
+      }
+    ],
+    "final_idle_verified": true,
+    "performance_qualified": false,
+    "runtime_promoted": false,
+    "review": "evidence/day3-recheck/review.md"
   }
 }

@@ -1,0 +1,138 @@
+[
+  {
+    "card": 0,
+    "query": "allcards-normal-card0-attempt01/host-preflight/query-0.json",
+    "uuid": [
+      "GPU-ed733bb8-c4a8-5bb5-9431-14512597fc12"
+    ],
+    "uncorrectable_ecc": [
+      "0",
+      "0"
+    ],
+    "remap_pending": [
+      "NO"
+    ],
+    "memory_used_mib": [
+      "31948"
+    ]
+  },
+  {
+    "card": 1,
+    "query": "allcards-normal-card1-attempt02/host-preflight/query-1.json",
+    "uuid": [
+      "GPU-b3509946-0bc6-5744-bd7c-a0b87dadef02"
+    ],
+    "uncorrectable_ecc": [
+      "0",
+      "0"
+    ],
+    "remap_pending": [
+      "NO"
+    ],
+    "memory_used_mib": [
+      "0"
+    ]
+  },
+  {
+    "card": 2,
+    "query": "allcards-normal-card2-attempt02/host-preflight/query-2.json",
+    "uuid": [
+      "GPU-09d75c76-1b13-5686-a3d2-a9647e48f619"
+    ],
+    "uncorrectable_ecc": [
+      "8",
+      "8"
+    ],
+    "remap_pending": [
+      "YES"
+    ],
+    "memory_used_mib": [
+      "0"
+    ]
+  },
+  {
+    "card": 3,
+    "query": "allcards-normal-card3-attempt01/host-preflight/query-3.json",
+    "uuid": [
+      "GPU-9429f5bd-7d13-5cc5-b1b4-c05ddc572f57"
+    ],
+    "uncorrectable_ecc": [
+      "0",
+      "0"
+    ],
+    "remap_pending": [
+      "NO"
+    ],
+    "memory_used_mib": [
+      "1844"
+    ]
+  },
+  {
+    "card": 4,
+    "query": "allcards-normal-card4-attempt01/host-preflight/query-4.json",
+    "uuid": [
+      "GPU-b7942319-362e-5a53-a8eb-a2d06fbe84f6"
+    ],
+    "uncorrectable_ecc": [
+      "0",
+      "0"
+    ],
+    "remap_pending": [
+      "NO"
+    ],
+    "memory_used_mib": [
+      "28268"
+    ]
+  },
+  {
+    "card": 5,
+    "query": "allcards-normal-card5-attempt01/host-preflight/query-5.json",
+    "uuid": [
+      "GPU-f396486d-9850-50e4-81c4-50f2e9f6ca87"
+    ],
+    "uncorrectable_ecc": [
+      "0",
+      "0"
+    ],
+    "remap_pending": [
+      "NO"
+    ],
+    "memory_used_mib": [
+      "36760"
+    ]
+  },
+  {
+    "card": 6,
+    "query": "allcards-normal-card6-attempt01/host-preflight/query-6.json",
+    "uuid": [
+      "GPU-9e24d168-db57-5cd9-8cfb-aea4ae898897"
+    ],
+    "uncorrectable_ecc": [
+      "0",
+      "0"
+    ],
+    "remap_pending": [
+      "NO"
+    ],
+    "memory_used_mib": [
+      "0"
+    ]
+  },
+  {
+    "card": 7,
+    "query": "allcards-normal-card7-attempt01/host-preflight/query-7.json",
+    "uuid": [
+      "GPU-4922595e-feb9-5762-9082-d8fd7f11abf5"
+    ],
+    "uncorrectable_ecc": [
+      "0",
+      "0"
+    ],
+    "remap_pending": [
+      "NO"
+    ],
+    "memory_used_mib": [
+      "0"
+    ]
+  }
+]

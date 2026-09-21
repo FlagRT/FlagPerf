@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "devices": [
+    {
+      "host_device_node": "/dev/xpu2",
+      "device_minor": 2,
+      "uuid": "b3509946-0bc6-5744-bd7c-a0b87dadef02",
+      "driver": "5.0.21.47",
+      "xpu_smi_runtime": "10.2",
+      "total_memory_mib": 98304,
+      "used_memory_mib": 0,
+      "free_memory_mib": 98304,
+      "utilization_percent": 0,
+      "processes_empty": true,
+      "temperature_c": 39.0,
+      "power_w": 94.0,
+      "host_physical_id": 1,
+      "pci_bdf": "0000:16:00.0",
+      "serial": "02K15K0263D002KN",
+      "container_node": "/dev/xpu2",
+      "device_major": 195
+    }
+  ],
+  "selection": {
+    "source": "physical-device-ids",
+    "requested_ids": [
+      1
+    ]
+  },
+  "machine_memory_unit": "numerically-cross-checked-with-query-MiB"
+}

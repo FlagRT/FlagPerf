@@ -1,0 +1,17 @@
+{
+  "argv": [
+    "sudo",
+    "-n",
+    "docker",
+    "logs",
+    "0871af4315c0d86472aec5aa0464ee5fa400b8ec4b0469e84434967c4b430f3a"
+  ],
+  "finished_monotonic_s": 3747099.891144632,
+  "returncode": 0,
+  "started_at": "2026-09-20T12:06:02.901737+00:00",
+  "started_monotonic_s": 3747099.821590766,
+  "stderr": "XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded\n\u001b[35mSYMBOL_REWRITE \u001b[0m\u001b[32mtorch success\u001b[0m\nTimeout (0:00:40)!\nThread 0x0000702f78cd7480 (most recent call first):\n  File \"/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/cuda/__init__.py\", line 1083 in synchronize\n  File \"/workspace/FlagPerf/base/vendors/kunlunxin/container_probe.py\", line 106 in main\n  File \"/workspace/FlagPerf/base/vendors/kunlunxin/container_probe.py\", line 141 in <module>\nTimeout (0:00:40)!\nThread 0x0000702f78cd7480 (most recent call first):\n  File \"/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/cuda/__init__.py\", line 1083 in synchronize\n  File \"/workspace/FlagPerf/base/vendors/kunlunxin/container_probe.py\", line 106 in main\n  File \"/workspace/FlagPerf/base/vendors/kunlunxin/container_probe.py\", line 141 in <module>\n",
+  "stdout": "checkpoint: UUID set verified; selecting device\ncheckpoint: creating four-element tensor\ncheckpoint: synchronizing device\n",
+  "timed_out": false,
+  "timeout_s": 3
+}

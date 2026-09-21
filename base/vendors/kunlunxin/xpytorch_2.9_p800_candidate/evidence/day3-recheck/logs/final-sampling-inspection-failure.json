@@ -1,0 +1,6 @@
+{
+  "status": "failed",
+  "operation": "six bounded fuser observations on /dev/xpu2 after user stopped monitoring",
+  "error": "first subprocess fuser exceeded 3-second timeout; no process ancestry observations collected",
+  "reason_not_proven": true
+}

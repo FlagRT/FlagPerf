@@ -1,0 +1,24 @@
+{
+  "context_sha256": "5e9ee506afd4f7cd2ac7652eff180ae1b5c841aff1fc94610c5cdc34a4e65ab1",
+  "git_head": "80dd3f98b69bcca914325f4e51ce46df81131a1f",
+  "git_status": "",
+  "source_sha256": {
+    "executors/__init__.py": "1ef97f09db289c320365311b2d7d40ad3f7aa98f305fc247375424b354397f9f",
+    "executors/benchmark.py": "226dc8b977575ab7298fd87da82e41d0ab3968cafb4eeb10e9efe9203f6a3f1f",
+    "executors/common.py": "8bddaff2243a39fa1cb941fa0f0af0e4639c9d6f2e9e5f2ab9e1a8b41f07467a",
+    "executors/host.py": "c442a5ebd815053908a6c462137e0ef59aedd89912471d9821a891f567a308bc",
+    "executors/lifecycle.py": "bf6ee7f0ec221056bbcd4aa5c04b74bd3d2bdb67754d58c5bc564ef57c4d8e20",
+    "executors/preflight.py": "bbe178ecdf5a2eb3b78f48decdf78bd417e721861612cb740489b522210768b9",
+    "executors/progress.py": "55951309d1730c277025c11f91254ab4a8f58719b5424a44f339324ec1eed806",
+    "executors/toolkit.py": "304d5e8d14beea18356cee9aff41059ad0a0265059b01f7b08281b4dbbf087cc",
+    "monitoring/__init__.py": "f2b1f19fb0bd0acd4f6c42144d248241708d10451af98086f0b80cbffab954c2",
+    "monitoring/ascend_usage.py": "b9b77db663a9b22821f18cef0eb70f42b32038fcb9efa8beabc70de46ac0a2fb",
+    "monitoring/kunlunxin_usage.py": "29c686fdf649271a3801d4c7390d39160847159e6db0d86c3d74bf1a67930acb",
+    "vendors/kunlunxin/container_probe.py": "5449e5cebcf6fda04461935c1899630e04dca70499cc9904793914d6f9b3c5f5",
+    "vendors/kunlunxin/kunlunxin_analysis.py": "17a62e9f41582d4245bb7cd8b1314c2421b96a8aeee717063025aaf0b898b444",
+    "vendors/kunlunxin/kunlunxin_monitor.py": "9f324639ce1a62c1928bbb2e1367611f1a85d35c77d331383791142d31d4a1f3",
+    "vendors/kunlunxin/preflight.py": "b1da2dcf742729432d216c15cd7f4cffceb6e56ccbba193e62a0d3723d3222c1",
+    "vendors/kunlunxin/provider.py": "7676f58ba7470f47a93ff2884c465263f56d4f0dfeee49b1935b57b74d12bd70",
+    "vendors/kunlunxin/reuse.py": "bc29a1145a520e8e121baeb378519ad5ebea5ef63ed6e94b9d6f7247ce57d668"
+  }
+}

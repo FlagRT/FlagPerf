@@ -1,0 +1,16 @@
+{
+  "container_absent": true,
+  "lock_reacquired": true,
+  "checks": [
+    {
+      "attempt": 1,
+      "idle": false,
+      "error": "device has open handles or handle check failed"
+    },
+    {
+      "attempt": 2,
+      "idle": true
+    }
+  ],
+  "recovered": true
+}

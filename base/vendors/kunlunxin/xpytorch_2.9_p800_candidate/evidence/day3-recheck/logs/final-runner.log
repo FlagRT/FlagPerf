@@ -1,0 +1,17 @@
+START monitor-off-card1-attempt01
+END monitor-off-card1-attempt01 failed device has open handles or handle check failed not-run
+START monitor-off-card1-attempt02
+END monitor-off-card1-attempt02 failed bounded container execution timed out failed
+START confirm-card2-attempt01
+END confirm-card2-attempt01 failed None failed
+START timeout-card6-attempt01
+END timeout-card6-attempt01 failed device has open handles or handle check failed not-run
+START timeout-card6-attempt02
+END timeout-card6-attempt02 failed bounded container execution timed out passed
+START timeout-card7-attempt01
+END timeout-card7-attempt01 failed device has open handles or handle check failed not-run
+START timeout-card7-attempt02
+END timeout-card7-attempt02 failed bounded container execution timed out failed
+START timeout-card2-attempt01
+END timeout-card2-attempt01 failed bounded container execution timed out failed
+FINAL_MATRIX_FINISHED [{"card": 1, "mode": "identity", "monitor": "off", "attempt": "monitor-off-card1-attempt02", "status": "failed", "probe_status": null, "error_type": "TimeoutError"}, {"card": 2, "mode": "identity", "monitor": "on", "attempt": "confirm-card2-attempt01", "status": "failed", "probe_status": "passed", "error_type": null}, {"card": 6, "mode": "timeout-check", "monitor": "off", "attempt": "timeout-card6-attempt02", "status": "failed", "probe_status": "passed", "error_type": "TimeoutError"}, {"card": 7, "mode": "timeout-check", "monitor": "off", "attempt": "timeout-card7-attempt02", "status": "failed", "probe_status": "passed", "error_type": "TimeoutError"}, {"card": 2, "mode": "timeout-check", "monitor": "off", "attempt": "timeout-card2-attempt01", "status": "failed", "probe_status": "passed", "error_type": "TimeoutError"}]

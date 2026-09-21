@@ -1,0 +1,13 @@
+{
+  "at": "2026-09-20T12:24:56.380711+00:00",
+  "argv": [
+    "sudo",
+    "-n",
+    "fuser",
+    "/dev/xpu2"
+  ],
+  "returncode": 1,
+  "stdout": "",
+  "stderr": "",
+  "timed_out": false
+}

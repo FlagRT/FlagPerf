@@ -1,0 +1,15 @@
+START normal-card1-attempt01
+END normal-card1-attempt01 failed device has open handles or handle check failed failed
+START normal-card1-attempt02
+END normal-card1-attempt02 failed device has open handles or handle check failed passed
+START normal-card1-attempt03
+END normal-card1-attempt03 failed device has open handles or handle check failed failed
+START normal-card2-attempt01
+END normal-card2-attempt01 failed None failed
+Traceback (most recent call last):
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-recheck-20260920-1952/run_recheck.py", line 64, in <module>
+    name,summary=run(card,'identity','normal')
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-recheck-20260920-1952/run_recheck.py", line 48, in run
+    raise RuntimeError('launched workload postflight failed: stop for review')
+RuntimeError: launched workload postflight failed: stop for review

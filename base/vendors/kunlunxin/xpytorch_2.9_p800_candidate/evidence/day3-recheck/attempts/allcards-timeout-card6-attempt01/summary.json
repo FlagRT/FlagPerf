@@ -1,0 +1,18 @@
+{
+  "cleanup_status": "passed",
+  "error": "bounded container execution timed out",
+  "error_type": "TimeoutError",
+  "failure_stage": "container-probe",
+  "finished_at": "2026-09-20T12:23:42.996843Z",
+  "kind": "benchmark-preflight",
+  "lease_released": true,
+  "measurement_status": "not-run",
+  "monitoring_status": "not-run",
+  "postflight_status": "passed",
+  "probe_mode": "timeout-check",
+  "run_id": "preflight-f36a2c935c324037989833ed90203c69",
+  "schema_version": 1,
+  "started_at": "2026-09-20T12:21:30.050027Z",
+  "status": "failed",
+  "vendor": "kunlunxin"
+}

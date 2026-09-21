@@ -1,0 +1,50 @@
+[
+  {
+    "card": 1,
+    "uuid": "b3509946-0bc6-5744-bd7c-a0b87dadef02",
+    "node": "/dev/xpu2",
+    "uncorrectable_ecc": [
+      "0",
+      "0"
+    ],
+    "remap_pending": [
+      "NO"
+    ]
+  },
+  {
+    "card": 2,
+    "uuid": "09d75c76-1b13-5686-a3d2-a9647e48f619",
+    "node": "/dev/xpu3",
+    "uncorrectable_ecc": [
+      "8",
+      "8"
+    ],
+    "remap_pending": [
+      "YES"
+    ]
+  },
+  {
+    "card": 6,
+    "uuid": "9e24d168-db57-5cd9-8cfb-aea4ae898897",
+    "node": "/dev/xpu5",
+    "uncorrectable_ecc": [
+      "0",
+      "0"
+    ],
+    "remap_pending": [
+      "NO"
+    ]
+  },
+  {
+    "card": 7,
+    "uuid": "4922595e-feb9-5762-9082-d8fd7f11abf5",
+    "node": "/dev/xpu6",
+    "uncorrectable_ecc": [
+      "0",
+      "0"
+    ],
+    "remap_pending": [
+      "NO"
+    ]
+  }
+]

@@ -1,0 +1,17 @@
+[
+  {
+    "card": 6,
+    "normal_attempt": "extended-card6-attempt01",
+    "status": "passed"
+  },
+  {
+    "card": 7,
+    "normal_attempt": "extended-card7-attempt01",
+    "status": "passed"
+  },
+  {
+    "card": 1,
+    "normal_attempt": "extended-card1-attempt01",
+    "status": "failed"
+  }
+]

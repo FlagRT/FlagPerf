@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-recheck-20260920-1952/run_audit_allcards.py", line 28, in <module>
+    assert result.returncode == 0 and not result.stdout.strip()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

@@ -1,0 +1,17 @@
+{
+  "created_at": "2026-09-20T12:17:03.674392+00:00",
+  "end": "2026-09-20T12:52:03.674407+00:00",
+  "cards": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "reference": "User expanded retest to all physical cards and confirmed own xpu-smi monitoring stopped; sequential bounded probes; occupancy gates remain enforced",
+  "external_monitor_user_confirmed_stopped": true,
+  "physical_id": 0
+}

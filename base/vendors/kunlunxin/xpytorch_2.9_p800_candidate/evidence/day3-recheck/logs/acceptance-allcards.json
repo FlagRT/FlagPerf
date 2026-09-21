@@ -1,0 +1,1891 @@
+{
+  "at": "2026-09-21T01:33:09.638785+00:00",
+  "attempt_count": 33,
+  "attempts": [
+    {
+      "attempt": "after-stop-card1-attempt01",
+      "card": 1,
+      "summary": {
+        "cleanup_status": "passed",
+        "error": "bounded container execution timed out",
+        "error_type": "TimeoutError",
+        "failure_stage": "container-probe",
+        "finished_at": "2026-09-20T12:28:46.537862Z",
+        "kind": "benchmark-preflight",
+        "lease_released": true,
+        "measurement_status": "not-run",
+        "monitoring_status": "not-run",
+        "postflight_status": "passed",
+        "probe_mode": "identity",
+        "run_id": "preflight-3d705497799f49e1a9c843a0a8c3fbfd",
+        "schema_version": 1,
+        "started_at": "2026-09-20T12:26:30.802160Z",
+        "status": "failed",
+        "vendor": "kunlunxin"
+      },
+      "container_created": true,
+      "absence_check": {
+        "argv": [
+          "sudo",
+          "-n",
+          "docker",
+          "ps",
+          "-a",
+          "--no-trunc",
+          "--filter",
+          "id=866dbfe9aec0a537642565f860e4ca7b3ebfccb22a833c8838632b77014e248f",
+          "--format",
+          "{{.ID}}"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "locks_reacquired": true,
+      "binding_context_verified": true,
+      "binding": {
+        "container_device_node": "/dev/xpu2",
+        "framework_device_name": "cuda:0",
+        "framework_local_rank": 0,
+        "framework_logical_id": 0,
+        "host_device_node": "/dev/xpu2",
+        "host_physical_id": 1,
+        "legacy_logical_id": null,
+        "pci_bdf": "0000:16:00.0",
+        "request_index": 0,
+        "resource_key": "kunlunxin/b3509946-0bc6-5744-bd7c-a0b87dadef02",
+        "serial_or_uuid": "b3509946-0bc6-5744-bd7c-a0b87dadef02",
+        "vendor": "kunlunxin"
+      },
+      "probe_passed": false,
+      "independent_review": {
+        "container_absent": true,
+        "postflight_passed": true,
+        "lock_reacquired": true,
+        "lease": {
+          "backend": "flock",
+          "root": "/tmp/flagperf-base-device-leases",
+          "compatibility_paths": [
+            "/tmp/flagperf-p800-b3509946-0bc6-5744-bd7c-a0b87dadef02.lock"
+          ],
+          "device_ids": [],
+          "resource_keys": [
+            "kunlunxin/b3509946-0bc6-5744-bd7c-a0b87dadef02"
+          ],
+          "run_id": "recheck-acceptance",
+          "pid": 1522718,
+          "acquired_at": "2026-09-20T12:28:46.569674Z"
+        }
+      }
+    },
+    {
+      "attempt": "allcards-normal-card0-attempt01",
+      "card": 0,
+      "summary": {
+        "cleanup_status": "not-created",
+        "error": "selected physical device 0 is occupied",
+        "error_type": "RuntimeError",
+        "failure_stage": "host-preflight",
+        "finished_at": "2026-09-20T12:17:04.080238Z",
+        "kind": "benchmark-preflight",
+        "lease_released": false,
+        "measurement_status": "not-run",
+        "monitoring_status": "not-run",
+        "postflight_status": "not-run",
+        "probe_mode": "identity",
+        "run_id": "preflight-3de04db6ae424414bea585894c74ee4b",
+        "schema_version": 1,
+        "started_at": "2026-09-20T12:17:03.834134Z",
+        "status": "failed",
+        "vendor": "kunlunxin"
+      },
+      "container_created": false,
+      "probe_passed": false
+    },
+    {
+      "attempt": "allcards-normal-card1-attempt01",
+      "card": 1,
+      "summary": {
+        "cleanup_status": "not-created",
+        "error": "device has open handles or handle check failed",
+        "error_type": "RuntimeError",
+        "failure_stage": "host-preflight",
+        "finished_at": "2026-09-20T12:17:08.225587Z",
+        "kind": "benchmark-preflight",
+        "lease_released": false,
+        "measurement_status": "not-run",
+        "monitoring_status": "not-run",
+        "postflight_status": "not-run",
+        "probe_mode": "identity",
+        "run_id": "preflight-8f217fe8c6a146a087293f827943d67a",
+        "schema_version": 1,
+        "started_at": "2026-09-20T12:17:04.197190Z",
+        "status": "failed",
+        "vendor": "kunlunxin"
+      },
+      "container_created": false,
+      "probe_passed": false
+    },
+    {
+      "attempt": "allcards-normal-card1-attempt02",
+      "card": 1,
+      "summary": {
+        "cleanup_status": "not-created",
+        "error": "device has open handles or handle check failed",
+        "error_type": "RuntimeError",
+        "failure_stage": "locked-preflight",
+        "finished_at": "2026-09-20T12:17:21.192268Z",
+        "kind": "benchmark-preflight",
+        "lease_released": true,
+        "measurement_status": "not-run",
+        "monitoring_status": "not-run",
+        "postflight_error": "device has open handles or handle check failed",
+        "postflight_status": "failed",
+        "probe_mode": "identity",
+        "run_id": "preflight-8929fa3e4f094c128700145542b818db",
+        "schema_version": 1,
+        "started_at": "2026-09-20T12:17:10.339398Z",
+        "status": "failed",
+        "vendor": "kunlunxin"
+      },
+      "container_created": false,
+      "probe_passed": false
+    },
+    {
+      "attempt": "allcards-normal-card2-attempt01",
+      "card": 2,
+      "summary": {
+        "cleanup_status": "not-created",
+        "error": "device has open handles or handle check failed",
+        "error_type": "RuntimeError",
+        "failure_stage": "locked-preflight",
+        "finished_at": "2026-09-20T12:17:33.144085Z",
+        "kind": "benchmark-preflight",
+        "lease_released": true,
+        "measurement_status": "not-run",
+        "monitoring_status": "not-run",
+        "postflight_status": "passed",
+        "probe_mode": "identity",
+        "run_id": "preflight-c667e1a59e924bf88a631cea4e292aaa",
+        "schema_version": 1,
+        "started_at": "2026-09-20T12:17:23.305348Z",
+        "status": "failed",
+        "vendor": "kunlunxin"
+      },
+      "container_created": false,
+      "probe_passed": false
+    },
+    {
+      "attempt": "allcards-normal-card2-attempt02",
+      "card": 2,
+      "summary": {
+        "cleanup_status": "passed",
+        "container_exit_code": 0,
+        "device_bindings": [
+          {
+            "container_device_node": "/dev/xpu3",
+            "framework_device_name": "cuda:0",
+            "framework_local_rank": 0,
+            "framework_logical_id": 0,
+            "host_device_node": "/dev/xpu3",
+            "host_physical_id": 2,
+            "legacy_logical_id": null,
+            "pci_bdf": "0000:1c:00.0",
+            "request_index": 0,
+            "resource_key": "kunlunxin/09d75c76-1b13-5686-a3d2-a9647e48f619",
+            "serial_or_uuid": "09d75c76-1b13-5686-a3d2-a9647e48f619",
+            "vendor": "kunlunxin"
+          }
+        ],
+        "finished_at": "2026-09-20T12:18:06.985810Z",
+        "kind": "benchmark-preflight",
+        "lease_released": true,
+        "measurement_status": "not-run",
+        "monitoring_status": "passed",
+        "postflight_status": "passed",
+        "probe_mode": "identity",
+        "run_id": "preflight-bdfcca25fd5248acaaece0ca8130daf1",
+        "schema_version": 1,
+        "started_at": "2026-09-20T12:17:35.260163Z",
+        "status": "passed",
+        "vendor": "kunlunxin"
+      },
+      "container_created": true,
+      "absence_check": {
+        "argv": [
+          "sudo",
+          "-n",
+          "docker",
+          "ps",
+          "-a",
+          "--no-trunc",
+          "--filter",
+          "id=d1428a44172b477d7a164559f019ce6858dafb63d607d8fadf33016fdab20bc9",
+          "--format",
+          "{{.ID}}"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "locks_reacquired": true,
+      "binding_context_verified": true,
+      "binding": {
+        "container_device_node": "/dev/xpu3",
+        "framework_device_name": "cuda:0",
+        "framework_local_rank": 0,
+        "framework_logical_id": 0,
+        "host_device_node": "/dev/xpu3",
+        "host_physical_id": 2,
+        "legacy_logical_id": null,
+        "pci_bdf": "0000:1c:00.0",
+        "request_index": 0,
+        "resource_key": "kunlunxin/09d75c76-1b13-5686-a3d2-a9647e48f619",
+        "serial_or_uuid": "09d75c76-1b13-5686-a3d2-a9647e48f619",
+        "vendor": "kunlunxin"
+      },
+      "probe_passed": true,
+      "valid_samples": {
+        "kunlunxin/09d75c76-1b13-5686-a3d2-a9647e48f619": 16
+      },
+      "independent_review": {
+        "container_absent": true,
+        "postflight_passed": true,
+        "lock_reacquired": true,
+        "lease": {
+          "backend": "flock",
+          "root": "/tmp/flagperf-base-device-leases",
+          "compatibility_paths": [
+            "/tmp/flagperf-p800-09d75c76-1b13-5686-a3d2-a9647e48f619.lock"
+          ],
+          "device_ids": [],
+          "resource_keys": [
+            "kunlunxin/09d75c76-1b13-5686-a3d2-a9647e48f619"
+          ],
+          "run_id": "recheck-acceptance",
+          "pid": 1434731,
+          "acquired_at": "2026-09-20T12:18:07.015889Z"
+        }
+      }
+    },
+    {
+      "attempt": "allcards-normal-card3-attempt01",
+      "card": 3,
+      "summary": {
+        "cleanup_status": "not-created",
+        "error": "selected physical device 3 is occupied",
+        "error_type": "RuntimeError",
+        "failure_stage": "host-preflight",
+        "finished_at": "2026-09-20T12:18:07.352414Z",
+        "kind": "benchmark-preflight",
+        "lease_released": false,
+        "measurement_status": "not-run",
+        "monitoring_status": "not-run",
+        "postflight_status": "not-run",
+        "probe_mode": "identity",
+        "run_id": "preflight-1b6844ab69ac449db5711a07495f5933",
+        "schema_version": 1,
+        "started_at": "2026-09-20T12:18:07.109782Z",
+        "status": "failed",
+        "vendor": "kunlunxin"
+      },
+      "container_created": false,
+      "probe_passed": false
+    },
+    {
+      "attempt": "allcards-normal-card4-attempt01",
+      "card": 4,
+      "summary": {
+        "cleanup_status": "not-created",
+        "error": "selected physical device 4 is occupied",
+        "error_type": "RuntimeError",
+        "failure_stage": "host-preflight",
+        "finished_at": "2026-09-20T12:18:07.727042Z",
+        "kind": "benchmark-preflight",
+        "lease_released": false,
+        "measurement_status": "not-run",
+        "monitoring_status": "not-run",
+        "postflight_status": "not-run",
+        "probe_mode": "identity",
+        "run_id": "preflight-30a760f168ad4e6990cf9fd36d2af296",
+        "schema_version": 1,
+        "started_at": "2026-09-20T12:18:07.470796Z",
+        "status": "failed",
+        "vendor": "kunlunxin"
+      },
+      "container_created": false,
+      "probe_passed": false
+    },
+    {
+      "attempt": "allcards-normal-card5-attempt01",
+      "card": 5,
+      "summary": {
+        "cleanup_status": "not-created",
+        "error": "selected physical device 5 is occupied",
+        "error_type": "RuntimeError",
+        "failure_stage": "host-preflight",
+        "finished_at": "2026-09-20T12:18:08.079498Z",
+        "kind": "benchmark-preflight",
+        "lease_released": false,
+        "measurement_status": "not-run",
+        "monitoring_status": "not-run",
+        "postflight_status": "not-run",
+        "probe_mode": "identity",
+        "run_id": "preflight-f94ba311b0ea45efa82fd695935f2c79",
+        "schema_version": 1,
+        "started_at": "2026-09-20T12:18:07.846930Z",
+        "status": "failed",
+        "vendor": "kunlunxin"
+      },
+      "container_created": false,
+      "probe_passed": false
+    },
+    {
+      "attempt": "allcards-normal-card6-attempt01",
+      "card": 6,
+      "summary": {
+        "cleanup_status": "passed",
+        "container_exit_code": 0,
+        "device_bindings": [
+          {
+            "container_device_node": "/dev/xpu5",
+            "framework_device_name": "cuda:0",
+            "framework_local_rank": 0,
+            "framework_logical_id": 0,
+            "host_device_node": "/dev/xpu5",
+            "host_physical_id": 6,
+            "legacy_logical_id": null,
+            "pci_bdf": "0000:b6:00.0",
+            "request_index": 0,
+            "resource_key": "kunlunxin/9e24d168-db57-5cd9-8cfb-aea4ae898897",
+            "serial_or_uuid": "9e24d168-db57-5cd9-8cfb-aea4ae898897",
+            "vendor": "kunlunxin"
+          }
+        ],
+        "finished_at": "2026-09-20T12:18:42.607217Z",
+        "kind": "benchmark-preflight",
+        "lease_released": true,
+        "measurement_status": "not-run",
+        "monitoring_status": "passed",
+        "postflight_status": "passed",
+        "probe_mode": "identity",
+        "run_id": "preflight-c17285e49a2545f78f60b6ca9e075b76",
+        "schema_version": 1,
+        "started_at": "2026-09-20T12:18:08.196692Z",
+        "status": "passed",
+        "vendor": "kunlunxin"
+      },
+      "container_created": true,
+      "absence_check": {
+        "argv": [
+          "sudo",
+          "-n",
+          "docker",
+          "ps",
+          "-a",
+          "--no-trunc",
+          "--filter",
+          "id=37c6bd4218eae6e12c0abc3a102a9cf957de579ece9c3b9d358686f22a621979",
+          "--format",
+          "{{.ID}}"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "locks_reacquired": true,
+      "binding_context_verified": true,
+      "binding": {
+        "container_device_node": "/dev/xpu5",
+        "framework_device_name": "cuda:0",
+        "framework_local_rank": 0,
+        "framework_logical_id": 0,
+        "host_device_node": "/dev/xpu5",
+        "host_physical_id": 6,
+        "legacy_logical_id": null,
+        "pci_bdf": "0000:b6:00.0",
+        "request_index": 0,
+        "resource_key": "kunlunxin/9e24d168-db57-5cd9-8cfb-aea4ae898897",
+        "serial_or_uuid": "9e24d168-db57-5cd9-8cfb-aea4ae898897",
+        "vendor": "kunlunxin"
+      },
+      "probe_passed": true,
+      "valid_samples": {
+        "kunlunxin/9e24d168-db57-5cd9-8cfb-aea4ae898897": 16
+      },
+      "independent_review": {
+        "container_absent": true,
+        "postflight_passed": true,
+        "lock_reacquired": true,
+        "lease": {
+          "backend": "flock",
+          "root": "/tmp/flagperf-base-device-leases",
+          "compatibility_paths": [
+            "/tmp/flagperf-p800-9e24d168-db57-5cd9-8cfb-aea4ae898897.lock"
+          ],
+          "device_ids": [],
+          "resource_keys": [
+            "kunlunxin/9e24d168-db57-5cd9-8cfb-aea4ae898897"
+          ],
+          "run_id": "recheck-acceptance",
+          "pid": 1434731,
+          "acquired_at": "2026-09-20T12:18:42.639374Z"
+        }
+      }
+    },
+    {
+      "attempt": "allcards-normal-card7-attempt01",
+      "card": 7,
+      "summary": {
+        "cleanup_status": "passed",
+        "container_exit_code": 0,
+        "device_bindings": [
+          {
+            "container_device_node": "/dev/xpu6",
+            "framework_device_name": "cuda:0",
+            "framework_local_rank": 0,
+            "framework_logical_id": 0,
+            "host_device_node": "/dev/xpu6",
+            "host_physical_id": 7,
+            "legacy_logical_id": null,
+            "pci_bdf": "0000:bb:00.0",
+            "request_index": 0,
+            "resource_key": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+            "serial_or_uuid": "4922595e-feb9-5762-9082-d8fd7f11abf5",
+            "vendor": "kunlunxin"
+          }
+        ],
+        "finished_at": "2026-09-20T12:19:14.898970Z",
+        "kind": "benchmark-preflight",
+        "lease_released": true,
+        "measurement_status": "not-run",
+        "monitoring_status": "passed",
+        "postflight_status": "passed",
+        "probe_mode": "identity",
+        "run_id": "preflight-c71761946b6c4195bb8d452ad035235b",
+        "schema_version": 1,
+        "started_at": "2026-09-20T12:18:42.735748Z",
+        "status": "passed",
+        "vendor": "kunlunxin"
+      },
+      "container_created": true,
+      "absence_check": {
+        "argv": [
+          "sudo",
+          "-n",
+          "docker",
+          "ps",
+          "-a",
+          "--no-trunc",
+          "--filter",
+          "id=779dba343c764e4aa718faae7e213c6573ad192a07ec9c617a30ca21f596439f",
+          "--format",
+          "{{.ID}}"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "locks_reacquired": true,
+      "binding_context_verified": true,
+      "binding": {
+        "container_device_node": "/dev/xpu6",
+        "framework_device_name": "cuda:0",
+        "framework_local_rank": 0,
+        "framework_logical_id": 0,
+        "host_device_node": "/dev/xpu6",
+        "host_physical_id": 7,
+        "legacy_logical_id": null,
+        "pci_bdf": "0000:bb:00.0",
+        "request_index": 0,
+        "resource_key": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+        "serial_or_uuid": "4922595e-feb9-5762-9082-d8fd7f11abf5",
+        "vendor": "kunlunxin"
+      },
+      "probe_passed": true,
+      "valid_samples": {
+        "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5": 16
+      },
+      "independent_review": {
+        "container_absent": true,
+        "postflight_passed": true,
+        "lock_reacquired": true,
+        "lease": {
+          "backend": "flock",
+          "root": "/tmp/flagperf-base-device-leases",
+          "compatibility_paths": [
+            "/tmp/flagperf-p800-4922595e-feb9-5762-9082-d8fd7f11abf5.lock"
+          ],
+          "device_ids": [],
+          "resource_keys": [
+            "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5"
+          ],
+          "run_id": "recheck-acceptance",
+          "pid": 1434731,
+          "acquired_at": "2026-09-20T12:19:14.929063Z"
+        }
+      }
+    },
+    {
+      "attempt": "allcards-timeout-card2-attempt01",
+      "card": 2,
+      "summary": {
+        "cleanup_status": "passed",
+        "error": "bounded container execution timed out",
+        "error_type": "TimeoutError",
+        "failure_stage": "container-probe",
+        "finished_at": "2026-09-20T12:21:29.919692Z",
+        "kind": "benchmark-preflight",
+        "lease_released": true,
+        "measurement_status": "not-run",
+        "monitoring_status": "not-run",
+        "postflight_status": "passed",
+        "probe_mode": "timeout-check",
+        "run_id": "preflight-0349e0b9c79d4d9283070af7ed96d866",
+        "schema_version": 1,
+        "started_at": "2026-09-20T12:19:15.026366Z",
+        "status": "failed",
+        "vendor": "kunlunxin"
+      },
+      "container_created": true,
+      "absence_check": {
+        "argv": [
+          "sudo",
+          "-n",
+          "docker",
+          "ps",
+          "-a",
+          "--no-trunc",
+          "--filter",
+          "id=f5f0d2baafea0a2a43c4ed77798217b201c6a03b419b00ba9697e4a5d793fbd5",
+          "--format",
+          "{{.ID}}"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "locks_reacquired": true,
+      "binding_context_verified": true,
+      "binding": {
+        "container_device_node": "/dev/xpu3",
+        "framework_device_name": "cuda:0",
+        "framework_local_rank": 0,
+        "framework_logical_id": 0,
+        "host_device_node": "/dev/xpu3",
+        "host_physical_id": 2,
+        "legacy_logical_id": null,
+        "pci_bdf": "0000:1c:00.0",
+        "request_index": 0,
+        "resource_key": "kunlunxin/09d75c76-1b13-5686-a3d2-a9647e48f619",
+        "serial_or_uuid": "09d75c76-1b13-5686-a3d2-a9647e48f619",
+        "vendor": "kunlunxin"
+      },
+      "probe_passed": true,
+      "independent_review": {
+        "container_absent": true,
+        "postflight_passed": true,
+        "lock_reacquired": true,
+        "lease": {
+          "backend": "flock",
+          "root": "/tmp/flagperf-base-device-leases",
+          "compatibility_paths": [
+            "/tmp/flagperf-p800-09d75c76-1b13-5686-a3d2-a9647e48f619.lock"
+          ],
+          "device_ids": [],
+          "resource_keys": [
+            "kunlunxin/09d75c76-1b13-5686-a3d2-a9647e48f619"
+          ],
+          "run_id": "recheck-acceptance",
+          "pid": 1434731,
+          "acquired_at": "2026-09-20T12:21:29.953064Z"
+        }
+      }
+    },
+    {
+      "attempt": "allcards-timeout-card6-attempt01",
+      "card": 6,
+      "summary": {
+        "cleanup_status": "passed",
+        "error": "bounded container execution timed out",
+        "error_type": "TimeoutError",
+        "failure_stage": "container-probe",
+        "finished_at": "2026-09-20T12:23:42.996843Z",
+        "kind": "benchmark-preflight",
+        "lease_released": true,
+        "measurement_status": "not-run",
+        "monitoring_status": "not-run",
+        "postflight_status": "passed",
+        "probe_mode": "timeout-check",
+        "run_id": "preflight-f36a2c935c324037989833ed90203c69",
+        "schema_version": 1,
+        "started_at": "2026-09-20T12:21:30.050027Z",
+        "status": "failed",
+        "vendor": "kunlunxin"
+      },
+      "container_created": true,
+      "absence_check": {
+        "argv": [
+          "sudo",
+          "-n",
+          "docker",
+          "ps",
+          "-a",
+          "--no-trunc",
+          "--filter",
+          "id=12f68fd2ee6ddbc8bcc86828071e33befd87838c082790a6407c983aff06a84f",
+          "--format",
+          "{{.ID}}"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "locks_reacquired": true,
+      "binding_context_verified": true,
+      "binding": {
+        "container_device_node": "/dev/xpu5",
+        "framework_device_name": "cuda:0",
+        "framework_local_rank": 0,
+        "framework_logical_id": 0,
+        "host_device_node": "/dev/xpu5",
+        "host_physical_id": 6,
+        "legacy_logical_id": null,
+        "pci_bdf": "0000:b6:00.0",
+        "request_index": 0,
+        "resource_key": "kunlunxin/9e24d168-db57-5cd9-8cfb-aea4ae898897",
+        "serial_or_uuid": "9e24d168-db57-5cd9-8cfb-aea4ae898897",
+        "vendor": "kunlunxin"
+      },
+      "probe_passed": true,
+      "independent_review": {
+        "container_absent": true,
+        "postflight_passed": true,
+        "lock_reacquired": true,
+        "lease": {
+          "backend": "flock",
+          "root": "/tmp/flagperf-base-device-leases",
+          "compatibility_paths": [
+            "/tmp/flagperf-p800-9e24d168-db57-5cd9-8cfb-aea4ae898897.lock"
+          ],
+          "device_ids": [],
+          "resource_keys": [
+            "kunlunxin/9e24d168-db57-5cd9-8cfb-aea4ae898897"
+          ],
+          "run_id": "recheck-acceptance",
+          "pid": 1434731,
+          "acquired_at": "2026-09-20T12:23:43.026988Z"
+        }
+      }
+    },
+    {
+      "attempt": "allcards-timeout-card7-attempt01",
+      "card": 7,
+      "summary": {
+        "cleanup_status": "passed",
+        "error": "bounded container execution timed out",
+        "error_type": "TimeoutError",
+        "failure_stage": "container-probe",
+        "finished_at": "2026-09-20T12:25:55.871288Z",
+        "kind": "benchmark-preflight",
+        "lease_released": true,
+        "measurement_status": "not-run",
+        "monitoring_status": "not-run",
+        "postflight_status": "passed",
+        "probe_mode": "timeout-check",
+        "run_id": "preflight-a2d49b74491148578055949478853e8f",
+        "schema_version": 1,
+        "started_at": "2026-09-20T12:23:43.125315Z",
+        "status": "failed",
+        "vendor": "kunlunxin"
+      },
+      "container_created": true,
+      "absence_check": {
+        "argv": [
+          "sudo",
+          "-n",
+          "docker",
+          "ps",
+          "-a",
+          "--no-trunc",
+          "--filter",
+          "id=858a97ae82e6687ccbb6f4dfaf3b162765b1849ef5c00046c0f924807b006e0e",
+          "--format",
+          "{{.ID}}"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "locks_reacquired": true,
+      "binding_context_verified": true,
+      "binding": {
+        "container_device_node": "/dev/xpu6",
+        "framework_device_name": "cuda:0",
+        "framework_local_rank": 0,
+        "framework_logical_id": 0,
+        "host_device_node": "/dev/xpu6",
+        "host_physical_id": 7,
+        "legacy_logical_id": null,
+        "pci_bdf": "0000:bb:00.0",
+        "request_index": 0,
+        "resource_key": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+        "serial_or_uuid": "4922595e-feb9-5762-9082-d8fd7f11abf5",
+        "vendor": "kunlunxin"
+      },
+      "probe_passed": true,
+      "independent_review": {
+        "container_absent": true,
+        "postflight_passed": true,
+        "lock_reacquired": true,
+        "lease": {
+          "backend": "flock",
+          "root": "/tmp/flagperf-base-device-leases",
+          "compatibility_paths": [
+            "/tmp/flagperf-p800-4922595e-feb9-5762-9082-d8fd7f11abf5.lock"
+          ],
+          "device_ids": [],
+          "resource_keys": [
+            "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5"
+          ],
+          "run_id": "recheck-acceptance",
+          "pid": 1434731,
+          "acquired_at": "2026-09-20T12:25:55.904035Z"
+        }
+      }
+    },
+    {
+      "attempt": "confirm-card2-attempt01",
+      "card": 2,
+      "summary": {
+        "cleanup_status": "passed",
+        "container_exit_code": 0,
+        "device_bindings": [
+          {
+            "container_device_node": "/dev/xpu3",
+            "framework_device_name": "cuda:0",
+            "framework_local_rank": 0,
+            "framework_logical_id": 0,
+            "host_device_node": "/dev/xpu3",
+            "host_physical_id": 2,
+            "legacy_logical_id": null,
+            "pci_bdf": "0000:1c:00.0",
+            "request_index": 0,
+            "resource_key": "kunlunxin/09d75c76-1b13-5686-a3d2-a9647e48f619",
+            "serial_or_uuid": "09d75c76-1b13-5686-a3d2-a9647e48f619",
+            "vendor": "kunlunxin"
+          }
+        ],
+        "finished_at": "2026-09-20T12:06:54.052252Z",
+        "kind": "benchmark-preflight",
+        "lease_released": true,
+        "measurement_status": "not-run",
+        "monitoring_status": "passed",
+        "postflight_error": "device has open handles or handle check failed",
+        "postflight_status": "failed",
+        "probe_mode": "identity",
+        "run_id": "preflight-886e443c98c243568b5cc2adada2abae",
+        "schema_version": 1,
+        "started_at": "2026-09-20T12:06:21.332638Z",
+        "status": "failed",
+        "vendor": "kunlunxin"
+      },
+      "container_created": true,
+      "absence_check": {
+        "argv": [
+          "sudo",
+          "-n",
+          "docker",
+          "ps",
+          "-a",
+          "--no-trunc",
+          "--filter",
+          "id=0d26608f6b4ae4e08300c25ed96fed1f491f8a1c7c7e4f2db9accdef5e26f209",
+          "--format",
+          "{{.ID}}"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "locks_reacquired": true,
+      "binding_context_verified": true,
+      "binding": {
+        "container_device_node": "/dev/xpu3",
+        "framework_device_name": "cuda:0",
+        "framework_local_rank": 0,
+        "framework_logical_id": 0,
+        "host_device_node": "/dev/xpu3",
+        "host_physical_id": 2,
+        "legacy_logical_id": null,
+        "pci_bdf": "0000:1c:00.0",
+        "request_index": 0,
+        "resource_key": "kunlunxin/09d75c76-1b13-5686-a3d2-a9647e48f619",
+        "serial_or_uuid": "09d75c76-1b13-5686-a3d2-a9647e48f619",
+        "vendor": "kunlunxin"
+      },
+      "probe_passed": true,
+      "valid_samples": {
+        "kunlunxin/09d75c76-1b13-5686-a3d2-a9647e48f619": 16
+      },
+      "independent_review": {
+        "container_absent": true,
+        "postflight_passed": false,
+        "lock_reacquired": true,
+        "lease": {
+          "backend": "flock",
+          "root": "/tmp/flagperf-base-device-leases",
+          "compatibility_paths": [
+            "/tmp/flagperf-p800-09d75c76-1b13-5686-a3d2-a9647e48f619.lock"
+          ],
+          "device_ids": [],
+          "resource_keys": [
+            "kunlunxin/09d75c76-1b13-5686-a3d2-a9647e48f619"
+          ],
+          "run_id": "recheck-acceptance",
+          "pid": 1315586,
+          "acquired_at": "2026-09-20T12:06:54.081894Z"
+        },
+        "followup_checks": [
+          {
+            "attempt": 1,
+            "idle": false,
+            "error": "device has open handles or handle check failed"
+          },
+          {
+            "attempt": 2,
+            "idle": true
+          }
+        ],
+        "followup_idle": true
+      }
+    },
+    {
+      "attempt": "extended-card1-attempt01",
+      "card": 1,
+      "summary": {
+        "cleanup_status": "passed",
+        "error": "bounded container execution timed out",
+        "error_type": "TimeoutError",
+        "failure_stage": "container-probe",
+        "finished_at": "2026-09-20T12:03:16.795416Z",
+        "kind": "benchmark-preflight",
+        "lease_released": true,
+        "measurement_status": "not-run",
+        "monitoring_status": "partial",
+        "postflight_error": "device has open handles or handle check failed",
+        "postflight_status": "failed",
+        "probe_mode": "identity",
+        "run_id": "preflight-235155abbfde4798a355b9d9ebc3ccda",
+        "schema_version": 1,
+        "started_at": "2026-09-20T12:00:59.668105Z",
+        "status": "failed",
+        "vendor": "kunlunxin"
+      },
+      "container_created": true,
+      "absence_check": {
+        "argv": [
+          "sudo",
+          "-n",
+          "docker",
+          "ps",
+          "-a",
+          "--no-trunc",
+          "--filter",
+          "id=7537c63df10b9716e82e7f94da24b5b96268e0a6515378e2217f41d94c647881",
+          "--format",
+          "{{.ID}}"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "locks_reacquired": true,
+      "binding_context_verified": true,
+      "binding": {
+        "container_device_node": "/dev/xpu2",
+        "framework_device_name": "cuda:0",
+        "framework_local_rank": 0,
+        "framework_logical_id": 0,
+        "host_device_node": "/dev/xpu2",
+        "host_physical_id": 1,
+        "legacy_logical_id": null,
+        "pci_bdf": "0000:16:00.0",
+        "request_index": 0,
+        "resource_key": "kunlunxin/b3509946-0bc6-5744-bd7c-a0b87dadef02",
+        "serial_or_uuid": "b3509946-0bc6-5744-bd7c-a0b87dadef02",
+        "vendor": "kunlunxin"
+      },
+      "probe_passed": false,
+      "valid_samples": {
+        "kunlunxin/b3509946-0bc6-5744-bd7c-a0b87dadef02": 0
+      },
+      "independent_review": {
+        "container_absent": true,
+        "postflight_passed": false,
+        "lock_reacquired": true,
+        "lease": {
+          "backend": "flock",
+          "root": "/tmp/flagperf-base-device-leases",
+          "compatibility_paths": [
+            "/tmp/flagperf-p800-b3509946-0bc6-5744-bd7c-a0b87dadef02.lock"
+          ],
+          "device_ids": [],
+          "resource_keys": [
+            "kunlunxin/b3509946-0bc6-5744-bd7c-a0b87dadef02"
+          ],
+          "run_id": "recheck-acceptance",
+          "pid": 1279219,
+          "acquired_at": "2026-09-20T12:03:16.825338Z"
+        },
+        "followup_checks": [
+          {
+            "attempt": 1,
+            "idle": true
+          }
+        ],
+        "followup_idle": true
+      }
+    },
+    {
+      "attempt": "extended-card6-attempt01",
+      "card": 6,
+      "summary": {
+        "cleanup_status": "passed",
+        "container_exit_code": 0,
+        "device_bindings": [
+          {
+            "container_device_node": "/dev/xpu5",
+            "framework_device_name": "cuda:0",
+            "framework_local_rank": 0,
+            "framework_logical_id": 0,
+            "host_device_node": "/dev/xpu5",
+            "host_physical_id": 6,
+            "legacy_logical_id": null,
+            "pci_bdf": "0000:b6:00.0",
+            "request_index": 0,
+            "resource_key": "kunlunxin/9e24d168-db57-5cd9-8cfb-aea4ae898897",
+            "serial_or_uuid": "9e24d168-db57-5cd9-8cfb-aea4ae898897",
+            "vendor": "kunlunxin"
+          }
+        ],
+        "finished_at": "2026-09-20T12:00:28.268452Z",
+        "kind": "benchmark-preflight",
+        "lease_released": true,
+        "measurement_status": "not-run",
+        "monitoring_status": "passed",
+        "postflight_status": "passed",
+        "probe_mode": "identity",
+        "run_id": "preflight-e673bd1d06114c0cafab0e6b4d16184f",
+        "schema_version": 1,
+        "started_at": "2026-09-20T11:59:54.282446Z",
+        "status": "passed",
+        "vendor": "kunlunxin"
+      },
+      "container_created": true,
+      "absence_check": {
+        "argv": [
+          "sudo",
+          "-n",
+          "docker",
+          "ps",
+          "-a",
+          "--no-trunc",
+          "--filter",
+          "id=8a58a5ad9b47cb04671483a3b567e6b666f4e4b1ab4838bcfc7b068b42f8de6b",
+          "--format",
+          "{{.ID}}"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "locks_reacquired": true,
+      "binding_context_verified": true,
+      "binding": {
+        "container_device_node": "/dev/xpu5",
+        "framework_device_name": "cuda:0",
+        "framework_local_rank": 0,
+        "framework_logical_id": 0,
+        "host_device_node": "/dev/xpu5",
+        "host_physical_id": 6,
+        "legacy_logical_id": null,
+        "pci_bdf": "0000:b6:00.0",
+        "request_index": 0,
+        "resource_key": "kunlunxin/9e24d168-db57-5cd9-8cfb-aea4ae898897",
+        "serial_or_uuid": "9e24d168-db57-5cd9-8cfb-aea4ae898897",
+        "vendor": "kunlunxin"
+      },
+      "probe_passed": true,
+      "valid_samples": {
+        "kunlunxin/9e24d168-db57-5cd9-8cfb-aea4ae898897": 16
+      },
+      "independent_review": {
+        "container_absent": true,
+        "postflight_passed": true,
+        "lock_reacquired": true,
+        "lease": {
+          "backend": "flock",
+          "root": "/tmp/flagperf-base-device-leases",
+          "compatibility_paths": [
+            "/tmp/flagperf-p800-9e24d168-db57-5cd9-8cfb-aea4ae898897.lock"
+          ],
+          "device_ids": [],
+          "resource_keys": [
+            "kunlunxin/9e24d168-db57-5cd9-8cfb-aea4ae898897"
+          ],
+          "run_id": "recheck-acceptance",
+          "pid": 1279219,
+          "acquired_at": "2026-09-20T12:00:28.299262Z"
+        }
+      }
+    },
+    {
+      "attempt": "extended-card7-attempt01",
+      "card": 7,
+      "summary": {
+        "cleanup_status": "passed",
+        "container_exit_code": 0,
+        "device_bindings": [
+          {
+            "container_device_node": "/dev/xpu6",
+            "framework_device_name": "cuda:0",
+            "framework_local_rank": 0,
+            "framework_logical_id": 0,
+            "host_device_node": "/dev/xpu6",
+            "host_physical_id": 7,
+            "legacy_logical_id": null,
+            "pci_bdf": "0000:bb:00.0",
+            "request_index": 0,
+            "resource_key": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+            "serial_or_uuid": "4922595e-feb9-5762-9082-d8fd7f11abf5",
+            "vendor": "kunlunxin"
+          }
+        ],
+        "finished_at": "2026-09-20T12:00:59.545450Z",
+        "kind": "benchmark-preflight",
+        "lease_released": true,
+        "measurement_status": "not-run",
+        "monitoring_status": "passed",
+        "postflight_status": "passed",
+        "probe_mode": "identity",
+        "run_id": "preflight-9621957656674cefb76198cb17cb7f44",
+        "schema_version": 1,
+        "started_at": "2026-09-20T12:00:28.388024Z",
+        "status": "passed",
+        "vendor": "kunlunxin"
+      },
+      "container_created": true,
+      "absence_check": {
+        "argv": [
+          "sudo",
+          "-n",
+          "docker",
+          "ps",
+          "-a",
+          "--no-trunc",
+          "--filter",
+          "id=905683d0f0d52102ff12c7ba5462009a0a7bcbe1a8a8006f654a48b0082f2827",
+          "--format",
+          "{{.ID}}"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "locks_reacquired": true,
+      "binding_context_verified": true,
+      "binding": {
+        "container_device_node": "/dev/xpu6",
+        "framework_device_name": "cuda:0",
+        "framework_local_rank": 0,
+        "framework_logical_id": 0,
+        "host_device_node": "/dev/xpu6",
+        "host_physical_id": 7,
+        "legacy_logical_id": null,
+        "pci_bdf": "0000:bb:00.0",
+        "request_index": 0,
+        "resource_key": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+        "serial_or_uuid": "4922595e-feb9-5762-9082-d8fd7f11abf5",
+        "vendor": "kunlunxin"
+      },
+      "probe_passed": true,
+      "valid_samples": {
+        "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5": 16
+      },
+      "independent_review": {
+        "container_absent": true,
+        "postflight_passed": true,
+        "lock_reacquired": true,
+        "lease": {
+          "backend": "flock",
+          "root": "/tmp/flagperf-base-device-leases",
+          "compatibility_paths": [
+            "/tmp/flagperf-p800-4922595e-feb9-5762-9082-d8fd7f11abf5.lock"
+          ],
+          "device_ids": [],
+          "resource_keys": [
+            "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5"
+          ],
+          "run_id": "recheck-acceptance",
+          "pid": 1279219,
+          "acquired_at": "2026-09-20T12:00:59.576047Z"
+        }
+      }
+    },
+    {
+      "attempt": "monitor-off-card1-attempt01",
+      "card": 1,
+      "summary": {
+        "cleanup_status": "not-created",
+        "error": "device has open handles or handle check failed",
+        "error_type": "RuntimeError",
+        "failure_stage": "host-preflight",
+        "finished_at": "2026-09-20T12:03:52.582246Z",
+        "kind": "benchmark-preflight",
+        "lease_released": false,
+        "measurement_status": "not-run",
+        "monitoring_status": "not-run",
+        "postflight_status": "not-run",
+        "probe_mode": "identity",
+        "run_id": "preflight-1307f01df1f843df8101293392db576d",
+        "schema_version": 1,
+        "started_at": "2026-09-20T12:03:49.553710Z",
+        "status": "failed",
+        "vendor": "kunlunxin"
+      },
+      "container_created": false,
+      "probe_passed": false
+    },
+    {
+      "attempt": "monitor-off-card1-attempt02",
+      "card": 1,
+      "summary": {
+        "cleanup_status": "passed",
+        "error": "bounded container execution timed out",
+        "error_type": "TimeoutError",
+        "failure_stage": "container-probe",
+        "finished_at": "2026-09-20T12:06:12.465429Z",
+        "kind": "benchmark-preflight",
+        "lease_released": true,
+        "measurement_status": "not-run",
+        "monitoring_status": "not-run",
+        "postflight_error": "device has open handles or handle check failed",
+        "postflight_status": "failed",
+        "probe_mode": "identity",
+        "run_id": "preflight-f0951bf97432423db0022f005f8a8aa7",
+        "schema_version": 1,
+        "started_at": "2026-09-20T12:03:54.694254Z",
+        "status": "failed",
+        "vendor": "kunlunxin"
+      },
+      "container_created": true,
+      "absence_check": {
+        "argv": [
+          "sudo",
+          "-n",
+          "docker",
+          "ps",
+          "-a",
+          "--no-trunc",
+          "--filter",
+          "id=0871af4315c0d86472aec5aa0464ee5fa400b8ec4b0469e84434967c4b430f3a",
+          "--format",
+          "{{.ID}}"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "locks_reacquired": true,
+      "binding_context_verified": true,
+      "binding": {
+        "container_device_node": "/dev/xpu2",
+        "framework_device_name": "cuda:0",
+        "framework_local_rank": 0,
+        "framework_logical_id": 0,
+        "host_device_node": "/dev/xpu2",
+        "host_physical_id": 1,
+        "legacy_logical_id": null,
+        "pci_bdf": "0000:16:00.0",
+        "request_index": 0,
+        "resource_key": "kunlunxin/b3509946-0bc6-5744-bd7c-a0b87dadef02",
+        "serial_or_uuid": "b3509946-0bc6-5744-bd7c-a0b87dadef02",
+        "vendor": "kunlunxin"
+      },
+      "probe_passed": false,
+      "independent_review": {
+        "container_absent": true,
+        "postflight_passed": false,
+        "lock_reacquired": true,
+        "lease": {
+          "backend": "flock",
+          "root": "/tmp/flagperf-base-device-leases",
+          "compatibility_paths": [
+            "/tmp/flagperf-p800-b3509946-0bc6-5744-bd7c-a0b87dadef02.lock"
+          ],
+          "device_ids": [],
+          "resource_keys": [
+            "kunlunxin/b3509946-0bc6-5744-bd7c-a0b87dadef02"
+          ],
+          "run_id": "recheck-acceptance",
+          "pid": 1315586,
+          "acquired_at": "2026-09-20T12:06:12.494235Z"
+        },
+        "followup_checks": [
+          {
+            "attempt": 1,
+            "idle": false,
+            "error": "device has open handles or handle check failed"
+          },
+          {
+            "attempt": 2,
+            "idle": true
+          }
+        ],
+        "followup_idle": true
+      }
+    },
+    {
+      "attempt": "normal-card1-attempt01",
+      "card": 1,
+      "summary": {
+        "cleanup_status": "not-created",
+        "error": "device has open handles or handle check failed",
+        "error_type": "RuntimeError",
+        "failure_stage": "locked-preflight",
+        "finished_at": "2026-09-20T11:52:57.863832Z",
+        "kind": "benchmark-preflight",
+        "lease_released": true,
+        "measurement_status": "not-run",
+        "monitoring_status": "not-run",
+        "postflight_error": "device has open handles or handle check failed",
+        "postflight_status": "failed",
+        "probe_mode": "identity",
+        "run_id": "preflight-66b595dfaffc4b42812648e3e8c6bb7a",
+        "schema_version": 1,
+        "started_at": "2026-09-20T11:52:47.407044Z",
+        "status": "failed",
+        "vendor": "kunlunxin"
+      },
+      "container_created": false,
+      "probe_passed": false
+    },
+    {
+      "attempt": "normal-card1-attempt02",
+      "card": 1,
+      "summary": {
+        "cleanup_status": "not-created",
+        "error": "device has open handles or handle check failed",
+        "error_type": "RuntimeError",
+        "failure_stage": "locked-preflight",
+        "finished_at": "2026-09-20T11:53:10.820907Z",
+        "kind": "benchmark-preflight",
+        "lease_released": true,
+        "measurement_status": "not-run",
+        "monitoring_status": "not-run",
+        "postflight_status": "passed",
+        "probe_mode": "identity",
+        "run_id": "preflight-dd3b6488017148a3ac169142016ff2f3",
+        "schema_version": 1,
+        "started_at": "2026-09-20T11:52:59.976764Z",
+        "status": "failed",
+        "vendor": "kunlunxin"
+      },
+      "container_created": false,
+      "probe_passed": false
+    },
+    {
+      "attempt": "normal-card1-attempt03",
+      "card": 1,
+      "summary": {
+        "cleanup_status": "not-created",
+        "error": "device has open handles or handle check failed",
+        "error_type": "RuntimeError",
+        "failure_stage": "locked-preflight",
+        "finished_at": "2026-09-20T11:53:24.688848Z",
+        "kind": "benchmark-preflight",
+        "lease_released": true,
+        "measurement_status": "not-run",
+        "monitoring_status": "not-run",
+        "postflight_error": "device has open handles or handle check failed",
+        "postflight_status": "failed",
+        "probe_mode": "identity",
+        "run_id": "preflight-81af40eb4d134b17a3780d487d2c3a31",
+        "schema_version": 1,
+        "started_at": "2026-09-20T11:53:12.937876Z",
+        "status": "failed",
+        "vendor": "kunlunxin"
+      },
+      "container_created": false,
+      "probe_passed": false
+    },
+    {
+      "attempt": "normal-card2-attempt01",
+      "card": 2,
+      "summary": {
+        "cleanup_status": "passed",
+        "container_exit_code": 0,
+        "device_bindings": [
+          {
+            "container_device_node": "/dev/xpu3",
+            "framework_device_name": "cuda:0",
+            "framework_local_rank": 0,
+            "framework_logical_id": 0,
+            "host_device_node": "/dev/xpu3",
+            "host_physical_id": 2,
+            "legacy_logical_id": null,
+            "pci_bdf": "0000:1c:00.0",
+            "request_index": 0,
+            "resource_key": "kunlunxin/09d75c76-1b13-5686-a3d2-a9647e48f619",
+            "serial_or_uuid": "09d75c76-1b13-5686-a3d2-a9647e48f619",
+            "vendor": "kunlunxin"
+          }
+        ],
+        "finished_at": "2026-09-20T11:54:00.149810Z",
+        "kind": "benchmark-preflight",
+        "lease_released": true,
+        "measurement_status": "not-run",
+        "monitoring_status": "passed",
+        "postflight_error": "device has open handles or handle check failed",
+        "postflight_status": "failed",
+        "probe_mode": "identity",
+        "run_id": "preflight-e9425a40e8164a8483d2dc8aca1236de",
+        "schema_version": 1,
+        "started_at": "2026-09-20T11:53:26.805156Z",
+        "status": "failed",
+        "vendor": "kunlunxin"
+      },
+      "container_created": true,
+      "absence_check": {
+        "argv": [
+          "sudo",
+          "-n",
+          "docker",
+          "ps",
+          "-a",
+          "--no-trunc",
+          "--filter",
+          "id=bd5934498a24ed009f392e6b159e153a8f2dc76f6b6e703c7d5c71d5cf6d8a21",
+          "--format",
+          "{{.ID}}"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "locks_reacquired": true,
+      "binding_context_verified": true,
+      "binding": {
+        "container_device_node": "/dev/xpu3",
+        "framework_device_name": "cuda:0",
+        "framework_local_rank": 0,
+        "framework_logical_id": 0,
+        "host_device_node": "/dev/xpu3",
+        "host_physical_id": 2,
+        "legacy_logical_id": null,
+        "pci_bdf": "0000:1c:00.0",
+        "request_index": 0,
+        "resource_key": "kunlunxin/09d75c76-1b13-5686-a3d2-a9647e48f619",
+        "serial_or_uuid": "09d75c76-1b13-5686-a3d2-a9647e48f619",
+        "vendor": "kunlunxin"
+      },
+      "probe_passed": true,
+      "valid_samples": {
+        "kunlunxin/09d75c76-1b13-5686-a3d2-a9647e48f619": 16
+      }
+    },
+    {
+      "attempt": "repeat-card1-attempt01",
+      "card": 1,
+      "summary": {
+        "cleanup_status": "not-created",
+        "error": "device has open handles or handle check failed",
+        "error_type": "RuntimeError",
+        "failure_stage": "host-preflight",
+        "finished_at": "2026-09-20T11:57:19.004662Z",
+        "kind": "benchmark-preflight",
+        "lease_released": false,
+        "measurement_status": "not-run",
+        "monitoring_status": "not-run",
+        "postflight_status": "not-run",
+        "probe_mode": "identity",
+        "run_id": "preflight-c56b7c8b875c4728bc76435db3c649b8",
+        "schema_version": 1,
+        "started_at": "2026-09-20T11:57:15.922003Z",
+        "status": "failed",
+        "vendor": "kunlunxin"
+      },
+      "container_created": false,
+      "probe_passed": false
+    },
+    {
+      "attempt": "repeat-card1-attempt02",
+      "card": 1,
+      "summary": {
+        "cleanup_status": "not-created",
+        "error": "device has open handles or handle check failed",
+        "error_type": "RuntimeError",
+        "failure_stage": "host-preflight",
+        "finished_at": "2026-09-20T11:57:24.709636Z",
+        "kind": "benchmark-preflight",
+        "lease_released": false,
+        "measurement_status": "not-run",
+        "monitoring_status": "not-run",
+        "postflight_status": "not-run",
+        "probe_mode": "identity",
+        "run_id": "preflight-2c8c16b81a18475da8565270d64b2c63",
+        "schema_version": 1,
+        "started_at": "2026-09-20T11:57:21.115359Z",
+        "status": "failed",
+        "vendor": "kunlunxin"
+      },
+      "container_created": false,
+      "probe_passed": false
+    },
+    {
+      "attempt": "repeat-card1-attempt03",
+      "card": 1,
+      "summary": {
+        "cleanup_status": "not-created",
+        "error": "device has open handles or handle check failed",
+        "error_type": "RuntimeError",
+        "failure_stage": "locked-preflight",
+        "finished_at": "2026-09-20T11:57:35.665385Z",
+        "kind": "benchmark-preflight",
+        "lease_released": true,
+        "measurement_status": "not-run",
+        "monitoring_status": "not-run",
+        "postflight_status": "passed",
+        "probe_mode": "identity",
+        "run_id": "preflight-3d9015879c8341a29545047592e74ead",
+        "schema_version": 1,
+        "started_at": "2026-09-20T11:57:26.821700Z",
+        "status": "failed",
+        "vendor": "kunlunxin"
+      },
+      "container_created": false,
+      "probe_passed": false
+    },
+    {
+      "attempt": "repeat-card2-attempt01",
+      "card": 2,
+      "summary": {
+        "cleanup_status": "passed",
+        "container_exit_code": 0,
+        "device_bindings": [
+          {
+            "container_device_node": "/dev/xpu3",
+            "framework_device_name": "cuda:0",
+            "framework_local_rank": 0,
+            "framework_logical_id": 0,
+            "host_device_node": "/dev/xpu3",
+            "host_physical_id": 2,
+            "legacy_logical_id": null,
+            "pci_bdf": "0000:1c:00.0",
+            "request_index": 0,
+            "resource_key": "kunlunxin/09d75c76-1b13-5686-a3d2-a9647e48f619",
+            "serial_or_uuid": "09d75c76-1b13-5686-a3d2-a9647e48f619",
+            "vendor": "kunlunxin"
+          }
+        ],
+        "finished_at": "2026-09-20T11:58:11.240423Z",
+        "kind": "benchmark-preflight",
+        "lease_released": true,
+        "measurement_status": "not-run",
+        "monitoring_status": "passed",
+        "postflight_error": "device has open handles or handle check failed",
+        "postflight_status": "failed",
+        "probe_mode": "identity",
+        "run_id": "preflight-7c75aea0953e424bb35773a71ba42ca1",
+        "schema_version": 1,
+        "started_at": "2026-09-20T11:57:37.784206Z",
+        "status": "failed",
+        "vendor": "kunlunxin"
+      },
+      "container_created": true,
+      "absence_check": {
+        "argv": [
+          "sudo",
+          "-n",
+          "docker",
+          "ps",
+          "-a",
+          "--no-trunc",
+          "--filter",
+          "id=cc9b513503f9a9320b5261fbaed29444da89d07087347b7fb691ce65798a66a3",
+          "--format",
+          "{{.ID}}"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "locks_reacquired": true,
+      "binding_context_verified": true,
+      "binding": {
+        "container_device_node": "/dev/xpu3",
+        "framework_device_name": "cuda:0",
+        "framework_local_rank": 0,
+        "framework_logical_id": 0,
+        "host_device_node": "/dev/xpu3",
+        "host_physical_id": 2,
+        "legacy_logical_id": null,
+        "pci_bdf": "0000:1c:00.0",
+        "request_index": 0,
+        "resource_key": "kunlunxin/09d75c76-1b13-5686-a3d2-a9647e48f619",
+        "serial_or_uuid": "09d75c76-1b13-5686-a3d2-a9647e48f619",
+        "vendor": "kunlunxin"
+      },
+      "probe_passed": true,
+      "valid_samples": {
+        "kunlunxin/09d75c76-1b13-5686-a3d2-a9647e48f619": 16
+      }
+    },
+    {
+      "attempt": "timeout-card2-attempt01",
+      "card": 2,
+      "summary": {
+        "cleanup_status": "passed",
+        "error": "bounded container execution timed out",
+        "error_type": "TimeoutError",
+        "failure_stage": "container-probe",
+        "finished_at": "2026-09-20T12:14:05.107832Z",
+        "kind": "benchmark-preflight",
+        "lease_released": true,
+        "measurement_status": "not-run",
+        "monitoring_status": "not-run",
+        "postflight_error": "device has open handles or handle check failed",
+        "postflight_status": "failed",
+        "probe_mode": "timeout-check",
+        "run_id": "preflight-ffd235c3990148edacbc5308d938e120",
+        "schema_version": 1,
+        "started_at": "2026-09-20T12:11:50.223188Z",
+        "status": "failed",
+        "vendor": "kunlunxin"
+      },
+      "container_created": true,
+      "absence_check": {
+        "argv": [
+          "sudo",
+          "-n",
+          "docker",
+          "ps",
+          "-a",
+          "--no-trunc",
+          "--filter",
+          "id=8a0b125945c9fd56828845f0fa46ffcd7323287830df73e82a33184f12dd38ac",
+          "--format",
+          "{{.ID}}"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "locks_reacquired": true,
+      "binding_context_verified": true,
+      "binding": {
+        "container_device_node": "/dev/xpu3",
+        "framework_device_name": "cuda:0",
+        "framework_local_rank": 0,
+        "framework_logical_id": 0,
+        "host_device_node": "/dev/xpu3",
+        "host_physical_id": 2,
+        "legacy_logical_id": null,
+        "pci_bdf": "0000:1c:00.0",
+        "request_index": 0,
+        "resource_key": "kunlunxin/09d75c76-1b13-5686-a3d2-a9647e48f619",
+        "serial_or_uuid": "09d75c76-1b13-5686-a3d2-a9647e48f619",
+        "vendor": "kunlunxin"
+      },
+      "probe_passed": true,
+      "independent_review": {
+        "container_absent": true,
+        "postflight_passed": false,
+        "lock_reacquired": true,
+        "lease": {
+          "backend": "flock",
+          "root": "/tmp/flagperf-base-device-leases",
+          "compatibility_paths": [
+            "/tmp/flagperf-p800-09d75c76-1b13-5686-a3d2-a9647e48f619.lock"
+          ],
+          "device_ids": [],
+          "resource_keys": [
+            "kunlunxin/09d75c76-1b13-5686-a3d2-a9647e48f619"
+          ],
+          "run_id": "recheck-acceptance",
+          "pid": 1315586,
+          "acquired_at": "2026-09-20T12:14:05.134701Z"
+        },
+        "followup_checks": [
+          {
+            "attempt": 1,
+            "idle": true
+          }
+        ],
+        "followup_idle": true
+      }
+    },
+    {
+      "attempt": "timeout-card6-attempt01",
+      "card": 6,
+      "summary": {
+        "cleanup_status": "not-created",
+        "error": "device has open handles or handle check failed",
+        "error_type": "RuntimeError",
+        "failure_stage": "host-preflight",
+        "finished_at": "2026-09-20T12:07:06.229053Z",
+        "kind": "benchmark-preflight",
+        "lease_released": false,
+        "measurement_status": "not-run",
+        "monitoring_status": "not-run",
+        "postflight_status": "not-run",
+        "probe_mode": "timeout-check",
+        "run_id": "preflight-b6bf682bf22448b78c37b85cfedb16a7",
+        "schema_version": 1,
+        "started_at": "2026-09-20T12:07:03.054428Z",
+        "status": "failed",
+        "vendor": "kunlunxin"
+      },
+      "container_created": false,
+      "probe_passed": false
+    },
+    {
+      "attempt": "timeout-card6-attempt02",
+      "card": 6,
+      "summary": {
+        "cleanup_status": "passed",
+        "error": "bounded container execution timed out",
+        "error_type": "TimeoutError",
+        "failure_stage": "container-probe",
+        "finished_at": "2026-09-20T12:09:22.708401Z",
+        "kind": "benchmark-preflight",
+        "lease_released": true,
+        "measurement_status": "not-run",
+        "monitoring_status": "not-run",
+        "postflight_status": "passed",
+        "probe_mode": "timeout-check",
+        "run_id": "preflight-f4b25fdb88bf45d5b66a2554e1c48242",
+        "schema_version": 1,
+        "started_at": "2026-09-20T12:07:08.341066Z",
+        "status": "failed",
+        "vendor": "kunlunxin"
+      },
+      "container_created": true,
+      "absence_check": {
+        "argv": [
+          "sudo",
+          "-n",
+          "docker",
+          "ps",
+          "-a",
+          "--no-trunc",
+          "--filter",
+          "id=83def915c221641ed0ed3446836fec0f78c2f1c56e1a88635d8c06b92aae8ae3",
+          "--format",
+          "{{.ID}}"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "locks_reacquired": true,
+      "binding_context_verified": true,
+      "binding": {
+        "container_device_node": "/dev/xpu5",
+        "framework_device_name": "cuda:0",
+        "framework_local_rank": 0,
+        "framework_logical_id": 0,
+        "host_device_node": "/dev/xpu5",
+        "host_physical_id": 6,
+        "legacy_logical_id": null,
+        "pci_bdf": "0000:b6:00.0",
+        "request_index": 0,
+        "resource_key": "kunlunxin/9e24d168-db57-5cd9-8cfb-aea4ae898897",
+        "serial_or_uuid": "9e24d168-db57-5cd9-8cfb-aea4ae898897",
+        "vendor": "kunlunxin"
+      },
+      "probe_passed": true,
+      "independent_review": {
+        "container_absent": true,
+        "postflight_passed": true,
+        "lock_reacquired": true,
+        "lease": {
+          "backend": "flock",
+          "root": "/tmp/flagperf-base-device-leases",
+          "compatibility_paths": [
+            "/tmp/flagperf-p800-9e24d168-db57-5cd9-8cfb-aea4ae898897.lock"
+          ],
+          "device_ids": [],
+          "resource_keys": [
+            "kunlunxin/9e24d168-db57-5cd9-8cfb-aea4ae898897"
+          ],
+          "run_id": "recheck-acceptance",
+          "pid": 1315586,
+          "acquired_at": "2026-09-20T12:09:22.738528Z"
+        }
+      }
+    },
+    {
+      "attempt": "timeout-card7-attempt01",
+      "card": 7,
+      "summary": {
+        "cleanup_status": "not-created",
+        "error": "device has open handles or handle check failed",
+        "error_type": "RuntimeError",
+        "failure_stage": "host-preflight",
+        "finished_at": "2026-09-20T12:09:26.861489Z",
+        "kind": "benchmark-preflight",
+        "lease_released": false,
+        "measurement_status": "not-run",
+        "monitoring_status": "not-run",
+        "postflight_status": "not-run",
+        "probe_mode": "timeout-check",
+        "run_id": "preflight-626321dc48894f1197c082ad3452b9d9",
+        "schema_version": 1,
+        "started_at": "2026-09-20T12:09:22.832728Z",
+        "status": "failed",
+        "vendor": "kunlunxin"
+      },
+      "container_created": false,
+      "probe_passed": false
+    },
+    {
+      "attempt": "timeout-card7-attempt02",
+      "card": 7,
+      "summary": {
+        "cleanup_status": "passed",
+        "error": "bounded container execution timed out",
+        "error_type": "TimeoutError",
+        "failure_stage": "container-probe",
+        "finished_at": "2026-09-20T12:11:41.699237Z",
+        "kind": "benchmark-preflight",
+        "lease_released": true,
+        "measurement_status": "not-run",
+        "monitoring_status": "not-run",
+        "postflight_error": "device has open handles or handle check failed",
+        "postflight_status": "failed",
+        "probe_mode": "timeout-check",
+        "run_id": "preflight-8b3a19403d1c42bebc97eb7604808d96",
+        "schema_version": 1,
+        "started_at": "2026-09-20T12:09:28.977641Z",
+        "status": "failed",
+        "vendor": "kunlunxin"
+      },
+      "container_created": true,
+      "absence_check": {
+        "argv": [
+          "sudo",
+          "-n",
+          "docker",
+          "ps",
+          "-a",
+          "--no-trunc",
+          "--filter",
+          "id=39d411c562cc88ca998a452b2df394fd40ed6dd0141a78a69f485de6f898cb31",
+          "--format",
+          "{{.ID}}"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "locks_reacquired": true,
+      "binding_context_verified": true,
+      "binding": {
+        "container_device_node": "/dev/xpu6",
+        "framework_device_name": "cuda:0",
+        "framework_local_rank": 0,
+        "framework_logical_id": 0,
+        "host_device_node": "/dev/xpu6",
+        "host_physical_id": 7,
+        "legacy_logical_id": null,
+        "pci_bdf": "0000:bb:00.0",
+        "request_index": 0,
+        "resource_key": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+        "serial_or_uuid": "4922595e-feb9-5762-9082-d8fd7f11abf5",
+        "vendor": "kunlunxin"
+      },
+      "probe_passed": true,
+      "independent_review": {
+        "container_absent": true,
+        "postflight_passed": false,
+        "lock_reacquired": true,
+        "lease": {
+          "backend": "flock",
+          "root": "/tmp/flagperf-base-device-leases",
+          "compatibility_paths": [
+            "/tmp/flagperf-p800-4922595e-feb9-5762-9082-d8fd7f11abf5.lock"
+          ],
+          "device_ids": [],
+          "resource_keys": [
+            "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5"
+          ],
+          "run_id": "recheck-acceptance",
+          "pid": 1315586,
+          "acquired_at": "2026-09-20T12:11:41.728321Z"
+        },
+        "followup_checks": [
+          {
+            "attempt": 1,
+            "idle": false,
+            "error": "device has open handles or handle check failed"
+          },
+          {
+            "attempt": 2,
+            "idle": true
+          }
+        ],
+        "followup_idle": true
+      }
+    }
+  ],
+  "final_idle": [
+    {
+      "card": 1,
+      "checks": [
+        {
+          "attempt": 1,
+          "idle": true
+        }
+      ],
+      "locks_reacquired": true,
+      "idle_verified": true
+    },
+    {
+      "card": 2,
+      "checks": [
+        {
+          "attempt": 1,
+          "idle": true
+        }
+      ],
+      "locks_reacquired": true,
+      "idle_verified": true
+    },
+    {
+      "card": 6,
+      "checks": [
+        {
+          "attempt": 1,
+          "idle": true
+        }
+      ],
+      "locks_reacquired": true,
+      "idle_verified": true
+    },
+    {
+      "card": 7,
+      "checks": [
+        {
+          "attempt": 1,
+          "idle": true
+        }
+      ],
+      "locks_reacquired": true,
+      "idle_verified": true
+    }
+  ],
+  "head": "80dd3f98b69bcca914325f4e51ce46df81131a1f",
+  "scope": "bounded single-card preflight; no performance qualification"
+}

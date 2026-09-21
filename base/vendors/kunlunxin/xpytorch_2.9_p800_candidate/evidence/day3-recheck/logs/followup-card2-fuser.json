@@ -1,0 +1,13 @@
+{
+  "argv": [
+    "sudo",
+    "-n",
+    "fuser",
+    "-v",
+    "/dev/xpu3"
+  ],
+  "portable_projection": "selected physical device only; process IDs/names redacted; raw retained in source directory",
+  "returncode": 0,
+  "stderr": "<verbose process details redacted; xpu-smi was observed>\n",
+  "stdout": "<redacted process identifiers>\n"
+}

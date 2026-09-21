@@ -1,0 +1,19 @@
+{
+  "container_absent": true,
+  "postflight_passed": true,
+  "lock_reacquired": true,
+  "lease": {
+    "backend": "flock",
+    "root": "/tmp/flagperf-base-device-leases",
+    "compatibility_paths": [
+      "/tmp/flagperf-p800-4922595e-feb9-5762-9082-d8fd7f11abf5.lock"
+    ],
+    "device_ids": [],
+    "resource_keys": [
+      "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5"
+    ],
+    "run_id": "recheck-acceptance",
+    "pid": 1434731,
+    "acquired_at": "2026-09-20T12:25:55.904035Z"
+  }
+}

@@ -26,8 +26,9 @@
 
 当前统一入口只承诺 **Ascend 单宿主**。原多机入口保存在
 [`legacy/cluster_run.py`](legacy/cluster_run.py)，仅用于迁移兼容。
-Benchmark 控制面通过静态 Vendor Provider 接入厂商策略；生产 registry 当前仅注册
-Ascend。P800 provider 尚未接入，不能用本次离线回归宣称 P800 正式性能已验证。
+Benchmark 控制面通过静态 Vendor Provider 接入厂商策略；生产 registry 已注册
+Ascend 性能执行与 Kunlunxin 单卡预检查。P800 性能 case/driver 仍未接入，
+预检查通过不代表正式性能已验证。
 接口、配置兼容变化与后续接入步骤见 [控制面迁移说明](docs/vendor-control-plane.md)。
 
 
@@ -540,3 +541,7 @@ See the [runbook and Day 4 integration contract](docs/p800-preflight.md) and
 [Day 3 evidence review](vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day3/review.md).
 P800 FP32 case/driver integration is pending; missing contracts reject before
 device access. This command does not produce TFLOPS or promote runtime validation.
+
+2026-09-20 追加复验：优先在重新通过预检查的卡 6/7 上推进；卡 1 同步超时
+复现并有 PCI 对应内核异常，卡 2 有既存 ECC/重映射告警。详见
+[逐卡结果与恢复记录](vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day3-recheck/review.md)。

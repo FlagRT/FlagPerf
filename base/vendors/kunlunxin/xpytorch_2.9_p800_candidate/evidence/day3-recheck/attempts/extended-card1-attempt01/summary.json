@@ -1,0 +1,19 @@
+{
+  "cleanup_status": "passed",
+  "error": "bounded container execution timed out",
+  "error_type": "TimeoutError",
+  "failure_stage": "container-probe",
+  "finished_at": "2026-09-20T12:03:16.795416Z",
+  "kind": "benchmark-preflight",
+  "lease_released": true,
+  "measurement_status": "not-run",
+  "monitoring_status": "partial",
+  "postflight_error": "device has open handles or handle check failed",
+  "postflight_status": "failed",
+  "probe_mode": "identity",
+  "run_id": "preflight-235155abbfde4798a355b9d9ebc3ccda",
+  "schema_version": 1,
+  "started_at": "2026-09-20T12:00:59.668105Z",
+  "status": "failed",
+  "vendor": "kunlunxin"
+}

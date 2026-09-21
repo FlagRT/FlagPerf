@@ -1,0 +1,80 @@
+{
+  "host_identity": "deferred-until-host-preflight",
+  "kind": "benchmark-preflight",
+  "measurement_status": "not-run",
+  "mode": "execution",
+  "monitoring": {
+    "automatic_workload_extension": false,
+    "collector": "xpu-smi -m and selected -q",
+    "enabled": true,
+    "metric_fields": [
+      {
+        "key": "utilization_percent",
+        "label": "Device utilization",
+        "unit": "%"
+      },
+      {
+        "key": "used_memory_mib",
+        "label": "Allocated device memory",
+        "unit": "MiB"
+      }
+    ],
+    "required_samples_per_target": 10,
+    "target_interval_s": 1.0,
+    "target_resource": "p800-device",
+    "vendor": "kunlunxin"
+  },
+  "permissions": {
+    "cap_drop": [
+      "ALL"
+    ],
+    "ipc_namespace": "private",
+    "network": "none",
+    "pid_namespace": "private",
+    "privileged_root": false,
+    "read_only_root": true
+  },
+  "probe_mode": "identity",
+  "runtime_bindings": "deferred-until-container-UUID-probe",
+  "runtime_lock": {
+    "image_manifest": {
+      "image": "flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev:202608",
+      "image_id": "sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975",
+      "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/image-manifest.json",
+      "release_stage": "candidate",
+      "schema_version": 1,
+      "sha256": "ab59dc1cd14b65a28ffaef7b1b21b1d0b51f5334619301659d4123a5c681acbf",
+      "validated": false,
+      "validation_scope": [],
+      "validation_status": null
+    },
+    "runtime_profile": "xpytorch_2.9_p800_candidate",
+    "stack_lock": {
+      "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/stack.lock.yaml",
+      "sha256": "8f200d0b955b7e60881bc13ed75c8784c2c38fe2c755d018c618f1dc7b46cded"
+    },
+    "vendor": "kunlunxin"
+  },
+  "schema_version": 1,
+  "selection_request": {
+    "expression": "5",
+    "requested_ids": [
+      5
+    ],
+    "resolution_status": "deferred-until-host-preflight",
+    "source": "physical-device-ids"
+  },
+  "stages": [
+    "image-identity",
+    "host-preflight",
+    "lease",
+    "locked-preflight",
+    "container-inspect",
+    "container-probe",
+    "cleanup",
+    "host-postflight",
+    "lease-release",
+    "report"
+  ],
+  "vendor": "kunlunxin"
+}

@@ -1,0 +1,15 @@
+{
+  "argv": [
+    "xpu-smi",
+    "-m"
+  ],
+  "finished_monotonic_s": 3747824.223037856,
+  "portable_projection": "selected physical device only; process IDs/names redacted; raw retained in source directory",
+  "returncode": 0,
+  "started_at": "2026-09-20T12:18:07.224545+00:00",
+  "started_monotonic_s": 3747824.144400267,
+  "stderr": "",
+  "stdout": "00000000:2E:00.0 3 3 02K15K0263D002L7 43 0 0 0 94 1450 1450 1450 1450 1450 1450 0 96 1844 98304 0 1.0:2.43:1.86.5.3 \"P800 OAM\" 0 0 0 0 0 0 0 0 0 0\n",
+  "timed_out": false,
+  "timeout_s": 10
+}

@@ -117,6 +117,24 @@ in ignored operational directories. Portable evidence explicitly labels selected
 record extractions and preserves source hashes; it must not imply filtered logs
 are byte-identical originals.
 
+## Targeted recheck before performance work (2026-09-20)
+
+Use physical card 6 or 7 only after a fresh authorized-window preflight. Both
+passed the normal tensor/16-sample observation and controlled timeout cleanup.
+All eight cards were checked: 0/3/4/5 were occupied and did not run workloads.
+After the user stopped their xpu-smi monitor, 2/6/7 normal and timeout postflight
+passed without follow-up recovery; card 1 still timed out with our monitor off.
+Card 1 reproduced synchronization timeouts with this run's monitor on and off;
+its selected PCI kernel log contains `KL_XID_KERNEL_EXCEPTION` and task/NOC idle
+timeouts. Root cause is not yet established. Card 2 completed tensor/observation
+but retains historical uncorrectable ECC 8/8 and remap pending YES; avoid using
+it as a performance baseline until assessed. Transient `xpu-smi` handles can
+reject strict pre/postflight even with zero utilization. Pause user-controlled
+refresh loops during checks; never ignore handles or stop other users' processes.
+Preserve failed summaries; independent later idle/lock recovery is separate.
+
+See the [recheck evidence review](../vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day3-recheck/review.md).
+
 ## Next performance integration
 
 P800 `benchmark run --case computation-FP32:P800` still rejects its missing case

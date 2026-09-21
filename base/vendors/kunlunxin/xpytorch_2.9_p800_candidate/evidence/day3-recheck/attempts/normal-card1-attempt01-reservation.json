@@ -1,0 +1,12 @@
+{
+  "created_at": "2026-09-20T11:52:47.319034+00:00",
+  "end": "2026-09-20T12:37:47.319046+00:00",
+  "cards": [
+    1,
+    2,
+    6,
+    7
+  ],
+  "reference": "User explicitly requested retesting idle physical cards 1,2,6,7 before next-day performance work; sequential bounded probes and cleanup drills",
+  "physical_id": 1
+}

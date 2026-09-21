@@ -1,0 +1,56 @@
+[
+  {
+    "card": 0,
+    "attempt": "allcards-normal-card0-attempt01",
+    "status": "failed",
+    "error": "selected physical device 0 is occupied"
+  },
+  {
+    "card": 1,
+    "attempt": "allcards-normal-card1-attempt02",
+    "status": "failed",
+    "error": "device has open handles or handle check failed"
+  },
+  {
+    "card": 2,
+    "attempt": "allcards-normal-card2-attempt02",
+    "status": "passed",
+    "error": null,
+    "timeout_attempt": "allcards-timeout-card2-attempt01",
+    "timeout_status": "failed"
+  },
+  {
+    "card": 3,
+    "attempt": "allcards-normal-card3-attempt01",
+    "status": "failed",
+    "error": "selected physical device 3 is occupied"
+  },
+  {
+    "card": 4,
+    "attempt": "allcards-normal-card4-attempt01",
+    "status": "failed",
+    "error": "selected physical device 4 is occupied"
+  },
+  {
+    "card": 5,
+    "attempt": "allcards-normal-card5-attempt01",
+    "status": "failed",
+    "error": "selected physical device 5 is occupied"
+  },
+  {
+    "card": 6,
+    "attempt": "allcards-normal-card6-attempt01",
+    "status": "passed",
+    "error": null,
+    "timeout_attempt": "allcards-timeout-card6-attempt01",
+    "timeout_status": "failed"
+  },
+  {
+    "card": 7,
+    "attempt": "allcards-normal-card7-attempt01",
+    "status": "passed",
+    "error": null,
+    "timeout_attempt": "allcards-timeout-card7-attempt01",
+    "timeout_status": "failed"
+  }
+]
