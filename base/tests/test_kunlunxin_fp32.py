@@ -334,6 +334,7 @@ class BoundedIntegrationTests(unittest.TestCase):
                 self.assertEqual(code, 1)
                 self.assertEqual(summary['status'], 'failed')
 
+
     def test_missing_event_or_partial_monitor_is_partial(self):
         for mode in ('missing-event', 'partial'):
             with self.subTest(mode=mode):
@@ -348,6 +349,83 @@ class BoundedIntegrationTests(unittest.TestCase):
                 self.assertEqual(code, 1)
                 self.assertEqual(summary['status'], 'failed')
 
+
+class QualificationStatisticsTests(unittest.TestCase):
+    def fixtures(self, parent, values):
+        config = read_config(CASE / 'case_config.yaml')
+        contract = json.dumps({'merged_config': config}).encode()
+        binding = binding_records([DEVICE], [UID])[0]
+        directories = []
+        for index, value in enumerate(values):
+            root = parent / str(index)
+            (root / 'artifacts').mkdir(parents=True)
+            (root / 'control').mkdir()
+            (root / 'benchmark-monitor').mkdir()
+            run_id = 'run-' + str(index)
+            context = {'run_id': run_id, 'case_assets_sha256': hashlib.sha256(contract).hexdigest()}
+            raw_context = json.dumps(context).encode()
+            metric, correct = rank_records(context, hashlib.sha256(raw_context).hexdigest(), binding, config)
+            elapsed = metric['operations'] / value / 1e12
+            metric.update(value=value, elapsed_seconds=elapsed,
+                          finished_monotonic_ns=metric['started_monotonic_ns'] + round(elapsed * 1e9))
+            metric['elapsed_seconds'] = (metric['finished_monotonic_ns'] - metric['started_monotonic_ns']) / 1e9
+            metric['value'] = metric['operations'] / metric['elapsed_seconds'] / 1e12
+            summary = {key: 'passed' for key in ('status', 'execution_status', 'measurement_status', 'correctness_status',
+                'measurement_evidence_status', 'monitoring_status', 'postflight_status', 'cleanup_status')}
+            summary.update(run_id=run_id, lease_released=True, qualification={'mode': 'qualification'},
+                           runtime={'image_id': 'fixed-image'}, device_bindings=[binding])
+            documents = {'summary.json': summary, 'benchmark-result.json': {'status': 'passed', 'metrics': [metric]},
+                'benchmark-monitor/summary.json': {'status': 'passed', 'primary_sample_counts_by_target': {binding['resource_key']: 20}},
+                'code-identity.json': {'source_sha256': {'code': 'fixed'}}, 'artifacts/metric-rank-0.json': metric,
+                'artifacts/correctness-rank-0.json': correct}
+            for filename, content in documents.items():
+                (root / filename).write_text(json.dumps(content))
+            (root / 'control/host-context.json').write_bytes(raw_context)
+            (root / 'control/case-assets.json').write_bytes(contract)
+            directories.append(root)
+        return directories
+
+    def test_all_five_values_and_sample_deviation_used(self):
+        from qualification import summarize
+        import statistics
+        values = [4.0, 4.01, 3.99, 4.02, 3.98]
+        with tempfile.TemporaryDirectory() as temp:
+            result = summarize(self.fixtures(Path(temp), values))
+            self.assertEqual(result['status'], 'passed')
+            self.assertAlmostEqual(result['sample_standard_deviation'], statistics.stdev(values), places=8)
+            self.assertAlmostEqual(result['median'], 4)
+            self.assertEqual(result['ddof'], 1)
+
+    def test_unstable_runs_not_trimmed(self):
+        from qualification import summarize
+        with tempfile.TemporaryDirectory() as temp:
+            result = summarize(self.fixtures(Path(temp), [4, 4, 4, 4, 2]))
+            self.assertEqual(result['status'], 'unstable')
+            self.assertEqual(len(result['runs']), 5)
+
+    def test_incomplete_mixed_code_and_tampered_evidence_rejected(self):
+        from qualification import summarize
+        for mode in ('duplicate', 'failed', 'mixed-code', 'missing-correctness', 'tampered-metric'):
+            with self.subTest(mode=mode), tempfile.TemporaryDirectory() as temp:
+                directories = self.fixtures(Path(temp), [4] * 5)
+                if mode == 'duplicate':
+                    directories[-1] = directories[0]
+                elif mode == 'failed':
+                    path = directories[0] / 'summary.json'
+                    record = json.loads(path.read_text())
+                    record['status'] = 'failed'
+                    path.write_text(json.dumps(record))
+                elif mode == 'mixed-code':
+                    (directories[0] / 'code-identity.json').write_text(json.dumps({'source_sha256': {'code': 'different'}}))
+                elif mode == 'missing-correctness':
+                    (directories[0] / 'artifacts/correctness-rank-0.json').unlink()
+                else:
+                    path = directories[0] / 'artifacts/metric-rank-0.json'
+                    record = json.loads(path.read_text())
+                    record['value'] = 999
+                    path.write_text(json.dumps(record))
+                with self.assertRaises((ValueError, RuntimeError, OSError)):
+                    summarize(directories)
 
 if __name__ == '__main__':
     unittest.main()

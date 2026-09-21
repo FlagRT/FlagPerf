@@ -93,6 +93,9 @@ def host_device_sync(vendor):
 
 
 def multi_device_sync(vendor):
+    if _vendor_name(vendor) == "kunlunxin":
+        torch.distributed.barrier()
+        return
     if _vendor_name(vendor) == "nvidia":
         torch.distributed.barrier()
     elif _vendor_name(vendor) == "ascend":

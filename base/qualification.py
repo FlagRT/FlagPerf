@@ -8,6 +8,7 @@ import statistics
 
 
 def summarize(directories):
+    from executors.bounded_benchmark import validate_metric
     if len(directories) != 5 or len({path.resolve() for path in directories}) != 5:
         raise ValueError('qualification requires exactly five distinct result directories')
     records, identities, run_ids = [], set(), set()
@@ -23,6 +24,17 @@ def summarize(directories):
         if result.get('status') != 'passed' or len(result.get('metrics', [])) != 1:
             raise ValueError('incomplete rank metrics')
         metric = result['metrics'][0]
+        context_raw = (root / 'control/host-context.json').read_bytes()
+        context = json.loads(context_raw)
+        contract = json.loads((root / 'control/case-assets.json').read_text())
+        if hashlib.sha256((root / 'control/case-assets.json').read_bytes()).hexdigest() != context['case_assets_sha256']:
+            raise ValueError('case contract hash differs from host context')
+        raw_metric = json.loads((root / 'artifacts/metric-rank-0.json').read_text())
+        correctness = json.loads((root / 'artifacts/correctness-rank-0.json').read_text())
+        if metric != raw_metric:
+            raise ValueError('semantic metric differs from raw rank evidence')
+        validate_metric(metric, correctness, context, hashlib.sha256(context_raw).hexdigest(),
+                        summary['device_bindings'][0], contract['merged_config'])
         if metric.get('rank') != 0 or metric['elapsed_seconds'] < 15 or metric['mode'] != 'qualification':
             raise ValueError('wrong rank, mode, or short measurement window')
         value = metric['value']
