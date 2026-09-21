@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 import json
 import logging
 import os
+import runpy
 from pathlib import Path
 import shlex
 import subprocess
@@ -23,6 +24,32 @@ from benchmarks.case_assets import resolve_case_assets, verify_worker_assets
 
 
 LOGGER = logging.getLogger("flagperf.base.benchmark_worker")
+
+
+def run_bound_case(context, context_path, output):
+    """Run the explicitly single-rank case in the already gated child."""
+    if context.get('nproc_per_node') != 1 or context.get('kind') != 'benchmark':
+        raise RuntimeError('bound case worker requires a single-rank benchmark context')
+    base = Path(__file__).resolve().parent
+    contract = context_path.parent / 'case-assets.json'
+    assets = verify_worker_assets(base, contract, context['case'], 'kunlunxin')
+    os.environ.update({'RANK': '0', 'LOCAL_RANK': '0', 'WORLD_SIZE': '1',
+                       'MASTER_ADDR': '127.0.0.1', 'MASTER_PORT': str(context['master_port']),
+                       'FLAGPERF_CASE_ASSETS': str(contract),
+                       'FLAGPERF_HOST_CONTEXT': str(context_path),
+                       'FLAGPERF_RUNTIME_BINDINGS': str(output / 'runtime-bindings.json'),
+                       'FLAGPERF_BENCHMARK_OUTPUT': str(output),
+                       'FLAGPERF_BENCHMARK_EVENTS_DIR': str(output / 'benchmark-events'),
+                       'FLAGPERF_BENCHMARK_CASE': context['case']})
+    os.chdir(base / 'benchmarks' / assets['case_name'])
+    sys.path.insert(0, str(base / 'benchmarks'))
+    sys.argv = [assets['entrypoint']['path'], '--vendor=' + assets['selector'], '--node_size=1']
+    try:
+        runpy.run_path(assets['entrypoint']['path'], run_name='__main__')
+    finally:
+        import torch.distributed as distributed
+        if distributed.is_initialized():
+            distributed.destroy_process_group()
 
 
 def utc_now() -> str:

@@ -13,6 +13,7 @@ class KunlunxinProvider:
     display_name = 'Kunlunxin P800'
     default_runtime_profile = 'xpytorch_2.9_p800_candidate'
     supports_preflight = True
+    supports_bounded_benchmark = True
     fallback_markers = ()  # PR0 did not prove a universal fallback detector.
 
     def runtime_root(self, base_dir, profile):
@@ -34,6 +35,26 @@ class KunlunxinProvider:
         context.validate(require_selection=True)
         if context.physical_device_ids is None:
             raise ConfigurationError('P800 requires --physical-device-ids; legacy aliases are undefined')
+
+    def validate_benchmark(self, request, assets):
+        from benchmarks.fp32_contract import validate_config
+        validate_config(assets['merged_config'])
+        if assets['environments']:
+            raise ConfigurationError('P800 native case must not inject unqualified environment scripts')
+        if request.case != 'computation-FP32:P800' or request.nproc_per_node not in (None, 1):
+            raise ConfigurationError('P800 performance qualification supports only single-rank FP32')
+        selected = request.context.selection_request()['requested_ids']
+        if len(selected) != 1 or not set(selected).issubset(request_assets_inventory(request)):
+            raise ConfigurationError('P800 performance requires one configured physical device')
+        if not 30 <= request.context.timeout <= 600:
+            raise ConfigurationError('P800 performance timeout must be 30..600 seconds; pass --timeout 300')
+        if request.allow_privileged_root:
+            raise ConfigurationError('P800 performance uses nonprivileged containers')
+        if request.result_dir is not None and request.context.result_root is not None:
+            raise ConfigurationError('choose result-dir or result-root, not both')
+
+    def benchmark_spec(self, base_dir, result_dir, config, host, image_id):
+        return self.probe_spec(base_dir, result_dir, config, host, image_id)
 
     def inspect_host(self, config, requested, commands, directory):
         return preflight.inspect_host(config, requested, commands, directory)
@@ -121,3 +142,8 @@ def binding_records(devices, observed):
                           framework_local_rank=d['requested_rank'], framework_logical_id=d['logical_device'],
                           framework_device_name='cuda:' + str(d['logical_device']), request_index=d['requested_rank'],
                           resource_key='kunlunxin/' + d['uuid']).record() for d in resolved]
+
+
+def request_assets_inventory(request):
+    from executors.common import load_host_config
+    return load_host_config(request.context.config)[1]['expected_device_ids']

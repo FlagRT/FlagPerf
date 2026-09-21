@@ -93,6 +93,10 @@ def add_cli_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--master-port", type=int, default=29721)
     parser.add_argument("--log-level", default="INFO")
     parser.add_argument("--result-root", type=Path)
+    parser.add_argument("--result-dir", type=Path)
+    parser.add_argument("--privilege-command", default="")
+    parser.add_argument("--reservation-end")
+    parser.add_argument("--reservation-reference")
     parser.add_argument("--timeout", type=int, default=3600)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument(
@@ -131,6 +135,10 @@ class BenchmarkRunRequest:
     allow_high_risk_case: bool
     monitor: str = "on"
     allow_candidate_runtime: bool = False
+    result_dir: Path | None = None
+    privilege_command: str = ""
+    reservation_end: str | None = None
+    reservation_reference: str | None = None
 
     @classmethod
     def from_namespace(cls, args: argparse.Namespace) -> "BenchmarkRunRequest":
@@ -153,6 +161,10 @@ class BenchmarkRunRequest:
             allow_high_risk_case=args.allow_high_risk_case,
             monitor=args.monitor,
             allow_candidate_runtime=args.allow_candidate_runtime,
+            result_dir=getattr(args, "result_dir", None),
+            privilege_command=getattr(args, "privilege_command", ""),
+            reservation_end=getattr(args, "reservation_end", None),
+            reservation_reference=getattr(args, "reservation_reference", None),
         )
 
     def validate(self) -> None:
@@ -371,6 +383,8 @@ class BenchmarkExecutor:
         runtime_requirements = case_runtime_requirement_record(request)
         validate_case_runtime_requirements(request, config, runtime_requirements)
         requirements = runtime_requirements["requirements"] if runtime_requirements else {}
+        if requirements.get("supported") is not False and getattr(provider, "supports_bounded_benchmark", False):
+            provider.validate_benchmark(request, assets)
         applicability = {
             "status": "skipped" if requirements.get("supported") is False else "applicable",
             "reason": requirements.get("unsupported_reason"),
@@ -416,6 +430,13 @@ class BenchmarkExecutor:
         if request.context.dry_run:
             print(json.dumps(plan, indent=2, sort_keys=True))
             return 0
+        _, config = load_host_config(request.context.config)
+        provider = get_provider(config["vendor"])
+        if plan["applicability"]["status"] != "skipped" and getattr(provider, "supports_bounded_benchmark", False):
+            from executors.bounded_benchmark import execute
+            return execute(request, plan, config, provider)
+        if request.result_dir is not None or request.privilege_command or request.reservation_end or request.reservation_reference:
+            raise ConfigurationError("bounded lifecycle arguments require a supporting provider")
         return self._execute(request, plan)
 
     def _execute(

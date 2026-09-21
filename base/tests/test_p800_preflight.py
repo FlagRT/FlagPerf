@@ -180,11 +180,11 @@ class ContractTests(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 validate_context(c, e, n)
 
-    def test_p800_performance_contract_rejected_without_device_access(self):
+    def test_p800_unimplemented_precision_rejected_without_device_access(self):
         from run import main
         with patch('subprocess.run', side_effect=AssertionError('device access forbidden')):
             code = main(['benchmark', 'run', '--config', str(CONFIG), '--physical-device-ids', '1',
-                         '--case', 'computation-FP32:P800', '--dry-run'])
+                         '--case', 'computation-FP16:P800', '--dry-run'])
         self.assertEqual(code, 2)
 
     def test_supervisor_spawns_gated_no_site_child_and_propagates_failure(self):

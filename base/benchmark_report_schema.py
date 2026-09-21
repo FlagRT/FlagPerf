@@ -122,6 +122,16 @@ def render_report(root, summary, result, rank_assets):
     lines += table(["Rank", "Metric", "Value", "Unit"], [(m.get("rank"),m.get("metric"),m.get("value"),m.get("unit")) for m in result.get("metrics", [])
         if type(m.get("value")) in (float,int) and math.isfinite(m["value"])])
     lines += [f"Missing ranks: {cell(result.get('missing_ranks', []))}", ""]
+    if summary.get('qualification'):
+        lines += ['## Qualification', '', '```json', json.dumps(summary['qualification'], indent=2, sort_keys=True), '```', '',
+                  'Correctness: ' + cell(summary.get('correctness_status')), '',
+                  'Measurement evidence: ' + cell(summary.get('measurement_evidence_status')), '',
+                  '[Correctness artifact](artifacts/correctness-rank-0.json)', '',
+                  '[Raw rank metric and timing](artifacts/metric-rank-0.json)', '',
+                  '[Runtime UUID binding](artifacts/runtime-bindings.json)', '',
+                  '[Container ownership and mapping](container-inspect.json)', '',
+                  'Large-shape correctness checks fixed rows/columns with the full reduction dimension and full-output finiteness. ',
+                  'Native FP32 input/output evidence does not certify internal IEEE arithmetic or universal CPU-fallback exclusion.', '']
     for asset in rank_assets:
         lines += [f"![Rank metrics]({asset['path']})", ""]
     lines += ["## Case configuration", "", "Precedence: generic < vendor < chip < override.", ""]

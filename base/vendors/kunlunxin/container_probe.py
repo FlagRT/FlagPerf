@@ -28,11 +28,15 @@ def save(path, value):
 
 
 def validate_context(context, environ, nodes, now=None):
-    require(context.get('schema_version') == 1 and context.get('kind') == 'benchmark-preflight', 'invalid host context')
-    require(context.get('probe_mode') in ('identity', 'timeout-check'), 'invalid probe mode')
+    require(context.get('schema_version') == 1 and context.get('kind') in ('benchmark-preflight', 'benchmark'), 'invalid host context')
+    benchmark = context['kind'] == 'benchmark'
+    require(context.get('probe_mode') in (('performance',) if benchmark else ('identity', 'timeout-check')), 'invalid probe mode')
     require(context.get('allow_candidate_runtime') is True, 'candidate runtime needs explicit authorization')
     require(isinstance(context.get('run_id'), str) and context['run_id'], 'missing run identity')
-    require(type(context.get('timeout')) is int and 30 <= context['timeout'] <= 180, 'invalid probe timeout')
+    require(type(context.get('timeout')) is int and 30 <= context['timeout'] <= (600 if benchmark else 180), 'invalid probe timeout')
+    if benchmark:
+        require(context.get('case') == 'computation-FP32:P800' and context.get('nproc_per_node') == 1, 'unqualified performance scope')
+        require(isinstance(context.get('case_assets_sha256'), str) and len(context['case_assets_sha256']) == 64, 'missing case asset identity')
     require(context.get('reservation_reference'), 'reservation reference required')
     start = datetime.fromisoformat(context['reservation_start'].replace('Z', '+00:00'))
     end = datetime.fromisoformat(context['reservation_end'].replace('Z', '+00:00'))
@@ -71,6 +75,8 @@ def main():
         manifest = json.loads((runtime.ROOT / 'image-manifest.json').read_text())
         runtime.validate_manifest(manifest, context['image_identity'])
         require(Path(sys.executable).resolve() == (runtime.PREFIX / 'bin/python').resolve(), 'wrong runtime Python')
+        if context.get('kind') == 'benchmark':
+            require(runtime.sha256(args.context.parent / 'case-assets.json') == context['case_assets_sha256'], 'case asset contract changed')
         if not args.worker:
             audit = runtime.static_audit()
             save(output / 'runtime-audit.json', audit)
@@ -123,6 +129,12 @@ def main():
         observation = {'schema_version': 1, 'kind': 'probe-observation', 'run_id': context['run_id'],
                        'device_id': binding['resource_key'], 'started_monotonic_ns': time.monotonic_ns()}
         save(output / 'probe.json', result)
+        if context.get('kind') == 'benchmark':
+            from base.benchmark_worker import run_bound_case
+            run_bound_case(context, args.context, output)
+            result['finished_monotonic_ns'] = time.monotonic_ns()
+            save(output / 'probe.json', result)
+            return 0
         save(output / 'probe-observation.json', observation)
         seconds = context['timeout'] + 30 if context['probe_mode'] == 'timeout-check' else 16
         time.sleep(seconds)

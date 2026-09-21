@@ -99,8 +99,8 @@ def render_report(root):
     return {'status': 'passed', 'sha256': hashlib.sha256(content.encode()).hexdigest()}
 
 
-def execute(args):
-    static, config, provider = plan(args)
+def execute(args, *, prepared=None, workload=None):
+    static, config, provider = prepared if prepared is not None else plan(args)
     if args.dry_run:
         print(json.dumps(static, indent=2, sort_keys=True))
         return 0
@@ -114,10 +114,13 @@ def execute(args):
     (root / 'control').mkdir()
     (root / 'artifacts').mkdir(mode=0o770)
     (root / 'artifacts').chmod(0o770)
-    run_id = 'preflight-' + uuid.uuid4().hex
+    run_id = ('preflight-' if workload is None else 'benchmark-') + uuid.uuid4().hex
     summary = {'schema_version': 1, 'kind': 'benchmark-preflight', 'run_id': run_id, 'vendor': provider.name,
                'probe_mode': args.probe_mode, 'status': 'running', 'started_at': utc_now(),
                'measurement_status': 'not-run', 'monitoring_status': 'not-run', 'lease_released': False}
+    if workload is not None:
+        summary.update(workload.initial_summary(static))
+        workload.prepare(root)
     write_json(root / 'summary.json', summary)
     write_json(root / 'static-plan.json', static)
     commands = HostCommands(args.privilege_command, deadline=absolute_deadline - 30)
@@ -155,19 +158,31 @@ def execute(args):
                    'image_identity': identity, 'reservation_start': utc_now(), 'reservation_end': end.isoformat(),
                    'reservation_reference': args.reservation_reference, 'probe_mode': args.probe_mode,
                    'timeout': args.timeout, 'allow_candidate_runtime': args.allow_candidate_runtime}
+        if workload is not None:
+            context.update(workload.context_record(root))
         write_json(root / 'control/host-context.json', context)
         context_hash = hashlib.sha256((root / 'control/host-context.json').read_bytes()).hexdigest()
-        arguments, expected = provider.probe_spec(BASE_DIR, root, config, locked, image_id)
+        spec = provider.probe_spec if workload is None else provider.benchmark_spec
+        arguments, expected = spec(BASE_DIR, root, config, locked, image_id)
         write_json(root / 'resolved-plan.json', {**static, 'host': locked, 'runtime_identity': identity,
                                                 'container_arguments': arguments, 'expected_container': expected})
         write_json(root / 'code-identity.json', {'git_head': commands.checked(['git', '-C', str(BASE_DIR.parent), 'rev-parse', 'HEAD'])['stdout'].strip(),
                    'git_status': commands.checked(['git', '-C', str(BASE_DIR.parent), 'status', '--porcelain'])['stdout'],
                    'source_sha256': {str(p.relative_to(BASE_DIR)): hashlib.sha256(p.read_bytes()).hexdigest()
-                                     for subdir in ('executors', 'vendors/kunlunxin', 'monitoring')
+                                     for subdir in ('executors', 'vendors/kunlunxin', 'monitoring', 'benchmarks/drivers', 'benchmarks/computation-FP32')
                                      for p in sorted((BASE_DIR / subdir).glob('*.py'))},
                    'context_sha256': context_hash})
+        if workload is not None:
+            identity_path = root / 'code-identity.json'
+            code_identity = json.loads(identity_path.read_text())
+            code_identity['source_sha256'].update({relative: hashlib.sha256((BASE_DIR / relative).read_bytes()).hexdigest()
+                for relative in ('benchmark_worker.py', 'benchmarks/fp32_contract.py', 'benchmarks/case_assets.py',
+                                 'vendors/kunlunxin/runtime_bootstrap.sh')})
+            write_json(identity_path, code_identity)
         stage = 'container-inspect'
         container.create(arguments, expected)
+        if workload is not None:
+            summary['container_id'] = container.cid
         if absolute_deadline - time.monotonic() < args.timeout + 30:
             raise RuntimeError('insufficient reservation remaining after create')
         stage = 'container-probe'
@@ -176,6 +191,11 @@ def execute(args):
             monitor.commands.deadline = absolute_deadline - 30
             monitor.start()
         container.start()
+        if workload is not None:
+            started_container = container.inspect()
+            write_json(root / 'container-started.json', {'Id': started_container['Id'],
+                       'Image': started_container['Image'], 'State': started_container['State'],
+                       'run_id': run_id})
         returncode = container.wait(min(time.monotonic() + args.timeout, absolute_deadline - 30))
         summary['container_exit_code'] = returncode
         if returncode != 0:
@@ -188,6 +208,8 @@ def execute(args):
         if probe.get('context_sha256') != context_hash or probe.get('binding') != summary['device_bindings'][0]:
             raise RuntimeError('probe binding mismatch')
         summary['status'] = 'passed'
+        if workload is not None:
+            workload.collect(root, context, context_hash, summary)
     except (Exception, KeyboardInterrupt) as exc:
         summary.update(status='failed', failure_stage=stage, error=str(exc), error_type=type(exc).__name__)
     finally:
@@ -205,8 +227,11 @@ def execute(args):
                             windows = [{**event, 'role': 'probe-observation',
                                         'started_offset_s': event['started_monotonic_ns'] / 1e9 - monitor.origin_monotonic_s,
                                         'finished_offset_s': event['finished_monotonic_ns'] / 1e9 - monitor.origin_monotonic_s}]
-                    result = monitor.finish(root, root / 'monitor', windows, [], primary_role='probe-observation',
-                                            window_semantics='bounded identity probe observation, not performance measurement')
+                    if workload is not None:
+                        windows = workload.monitor_windows(root, monitor, summary)
+                    result = monitor.finish(root, root / ('monitor' if workload is None else 'benchmark-monitor'), windows, [],
+                                            primary_role='probe-observation' if workload is None else 'measurement',
+                                            window_semantics='bounded identity probe observation, not performance measurement' if workload is None else 'FP32 loop including final full target synchronization')
                     summary['monitoring_status'] = result['status']
                     if result['status'] != 'passed' and summary['status'] == 'passed':
                         summary['status'] = 'partial'
@@ -247,9 +272,14 @@ def execute(args):
             finally:
                 signal.signal(signal.SIGTERM, previous_sigterm)
         summary['finished_at'] = utc_now()
+        if workload is not None:
+            workload.finalize(root, summary)
         write_json(root / 'summary.json', summary)
         try:
-            render_report(root)
+            if workload is None:
+                render_report(root)
+            else:
+                workload.render_report(root)
         except Exception as exc:
             summary['report_error'] = str(exc)
             write_json(root / 'summary.json', summary)
