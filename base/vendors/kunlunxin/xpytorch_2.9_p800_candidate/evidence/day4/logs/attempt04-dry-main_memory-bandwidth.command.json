@@ -1,0 +1,24 @@
+{
+  "name": "attempt04-dry-main_memory-bandwidth",
+  "command": [
+    "python3",
+    "-B",
+    "base/run.py",
+    "benchmark",
+    "run",
+    "--case",
+    "main_memory-bandwidth",
+    "--dry-run",
+    "--config",
+    "base/configs/ascend910_cann9_local.yaml",
+    "--device-ids",
+    "14",
+    "--nproc-per-node",
+    "1"
+  ],
+  "exit_code": 0,
+  "applicability": {
+    "reason": null,
+    "status": "applicable"
+  }
+}

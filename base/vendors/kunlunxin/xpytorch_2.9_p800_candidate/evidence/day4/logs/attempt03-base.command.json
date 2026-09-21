@@ -1,0 +1,17 @@
+{
+  "name": "attempt03-base",
+  "command": [
+    "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-pr1-20260920-162724/cpu-test-venv/bin/python",
+    "-B",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "base/tests",
+    "-p",
+    "test_*.py",
+    "-v"
+  ],
+  "exit_code": 0,
+  "test_count": 173
+}

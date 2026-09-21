@@ -1,0 +1,22 @@
+{
+  "name": "attempt04-dry-selector-npu-ids-off",
+  "command": [
+    "python3",
+    "-B",
+    "base/run.py",
+    "benchmark",
+    "run",
+    "--case",
+    "computation-FP32",
+    "--npu-ids",
+    "7",
+    "--monitor",
+    "off",
+    "--dry-run"
+  ],
+  "exit_code": 0,
+  "applicability": {
+    "reason": null,
+    "status": "applicable"
+  }
+}

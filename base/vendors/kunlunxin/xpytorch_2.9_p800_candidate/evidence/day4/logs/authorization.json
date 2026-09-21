@@ -1,0 +1,7 @@
+{
+  "authorized_scope": "User instructed completing all Day 4 tasks; idle single card 6 or 7, sequential FP32 qualification and bounded cleanup drills",
+  "reference": "user-20260920-start-all-day4-tasks",
+  "created_at": "2026-09-21T02:21:12.252449+00:00",
+  "reservation_end": "2026-09-21T03:51:12.252449+00:00",
+  "interpretation": "Bounded execution budget under user authorization, not a claim of reservation with other users"
+}

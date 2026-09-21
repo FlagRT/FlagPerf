@@ -1,0 +1,20 @@
+{
+  "name": "attempt03-dry-computation-INT8",
+  "command": [
+    "python3",
+    "-B",
+    "base/run.py",
+    "benchmark",
+    "run",
+    "--case",
+    "computation-INT8",
+    "--dry-run",
+    "--config",
+    "base/configs/ascend910_cann9_local.yaml",
+    "--device-ids",
+    "14",
+    "--nproc-per-node",
+    "1"
+  ],
+  "exit_code": 0
+}

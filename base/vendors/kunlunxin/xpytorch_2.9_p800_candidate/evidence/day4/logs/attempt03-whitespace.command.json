@@ -1,0 +1,9 @@
+{
+  "name": "attempt03-whitespace",
+  "command": [
+    "git",
+    "diff",
+    "--check"
+  ],
+  "exit_code": 0
+}

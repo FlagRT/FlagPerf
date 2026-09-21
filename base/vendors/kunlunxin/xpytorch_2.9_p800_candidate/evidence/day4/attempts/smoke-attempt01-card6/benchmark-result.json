@@ -1,0 +1,63 @@
+{
+  "case": "computation-FP32:P800",
+  "correctness": "artifacts/correctness-rank-0.json",
+  "expected_ranks": [
+    0
+  ],
+  "metrics": [
+    {
+      "allocation_semantics": "torch.mm returned output; allocator cost may be included",
+      "binding": {
+        "container_device_node": "/dev/xpu5",
+        "framework_device_name": "cuda:0",
+        "framework_local_rank": 0,
+        "framework_logical_id": 0,
+        "host_device_node": "/dev/xpu5",
+        "host_physical_id": 6,
+        "legacy_logical_id": null,
+        "pci_bdf": "0000:b6:00.0",
+        "request_index": 0,
+        "resource_key": "kunlunxin/9e24d168-db57-5cd9-8cfb-aea4ae898897",
+        "serial_or_uuid": "9e24d168-db57-5cd9-8cfb-aea4ae898897",
+        "vendor": "kunlunxin"
+      },
+      "case_assets_sha256": "cede80fe4c9b577e6ea3ac7b8126ac76420562b1bc89fdee6e8782cca260999c",
+      "context_sha256": "5d3a0e39f57454f72c144d90ec7b4b243e7a755e5d393e586358ccae6a67f6fe",
+      "cuda_matmul_allow_tf32": false,
+      "elapsed_seconds": 0.000107037,
+      "fallback_scope": "UUID, tensor placement and locked native route; no universal fallback exclusion",
+      "finished_monotonic_ns": 3798485949161763,
+      "implementation": "native-xpytorch",
+      "iterations": 4,
+      "metric": "computation-FP32",
+      "mode": "smoke",
+      "operations": 262144,
+      "pid_namespace": "pid:[4026547810]",
+      "precision_scope": "native FP32 inputs/outputs; CUDA control does not certify internal IEEE arithmetic",
+      "qualification_duration_passed": false,
+      "rank": 0,
+      "run_id": "benchmark-5e0e8dd5e5144506aa1f1fb294373fca",
+      "schema_version": 1,
+      "shape": [
+        32,
+        32,
+        32
+      ],
+      "started_monotonic_ns": 3798485949054726,
+      "status": "passed",
+      "timer": "perf_counter_ns with full target synchronization",
+      "unit": "TFLOPS",
+      "value": 0.0024490970412100487,
+      "warmup": 2,
+      "worker_parent_pid": 1,
+      "worker_pid": 102,
+      "world_size": 1
+    }
+  ],
+  "missing_ranks": [],
+  "observed_ranks": [
+    0
+  ],
+  "schema_version": 1,
+  "status": "passed"
+}

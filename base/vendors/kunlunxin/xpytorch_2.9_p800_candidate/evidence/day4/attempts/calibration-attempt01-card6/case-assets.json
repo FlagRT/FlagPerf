@@ -1,0 +1,68 @@
+{
+  "case": "computation-FP32:P800",
+  "case_name": "computation-FP32",
+  "chip": "P800",
+  "configurations": {
+    "chip": {
+      "bytes": 171,
+      "relative_path": "benchmarks/computation-FP32/kunlunxin/P800/case_config.yaml",
+      "sha256": "ddac74a708cc011d5ff3b58abfc3720cc8b8cd012b2d00473109a3e1978225cd"
+    },
+    "generic": {
+      "bytes": 653,
+      "relative_path": "benchmarks/computation-FP32/case_config.yaml",
+      "sha256": "a299308c594c20454b73d370a2960d5a54a20c45c3481d44b82812113dc085af"
+    },
+    "override": {
+      "bytes": 39,
+      "relative_path": "@override",
+      "sha256": "bee3e8c3b183c76d0d28fcfe82817f2acead6ad69adc66ff482795038d1bf66e"
+    }
+  },
+  "entrypoint": {
+    "bytes": 3700,
+    "relative_path": "benchmarks/computation-FP32/main.py",
+    "sha256": "594d2b0799351fc56198be72113765e10d30866cb441ed044bc48bc9e88f2ac3"
+  },
+  "environments": [],
+  "merged_config": {
+    "ATOL": 0.0001,
+    "DIST_BACKEND": "gloo",
+    "FAULT_MODE": "none",
+    "IMPLEMENTATION": "native-xpytorch",
+    "ITERS": 64,
+    "K": 4096,
+    "M": 4096,
+    "MODE": "calibration",
+    "N": 4096,
+    "RTOL": 0.0001,
+    "SEED": 519,
+    "WARMUP": 10
+  },
+  "requirement_files": [
+    {
+      "bytes": 522,
+      "relative_path": "benchmarks/computation-FP32/kunlunxin/P800/runtime_requirements.json",
+      "sha256": "06a09993c5ea5224b3e0a43077b3139466d602925154710073ea00d879ebd294"
+    }
+  ],
+  "requirements": {
+    "compatibility_note": "Candidate opt-in, context-bound UUID and bounded FP32 config validation required. No other precision or collective scope.",
+    "correctness_required": true,
+    "implementation": "native-xpytorch",
+    "process_scope": {
+      "nnodes": 1,
+      "nproc_per_node": 1
+    },
+    "qualification_max_cv_percent": 5,
+    "qualification_min_measurement_seconds": 15,
+    "qualification_repetitions": 5,
+    "runtime_profile": "xpytorch_2.9_p800_candidate",
+    "runtime_role": "operator",
+    "schema_version": 1,
+    "supported": true
+  },
+  "schema_version": 1,
+  "selector": "kunlunxin/P800",
+  "vendor": "kunlunxin"
+}

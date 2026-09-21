@@ -1,0 +1,68 @@
+{
+  "clock_domain": "same-host Linux monotonic",
+  "collector": "xpu-smi -m and selected -q",
+  "extensions": [],
+  "parsed_samples": {
+    "bytes": 11359,
+    "path": "benchmark-monitor/samples.jsonl",
+    "sha256": "d505d0a5b6b4e508c7606c19b827351fdef744bec5137af312df2dcddb0de951"
+  },
+  "policy": {
+    "automatic_workload_extension": false,
+    "collector": "xpu-smi -m and selected -q",
+    "enabled": true,
+    "metric_fields": [
+      {
+        "key": "utilization_percent",
+        "label": "Device utilization",
+        "unit": "%"
+      },
+      {
+        "key": "used_memory_mib",
+        "label": "Allocated device memory",
+        "unit": "MiB"
+      }
+    ],
+    "required_samples_per_target": 10,
+    "target_interval_s": 1.0,
+    "target_resource": "p800-device",
+    "vendor": "kunlunxin"
+  },
+  "primary_sample_counts_by_target": {
+    "kunlunxin/9e24d168-db57-5cd9-8cfb-aea4ae898897": 24
+  },
+  "raw_samples": {
+    "bytes": 142971,
+    "path": "benchmark-monitor/samples.raw.jsonl",
+    "sha256": "7f0f10f8e95717271eaa50f8292fae4c8accb26a4fff7e12cb6e1af749589400"
+  },
+  "reasons": [],
+  "sample_counts_by_target": {
+    "kunlunxin/9e24d168-db57-5cd9-8cfb-aea4ae898897": 24
+  },
+  "schema_version": 2,
+  "status": "passed",
+  "target_resource": null,
+  "targets": [
+    {
+      "device_id": "kunlunxin/9e24d168-db57-5cd9-8cfb-aea4ae898897",
+      "pci_bdf": "0000:b6:00.0",
+      "physical_id": 6,
+      "uuid": "9e24d168-db57-5cd9-8cfb-aea4ae898897"
+    }
+  ],
+  "total_sample_commands": 68,
+  "vendor": "kunlunxin",
+  "window_semantics": "FP32 loop including final full target synchronization",
+  "workload_windows": [
+    {
+      "device_id": "kunlunxin/9e24d168-db57-5cd9-8cfb-aea4ae898897",
+      "finished_monotonic_ns": 3798933080996428,
+      "finished_offset_s": 32.456522182095796,
+      "rank": 0,
+      "role": "measurement",
+      "started_monotonic_ns": 3798908740549720,
+      "started_offset_s": 8.116075473837554
+    }
+  ]
+}

@@ -1,0 +1,201 @@
+{
+  "status": "passed",
+  "rows": [
+    {
+      "name": "dry-computation-BF16",
+      "matches_baseline": true,
+      "exit_code": 0,
+      "applicability": {
+        "reason": null,
+        "status": "applicable"
+      }
+    },
+    {
+      "name": "dry-computation-FP16",
+      "matches_baseline": true,
+      "exit_code": 0,
+      "applicability": {
+        "reason": null,
+        "status": "applicable"
+      }
+    },
+    {
+      "name": "dry-computation-FP32",
+      "matches_baseline": true,
+      "exit_code": 0,
+      "applicability": {
+        "reason": null,
+        "status": "applicable"
+      }
+    },
+    {
+      "name": "dry-computation-FP64",
+      "matches_baseline": true,
+      "exit_code": 0,
+      "applicability": {
+        "reason": "\u5f53\u524d Ascend 910C/A3 \u4e0d\u652f\u6301\u672c Case \u6240\u9700\u7684\u539f\u751f FP64 GEMM\uff1bTorch-FL \u7684 FP64 \u8f6c FP32 \u8def\u5f84\u4e0d\u80fd\u4f5c\u4e3a FP64 \u7b97\u529b\u7ed3\u679c",
+        "status": "skipped"
+      }
+    },
+    {
+      "name": "dry-computation-FP8",
+      "matches_baseline": true,
+      "exit_code": 0,
+      "applicability": {
+        "reason": "\u5f53\u524d Ascend 910C/A3 \u4e0d\u652f\u6301\u672c Case \u6240\u9700\u7684\u539f\u751f FP8 GEMM\uff1b\u8f6c\u4e3a FP16/BF16 \u8ba1\u7b97\u4e0d\u80fd\u4f5c\u4e3a\u539f\u751f FP8 \u7b97\u529b\u7ed3\u679c",
+        "status": "skipped"
+      }
+    },
+    {
+      "name": "dry-computation-INT8",
+      "matches_baseline": true,
+      "exit_code": 0,
+      "applicability": {
+        "reason": null,
+        "status": "applicable"
+      }
+    },
+    {
+      "name": "dry-computation-TF32",
+      "matches_baseline": true,
+      "exit_code": 0,
+      "applicability": {
+        "reason": "TF32 Case \u672a\u539f\u751f\u9002\u914d Ascend\uff0c\u6682\u65f6\u8df3\u8fc7\uff1bAscend HF32 \u4e0d\u5728\u672c Case \u7684\u5f53\u524d\u9002\u914d\u8303\u56f4\u5185",
+        "status": "skipped"
+      }
+    },
+    {
+      "name": "dry-interconnect-MPI_interserver",
+      "matches_baseline": true,
+      "exit_code": 0,
+      "applicability": {
+        "reason": "\u8de8\u673a AllReduce \u4e0d\u5728\u5f53\u524d Ascend \u5355\u5bbf\u4e3b\u7edf\u4e00\u5165\u53e3\u7684\u9002\u914d\u8303\u56f4\u5185\uff1b\u8be5\u5165\u53e3\u56fa\u5b9a nnodes=1",
+        "status": "skipped"
+      }
+    },
+    {
+      "name": "dry-interconnect-MPI_intraserver",
+      "matches_baseline": true,
+      "exit_code": 0,
+      "applicability": {
+        "reason": null,
+        "status": "applicable"
+      }
+    },
+    {
+      "name": "dry-interconnect-P2P_interserver",
+      "matches_baseline": true,
+      "exit_code": 0,
+      "applicability": {
+        "reason": "\u8de8\u673a P2P \u4e0d\u5728\u5f53\u524d Ascend \u5355\u5bbf\u4e3b\u7edf\u4e00\u5165\u53e3\u7684\u9002\u914d\u8303\u56f4\u5185\uff1b\u8be5\u5165\u53e3\u56fa\u5b9a nnodes=1",
+        "status": "skipped"
+      }
+    },
+    {
+      "name": "dry-interconnect-P2P_intraserver",
+      "matches_baseline": true,
+      "exit_code": 0,
+      "applicability": {
+        "reason": null,
+        "status": "applicable"
+      }
+    },
+    {
+      "name": "dry-interconnect-d2h",
+      "matches_baseline": true,
+      "exit_code": 0,
+      "applicability": {
+        "reason": null,
+        "status": "applicable"
+      }
+    },
+    {
+      "name": "dry-interconnect-h2d",
+      "matches_baseline": true,
+      "exit_code": 0,
+      "applicability": {
+        "reason": null,
+        "status": "applicable"
+      }
+    },
+    {
+      "name": "dry-main_memory-bandwidth",
+      "matches_baseline": true,
+      "exit_code": 0,
+      "applicability": {
+        "reason": null,
+        "status": "applicable"
+      }
+    },
+    {
+      "name": "dry-main_memory-capacity",
+      "matches_baseline": true,
+      "exit_code": 0,
+      "applicability": {
+        "reason": null,
+        "status": "applicable"
+      }
+    },
+    {
+      "name": "dry-selector-physical-device-ids-on",
+      "matches_baseline": true,
+      "exit_code": 0,
+      "applicability": {
+        "reason": null,
+        "status": "applicable"
+      }
+    },
+    {
+      "name": "dry-selector-physical-device-ids-off",
+      "matches_baseline": true,
+      "exit_code": 0,
+      "applicability": {
+        "reason": null,
+        "status": "applicable"
+      }
+    },
+    {
+      "name": "dry-selector-npu-ids-on",
+      "matches_baseline": true,
+      "exit_code": 0,
+      "applicability": {
+        "reason": null,
+        "status": "applicable"
+      }
+    },
+    {
+      "name": "dry-selector-npu-ids-off",
+      "matches_baseline": true,
+      "exit_code": 0,
+      "applicability": {
+        "reason": null,
+        "status": "applicable"
+      }
+    },
+    {
+      "name": "dry-selector-device-ids-on",
+      "matches_baseline": true,
+      "exit_code": 0,
+      "applicability": {
+        "reason": null,
+        "status": "applicable"
+      }
+    },
+    {
+      "name": "dry-selector-device-ids-off",
+      "matches_baseline": true,
+      "exit_code": 0,
+      "applicability": {
+        "reason": null,
+        "status": "applicable"
+      }
+    },
+    {
+      "name": "dry-capacity-denied",
+      "matches_baseline": true,
+      "exit_code": 2,
+      "applicability": null
+    }
+  ],
+  "comparison_correction": "Historical selector entries omitted applicability; compare only fields actually recorded in baseline. attempt04-verification.json retained unchanged."
+}

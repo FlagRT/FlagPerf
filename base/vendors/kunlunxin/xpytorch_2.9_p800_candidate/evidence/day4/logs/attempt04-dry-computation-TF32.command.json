@@ -1,0 +1,24 @@
+{
+  "name": "attempt04-dry-computation-TF32",
+  "command": [
+    "python3",
+    "-B",
+    "base/run.py",
+    "benchmark",
+    "run",
+    "--case",
+    "computation-TF32",
+    "--dry-run",
+    "--config",
+    "base/configs/ascend910_cann9_local.yaml",
+    "--device-ids",
+    "14",
+    "--nproc-per-node",
+    "1"
+  ],
+  "exit_code": 0,
+  "applicability": {
+    "reason": "TF32 Case \u672a\u539f\u751f\u9002\u914d Ascend\uff0c\u6682\u65f6\u8df3\u8fc7\uff1bAscend HF32 \u4e0d\u5728\u672c Case \u7684\u5f53\u524d\u9002\u914d\u8303\u56f4\u5185",
+    "status": "skipped"
+  }
+}

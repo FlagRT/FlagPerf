@@ -1,0 +1,24 @@
+{
+  "name": "attempt03-dry-p800-off",
+  "command": [
+    "python3",
+    "-B",
+    "base/run.py",
+    "benchmark",
+    "run",
+    "--config",
+    "base/configs/kunlunxin_p800_xpytorch29.yaml",
+    "--case",
+    "computation-FP32:P800",
+    "--physical-device-ids",
+    "6",
+    "--nproc-per-node",
+    "1",
+    "--timeout",
+    "300",
+    "--monitor",
+    "off",
+    "--dry-run"
+  ],
+  "exit_code": 0
+}

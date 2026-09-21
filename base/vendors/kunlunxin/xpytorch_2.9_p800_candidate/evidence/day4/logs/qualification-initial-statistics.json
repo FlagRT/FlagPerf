@@ -1,0 +1,52 @@
+{
+  "cv_percent": 0.08874402347040153,
+  "ddof": 1,
+  "max": 113.13232647068246,
+  "max_cv_percent": 5,
+  "mean": 113.03365576164917,
+  "median": 113.05773712582776,
+  "min": 112.92612352409549,
+  "repetitions": 5,
+  "runs": [
+    {
+      "directory": "base/result/p800-pr3-20260921-1011/qualification-attempt01-card6",
+      "elapsed_seconds": 24.297025927,
+      "run_id": "benchmark-50176487411e49928c75bb002dadb4da",
+      "summary_sha256": "55596e20022ddd15823a4f774348d267859185de24bedb12da979984073fded3",
+      "tflops": 113.13232647068246
+    },
+    {
+      "directory": "base/result/p800-pr3-20260921-1011/qualification-attempt02-card6",
+      "elapsed_seconds": 24.340446708,
+      "run_id": "benchmark-68e37dd3b46f4b67a6f6c7a93f60fe51",
+      "summary_sha256": "87857edea2b7857d0dfcad79daae2195ccac1b38663aece429e17a968db2bec7",
+      "tflops": 112.93051037294873
+    },
+    {
+      "directory": "base/result/p800-pr3-20260921-1011/qualification-attempt03-card6",
+      "elapsed_seconds": 24.313055783,
+      "run_id": "benchmark-e7495c9f420540f481202d630b42b584",
+      "summary_sha256": "bbe66204e526206867e72d99f62237755a005a7463323bede489967adb018562",
+      "tflops": 113.05773712582776
+    },
+    {
+      "directory": "base/result/p800-pr3-20260921-1011/qualification-attempt04-card6",
+      "elapsed_seconds": 24.299333845,
+      "run_id": "benchmark-999e6541a7d94b51a695eae2cc4659a7",
+      "summary_sha256": "f91ca599a41ebd290f3e4bcd90d62ec053f441733de0a8315df593f93e844bdc",
+      "tflops": 113.1215813146914
+    },
+    {
+      "directory": "base/result/p800-pr3-20260921-1011/qualification-attempt05-card6",
+      "elapsed_seconds": 24.341392263,
+      "run_id": "benchmark-e5f20b59317a46f7aecd7df63aa11009",
+      "summary_sha256": "ca4282183e85f977a2fdcff100145089200cce5afdc3730c8e865bfdd3eed8e1",
+      "tflops": 112.92612352409549
+    }
+  ],
+  "sample_standard_deviation": 0.10031061399857082,
+  "schema_version": 1,
+  "scope": "one physical UUID, locked M1/native FP32/config; no other dtype or communication qualification",
+  "status": "passed",
+  "unit": "TFLOPS"
+}

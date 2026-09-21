@@ -1,0 +1,24 @@
+{
+  "name": "attempt04-dry-computation-FP64",
+  "command": [
+    "python3",
+    "-B",
+    "base/run.py",
+    "benchmark",
+    "run",
+    "--case",
+    "computation-FP64",
+    "--dry-run",
+    "--config",
+    "base/configs/ascend910_cann9_local.yaml",
+    "--device-ids",
+    "14",
+    "--nproc-per-node",
+    "1"
+  ],
+  "exit_code": 0,
+  "applicability": {
+    "reason": "\u5f53\u524d Ascend 910C/A3 \u4e0d\u652f\u6301\u672c Case \u6240\u9700\u7684\u539f\u751f FP64 GEMM\uff1bTorch-FL \u7684 FP64 \u8f6c FP32 \u8def\u5f84\u4e0d\u80fd\u4f5c\u4e3a FP64 \u7b97\u529b\u7ed3\u679c",
+    "status": "skipped"
+  }
+}

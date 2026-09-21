@@ -1,0 +1,18 @@
+{
+  "name": "attempt04-pr0",
+  "command": [
+    "python3",
+    "-S",
+    "-B",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "base/vendors/kunlunxin/xpytorch_2.9_p800_candidate",
+    "-p",
+    "test_*.py",
+    "-v"
+  ],
+  "exit_code": 0,
+  "test_count": 32
+}

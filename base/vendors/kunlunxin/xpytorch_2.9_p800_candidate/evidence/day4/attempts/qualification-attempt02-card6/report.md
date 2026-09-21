@@ -1,0 +1,95 @@
+# FlagPerf Base Benchmark
+
+## Run
+
+| Field | Evidence |
+|---|---|
+| run_id | benchmark-68e37dd3b46f4b67a6f6c7a93f60fe51 |
+| vendor | kunlunxin |
+| vendor_display_name | Kunlunxin P800 |
+| case | computation-FP32:P800 |
+| status | passed |
+| execution_status | passed |
+| measurement_status | passed |
+| monitoring_status | passed |
+| failure_stage | not recorded |
+| error | not recorded |
+| skip_reason | not recorded |
+
+## Runtime
+
+| Field | Evidence |
+|---|---|
+| image | flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev:202608 |
+| image_id | sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975 |
+| lock | {"image_manifest": {"image": "flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev:202608", "image_id": "sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975", "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/image-manifest.json", "release_stage": "candidate", "schema_version": 1, "sha256": "ab59dc1cd14b65a28ffaef7b1b21b1d0b51f5334619301659d4123a5c681acbf", "validated": false, "validation_scope": [], "validation_status": null}, "runtime_profile": "xpytorch_2.9_p800_candidate", "stack_lock": {"path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/stack.lock.yaml", "sha256": "8f200d0b955b7e60881bc13ed75c8784c2c38fe2c755d018c618f1dc7b46cded"}, "vendor": "kunlunxin"} |
+
+## Device bindings
+
+| Local rank | Framework ID | Physical ID | Resource | Host node | Container node | PCI | UUID/serial |
+|---|---|---|---|---|---|---|---|
+| 0 | 0 | 6 | kunlunxin/9e24d168-db57-5cd9-8cfb-aea4ae898897 | /dev/xpu5 | /dev/xpu5 | 0000:b6:00.0 | 9e24d168-db57-5cd9-8cfb-aea4ae898897 |
+
+## Rank metrics
+
+| Rank | Metric | Value | Unit |
+|---|---|---|---|
+| 0 | computation-FP32 | 112.93051037294873 | TFLOPS |
+
+Missing ranks: []
+
+## Qualification
+
+```json
+{
+  "max_cv_percent": 5,
+  "min_measurement_seconds": 15,
+  "mode": "qualification",
+  "repetitions_required": 5,
+  "scope": "single-card native XPYTORCH FP32; candidate runtime"
+}
+```
+
+Correctness: passed
+
+Measurement evidence: passed
+
+[Correctness artifact](artifacts/correctness-rank-0.json)
+
+[Raw rank metric and timing](artifacts/metric-rank-0.json)
+
+[Runtime UUID binding](artifacts/runtime-bindings.json)
+
+[Container ownership and mapping](container-inspect.json)
+
+Large-shape correctness checks fixed rows/columns with the full reduction dimension and full-output finiteness. 
+Native FP32 input/output evidence does not certify internal IEEE arithmetic or universal CPU-fallback exclusion.
+
+![Rank metrics](report-assets/benchmark-rank-computation-fp32-tflops.svg)
+
+## Case configuration
+
+Precedence: generic < vendor < chip < override.
+
+| Layer | Source | SHA256 | Snapshot |
+|---|---|---|---|
+| chip | /home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/computation-FP32/kunlunxin/P800/case_config.yaml | 7715abb565797fe939b2d2007f4ee5f6f08e39c9671f05d9bc63c9e287fac8e8 | not recorded |
+| generic | /home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/computation-FP32/case_config.yaml | a299308c594c20454b73d370a2960d5a54a20c45c3481d44b82812113dc085af | not recorded |
+
+## Evidence
+
+[Monitor report](report_monitor.md)
+
+- [summary.json](summary.json)
+- [resolved-plan.json](resolved-plan.json)
+- [case-assets.json](case-assets.json)
+- [benchmark-result.json](benchmark-result.json)
+- [runner.log](runner.log)
+- [container-preflight.json](container-preflight.json)
+- [benchmark-monitor/summary.json](benchmark-monitor/summary.json)
+
+Host preflight: host-preflight/summary.json
+
+Host postflight: host-postflight/summary.json
+
+This report preserves the experiment status. Missing evidence is not evidence of success.

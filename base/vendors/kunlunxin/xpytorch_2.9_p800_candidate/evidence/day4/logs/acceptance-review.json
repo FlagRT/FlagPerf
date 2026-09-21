@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-09-21T02:35:59.044491+00:00",
+  "checks": [
+    {
+      "attempt": "calibration-attempt01-card6",
+      "experiment_status": "passed",
+      "summary_unchanged": true,
+      "report_deterministic": true,
+      "container_id": "49ded254703c2b08d7df1d33bc2d11b4c0c1be9c51b2dd5b67b2a6f67159922e",
+      "container_absent": true,
+      "tflops": 112.8799139838486,
+      "elapsed_seconds": 0.077924342,
+      "valid_samples": 0,
+      "code_commit": "28e55dcf75b69a760247d86bf4d8634b8b219ca5",
+      "worktree_clean": true
+    },
+    {
+      "attempt": "preflight-attempt01-card6",
+      "experiment_status": "passed",
+      "summary_unchanged": true,
+      "report_deterministic": true,
+      "container_id": "3cea00b500c04c9dbdcce5740d90f8c4e58d64c2244d2a72b0b3ffb46dca5b66",
+      "container_absent": true,
+      "code_commit": "094a89819f12930cf4ce10a7aa9100443d2ab1ec",
+      "worktree_clean": false
+    },
+    {
+      "attempt": "qualification-attempt01-card6",
+      "experiment_status": "passed",
+      "summary_unchanged": true,
+      "report_deterministic": true,
+      "container_id": "09e565d86d1ecf16644e297203a85c0133dc8d43823d4f1cc9752bcdcf5a5366",
+      "container_absent": true,
+      "tflops": 113.13232647068246,
+      "elapsed_seconds": 24.297025927,
+      "valid_samples": 24,
+      "code_commit": "7bf4c9bf5ca1c7e76dc46fd4ff05fb2b208791fd",
+      "worktree_clean": true
+    },
+    {
+      "attempt": "qualification-attempt02-card6",
+      "experiment_status": "passed",
+      "summary_unchanged": true,
+      "report_deterministic": true,
+      "container_id": "b5c3646395253fdcadfe0d6f8c9907de7e746d5e4e1a65ce12140d1c6e035acd",
+      "container_absent": true,
+      "tflops": 112.93051037294873,
+      "elapsed_seconds": 24.340446708,
+      "valid_samples": 24,
+      "code_commit": "7bf4c9bf5ca1c7e76dc46fd4ff05fb2b208791fd",
+      "worktree_clean": true
+    },
+    {
+      "attempt": "qualification-attempt03-card6",
+      "experiment_status": "passed",
+      "summary_unchanged": true,
+      "report_deterministic": true,
+      "container_id": "eee34284d5f117bb20ab71e0cade61e3c4c276c6c67dd3ee0978e179332a9bac",
+      "container_absent": true,
+      "tflops": 113.05773712582776,
+      "elapsed_seconds": 24.313055783,
+      "valid_samples": 25,
+      "code_commit": "7bf4c9bf5ca1c7e76dc46fd4ff05fb2b208791fd",
+      "worktree_clean": true
+    },
+    {
+      "attempt": "qualification-attempt04-card6",
+      "experiment_status": "passed",
+      "summary_unchanged": true,
+      "report_deterministic": true,
+      "container_id": "0b1d58f0700e004dac08a5ef627d0a77fbd1616cfc2f3b96d53dab1fb744eb41",
+      "container_absent": true,
+      "tflops": 113.1215813146914,
+      "elapsed_seconds": 24.299333845,
+      "valid_samples": 24,
+      "code_commit": "7bf4c9bf5ca1c7e76dc46fd4ff05fb2b208791fd",
+      "worktree_clean": true
+    },
+    {
+      "attempt": "qualification-attempt05-card6",
+      "experiment_status": "passed",
+      "summary_unchanged": true,
+      "report_deterministic": true,
+      "container_id": "a7db14027ce7d702226a8af98bc1cdded3ca29518e33fd539a73d0fea1d47352",
+      "container_absent": true,
+      "tflops": 112.92612352409549,
+      "elapsed_seconds": 24.341392263,
+      "valid_samples": 25,
+      "code_commit": "7bf4c9bf5ca1c7e76dc46fd4ff05fb2b208791fd",
+      "worktree_clean": true
+    },
+    {
+      "attempt": "smoke-attempt01-card6",
+      "experiment_status": "passed",
+      "summary_unchanged": true,
+      "report_deterministic": true,
+      "container_id": "6b7a337dbaa6ea44aec230e9d14e275ab6b40ea6ad3e329d3b181e0a0e7f2800",
+      "container_absent": true,
+      "tflops": 0.0024490970412100487,
+      "elapsed_seconds": 0.000107037,
+      "valid_samples": 0,
+      "code_commit": "28e55dcf75b69a760247d86bf4d8634b8b219ca5",
+      "worktree_clean": true
+    },
+    {
+      "attempt": "timeout-attempt01-card6",
+      "experiment_status": "failed",
+      "summary_unchanged": true,
+      "report_deterministic": true,
+      "container_id": "37d3b81b8be785f4aae669577ccb553e75396de1edb3470bb52aba274036852c",
+      "container_absent": true,
+      "code_commit": "7bf4c9bf5ca1c7e76dc46fd4ff05fb2b208791fd",
+      "worktree_clean": true
+    }
+  ],
+  "lease_reacquired": true,
+  "lease": {
+    "backend": "flock",
+    "root": "/tmp/flagperf-base-device-leases",
+    "compatibility_paths": [
+      "/tmp/flagperf-p800-9e24d168-db57-5cd9-8cfb-aea4ae898897.lock"
+    ],
+    "device_ids": [],
+    "resource_keys": [
+      "kunlunxin/9e24d168-db57-5cd9-8cfb-aea4ae898897"
+    ],
+    "run_id": "pr3-independent-acceptance",
+    "pid": 3526533,
+    "acquired_at": "2026-09-21T02:35:56.097975Z"
+  },
+  "final_idle_status": "passed",
+  "controlled_timeout_cleanup": "passed",
+  "qualification_status": "passed",
+  "status": "passed"
+}
