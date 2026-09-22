@@ -683,6 +683,87 @@
         "mean_seconds": 22.3,
         "runs": 5
       }
+    },
+    "transfer_payload_realignment": {
+      "governing_reference": "参考资料/20260914T133423Z (toolkit bundle): ascend-dmi --bw -s 536870912 --et 50 = 512 MiB x 50",
+      "superseded": "the 4 GiB payload came from the Ascend Base case config (Melements 1024), a different suite",
+      "iteration_rule": "iterations raised from the reference 50 to hold the 15 s measurement floor; per-variant counts recorded",
+      "pinned_nonblocking": "runs at 512 MiB, so the earlier 2 GiB scope was a payload workaround; the vendor error 999 is payload-specific (4 GiB) not mode-specific",
+      "results_512MiB": {
+        "h2d-pageable-blocking": {
+          "status": "passed",
+          "median_gb_s": 9.05873738694354,
+          "cv_percent": 4.351668951209485,
+          "min": 8.520777892506196,
+          "max": 9.332824229363673,
+          "window_seconds": 24.03,
+          "iterations": 400
+        },
+        "h2d-pageable-nonblocking": {
+          "status": "passed",
+          "median_gb_s": 17.235107505005104,
+          "cv_percent": 4.335179109699786,
+          "min": 15.70114090222531,
+          "max": 17.372988945032592,
+          "window_seconds": 19.17,
+          "iterations": 600
+        },
+        "h2d-pinned-blocking": {
+          "status": "passed",
+          "median_gb_s": 20.49592052396569,
+          "cv_percent": 1.5475570379882106,
+          "min": 20.06733640479456,
+          "max": 20.896744359611485,
+          "window_seconds": 17.03,
+          "iterations": 650
+        },
+        "h2d-pinned-nonblocking": {
+          "status": "passed",
+          "median_gb_s": 20.742245800183582,
+          "cv_percent": 1.661333693475141,
+          "min": 20.07425172821236,
+          "max": 20.968242552529276,
+          "window_seconds": 18.2,
+          "iterations": 700
+        },
+        "d2h-pageable-blocking": {
+          "status": "passed",
+          "median_gb_s": 10.162388526694086,
+          "cv_percent": 1.3816296861545108,
+          "min": 9.946988490605532,
+          "max": 10.294490901014257,
+          "window_seconds": 21.22,
+          "iterations": 400
+        },
+        "d2h-pageable-nonblocking": {
+          "status": "passed",
+          "median_gb_s": 15.089063978995377,
+          "cv_percent": 0.8810595015417594,
+          "min": 14.896449467331289,
+          "max": 15.214572089531698,
+          "window_seconds": 17.82,
+          "iterations": 500
+        },
+        "d2h-pinned-blocking": {
+          "status": "passed",
+          "median_gb_s": 27.29736505148278,
+          "cv_percent": 2.721169057968525,
+          "min": 26.340486634993606,
+          "max": 28.38288885363892,
+          "window_seconds": 19.64,
+          "iterations": 1000
+        },
+        "d2h-pinned-nonblocking": {
+          "status": "passed",
+          "median_gb_s": 27.947769861512516,
+          "cv_percent": 3.1904143342173468,
+          "min": 26.432570690422825,
+          "max": 28.58927157588132,
+          "window_seconds": 19.33,
+          "iterations": 1000
+        }
+      },
+      "missing": []
     }
   }
 }

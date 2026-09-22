@@ -282,3 +282,43 @@ trimmed, and scheduled for a quiet-window re-run.
 
 The Ascend-parity variant (pinned, blocking, 4 GiB) qualifies normally at 18.399 GB/s
 (h2d) and at the corrected iteration count (d2h).
+
+## Transfer payload realigned to the toolkit reference (512 MiB)
+
+A per-case comparison of the toolkit reference bundle against the P800 state, with the exact vendor parameters and the remaining work, is archived next to this review as `toolkit-alignment-notes.zh.md`.
+
+The governing reference for this alignment is the toolkit result bundle supplied by the user
+(`参考资料/20260914T133423Z`), whose H2D and D2H cases run
+`ascend-dmi --bw -t h2d|d2h -s 536870912 --et 50`: a **512 MiB payload copied 50 times**.
+The earlier 4 GiB payload came from the Ascend **Base** case configuration
+(`Melements: 1024`), a different suite with a different payload; the toolkit reference
+supersedes it for these two cases.
+
+The payload is now 512 MiB in all eight request modes. Iterations are raised from the
+reference 50 because 50 copies measure 1-3 s at P800 rates, below this project's 15 s
+measurement floor; per-variant counts are in the table. Warmup, dtype, layout and the
+content checks are unchanged.
+
+Two consequences worth recording:
+
+- **pinned non-blocking runs at 512 MiB.** The vendor `error code= 999` seen earlier only
+  appears at a 4 GiB payload on that path; at the reference payload all eight modes run, so
+  the two groups previously limited to 2 GiB return to the common payload and the 4 GiB
+  failure is recorded as payload-specific rather than a mode limitation.
+- The d2h pinned blocking group no longer needs the raised iteration count that its 4 GiB
+  window required; the 512 MiB windows satisfy the floor at the listed counts.
+
+| Group | Median | CV | Window | Iterations |
+|---|---:|---:|---:|---:|
+| h2d-pageable-blocking | 9.059 GB/s | 4.3517% | 24.03 s | 400 |
+| h2d-pageable-nonblocking | 17.235 GB/s | 4.3352% | 19.17 s | 600 |
+| h2d-pinned-blocking | 20.496 GB/s | 1.5476% | 17.03 s | 650 |
+| h2d-pinned-nonblocking | 20.742 GB/s | 1.6613% | 18.20 s | 700 |
+| d2h-pageable-blocking | 10.162 GB/s | 1.3816% | 21.22 s | 400 |
+| d2h-pageable-nonblocking | 15.089 GB/s | 0.8811% | 17.82 s | 500 |
+| d2h-pinned-blocking | 27.297 GB/s | 2.7212% | 19.64 s | 1000 |
+| d2h-pinned-nonblocking | 27.948 GB/s | 3.1904% | 19.33 s | 1000 |
+
+The 4 GiB results from the previous alignment remain in the raw result directory as
+`qualification-<direction>-<variant>-4g-*` and are not mixed into this set: payload is part
+of the configuration identity.

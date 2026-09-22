@@ -1,0 +1,24 @@
+{
+  "bindings": [
+    {
+      "container_device_node": "/dev/xpu7",
+      "framework_device_name": "cuda:0",
+      "framework_local_rank": 0,
+      "framework_logical_id": 0,
+      "host_device_node": "/dev/xpu7",
+      "host_physical_id": 5,
+      "legacy_logical_id": null,
+      "pci_bdf": "0000:9c:00.0",
+      "request_index": 0,
+      "resource_key": "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87",
+      "serial_or_uuid": "f396486d-9850-50e4-81c4-50f2e9f6ca87",
+      "vendor": "kunlunxin"
+    }
+  ],
+  "context_sha256": "11af15a0119582294d3a8748d1cbc95e42f87421171f23b1b267a34a371a9e87",
+  "observed_uuids": [
+    "f396486d-9850-50e4-81c4-50f2e9f6ca87"
+  ],
+  "run_id": "benchmark-ac15a1c15d584e3a9ce424d0b1d7d4ef",
+  "schema_version": 1
+}

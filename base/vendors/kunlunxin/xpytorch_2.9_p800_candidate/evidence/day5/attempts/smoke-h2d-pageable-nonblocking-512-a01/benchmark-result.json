@@ -1,0 +1,66 @@
+{
+  "case": "interconnect-h2d:P800",
+  "correctness": "artifacts/correctness-rank-0.json",
+  "expected_ranks": [
+    0
+  ],
+  "metrics": [
+    {
+      "allocation_semantics": "preallocated source/destination; timed loop only Tensor.copy_; runtime staging may occur",
+      "api": "Tensor.copy_",
+      "binding": {
+        "container_device_node": "/dev/xpu7",
+        "framework_device_name": "cuda:0",
+        "framework_local_rank": 0,
+        "framework_logical_id": 0,
+        "host_device_node": "/dev/xpu7",
+        "host_physical_id": 5,
+        "legacy_logical_id": null,
+        "pci_bdf": "0000:9c:00.0",
+        "request_index": 0,
+        "resource_key": "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87",
+        "serial_or_uuid": "f396486d-9850-50e4-81c4-50f2e9f6ca87",
+        "vendor": "kunlunxin"
+      },
+      "case_assets_sha256": "9ea54f8b2014babfbe5c2faf0dd51eb32d62dd8822e7355e40f4fdaba7f01b87",
+      "context_sha256": "e0ca90aee699e291a59346b46b22285d76ce346b9d6834c436426426143cb6d0",
+      "cuda_matmul_allow_tf32": false,
+      "direction": "h2d",
+      "dtype": "float32",
+      "elapsed_seconds": 0.148445586,
+      "fallback_scope": "UUID, tensor placement and locked native route; no universal fallback exclusion",
+      "finished_monotonic_ns": 3922026223717075,
+      "host_memory": "pageable",
+      "implementation": "native-xpytorch",
+      "iterations": 5,
+      "metric": "transfer-bandwidth",
+      "mode": "smoke",
+      "non_blocking": true,
+      "payload_bytes": 536870912,
+      "pid_namespace": "pid:[4026548062]",
+      "precision_scope": "native inputs/outputs as recorded by the case; compatibility controls do not certify internal arithmetic",
+      "qualification_duration_passed": false,
+      "rank": 0,
+      "run_id": "benchmark-41041fe9473d4f188ef34709bf8c6f15",
+      "schema_version": 1,
+      "scope": "effective single-direction API bandwidth; non_blocking is a request, not proof of overlap or DMA",
+      "started_monotonic_ns": 3922026075271489,
+      "status": "passed",
+      "timer": "perf_counter_ns with full target synchronization",
+      "total_bytes": 2684354560,
+      "unit": "GB/s",
+      "value": 18.08308776523675,
+      "value_gib_s": 16.84118785451795,
+      "warmup": 5,
+      "worker_parent_pid": 1,
+      "worker_pid": 102,
+      "world_size": 1
+    }
+  ],
+  "missing_ranks": [],
+  "observed_ranks": [
+    0
+  ],
+  "schema_version": 1,
+  "status": "passed"
+}

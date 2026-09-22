@@ -1,0 +1,64 @@
+{
+  "case": "interconnect-h2d:P800",
+  "case_name": "interconnect-h2d",
+  "chip": "P800",
+  "configurations": {
+    "chip": {
+      "bytes": 233,
+      "relative_path": "benchmarks/interconnect-h2d/kunlunxin/P800/case_config.yaml",
+      "sha256": "80d44b77ebbe4ca890da869683936bc1e763da8d3ac3943c76e244e8c5a49ab1"
+    },
+    "generic": {
+      "bytes": 644,
+      "relative_path": "benchmarks/interconnect-h2d/case_config.yaml",
+      "sha256": "601f289d6cdbf0f1571d4fb8bd9f4a6e3b9fbc700374bd2051eb482a4f785191"
+    },
+    "override": {
+      "bytes": 262,
+      "relative_path": "@override",
+      "sha256": "d922d97e1f1e9151a8909e30884ec3c798bedae43a0589b63236cc441dca0f4b"
+    }
+  },
+  "entrypoint": {
+    "bytes": 4686,
+    "relative_path": "benchmarks/interconnect-h2d/main.py",
+    "sha256": "a9a3dbf9ef6762e7d590d71ee74887e58c75aaed61caa471f4995e65326e1b20"
+  },
+  "environments": [],
+  "merged_config": {
+    "DIRECTION": "h2d",
+    "DIST_BACKEND": "gloo",
+    "DTYPE": "float32",
+    "FAULT_MODE": "none",
+    "IMPLEMENTATION": "native-xpytorch",
+    "ITERS": 600,
+    "MODE": "measured",
+    "Melements": 1024,
+    "NON_BLOCKING": true,
+    "PAYLOAD_BYTES": 536870912,
+    "PIN_MEMORY": false,
+    "REUSE_DESTINATION": true,
+    "SEED": 519,
+    "WARMUP": 10
+  },
+  "requirement_files": [
+    {
+      "bytes": 162,
+      "relative_path": "benchmarks/interconnect-h2d/kunlunxin/P800/runtime_requirements.json",
+      "sha256": "26880ef77f5337b0d7aac81cd2d09fae4ee3ec26496d3ebe5ff3a18d04e550ec"
+    }
+  ],
+  "requirements": {
+    "correctness_required": true,
+    "process_scope": {
+      "nnodes": 1,
+      "nproc_per_node": 1
+    },
+    "runtime_profile": "xpytorch_2.9_p800_candidate",
+    "schema_version": 1,
+    "supported": true
+  },
+  "schema_version": 1,
+  "selector": "kunlunxin/P800",
+  "vendor": "kunlunxin"
+}

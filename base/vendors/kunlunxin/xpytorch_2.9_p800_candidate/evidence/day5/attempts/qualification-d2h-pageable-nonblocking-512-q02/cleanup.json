@@ -1,0 +1,69 @@
+{
+  "commands": [
+    {
+      "argv": [
+        "sudo",
+        "-n",
+        "docker",
+        "ps",
+        "-a",
+        "--no-trunc",
+        "--filter",
+        "id=f3ee290828ea5dcc784e91584ed3a2b0f87fb0ef67f5b2a2a1cf1a9666a6e399",
+        "--format",
+        "{{.ID}}"
+      ],
+      "finished_monotonic_s": 3923119.34772246,
+      "returncode": 0,
+      "started_at": "2026-09-22T12:59:42.353021+00:00",
+      "started_monotonic_s": 3923119.272874905,
+      "stderr": "",
+      "stdout": "f3ee290828ea5dcc784e91584ed3a2b0f87fb0ef67f5b2a2a1cf1a9666a6e399\n",
+      "timed_out": false,
+      "timeout_s": 3
+    },
+    {
+      "argv": [
+        "sudo",
+        "-n",
+        "docker",
+        "rm",
+        "-f",
+        "f3ee290828ea5dcc784e91584ed3a2b0f87fb0ef67f5b2a2a1cf1a9666a6e399"
+      ],
+      "finished_monotonic_s": 3923119.569712718,
+      "returncode": 0,
+      "started_at": "2026-09-22T12:59:42.543897+00:00",
+      "started_monotonic_s": 3923119.463750308,
+      "stderr": "",
+      "stdout": "f3ee290828ea5dcc784e91584ed3a2b0f87fb0ef67f5b2a2a1cf1a9666a6e399\n",
+      "timed_out": false,
+      "timeout_s": 5
+    },
+    {
+      "argv": [
+        "sudo",
+        "-n",
+        "docker",
+        "ps",
+        "-a",
+        "--no-trunc",
+        "--filter",
+        "id=f3ee290828ea5dcc784e91584ed3a2b0f87fb0ef67f5b2a2a1cf1a9666a6e399",
+        "--format",
+        "{{.ID}}"
+      ],
+      "finished_monotonic_s": 3923119.633426188,
+      "returncode": 0,
+      "started_at": "2026-09-22T12:59:42.649873+00:00",
+      "started_monotonic_s": 3923119.569725568,
+      "stderr": "",
+      "stdout": "",
+      "timed_out": false,
+      "timeout_s": 3
+    }
+  ],
+  "container_absent": true,
+  "container_id": "f3ee290828ea5dcc784e91584ed3a2b0f87fb0ef67f5b2a2a1cf1a9666a6e399",
+  "status": "passed"
+}

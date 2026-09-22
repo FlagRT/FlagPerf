@@ -11,8 +11,9 @@ correctness scope, and the [FP32 runbook](../../../benchmarks/computation-FP32/k
 (CV 0.2294%), BF16 118.970 TFLOPS (CV 0.0029%), FP32 117.049 TFLOPS (CV 0.086%) and INT8
 504.591 TOPS (CV 0.3315%), all at the Ascend 8192-cubed scale with warmup 100; BF16 is a
 device measurement but the vendor bf16 kernel runs at fp32-equivalent throughput;
-transfer pageable modes qualified while all four pinned-mode groups stayed
-unstable on the shared host and await a quiet window. The first INT8 round measured a
+transfer modes are qualified at the toolkit-reference payload (512 MiB, matching
+`ascend-dmi -s 536870912`); every one of the eight request modes passes its stability gate at
+that payload, including the pinned non-blocking pair that a 4 GiB payload cannot run. The first INT8 round measured a
 host-CPU fallback and is retracted; the review records the evidence and the device-kernel
 replacement. See the
 [Day 5 review](evidence/day5/review.md) for the capability matrix, per-group
