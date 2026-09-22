@@ -6,8 +6,10 @@ from base.vendors.protocol import ConfigurationError
 
 def validate_config(config):
     for key in ('M', 'N', 'K'):
-        if type(config.get(key)) is not int or not 1 <= config[key] <= 4096:
-            raise ConfigurationError('FP32 shape must be integer dimensions in 1..4096')
+        # 8192 allows the Ascend-parity shape; the day-four qualification used 4096 and
+        # keeps its own snapshotted contract inside each result directory.
+        if type(config.get(key)) is not int or not 1 <= config[key] <= 8192:
+            raise ConfigurationError('FP32 shape must be integer dimensions in 1..8192')
     for key, lower, upper in [('WARMUP', 1, 100), ('ITERS', 1, 20000), ('SEED', 0, 2**31 - 1)]:
         if type(config.get(key)) is not int or not lower <= config[key] <= upper:
             raise ConfigurationError('invalid bounded FP32 field: ' + key)

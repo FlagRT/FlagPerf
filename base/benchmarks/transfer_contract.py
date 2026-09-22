@@ -16,7 +16,11 @@ def contract(case):
 
 def validate_config(config, case):
     spec = contract(case)
-    for key, lower, upper in [('PAYLOAD_BYTES', 4096, 256 * 2**20), ('ITERS', 1, 200000),
+    # Upper bound raised from 256 MiB to 4 GiB so the transfer cases can run at the
+    # Ascend configuration scale (Melements 1024). The runtime memory budget still
+    # refuses any payload whose host or device footprint exceeds ten percent of what
+    # is available, so this does not weaken allocation safety.
+    for key, lower, upper in [('PAYLOAD_BYTES', 4096, 4 * 2**30), ('ITERS', 1, 200000),
                               ('WARMUP', 1, 100), ('SEED', 0, 2**31 - 1)]:
         if type(config.get(key)) is not int or not lower <= config[key] <= upper:
             raise ConfigurationError('invalid bounded transfer field: ' + key)

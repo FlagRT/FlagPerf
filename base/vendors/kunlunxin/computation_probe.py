@@ -5,7 +5,7 @@ from pathlib import Path
 import traceback
 
 
-PRECISIONS = ('FP16', 'BF16', 'INT8', 'INT8-ROUTES', 'MATMUL-ROUTES', 'XTORCH-INT8', 'FP64', 'FP8', 'TF32')
+PRECISIONS = ('FP16', 'BF16', 'INT8', 'INT8-ROUTES', 'MATMUL-ROUTES', 'XTORCH-INT8', 'BF16-ROUTES', 'FP64', 'FP8', 'TF32')
 
 
 def probe(precision, device, identity, output):
@@ -297,6 +297,99 @@ def probe(precision, device, identity, output):
                  a_scale_nonzero=int((a_scale != 0).sum().item()), b_scale_nonzero=int((b_scale != 0).sum().item()))
         except Exception as exc:
             note('workspace_written', status='failed', error_type=type(exc).__name__, error=str(exc)[:200])
+        (output / 'capability.json').write_text(json.dumps(record, indent=2) + '\n')
+    elif precision == 'BF16-ROUTES':
+        import time as _time
+        record['route_scope'] = 'vendor grouped bf16 kernel as a single-group dense GEMM; not a qualification'
+
+        def note(name, **values):
+            item = {'name': name, 'status': values.pop('status', 'observed'), **values}
+            record['tests'].append(item)
+            (output / 'capability.json').write_text(json.dumps(record, indent=2) + '\n')
+            print('[probe]', json.dumps(item)[:600], flush=True)
+
+        import xtorch_ops
+        generator = torch.Generator().manual_seed(519)
+        kernel = getattr(xtorch_ops, 'm_grouped_gemm_bf16_bf16_bf16_nt_contiguous_v3')
+
+        def build(size):
+            left = (torch.randn(size, size, generator=generator) / size ** 0.5).to(torch.bfloat16).to(device)
+            right = (torch.randn(size, size, generator=generator) / size ** 0.5).to(torch.bfloat16).to(device)
+            out = torch.empty(size, size, dtype=torch.bfloat16, device=device)
+            return left, right, out
+
+        # Single group: every row belongs to group 0. Try the two plausible index
+        # encodings and keep whichever returns clean results.
+        for label, make_indices in (('m_indices_zeros_M', lambda size: torch.zeros(size, dtype=torch.int32, device=device)),
+                                    ('m_indices_zeros_1', lambda size: torch.zeros(1, dtype=torch.int32, device=device))):
+            try:
+                size = 4096
+                left, right, out = build(size)
+                indices = make_indices(size)
+                kernel(left, right, out, indices)
+                torch.cuda.synchronize(device)
+                rows = [0, 1, size - 1]
+                columns = [0, 5, size - 1]
+                reference = left[rows].double() @ right.t()[:, columns].double()
+                actual = out[rows][:, columns].double()
+                error = (actual - reference).abs().max().item()
+                note('grouped_%s_correctness' % label, max_abs_error=error,
+                     reference_scale=reference.abs().max().item(), indices_shape=list(indices.shape))
+            except Exception as exc:
+                note('grouped_%s_correctness' % label, status='failed',
+                     error_type=type(exc).__name__, error=str(exc)[:250])
+
+        # Time the working encoding at the qualification shape.
+        size = 8192
+        left, right, out = build(size)
+        indices = torch.zeros(size, dtype=torch.int32, device=device)
+
+        def call():
+            kernel(left, right, out, indices)
+
+        try:
+            for _ in range(2):
+                call()
+            torch.cuda.synchronize(device)
+            wall0, cpu0 = _time.perf_counter(), _time.process_time()
+            for _ in range(3):
+                call()
+            torch.cuda.synchronize(device)
+            wall = _time.perf_counter() - wall0
+            note('grouped_bf16_8192', ms_per_iteration=wall / 3 * 1e3, tops=2 * size ** 3 * 3 / wall / 1e12,
+                 process_cpu_over_wall=(_time.process_time() - cpu0) / wall)
+        except Exception as exc:
+            note('grouped_bf16_8192', status='failed', error_type=type(exc).__name__, error=str(exc)[:250])
+
+        # Reference points measured in the same container for a clean comparison.
+        fp16_left = left.to(torch.float16)
+        fp16_right = right.to(torch.float16)
+
+        def fp16_call():
+            torch.mm(fp16_left, fp16_right)
+
+        for _ in range(2):
+            fp16_call()
+        torch.cuda.synchronize(device)
+        wall0 = _time.perf_counter()
+        for _ in range(3):
+            fp16_call()
+        torch.cuda.synchronize(device)
+        wall = _time.perf_counter() - wall0
+        note('aten_fp16_8192_reference', ms_per_iteration=wall / 3 * 1e3, tops=2 * size ** 3 * 3 / wall / 1e12)
+
+        def bf16_call():
+            torch.mm(left, right)
+
+        for _ in range(2):
+            bf16_call()
+        torch.cuda.synchronize(device)
+        wall0 = _time.perf_counter()
+        for _ in range(3):
+            bf16_call()
+        torch.cuda.synchronize(device)
+        wall = _time.perf_counter() - wall0
+        note('aten_bf16_8192_reference', ms_per_iteration=wall / 3 * 1e3, tops=2 * size ** 3 * 3 / wall / 1e12)
         (output / 'capability.json').write_text(json.dumps(record, indent=2) + '\n')
     elif precision == 'TF32':
         record['initial_allow_tf32'] = torch.backends.cuda.matmul.allow_tf32

@@ -97,7 +97,7 @@ class TransferContractTests(unittest.TestCase):
         with self.assertRaises(ConfigurationError):
             validate_config({**self.config(), 'DIRECTION': 'd2h'}, 'interconnect-h2d:P800')
         with self.assertRaises(ConfigurationError):
-            validate_config({**self.config(), 'PAYLOAD_BYTES': 512 * 2**20}, 'interconnect-h2d:P800')
+            validate_config({**self.config(), 'PAYLOAD_BYTES': 4 * 2**30 + 4096}, 'interconnect-h2d:P800')
 
 
 if __name__ == '__main__':

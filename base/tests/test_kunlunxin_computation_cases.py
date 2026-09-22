@@ -106,7 +106,10 @@ class ComputationNumericalTests(unittest.TestCase):
         for precision in ('FP16', 'BF16'):
             with self.subTest(precision=precision), tempfile.TemporaryDirectory() as temp:
                 root = Path(temp)
+                # Execution correctness is independent of the benchmark scale, which is now
+                # the Ascend-parity 8192-cubed; keep this fixture small and explicit.
                 config = config_for(precision)
+                config.update(M=32, N=32, K=32, ITERS=4, WARMUP=1)
                 (root / 'context.json').write_text(json.dumps({'case_assets_sha256': 'case-hash'}))
                 driver = Mock()
                 driver.device.return_value = torch.device('cpu')

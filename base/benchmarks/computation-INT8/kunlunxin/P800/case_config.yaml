@@ -13,5 +13,5 @@ DTYPE: int8
 OPERATOR: xtorch_ops.gemm_I8_I8_bf16_nt
 DIST_BACKEND: gloo
 IMPLEMENTATION: native-xpytorch
-FAULT_MODE: none
 MODE: qualification
+FAULT_MODE: none

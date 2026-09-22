@@ -132,7 +132,8 @@ class ContractTests(unittest.TestCase):
             root = Path(temp)
             workload.prepare(root)
             actual = verify_worker_assets(BASE, root / 'control/case-assets.json', 'computation-FP32:P800', 'kunlunxin')
-            self.assertEqual(actual['merged_config']['M'], 32)
+            expected_m = read_config(CASE / 'case_config.smoke.yaml')['M']
+            self.assertEqual(actual['merged_config']['M'], expected_m)
             (root / 'control/case-config/override.yaml').write_text('M: 99\n')
             with self.assertRaises(ConfigurationError):
                 verify_worker_assets(BASE, root / 'control/case-assets.json', 'computation-FP32:P800', 'kunlunxin')
@@ -175,7 +176,10 @@ class NumericalTests(unittest.TestCase):
 
     def run_cpu_fixture(self, temp, clock=(1000000000, 2000000000), failure=False):
         root = Path(temp)
+        # Timer and correctness semantics are independent of the benchmark scale, which is
+        # now the Ascend-parity 8192-cubed; keep this fixture explicitly small.
         config = {**read_config(CASE / 'case_config.yaml'), **read_config(CASE / 'case_config.smoke.yaml')}
+        config.update(M=32, N=32, K=32, ITERS=4, WARMUP=1)
         calls = []
         driver = Mock()
         driver.device.return_value = torch.device('cpu')
