@@ -5,7 +5,7 @@ from pathlib import Path
 import traceback
 
 
-PRECISIONS = ('FP16', 'BF16', 'INT8', 'INT8-ROUTES', 'MATMUL-ROUTES', 'XTORCH-INT8', 'BF16-ROUTES', 'FP64', 'FP8', 'TF32')
+PRECISIONS = ('FP16', 'BF16', 'INT8', 'INT8-ROUTES', 'MATMUL-ROUTES', 'XTORCH-INT8', 'BF16-ROUTES', 'BF16-SWEEP', 'TRANSFER-PINNED', 'FP64', 'FP8', 'TF32')
 
 
 def probe(precision, device, identity, output):
@@ -390,6 +390,105 @@ def probe(precision, device, identity, output):
         torch.cuda.synchronize(device)
         wall = _time.perf_counter() - wall0
         note('aten_bf16_8192_reference', ms_per_iteration=wall / 3 * 1e3, tops=2 * size ** 3 * 3 / wall / 1e12)
+        (output / 'capability.json').write_text(json.dumps(record, indent=2) + '\n')
+    elif precision == 'BF16-SWEEP':
+        record['route_scope'] = 'nt kernel lower dynamic-range boundary; not a qualification'
+
+        def note(name, **values):
+            item = {'name': name, 'status': values.pop('status', 'observed'), **values}
+            record['tests'].append(item)
+            (output / 'capability.json').write_text(json.dumps(record, indent=2) + '\n')
+            print('[probe]', json.dumps(item)[:500], flush=True)
+
+        import torch.nn.functional as functional
+        size = 128
+        right = torch.ones(size, size, dtype=torch.bfloat16, device=device)
+        for exponent in (-8, -9, -10, -11, -12, -14, -16, -20, -25):
+            value = 10.0 ** exponent
+            left = torch.full((size, size), value, dtype=torch.bfloat16, device=device)
+            expected = value * size
+            mm_out = torch.mm(left, right)
+            nt_out = functional.linear(left, right.t().contiguous())
+            torch.cuda.synchronize(device)
+            mm_first = mm_out.flatten()[0].item()
+            nt_first = nt_out.flatten()[0].item()
+            note('boundary_1e%d' % exponent, input_value=value, expected=expected,
+                 mm_first=mm_first, nt_first=nt_first,
+                 mm_ok=abs(mm_first - expected) <= abs(expected) * 0.01,
+                 nt_ok=abs(nt_first - expected) <= abs(expected) * 0.01)
+            del left, mm_out, nt_out
+        del right
+        (output / 'capability.json').write_text(json.dumps(record, indent=2) + '\n')
+    elif precision == 'TRANSFER-PINNED':
+        import time as _time
+        record['route_scope'] = 'pinned copy stage and payload threshold; not a qualification'
+
+        def note(name, **values):
+            item = {'name': name, 'status': values.pop('status', 'observed'), **values}
+            record['tests'].append(item)
+            (output / 'capability.json').write_text(json.dumps(record, indent=2) + '\n')
+            print('[probe]', json.dumps(item)[:500], flush=True)
+
+        MIB = 2 ** 20
+        for mib in (64, 256, 512, 1024, 2048, 4096):
+            payload = mib * MIB
+            elements = payload // 4
+            stages = {}
+            host = accelerator = source = destination = None
+            try:
+                stages['pinned_alloc'] = 'started'
+                host = torch.empty(elements, dtype=torch.float32, pin_memory=True)
+                stages['pinned_alloc'] = 'ok' if host.is_pinned() else 'not_pinned'
+                stages['device_alloc'] = 'started'
+                accelerator = torch.empty(elements, dtype=torch.float32, device=device)
+                stages['device_alloc'] = 'ok'
+                stages['fill'] = 'started'
+                host.fill_(1.0)
+                accelerator.fill_(2.0)
+                stages['fill'] = 'ok'
+                stages['sync_before'] = 'started'
+                torch.cuda.synchronize(device)
+                stages['sync_before'] = 'ok'
+                for non_blocking in (False, True):
+                    label = 'nonblocking' if non_blocking else 'blocking'
+                    try:
+                        stages['copy_' + label] = 'started'
+                        accelerator.copy_(host, non_blocking=non_blocking)
+                        torch.cuda.synchronize(device)
+                        stages['copy_' + label] = 'ok'
+                        stages['readback_' + label] = 'ok' if float(accelerator[0].item()) == 1.0 else 'mismatch'
+                    except Exception as exc:
+                        stages['copy_' + label] = '%s: %s' % (type(exc).__name__, str(exc)[:120])
+                note('payload_%dMiB' % mib, status='observed', stages=stages)
+            except Exception as exc:
+                stages['error'] = '%s: %s' % (type(exc).__name__, str(exc)[:200])
+                note('payload_%dMiB' % mib, status='failed', stages=stages)
+            finally:
+                del host, accelerator, source, destination
+                try:
+                    torch.cuda.empty_cache()
+                except Exception:
+                    pass
+
+        # Repeat the failing 4 GiB pinned+nonblocking copy a few times to see whether the
+        # failure is deterministic or depends on accumulated state.
+        for attempt in range(3):
+            try:
+                host = torch.empty(2 ** 30, dtype=torch.float32, pin_memory=True)
+                accelerator = torch.empty(2 ** 30, dtype=torch.float32, device=device)
+                host.fill_(3.0)
+                torch.cuda.synchronize(device)
+                wall0 = _time.perf_counter()
+                for _ in range(3):
+                    accelerator.copy_(host, non_blocking=True)
+                torch.cuda.synchronize(device)
+                seconds = _time.perf_counter() - wall0
+                note('repeat_4GiB_nonblocking_attempt%d' % attempt, status='observed',
+                     ms_per_copy=seconds / 3 * 1e3, gb_s=payload / (seconds / 3) / 1e9)
+                del host, accelerator
+            except Exception as exc:
+                note('repeat_4GiB_nonblocking_attempt%d' % attempt, status='failed',
+                     error_type=type(exc).__name__, error=str(exc)[:200])
         (output / 'capability.json').write_text(json.dumps(record, indent=2) + '\n')
     elif precision == 'TF32':
         record['initial_allow_tf32'] = torch.backends.cuda.matmul.allow_tf32
