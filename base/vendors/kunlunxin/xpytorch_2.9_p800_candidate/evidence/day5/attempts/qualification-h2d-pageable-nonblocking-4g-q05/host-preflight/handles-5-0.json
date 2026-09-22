@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "sudo",
+    "-n",
+    "fuser",
+    "/dev/xpu7"
+  ],
+  "finished_monotonic_s": 3912336.742917194,
+  "returncode": 1,
+  "started_at": "2026-09-22T09:59:55.511492+00:00",
+  "started_monotonic_s": 3912332.43134522,
+  "stderr": "",
+  "stdout": "",
+  "timed_out": false,
+  "timeout_s": 10
+}

@@ -1,0 +1,58 @@
+{
+  "cv_percent": 3.310653085869755,
+  "ddof": 1,
+  "max": 10.322289603824862,
+  "max_cv_percent": 5,
+  "mean": 10.003279088384831,
+  "median": 10.1470878901719,
+  "metric": "transfer-bandwidth",
+  "min": 9.54165472587984,
+  "repetitions": 5,
+  "runs": [
+    {
+      "directory": "base/result/p800-pr4-pr5-20260922-0935/qualification-h2d-pageable-blocking-4g-q81",
+      "elapsed_seconds": 41.984894509,
+      "gb_s": 10.229791800666115,
+      "run_id": "benchmark-af440da4eaab430eaefb247f5fbb74b7",
+      "summary_sha256": "0693a8b89b778a64c2f4b4ee82193770b37847980eea2e763d0b5031eec872ae",
+      "value": 10.229791800666115
+    },
+    {
+      "directory": "base/result/p800-pr4-pr5-20260922-0935/qualification-h2d-pageable-blocking-4g-q82",
+      "elapsed_seconds": 41.608668821,
+      "gb_s": 10.322289603824862,
+      "run_id": "benchmark-c46cd14c4a7343259d5a057948566eb5",
+      "summary_sha256": "0e1743517baeee9cb97084a8c1c2aeb60731645db190ce3cef3e1bfd2cac728e",
+      "value": 10.322289603824862
+    },
+    {
+      "directory": "base/result/p800-pr4-pr5-20260922-0935/qualification-h2d-pageable-blocking-4g-q83",
+      "elapsed_seconds": 42.327092684,
+      "gb_s": 10.1470878901719,
+      "run_id": "benchmark-24bec9fdae1545838c6a4463070e0e13",
+      "summary_sha256": "c98ee6796018c0b7f7f32ed00b2c81e56745e16cbb8abb0bea92ed766fc245f0",
+      "value": 10.1470878901719
+    },
+    {
+      "directory": "base/result/p800-pr4-pr5-20260922-0935/qualification-h2d-pageable-blocking-4g-q84",
+      "elapsed_seconds": 43.935715989,
+      "gb_s": 9.77557142138144,
+      "run_id": "benchmark-948d217771064e5c9dd0f685ab757ffd",
+      "summary_sha256": "00a33e29324a28f939646ebc9ffb14495e259a791d1d3b8b2cefb10286067485",
+      "value": 9.77557142138144
+    },
+    {
+      "directory": "base/result/p800-pr4-pr5-20260922-0935/qualification-h2d-pageable-blocking-4g-q85",
+      "elapsed_seconds": 45.012814018,
+      "gb_s": 9.54165472587984,
+      "run_id": "benchmark-fdeb02577b89432faf305c31add4f89b",
+      "summary_sha256": "2b1b7ce0e378978840f5d67e31e45d4db05dd6ebce55a9815ae11a8072136de6",
+      "value": 9.54165472587984
+    }
+  ],
+  "sample_standard_deviation": 0.33117386782777636,
+  "schema_version": 1,
+  "scope": "one physical UUID, locked M1/native transfer-bandwidth/config; no other dtype or communication qualification",
+  "status": "passed",
+  "unit": "GB/s"
+}

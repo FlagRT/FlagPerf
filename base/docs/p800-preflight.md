@@ -166,8 +166,10 @@ Four pageable transfer groups qualified; the four pinned-mode groups stayed
 unstable on the current shared host and remain scheduled for a quiet window.
 The first INT8 round measured a host-CPU fallback (`torch._int_mm`) and is
 retracted; the case now runs the vendor device kernel `xtorch_ops.gemm_I8_I8_bf16_nt` at
-the Ascend 8192-cubed scale, qualifying at 504.591 TOPS with CV 0.3315%. FP16, BF16 and
-FP32 still run at 4096-cubed and the transfer payloads are still 64 MiB; an Ascend-scale
-comparability re-run is outstanding. FP32
+the Ascend 8192-cubed scale, qualifying at 504.591 TOPS with CV 0.3315%. Every computation case
+now runs at the Ascend 8192-cubed scale with warmup 100 (FP16 and BF16 keep the Ascend
+iteration count, FP32 and INT8 raise it to hold the 15 s measurement floor) and the eight
+transfer request modes run at the Ascend 4 GiB payload. BF16 measures 118.970 TFLOPS
+because the vendor bf16 kernel executes at fp32-equivalent throughput. FP32
 monitored regression on this host reproduced the day-4 value (113.1 TFLOPS, not
 merged into day-4 statistics). The manifest remains candidate, `validated: false`.

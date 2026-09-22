@@ -1,0 +1,60 @@
+{
+  "clock_domain": "same-host Linux monotonic",
+  "collector": "xpu-smi -m and selected -q",
+  "extensions": [],
+  "parsed_samples": {
+    "bytes": 2654,
+    "path": "benchmark-monitor/samples.jsonl",
+    "sha256": "50f774dc6477a40c7522fcdc1d04bdb0ac30fb776dd404a800837ab791982525"
+  },
+  "policy": {
+    "automatic_workload_extension": false,
+    "collector": "xpu-smi -m and selected -q",
+    "enabled": true,
+    "metric_fields": [
+      {
+        "key": "utilization_percent",
+        "label": "Device utilization",
+        "unit": "%"
+      },
+      {
+        "key": "used_memory_mib",
+        "label": "Allocated device memory",
+        "unit": "MiB"
+      }
+    ],
+    "required_samples_per_target": 10,
+    "target_interval_s": 1.0,
+    "target_resource": "p800-device",
+    "vendor": "kunlunxin"
+  },
+  "primary_sample_counts_by_target": {
+    "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87": 0
+  },
+  "raw_samples": {
+    "bytes": 40530,
+    "path": "benchmark-monitor/samples.raw.jsonl",
+    "sha256": "30e107d26ef68924c8a9465b4eab700917cc0d69ba6effd04e12d8e5735dd066"
+  },
+  "reasons": [
+    "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87: 0/10 valid samples"
+  ],
+  "sample_counts_by_target": {
+    "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87": 0
+  },
+  "schema_version": 2,
+  "status": "partial",
+  "target_resource": null,
+  "targets": [
+    {
+      "device_id": "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87",
+      "pci_bdf": "0000:9c:00.0",
+      "physical_id": 5,
+      "uuid": "f396486d-9850-50e4-81c4-50f2e9f6ca87"
+    }
+  ],
+  "total_sample_commands": 16,
+  "vendor": "kunlunxin",
+  "window_semantics": "FP32 loop including final full target synchronization",
+  "workload_windows": []
+}

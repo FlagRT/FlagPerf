@@ -1,0 +1,277 @@
+{
+  "schema_version": 1,
+  "run_id": "preflight-eedf9bb623684a5c944f12b91197c1d3",
+  "context_sha256": "1a72bb4a5daaa612f29e9ae9f0bff2b58f3bcc220cd7848b36c398a1bb330286",
+  "binding": {
+    "vendor": "kunlunxin",
+    "host_physical_id": 5,
+    "pci_bdf": "0000:9c:00.0",
+    "serial_or_uuid": "f396486d-9850-50e4-81c4-50f2e9f6ca87",
+    "host_device_node": "/dev/xpu7",
+    "container_device_node": "/dev/xpu7",
+    "framework_local_rank": 0,
+    "framework_logical_id": 0,
+    "framework_device_name": "cuda:0",
+    "request_index": 0,
+    "resource_key": "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87",
+    "legacy_logical_id": null
+  },
+  "precision": "BF16-SWEEP",
+  "tests": [
+    {
+      "name": "normal_magnitude",
+      "status": "observed",
+      "input_scale": 0.14665910601615906,
+      "linear_max_abs": 0.0004751533269882202,
+      "linear_relative": 0.0032398487887677924,
+      "mm_max_abs": 0.0004751533269882202,
+      "mm_relative": 0.0032398487887677924,
+      "linear_matches_mm": false
+    },
+    {
+      "name": "magnitude_1e-30",
+      "status": "observed",
+      "input_scale": 0.0,
+      "linear_max_abs": 0.0,
+      "linear_relative": null,
+      "mm_max_abs": 0.0,
+      "mm_relative": null,
+      "linear_matches_mm": true
+    },
+    {
+      "name": "magnitude_1e-20",
+      "status": "observed",
+      "input_scale": 0.0,
+      "linear_max_abs": 0.0,
+      "linear_relative": null,
+      "mm_max_abs": 0.0,
+      "mm_relative": null,
+      "linear_matches_mm": true
+    },
+    {
+      "name": "magnitude_1e-10",
+      "status": "observed",
+      "input_scale": 1.4659397405447759e-21,
+      "linear_max_abs": 3.309530243779057e-24,
+      "linear_relative": 0.0022576168393860186,
+      "mm_max_abs": 3.308520501820374e-24,
+      "mm_relative": 0.0022569280375678022,
+      "linear_matches_mm": false
+    },
+    {
+      "name": "magnitude_1e-6",
+      "status": "observed",
+      "input_scale": 1.4659852650387994e-13,
+      "linear_max_abs": 4.423138287926176e-16,
+      "linear_relative": 0.0030171778621588745,
+      "mm_max_abs": 4.423138287926176e-16,
+      "mm_relative": 0.0030171778621588745,
+      "linear_matches_mm": false
+    },
+    {
+      "name": "magnitude_1e-3",
+      "status": "observed",
+      "input_scale": 1.4667409686808242e-07,
+      "linear_max_abs": 4.646096840588143e-10,
+      "linear_relative": 0.003167632826651599,
+      "mm_max_abs": 4.646096840588143e-10,
+      "mm_relative": 0.003167632826651599,
+      "linear_matches_mm": false
+    },
+    {
+      "name": "magnitude_1e0",
+      "status": "observed",
+      "input_scale": 0.14665910601615906,
+      "linear_max_abs": 0.0004751533269882202,
+      "linear_relative": 0.0032398487887677924,
+      "mm_max_abs": 0.0004751533269882202,
+      "mm_relative": 0.0032398487887677924,
+      "linear_matches_mm": false
+    },
+    {
+      "name": "magnitude_1e3",
+      "status": "observed",
+      "input_scale": 146823.84375,
+      "linear_max_abs": 509.859375,
+      "linear_relative": 0.0034725924752940546,
+      "mm_max_abs": 509.859375,
+      "mm_relative": 0.0034725924752940546,
+      "linear_matches_mm": false
+    },
+    {
+      "name": "magnitude_1e6",
+      "status": "observed",
+      "input_scale": 146622971904.0,
+      "linear_max_abs": 510951424.0,
+      "linear_relative": 0.0034847978960250553,
+      "mm_max_abs": 510951424.0,
+      "mm_relative": 0.0034847978960250553,
+      "linear_matches_mm": false
+    }
+  ],
+  "scope": "bounded API and numerical observations, not performance or universal fallback exclusion",
+  "route_scope": "nt linear kernel magnitude behaviour and comparison against mm; not a qualification",
+  "extension_path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir",
+  "api_schemas": {
+    "mm": "{'': aten::mm(Tensor self, Tensor mat2) -> Tensor, 'out': aten::mm.out(Tensor self, Tensor mat2, *, Tensor(a!) out) -> Tensor(a!), 'dtype_out': aten::mm.dtype_out(Tensor self, Tensor mat2, ScalarType out_dtype, *, Tensor(a!) out) -> Tensor(a!), 'dtype': aten::mm.dtype(Tensor self, Tensor mat2, ScalarType out_dtype) -> Tensor}",
+    "_int_mm": "{'': aten::_int_mm(Tensor self, Tensor mat2) -> Tensor, 'out': aten::_int_mm.out(Tensor self, Tensor mat2, *, Tensor(a!) out) -> Tensor(a!)}",
+    "_scaled_mm": "{'': aten::_scaled_mm(Tensor self, Tensor mat2, Tensor scale_a, Tensor scale_b, Tensor? bias=None, Tensor? scale_result=None, ScalarType? out_dtype=None, bool use_fast_accum=False) -> Tensor, 'out': aten::_scaled_mm.out(Tensor self, Tensor mat2, Tensor scale_a, Tensor scale_b, Tensor? bias=None, Tensor? scale_result=None, ScalarType? out_dtype=None, bool use_fast_accum=False, *, Tensor(a!) out) -> Tensor(a!)}"
+  },
+  "extension_symbols": [],
+  "source_precision_mentions": [
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/core/xpu_builder.py",
+      "sha256": "9d88fa9ad0f127bcdb9b40aedba6210524790ad6b9b63e2942cde85dcd0899e0",
+      "matches": [
+        {
+          "line": 38,
+          "text": "    Type.F64: torch.float64,"
+        }
+      ]
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/debug/validate_aten/validate/comparer.py",
+      "sha256": "3fc0bed114852057159c55b6a86c5440427330c865a27340d2e8df6ca98446b6",
+      "matches": [
+        {
+          "line": 129,
+          "text": "        # TODO\uff1adtype\u4e0d\u76f8\u7b49\u4e0d\u4e00\u5b9a\u662f\u9519\u8bef\uff0c\u6bd4\u5982 float32/float64\uff0c\u5982\u679c\u786e\u5b9e\u4e0d\u91cd\u8981\uff0c\u53ef\u4ee5\u8003\u8651\u5ffd\u7565"
+        }
+      ]
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/dynamo/ir.py",
+      "sha256": "85bdf7ceec44ebe257fa7cd09da9123ad87bc06ad267ad1344b65800baeb4a64",
+      "matches": [
+        {
+          "line": 21,
+          "text": "    torch.float64: 7,"
+        },
+        {
+          "line": 163,
+          "text": "    if dtype == torch.float64:"
+        }
+      ]
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/dynamo/xmlir_builder.py",
+      "sha256": "1007f84748fb957cbb435b9b11fd519c3a86a34711b3f4150ce6afd148effb79",
+      "matches": [
+        {
+          "line": 44,
+          "text": "    torch.float64: np.float64,"
+        }
+      ]
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/nn/linear.py",
+      "sha256": "8e389f014b5f63916cc8b7eb37de065c65be024ac0bd8f4b52a314df3f3cf548",
+      "matches": [
+        {
+          "line": 173,
+          "text": "    This module supports :ref:`TensorFloat32<tf32_on_ampere>`."
+        }
+      ]
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/test_utils/automated_test/comparer.py",
+      "sha256": "21e607fbfc41d02ae53ff29f4b35f1cb237f6f755a125261270afc319e333219",
+      "matches": [
+        {
+          "line": 811,
+          "text": "            # \u8f6c\u6362\u5230float64\u8ba1\u7b97, \u9632\u6b62\u6570\u503c\u8fc7\u5927\u53d8\u6210inf"
+        },
+        {
+          "line": 812,
+          "text": "            baseline_data = baseline_data.to(torch.float64)"
+        },
+        {
+          "line": 813,
+          "text": "            evaluated_data = evaluated_data.to(torch.float64)"
+        }
+      ]
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/test_utils/automated_test/generators.py",
+      "sha256": "da0af6dcc53c77413638e33bffd5c09d67e0be12a67156889b59ad3b8f92ee2c",
+      "matches": [
+        {
+          "line": 184,
+          "text": "    elif dtype in (torch.bfloat16, torch.float32, torch.float64):"
+        },
+        {
+          "line": 220,
+          "text": "        if dtype in (torch.float16, torch.bfloat16, torch.float32, torch.float64)"
+        }
+      ]
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xhpc/xblas/script/matrix_quantization_precision.py",
+      "sha256": "4f631fa91253c56763c45f7a9f2a30ba9c770accaa949c1f4ec6a0b71f9db005",
+      "matches": [
+        {
+          "line": 22,
+          "text": "\u652f\u6301\u591a\u79cd\u6570\u636e\u7c7b\u578b\uff1afloat32\u3001float16\u3001bfloat16\u3001int8\u3001int16\u3001float8_e4m3fn"
+        },
+        {
+          "line": 46,
+          "text": "--dtypes \u7c7b\u578b [\u7c7b\u578b ...]      \u8981\u6d4b\u8bd5\u7684\u6570\u636e\u7c7b\u578b\uff08\u9ed8\u8ba4\uff1afloat32 float16 bfloat16 int16 int8 float8_e4m3fn\uff09"
+        },
+        {
+          "line": 105,
+          "text": "        if dtype == torch.float8_e4m3fn:"
+        },
+        {
+          "line": 121,
+          "text": "            q_tensor = scaled_tensor.to(torch.float8_e4m3fn)"
+        },
+        {
+          "line": 125,
+          "text": "            return self._quantize_per_token(tensor, fp8_max, torch.float8_e4m3fn, return_scale)"
+        },
+        {
+          "line": 128,
+          "text": "            return self._quantize_group(tensor, fp8_max, torch.float8_e4m3fn, group_size, return_scale)"
+        },
+        {
+          "line": 302,
+          "text": "            'float8_e4m3fn': torch.float8_e4m3fn,"
+        },
+        {
+          "line": 743,
+          "text": "            'dtypes': [\"float32\", \"float16\", \"bfloat16\", \"int16\", \"int8\", \"float8_e4m3fn\"]"
+        },
+        {
+          "line": 1014,
+          "text": "            \"float8_e4m3fn\": torch.float8_e4m3fn,"
+        },
+        {
+          "line": 1155,
+          "text": "                                                        \"int16\", \"int8\", \"float8_e4m3fn\"],"
+        },
+        {
+          "line": 1158,
+          "text": "                                                        \"int16\", \"int8\", \"float8_e4m3fn\"],"
+        },
+        {
+          "line": 1180,
+          "text": "                      default=[\"float32\", \"float16\", \"bfloat16\", \"int16\", \"int8\", \"float8_e4m3fn\"],"
+        },
+        {
+          "line": 1181,
+          "text": "                      choices=[\"float32\", \"float16\", \"bfloat16\", \"int16\", \"int8\", \"float8_e4m3fn\"],"
+        }
+      ]
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xhpc/xblas/script/perf_regression/script/evaluate_fc_kl3.py",
+      "sha256": "ace990b2c29829104e2d6719574178a7eb92e486f08862ba4f1b682a132686e0",
+      "matches": [
+        {
+          "line": 55,
+          "text": "    if compute_type == \"CUBLAS_COMPUTE_32F_FAST_TF32\":"
+        }
+      ]
+    }
+  ]
+}

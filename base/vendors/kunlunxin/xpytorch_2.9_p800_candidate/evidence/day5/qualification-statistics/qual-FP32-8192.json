@@ -1,0 +1,58 @@
+{
+  "cv_percent": 0.08600405602476272,
+  "ddof": 1,
+  "max": 117.0766653764408,
+  "max_cv_percent": 5,
+  "mean": 116.99983495096727,
+  "median": 117.04902861351002,
+  "metric": "computation-FP32",
+  "min": 116.8322216667718,
+  "repetitions": 5,
+  "runs": [
+    {
+      "directory": "base/result/p800-pr4-pr5-20260922-0935/qualification-FP32-8192-q71",
+      "elapsed_seconds": 18.82206145,
+      "run_id": "benchmark-2408d76cc5e14f39ae254556b347dbbe",
+      "summary_sha256": "425cc4f79db0e9cc014c11afcbe6d234a945158077f9cd381b37e1b1061d28dd",
+      "tflops": 116.8322216667718,
+      "value": 116.8322216667718
+    },
+    {
+      "directory": "base/result/p800-pr4-pr5-20260922-0935/qualification-FP32-8192-q72",
+      "elapsed_seconds": 18.787197823,
+      "run_id": "benchmark-c165740451a54d1f8f96b5c66dfad93c",
+      "summary_sha256": "2b08c8cf3207c83f7b6d7a8c61fa4beea0d3c439c8ee579948c1599db83d79a3",
+      "tflops": 117.04902861351002,
+      "value": 117.04902861351002
+    },
+    {
+      "directory": "base/result/p800-pr4-pr5-20260922-0935/qualification-FP32-8192-q73",
+      "elapsed_seconds": 18.7982021,
+      "run_id": "benchmark-dca3c2e692b4464dac3982a25886aae1",
+      "summary_sha256": "4322514d726cad6b213ef1635c0b1f39851c8554b9e06508f415d39fd4f12206",
+      "tflops": 116.98050929838656,
+      "value": 116.98050929838656
+    },
+    {
+      "directory": "base/result/p800-pr4-pr5-20260922-0935/qualification-FP32-8192-q74",
+      "elapsed_seconds": 18.782762974,
+      "run_id": "benchmark-acf9b88ec0a54b4a9f5fff43fcea6d4f",
+      "summary_sha256": "f4102475a38efc653a0ced8737e091b65a72391d248df54f177ddfe6fd598506",
+      "tflops": 117.0766653764408,
+      "value": 117.0766653764408
+    },
+    {
+      "directory": "base/result/p800-pr4-pr5-20260922-0935/qualification-FP32-8192-q75",
+      "elapsed_seconds": 18.785316678,
+      "run_id": "benchmark-96c7024de41b4105ac7d76a6587241cb",
+      "summary_sha256": "1e14fed34cd1f4957f45176f6c3ff1a4fb2593fd16b7ca63cc1f09de58e30614",
+      "tflops": 117.06074979972718,
+      "value": 117.06074979972718
+    }
+  ],
+  "sample_standard_deviation": 0.1006246036001098,
+  "schema_version": 1,
+  "scope": "one physical UUID, locked M1/native computation-FP32/config; no other dtype or communication qualification",
+  "status": "passed",
+  "unit": "TFLOPS"
+}

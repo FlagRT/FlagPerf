@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "sudo",
+    "-n",
+    "cat",
+    "/proc/4010194/cmdline"
+  ],
+  "finished_monotonic_s": 3915093.881529477,
+  "returncode": 0,
+  "started_at": "2026-09-22T10:45:56.938431+00:00",
+  "started_monotonic_s": 3915093.858283818,
+  "stderr": "",
+  "stdout": "",
+  "timed_out": false,
+  "timeout_s": 10
+}

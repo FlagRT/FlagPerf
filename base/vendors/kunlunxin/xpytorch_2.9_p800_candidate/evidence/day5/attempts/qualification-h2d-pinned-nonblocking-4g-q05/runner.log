@@ -1,0 +1,13 @@
+checkpoint: UUID set verified; selecting device
+checkpoint: creating four-element tensor
+checkpoint: synchronizing device
+checkpoint: tensor readback passed
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[FlagPerf Result]Rank 0's transfer-bandwidth=20.881320654416957GB/s
+[FlagPerf Result]Rank 0's transfer-bandwidth=19.44724531324297GiB/s
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+[W922 18:40:57.143674363 socket.cpp:209] [c10d] The hostname of the client socket cannot be retrieved. err=-3
+[W922 18:40:57.144364548 ProcessGroupGloo.cpp:516] Warning: Unable to resolve hostname to a (local) address. Using the loopback address as fallback. Manually set the network interface to bind to with GLOO_SOCKET_IFNAME. (function operator())
+/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/backends/cuda/__init__.py:131: UserWarning: Please use the new API settings to control TF32 behavior, such as torch.backends.cudnn.conv.fp32_precision = 'tf32' or torch.backends.cuda.matmul.fp32_precision = 'ieee'. Old settings, e.g, torch.backends.cuda.matmul.allow_tf32 = True, torch.backends.cudnn.allow_tf32 = True, allowTF32CuDNN() and allowTF32CuBLAS() will be deprecated after Pytorch 2.9. Please see https://pytorch.org/docs/main/notes/cuda.html#tensorfloat-32-tf32-on-ampere-and-later-devices (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:80.)
+  return torch._C._get_cublas_allow_tf32()

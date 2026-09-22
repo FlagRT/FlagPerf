@@ -1,0 +1,17 @@
+{
+  "argv": [
+    "sudo",
+    "-n",
+    "docker",
+    "start",
+    "279d70893cb40238fa7256ff1069e95f32fb7d35c1fbed3df076253d6e1d1166"
+  ],
+  "finished_monotonic_s": 3914603.174298983,
+  "returncode": 0,
+  "started_at": "2026-09-22T10:37:46.034386+00:00",
+  "started_monotonic_s": 3914602.954239483,
+  "stderr": "",
+  "stdout": "279d70893cb40238fa7256ff1069e95f32fb7d35c1fbed3df076253d6e1d1166\n",
+  "timed_out": false,
+  "timeout_s": 10
+}

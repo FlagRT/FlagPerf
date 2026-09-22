@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="280" viewBox="0 0 1000 280">
+<rect width="100%" height="100%" fill="white"/>
+<text x="20" y="25" font-size="16">Raw telemetry overlapping rank measurement windows</text>
+<text x="20" y="60" font-size="13">kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87: Device utilization (%) [0, 0]</text>
+<circle cx="30.000" cy="135.000" r="3" fill="#2463a4"><title>13.09481945168227: 0</title></circle>
+<circle cx="70.895" cy="135.000" r="3" fill="#2463a4"><title>14.107186951674521: 0</title></circle>
+<circle cx="112.060" cy="135.000" r="3" fill="#2463a4"><title>15.126230963971466: 0</title></circle>
+<circle cx="152.285" cy="135.000" r="3" fill="#2463a4"><title>16.121995868626982: 0</title></circle>
+<circle cx="192.539" cy="135.000" r="3" fill="#2463a4"><title>17.118486867751926: 0</title></circle>
+<circle cx="232.638" cy="135.000" r="3" fill="#2463a4"><title>18.111140840686858: 0</title></circle>
+<circle cx="273.581" cy="135.000" r="3" fill="#2463a4"><title>19.124691694043577: 0</title></circle>
+<circle cx="314.106" cy="135.000" r="3" fill="#2463a4"><title>20.127898524980992: 0</title></circle>
+<circle cx="354.439" cy="135.000" r="3" fill="#2463a4"><title>21.126347230747342: 0</title></circle>
+<circle cx="394.308" cy="135.000" r="3" fill="#2463a4"><title>22.113289700821042: 0</title></circle>
+<circle cx="434.931" cy="135.000" r="3" fill="#2463a4"><title>23.118930177763104: 0</title></circle>
+<circle cx="475.659" cy="135.000" r="3" fill="#2463a4"><title>24.127139278687537: 0</title></circle>
+<circle cx="515.856" cy="135.000" r="3" fill="#2463a4"><title>25.12223639898002: 0</title></circle>
+<circle cx="556.299" cy="135.000" r="3" fill="#2463a4"><title>26.123389645013958: 0</title></circle>
+<circle cx="596.861" cy="135.000" r="3" fill="#2463a4"><title>27.127505755983293: 0</title></circle>
+<circle cx="636.964" cy="135.000" r="3" fill="#2463a4"><title>28.120268446858972: 0</title></circle>
+<circle cx="677.087" cy="135.000" r="3" fill="#2463a4"><title>29.11352002667263: 0</title></circle>
+<circle cx="717.322" cy="135.000" r="3" fill="#2463a4"><title>30.109529736917466: 0</title></circle>
+<circle cx="758.477" cy="135.000" r="3" fill="#2463a4"><title>31.128340683877468: 0</title></circle>
+<circle cx="798.891" cy="135.000" r="3" fill="#2463a4"><title>32.12879618583247: 0</title></circle>
+<circle cx="839.404" cy="135.000" r="3" fill="#2463a4"><title>33.131679663900286: 0</title></circle>
+<circle cx="879.879" cy="135.000" r="3" fill="#2463a4"><title>34.13366591185331: 0</title></circle>
+<circle cx="919.135" cy="135.000" r="3" fill="#2463a4"><title>35.10543646570295: 0</title></circle>
+<circle cx="960.000" cy="135.000" r="3" fill="#2463a4"><title>36.117057190742344: 0</title></circle>
+<text x="20" y="170" font-size="13">kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87: Allocated device memory (MiB) [4260, 4260]</text>
+<circle cx="30.000" cy="245.000" r="3" fill="#2463a4"><title>13.09481945168227: 4260</title></circle>
+<circle cx="70.895" cy="245.000" r="3" fill="#2463a4"><title>14.107186951674521: 4260</title></circle>
+<circle cx="112.060" cy="245.000" r="3" fill="#2463a4"><title>15.126230963971466: 4260</title></circle>
+<circle cx="152.285" cy="245.000" r="3" fill="#2463a4"><title>16.121995868626982: 4260</title></circle>
+<circle cx="192.539" cy="245.000" r="3" fill="#2463a4"><title>17.118486867751926: 4260</title></circle>
+<circle cx="232.638" cy="245.000" r="3" fill="#2463a4"><title>18.111140840686858: 4260</title></circle>
+<circle cx="273.581" cy="245.000" r="3" fill="#2463a4"><title>19.124691694043577: 4260</title></circle>
+<circle cx="314.106" cy="245.000" r="3" fill="#2463a4"><title>20.127898524980992: 4260</title></circle>
+<circle cx="354.439" cy="245.000" r="3" fill="#2463a4"><title>21.126347230747342: 4260</title></circle>
+<circle cx="394.308" cy="245.000" r="3" fill="#2463a4"><title>22.113289700821042: 4260</title></circle>
+<circle cx="434.931" cy="245.000" r="3" fill="#2463a4"><title>23.118930177763104: 4260</title></circle>
+<circle cx="475.659" cy="245.000" r="3" fill="#2463a4"><title>24.127139278687537: 4260</title></circle>
+<circle cx="515.856" cy="245.000" r="3" fill="#2463a4"><title>25.12223639898002: 4260</title></circle>
+<circle cx="556.299" cy="245.000" r="3" fill="#2463a4"><title>26.123389645013958: 4260</title></circle>
+<circle cx="596.861" cy="245.000" r="3" fill="#2463a4"><title>27.127505755983293: 4260</title></circle>
+<circle cx="636.964" cy="245.000" r="3" fill="#2463a4"><title>28.120268446858972: 4260</title></circle>
+<circle cx="677.087" cy="245.000" r="3" fill="#2463a4"><title>29.11352002667263: 4260</title></circle>
+<circle cx="717.322" cy="245.000" r="3" fill="#2463a4"><title>30.109529736917466: 4260</title></circle>
+<circle cx="758.477" cy="245.000" r="3" fill="#2463a4"><title>31.128340683877468: 4260</title></circle>
+<circle cx="798.891" cy="245.000" r="3" fill="#2463a4"><title>32.12879618583247: 4260</title></circle>
+<circle cx="839.404" cy="245.000" r="3" fill="#2463a4"><title>33.131679663900286: 4260</title></circle>
+<circle cx="879.879" cy="245.000" r="3" fill="#2463a4"><title>34.13366591185331: 4260</title></circle>
+<circle cx="919.135" cy="245.000" r="3" fill="#2463a4"><title>35.10543646570295: 4260</title></circle>
+<circle cx="960.000" cy="245.000" r="3" fill="#2463a4"><title>36.117057190742344: 4260</title></circle>
+</svg>

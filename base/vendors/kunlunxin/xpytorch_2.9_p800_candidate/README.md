@@ -7,9 +7,10 @@ this profile to bounded identity, telemetry and cleanup qualification. On
 4096-cubed repetitions on physical card 6: median 113.057737 TFLOPS, CV 0.088744%.
 See the [Day 4 review](evidence/day4/review.md) for the exact measurement and
 correctness scope, and the [FP32 runbook](../../../benchmarks/computation-FP32/kunlunxin/P800/README.md). On 2026-09-22 physical card 5 extended this chain to FP16, BF16 and
-2048-cubed INT8 computation plus H2D/D2H copy cases: FP16 median 253.127 TFLOPS
-(CV 0.0796%), BF16 114.0087 TFLOPS (CV 0.0068%), INT8 504.591 TOPS at the Ascend
-8192-cubed scale (CV 0.3315%);
+2048-cubed INT8 computation plus H2D/D2H copy cases: FP16 median 258.869 TFLOPS
+(CV 0.2294%), BF16 118.970 TFLOPS (CV 0.0029%), FP32 117.049 TFLOPS (CV 0.086%) and INT8
+504.591 TOPS (CV 0.3315%), all at the Ascend 8192-cubed scale with warmup 100; BF16 is a
+device measurement but the vendor bf16 kernel runs at fp32-equivalent throughput;
 transfer pageable modes qualified while all four pinned-mode groups stayed
 unstable on the shared host and await a quiet window. The first INT8 round measured a
 host-CPU fallback and is retracted; the review records the evidence and the device-kernel
