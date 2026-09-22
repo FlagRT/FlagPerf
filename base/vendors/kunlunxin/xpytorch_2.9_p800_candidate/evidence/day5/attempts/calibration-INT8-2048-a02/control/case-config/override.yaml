@@ -1,0 +1,6 @@
+M: 2048
+N: 2048
+K: 2048
+WARMUP: 100
+ITERS: 2000
+MODE: calibration

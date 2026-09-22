@@ -1,0 +1,29 @@
+/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-pr1-20260920-162724/cpu-test-venv/lib/python3.12/site-packages/torch/_subclasses/functional_tensor.py:295: UserWarning: Failed to initialize NumPy: No module named 'numpy' (Triggered internally at ../torch/csrc/utils/tensor_numpy.cpp:84.)
+  cpu = _conversion_method_template(device=torch.device("cpu"))
+test_complete_single_rank_evidence (base.tests.test_kunlunxin_fp32.BoundedIntegrationTests.test_complete_single_rank_evidence) ... ok
+test_missing_duplicate_and_stale_evidence_never_pass (base.tests.test_kunlunxin_fp32.BoundedIntegrationTests.test_missing_duplicate_and_stale_evidence_never_pass) ... ok
+test_missing_event_or_partial_monitor_is_partial (base.tests.test_kunlunxin_fp32.BoundedIntegrationTests.test_missing_event_or_partial_monitor_is_partial) ... ok
+test_timeout_interrupt_and_cleanup_uncertainty (base.tests.test_kunlunxin_fp32.BoundedIntegrationTests.test_timeout_interrupt_and_cleanup_uncertainty) ... ok
+test_candidate_and_window_gate_before_commands (base.tests.test_kunlunxin_fp32.ContractTests.test_candidate_and_window_gate_before_commands) ... ok
+test_dry_run_has_no_commands_runtime_import_or_result_directory (base.tests.test_kunlunxin_fp32.ContractTests.test_dry_run_has_no_commands_runtime_import_or_result_directory) ... ok
+test_invalid_config_and_selection_fail_closed (base.tests.test_kunlunxin_fp32.ContractTests.test_invalid_config_and_selection_fail_closed) ... ok
+test_snapshot_roundtrip_keeps_host_worker_contract (base.tests.test_kunlunxin_fp32.ContractTests.test_snapshot_roundtrip_keeps_host_worker_contract) ... ok
+test_binding_rechecked_and_initialization_idempotent (base.tests.test_kunlunxin_fp32.DriverTests.test_binding_rechecked_and_initialization_idempotent) ... ok
+test_dispatch_unknown_vendor_and_error_classification (base.tests.test_kunlunxin_fp32.DriverTests.test_dispatch_unknown_vendor_and_error_classification) ... ok
+test_extension_missing_propagates (base.tests.test_kunlunxin_fp32.DriverTests.test_extension_missing_propagates) ... ok
+test_logical_device_not_derived_from_rank (base.tests.test_kunlunxin_fp32.DriverTests.test_logical_device_not_derived_from_rank) ... ok
+test_stale_binding_and_wrong_uuid_rejected (base.tests.test_kunlunxin_fp32.DriverTests.test_stale_binding_and_wrong_uuid_rejected) ... ok
+test_rejects_tampered_rank_context_and_formula (base.tests.test_kunlunxin_fp32.MetricTests.test_rejects_tampered_rank_context_and_formula) ... ok
+test_bad_clock_and_correctness_never_write_success_metric (base.tests.test_kunlunxin_fp32.NumericalTests.test_bad_clock_and_correctness_never_write_success_metric) ... ok
+test_device_and_dtype_gate (base.tests.test_kunlunxin_fp32.NumericalTests.test_device_and_dtype_gate) ... ok
+test_large_shape_sampling_and_full_output_finiteness (base.tests.test_kunlunxin_fp32.NumericalTests.test_large_shape_sampling_and_full_output_finiteness) ... ok
+test_seed_reference_tolerance_and_nonfinite (base.tests.test_kunlunxin_fp32.NumericalTests.test_seed_reference_tolerance_and_nonfinite) ... ok
+test_timing_excludes_reference_and_includes_final_sync (base.tests.test_kunlunxin_fp32.NumericalTests.test_timing_excludes_reference_and_includes_final_sync) ... ok
+test_all_five_values_and_sample_deviation_used (base.tests.test_kunlunxin_fp32.QualificationStatisticsTests.test_all_five_values_and_sample_deviation_used) ... ok
+test_incomplete_mixed_code_and_tampered_evidence_rejected (base.tests.test_kunlunxin_fp32.QualificationStatisticsTests.test_incomplete_mixed_code_and_tampered_evidence_rejected) ... ok
+test_unstable_runs_not_trimmed (base.tests.test_kunlunxin_fp32.QualificationStatisticsTests.test_unstable_runs_not_trimmed) ... ok
+
+----------------------------------------------------------------------
+Ran 22 tests in 0.485s
+
+OK

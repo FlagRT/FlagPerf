@@ -1,0 +1,14 @@
+{
+  "case": "computation-BF16:P800",
+  "duration_s": 9.4478e-05,
+  "finished_at": "2026-09-22T02:28:41.254948Z",
+  "finished_monotonic_ns": 3885258174804523,
+  "kind": "measurement-window",
+  "local_rank": 0,
+  "pid": 102,
+  "rank": 0,
+  "schema_version": 1,
+  "started_at": "2026-09-22T02:28:41.254834Z",
+  "started_monotonic_ns": 3885258174710045,
+  "world_size": 1
+}

@@ -1,0 +1,21 @@
+/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-pr1-20260920-162724/cpu-test-venv/lib/python3.12/site-packages/torch/_subclasses/functional_tensor.py:295: UserWarning: Failed to initialize NumPy: No module named 'numpy' (Triggered internally at ../torch/csrc/utils/tensor_numpy.cpp:84.)
+  cpu = _conversion_method_template(device=torch.device("cpu"))
+test_kunlunxin_computation_cases (unittest.loader._FailedTest.test_kunlunxin_computation_cases) ... ERROR
+
+======================================================================
+ERROR: test_kunlunxin_computation_cases (unittest.loader._FailedTest.test_kunlunxin_computation_cases)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_kunlunxin_computation_cases
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/unittest/loader.py", line 137, in loadTestsFromName
+    module = __import__(module_name)
+             ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/tests/test_kunlunxin_computation_cases.py", line 24, in <module>
+    from test_kunlunxin_fp32 import rank_records, DEVICE, UID
+ModuleNotFoundError: No module named 'test_kunlunxin_fp32'
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+FAILED (errors=1)

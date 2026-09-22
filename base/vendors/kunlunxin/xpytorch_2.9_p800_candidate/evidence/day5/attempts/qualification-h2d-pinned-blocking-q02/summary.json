@@ -1,0 +1,267 @@
+{
+  "case": "interconnect-h2d:P800",
+  "cleanup_status": "passed",
+  "container_exit_code": 0,
+  "container_id": "75701bb18194d889765b7410401c7ea9f40effd1e4a7d5758e5569b51f6fd627",
+  "correctness_status": "passed",
+  "device_bindings": [
+    {
+      "container_device_node": "/dev/xpu7",
+      "framework_device_name": "cuda:0",
+      "framework_local_rank": 0,
+      "framework_logical_id": 0,
+      "host_device_node": "/dev/xpu7",
+      "host_physical_id": 5,
+      "legacy_logical_id": null,
+      "pci_bdf": "0000:9c:00.0",
+      "request_index": 0,
+      "resource_key": "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87",
+      "serial_or_uuid": "f396486d-9850-50e4-81c4-50f2e9f6ca87",
+      "vendor": "kunlunxin"
+    }
+  ],
+  "execution_status": "passed",
+  "finished_at": "2026-09-22T07:16:21.895433Z",
+  "host_postflight": "host-postflight/summary.json",
+  "host_preflight": "host-preflight/summary.json",
+  "kind": "benchmark",
+  "lease_released": true,
+  "measurement_evidence_status": "passed",
+  "measurement_status": "passed",
+  "monitoring_status": "passed",
+  "postflight_status": "passed",
+  "probe_mode": "performance",
+  "qualification": {
+    "max_cv_percent": 5,
+    "min_measurement_seconds": 15,
+    "mode": "measured",
+    "repetitions_required": 5,
+    "scope": "single-card native XPYTORCH interconnect-h2d:P800; candidate runtime"
+  },
+  "run_id": "benchmark-94d93a85f6944fbfb952823cc11d004c",
+  "runtime": {
+    "image": "flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev:202608",
+    "image_id": "sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975",
+    "lock": {
+      "image_manifest": {
+        "image": "flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev:202608",
+        "image_id": "sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975",
+        "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/image-manifest.json",
+        "release_stage": "candidate",
+        "schema_version": 1,
+        "sha256": "ab59dc1cd14b65a28ffaef7b1b21b1d0b51f5334619301659d4123a5c681acbf",
+        "validated": false,
+        "validation_scope": [],
+        "validation_status": null
+      },
+      "runtime_profile": "xpytorch_2.9_p800_candidate",
+      "stack_lock": {
+        "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/stack.lock.yaml",
+        "sha256": "8f200d0b955b7e60881bc13ed75c8784c2c38fe2c755d018c618f1dc7b46cded"
+      },
+      "vendor": "kunlunxin"
+    }
+  },
+  "schema_version": 3,
+  "started_at": "2026-09-22T07:15:21.712404Z",
+  "static_plan": {
+    "applicability": {
+      "reason": null,
+      "status": "applicable"
+    },
+    "case": "interconnect-h2d:P800",
+    "case_assets": {
+      "case": "interconnect-h2d:P800",
+      "case_name": "interconnect-h2d",
+      "chip": "P800",
+      "configurations": {
+        "chip": {
+          "bytes": 233,
+          "relative_path": "benchmarks/interconnect-h2d/kunlunxin/P800/case_config.yaml",
+          "sha256": "80d44b77ebbe4ca890da869683936bc1e763da8d3ac3943c76e244e8c5a49ab1"
+        },
+        "generic": {
+          "bytes": 644,
+          "relative_path": "benchmarks/interconnect-h2d/case_config.yaml",
+          "sha256": "601f289d6cdbf0f1571d4fb8bd9f4a6e3b9fbc700374bd2051eb482a4f785191"
+        },
+        "override": {
+          "bytes": 100,
+          "relative_path": "@override",
+          "sha256": "cbc603ac4644071a5e8ac2fa2187bb99656244821c8fea9d14fab5702c6890bb"
+        }
+      },
+      "entrypoint": {
+        "bytes": 4686,
+        "relative_path": "benchmarks/interconnect-h2d/main.py",
+        "sha256": "a9a3dbf9ef6762e7d590d71ee74887e58c75aaed61caa471f4995e65326e1b20"
+      },
+      "environments": [],
+      "merged_config": {
+        "DIRECTION": "h2d",
+        "DIST_BACKEND": "gloo",
+        "DTYPE": "float32",
+        "FAULT_MODE": "none",
+        "IMPLEMENTATION": "native-xpytorch",
+        "ITERS": 10000,
+        "MODE": "measured",
+        "Melements": 1024,
+        "NON_BLOCKING": false,
+        "PAYLOAD_BYTES": 67108864,
+        "PIN_MEMORY": true,
+        "REUSE_DESTINATION": true,
+        "SEED": 519,
+        "WARMUP": 10
+      },
+      "requirement_files": [
+        {
+          "bytes": 162,
+          "relative_path": "benchmarks/interconnect-h2d/kunlunxin/P800/runtime_requirements.json",
+          "sha256": "26880ef77f5337b0d7aac81cd2d09fae4ee3ec26496d3ebe5ff3a18d04e550ec"
+        }
+      ],
+      "requirements": {
+        "correctness_required": true,
+        "process_scope": {
+          "nnodes": 1,
+          "nproc_per_node": 1
+        },
+        "runtime_profile": "xpytorch_2.9_p800_candidate",
+        "schema_version": 1,
+        "supported": true
+      },
+      "schema_version": 1,
+      "selector": "kunlunxin/P800",
+      "vendor": "kunlunxin"
+    },
+    "case_config": {
+      "chip": {
+        "bytes": 233,
+        "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/interconnect-h2d/kunlunxin/P800/case_config.yaml",
+        "relative_path": "benchmarks/interconnect-h2d/kunlunxin/P800/case_config.yaml",
+        "sha256": "80d44b77ebbe4ca890da869683936bc1e763da8d3ac3943c76e244e8c5a49ab1"
+      },
+      "generic": {
+        "bytes": 644,
+        "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/interconnect-h2d/case_config.yaml",
+        "relative_path": "benchmarks/interconnect-h2d/case_config.yaml",
+        "sha256": "601f289d6cdbf0f1571d4fb8bd9f4a6e3b9fbc700374bd2051eb482a4f785191"
+      },
+      "override": {
+        "bytes": 100,
+        "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/interconnect-h2d/kunlunxin/P800/case_config.measured-pinned-blocking.yaml",
+        "relative_path": "@override",
+        "sha256": "cbc603ac4644071a5e8ac2fa2187bb99656244821c8fea9d14fab5702c6890bb"
+      }
+    },
+    "context": {
+      "config": "base/configs/kunlunxin_p800_xpytorch29.yaml",
+      "device_ids": null,
+      "dry_run": false,
+      "npu_ids": null,
+      "physical_device_ids": "5",
+      "result_root": null,
+      "timeout": 300
+    },
+    "host_config": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/configs/kunlunxin_p800_xpytorch29.yaml",
+    "image": "flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev:202608",
+    "kind": "benchmark",
+    "mode": "execution",
+    "monitoring": {
+      "automatic_workload_extension": false,
+      "collector": "xpu-smi -m and selected -q",
+      "enabled": true,
+      "metric_fields": [
+        {
+          "key": "utilization_percent",
+          "label": "Device utilization",
+          "unit": "%"
+        },
+        {
+          "key": "used_memory_mib",
+          "label": "Allocated device memory",
+          "unit": "MiB"
+        }
+      ],
+      "required_samples_per_target": 10,
+      "target_interval_s": 1.0,
+      "target_resource": "p800-device",
+      "vendor": "kunlunxin"
+    },
+    "nproc_per_node": 1,
+    "permissions": {
+      "active_dmi": false,
+      "candidate_runtime": true,
+      "cap_drop": [
+        "ALL"
+      ],
+      "ipc_namespace": "private",
+      "network": "none",
+      "pid_namespace": "private",
+      "privileged_root": false,
+      "read_only_root": true
+    },
+    "runtime_identity": {
+      "image_id": "deferred-until-image-inspection"
+    },
+    "runtime_lock": {
+      "image_manifest": {
+        "image": "flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev:202608",
+        "image_id": "sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975",
+        "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/image-manifest.json",
+        "release_stage": "candidate",
+        "schema_version": 1,
+        "sha256": "ab59dc1cd14b65a28ffaef7b1b21b1d0b51f5334619301659d4123a5c681acbf",
+        "validated": false,
+        "validation_scope": [],
+        "validation_status": null
+      },
+      "runtime_profile": "xpytorch_2.9_p800_candidate",
+      "stack_lock": {
+        "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/stack.lock.yaml",
+        "sha256": "8f200d0b955b7e60881bc13ed75c8784c2c38fe2c755d018c618f1dc7b46cded"
+      },
+      "vendor": "kunlunxin"
+    },
+    "runtime_requirements": {
+      "bytes": 162,
+      "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/interconnect-h2d/kunlunxin/P800/runtime_requirements.json",
+      "relative_path": "benchmarks/interconnect-h2d/kunlunxin/P800/runtime_requirements.json",
+      "requirements": {
+        "correctness_required": true,
+        "process_scope": {
+          "nnodes": 1,
+          "nproc_per_node": 1
+        },
+        "runtime_profile": "xpytorch_2.9_p800_candidate",
+        "schema_version": 1,
+        "supported": true
+      },
+      "sha256": "26880ef77f5337b0d7aac81cd2d09fae4ee3ec26496d3ebe5ff3a18d04e550ec",
+      "sources": [
+        {
+          "bytes": 162,
+          "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/interconnect-h2d/kunlunxin/P800/runtime_requirements.json",
+          "relative_path": "benchmarks/interconnect-h2d/kunlunxin/P800/runtime_requirements.json",
+          "sha256": "26880ef77f5337b0d7aac81cd2d09fae4ee3ec26496d3ebe5ff3a18d04e550ec"
+        }
+      ]
+    },
+    "schema_version": 1,
+    "selection_note": "physical-to-logical mapping and idle state are resolved only by the side-effecting host preflight",
+    "selection_request": {
+      "expression": "5",
+      "requested_ids": [
+        5
+      ],
+      "resolution_status": "deferred-until-host-preflight",
+      "source": "physical-device-ids"
+    },
+    "vendor": "kunlunxin",
+    "vendor_display_name": "Kunlunxin P800",
+    "worker": "benchmark_worker.py"
+  },
+  "status": "passed",
+  "vendor": "kunlunxin",
+  "vendor_display_name": "Kunlunxin P800"
+}

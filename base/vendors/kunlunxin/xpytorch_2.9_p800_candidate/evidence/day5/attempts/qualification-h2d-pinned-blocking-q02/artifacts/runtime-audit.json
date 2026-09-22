@@ -1,0 +1,440 @@
+{
+  "architecture": "x86_64",
+  "editable_sources": [
+    {
+      "git_head": {
+        "argv": [
+          "git",
+          "-c",
+          "safe.directory=/env/FlagCX",
+          "-C",
+          "/env/FlagCX",
+          "rev-parse",
+          "HEAD"
+        ],
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "3b43bdb237fc93736eddf3e118edf32f664b7861\n"
+      },
+      "git_status": {
+        "argv": [
+          "git",
+          "-c",
+          "safe.directory=/env/FlagCX",
+          "-C",
+          "/env/FlagCX",
+          "status",
+          "--short"
+        ],
+        "returncode": 0,
+        "stderr": "",
+        "stdout": ""
+      },
+      "path": "/env/FlagCX"
+    },
+    {
+      "git_head": {
+        "argv": [
+          "git",
+          "-c",
+          "safe.directory=/env/xvllm-plugin-FL",
+          "-C",
+          "/env/xvllm-plugin-FL",
+          "rev-parse",
+          "HEAD"
+        ],
+        "returncode": 128,
+        "stderr": "fatal: detected dubious ownership in repository at '/env/xvllm-plugin-FL'\nTo add an exception for this directory, call:\n\n\tgit config --global --add safe.directory /env/xvllm-plugin-FL\n",
+        "stdout": ""
+      },
+      "git_status": {
+        "argv": [
+          "git",
+          "-c",
+          "safe.directory=/env/xvllm-plugin-FL",
+          "-C",
+          "/env/xvllm-plugin-FL",
+          "status",
+          "--short"
+        ],
+        "returncode": 128,
+        "stderr": "fatal: detected dubious ownership in repository at '/env/xvllm-plugin-FL'\nTo add an exception for this directory, call:\n\n\tgit config --global --add safe.directory /env/xvllm-plugin-FL\n",
+        "stdout": ""
+      },
+      "path": "/env/xvllm-plugin-FL"
+    }
+  ],
+  "environment": {
+    "CONDA_PREFIX": "/root/miniconda/envs/python310_torch29_cuda",
+    "CUDA_VISIBLE_DEVICES": "0",
+    "FLAGCX_ADAPTOR": null,
+    "GEMS_VENDOR": null,
+    "LD_LIBRARY_PATH": null,
+    "LD_PRELOAD": null,
+    "PYTHONPATH": null,
+    "TORCH_DEVICE_BACKEND_AUTOLOAD": null,
+    "USE_FLAGGEMS": "0",
+    "XPU_EVENT_KL3_ENABLE": null,
+    "XPU_VISIBLE_DEVICES": null
+  },
+  "executable": "/root/miniconda/envs/python310_torch29_cuda/bin/python",
+  "inventory_errors": [],
+  "libraries": [
+    {
+      "ldd": {
+        "argv": [
+          "ldd",
+          "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libbkcl.so"
+        ],
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "\tlinux-vdso.so.1 (0x00007fff3446a000)\n\tlibxpurt.so.2 => not found\n\tlibxpuml.so.1 => not found\n\tlibxpucuda.so.1 => not found\n\tlibcudart.so.12 => /usr/local/cuda-12.8/targets/x86_64-linux/lib/libcudart.so.12 (0x0000740de8c00000)\n\tlibpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x0000740dea806000)\n\tlibrt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x0000740dea7ff000)\n\tlibdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x0000740dea7fa000)\n\tlibz.so.1 => /lib/x86_64-linux-gnu/libz.so.1 (0x0000740de8fe4000)\n\tlibstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x0000740de89d4000)\n\tlibm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x0000740de8efd000)\n\tlibgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x0000740de8edd000)\n\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x0000740de87ab000)\n\t/lib64/ld-linux-x86-64.so.2 (0x0000740dea818000)\n"
+      },
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libbkcl.so",
+      "resolved": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libbkcl.so",
+      "sha256": "5f1b968b110cad84be2d92530600400ac2e485ddfb221570d17f33b5e4e5dab3"
+    },
+    {
+      "ldd": {
+        "argv": [
+          "ldd",
+          "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl/so/libbkcl.so"
+        ],
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "\tlinux-vdso.so.1 (0x00007ffef31f1000)\n\tlibxpurt.so.2 => not found\n\tlibxpuml.so.1 => not found\n\tlibxpucuda.so.1 => not found\n\tlibcudart.so.12 => /usr/local/cuda-12.8/targets/x86_64-linux/lib/libcudart.so.12 (0x000070b032e00000)\n\tlibpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x000070b034bd6000)\n\tlibrt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x000070b034bcf000)\n\tlibdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x000070b034bca000)\n\tlibz.so.1 => /lib/x86_64-linux-gnu/libz.so.1 (0x000070b034bae000)\n\tlibstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x000070b032bd4000)\n\tlibm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x000070b034ac7000)\n\tlibgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x000070b034aa7000)\n\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x000070b0329ab000)\n\t/lib64/ld-linux-x86-64.so.2 (0x000070b034be8000)\n"
+      },
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl/so/libbkcl.so",
+      "resolved": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl/so/libbkcl.so",
+      "sha256": "5f1b968b110cad84be2d92530600400ac2e485ddfb221570d17f33b5e4e5dab3"
+    },
+    {
+      "ldd": {
+        "argv": [
+          "ldd",
+          "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xhpc/xblas/dependency_so/libcudart.so"
+        ],
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "\tlinux-vdso.so.1 (0x00007ffcca35c000)\n\tlibrt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x000072ea5b6ae000)\n\tlibpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x000072ea5b6a9000)\n\tlibdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x000072ea5b6a4000)\n\tlibstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x000072ea5b1d4000)\n\tlibm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x000072ea5b0ed000)\n\tlibgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x000072ea5b682000)\n\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x000072ea5aec4000)\n\t/lib64/ld-linux-x86-64.so.2 (0x000072ea5b6c0000)\n"
+      },
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xhpc/xblas/dependency_so/libcudart.so",
+      "resolved": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xhpc/xblas/dependency_so/libcudart.so",
+      "sha256": "f3a96e022833f32a3b6cd47e5f7c94f1f8ad66a4d03f5361cbb89cc5d6e5e629"
+    },
+    {
+      "ldd": {
+        "argv": [
+          "ldd",
+          "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xhpc/xblas/dependency_so/libxpucuda.so"
+        ],
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "\tlinux-vdso.so.1 (0x00007ffe3d9cf000)\n\tlibrt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x0000777465e1c000)\n\tlibdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x0000777465e17000)\n\tlibpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x0000777465e12000)\n\tlibm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x0000777465719000)\n\tlibstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007774654ed000)\n\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007774652c4000)\n\t/lib64/ld-linux-x86-64.so.2 (0x0000777465e2e000)\n\tlibgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x0000777465df0000)\n"
+      },
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xhpc/xblas/dependency_so/libxpucuda.so",
+      "resolved": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xhpc/xblas/dependency_so/libxpucuda.so",
+      "sha256": "721aa1812501ad696d7b24057cdd659ecc6fb55fe70ad754032e4ffdb6f54fe0"
+    },
+    {
+      "ldd": {
+        "argv": [
+          "ldd",
+          "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xhpc/xblas/dependency_so/libxpurt.so"
+        ],
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "\tlinux-vdso.so.1 (0x00007ffd8d5e3000)\n\tlibrt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x00007b800eb8b000)\n\tlibpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x00007b800eb86000)\n\tlibdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007b800eb81000)\n\tlibstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007b800e5d4000)\n\tlibm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007b800ea9a000)\n\tlibgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007b800ea78000)\n\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007b800e3ab000)\n\t/lib64/ld-linux-x86-64.so.2 (0x00007b800eb9d000)\n"
+      },
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xhpc/xblas/dependency_so/libxpurt.so",
+      "resolved": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xhpc/xblas/dependency_so/libxpurt.so",
+      "sha256": "7721768f06301e9cf13abbcc92eb7da7090bf81543483071ce5e3c193dfb5980"
+    },
+    {
+      "ldd": {
+        "argv": [
+          "ldd",
+          "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/so/libcudart.so"
+        ],
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "\tlinux-vdso.so.1 (0x00007ffe29f64000)\n\tlibrt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x00007d9d5732c000)\n\tlibpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x00007d9d57327000)\n\tlibdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007d9d57322000)\n\tlibstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007d9d56dd4000)\n\tlibm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007d9d56ced000)\n\tlibgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007d9d57300000)\n\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007d9d56ac4000)\n\t/lib64/ld-linux-x86-64.so.2 (0x00007d9d5733e000)\n"
+      },
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/so/libcudart.so",
+      "resolved": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/so/libcudart.so",
+      "sha256": "ee5203a7c93844128d19227fe5c9b339042b6354f9cdaae0c8e3ea5a2ccdab2a"
+    },
+    {
+      "ldd": {
+        "argv": [
+          "ldd",
+          "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/so/libxpucuda.so"
+        ],
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "\tlinux-vdso.so.1 (0x00007fff7e68b000)\n\tlibrt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x00007f682d324000)\n\tlibdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007f682d31f000)\n\tlibpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x00007f682d31a000)\n\tlibm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007f682d233000)\n\tlibstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007f682c9d4000)\n\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f682c7ab000)\n\t/lib64/ld-linux-x86-64.so.2 (0x00007f682d336000)\n\tlibgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007f682d211000)\n"
+      },
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/so/libxpucuda.so",
+      "resolved": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/so/libxpucuda.so",
+      "sha256": "ba40fcfefa44c8e346cfcdcdb130a64f53d6b25fadaeae58761389b44f68397c"
+    },
+    {
+      "ldd": {
+        "argv": [
+          "ldd",
+          "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/so/libxpurt.so"
+        ],
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "\tlinux-vdso.so.1 (0x00007ffd52d50000)\n\tlibrt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x000076a4a39bf000)\n\tlibpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x000076a4a39ba000)\n\tlibdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x000076a4a39b5000)\n\tlibstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x000076a4a33d4000)\n\tlibm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x000076a4a38ce000)\n\tlibgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x000076a4a38ac000)\n\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x000076a4a31ab000)\n\t/lib64/ld-linux-x86-64.so.2 (0x000076a4a39d1000)\n"
+      },
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/so/libxpurt.so",
+      "resolved": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/so/libxpurt.so",
+      "sha256": "2d1ceae4ab4e8037a5b2a134f8327de06987554962e39c53a3f8a0658f3738c3"
+    },
+    {
+      "ldd": {
+        "argv": [
+          "ldd",
+          "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/so_debug/libcudart.so"
+        ],
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "\tlinux-vdso.so.1 (0x00007ffc003ee000)\n\tlibrt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x0000745e38b89000)\n\tlibpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x0000745e38b84000)\n\tlibdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x0000745e38b7f000)\n\tlibstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x0000745e385d4000)\n\tlibm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x0000745e384ed000)\n\tlibgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x0000745e38b5d000)\n\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x0000745e382c4000)\n\t/lib64/ld-linux-x86-64.so.2 (0x0000745e38b9b000)\n"
+      },
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/so_debug/libcudart.so",
+      "resolved": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/so_debug/libcudart.so",
+      "sha256": "dd5fba0bb19bb818ff12ed9acd65d79599b0fd2c3d87a98130958e20a34ef5e9"
+    },
+    {
+      "ldd": {
+        "argv": [
+          "ldd",
+          "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/so_debug/libxpucuda.so"
+        ],
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "\tlinux-vdso.so.1 (0x00007ffe2479e000)\n\tlibrt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x00007e9e4067d000)\n\tlibdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007e9e40678000)\n\tlibpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x00007e9e40673000)\n\tlibm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007e9e3f919000)\n\tlibstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007e9e3f6ed000)\n\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007e9e3f4c4000)\n\t/lib64/ld-linux-x86-64.so.2 (0x00007e9e4068f000)\n\tlibgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007e9e40651000)\n"
+      },
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/so_debug/libxpucuda.so",
+      "resolved": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/so_debug/libxpucuda.so",
+      "sha256": "44313105bf771189dabacb3fe4850e0338b57eb7568a2b71f218c938b22aea42"
+    },
+    {
+      "ldd": {
+        "argv": [
+          "ldd",
+          "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/so_debug/libxpurt.so"
+        ],
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "\tlinux-vdso.so.1 (0x00007fffd3ded000)\n\tlibrt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x00007b0be1302000)\n\tlibpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x00007b0be12fd000)\n\tlibdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007b0be12f8000)\n\tlibstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007b0be0bd4000)\n\tlibm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007b0be1211000)\n\tlibgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007b0be11ef000)\n\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007b0be09ab000)\n\t/lib64/ld-linux-x86-64.so.2 (0x00007b0be1314000)\n"
+      },
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/so_debug/libxpurt.so",
+      "resolved": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/so_debug/libxpurt.so",
+      "sha256": "695140bf0b66bd8c5728d3fed7d2ce3de86be8c41b8b16e492bdb3ff0d41997d"
+    }
+  ],
+  "library_qualification": "pending runtime loader verification",
+  "metadata_search_paths": [
+    "/env/FlagCX/plugin/torch",
+    "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages"
+  ],
+  "module_files": {
+    "flag_gems": [
+      "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/flag_gems"
+    ],
+    "flagcx": [
+      "/env/FlagCX/plugin/torch/flagcx"
+    ],
+    "torch": [
+      "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch"
+    ],
+    "torch_xmlir": [
+      "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir"
+    ],
+    "torch_xray": [
+      "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xray"
+    ],
+    "triton": [
+      "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/triton"
+    ],
+    "xtorch_ops": [
+      "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/xtorch_ops"
+    ]
+  },
+  "packages": {
+    "flag-gems": {
+      "editable": false,
+      "local_source": "/work/FlagGems",
+      "metadata_path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/flag_gems-5.3.4.post1.dev12+g4fa5805b8.dist-info",
+      "name": "flag_gems",
+      "version": "5.3.4.post1.dev12+g4fa5805b8"
+    },
+    "flagcx": {
+      "metadata_path": "/env/FlagCX/plugin/torch/flagcx.egg-info",
+      "name": "flagcx",
+      "version": "0.10.0"
+    },
+    "flagtree": {
+      "metadata_path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/flagtree-0.6.1+xpu3.6.dist-info",
+      "name": "flagtree",
+      "version": "0.6.1+xpu3.6"
+    },
+    "torch": {
+      "metadata_path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch-2.9.0+cu129.dist-info",
+      "name": "torch",
+      "version": "2.9.0+cu129"
+    },
+    "torch-plugin": {
+      "editable": false,
+      "local_source": "/tmp/selfgz454548/torch_plugin-0.1.0.tar.gz",
+      "metadata_path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_plugin-0.1.0.dist-info",
+      "name": "torch_plugin",
+      "version": "0.1.0"
+    },
+    "torch-xray": {
+      "editable": false,
+      "local_source": "/tmp/selfgz454548/torch_xray-2.0.4-cp310-cp310-linux_x86_64.whl",
+      "metadata_path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xray-2.0.4.dist-info",
+      "name": "torch_xray",
+      "version": "2.0.4"
+    },
+    "vllm": {
+      "metadata_path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/vllm-0.13.0.dist-info",
+      "name": "vllm",
+      "version": "0.13.0"
+    },
+    "vllm-plugin-fl": {
+      "editable": true,
+      "local_source": "/env/xvllm-plugin-FL",
+      "metadata_path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/vllm_plugin_fl-0.1.0.dist-info",
+      "name": "vllm-plugin-fl",
+      "version": "0.1.0"
+    },
+    "xmlir": {
+      "editable": false,
+      "local_source": "/tmp/selfgz454548/xmlir-1.0.0.1-cp310-cp310-linux_x86_64.whl",
+      "metadata_path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/xmlir-1.0.0.1.dist-info",
+      "name": "xmlir",
+      "version": "1.0.0.1"
+    },
+    "xtorch-ops": {
+      "editable": false,
+      "local_source": "/env/output/xtorch_ops/xtorch_ops-0.1.2640%2B9bc36a18-cp310-cp310-linux_x86_64.whl",
+      "metadata_path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/xtorch_ops-0.1.2640+9bc36a18.dist-info",
+      "name": "xtorch_ops",
+      "version": "0.1.2640+9bc36a18"
+    }
+  },
+  "pth_files": [
+    {
+      "lines": [
+        "import __editable___vllm_plugin_fl_0_1_0_finder; __editable___vllm_plugin_fl_0_1_0_finder.install()"
+      ],
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/__editable__.vllm_plugin_fl-0.1.0.pth",
+      "sha256": "c7a399605938dc79a5d15f8d34ea639e463727f45bf6339020c40d732024a05d"
+    },
+    {
+      "lines": [
+        "import os; var = 'SETUPTOOLS_USE_DISTUTILS'; enabled = os.environ.get(var, 'local') == 'local'; enabled and __import__('_distutils_hack').add_shim(); "
+      ],
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/distutils-precedence.pth",
+      "sha256": "2638ce9e2500e572a5e0de7faed6661eb569d1b696fcba07b0dd223da5f5d224"
+    },
+    {
+      "lines": [
+        "/env/FlagCX/plugin/torch"
+      ],
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/easy-install.pth",
+      "sha256": "5091554b26b99b31cbb325ca6a1abdd8177cb7c97a1861b31ffbbecba36eefaa"
+    },
+    {
+      "lines": [
+        "import os, sys;exec('import xpytorch_import_hook\\nxpytorch_import_hook.hook_torch()')"
+      ],
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir.pth",
+      "sha256": "708476352b1dadc28e9cfc3e86f2ed6f36b47b4b415d2c3c398fc8da102e14e0"
+    },
+    {
+      "lines": [
+        "import os, sys;exec('import torch_xray_import_hook')"
+      ],
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xray.pth",
+      "sha256": "03376a8dfffbcf58daaa338d4fbfd4eaa4989903c7ec51a3a1d91e43cb503ec9"
+    },
+    {
+      "lines": [
+        "import sys; exec(\"try:\\n import os, ctypes\\n _p = os.path.join(sys.prefix, 'lib', 'libstdc++.so.6')\\n if os.path.isfile(_p) and b'GLIBCXX_3.4.30' in open(_p, 'rb').read(4194304):\\n  ctypes.CDLL(_p, mode=ctypes.RTLD_GLOBAL)\\nexcept Exception:\\n pass\")"
+      ],
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/zzz_flagtree_xpu_libstdcxx.pth",
+      "sha256": "521c9c1d4a807510f1ef0b898662b12d5a0f420524f453ace46a2e5680e2bd65"
+    }
+  ],
+  "python": "3.10.18",
+  "site_processing_disabled": true,
+  "source_files": [
+    {
+      "literal_version": "3.6.0",
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/triton/__init__.py",
+      "sha256": "96e68192cab5dd11fa30d5dc95d56c29ceecda53477fc3af8f37bee026b7a021"
+    },
+    {
+      "literal_version": null,
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/__init__.py",
+      "sha256": "55433392fa4142e1594e410fff831f178847f4816f169a43cef15c940702b35d"
+    },
+    {
+      "path": "/env/FlagCX/plugin/torch/flagcx/__init__.py",
+      "sha256": "9b482e459fdbaac2ff8ff01e5e994cc002b7f42b247493ac9c5d160e66a92c51"
+    },
+    {
+      "path": "/env/FlagCX/plugin/torch/_build_config.py",
+      "sha256": "063079d42e5aee1d0c84d0c3d20885804eb55d7fe64ca8f1ed6547ac27c820e8"
+    }
+  ],
+  "torchrun": {
+    "exists": true,
+    "path": "/root/miniconda/envs/python310_torch29_cuda/bin/torchrun"
+  },
+  "unresolved_ldd_paths": [
+    "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libbkcl.so",
+    "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl/so/libbkcl.so"
+  ],
+  "vendor_version_files": [
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/_versions.txt",
+      "sha256": "cc1125447699bfa9092fe6b224e4ddcd7a87f141ac63360bf1629813ac6e5fc0",
+      "text": "XPYTORCH: XMLIR--bc1b1dc6f-dev+2026032411\nXHPC: 20770323\nXTDK: 3.6.0.1\nXRE: 5.13.0.0\nCUPTI: 1.1.0.0\nXCCL: 20260209_9\ncompile_date: 20260324-11:53:49\narch: x86_64\n"
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl/version.txt",
+      "sha256": "f1f213f568eac1fce19382b10984cc9a8e23558935f2ae332070ee7e1dc04f6b",
+      "text": "\n\n=========================================\nDate:\n\t2026-02-09 13:05:32\nCommit ID:\n\t0792b0318f31eb17e2cfc2cd85516f2507b0c678\nDependence:\n\tXTDK:3.5.0.1\n\tXRE:5.13.0.0\n\tCUDA:cuda12\n"
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xhpc/version.txt",
+      "sha256": "264154070bd093c0ab750b6971b99f496653d360827aac3a418798d05df5be15",
+      "text": "\n=============================================\nDate: 20770323\ncommit id:\n    INFRA: 93f56b92c9d3d48fdde381923c2de2689b091b1b\n    XDNN: aba317af7803a356916436a608fb606588a0326a\n    XBLAS: ba2bff584e8cbcd6ad7f15f32e921102f5e0323b\n    XFA: 84608e4551f7153441a11189ff0ecd3bc65d8bf7\n    xpuDNN: a10fb985de6e4d11a890a36d8cd5443a0bafddec\n=============================================\nDependence:\n    XTDK: 3.6.27.1\n    XRE: 5.18.0.0\n    XCCL: 3.0.7.4\n"
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xhpc/xdnn/version.txt",
+      "sha256": "47a103dbfb34da74441e036d166a44e6e8222b99c33c30f8bf28e5d6f39b6fe5",
+      "text": "Commit ID:\n\taba317af7803a356916436a608fb606588a0326a\nDependence:\n\tXTDK:3.6.27.1\n\tXRE:4.32.0.1\n"
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xhpc/xfa/version.txt",
+      "sha256": "023197f4520e3136efb8c1868da324c5e4a866499769ba4df6bde263f1049d67",
+      "text": "Commit ID:\n\t\nDependence:\n\tXTDK:\n\tXRE:\n"
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/version.txt",
+      "sha256": "ba509eb949462f6729c96c1e3f0a9b0e1728d88a543aec49481213438249479a",
+      "text": "5.13.0.0\npeermem\nDriver Compatible Version:\n        515.58\nCUDA Compatible Version:\n        12.9.1\n======================================\nDate:\n        2025-11-27-14-27-01\nCommit ID:\n        xre-close: 45f27c72669f5a1abf4188ad6a3cdfa9ce000d0d\n        xre-open:  b725f3de70af33c69f8357345477feee16e45eaf\n"
+    }
+  ],
+  "visible_device_nodes": [
+    "/dev/xpu7",
+    "/dev/xpuctrl"
+  ]
+}

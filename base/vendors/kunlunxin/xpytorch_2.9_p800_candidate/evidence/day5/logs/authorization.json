@@ -1,0 +1,7 @@
+{
+  "reference": "user-20260922-complete-day5-and-continue-existing-draft",
+  "authorized_scope": "Day 5 single-card computation and transfer on idle card 6, fallback card 7",
+  "created_at": "2026-09-22T01:57:33.189957+00:00",
+  "reservation_end": "2026-09-22T09:57:33.189957+00:00",
+  "interpretation": "Bounded execution budget under user task authorization; not a reservation with other users"
+}

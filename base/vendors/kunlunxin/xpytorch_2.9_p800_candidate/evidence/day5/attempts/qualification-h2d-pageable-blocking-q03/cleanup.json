@@ -1,0 +1,69 @@
+{
+  "commands": [
+    {
+      "argv": [
+        "sudo",
+        "-n",
+        "docker",
+        "ps",
+        "-a",
+        "--no-trunc",
+        "--filter",
+        "id=1bfd9a33823997ef8eda9a1e5c73e9d62a66b0247f10f653e5f90457df49b4b6",
+        "--format",
+        "{{.ID}}"
+      ],
+      "finished_monotonic_s": 3901965.566049693,
+      "returncode": 0,
+      "started_at": "2026-09-22T07:07:08.585228+00:00",
+      "started_monotonic_s": 3901965.505081396,
+      "stderr": "",
+      "stdout": "1bfd9a33823997ef8eda9a1e5c73e9d62a66b0247f10f653e5f90457df49b4b6\n",
+      "timed_out": false,
+      "timeout_s": 3
+    },
+    {
+      "argv": [
+        "sudo",
+        "-n",
+        "docker",
+        "rm",
+        "-f",
+        "1bfd9a33823997ef8eda9a1e5c73e9d62a66b0247f10f653e5f90457df49b4b6"
+      ],
+      "finished_monotonic_s": 3901965.80326327,
+      "returncode": 0,
+      "started_at": "2026-09-22T07:07:08.787758+00:00",
+      "started_monotonic_s": 3901965.707610807,
+      "stderr": "",
+      "stdout": "1bfd9a33823997ef8eda9a1e5c73e9d62a66b0247f10f653e5f90457df49b4b6\n",
+      "timed_out": false,
+      "timeout_s": 5
+    },
+    {
+      "argv": [
+        "sudo",
+        "-n",
+        "docker",
+        "ps",
+        "-a",
+        "--no-trunc",
+        "--filter",
+        "id=1bfd9a33823997ef8eda9a1e5c73e9d62a66b0247f10f653e5f90457df49b4b6",
+        "--format",
+        "{{.ID}}"
+      ],
+      "finished_monotonic_s": 3901965.866867042,
+      "returncode": 0,
+      "started_at": "2026-09-22T07:07:08.883426+00:00",
+      "started_monotonic_s": 3901965.80327584,
+      "stderr": "",
+      "stdout": "",
+      "timed_out": false,
+      "timeout_s": 3
+    }
+  ],
+  "container_absent": true,
+  "container_id": "1bfd9a33823997ef8eda9a1e5c73e9d62a66b0247f10f653e5f90457df49b4b6",
+  "status": "passed"
+}

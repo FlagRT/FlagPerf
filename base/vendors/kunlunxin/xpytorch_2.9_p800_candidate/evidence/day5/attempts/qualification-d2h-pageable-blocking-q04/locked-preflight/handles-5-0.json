@@ -1,0 +1,17 @@
+{
+  "argv": [
+    "sudo",
+    "-n",
+    "fuser",
+    "/dev/xpu7"
+  ],
+  "finished_monotonic_s": 3903243.158613098,
+  "projection": "process identifiers redacted; original exit/occupancy state retained",
+  "returncode": 0,
+  "started_at": "2026-09-22T07:28:21.855382+00:00",
+  "started_monotonic_s": 3903238.775234858,
+  "stderr": "/dev/xpu7:          \n",
+  "stdout": "[redacted nonempty device handle list]\n",
+  "timed_out": false,
+  "timeout_s": 10
+}

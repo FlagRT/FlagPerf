@@ -1,0 +1,65 @@
+{
+  "case": "computation-BF16:P800",
+  "case_name": "computation-BF16",
+  "chip": "P800",
+  "configurations": {
+    "chip": {
+      "bytes": 206,
+      "relative_path": "benchmarks/computation-BF16/kunlunxin/P800/case_config.yaml",
+      "sha256": "59abb53f5fcb9c2ae8522b1ef74aa47ad08a0799312910d487f150b39a378af2"
+    },
+    "generic": {
+      "bytes": 653,
+      "relative_path": "benchmarks/computation-BF16/case_config.yaml",
+      "sha256": "3c5e8d18fbe971688ba7c1f8043769d8c30b83dc5b838ab4a8ecccd8b8a19be0"
+    }
+  },
+  "entrypoint": {
+    "bytes": 3700,
+    "relative_path": "benchmarks/computation-BF16/main.py",
+    "sha256": "ba8e1bcdde913a52c2ec7bcb76b725ee25a1b46fc449b7cb51b652705f9d2fad"
+  },
+  "environments": [],
+  "merged_config": {
+    "ATOL": 0.008,
+    "DIST_BACKEND": "gloo",
+    "DTYPE": "bfloat16",
+    "FAULT_MODE": "none",
+    "IMPLEMENTATION": "native-xpytorch",
+    "ITERS": 100000,
+    "K": 4096,
+    "M": 4096,
+    "MODE": "qualification",
+    "N": 4096,
+    "OPERATOR": "torch.mm",
+    "RTOL": 0.008,
+    "SEED": 519,
+    "WARMUP": 10
+  },
+  "requirement_files": [
+    {
+      "bytes": 554,
+      "relative_path": "benchmarks/computation-BF16/kunlunxin/P800/runtime_requirements.json",
+      "sha256": "1f76c4b73bb350065ce550774c9de6ef4eec36c201c5a01f467518a446d515f1"
+    }
+  ],
+  "requirements": {
+    "compatibility_note": "Candidate implementation; numerical qualification recorded separately for exact dtype/operator/config. No internal accumulator or peak claim.",
+    "correctness_required": true,
+    "implementation": "native-xpytorch",
+    "process_scope": {
+      "nnodes": 1,
+      "nproc_per_node": 1
+    },
+    "qualification_max_cv_percent": 5,
+    "qualification_min_measurement_seconds": 15,
+    "qualification_repetitions": 5,
+    "runtime_profile": "xpytorch_2.9_p800_candidate",
+    "runtime_role": "operator",
+    "schema_version": 1,
+    "supported": true
+  },
+  "schema_version": 1,
+  "selector": "kunlunxin/P800",
+  "vendor": "kunlunxin"
+}

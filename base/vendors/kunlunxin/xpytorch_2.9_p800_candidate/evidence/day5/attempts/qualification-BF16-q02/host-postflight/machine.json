@@ -1,0 +1,15 @@
+{
+  "argv": [
+    "xpu-smi",
+    "-m"
+  ],
+  "finished_monotonic_s": 3886124.947223707,
+  "projection": "selected physical card 5 only; original bytes remain in operational evidence",
+  "returncode": 0,
+  "started_at": "2026-09-22T02:43:07.947011+00:00",
+  "started_monotonic_s": 3886124.866863194,
+  "stderr": "",
+  "stdout": "00000000:9C:00.0 5 5 02K15K0263D001ZZ 51 0 0 0 96 1450 1450 1450 1450 1450 1450 0 96 0 98304 0 1.0:2.43:1.86.5.3 \"P800 OAM\" 0 0 0 0 0 0 0 0 0 0\n",
+  "timed_out": false,
+  "timeout_s": 10
+}

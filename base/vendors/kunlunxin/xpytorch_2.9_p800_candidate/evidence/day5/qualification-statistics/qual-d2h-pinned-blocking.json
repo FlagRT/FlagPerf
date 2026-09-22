@@ -1,0 +1,58 @@
+{
+  "cv_percent": 18.616207047878586,
+  "ddof": 1,
+  "max": 23.920933737701517,
+  "max_cv_percent": 5,
+  "mean": 20.025963271196055,
+  "median": 19.442535574753588,
+  "metric": "d2h-bandwidth",
+  "min": 15.74226743573212,
+  "repetitions": 5,
+  "runs": [
+    {
+      "directory": "base/result/p800-pr4-pr5-20260922-0935/qualification-d2h-pinned-blocking-q01",
+      "elapsed_seconds": 38.899987337,
+      "gb_s": 17.251641605592226,
+      "run_id": "benchmark-e0e287f08a3742f08f1ccd7f63fbdeca",
+      "summary_sha256": "df0595c96bc0b855f73ed9fff94d0a955e89ca3f6eb09678adc1056c42a755f3",
+      "value": 17.251641605592226
+    },
+    {
+      "directory": "base/result/p800-pr4-pr5-20260922-0935/qualification-d2h-pinned-blocking-q02",
+      "elapsed_seconds": 28.054450021,
+      "gb_s": 23.920933737701517,
+      "run_id": "benchmark-ab6d85f954c34d1fb5e24c68a3a3083d",
+      "summary_sha256": "625c5cb6afc8850b5273a8768046739fdc9b2e19cdf8660e1560dfe8e4f293d9",
+      "value": 23.920933737701517
+    },
+    {
+      "directory": "base/result/p800-pr4-pr5-20260922-0935/qualification-d2h-pinned-blocking-q03",
+      "elapsed_seconds": 34.516518559,
+      "gb_s": 19.442535574753588,
+      "run_id": "benchmark-337524b932094e9e898311f5935303d8",
+      "summary_sha256": "2d880f335291dcb120dea0007a0d69e5b2817442fb3881cb9a5d3729bf630b1a",
+      "value": 19.442535574753588
+    },
+    {
+      "directory": "base/result/p800-pr4-pr5-20260922-0935/qualification-d2h-pinned-blocking-q04",
+      "elapsed_seconds": 28.229693561,
+      "gb_s": 23.772438002200815,
+      "run_id": "benchmark-b3b08af378544acaa3918a9b665d4e18",
+      "summary_sha256": "ecb2af5878b1420bc75cec09d5bbc2d0f86e3b5f50c4a29bcc18c48a0f7393b6",
+      "value": 23.772438002200815
+    },
+    {
+      "directory": "base/result/p800-pr4-pr5-20260922-0935/qualification-d2h-pinned-blocking-q05",
+      "elapsed_seconds": 42.629731882,
+      "gb_s": 15.74226743573212,
+      "run_id": "benchmark-13d91f9ffd694cc4ab1618c0212be298",
+      "summary_sha256": "fac26a4c38f050f7fcdad71f584ceac6cf0320a93e15eaae40ccbf601d198a7f",
+      "value": 15.74226743573212
+    }
+  ],
+  "sample_standard_deviation": 3.728074785897977,
+  "schema_version": 1,
+  "scope": "one physical UUID, locked M1/native d2h-bandwidth/config; no other dtype or communication qualification",
+  "status": "unstable",
+  "unit": "GB/s"
+}

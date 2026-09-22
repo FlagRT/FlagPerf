@@ -1,0 +1,58 @@
+{
+  "cv_percent": 1.645695398655184,
+  "ddof": 1,
+  "max": 4.237144905521529,
+  "max_cv_percent": 5,
+  "mean": 4.162649084753084,
+  "median": 4.163929875761079,
+  "metric": "computation-INT8",
+  "min": 4.0550776428613,
+  "repetitions": 5,
+  "runs": [
+    {
+      "directory": "base/result/p800-pr4-pr5-20260922-0935/qualification-INT8-q21",
+      "elapsed_seconds": 16.54042082,
+      "run_id": "benchmark-473adf4b361841cd96badb610d45e17b",
+      "summary_sha256": "eb8b46e3b2f28a672466ceaedc256f3882239721037092d69403f6e144001d6b",
+      "tops": 4.154638958937926,
+      "value": 4.154638958937926
+    },
+    {
+      "directory": "base/result/p800-pr4-pr5-20260922-0935/qualification-INT8-q22",
+      "elapsed_seconds": 16.218344727,
+      "run_id": "benchmark-9069b52e42be49878db5fe88227ff352",
+      "summary_sha256": "fe72dc900080fbb60d87b8ed817fb69af4d721a6f51b72b254c3102dbac7dbf6",
+      "tops": 4.237144905521529,
+      "value": 4.237144905521529
+    },
+    {
+      "directory": "base/result/p800-pr4-pr5-20260922-0935/qualification-INT8-q23",
+      "elapsed_seconds": 16.503514417,
+      "run_id": "benchmark-9e4d9ac7e0184e07874261fbb5e8bd47",
+      "summary_sha256": "ad1a64e6a2fa748e119bbc202ae47c03bf8105928acac2d1c304c63ace323899",
+      "tops": 4.163929875761079,
+      "value": 4.163929875761079
+    },
+    {
+      "directory": "base/result/p800-pr4-pr5-20260922-0935/qualification-INT8-q24",
+      "elapsed_seconds": 16.352225645,
+      "run_id": "benchmark-acce7fabef1c42de85b2fa2ffc0acb32",
+      "summary_sha256": "d1e490e498a005932a034fa9f1da86e8ae717a47c4cde8a42d00842bb4e371df",
+      "tops": 4.202454040683586,
+      "value": 4.202454040683586
+    },
+    {
+      "directory": "base/result/p800-pr4-pr5-20260922-0935/qualification-INT8-q25",
+      "elapsed_seconds": 16.946525514,
+      "run_id": "benchmark-5481e35225334a1e80050a6bc852abe5",
+      "summary_sha256": "4f8cc012e974b9c0e93f1a31570a9be204baff7c333b3ad21f64184cabafb5b1",
+      "tops": 4.0550776428613,
+      "value": 4.0550776428613
+    }
+  ],
+  "sample_standard_deviation": 0.06850452444994364,
+  "schema_version": 1,
+  "scope": "one physical UUID, locked M1/native computation-INT8/config; no other dtype or communication qualification",
+  "status": "passed",
+  "unit": "TOPS"
+}

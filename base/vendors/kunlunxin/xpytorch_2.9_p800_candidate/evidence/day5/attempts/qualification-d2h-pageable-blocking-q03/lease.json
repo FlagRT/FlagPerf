@@ -1,0 +1,15 @@
+{
+  "acquired_at": "2026-09-22T07:27:04.086641Z",
+  "backend": "flock",
+  "compatibility_paths": [
+    "/tmp/flagperf-p800-f396486d-9850-50e4-81c4-50f2e9f6ca87.lock"
+  ],
+  "device_ids": [],
+  "pid": 351311,
+  "released_at": "2026-09-22T07:28:16.814447Z",
+  "resource_keys": [
+    "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87"
+  ],
+  "root": "/tmp/flagperf-base-device-leases",
+  "run_id": "benchmark-c569b35bce984ec08754b8d5061453c4"
+}

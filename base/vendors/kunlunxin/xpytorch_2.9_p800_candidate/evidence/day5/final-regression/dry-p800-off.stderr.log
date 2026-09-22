@@ -1,0 +1,12 @@
+usage: flagperf-base benchmark preflight [-h] --config CONFIG
+                                         (--physical-device-ids PHYSICAL_DEVICE_IDS | --npu-ids NPU_IDS | --device-ids DEVICE_IDS)
+                                         [--dry-run]
+                                         [--allow-candidate-runtime]
+                                         [--probe-mode {identity,timeout-check,capability-FP16,capability-BF16,capability-INT8,capability-FP64,capability-FP8,capability-TF32}]
+                                         [--monitor {on,off}]
+                                         [--timeout TIMEOUT]
+                                         [--privilege-command PRIVILEGE_COMMAND]
+                                         [--reservation-end RESERVATION_END]
+                                         [--reservation-reference RESERVATION_REFERENCE]
+                                         [--result-dir RESULT_DIR]
+flagperf-base benchmark preflight: error: one of the arguments --physical-device-ids --npu-ids --device-ids is required

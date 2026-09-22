@@ -150,3 +150,21 @@ itself still does not measure performance. The performance timer uses wall-clock
 with full target synchronization, not PR0's zero-valued CUDA Event elapsed time.
 The manifest remains candidate. Other shapes/dtypes, FlagGems, multi-rank
 collectives and universal CPU-fallback exclusion are outside this qualification.
+
+## Day 5 computation and transfer integration (2026-09-22)
+
+`benchmark run` now dispatches an explicit case whitelist covering
+computation-FP32/FP16/BF16/INT8 and interconnect-h2d/d2h on the P800 profile.
+FP64/FP8/TF32 are `skipped` before Docker, lease or device access, with the
+capability-probe reason recorded. Transfer runs use preallocated source and
+destination buffers, full-payload content checks outside the timed region, and
+report GB/s and GiB/s from the same bytes and time; `non_blocking` records a
+requested mode, not overlap evidence.
+
+See the [Day 5 review](../vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day5/review.md).
+Four pageable transfer groups qualified; the four pinned-mode groups stayed
+unstable on the current shared host and remain scheduled for a quiet window.
+The 4096-cubed INT8 configs were bimodal across two independent groups and are
+retained as failure evidence; the qualified INT8 scope is 2048-cubed. FP32
+monitored regression on this host reproduced the day-4 value (113.1 TFLOPS, not
+merged into day-4 statistics). The manifest remains candidate, `validated: false`.

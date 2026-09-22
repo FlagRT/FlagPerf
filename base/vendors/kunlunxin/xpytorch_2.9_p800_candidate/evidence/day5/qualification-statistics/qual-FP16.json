@@ -1,0 +1,58 @@
+{
+  "cv_percent": 0.07963260644881569,
+  "ddof": 1,
+  "max": 253.20196739560845,
+  "max_cv_percent": 5,
+  "mean": 253.01635724720876,
+  "median": 253.126972441087,
+  "metric": "computation-FP16",
+  "min": 252.73465887835889,
+  "repetitions": 5,
+  "runs": [
+    {
+      "directory": "base/result/p800-pr4-pr5-20260922-0935/qualification-FP16-q01",
+      "elapsed_seconds": 54.35065958,
+      "run_id": "benchmark-bafa2115901445178104a232c9df66df",
+      "summary_sha256": "399421c4c55c52c7ed7a876055d8a3c469316f6acbe4dfe4f9ab36b304a7a8e2",
+      "tflops": 252.87449045526378,
+      "value": 252.87449045526378
+    },
+    {
+      "directory": "base/result/p800-pr4-pr5-20260922-0935/qualification-FP16-q02",
+      "elapsed_seconds": 54.29644741,
+      "run_id": "benchmark-83262566a3bd48049971491951881f8c",
+      "summary_sha256": "c2cc5b72b5b71fceaae6c763b4cb69a70a51472f0ac29e0859a807a0f243d12f",
+      "tflops": 253.126972441087,
+      "value": 253.126972441087
+    },
+    {
+      "directory": "base/result/p800-pr4-pr5-20260922-0935/qualification-FP16-q03",
+      "elapsed_seconds": 54.280365546,
+      "run_id": "benchmark-c285c9bdf5504f57961c7f3755e3ab4b",
+      "summary_sha256": "65907bd18f46518eabf5fa1104e24d6f2d2b3860281ad86e46050419a394db78",
+      "tflops": 253.20196739560845,
+      "value": 253.20196739560845
+    },
+    {
+      "directory": "base/result/p800-pr4-pr5-20260922-0935/qualification-FP16-q04",
+      "elapsed_seconds": 54.3807304,
+      "run_id": "benchmark-1c43cacd96fb42ab8cd2c57e06156659",
+      "summary_sha256": "a6249d55213679b0bba48bc101055c43e34ddbff3a00933282d53fa27ea4fd48",
+      "tflops": 252.73465887835889,
+      "value": 252.73465887835889
+    },
+    {
+      "directory": "base/result/p800-pr4-pr5-20260922-0935/qualification-FP16-q05",
+      "elapsed_seconds": 54.292860168,
+      "run_id": "benchmark-a6480916447b41b09a9d94dbc4776485",
+      "summary_sha256": "42b861847d92d460bcb08e6cfa3f81e35cf54e1c9b8497d71c1013815f71994a",
+      "tflops": 253.14369706572575,
+      "value": 253.14369706572575
+    }
+  ],
+  "sample_standard_deviation": 0.2014835200177993,
+  "schema_version": 1,
+  "scope": "one physical UUID, locked M1/native computation-FP16/config; no other dtype or communication qualification",
+  "status": "passed",
+  "unit": "TFLOPS"
+}

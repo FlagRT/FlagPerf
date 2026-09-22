@@ -1,0 +1,58 @@
+{
+  "cv_percent": 5.435751619583214,
+  "ddof": 1,
+  "max": 25.178791934554692,
+  "max_cv_percent": 5,
+  "mean": 23.336885573926573,
+  "median": 23.240738431150298,
+  "metric": "d2h-bandwidth",
+  "min": 21.621191002705377,
+  "repetitions": 5,
+  "runs": [
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-pr4-pr5-20260922-0935/qualification-d2h-pinned-nonblocking-q01",
+      "elapsed_seconds": 28.875530009,
+      "gb_s": 23.240738431150298,
+      "run_id": "benchmark-ba7f6ef82f324f8c8bd7b4fbe4d2c772",
+      "summary_sha256": "5a36ea74b1b8438eb8d5e4c33d15cb93443e6fc5abefe78d76ad4ae0c44d84aa",
+      "value": 23.240738431150298
+    },
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-pr4-pr5-20260922-0935/qualification-d2h-pinned-nonblocking-q02",
+      "elapsed_seconds": 31.038467766,
+      "gb_s": 21.621191002705377,
+      "run_id": "benchmark-dd816710225e4775a623bbf38fa84ee4",
+      "summary_sha256": "159bab0f3e8ecf4379cae9467313375a789f6ec3bd849614ab208189a3e86db7",
+      "value": 21.621191002705377
+    },
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-pr4-pr5-20260922-0935/qualification-d2h-pinned-nonblocking-q03",
+      "elapsed_seconds": 26.652932426,
+      "gb_s": 25.178791934554692,
+      "run_id": "benchmark-f1cf09b215b64ba8a17ad51f72dfeddb",
+      "summary_sha256": "9a2fb173f755f6d676c310b6f62e33b3bc23b765fabe05c76060b8b57a6258dd",
+      "value": 25.178791934554692
+    },
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-pr4-pr5-20260922-0935/qualification-d2h-pinned-nonblocking-q04",
+      "elapsed_seconds": 28.514581182,
+      "gb_s": 23.534928874341272,
+      "run_id": "benchmark-4b2399848632470b8a90470d1bf0bac3",
+      "summary_sha256": "c65dce30cc058797e87f123fe853a1d4bbad9caac59ba6c5d0decc2314f5779a",
+      "value": 23.534928874341272
+    },
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-pr4-pr5-20260922-0935/qualification-d2h-pinned-nonblocking-q05",
+      "elapsed_seconds": 29.040421386,
+      "gb_s": 23.108777626881228,
+      "run_id": "benchmark-c53ffeb65328487aad2f424aeb17c60c",
+      "summary_sha256": "76ca1ded33d0a34efe35032bae5ebddfd8a843d55673535f2f053a3759c19024",
+      "value": 23.108777626881228
+    }
+  ],
+  "sample_standard_deviation": 1.268535135544995,
+  "schema_version": 1,
+  "scope": "one physical UUID, locked M1/native d2h-bandwidth/config; no other dtype or communication qualification",
+  "status": "unstable",
+  "unit": "GB/s"
+}

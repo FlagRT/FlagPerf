@@ -1,0 +1,58 @@
+{
+  "cv_percent": 1.1461435739911416,
+  "ddof": 1,
+  "max": 11.725765331810313,
+  "max_cv_percent": 5,
+  "mean": 11.584404136804617,
+  "median": 11.620467789540088,
+  "metric": "d2h-bandwidth",
+  "min": 11.3747986321126,
+  "repetitions": 5,
+  "runs": [
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-pr4-pr5-20260922-0935/qualification-d2h-pageable-blocking-q01",
+      "elapsed_seconds": 57.231969173,
+      "gb_s": 11.725765331810313,
+      "run_id": "benchmark-601ec40710cc4f6490d36f44ce6deee1",
+      "summary_sha256": "927cce68a44c8e06d37d93e324303b5d3022ded889048b8616a65256cace48d1",
+      "value": 11.725765331810313
+    },
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-pr4-pr5-20260922-0935/qualification-d2h-pageable-blocking-q02",
+      "elapsed_seconds": 58.997847936,
+      "gb_s": 11.3747986321126,
+      "run_id": "benchmark-25ae28ad9acc42d8a43d9d93313078a0",
+      "summary_sha256": "35b1dc105e5a4b78376ce2d53b1427233095c6ef3f1d54b52270835f239ff261",
+      "value": 11.3747986321126
+    },
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-pr4-pr5-20260922-0935/qualification-d2h-pageable-blocking-q03",
+      "elapsed_seconds": 57.750570128,
+      "gb_s": 11.620467789540088,
+      "run_id": "benchmark-c569b35bce984ec08754b8d5061453c4",
+      "summary_sha256": "e587bf0e15db6dc1a2638fdced82fed6cd29b0c237b89c072942cb2dca355917",
+      "value": 11.620467789540088
+    },
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-pr4-pr5-20260922-0935/qualification-d2h-pageable-blocking-q04",
+      "elapsed_seconds": 57.607235654,
+      "gb_s": 11.64938106092585,
+      "run_id": "benchmark-fe40999cecb54dc8b1484111b121092c",
+      "summary_sha256": "2dabe79784fac023dd6bc1888d665510e09eb884051463439d050398a9cfbdc1",
+      "value": 11.64938106092585
+    },
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-pr4-pr5-20260922-0935/qualification-d2h-pageable-blocking-q05",
+      "elapsed_seconds": 58.094825203,
+      "gb_s": 11.551607869634234,
+      "run_id": "benchmark-0f61ee8395ca4946bdfbf6342e27df0c",
+      "summary_sha256": "189d4e5db2f5167bf0c7728f0c366aca23d5bfd831984415b2ebd7d21e55e4cd",
+      "value": 11.551607869634234
+    }
+  ],
+  "sample_standard_deviation": 0.1327739035991501,
+  "schema_version": 1,
+  "scope": "one physical UUID, locked M1/native d2h-bandwidth/config; no other dtype or communication qualification",
+  "status": "passed",
+  "unit": "GB/s"
+}

@@ -1,0 +1,68 @@
+{
+  "case": "computation-INT8:P800",
+  "correctness": "artifacts/correctness-rank-0.json",
+  "expected_ranks": [
+    0
+  ],
+  "metrics": [
+    {
+      "accumulation_scope": "numerical observations only; internal accumulator dtype not certified",
+      "allocation_semantics": "torch._int_mm returned output; allocator cost may be included",
+      "binding": {
+        "container_device_node": "/dev/xpu7",
+        "framework_device_name": "cuda:0",
+        "framework_local_rank": 0,
+        "framework_logical_id": 0,
+        "host_device_node": "/dev/xpu7",
+        "host_physical_id": 5,
+        "legacy_logical_id": null,
+        "pci_bdf": "0000:9c:00.0",
+        "request_index": 0,
+        "resource_key": "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87",
+        "serial_or_uuid": "f396486d-9850-50e4-81c4-50f2e9f6ca87",
+        "vendor": "kunlunxin"
+      },
+      "case_assets_sha256": "1afb63c5de94429741d5c50ddf74eaee9ba3fb16db123567279f5865f40b634d",
+      "context_sha256": "80410b8e9ff72eb5893d97a7845d50f9fd18d6b7e6225fd46e9921d54261485a",
+      "cuda_matmul_allow_tf32": false,
+      "dtype": "int8",
+      "elapsed_seconds": 8.607479514,
+      "fallback_scope": "UUID, tensor placement and locked native route; no universal fallback exclusion",
+      "finished_monotonic_ns": 3888078472848147,
+      "implementation": "native-xpytorch",
+      "iterations": 2000,
+      "metric": "computation-INT8",
+      "mode": "calibration",
+      "operations": 34359738368000,
+      "operator": "torch._int_mm",
+      "output_dtype": "int32",
+      "pid_namespace": "pid:[4026547459]",
+      "precision_scope": "native inputs/outputs as recorded by the case; compatibility controls do not certify internal arithmetic",
+      "qualification_duration_passed": false,
+      "rank": 0,
+      "reference_inputs": "signed int8 inputs, CPU int64 accumulation; scale=1, zero_point=0",
+      "run_id": "benchmark-c62ddb47911441bb9c221f146b270248",
+      "schema_version": 1,
+      "shape": [
+        2048,
+        2048,
+        2048
+      ],
+      "started_monotonic_ns": 3888069865368633,
+      "status": "passed",
+      "timer": "perf_counter_ns with full target synchronization",
+      "unit": "TOPS",
+      "value": 3.991846662209785,
+      "warmup": 100,
+      "worker_parent_pid": 1,
+      "worker_pid": 102,
+      "world_size": 1
+    }
+  ],
+  "missing_ranks": [],
+  "observed_ranks": [
+    0
+  ],
+  "schema_version": 1,
+  "status": "passed"
+}

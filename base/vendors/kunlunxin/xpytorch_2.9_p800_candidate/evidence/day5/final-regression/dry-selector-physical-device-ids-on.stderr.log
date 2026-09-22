@@ -1,0 +1,1 @@
+ERROR: P800 performance timeout must be 30..600 seconds; pass --timeout 300

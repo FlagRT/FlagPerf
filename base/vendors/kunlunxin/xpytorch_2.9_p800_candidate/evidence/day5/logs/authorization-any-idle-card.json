@@ -1,0 +1,7 @@
+{
+  "reference": "user-20260922-complete-day5-and-continue-existing-draft",
+  "authorized_scope": "Day 5 single-card computation and transfer on any currently idle card; verified read-only xpu-smi observers allowed by user",
+  "created_at": "2026-09-22T02:08:09.368569+00:00",
+  "reservation_end": "2026-09-22T10:08:09.368569+00:00",
+  "interpretation": "Bounded execution budget under user task authorization; not a reservation with other users"
+}

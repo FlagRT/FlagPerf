@@ -1,0 +1,19 @@
+{
+  "argv": [
+    "sudo",
+    "-n",
+    "docker",
+    "image",
+    "inspect",
+    "sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975"
+  ],
+  "finished_monotonic_s": 3888340.946782584,
+  "projection": "image identity fields only; full original inspect stays on development host",
+  "returncode": 0,
+  "started_at": "2026-09-22T03:20:03.922615+00:00",
+  "started_monotonic_s": 3888340.842471043,
+  "stderr": "",
+  "stdout": "[\n  {\n    \"Id\": \"sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975\",\n    \"RepoDigests\": [\n      \"flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev@sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975\"\n    ],\n    \"Architecture\": \"amd64\",\n    \"Created\": \"2026-08-12T21:47:16.130386935+08:00\"\n  }\n]\n",
+  "timed_out": false,
+  "timeout_s": 10
+}

@@ -1,0 +1,43 @@
+test_aliases_multiple_and_invalid_selections_rejected (base.tests.test_p800_preflight.ContractTests.test_aliases_multiple_and_invalid_selections_rejected) ... ok
+test_candidate_and_reservation_gate_before_files_or_commands (base.tests.test_p800_preflight.ContractTests.test_candidate_and_reservation_gate_before_files_or_commands) ... ok
+test_container_context_rejects_nodes_environment_and_expired_window (base.tests.test_p800_preflight.ContractTests.test_container_context_rejects_nodes_environment_and_expired_window) ... ok
+test_p800_unimplemented_precision_rejected_without_device_access (base.tests.test_p800_preflight.ContractTests.test_p800_unimplemented_precision_rejected_without_device_access) ... ERROR: runtime requirements missing for kunlunxin/main_memory-bandwidth:P800
+ok
+test_registered_provider_and_deferred_dry_run_without_side_effects (base.tests.test_p800_preflight.ContractTests.test_registered_provider_and_deferred_dry_run_without_side_effects) ... ok
+test_resolved_binding_rejects_stale_hash_and_tampering (base.tests.test_p800_preflight.ContractTests.test_resolved_binding_rejects_stale_hash_and_tampering) ... ok
+test_supervisor_spawns_gated_no_site_child_and_propagates_failure (base.tests.test_p800_preflight.ContractTests.test_supervisor_spawns_gated_no_site_child_and_propagates_failure) ... ok
+test_uuid_join_preserves_requested_rank_not_logical_order (base.tests.test_p800_preflight.ContractTests.test_uuid_join_preserves_requested_rank_not_logical_order) ... ok
+test_cleanup_unknown_or_exception_releases_lock_but_requires_recovery (base.tests.test_p800_preflight.ExecutionTests.test_cleanup_unknown_or_exception_releases_lock_but_requires_recovery) ... ok
+test_create_and_start_failure_cleanup (base.tests.test_p800_preflight.ExecutionTests.test_create_and_start_failure_cleanup) ... ok
+test_lock_identity_change_blocks_container_start (base.tests.test_p800_preflight.ExecutionTests.test_lock_identity_change_blocks_container_start) ... ok
+test_normal_postflight_before_release_and_deterministic_report (base.tests.test_p800_preflight.ExecutionTests.test_normal_postflight_before_release_and_deterministic_report) ... ok
+test_partial_monitor_is_not_pass (base.tests.test_p800_preflight.ExecutionTests.test_partial_monitor_is_not_pass) ... ok
+test_timeout_and_interrupt_cleanup_and_release (base.tests.test_p800_preflight.ExecutionTests.test_timeout_and_interrupt_cleanup_and_release) ... ok
+test_pr0_flock_interlocks_both_directions_and_keeps_inode (base.tests.test_p800_preflight.LeaseTests.test_pr0_flock_interlocks_both_directions_and_keeps_inode) ... ok
+test_symlink_hardlink_permission_and_partial_failure_release (base.tests.test_p800_preflight.LeaseTests.test_symlink_hardlink_permission_and_partial_failure_release) ... ok
+test_cleanup_daemon_errors_are_not_success (base.tests.test_p800_preflight.LifecycleTests.test_cleanup_daemon_errors_are_not_success) ... ok
+test_cleanup_ownership_mismatch_never_deletes (base.tests.test_p800_preflight.LifecycleTests.test_cleanup_ownership_mismatch_never_deletes) ... ok
+test_cleanup_timedout_create_recovers_only_owned_container (base.tests.test_p800_preflight.LifecycleTests.test_cleanup_timedout_create_recovers_only_owned_container) ... ok
+test_create_inspects_immutable_identity_and_permissions (base.tests.test_p800_preflight.LifecycleTests.test_create_inspects_immutable_identity_and_permissions) ... ok
+test_host_timeout_and_prefix_are_recorded (base.tests.test_p800_preflight.LifecycleTests.test_host_timeout_and_prefix_are_recorded) ... ok
+test_wait_uses_remaining_probe_deadline (base.tests.test_p800_preflight.LifecycleTests.test_wait_uses_remaining_probe_deadline) ... ok
+test_active_process_table_is_valid_telemetry_but_not_idle (base.tests.test_p800_preflight.MonitorTests.test_active_process_table_is_valid_telemetry_but_not_idle) ... ok
+test_failed_or_wrong_identity_samples_are_invalid_not_zero (base.tests.test_p800_preflight.MonitorTests.test_failed_or_wrong_identity_samples_are_invalid_not_zero) ... ok
+test_telemetry_uuid_and_units (base.tests.test_p800_preflight.MonitorTests.test_telemetry_uuid_and_units) ... ok
+test_window_counts_partial_missing_wrong_role_and_invalid (base.tests.test_p800_preflight.MonitorTests.test_window_counts_partial_missing_wrong_role_and_invalid) ... ok
+test_disappearing_observer_requires_fresh_handle_check (base.tests.test_p800_preflight.ParserTests.test_disappearing_observer_requires_fresh_handle_check) ... ok
+test_exited_process_is_recorded_not_misclassified_as_observer (base.tests.test_p800_preflight.ParserTests.test_exited_process_is_recorded_not_misclassified_as_observer) ... ok
+test_host_busy_handles_driver_inventory_fail_closed (base.tests.test_p800_preflight.ParserTests.test_host_busy_handles_driver_inventory_fail_closed) ... ok
+test_host_idle_accepted (base.tests.test_p800_preflight.ParserTests.test_host_idle_accepted) ... ok
+test_inventory_variable_count_and_quoted_model (base.tests.test_p800_preflight.ParserTests.test_inventory_variable_count_and_quoted_model) ... ok
+test_lock_recheck_identity_drift (base.tests.test_p800_preflight.ParserTests.test_lock_recheck_identity_drift) ... ok
+test_machine_rejects_schema_ranges_model_and_duplicates (base.tests.test_p800_preflight.ParserTests.test_machine_rejects_schema_ranges_model_and_duplicates) ... ok
+test_nodes_reject_symlink_wrong_minor_and_regular_file (base.tests.test_p800_preflight.ParserTests.test_nodes_reject_symlink_wrong_minor_and_regular_file) ... ok
+test_only_verified_readonly_observers_are_allowed (base.tests.test_p800_preflight.ParserTests.test_only_verified_readonly_observers_are_allowed) ... ok
+test_query_rejects_missing_ambiguous_units_and_identity (base.tests.test_p800_preflight.ParserTests.test_query_rejects_missing_ambiguous_units_and_identity) ... ok
+test_query_units_identity_versions_and_two_digit_minor (base.tests.test_p800_preflight.ParserTests.test_query_units_identity_versions_and_two_digit_minor) ... ok
+
+----------------------------------------------------------------------
+Ran 37 tests in 0.277s
+
+OK

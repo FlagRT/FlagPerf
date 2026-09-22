@@ -1,0 +1,70 @@
+{
+  "case": "computation-INT8:P800",
+  "case_name": "computation-INT8",
+  "chip": "P800",
+  "configurations": {
+    "chip": {
+      "bytes": 199,
+      "relative_path": "benchmarks/computation-INT8/kunlunxin/P800/case_config.yaml",
+      "sha256": "02a168819acde4eac06adb5f1c5d500461b03c859f4618d5c53ef1f4e8afe92f"
+    },
+    "generic": {
+      "bytes": 653,
+      "relative_path": "benchmarks/computation-INT8/case_config.yaml",
+      "sha256": "3c5e8d18fbe971688ba7c1f8043769d8c30b83dc5b838ab4a8ecccd8b8a19be0"
+    },
+    "override": {
+      "bytes": 49,
+      "relative_path": "@override",
+      "sha256": "6bd7c976d5b8c9deb4a7f2d77ce5c8a4b48b31ae57deb89b02e0f3ff21715946"
+    }
+  },
+  "entrypoint": {
+    "bytes": 754,
+    "relative_path": "benchmarks/computation-INT8/kunlunxin/P800/main.py",
+    "sha256": "4c5f0409f0b5f7ab2cff12b31a9163adc2dfca4679104fe0ff9308457377f74c"
+  },
+  "environments": [],
+  "merged_config": {
+    "ATOL": 0,
+    "DIST_BACKEND": "gloo",
+    "DTYPE": "int8",
+    "FAULT_MODE": "none",
+    "IMPLEMENTATION": "native-xpytorch",
+    "ITERS": 4,
+    "K": 32,
+    "M": 32,
+    "MODE": "smoke",
+    "N": 32,
+    "OPERATOR": "torch._int_mm",
+    "RTOL": 0,
+    "SEED": 519,
+    "WARMUP": 2
+  },
+  "requirement_files": [
+    {
+      "bytes": 538,
+      "relative_path": "benchmarks/computation-INT8/kunlunxin/P800/runtime_requirements.json",
+      "sha256": "94991951dbb1397ff50e7e8635bc9f7e840808d0ff6594baeac0886919801d6e"
+    }
+  ],
+  "requirements": {
+    "compatibility_note": "Signed INT8 torch._int_mm to INT32, scale 1, zero point 0; CPU INT64 reference; no output narrowing/saturation or peak claim.",
+    "correctness_required": true,
+    "implementation": "native-xpytorch",
+    "process_scope": {
+      "nnodes": 1,
+      "nproc_per_node": 1
+    },
+    "qualification_max_cv_percent": 5,
+    "qualification_min_measurement_seconds": 15,
+    "qualification_repetitions": 5,
+    "runtime_profile": "xpytorch_2.9_p800_candidate",
+    "runtime_role": "operator",
+    "schema_version": 1,
+    "supported": true
+  },
+  "schema_version": 1,
+  "selector": "kunlunxin/P800",
+  "vendor": "kunlunxin"
+}

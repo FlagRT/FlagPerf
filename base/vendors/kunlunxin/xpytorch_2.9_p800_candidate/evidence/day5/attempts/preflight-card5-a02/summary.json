@@ -1,0 +1,18 @@
+{
+  "cleanup_status": "not-created",
+  "error": "device handle owners changed before they could be verified",
+  "error_type": "RuntimeError",
+  "failure_stage": "locked-preflight",
+  "finished_at": "2026-09-22T02:08:34.123355Z",
+  "kind": "benchmark-preflight",
+  "lease_released": true,
+  "measurement_status": "not-run",
+  "monitoring_status": "not-run",
+  "postflight_status": "passed",
+  "probe_mode": "identity",
+  "run_id": "preflight-84fdce52c9304feb98c04e124d6ce92f",
+  "schema_version": 1,
+  "started_at": "2026-09-22T02:08:09.465817Z",
+  "status": "failed",
+  "vendor": "kunlunxin"
+}

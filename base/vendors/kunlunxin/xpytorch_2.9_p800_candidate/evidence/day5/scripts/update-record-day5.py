@@ -1,0 +1,93 @@
+import json
+from pathlib import Path
+
+ROOT = Path('/home/kzhang519/Zhiyu/runtime-team/FlagPerf')
+path = ROOT / 'base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/qualification-record.json'
+record = json.loads(path.read_text())
+
+record['day5_pr4_pr5'] = {
+    "date": "2026-09-22",
+    "timezone": "Asia/Shanghai",
+    "tested_code_commit": "ed731d876024f494d0774d4696dd206ab20f1b2f",
+    "worktree_state_during_runs": "modified (day-5 changes under review; code identity recorded per run)",
+    "entrypoints": ["base/run.py benchmark run --case <case>:P800", "base/run.py benchmark preflight --probe-mode capability-*"],
+    "physical_device_id": 5,
+    "uuid": "f396486d-9850-50e4-81c4-50f2e9f6ca87",
+    "pci_bdf": "0000:9c:00.0",
+    "host_device_node": "/dev/xpu7",
+    "framework_device": "cuda:0",
+    "authorization_reference": "user-20260922-complete-day5-and-continue-existing-draft",
+    "raw_evidence_directory": "base/result/p800-pr4-pr5-20260922-0935",
+    "capability_matrix": {
+        "computation-FP16": {"status": "supported-and-qualified", "evidence": "five qualification runs"},
+        "computation-BF16": {"status": "supported-and-qualified", "evidence": "five qualification runs"},
+        "computation-INT8": {"status": "supported-and-qualified-at-2048", "operator": "torch._int_mm",
+                             "output_dtype": "torch.int32", "metric": "TOPS (multiply-add counted as two operations)",
+                             "evidence": "five qualification runs at 2048x2048x2048",
+                             "known_limit": "4096-cubed frozen configs show bimodal throughput (two groups unstable, CV 25.97% and 36.12%); fast/slow rounds share UUID/config/correctness/monitor identity"},
+        "computation-FP64": {"status": "unsupported-for-locked-stack",
+                            "evidence": "capability probe observed float32 output for float64 input"},
+        "computation-FP8": {"status": "unsupported-for-locked-stack",
+                           "evidence": "E4M3/E5M2 torch.mm and torch._scaled_mm returned NOT IMPLEMENTED"},
+        "computation-TF32": {"status": "blocked/unresolved",
+                            "evidence": "allow_tf32 True/False produced element-identical outputs; no controllable TF32 route demonstrated"},
+        "interconnect-h2d": {"status": "four request modes smoked; four qualification groups executed"},
+        "interconnect-d2h": {"status": "four request modes smoked; four qualification groups executed"},
+    },
+    "computation_qualification": {
+        "shape": "4096x4096x4096",
+        "seed": 519,
+        "warmup": 10,
+        "iterations": 100000,
+        "FP16": {"median_tflops": 253.127, "cv_percent": 0.0796, "atol": 0.001, "rtol": 0.001,
+                 "elapsed_seconds_per_run": 54.29, "status": "passed"},
+        "BF16": {"median_tflops": 114.0087, "cv_percent": 0.0068, "atol": 0.008, "rtol": 0.008,
+                 "elapsed_seconds_per_run": 120.55, "status": "passed"},
+        "INT8_2048": {"median_tops": 4.1639, "cv_percent": 1.6457, "warmup": 100, "iterations": 4000,
+                      "elapsed_seconds_per_run": 16.5, "status": "passed"},
+        "int8_4096_attempts": {"warmup10_cv_percent": 25.9706, "warmup100_cv_percent": 36.1224,
+                               "status": "unstable, retained as failure evidence, not trimmed"},
+    },
+    "transfer_qualification": {
+        "payload_bytes": 67108864,
+        "iterations": 10000,
+        "warmup": 10,
+        "dtype": "float32",
+        "api": "Tensor.copy_",
+        "timer": "perf_counter_ns with full target synchronization",
+        "h2d_pageable_blocking": {"median_gb_s": 10.7706, "cv_percent": 0.1937, "status": "passed"},
+        "h2d_pageable_nonblocking": {"median_gb_s": 20.2045, "cv_percent": 0.7236, "status": "passed"},
+        "d2h_pageable_blocking": {"median_gb_s": 11.6205, "cv_percent": 1.1461, "status": "passed"},
+        "d2h_pageable_nonblocking": {"median_gb_s": 18.4105, "cv_percent": 2.4006, "status": "passed"},
+        "h2d_pinned_blocking": {"median_gb_s": 17.9045, "cv_percent": 7.4488, "status": "unstable"},
+        "h2d_pinned_nonblocking": {"median_gb_s": 16.052, "cv_percent": 14.1804, "status": "unstable"},
+        "d2h_pinned_blocking": {"median_gb_s": 19.4425, "cv_percent": 18.6162, "status": "unstable"},
+        "d2h_pinned_nonblocking": {"median_gb_s": 23.2407, "cv_percent": 5.4358, "status": "unstable"},
+        "pinned_note": "all four pinned groups unstable on a shared host with concurrent third-party workloads; sample counts and device identity were consistent between fast and slow rounds",
+        "scope": "effective single-direction API bandwidth under full synchronization; non_blocking is a request mode, not proof of overlap",
+    },
+    "controlled_timeout_recheck": {
+        "computation": "timeout-FP16-a01 failed with TimeoutError at container-probe; cleanup, postflight and lease release passed",
+        "transfer": "timeout-h2d-a01 failed with TimeoutError at container-probe; cleanup, postflight and lease release passed",
+    },
+    "fp32_regression": {"smoke": "passed", "monitored_measured_round_tflops": 113.1,
+                        "note": "consistent with day-4 five-run median 113.057737 TFLOPS; not merged into day-4 statistics"},
+    "offline_regression": {"base_tests": 195, "pr0_tests": 32, "toolkit_tests": 80,
+                           "targeted_computation": 9, "targeted_transfer": 7, "targeted_fp32": 22, "targeted_preflight": 37,
+                           "ascend_case_matrix": {"total": 15, "applicable": 10, "skipped": 5},
+                           "p800_planning_matrix": {"computation_applicable": 4, "computation_skipped_with_evidence": 3, "transfer_applicable": 2},
+                           "public_distribution": {"tests": 7, "passed": 6, "known_preexisting_failure": 1},
+                           "selector_gates": "ascend selectors pass; p800 requires --physical-device-ids and rejects legacy aliases; preflight requires explicit selection",
+                           "capacity_gate": "high-risk capacity refused without --allow-high-risk-case"},
+    "acceptance_review": "base/result/p800-pr4-pr5-20260922-0935/acceptance-review.json (status passed; lock reacquired; card 5 idle under lock)",
+    "open_items": [
+        "Transfer pinned-mode groups are unstable on the current shared host; re-run in a quiet window (planned day 7) rather than trimming samples",
+        "INT8 4096-cubed bimodal throughput root cause unresolved; 2048-cubed config is the qualified one",
+        "TF32 remains blocked/unresolved: no verifiable runtime mode evidence",
+        "Device memory, capacity and multi-card communication remain outside day-5 scope",
+    ],
+    "scope_limits": "Single physical card 5, locked M1/native XPYTORCH with USE_FLAGGEMS=0, single rank. No multi-card, capacity, or other-vendor hardware validation. Candidate manifest remains validated:false.",
+}
+
+path.write_text(json.dumps(record, indent=2, ensure_ascii=False) + '\n')
+print(json.dumps({'updated_keys': list(record.keys())[-3:], 'day5_status': 'recorded'}, indent=2))

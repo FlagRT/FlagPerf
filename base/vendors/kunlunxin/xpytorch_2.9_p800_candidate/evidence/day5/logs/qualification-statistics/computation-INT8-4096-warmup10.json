@@ -1,0 +1,58 @@
+{
+  "cv_percent": 25.97058898971746,
+  "ddof": 1,
+  "max": 4.46853433262784,
+  "max_cv_percent": 5,
+  "mean": 3.9842398785193702,
+  "median": 4.4432300661379776,
+  "metric": "computation-INT8",
+  "min": 2.133412567438923,
+  "repetitions": 5,
+  "runs": [
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-pr4-pr5-20260922-0935/qualification-INT8-q01",
+      "elapsed_seconds": 64.422116739,
+      "run_id": "benchmark-d61b7106cf6e4d3ba377a8021da4af8a",
+      "summary_sha256": "ae1aecbba7715a4326961bb9556fc3ecb34aa9eb663ce3a9fb70f57839e2e296",
+      "tops": 2.133412567438923,
+      "value": 2.133412567438923
+    },
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-pr4-pr5-20260922-0935/qualification-INT8-q02",
+      "elapsed_seconds": 30.925169266,
+      "run_id": "benchmark-589021490e994bd9a56916ab24e6d40f",
+      "summary_sha256": "3024e2eed879f9210ad766563f799900ff9db29c730ab8464922395a5a9e6747",
+      "tops": 4.444242561449914,
+      "value": 4.444242561449914
+    },
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-pr4-pr5-20260922-0935/qualification-INT8-q03",
+      "elapsed_seconds": 30.932216299,
+      "run_id": "benchmark-8addb179a68744479700e6e84d708611",
+      "summary_sha256": "72507f32c1a8470dfe8ff1722439b9343b768262622a1192d51214c65dc864dd",
+      "tops": 4.4432300661379776,
+      "value": 4.4432300661379776
+    },
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-pr4-pr5-20260922-0935/qualification-INT8-q04",
+      "elapsed_seconds": 31.012134551,
+      "run_id": "benchmark-a26c055890e7424882c79e9dd96b9059",
+      "summary_sha256": "633061446ae5f8118bae19407d156d1e00403a3764ab3777a13e49884e9d3807",
+      "tops": 4.431779864942197,
+      "value": 4.431779864942197
+    },
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-pr4-pr5-20260922-0935/qualification-INT8-q05",
+      "elapsed_seconds": 30.757054381,
+      "run_id": "benchmark-6304d531b80349569989cd4c8beb4859",
+      "summary_sha256": "b1e9fa5b013de811cff7d212d1e3ccad12b04dee99966f3be41950b87ed283f6",
+      "tops": 4.46853433262784,
+      "value": 4.46853433262784
+    }
+  ],
+  "sample_standard_deviation": 1.0347305632146837,
+  "schema_version": 1,
+  "scope": "one physical UUID, locked M1/native computation-INT8/config; no other dtype or communication qualification",
+  "status": "unstable",
+  "unit": "TOPS"
+}

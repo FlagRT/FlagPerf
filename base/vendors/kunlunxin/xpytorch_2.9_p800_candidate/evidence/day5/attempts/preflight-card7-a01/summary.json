@@ -1,0 +1,18 @@
+{
+  "cleanup_status": "not-created",
+  "error": "selected physical device 7 is occupied",
+  "error_type": "RuntimeError",
+  "failure_stage": "host-preflight",
+  "finished_at": "2026-09-22T01:34:38.793413Z",
+  "kind": "benchmark-preflight",
+  "lease_released": false,
+  "measurement_status": "not-run",
+  "monitoring_status": "not-run",
+  "postflight_status": "not-run",
+  "probe_mode": "identity",
+  "run_id": "preflight-fc3b64a5371a430ebcb2b5fa155a6211",
+  "schema_version": 1,
+  "started_at": "2026-09-22T01:34:38.574355Z",
+  "status": "failed",
+  "vendor": "kunlunxin"
+}

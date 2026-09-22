@@ -1,0 +1,16 @@
+/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-pr1-20260920-162724/cpu-test-venv/lib/python3.12/site-packages/torch/_subclasses/functional_tensor.py:295: UserWarning: Failed to initialize NumPy: No module named 'numpy' (Triggered internally at ../torch/csrc/utils/tensor_numpy.cpp:84.)
+  cpu = _conversion_method_template(device=torch.device("cpu"))
+test_fp32_bounds_are_not_relaxed (test_kunlunxin_computation_cases.ComputationContractTests.test_fp32_bounds_are_not_relaxed) ... ok
+test_low_precision_metric_rejects_cross_case_and_incomplete_numerics (test_kunlunxin_computation_cases.ComputationContractTests.test_low_precision_metric_rejects_cross_case_and_incomplete_numerics) ... ok
+test_new_cases_dry_run_without_device_side_effects (test_kunlunxin_computation_cases.ComputationContractTests.test_new_cases_dry_run_without_device_side_effects) ... ok
+test_precision_contract_rejects_dtype_operator_and_tolerance_drift (test_kunlunxin_computation_cases.ComputationContractTests.test_precision_contract_rejects_dtype_operator_and_tolerance_drift) ... ok
+test_int8_exact_reference_detects_overflow_and_single_bit_error (test_kunlunxin_computation_cases.ComputationNumericalTests.test_int8_exact_reference_detects_overflow_and_single_bit_error) ... ok
+test_int8_full_case_outputs_tops_and_int32 (test_kunlunxin_computation_cases.ComputationNumericalTests.test_int8_full_case_outputs_tops_and_int32) ... ok
+test_low_precision_placement_rejects_cpu_and_promoted_output (test_kunlunxin_computation_cases.ComputationNumericalTests.test_low_precision_placement_rejects_cpu_and_promoted_output) ... ok
+test_new_cases_execute_full_correctness_with_synchronized_timer (test_kunlunxin_computation_cases.ComputationNumericalTests.test_new_cases_execute_full_correctness_with_synchronized_timer) ... ok
+test_reference_uses_quantized_inputs_and_budget_detects_corruption (test_kunlunxin_computation_cases.ComputationNumericalTests.test_reference_uses_quantized_inputs_and_budget_detects_corruption) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.118s
+
+OK

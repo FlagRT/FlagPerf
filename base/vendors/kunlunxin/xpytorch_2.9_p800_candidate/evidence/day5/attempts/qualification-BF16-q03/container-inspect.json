@@ -1,0 +1,275 @@
+{
+  "AppArmorProfile": "",
+  "Args": [
+    "/workspace/FlagPerf/base/vendors/kunlunxin/runtime_bootstrap.sh",
+    "--context",
+    "/run/flagperf/host-context.json",
+    "--output",
+    "/workspace/FlagPerf/results"
+  ],
+  "Config": {
+    "AttachStderr": true,
+    "AttachStdin": false,
+    "AttachStdout": true,
+    "Cmd": [
+      "/workspace/FlagPerf/base/vendors/kunlunxin/runtime_bootstrap.sh",
+      "--context",
+      "/run/flagperf/host-context.json",
+      "--output",
+      "/workspace/FlagPerf/results"
+    ],
+    "Domainname": "",
+    "Entrypoint": [
+      "/bin/bash"
+    ],
+    "Env": [
+      "CUDA_VISIBLE_DEVICES=0",
+      "USE_FLAGGEMS=0",
+      "PYTHONDONTWRITEBYTECODE=1",
+      "PYTHONNOUSERSITE=1",
+      "XDG_CACHE_HOME=/tmp/cache",
+      "TRITON_CACHE_DIR=/tmp/triton",
+      "PATH=/root/.cargo/bin:/usr/local/go/bin:/usr/local/cuda-12.8/bin:/root/miniconda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      "CONDA_DEFAULT_ENV=python310_torch29_cuda"
+    ],
+    "Hostname": "b9a560d5c779",
+    "Image": "sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975",
+    "Labels": {
+      "flagperf.run_id": "benchmark-d4d11d7cb0d24aaf9c34c38ef005f7d8"
+    },
+    "OpenStdin": false,
+    "StdinOnce": false,
+    "Tty": false,
+    "User": "",
+    "Volumes": null,
+    "WorkingDir": "/work"
+  },
+  "Created": "2026-09-22T02:43:21.634217037Z",
+  "Driver": "overlayfs",
+  "ExecIDs": null,
+  "HostConfig": {
+    "AutoRemove": false,
+    "Binds": null,
+    "BlkioDeviceReadBps": [],
+    "BlkioDeviceReadIOps": [],
+    "BlkioDeviceWriteBps": [],
+    "BlkioDeviceWriteIOps": [],
+    "BlkioWeight": 0,
+    "BlkioWeightDevice": [],
+    "CapAdd": null,
+    "CapDrop": [
+      "ALL"
+    ],
+    "Cgroup": "",
+    "CgroupParent": "",
+    "CgroupnsMode": "private",
+    "ConsoleSize": [
+      0,
+      0
+    ],
+    "ContainerIDFile": "",
+    "CpuCount": 0,
+    "CpuPercent": 0,
+    "CpuPeriod": 0,
+    "CpuQuota": 0,
+    "CpuRealtimePeriod": 0,
+    "CpuRealtimeRuntime": 0,
+    "CpuShares": 0,
+    "CpusetCpus": "",
+    "CpusetMems": "",
+    "DeviceCgroupRules": null,
+    "DeviceRequests": null,
+    "Devices": [
+      {
+        "CgroupPermissions": "rwm",
+        "PathInContainer": "/dev/xpu7",
+        "PathOnHost": "/dev/xpu7"
+      },
+      {
+        "CgroupPermissions": "rwm",
+        "PathInContainer": "/dev/xpuctrl",
+        "PathOnHost": "/dev/xpuctrl"
+      }
+    ],
+    "Dns": null,
+    "DnsOptions": [],
+    "DnsSearch": [],
+    "ExtraHosts": null,
+    "GroupAdd": [
+      "1013"
+    ],
+    "IOMaximumBandwidth": 0,
+    "IOMaximumIOps": 0,
+    "IpcMode": "private",
+    "Isolation": "",
+    "Links": null,
+    "LogConfig": {
+      "Config": {},
+      "Type": "json-file"
+    },
+    "MaskedPaths": [
+      "/proc/acpi",
+      "/proc/asound",
+      "/proc/interrupts",
+      "/proc/kcore",
+      "/proc/keys",
+      "/proc/latency_stats",
+      "/proc/sched_debug",
+      "/proc/scsi",
+      "/proc/timer_list",
+      "/proc/timer_stats",
+      "/sys/devices/virtual/powercap",
+      "/sys/firmware"
+    ],
+    "Memory": 0,
+    "MemoryReservation": 0,
+    "MemorySwap": 0,
+    "MemorySwappiness": null,
+    "Mounts": [
+      {
+        "ReadOnly": true,
+        "Source": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base",
+        "Target": "/workspace/FlagPerf/base",
+        "Type": "bind"
+      },
+      {
+        "ReadOnly": true,
+        "Source": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-pr4-pr5-20260922-0935/qualification-BF16-q03/control",
+        "Target": "/run/flagperf",
+        "Type": "bind"
+      },
+      {
+        "Source": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-pr4-pr5-20260922-0935/qualification-BF16-q03/artifacts",
+        "Target": "/workspace/FlagPerf/results",
+        "Type": "bind"
+      }
+    ],
+    "NanoCpus": 0,
+    "NetworkMode": "none",
+    "OomKillDisable": false,
+    "OomScoreAdj": 0,
+    "PidMode": "",
+    "PidsLimit": 512,
+    "PortBindings": {},
+    "Privileged": false,
+    "PublishAllPorts": false,
+    "ReadonlyPaths": [
+      "/proc/bus",
+      "/proc/fs",
+      "/proc/irq",
+      "/proc/sys",
+      "/proc/sysrq-trigger"
+    ],
+    "ReadonlyRootfs": true,
+    "RestartPolicy": {
+      "MaximumRetryCount": 0,
+      "Name": "no"
+    },
+    "Runtime": "runc",
+    "SecurityOpt": [
+      "no-new-privileges"
+    ],
+    "ShmSize": 536870912,
+    "Tmpfs": {
+      "/root/.cache": "rw,nosuid,size=512m",
+      "/tmp": "rw,nosuid,size=512m"
+    },
+    "UTSMode": "",
+    "Ulimits": [],
+    "UsernsMode": "",
+    "VolumeDriver": "",
+    "VolumesFrom": null
+  },
+  "HostnamePath": "",
+  "HostsPath": "",
+  "Id": "b9a560d5c77986f21761999bad3c3a47ba602d8fe4e3ecefbc7c4c22ff241b65",
+  "Image": "sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975",
+  "ImageManifestDescriptor": {
+    "digest": "sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975",
+    "mediaType": "application/vnd.oci.image.manifest.v1+json",
+    "platform": {
+      "architecture": "amd64",
+      "os": "linux"
+    },
+    "size": 6138
+  },
+  "LogPath": "",
+  "MountLabel": "",
+  "Mounts": [
+    {
+      "Destination": "/workspace/FlagPerf/base",
+      "Mode": "",
+      "Propagation": "rprivate",
+      "RW": false,
+      "Source": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base",
+      "Type": "bind"
+    },
+    {
+      "Destination": "/run/flagperf",
+      "Mode": "",
+      "Propagation": "rprivate",
+      "RW": false,
+      "Source": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-pr4-pr5-20260922-0935/qualification-BF16-q03/control",
+      "Type": "bind"
+    },
+    {
+      "Destination": "/workspace/FlagPerf/results",
+      "Mode": "",
+      "Propagation": "rprivate",
+      "RW": true,
+      "Source": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-pr4-pr5-20260922-0935/qualification-BF16-q03/artifacts",
+      "Type": "bind"
+    }
+  ],
+  "Name": "/flagperf-benchmark-d4d11d7cb0d24aaf9c34c38ef005f7d8",
+  "NetworkSettings": {
+    "Networks": {
+      "none": {
+        "Aliases": null,
+        "DNSNames": null,
+        "DriverOpts": null,
+        "EndpointID": "",
+        "Gateway": "",
+        "GlobalIPv6Address": "",
+        "GlobalIPv6PrefixLen": 0,
+        "GwPriority": 0,
+        "IPAMConfig": null,
+        "IPAddress": "",
+        "IPPrefixLen": 0,
+        "IPv6Gateway": "",
+        "Links": null,
+        "MacAddress": "",
+        "NetworkID": ""
+      }
+    },
+    "Ports": {},
+    "SandboxID": "",
+    "SandboxKey": ""
+  },
+  "Path": "/bin/bash",
+  "Platform": "linux",
+  "ProcessLabel": "",
+  "ResolvConfPath": "",
+  "RestartCount": 0,
+  "State": {
+    "Dead": false,
+    "Error": "",
+    "ExitCode": 0,
+    "FinishedAt": "0001-01-01T00:00:00Z",
+    "OOMKilled": false,
+    "Paused": false,
+    "Pid": 0,
+    "Restarting": false,
+    "Running": false,
+    "StartedAt": "0001-01-01T00:00:00Z",
+    "Status": "created"
+  },
+  "Storage": {
+    "RootFS": {
+      "Snapshot": {
+        "Name": "overlayfs"
+      }
+    }
+  },
+  "projection": "container environment/labels restricted to execution-relevant fields"
+}

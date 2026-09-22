@@ -1,0 +1,17 @@
+{
+  "argv": [
+    "sudo",
+    "-n",
+    "readlink",
+    "-e",
+    "/proc/476229/exe"
+  ],
+  "finished_monotonic_s": 3903670.537221779,
+  "returncode": 1,
+  "started_at": "2026-09-22T07:35:33.580392+00:00",
+  "started_monotonic_s": 3903670.500244373,
+  "stderr": "",
+  "stdout": "",
+  "timed_out": false,
+  "timeout_s": 10
+}

@@ -1,0 +1,88 @@
+{
+  "api": "Tensor.copy_",
+  "binding": {
+    "container_device_node": "/dev/xpu7",
+    "framework_device_name": "cuda:0",
+    "framework_local_rank": 0,
+    "framework_logical_id": 0,
+    "host_device_node": "/dev/xpu7",
+    "host_physical_id": 5,
+    "legacy_logical_id": null,
+    "pci_bdf": "0000:9c:00.0",
+    "request_index": 0,
+    "resource_key": "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87",
+    "serial_or_uuid": "f396486d-9850-50e4-81c4-50f2e9f6ca87",
+    "vendor": "kunlunxin"
+  },
+  "checks": [
+    {
+      "elements": 16777216,
+      "first_mismatch": null,
+      "mismatch_count": 0,
+      "passed": true,
+      "phase": "sentinel"
+    },
+    {
+      "elements": 16777216,
+      "first_mismatch": null,
+      "mismatch_count": 0,
+      "passed": true,
+      "phase": "changed-input"
+    },
+    {
+      "elements": 16777216,
+      "first_mismatch": null,
+      "mismatch_count": 0,
+      "passed": true,
+      "phase": "before"
+    },
+    {
+      "elements": 16777216,
+      "first_mismatch": null,
+      "mismatch_count": 0,
+      "passed": true,
+      "phase": "after"
+    }
+  ],
+  "context_sha256": "0bc839af1e610da278eb33db7c2627e32d5c4a1b8ee108443e17367ef814b587",
+  "cuda_matmul_allow_tf32": false,
+  "destination": {
+    "contiguous": true,
+    "data_ptr": 133488455966784,
+    "device": "cpu",
+    "dtype": "float32",
+    "numel": 16777216
+  },
+  "destination_reused": true,
+  "direction": "d2h",
+  "dtype": "float32",
+  "fallback_scope": "UUID, tensor placement and locked native route; no universal fallback exclusion",
+  "host_is_pinned": false,
+  "host_memory": "pageable",
+  "memory_budget": {
+    "device_available": 102907248640,
+    "device_bytes": 134217728,
+    "host_available": 1217101053952,
+    "host_bytes": 805306368,
+    "pinned_bytes": 0,
+    "scope": "conservative simultaneous buffer and validation temporary upper bounds"
+  },
+  "non_blocking": false,
+  "payload_bytes": 67108864,
+  "pid_namespace": "pid:[4026548057]",
+  "precision_scope": "native inputs/outputs as recorded by the case; compatibility controls do not certify internal arithmetic",
+  "rank": 0,
+  "run_id": "benchmark-0f61ee8395ca4946bdfbf6342e27df0c",
+  "schema_version": 1,
+  "source": {
+    "contiguous": true,
+    "data_ptr": 275049873408,
+    "device": "cuda:0",
+    "dtype": "float32",
+    "numel": 16777216
+  },
+  "source_reused": true,
+  "status": "passed",
+  "worker_parent_pid": 1,
+  "worker_pid": 102
+}

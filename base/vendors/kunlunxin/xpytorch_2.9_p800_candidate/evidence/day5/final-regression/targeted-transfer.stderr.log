@@ -1,0 +1,14 @@
+test_all_eight_modes_and_strict_boolean_contract (base.tests.test_kunlunxin_transfer_benchmarks.TransferContractTests.test_all_eight_modes_and_strict_boolean_contract) ... ok
+test_copy_loop_only_reuses_destination (base.tests.test_kunlunxin_transfer_benchmarks.TransferContractTests.test_copy_loop_only_reuses_destination) ... /home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-pr1-20260920-162724/cpu-test-venv/lib/python3.12/site-packages/torch/_subclasses/functional_tensor.py:295: UserWarning: Failed to initialize NumPy: No module named 'numpy' (Triggered internally at ../torch/csrc/utils/tensor_numpy.cpp:84.)
+  cpu = _conversion_method_template(device=torch.device("cpu"))
+ok
+test_invalid_elapsed_rejected (base.tests.test_kunlunxin_transfer_benchmarks.TransferContractTests.test_invalid_elapsed_rejected) ... ok
+test_metric_identity_semantics_content_and_formula (base.tests.test_kunlunxin_transfer_benchmarks.TransferContractTests.test_metric_identity_semantics_content_and_formula) ... ok
+test_semantics_are_explicit_and_bounded (base.tests.test_kunlunxin_transfer_benchmarks.TransferContractTests.test_semantics_are_explicit_and_bounded) ... ok
+test_stdout_requires_exact_consistent_unit_pair (base.tests.test_kunlunxin_transfer_benchmarks.TransferContractTests.test_stdout_requires_exact_consistent_unit_pair) ... ok
+test_units_are_derived_from_one_way_bytes (base.tests.test_kunlunxin_transfer_benchmarks.TransferContractTests.test_units_are_derived_from_one_way_bytes) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.906s
+
+OK

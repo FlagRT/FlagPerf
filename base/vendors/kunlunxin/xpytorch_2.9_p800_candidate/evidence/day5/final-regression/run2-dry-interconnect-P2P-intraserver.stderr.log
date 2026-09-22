@@ -1,0 +1,1 @@
+ERROR: Benchmark Case interconnect-P2P_intraserver requires an explicit bounded --case-config under its communication runtime contract

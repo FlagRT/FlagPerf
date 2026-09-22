@@ -1,0 +1,29 @@
+{
+  "command": [
+    "python3",
+    "-B",
+    "base/run.py",
+    "benchmark",
+    "preflight",
+    "--config",
+    "base/configs/kunlunxin_p800_xpytorch29.yaml",
+    "--physical-device-ids",
+    "6",
+    "--allow-candidate-runtime",
+    "--privilege-command",
+    "sudo -n",
+    "--reservation-end",
+    "2026-09-22T09:34:23.844286+00:00",
+    "--reservation-reference",
+    "user-20260922-complete-day5-and-continue-existing-draft",
+    "--result-dir",
+    "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-pr4-pr5-20260922-0935/preflight-card6-a01",
+    "--monitor",
+    "on",
+    "--timeout",
+    "120"
+  ],
+  "started_at": "2026-09-22T01:34:23.844475+00:00",
+  "exit_code": 1,
+  "finished_at": "2026-09-22T01:34:24.219311+00:00"
+}

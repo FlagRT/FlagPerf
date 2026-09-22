@@ -1,0 +1,14 @@
+M: 2048
+N: 2048
+K: 2048
+WARMUP: 100
+ITERS: 4000
+SEED: 519
+ATOL: 0
+RTOL: 0
+DTYPE: int8
+OPERATOR: torch._int_mm
+DIST_BACKEND: gloo
+IMPLEMENTATION: native-xpytorch
+MODE: qualification
+FAULT_MODE: none

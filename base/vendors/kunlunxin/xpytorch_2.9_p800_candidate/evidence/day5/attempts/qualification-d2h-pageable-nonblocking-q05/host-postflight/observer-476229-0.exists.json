@@ -1,0 +1,17 @@
+{
+  "argv": [
+    "sudo",
+    "-n",
+    "test",
+    "-d",
+    "/proc/476229"
+  ],
+  "finished_monotonic_s": 3903670.600864737,
+  "returncode": 1,
+  "started_at": "2026-09-22T07:35:33.642277+00:00",
+  "started_monotonic_s": 3903670.562129748,
+  "stderr": "",
+  "stdout": "",
+  "timed_out": false,
+  "timeout_s": 10
+}

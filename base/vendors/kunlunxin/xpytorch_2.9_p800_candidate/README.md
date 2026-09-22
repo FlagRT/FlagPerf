@@ -6,7 +6,13 @@ this profile to bounded identity, telemetry and cleanup qualification. On
 2026-09-21 the unified `benchmark run` path passed five single-card native FP32
 4096-cubed repetitions on physical card 6: median 113.057737 TFLOPS, CV 0.088744%.
 See the [Day 4 review](evidence/day4/review.md) for the exact measurement and
-correctness scope, and the [FP32 runbook](../../../benchmarks/computation-FP32/kunlunxin/P800/README.md).
+correctness scope, and the [FP32 runbook](../../../benchmarks/computation-FP32/kunlunxin/P800/README.md). On 2026-09-22 physical card 5 extended this chain to FP16, BF16 and
+2048-cubed INT8 computation plus H2D/D2H copy cases: FP16 median 253.127 TFLOPS
+(CV 0.0796%), BF16 114.0087 TFLOPS (CV 0.0068%), INT8 4.1639 TOPS (CV 1.6457%);
+transfer pageable modes qualified while all four pinned-mode groups stayed
+unstable on the shared host and await a quiet window. See the
+[Day 5 review](evidence/day5/review.md) for the capability matrix, per-group
+statistics, retained failure evidence and open items.
 The [preflight runbook](../../../docs/p800-preflight.md) and
 [Day 3 evidence review](evidence/day3/review.md) describe the separate identity gate. Day 1 is complete for
 development: the user accepts the tested version combination, confirms that

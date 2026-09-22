@@ -1,0 +1,14 @@
+{
+  "case": "computation-INT8:P800",
+  "duration_s": 30.75713375,
+  "finished_at": "2026-09-22T03:05:04.506137Z",
+  "finished_monotonic_ns": 3887441425968713,
+  "kind": "measurement-window",
+  "local_rank": 0,
+  "pid": 102,
+  "rank": 0,
+  "schema_version": 1,
+  "started_at": "2026-09-22T03:04:33.748954Z",
+  "started_monotonic_ns": 3887410668834963,
+  "world_size": 1
+}
