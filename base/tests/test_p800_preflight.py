@@ -115,6 +115,37 @@ class ParserTests(unittest.TestCase):
                 with self.assertRaises(RuntimeError):
                     host.check_nodes([deepcopy(DEVICE)])
 
+    def test_only_verified_readonly_observers_are_allowed(self):
+        for executable, arguments, allowed in (
+                ('/usr/local/bin/xpu-smi', ['-m'], True),
+                ('/usr/local/bin/xpu-smi', [], True),
+                ('/usr/local/bin/xpu-smi', ['-i', '5', '-q'], True),
+                ('/usr/local/bin/xpu-smi', ['--reset'], False),
+                ('/tmp/xpu-smi', ['-m'], False),
+                ('/usr/bin/python3', ['training.py'], False)):
+            with self.subTest(executable=executable, arguments=arguments), tempfile.TemporaryDirectory() as tmp:
+                commands = Mock()
+                commands.run.side_effect = [result('42', stderr='/dev/xpu3:'), result(executable),
+                                            result('\0'.join(['xpu-smi', *arguments]) + '\0')]
+                if allowed:
+                    self.assertEqual(host.inspect_handles(DEVICE, commands, Path(tmp), True)[0]['pid'], 42)
+                else:
+                    with self.assertRaises(RuntimeError):
+                        host.inspect_handles(DEVICE, commands, Path(tmp), True)
+
+    def test_disappearing_observer_requires_fresh_handle_check(self):
+        commands = Mock()
+        commands.run.side_effect = [result('42', stderr='/dev/xpu3:'), result(code=1), result(code=1), result(code=0), result(code=1)]
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(host.inspect_handles(DEVICE, commands, Path(tmp), True), [])
+
+    def test_exited_process_is_recorded_not_misclassified_as_observer(self):
+        commands = Mock()
+        commands.run.side_effect = [result('42', stderr='/dev/xpu3:'), result(code=1), result(code=1), result(code=1)]
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(host.inspect_handles(DEVICE, commands, Path(tmp), True),
+                             [{'pid': 42, 'classification': 'exited-before-inspection'}])
+
     def test_lock_recheck_identity_drift(self):
         original = {'devices': [DEVICE]}
         host.same_identity(original, deepcopy(original))
@@ -184,7 +215,7 @@ class ContractTests(unittest.TestCase):
         from run import main
         with patch('subprocess.run', side_effect=AssertionError('device access forbidden')):
             code = main(['benchmark', 'run', '--config', str(CONFIG), '--physical-device-ids', '1',
-                         '--case', 'computation-FP16:P800', '--dry-run'])
+                         '--case', 'main_memory-bandwidth:P800', '--timeout', '300', '--dry-run'])
         self.assertEqual(code, 2)
 
     def test_supervisor_spawns_gated_no_site_child_and_propagates_failure(self):

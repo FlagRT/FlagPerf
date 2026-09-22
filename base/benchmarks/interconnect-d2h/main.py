@@ -33,6 +33,10 @@ def parse_args():
 
 
 def main(config, case_config, rank, world_size, local_rank):
+    if config.vendor.split("/", 1)[0] == "kunlunxin":
+        from drivers import kunlunxin
+        from drivers.transfer import run_verified_transfer
+        return run_verified_transfer(kunlunxin, vars(case_config), rank, world_size, local_rank, 'd2h')
     if rank == 0:
         print("finish initialization")
 

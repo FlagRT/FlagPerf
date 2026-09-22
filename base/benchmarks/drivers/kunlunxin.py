@@ -78,5 +78,5 @@ def evidence():
             'worker_pid': os.getpid(), 'worker_parent_pid': os.getppid(),
             'pid_namespace': os.readlink('/proc/self/ns/pid'),
             'cuda_matmul_allow_tf32': torch.backends.cuda.matmul.allow_tf32,
-            'precision_scope': 'native FP32 inputs/outputs; CUDA control does not certify internal IEEE arithmetic',
+            'precision_scope': 'native inputs/outputs as recorded by the case; compatibility controls do not certify internal arithmetic',
             'fallback_scope': 'UUID, tensor placement and locked native route; no universal fallback exclusion'}

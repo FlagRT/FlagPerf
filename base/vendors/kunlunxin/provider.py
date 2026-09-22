@@ -22,6 +22,8 @@ class KunlunxinProvider:
         return runtime_root(base_dir, self.name, profile or self.default_runtime_profile)
 
     def validate_config(self, config):
+        if type(config.get('allow_readonly_smi_handles', False)) is not bool:
+            raise ConfigurationError('allow_readonly_smi_handles must be boolean')
         if config.get('chip') != 'P800' or config.get('requires_privileged_root') is not False:
             raise ConfigurationError('P800 profile requires chip=P800 and nonprivileged containers')
         if config.get('host_mounts') != [] or config.get('required_devices') != ['/dev/xpuctrl']:
@@ -37,12 +39,16 @@ class KunlunxinProvider:
             raise ConfigurationError('P800 requires --physical-device-ids; legacy aliases are undefined')
 
     def validate_benchmark(self, request, assets):
-        from benchmarks.fp32_contract import validate_config
-        validate_config(assets['merged_config'])
+        from benchmarks.computation_contract import validate_config, CASES
+        from benchmarks.transfer_contract import validate_config as validate_transfer_config, CASES as TRANSFER_CASES
+        if request.case not in (*CASES, *TRANSFER_CASES) or request.nproc_per_node not in (None, 1):
+            raise ConfigurationError('P800 requires a registered single-rank case')
+        if request.case in TRANSFER_CASES:
+            validate_transfer_config(assets['merged_config'], request.case)
+        else:
+            validate_config(assets['merged_config'], request.case)
         if assets['environments']:
             raise ConfigurationError('P800 native case must not inject unqualified environment scripts')
-        if request.case != 'computation-FP32:P800' or request.nproc_per_node not in (None, 1):
-            raise ConfigurationError('P800 performance qualification supports only single-rank FP32')
         selected = request.context.selection_request()['requested_ids']
         if len(selected) != 1 or not set(selected).issubset(request_assets_inventory(request)):
             raise ConfigurationError('P800 performance requires one configured physical device')

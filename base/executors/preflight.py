@@ -22,7 +22,8 @@ def add_cli_arguments(parser):
     selection.add_argument('--device-ids')
     parser.add_argument('--dry-run', action='store_true')
     parser.add_argument('--allow-candidate-runtime', action='store_true')
-    parser.add_argument('--probe-mode', choices=('identity', 'timeout-check'), default='identity')
+    from base.vendors.kunlunxin.computation_probe import PRECISIONS
+    parser.add_argument('--probe-mode', choices=('identity', 'timeout-check', *('capability-' + precision for precision in PRECISIONS)), default='identity')
     parser.add_argument('--monitor', choices=('on', 'off'), default='on')
     parser.add_argument('--timeout', type=int, default=120)
     parser.add_argument('--privilege-command', default='')
@@ -169,14 +170,18 @@ def execute(args, *, prepared=None, workload=None):
         write_json(root / 'code-identity.json', {'git_head': commands.checked(['git', '-C', str(BASE_DIR.parent), 'rev-parse', 'HEAD'])['stdout'].strip(),
                    'git_status': commands.checked(['git', '-C', str(BASE_DIR.parent), 'status', '--porcelain'])['stdout'],
                    'source_sha256': {str(p.relative_to(BASE_DIR)): hashlib.sha256(p.read_bytes()).hexdigest()
-                                     for subdir in ('executors', 'vendors/kunlunxin', 'monitoring', 'benchmarks/drivers', 'benchmarks/computation-FP32')
+                                     for subdir in ('executors', 'vendors/kunlunxin', 'monitoring', 'benchmarks/drivers',
+                                                    'benchmarks/computation-FP32', 'benchmarks/computation-FP16',
+                                     'benchmarks/computation-BF16', 'benchmarks/computation-INT8',
+                                     'benchmarks/interconnect-h2d', 'benchmarks/interconnect-d2h')
                                      for p in sorted((BASE_DIR / subdir).glob('*.py'))},
                    'context_sha256': context_hash})
         if workload is not None:
             identity_path = root / 'code-identity.json'
             code_identity = json.loads(identity_path.read_text())
             code_identity['source_sha256'].update({relative: hashlib.sha256((BASE_DIR / relative).read_bytes()).hexdigest()
-                for relative in ('benchmark_worker.py', 'benchmarks/fp32_contract.py', 'benchmarks/case_assets.py',
+                for relative in ('benchmark_worker.py', 'benchmarks/fp32_contract.py', 'benchmarks/computation_contract.py',
+                                 'benchmarks/transfer_contract.py', 'configs/kunlunxin_p800_xpytorch29.yaml', 'benchmarks/case_assets.py',
                                  'vendors/kunlunxin/runtime_bootstrap.sh')})
             write_json(identity_path, code_identity)
         stage = 'container-inspect'

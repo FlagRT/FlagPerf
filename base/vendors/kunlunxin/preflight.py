@@ -80,6 +80,49 @@ def check_nodes(devices, control='/dev/xpuctrl'):
         raise RuntimeError("missing character control device")
 
 
+def readonly_smi_arguments(arguments):
+    return (arguments in (['-m'], ['-q'], []) or
+            len(arguments) == 3 and arguments[0] == '-i' and arguments[1].isdigit() and arguments[2] == '-q')
+
+
+def inspect_handles(device, commands, directory, allow_observers=False):
+    node = device['host_device_node']
+    for attempt in range(3):
+        handles = commands.run(['fuser', node], privileged=True,
+                               evidence=directory / f"handles-{device['host_physical_id']}-{attempt}.json")
+        if handles['returncode'] == 1 and not handles['stdout'].strip() and not handles['stderr'].strip():
+            return []
+        pids = handles['stdout'].split()
+        if (not allow_observers or handles['returncode'] != 0 or not pids or
+                any(not pid.isdigit() for pid in pids) or handles['stderr'].strip() != node + ':'):
+            raise RuntimeError('device has open handles or handle check failed')
+        observers = []
+        vanished = False
+        for pid in pids:
+            prefix = directory / f'observer-{pid}-{attempt}'
+            executable = commands.run(['readlink', '-e', f'/proc/{pid}/exe'], privileged=True,
+                                      evidence=prefix.with_suffix('.exe.json'))
+            command = commands.run(['cat', f'/proc/{pid}/cmdline'], privileged=True,
+                                   evidence=prefix.with_suffix('.argv.json'))
+            if executable['returncode'] or command['returncode']:
+                existence = commands.run(['test', '-d', f'/proc/{pid}'], privileged=True,
+                                         evidence=prefix.with_suffix('.exists.json'))
+                if existence['returncode'] == 1 and not existence['stdout'] and not existence['stderr']:
+                    observers.append({'pid': int(pid), 'classification': 'exited-before-inspection'})
+                    continue
+                vanished = True
+                break
+            arguments = command['stdout'].rstrip('\0').split('\0')
+            if (executable['stdout'].strip() != '/usr/local/bin/xpu-smi' or
+                    not arguments or not readonly_smi_arguments(arguments[1:])):
+                raise RuntimeError('device handle is not a verified read-only xpu-smi observer')
+            observers.append({'pid': int(pid), 'executable': executable['stdout'].strip(),
+                              'arguments': arguments[1:], 'classification': 'read-only-observer'})
+        if not vanished:
+            return observers
+    raise RuntimeError('device handle owners changed before they could be verified')
+
+
 def inspect_host(config, requested, commands, directory):
     directory.mkdir(parents=True, exist_ok=False)
     machine = commands.checked(['xpu-smi', '-m'], evidence=directory / 'machine.json')
@@ -105,12 +148,10 @@ def inspect_host(config, requested, commands, directory):
                         'serial': row['serial'], 'container_node': info['host_device_node']})
     mapping.validate_device_set(devices)
     check_nodes(devices)
-    for device in devices:
-        handles = commands.run(['fuser', device['host_device_node']], privileged=True,
-                               evidence=directory / f"handles-{device['host_physical_id']}.json")
-        if handles['returncode'] != 1 or handles['stdout'].strip() or handles['stderr'].strip():
-            raise RuntimeError("device has open handles or handle check failed")
+    observers = {str(device['host_physical_id']): inspect_handles(
+        device, commands, directory, config.get('allow_readonly_smi_handles', False)) for device in devices}
     result = {'schema_version': 1, 'status': 'passed', 'devices': devices,
+              'readonly_observers': observers,
               'selection': {'source': 'physical-device-ids', 'requested_ids': requested},
               'machine_memory_unit': 'numerically-cross-checked-with-query-MiB'}
     (directory / 'summary.json').write_text(json.dumps(result, indent=2) + '\n')

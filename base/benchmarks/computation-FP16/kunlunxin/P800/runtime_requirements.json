@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "supported": true,
+  "runtime_profile": "xpytorch_2.9_p800_candidate",
+  "runtime_role": "operator",
+  "process_scope": {
+    "nnodes": 1,
+    "nproc_per_node": 1
+  },
+  "implementation": "native-xpytorch",
+  "correctness_required": true,
+  "qualification_repetitions": 5,
+  "qualification_min_measurement_seconds": 15,
+  "qualification_max_cv_percent": 5,
+  "compatibility_note": "Candidate implementation; numerical qualification recorded separately for exact dtype/operator/config. No internal accumulator or peak claim."
+}

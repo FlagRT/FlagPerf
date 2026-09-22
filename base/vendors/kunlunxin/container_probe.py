@@ -14,6 +14,7 @@ import time
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 from base.vendors.kunlunxin.reuse import mapping, runtime
 from base.vendors.kunlunxin.provider import binding_records
+from base.vendors.kunlunxin.computation_probe import PRECISIONS
 
 
 def require(condition, message):
@@ -30,12 +31,15 @@ def save(path, value):
 def validate_context(context, environ, nodes, now=None):
     require(context.get('schema_version') == 1 and context.get('kind') in ('benchmark-preflight', 'benchmark'), 'invalid host context')
     benchmark = context['kind'] == 'benchmark'
-    require(context.get('probe_mode') in (('performance',) if benchmark else ('identity', 'timeout-check')), 'invalid probe mode')
+    require(context.get('probe_mode') in (('performance',) if benchmark else ('identity', 'timeout-check', *('capability-' + precision for precision in PRECISIONS))), 'invalid probe mode')
     require(context.get('allow_candidate_runtime') is True, 'candidate runtime needs explicit authorization')
     require(isinstance(context.get('run_id'), str) and context['run_id'], 'missing run identity')
     require(type(context.get('timeout')) is int and 30 <= context['timeout'] <= (600 if benchmark else 180), 'invalid probe timeout')
     if benchmark:
-        require(context.get('case') == 'computation-FP32:P800' and context.get('nproc_per_node') == 1, 'unqualified performance scope')
+        from base.benchmarks.computation_contract import CASES
+        from base.benchmarks.transfer_contract import CASES as TRANSFER_CASES
+        require((context.get('case') in CASES or context.get('case') in TRANSFER_CASES)
+                and context.get('nproc_per_node') == 1, 'unqualified performance scope')
         require(isinstance(context.get('case_assets_sha256'), str) and len(context['case_assets_sha256']) == 64, 'missing case asset identity')
     require(context.get('reservation_reference'), 'reservation reference required')
     start = datetime.fromisoformat(context['reservation_start'].replace('Z', '+00:00'))
@@ -129,6 +133,10 @@ def main():
         observation = {'schema_version': 1, 'kind': 'probe-observation', 'run_id': context['run_id'],
                        'device_id': binding['resource_key'], 'started_monotonic_ns': time.monotonic_ns()}
         save(output / 'probe.json', result)
+        if context['probe_mode'].startswith('capability-'):
+            from base.vendors.kunlunxin.computation_probe import probe
+            probe(context['probe_mode'].split('-', 1)[1], device,
+                  {'run_id': context['run_id'], 'context_sha256': context_hash, 'binding': binding}, output)
         if context.get('kind') == 'benchmark':
             from base.benchmark_worker import run_bound_case
             run_bound_case(context, args.context, output)
@@ -140,7 +148,7 @@ def main():
         time.sleep(seconds)
         observation['finished_monotonic_ns'] = time.monotonic_ns()
         save(output / 'probe-observation.json', observation)
-        require(context['probe_mode'] == 'identity', 'timeout watchdog failed to stop bounded wait')
+        require(context['probe_mode'] != 'timeout-check', 'timeout watchdog failed to stop bounded wait')
     except Exception as exc:
         result.update(status='failed', error=str(exc), error_type=type(exc).__name__)
     result['finished_monotonic_ns'] = time.monotonic_ns()

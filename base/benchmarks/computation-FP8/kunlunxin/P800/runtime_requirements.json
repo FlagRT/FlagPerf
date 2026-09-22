@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "supported": false,
+  "unsupported_reason": "FP8 mm and scaled-mm APIs returned NOT IMPLEMENTED on the locked stack",
+  "runtime_profile": "xpytorch_2.9_p800_candidate",
+  "process_scope": {
+    "nnodes": 1,
+    "nproc_per_node": 1
+  }
+}

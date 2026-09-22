@@ -121,6 +121,13 @@ def render_report(root, summary, result, rank_assets):
     lines += ["## Rank metrics", ""]
     lines += table(["Rank", "Metric", "Value", "Unit"], [(m.get("rank"),m.get("metric"),m.get("value"),m.get("unit")) for m in result.get("metrics", [])
         if type(m.get("value")) in (float,int) and math.isfinite(m["value"])])
+    transfer_metrics = [metric for metric in result.get('metrics', []) if metric.get('unit') == 'GB/s' and
+                        type(metric.get('value_gib_s')) in (float, int) and math.isfinite(metric['value_gib_s'])]
+    if transfer_metrics:
+        lines += table(['Rank', 'Metric', 'Value', 'Unit'],
+                       [(metric['rank'], metric['metric'], metric['value_gib_s'], 'GiB/s') for metric in transfer_metrics])
+        lines += ['Effective one-way API copy bandwidth; both units use identical bytes and synchronized time.',
+                  'Full payload content is checked outside measurement. non_blocking is a request, not proof of overlap.', '']
     lines += [f"Missing ranks: {cell(result.get('missing_ranks', []))}", ""]
     if summary.get('qualification'):
         lines += ['## Qualification', '', '```json', json.dumps(summary['qualification'], indent=2, sort_keys=True), '```', '',
@@ -130,8 +137,9 @@ def render_report(root, summary, result, rank_assets):
                   '[Raw rank metric and timing](artifacts/metric-rank-0.json)', '',
                   '[Runtime UUID binding](artifacts/runtime-bindings.json)', '',
                   '[Container ownership and mapping](container-inspect.json)', '',
-                  'Large-shape correctness checks fixed rows/columns with the full reduction dimension and full-output finiteness. ',
-                  'Native FP32 input/output evidence does not certify internal IEEE arithmetic or universal CPU-fallback exclusion.', '']
+                  ('Transfer correctness checks the complete payload and buffer reuse outside timing.' if transfer_metrics else
+                   'Large-shape correctness checks fixed rows/columns with the full reduction dimension and full-output finiteness.'),
+                  'Native input/output dtype evidence does not certify internal arithmetic or universal CPU-fallback exclusion.', '']
     for asset in rank_assets:
         lines += [f"![Rank metrics]({asset['path']})", ""]
     lines += ["## Case configuration", "", "Precedence: generic < vendor < chip < override.", ""]
