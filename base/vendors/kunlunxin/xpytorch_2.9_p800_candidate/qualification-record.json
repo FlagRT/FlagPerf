@@ -211,12 +211,12 @@
         "evidence": "five qualification runs"
       },
       "computation-INT8": {
-        "status": "supported-and-qualified-at-2048",
-        "operator": "torch._int_mm",
-        "output_dtype": "torch.int32",
+        "status": "supported-and-qualified-at-8192",
+        "operator": "xtorch_ops.gemm_I8_I8_bf16_nt",
+        "output_dtype": "bfloat16",
         "metric": "TOPS (multiply-add counted as two operations)",
-        "evidence": "five qualification runs at 2048x2048x2048",
-        "known_limit": "4096-cubed frozen configs show bimodal throughput (two groups unstable, CV 25.97% and 36.12%); fast/slow rounds share UUID/config/correctness/monitor identity"
+        "evidence": "five qualification runs at 8192-cubed",
+        "known_limit": "the ATen int8 path (torch.mm, torch._int_mm) is unusable: mm rejects int8 and _int_mm runs on the host CPU"
       },
       "computation-FP64": {
         "status": "unsupported-for-locked-stack",
@@ -259,17 +259,29 @@
         "status": "passed"
       },
       "INT8_2048": {
-        "median_tops": 4.1639,
-        "cv_percent": 1.6457,
-        "warmup": 100,
-        "iterations": 4000,
-        "elapsed_seconds_per_run": 16.5,
-        "status": "passed"
+        "status": "retracted",
+        "reason": "torch._int_mm executes on the host CPU on this stack",
+        "evidence": "process CPU time equalled 192x wall time during the device loop; device telemetry stayed at 0% utilization, 39 C, 92 W; CPU-only call was faster than the device call"
       },
       "int8_4096_attempts": {
-        "warmup10_cv_percent": 25.9706,
-        "warmup100_cv_percent": 36.1224,
-        "status": "unstable, retained as failure evidence, not trimmed"
+        "status": "retracted",
+        "reason": "same host fallback; the two modes were CPU-bound and copy-bound regimes of that fallback"
+      },
+      "INT8_8192_device_kernel": {
+        "status": "passed",
+        "median_tops": 504.591,
+        "cv_percent": 0.3315,
+        "min_tops": 501.95,
+        "max_tops": 506.36,
+        "shape": "8192x8192x8192",
+        "iterations": 8000,
+        "warmup": 10,
+        "seed": 519,
+        "operator": "xtorch_ops.gemm_I8_I8_bf16_nt",
+        "output_dtype": "bfloat16",
+        "scales": "SCALE_A=SCALE_B=1.0 passed as 127*SCALE through the kernel max/127 convention",
+        "window_seconds": "17.37-17.52",
+        "device_telemetry": "100% utilization, 61 C, 400 W"
       }
     },
     "transfer_qualification": {
@@ -359,11 +371,21 @@
     },
     "acceptance_review": "base/result/p800-pr4-pr5-20260922-0935/acceptance-review.json (status passed; lock reacquired; card 5 idle under lock)",
     "open_items": [
-      "Transfer pinned-mode groups are unstable on the current shared host; re-run in a quiet window (planned day 7) rather than trimming samples",
-      "INT8 4096-cubed bimodal throughput root cause unresolved; 2048-cubed config is the qualified one",
+      "Transfer pinned-mode groups are unstable on the current shared host; re-run in a quiet window with the Ascend payload",
+      "FP16/BF16/FP32 and all transfer groups still need the Ascend-scale re-run for comparability",
       "TF32 remains blocked/unresolved: no verifiable runtime mode evidence",
       "Device memory, capacity and multi-card communication remain outside day-5 scope"
     ],
-    "scope_limits": "Single physical card 5, locked M1/native XPYTORCH with USE_FLAGGEMS=0, single rank. No multi-card, capacity, or other-vendor hardware validation. Candidate manifest remains validated:false."
+    "scope_limits": "Single physical card 5, locked M1/native XPYTORCH with USE_FLAGGEMS=0, single rank. No multi-card, capacity, or other-vendor hardware validation. Candidate manifest remains validated:false.",
+    "scale_alignment": {
+      "ascend_reference": "computation cases at 8192-cubed, warmup 100; transfer cases Melements 1024 (4 GiB payload), pinned, 100 iterations",
+      "int8": "aligned to 8192-cubed and qualified in this window",
+      "outstanding": [
+        "FP16 and BF16 at 8192-cubed",
+        "FP32 comparability round at 8192-cubed",
+        "transfer runs at the Ascend 4 GiB payload for all eight request modes"
+      ]
+    },
+    "monitoring_correction": "xpu-smi telemetry does observe these workloads (100% utilization, 61-63 C, 296-400 W during compute; idle readings during the retracted _int_mm runs). An earlier note claiming the monitor was blind to all cases came from reading the wrong JSON nesting and is withdrawn."
   }
 }

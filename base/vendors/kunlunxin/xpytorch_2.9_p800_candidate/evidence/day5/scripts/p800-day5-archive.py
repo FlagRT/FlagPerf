@@ -89,7 +89,7 @@ for source in (Path('/tmp/day5_transfer_qualification.sh'), Path('/tmp/day5_foll
 
 # Qualification statistics recomputed by the repository tool
 stats = DEST / 'qualification-statistics'
-stats.mkdir()
+stats.mkdir(exist_ok=True)
 for name in sorted(path.name for path in Path('/tmp').glob('qual-*.json')):
     shutil.copyfile(Path('/tmp') / name, stats / name)
     provenance.append({'source': f'/tmp/{name}', 'destination': f'qualification-statistics/{name}',

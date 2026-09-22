@@ -1,0 +1,49 @@
+{
+  "clock_domain": "same-host Linux monotonic",
+  "collector": "xpu-smi -m and selected -q",
+  "extensions": [],
+  "parsed_samples": {
+    "bytes": 14317,
+    "path": "monitor/samples.jsonl",
+    "sha256": "5926dfa9c91b030e753cd924dc48cb6b52bd5875630ae3b382f0c13502105f0c"
+  },
+  "primary_sample_counts_by_target": {
+    "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87": 37
+  },
+  "raw_samples": {
+    "bytes": 222028,
+    "path": "monitor/samples.raw.jsonl",
+    "sha256": "cbdd340804e4b903b84859311d5a112901f75a5d89cc721c519e0dad7a02fb3f"
+  },
+  "reasons": [],
+  "sample_counts_by_target": {
+    "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87": 37
+  },
+  "schema_version": 2,
+  "status": "passed",
+  "target_resource": null,
+  "targets": [
+    {
+      "device_id": "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87",
+      "pci_bdf": "0000:9c:00.0",
+      "physical_id": 5,
+      "uuid": "f396486d-9850-50e4-81c4-50f2e9f6ca87"
+    }
+  ],
+  "total_sample_commands": 86,
+  "vendor": "kunlunxin",
+  "window_semantics": "bounded identity probe observation, not performance measurement",
+  "workload_windows": [
+    {
+      "device_id": "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87",
+      "finished_monotonic_ns": 3909267318984877,
+      "finished_offset_s": 41.84970854502171,
+      "kind": "probe-observation",
+      "role": "probe-observation",
+      "run_id": "preflight-40bc2ffaa76e4da7bf175855f06a60fc",
+      "schema_version": 1,
+      "started_monotonic_ns": 3909230353370221,
+      "started_offset_s": 4.8840938890352845
+    }
+  ]
+}

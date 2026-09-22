@@ -1,0 +1,407 @@
+{
+  "schema_version": 1,
+  "run_id": "preflight-5adecc0887114197bdd9cb23ede523e8",
+  "context_sha256": "de8866078d30332a8e32d2da0632d20ded621ade0757471de3c0f4a1db183037",
+  "binding": {
+    "vendor": "kunlunxin",
+    "host_physical_id": 5,
+    "pci_bdf": "0000:9c:00.0",
+    "serial_or_uuid": "f396486d-9850-50e4-81c4-50f2e9f6ca87",
+    "host_device_node": "/dev/xpu7",
+    "container_device_node": "/dev/xpu7",
+    "framework_local_rank": 0,
+    "framework_logical_id": 0,
+    "framework_device_name": "cuda:0",
+    "request_index": 0,
+    "resource_key": "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87",
+    "legacy_logical_id": null
+  },
+  "precision": "XTORCH-INT8",
+  "tests": [
+    {
+      "name": "xtorch_signatures",
+      "status": "observed",
+      "signatures": {
+        "awq_dequantize": {
+          "signature": "(qweight: torch.Tensor, scales: torch.Tensor, zeros: torch.Tensor, weight: torch.Tensor, group_m: int, quant_type: int = 0, align_type: int = 1) -> int",
+          "doc": "\u5bf9\u6807vllm::awq_dequantize()\n\u5206\u7ec4\u53cd\u91cf\u5316\u8fd0\u7b97\uff0cweight=(qweight-zeros)*scales\n\u6ce8\uff1aint4\u6392\u5e8f\u65b9\u5f0f\u6709\u591a\u79cd\uff0c\u8be6\u89c1align_type\u53c2\u6570\u8bf4\u660e\u3002\n\u6ce8\uff1aGPU\u7684int4\u6392\u5e8f\u65b9\u5f0f\u4e5f\u6709\u591a\u79cd\uff0c\u4e00\u79cd\u6392\u5e8f\u65b9\u5f0f\u4e3a\uff1ax0,x4,x1,x5,x2,x6,x3,x7, ...\u3002\n\nArgs:\n    qweight (Tensor, required): \u8f93\u5165\u5f20\u91cf\uff0c\u5f62\u72b6\u4e3a[m, n]\uff0c\u5b58\u50a8\u4e3aint32\u7c7b\u578b\u3002\u76ee\u524d\u53ea\u652f\u6301uint4\u7c7b\u578b(\u5f62\u72b6\u4e3a[m, n*8])\u3002\n    scales (Tensor, required): \u8f93\u5165\u5f20\u91cf\uff0c\u5f62\u72b6\u4e3a[m/group_m, n*8]\uff0c"
+        },
+        "cache_quant_static": {
+          "signature": "(k_cache_quanted: torch.Tensor, v_cache_quanted: torch.Tensor, k_cache: torch.Tensor, v_cache: torch.Tensor, k_scale: torch.Tensor, v_scale: torch.Tensor, block_table: torch.Tensor, batch_size: int, kv_head_num: int, head_dim: int, max_seq_num: int, max_seq_len: int, block_size: int, max_num_blocks_per_seq: int, seq_lod_cpu: torch.Tensor | None = None, seq_lod_xpu: torch.Tensor | None = None) -> int",
+          "doc": "\u5bf9\u8f93\u5165\u7684 kv cache, \u9759\u6001\u91cf\u5316\u4e3a int8_t, \u5e76\u4fdd\u5b58\u5230 k_cache_quanted, v_cache_quanted \u4e2d\n\nArgs:\n    k_cache (Tensor, required): \u8f93\u5165\u5f20\u91cf, \u7c7b\u578b\u4e3a fp16/bfp16/fp32\n            shape\u4e3a[max_seq_num * max_num_blocks_per_seq, kv_head_num, block_size, head_dim]\n    v_cache (Tensor, required): \u8f93\u5165\u5f20\u91cf, \u7c7b\u578b\u4e3a fp16/bfp16/fp32\n            shap"
+        },
+        "concat_quant_and_cache_mla": {
+          "signature": "(kv_c: torch.Tensor, k_pe: torch.Tensor, scale: torch.Tensor, slot_mapping: torch.Tensor, kv_cache: torch.Tensor, scale_is_max: bool = True) -> int",
+          "doc": "\u7ed9\u5b9akv_c, k_pe\u4f5c\u4e3a\u8f93\u5165, \u5c06\u4ed6\u4eec\u91cf\u5316\u4e3aint8\u540e\u5408\u5e76, \u5e76\u6309\u7167slot mapping\u4f5c\u4e3a\u7d22\u5f15\u5c06\u5408\u5e76\u540e\u7684\u6570\u636e\u4fdd\u5b58\u5230kv_cache\u4e4b\u4e2d\n\nArgs:\n    kv_c (Tensor, required): \u8f93\u5165\u5f20\u91cf, shape\u4e3a[m, kv_c_dim], \u7c7b\u578b\u4e3a fp16/bfp16/fp32\u3002\n    k_pe (Tensor, required): \u8f93\u5165\u5f20\u91cf, shape\u4e3a[m, k_pe_dim], \u7c7b\u578b\u4e0e kv_c \u76f8\u540c\u3002\n    scale (Tensor, required): \u8f93\u5165\u5f20\u91cf, shape\u4e3a[kv_c_dim + k_pe_dim], \u7c7b\u578b\u4e3a fp32\u3002"
+        },
+        "dequant2d_per_token": {
+          "signature": "(x: torch.Tensor, scale: torch.Tensor, y: torch.Tensor, is_absmax: bool = False, force_sdnn: bool = False) -> int",
+          "doc": "\u5c06 token \u7684\u9690\u5c42\u4fe1\u606f, \u6309\u7167scale\u53cd\u91cf\u5316\u4e3afp16/bfp16/fp32\u3002\n    1. scale \u67e5\u8be2\u6bcf\u4e2atoken\u7684\u53cd\u91cf\u5316\u7cfb\u6570 max\u3002\n    2. \u4f7f\u7528\u6bcf\u884c\u7684 max \u503c\uff0c\u5c06 n \u4e2a\u6570\u4ece \u7c7b\u578bint8\u3002 \u53cd\u91cf\u5316\u4e3afp16/bfp16/fp32\u3002\n\nArgs:\n    x (Tensor, required): \u8f93\u5165\u5f20\u91cf\uff0c\u5f62\u72b6\u4e3a[m, n]\uff0c\u7c7b\u578b\u4e3aint8\u3002\n    scale (Tensor, required): \u8f93\u5165\u5f20\u91cf\uff0c\u53cd\u91cf\u5316\u7cfb\u6570\uff0c\u5f62\u72b6\u4e3a [m]\uff0c\u7c7b\u578b\u4e3afp32\u3002\n    is_absmax (bool, optional): \u8f93\u5165\uff0cscale\u7684\u5b9e\u9645\u542b\u4e49\n      "
+        },
+        "dequant2d_per_token_castte_with_mask": {
+          "signature": "(x: torch.Tensor, token_max: torch.Tensor, y: torch.Tensor, scale: torch.Tensor, recv_count: torch.Tensor, y_max: torch.Tensor | None = None, is_absmax: bool = False, reuse_scale: bool = False) -> int",
+          "doc": "\u5bf9 x \u8fdb\u884c\u878d\u5408\u7684 dequant2d_per_token + castte \u64cd\u4f5c\u3002\n\nArgs:\n    x (Tensor, required): \u8f93\u5165\u5f20\u91cf, \u5f62\u72b6\u4e3a[m, n] \u7c7b\u578b\u4e3a int8\u3002\n    token_max (Tensor, required): \u8f93\u5165\u5f20\u91cf, \u5f62\u72b6\u4e3a[m] \u7c7b\u578b\u4e3a float32\u3002\n    recv_count (Tensor, required): \u8f93\u5165\u5f20\u91cf, \u5f62\u72b6\u4e3a[num_groups], \u5143\u7d20\u8303\u56f4\u662f[0, max_m), \u7c7b\u578b\u4e3aint32\u3002\n                    \u5176\u5c06 m \u5206\u4e3anum_groups\u7ec4, \u6bcf\u4e2a\u5143\u7d20\u8868\u793a\u5f53\u524d\u7ec4\u7684\u524dre"
+        },
+        "dequant2d_per_token_init_te_with_mask": {
+          "signature": "(x: torch.Tensor, token_max: torch.Tensor, y: torch.Tensor, scale: torch.Tensor, recv_count: torch.Tensor, y_max: torch.Tensor | None = None, is_absmax: bool = False, reuse_scale: bool = False) -> int",
+          "doc": "\u5bf9 x \u8fdb\u884c\u878d\u5408\u7684 dequant2d_per_token + castte \u64cd\u4f5c\u3002\n\nArgs:\n    x (Tensor, required): \u8f93\u5165\u5f20\u91cf, \u5f62\u72b6\u4e3a[m, n] \u7c7b\u578b\u4e3a int8\u3002\n    token_max (Tensor, required): \u8f93\u5165\u5f20\u91cf, \u5f62\u72b6\u4e3a[m] \u7c7b\u578b\u4e3a float32\u3002\n    recv_count (Tensor, required): \u8f93\u5165\u5f20\u91cf, \u5f62\u72b6\u4e3a[num_groups], \u5143\u7d20\u8303\u56f4\u662f[0, max_m), \u7c7b\u578b\u4e3aint32\u3002\n                    \u5176\u5c06 m \u5206\u4e3anum_groups\u7ec4, \u6bcf\u4e2a\u5143\u7d20\u8868\u793a\u5f53\u524d\u7ec4\u7684\u524dre"
+        },
+        "dequant_int4": {
+          "signature": "(x: torch.Tensor, scale: torch.Tensor, zero: torch.Tensor, y: torch.Tensor, group_m: int, int4_signed: bool = True, use_mode_fast: bool = False) -> int",
+          "doc": "\u5bf9x\u8fdb\u884cint4\u53cd\u91cf\u5316\u64cd\u4f5c\n\nArgs:\n    x (Tensor, required): \u8f93\u5165\u5f20\u91cf\uff0c\u5f62\u72b6\u4e3a [m, int8_n]\uff0c\u5b58\u50a8\u7c7b\u578b\u4e3aint8, \u7c7b\u578b\u4e3a int4/uint4\u3002\n    scale (Tensor, required): \u8f93\u5165\u5f20\u91cf, \u53cd\u91cf\u5316\u7cfb\u6570\uff0c\u5f62\u72b6\u4e3a [roundup_div(m, group_m), n], \u7c7b\u578b\u4e3afp32\u6216\u4e0ey\u7684\u7c7b\u578b\u4e00\u81f4\u3002\n    zero (Tensor, required): \u8f93\u5165\u5f20\u91cf, \u96f6\u70b9\uff0c\u5f62\u72b6\u4e3a [roundup_div(m, group_m), n], \u7c7b\u578b\u4e0escale\u4e00\u81f4\u3002\n                            "
+        },
+        "fused_quant_add_rmsnorm": {
+          "signature": "(x: torch.Tensor, weight: torch.Tensor, quant_out: torch.Tensor, quant_out_scale: torch.Tensor, residual_in: torch.Tensor | None = None, residual_out: torch.Tensor | None = None, norm_residual_out: torch.Tensor | None = None, bias: torch.Tensor | None = None, smooth: torch.Tensor | None = None, eps: float = 1e-05, interweaved: bool = False, force_sdnn: bool = False) -> int",
+          "doc": "\u5b9e\u73b0 quant add_rmsnorm \u64cd\u4f5c\u3002\n\nArgs:\n    x (Tensor, required): shape \u4e3a [m, n]\uff0c\u7b2c\u4e00\u4e2a\u8f93\u5165\uff0c\u7c7b\u578b\u4e3abf16/fp16/fp32\u3002\n    weight (Tensor, required): shape \u4e3a [n]\uff0c \u6743\u91cd\uff0c\u7c7b\u578b\u540cx\u6216fp32\u3002\n    residual_in (Tensor, optional): shape \u4e3a [m, n]\uff0c \u7b2c\u4e8c\u4e2a\u8f93\u5165\uff0c\u7c7b\u578b\u540cx\uff08\u6682\u4e0d\u652f\u6301 None\uff09\u3002\n    bias (Tensor, optional): shape \u4e3a [n]\uff0c\u9ed8\u8ba4\u4e3aNone\uff0c\u7c7b\u578b\u4e0eweight\u76f8\u540c\u3002\n    smo"
+        },
+        "gather_and_maybe_dequant_cache_ds_mla": {
+          "signature": "(src_cache: torch.Tensor, dst: torch.Tensor, block_table: torch.Tensor, cu_seq_lens: torch.Tensor, batch_size: int, seq_starts: torch.Tensor | None = None, xbf16_label: int = 0, dst_batch_stride: int = 0) -> int",
+          "doc": "\u6839\u636efp8_ds_mla\u683c\u5f0f, \u4ecesrc_cache\u4e2d\u53cd\u91cf\u5316\u6570\u636e\u5230dst\u3002\nfp8_ds_mla\u683c\u5f0f: 512Bytes 512\u4e2afp8 nope + 16Bytes 4\u4e2afloat scale + 128Bytes 64\u4e2abfloat16 rope \u4e00\u5171656Bytes\n\u53cd\u91cf\u5316\u540e\u683c\u5f0f: 1024Bytes 512\u4e2abfloat16 nope + 128Bytes 64\u4e2abfloat16 rope\nArgs:\n    src_cache (Tensor): \u8f93\u5165, shape\u4e3a[num_blocks, block_size, ENTRIES...], paged_cache\u5b58\u653e\u5f62\u5f0f\u3002\n    "
+        },
+        "gemm_I8_I8_bf16_nt": {
+          "signature": "(lhs: Tuple[torch.Tensor, torch.Tensor], rhs: Tuple[torch.Tensor, torch.Tensor], out: torch.Tensor)",
+          "doc": "Do a grouped GEMM (contiguous format) with INT8 inputs and BF16 output,\n\nArguments:\n    lhs: \u7b2c\u4e00\u4e2a\u6210\u5458\u662fint8\u7c7b\u578b\u5f20\u91cf\uff0c`[m_sum, k]`,\n         \u7b2c\u4e8c\u4e2a\u6210\u5458\u662ffp32\u7c7b\u578b\u5f20\u91cf\uff0c lhs\u7684\u91cf\u5316\u503c`[m_sum, \u2308k / 128\u2309]`.\n    rhs: \u7b2c\u4e00\u4e2a\u6210\u5458\u662fint8\u7c7b\u578b\u5f20\u91cf\uff0c `[num_groups, n, k]`.\n         \u7b2c\u4e8c\u4e2a\u6210\u5458\u662ffp32\u7c7b\u578b\u5f20\u91cf\uff0c `[num_groups, \u2308n / 128\u2309, \u2308k / 128\u2309]`.\n    out: \u8f93\u51fa\u7684\u7279\u5f81"
+        },
+        "gemm_I8_I8_bf16_nt_v2": {
+          "signature": "(lhs: Tuple[torch.Tensor, torch.Tensor], rhs: Tuple[torch.Tensor, torch.Tensor], out: torch.Tensor)",
+          "doc": "Do a grouped GEMM (contiguous format) with INT8 inputs and BF16 output,\n\nArguments:\n    lhs: \u7b2c\u4e00\u4e2a\u6210\u5458\u662fint8\u7c7b\u578b\u5f20\u91cf\uff0c`[m_sum, k]`,\n         \u7b2c\u4e8c\u4e2a\u6210\u5458\u662ffp32\u7c7b\u578b\u5f20\u91cf\uff0c lhs\u7684\u91cf\u5316\u503c`[m_sum, \u2308k / 128\u2309]`.\n    rhs: \u7b2c\u4e00\u4e2a\u6210\u5458\u662fint8\u7c7b\u578b\u5f20\u91cf\uff0c `[num_groups, n, k]`.\n         \u7b2c\u4e8c\u4e2a\u6210\u5458\u662ffp32\u7c7b\u578b\u5f20\u91cf\uff0c `[num_groups, \u2308n / 128\u2309, \u2308k / 128\u2309]`.\n    out: \u8f93\u51fa\u7684\u7279\u5f81"
+        },
+        "m_grouped_gemm_I8_I8_bf16_nt_contiguous": {
+          "signature": "(lhs: Tuple[torch.Tensor, torch.Tensor], rhs: Tuple[torch.Tensor, torch.Tensor], out: torch.Tensor, m_indices: torch.Tensor, lod_force_sdnn: bool = False)",
+          "doc": "Do a grouped GEMM (contiguous format) with INT8 inputs and BF16 output,\n\nArguments:\n    lhs: \u7b2c\u4e00\u4e2a\u6210\u5458\u662fint8\u7c7b\u578b\u5f20\u91cf\uff0c`[m_sum, k]`,\n         \u7b2c\u4e8c\u4e2a\u6210\u5458\u662ffp32\u7c7b\u578b\u5f20\u91cf\uff0c lhs\u7684\u91cf\u5316\u503c`[m_sum, \u2308k / 128\u2309]`.\n    rhs: \u7b2c\u4e00\u4e2a\u6210\u5458\u662fint8\u7c7b\u578b\u5f20\u91cf\uff0c `[num_groups, n, k]`.\n         \u7b2c\u4e8c\u4e2a\u6210\u5458\u662ffp32\u7c7b\u578b\u5f20\u91cf\uff0c `[num_groups, \u2308n / 128\u2309, \u2308k / 128\u2309]`.\n    out: \u8f93\u51fa\u7684\u7279\u5f81"
+        },
+        "m_grouped_gemm_I8_I8_bf16_nt_contiguous_v1": {
+          "signature": "(lhs: Tuple[torch.Tensor, torch.Tensor], rhs: Tuple[torch.Tensor, torch.Tensor], out: torch.Tensor, m_indices: torch.Tensor, lod_force_sdnn: bool = False)",
+          "doc": "Do a grouped GEMM (contiguous format) with INT8 inputs and BF16 output,\n\nArguments:\n    lhs: \u7b2c\u4e00\u4e2a\u6210\u5458\u662fint8\u7c7b\u578b\u5f20\u91cf\uff0c`[m_sum, k]`,\n         \u7b2c\u4e8c\u4e2a\u6210\u5458\u662ffp32\u7c7b\u578b\u5f20\u91cf\uff0c lhs\u7684\u91cf\u5316\u503c`[m_sum, \u2308k / 128\u2309]`.\n    rhs: \u7b2c\u4e00\u4e2a\u6210\u5458\u662fint8\u7c7b\u578b\u5f20\u91cf\uff0c `[num_groups, n, k]`.\n         \u7b2c\u4e8c\u4e2a\u6210\u5458\u662ffp32\u7c7b\u578b\u5f20\u91cf\uff0c `[num_groups, \u2308n / 128\u2309, \u2308k / 128\u2309]`.\n    out: \u8f93\u51fa\u7684\u7279\u5f81"
+        },
+        "m_grouped_gemm_I8_I8_bf16_nt_contiguous_v3": {
+          "signature": "(lhs: Tuple[torch.Tensor, torch.Tensor], rhs: Tuple[torch.Tensor, torch.Tensor], out: torch.Tensor, m_indices: torch.Tensor, lod_force_sdnn: bool = False)",
+          "doc": "Do a grouped GEMM (contiguous format) with INT8 inputs and BF16 output,\n\nArguments:\n    lhs: \u7b2c\u4e00\u4e2a\u6210\u5458\u662fint8\u7c7b\u578b\u5f20\u91cf\uff0c`[m_sum, k]`,\n         \u7b2c\u4e8c\u4e2a\u6210\u5458\u662ffp32\u7c7b\u578b\u5f20\u91cf\uff0c lhs\u7684\u91cf\u5316\u503c`[m_sum, \u2308k / 128\u2309]`.\n    rhs: \u7b2c\u4e00\u4e2a\u6210\u5458\u662fint8\u7c7b\u578b\u5f20\u91cf\uff0c `[num_groups, n, k]`.\n         \u7b2c\u4e8c\u4e2a\u6210\u5458\u662ffp32\u7c7b\u578b\u5f20\u91cf\uff0c `[num_groups, \u2308n / 128\u2309, \u2308k / 128\u2309]`.\n    out: \u8f93\u51fa\u7684\u7279\u5f81"
+        },
+        "m_grouped_gemm_I8_I8_bf16_nt_masked": {
+          "signature": "(lhs: Tuple[torch.Tensor, torch.Tensor], rhs: Tuple[torch.Tensor, torch.Tensor], out: torch.Tensor, mask_m: torch.Tensor, expected_m: int, lod_force_sdnn: bool = False)",
+          "doc": "Do a grouped GEMM (masked format) with INT8 inputs and BF16 output,\n\nArguments:\n    lhs: \u7b2c\u4e00\u4e2a\u6210\u5458\u662fint8\u7c7b\u578b\u5f20\u91cf\uff0c`[num_groups, m_max, k]`,\n         \u7b2c\u4e8c\u4e2a\u6210\u5458\u662ffp32\u7c7b\u578b\u5f20\u91cf\uff0c lhs\u7684\u91cf\u5316\u503c`[num_groups, m_max, \u2308k / 128\u2309]`.\n    rhs: \u7b2c\u4e00\u4e2a\u6210\u5458\u662fint8\u7c7b\u578b\u5f20\u91cf\uff0c `[num_groups, n, k]`.\n         \u7b2c\u4e8c\u4e2a\u6210\u5458\u662ffp32\u7c7b\u578b\u5f20\u91cf\uff0c `[num_groups, \u2308n / 128\u2309, \u2308k / 12"
+        },
+        "m_grouped_gemm_I8_I8_bf16_nt_masked_v3": {
+          "signature": "(lhs: Tuple[torch.Tensor, torch.Tensor], rhs: Tuple[torch.Tensor, torch.Tensor], out: torch.Tensor, mask_m: torch.Tensor, expected_m: int, lod_force_sdnn: bool = False)",
+          "doc": "Do a grouped GEMM (masked format) with INT8 inputs and BF16 output,\n\nArguments:\n    lhs: \u7b2c\u4e00\u4e2a\u6210\u5458\u662fint8\u7c7b\u578b\u5f20\u91cf\uff0c`[num_groups, m_max, k]`,\n         \u7b2c\u4e8c\u4e2a\u6210\u5458\u662ffp32\u7c7b\u578b\u5f20\u91cf\uff0c lhs\u7684\u91cf\u5316\u503c`[num_groups, m_max, \u2308k / 128\u2309]`.\n    rhs: \u7b2c\u4e00\u4e2a\u6210\u5458\u662fint8\u7c7b\u578b\u5f20\u91cf\uff0c `[num_groups, n, k]`.\n         \u7b2c\u4e8c\u4e2a\u6210\u5458\u662ffp32\u7c7b\u578b\u5f20\u91cf\uff0c `[num_groups, \u2308n / 128\u2309, \u2308k / 12"
+        },
+        "moe_ep_pre_sorted_quant2d": {
+          "signature": "(x: torch.Tensor, topk_index: torch.Tensor, block_statistic: torch.Tensor, ep_size: int, ep_rank: int, y: torch.Tensor, moe_index: torch.Tensor, expert_m: torch.Tensor, sorted_tokens_num_lod: torch.Tensor, quant_scale: torch.Tensor) -> int",
+          "doc": "\u5b9e\u73b0 \u4e2d MOE EP \u6a21\u5f0f\u4e0b\u7684\u524d\u5904\u7406 (sorted) + quant2d \u64cd\u4f5c\u3002\n\nArgs:\n    x (Tensor, required): \u8f93\u5165\u5f20\u91cf, \u5f62\u72b6\u4e3a [m, n], \u7c7b\u578b\u4e3afp16/bfp16 \u3002\n    topk_index (Tensor, required): \u7528\u4e8e\u9009\u62e9\u4e13\u5bb6\u7684 topk \u7d22\u5f15, \u5f62\u72b6\u4e3a [m, topk], \u7c7b\u578b\u4e3aint32 \u3002\n    block_statistic (Tensor, required): \u524d\u5e8f\u7b97\u5b50\u7684\u5206\u5757\u4fe1\u606f, \u5f62\u72b6\u4e3a [block_num, expert_num]\u3002\n                                "
+        },
+        "moe_pre_sorted_quant_pe": {
+          "signature": "(x: torch.Tensor, topk_index: torch.Tensor, expert_max: torch.Tensor, y: torch.Tensor, moe_index: torch.Tensor, expert_m: torch.Tensor, sorted_tokens_num_lod: torch.Tensor, block_statistic: torch.Tensor = None, token_max_out: torch.Tensor = None, force_sdnn: bool = False) -> int",
+          "doc": "\u7279\u5b9a\u4e1a\u52a1\u4f7f\u7528\u3002\n\u6267\u884cmoe_pre_sorted_quant_pe\u64cd\u4f5c\uff0c\u5373 moe_pre_sorted + quant2d_per_expert \u3002\n\nArgs:\n    x (Tensor, required): \u8f93\u5165\u5f20\u91cf\uff0c\u5f62\u72b6\u4e3a [m,n]\uff0c\u7c7b\u578b\u4e3abf16/fp16/fp32\u3002\n    topk_index (Tensor, required): \u8f93\u5165\u5f20\u91cf\uff0c\u5f62\u72b6\u4e3a [m, topk]\uff0c\u6bcf\u884c\u662f\u6bcf\u4e2atoken\u9009\u53d6\u7684topk\u4e2a\u4e13\u5bb6\u7684id\uff0c\u7c7b\u578b\u4e3aint32\u3002\n    expert_max (Tensor, required): \u8f93\u5165\u5f20\u91cf\uff0c\u5f62\u72b6\u4e3a [expert_num]\uff0c\u4f20\u5165\u6bcf\u4e2a\u4e13\u5bb6\u7684\u6700\u5927\u503c\uff0c\u7c7b"
+        },
+        "moe_scatter_dynamic_quant": {
+          "signature": "(hidden_states: torch.Tensor, selected_experts: torch.Tensor, moe_weights: torch.Tensor, smooth_scale: torch.Tensor, rank: int, dp_size: int, sp_size: int, ep_size: int, world_size: int, num_shared_experts: int, num_experts: int, scatter_tokens: torch.Tensor, scatter_per_token_scale: torch.Tensor, scatter_tokens_offset: torch.Tensor, experts_token_count: torch.Tensor, experts_token_start: torch.Tensor) -> int",
+          "doc": "\u5b9e\u73b0 DP+SP+EP \u6a21\u5f0f\u4e0b, \u6240\u6709(\u5171\u4eab+\u8def\u7531)\u4e13\u5bb6\u6d89\u53ca\u7684\u52a8\u6001 smooth_quant \u64cd\u4f5c(moe \u90e8\u5206\u8fd8\u5305\u62ec topk_weight) \u3002\n\nArgs:\n    hidden_states    (Tensor: [num_tokens, hidden_size]): \u8f93\u5165\u5f20\u91cf\uff0c\u7c7b\u578b\u4e3a bfp16\n    selected_experts (Tensor: [num_tokens, topk]):        \u4e13\u5bb6\u9009\u62e9 topk \u7d22\u5f15\u5f20\u91cf\uff0c\u7c7b\u578b\u4e3a int32\n    moe_weights      (Tensor: [num_tokens, topk]):        \u4e13\u5bb6\u9009\u62e9"
+        },
+        "moe_silu_dynamic_quant": {
+          "signature": "(x: torch.Tensor, smooth: torch.Tensor, experts_token_count: torch.Tensor, experts_token_start: torch.Tensor, y: torch.Tensor, scale: torch.Tensor) -> int",
+          "doc": "\u5b9e\u73b0 \u6a21\u578b\u7684 MoE Silu and Smooth Quant \u64cd\u4f5c\u3002\n\u6839\u636eexperts_token_start\u548cexperts_token_count\u786e\u5b9a\u6bcf\u4e2atoken\u5bf9\u5e94\u7684\u4e13\u5bb6, \u7136\u540e\u5bf9\u6bcf\u4e2atoken\u8fdb\u884csilu\u64cd\u4f5c, \u5e76\u6839\u636e\u5bf9\u5e94\u4e13\u5bb6 \u8fdb\u884csmooth quant\u64cd\u4f5c\u3002\n\nArgs:\n    x (Tensor, required): \u8f93\u5165\u5f20\u91cf, \u5f62\u72b6\u4e3a [m, 2 * n], \u7c7b\u578b\u4e3a bf16/fp16/fp32\u3002\n    smooth (Tensor, required): \u5e73\u6ed1\u7cfb\u6570\uff0c\u5f62\u72b6\u4e3a [expert_num, n]\u3002\u7c7b\u578b\u540cx\u6216fp32\u3002\n    experts_token_"
+        },
+        "moe_smooth_quant": {
+          "signature": "(x: torch.Tensor, smooth: torch.Tensor, shift: torch.Tensor, sorted_token_num_lod: torch.Tensor, output: torch.Tensor, max_val: torch.Tensor, force_sdnn: bool = False) -> int",
+          "doc": "\u5b9e\u73b0 \u6a21\u578b\u7684 MoE Smooth Quant \u64cd\u4f5c\u3002\n\u6839\u636esorted_token_num_lod\u786e\u5b9a\u4e13\u5bb6\u7684\u8303\u56f4\uff0c\u7136\u540e\u5bf9\u8f93\u5165\u6309\u4e13\u5bb6\u8fdb\u884csmooth\u64cd\u4f5c\u3002\n\nArgs:\n    x (Tensor, required): \u8f93\u5165\u5f20\u91cf\uff0c\u5f62\u72b6\u4e3a [m, n]\uff0c\u7c7b\u578b\u4e3a bf16/fp16\u3002\n    smooth (Tensor, required): \u5e73\u6ed1\u7cfb\u6570\uff0c\u5f62\u72b6\u4e3a [expert_num, n]\uff0c\u7c7b\u578b\u540cx\u3002\n    shift (Tensor, required): \u4f4d\u79fb\u91cf, \u76ee\u524d\u672a\u4f7f\u7528\u3002\n    sorted_token_num_lod (Tensor, required): \u6392\u5e8f\u540e\u7684 toke"
+        },
+        "per_token_dequant2d_with_mask": {
+          "signature": "(x: torch.Tensor, scale: torch.Tensor, recv_count: torch.Tensor, y: torch.Tensor, is_absmax: bool = False, force_sdnn: bool = False) -> int",
+          "doc": "\u5c06 token \u7684\u9690\u5c42\u4fe1\u606f, \u6309\u7167 scale \u53cd\u91cf\u5316\u4e3afp16/bfp16/fp32\u3002\n    1. scale \u67e5\u8be2\u6bcf\u4e2atoken\u7684\u53cd\u91cf\u5316\u7cfb\u6570 scale_value\u3002\n    2. \u4f7f\u7528\u6bcf\u884c\u7684 scale_value \u503c\uff0c\u5c06 n \u4e2a\u6570\u4ece \u7c7b\u578bint8\u3002 \u53cd\u91cf\u5316\u4e3afp16/bfp16/fp32\u3002\n\nArgs:\n    x (Tensor, required): \u8f93\u5165\u5f20\u91cf, \u5f62\u72b6\u4e3a[num_group, max_m, n]\uff0c \u7c7b\u578b\u4e3a int8\u3002\n    scale (Tensor, required): \u8f93\u5165\u5f20\u91cf\uff0c\u53cd\u91cf\u5316\u7cfb\u6570\uff0c\u5f62\u72b6\u4e3a[num_group, max_m, 1]\uff0c\u7c7b\u578b\u4e3a fp32"
+        },
+        "per_token_group_quant_I8_mask": {
+          "signature": "(x: torch.Tensor, y: torch.Tensor, max: torch.Tensor, scale_m: int, scale_n: int, valid_m: int, slot_mapping: torch.Tensor, force_sdnn: bool = False) -> int",
+          "doc": "\u5bf9\u4e8ex\u4ee5 [scale_m, scale_n]\u4e3a\u5355\u4f4d\u5bfb\u627e\u7edd\u5bf9\u503c\u6700\u5927\u503c\uff0c\u7136\u540e\u7528\u5176\u5bf9\u8be5\u533a\u57df\u8fdb\u884c\u91cf\u5316\u3002\n\nArgs:\n    x (Tensor, required): \u8f93\u5165\u5f20\u91cf\uff0c\u5f62\u72b6\u4e3a [m, n]\uff0c\u7c7b\u578b\u4e3a fb16/fp16\u3002\n    scale_m (int, required): int\u503c\uff0c\u91cf\u5316block\u7684m\u5927\u5c0f, \u5f53\u524d\u53ea\u652f\u63011\u3002\n    scale_n (int, required): int\u503c\uff0c\u91cf\u5316block\u7684n\u5927\u5c0f\u3002\n    valid_m (int, required): \u5b9e\u9645\u9700\u8981\u91cf\u5316\u7684token\u6570\u3002\n    slot_mapping (Tensor, required): \u5b9e\u9645\u9700\u8981"
+        },
+        "quant2d": {
+          "signature": "(x: torch.Tensor, y: torch.Tensor, max: torch.Tensor, force_sdnn: bool = False) -> int",
+          "doc": "\u5c06 token \u7684\u9690\u5c42\u4fe1\u606f\uff0c\u5f62\u72b6\u4e3a [m, n]\uff0c\u8fdb\u884c\u6309\u884c\u91cf\u5316\u6210 int8\u3002\n    1. \u5bf9\u4e8e\u6bcf\u884c\u7684 n \u4e2a\u6570\u627e\u5230 max \u503c\uff0c\u6539 max \u503c\u4e3a\u7edd\u5bf9\u503c\u7684\u6700\u5927\u503c\uff0c\u5171\u8f93\u51fa m \u4e2a max \u503c\u3002\n    2. \u4f7f\u7528\u6bcf\u884c\u7684 max \u503c\uff0c\u5c06 n \u4e2a\u6570\u4ece \u7c7b\u578bT \u5bf9\u79f0\u91cf\u5316\u6210 int8\u3002\n\nArgs:\n    x (Tensor, required): \u8f93\u5165\u5f20\u91cf\uff0c\u5f62\u72b6\u4e3a [m, n]\uff0c\u7c7b\u578b\u4e3a fp16/bfp16/fp32\u3002\n    force_sdnn (bool, optional): \u662f\u5426\u5f3a\u5236\u4f7f\u7528 sdnn \u8ba1\u7b97\uff0c\u9ed8\u8ba4\u4e3a False\u3002\n\nReturns:\n    y (Tensor, require"
+        },
+        "quant2d_int4": {
+          "signature": "(x: torch.Tensor, y: torch.Tensor, max: torch.Tensor, int4_unordered: bool = False, force_sdnn: bool = False) -> int",
+          "doc": "\u5c06 token \u7684\u9690\u5c42\u4fe1\u606f, shape \u4e3a [m, n], \u8fdb\u884c\u6309\u884c\u91cf\u5316\u6210int4\u3002\n\u4f7f\u7528int8\u5bb9\u7eb3\u6570\u636e, \u5373\u4fbfint8\u7684\u4f4d\u6570\u6709\u5269\u4f59, \u4e5f\u4e0d\u80fd\u8de8token\u4f7f\u7528int8\u3002\nint4_unordered: \u662f\u5426\u4f7f\u7528\u4e71\u5e8f\u5b58\u50a8\u3002\n    - False: \u987a\u5e8f\u5b58\u50a8, \u4e24\u4e2aint4\u5360\u7528\u4e00\u4e2aint8, \u4e0b\u6807\u5728\u524d\u7684\u6570\u636e\u5728\u4f4e\u4f4d, \u4e0b\u6807\u5728\u540e\u7684\u6570\u636e\u5728\u9ad8\u4f4d\u3002\n        int8_n = (n + 1) // 2\u3002\n    - True: \u4e71\u5e8f\u5b58\u50a8, \u6bcf\u4e2atoken\u7684128\u4e2aint4\u6570\u636e\u4e3a\u4e00\u7ec4, \u5360\u7528int8_n\u4e2aint8\u3002\n        \u9650\u5236: n\u5fc5\u987b\u4e3a64\u7684\u500d\u6570, \u5f53n\u4e0d\u4e3a128\u7684\u500d\u6570\u4f46\u4f59\u6570\u4e3a64\u65f6,"
+        },
+        "quant2d_per_expert": {
+          "signature": "(x: torch.Tensor, ep_max: torch.Tensor, y: torch.Tensor, expert_num: int, ep_max_lod: torch.Tensor = None, token_max_out: torch.Tensor = None, input_padded_layout: bool = False, output_padded_layout: bool = False, max_tokens_per_expert: int = 0, force_sdnn: bool = False) -> int",
+          "doc": "\u5c06 token \u7684\u9690\u5c42\u4fe1\u606f, shape \u4e3a [m, n], \u8fdb\u884c\u6309expert \u91cf\u5316\u6210 int8\u3002\n    1. \u6839\u636e\u6bcf\u4e2a token \u7684 expert_id \u67e5\u8be2\u5bf9\u5e94\u7684\u91cf\u5316\u7cfb\u6570 max\u3002\n    2. \u4f7f\u7528\u6bcf\u884c\u7684 max \u503c\uff0c\u5c06 n \u4e2a\u6570\u4ece \u7c7b\u578bT \u5bf9\u79f0\u91cf\u5316\u6210 int8\u3002\n\nArgs:\n    x (Tensor, required): \u8f93\u5165\u5f20\u91cf\uff0c\u5f62\u72b6\u4e3a [m, n]\uff0c\u7c7b\u578b\u4e3a fp16/bfp16/fp32\u3002\n    ep_max (Tensor, required): \u8f93\u5165\u5f20\u91cf\uff0c\u91cf\u5316\u6700\u5927\u503c\uff0c\u5f62\u72b6\u4e3a [expert_num]\uff0c\u7c7b\u578b\u4e3a fp32\u3002\n    expert_num (int, r"
+        },
+        "quant2d_with_scale_transpose": {
+          "signature": "(x: torch.Tensor, y: torch.Tensor, max: torch.Tensor, force_sdnn: bool = False) -> int",
+          "doc": "\u5c06 token \u7684\u9690\u5c42\u4fe1\u606f\uff0cshape \u4e3a [m, group_num, ldn]\uff0c\u8fdb\u884c\u6309\u884c\u91cf\u5316\u6210 int8\u3002\n    1. \u5bf9\u4e8e\u6bcf\u884c\u7684 n \u4e2a\u6570\u627e\u5230 max \u503c\uff0c\u8be5 max \u503c\u4e3a\u7edd\u5bf9\u503c\u7684\u6700\u5927\u503c\uff0c\u5171\u8f93\u51fa m \u4e2a max \u503c\u3002\n    2. \u4f7f\u7528\u6bcf\u884c\u7684 max \u503c\uff0c\u5c06 n \u4e2a\u6570\u4ece \u7c7b\u578bT \u5bf9\u79f0\u91cf\u5316\u6210 int8\u3002\n\nArgs:\n    x (Tensor, required): \u8f93\u5165\u5f20\u91cf\uff0c\u5f62\u72b6\u4e3a [m, group_num, ldn]\uff0c\u7c7b\u578b\u4e3a fp16/bfp16/fp32\u3002\n    force_sdnn (bool, optional): \u662f\u5426\u5f3a\u5236\u4f7f\u7528 sdnn \u8ba1\u7b97\uff0c\u9ed8\u8ba4\u4e3a False\u3002\n\nR"
+        },
+        "quant_layernorm": {
+          "signature": "(x: torch.Tensor, weight: torch.Tensor, output: torch.Tensor, eps: float = 1e-05, interweaved: bool = False, bias: torch.Tensor | None = None, output_max: torch.Tensor | None = None) -> int",
+          "doc": "\u5b9e\u73b0 layernorm \u64cd\u4f5c\n\nArgs:\n    x (Tensor): shape \u4e3a [m, n], \u8f93\u5165\uff0c\u7c7b\u578b\u4e3abf16/fp16/fp32\u3002\n    weight (Tensor): shape \u4e3a [n], \u6743\u91cd, \u7c7b\u578b\uff1ax\u4e3abf16\u65f6\u652f\u6301bf16/fp32, x\u4e3afp16/fp32\u65f6\u4e0ex\u76f8\u540c\u3002\n    output (Tensor): \u8f93\u51fa\u6570\u636e, shape  [m, n]\uff0c\u7c7b\u578b\u4e3aint8\u3002\n    eps (float): \u907f\u514d\u96640\u7684\u9608\u503c, \u9ed8\u8ba4\u4e3a1e-5\n    interweaved (bool, optional): \u6743\u91cd\u662f\u5426\u4e3a\u4ea4\u7ec7\u6392\u5e03\uff0c\u4ec5\u5bf9\u6743\u91cd\u4e3afp32\u7684\u60c5\u5f62\u751f\u6548\uff0c\u9ed8"
+        },
+        "quantize_k_cache": {
+          "signature": "(k_nope: torch.Tensor, k_rope: torch.Tensor, k_out_nope: torch.Tensor, group_size: int = 128, scale: torch.Tensor | None = None, k_out_rope: torch.Tensor | None = None) -> int",
+          "doc": "\u91cf\u5316 k_nope, \u5c06\u6bcf\u4e2atoken\u7684 \u91cf\u5316\u7ed3\u679c\u3001scale\u3001rope \u90e8\u5206\u62fc\u63a5\u5230\u4e00\u8d77\n\nArgs:\n    k_nope(Tensor, required): \u8f93\u5165\u5f20\u91cf, \u9700\u8981\u88ab\u91cf\u5316\u7684\u90e8\u5206, shape\u4e3a [token_num, dim_nope], \u7c7b\u578b\u4e3a bfp16, dim_nope \u5fc5\u987b\u4e3a 512\u3002\n    k_rope(Tensor, required): \u8f93\u5165\u5f20\u91cf, \u65e0\u9700\u91cf\u5316\u76f4\u63a5\u62fc\u63a5\u7684\u90e8\u5206, shape\u4e3a [token_num, dim_rope], \u7c7b\u578b\u4e3a bfp16, dim_rope \u5fc5\u987b\u4e3a 64\u3002\n    group_size (int64, optional): \u5206\u7ec4"
+        },
+        "rms_norm_smooth_quant": {
+          "signature": "(x: torch.Tensor, weight: torch.Tensor, smooth: torch.Tensor, output: torch.Tensor, output_max: torch.Tensor, eps: float = 1e-05, bias: torch.Tensor | None = None, workspace: torch.Tensor | None = None, cal_type: int = 0) -> int",
+          "doc": "\u5b9e\u73b0 rmsnorm + smooth_quant\u64cd\u4f5c\u3002\n\u5148\u6309x[b*m,n]\u505armsnorm\uff0c\u5bf9\u7ed3\u679c\u518d\u6309[b,m*n]\u5f62\u72b6\u505aper_channal smooth quant\u3002\n\nArgs:\n    x (Tensor, required): \u8f93\u5165\u6570\u636e\uff0c\u5f62\u72b6\u4e3a [b, m, n]\uff0c\u7c7b\u578b\u4e3abf16/fp16\u3002\n    weight (Tensor, required): \u8f93\u5165\u6743\u91cd, \u5f62\u72b6\u4e3a[n]\uff0c \u7c7b\u578b\u540cx\u6216fp32\u3002\n    smooth (Tensor, required): \u8f93\u5165\u6743\u91cd, \u5f62\u72b6\u4e3a[m,n]\u6216[m*n]\uff0c \u7c7b\u578b\u540cx\u3002\n    eps (float, required): \u907f\u514d\u9664"
+        },
+        "silu_and_mul_quant_unt": {
+          "signature": "(x: torch.Tensor, y: torch.Tensor, y_scale: torch.Tensor, recv_count: torch.Tensor, turn: bool = True, force_sdnn: bool = False, limit: float = 0.0) -> int",
+          "doc": "\u6839\u636erecv_count, \u5bf9\u8f93\u5165\u6570\u636e\u505a silu_and_mul \u548c per_token_quant \u64cd\u4f5c\n\nArgs:\n    x (Tensor, required): \u8f93\u5165\u5f20\u91cf, \u5f62\u72b6\u4e3a(N, D * 2), \u7c7b\u578b\u4e3a fp16/bfp16/fp32\n    recv_count (Tensor, required): \u8f93\u5165\u5f20\u91cf, \u5f62\u72b6\u4e3a(num_groups), \u5143\u7d20\u8303\u56f4\u662f[0, max_m]\n                    \u7c7b\u578b\u4e3a int32\n    turn (bool, optional): \u662f\u5426\u8f6c\u6362x1, x2, \u9ed8\u8ba4\u4e3aTrue\n    force_sdnn(bool,"
+        },
+        "silu_and_per_token_group_quant_I8": {
+          "signature": "(x: torch.Tensor, y: torch.Tensor, y_scale: torch.Tensor, recv_count: torch.Tensor, force_sdnn: bool = False, limit: float = 0.0) -> int",
+          "doc": "\u6839\u636erecv_count, \u5bf9\u8f93\u5165\u6570\u636e\u505a silu_and_mul \u548c per_token_quant \u64cd\u4f5c\n\nArgs:\n    x (Tensor, required): \u8f93\u5165\u5f20\u91cf, \u5f62\u72b6\u4e3a(..., D * 2), prod(...) = M, \u7c7b\u578b\u4e3a fp16/bfp16/fp32\n    recv_count (Tensor, required): \u8f93\u5165\u5f20\u91cf, \u5f62\u72b6\u4e3a(num_groups), \u5143\u7d20\u8303\u56f4\u662f[0, max_m], max_m=div(M, num_groups), \u7c7b\u578b\u4e3a int32\n    force_sdnn(bool, optional): \u662f\u5426\u5f3a\u5236\u4f7f\u7528SDNN\n"
+        },
+        "smooth_quant": {
+          "signature": "(x: torch.Tensor, smooth: torch.Tensor, y: torch.Tensor, max: torch.Tensor, shift: torch.Tensor = None, force_sdnn: bool = False) -> int",
+          "doc": "\u5c06 token \u7684\u9690\u5c42\u4fe1\u606f\uff0c\u5f62\u72b6\u4e3a [m, n]\uff0c\u5148\u8fdb\u884csmooth\u64cd\u4f5c\uff0c\u7136\u540equant2d\u91cf\u5316\u6210 int8_t\u3002\n\nArgs:\n    x (Tensor): \u8f93\u5165\u5f20\u91cf\uff0c\u5f62\u72b6\u4e3a [m, n]\uff0c\u7c7b\u578b\u4e3a fp16/bfp16\u3002\n    smooth (Tensor): \u8f93\u5165\u5f20\u91cf\uff0c\u5f62\u72b6\u4e3a [n]\uff0c\u7c7b\u578b\u4e0ex\u76f8\u540c\u3002\n    shift (Tensor): \u53ef\u9009\u53c2\u6570\uff0c\u5e73\u79fb\u91cf\uff0c\u5f62\u72b6\u4e3a [n]\uff0c\u7c7b\u578b\u4e0ex\u76f8\u540c\u3002\n    force_sdnn (bool): \u662f\u5426\u5f3a\u5236\u4f7f\u7528 sdnn \u8ba1\u7b97\uff0c\u9ed8\u8ba4\u4e3a False \u3002\n\nReturns:\n    y (Tensor): \u8f93\u51fa\u5f20\u91cf\uff0c\u91cf\u5316\u7ed3\u679c\uff0c\u5f62\u72b6\u4e3a [m, n]\uff0c\u7c7b\u578b\u4e3a"
+        },
+        "smooth_quant_gemm": {
+          "signature": "(x: torch.Tensor, weight: torch.Tensor, smooth: torch.Tensor, input_scale: torch.Tensor, weight_scale: torch.Tensor, per_token_scaling: bool, per_channel_scaling: bool, out: torch.Tensor) -> int",
+          "doc": "\u82e5x\u7c7b\u578b\u4e0d\u4e3aint8, \u8fdb\u884c smooth_quant(x) matmul weight\n\u82e5x\u7c7b\u578b\u4e3aint8, \u8fdb\u884c x matmul weight\n\nArgs:\n    x (Tensor): \u8f93\u5165\u5f20\u91cf\uff0cshape\u4e3a[m, k],\u7c7b\u578b\u4e3a int8/fp16\n    weight (Tensor): matmul\u7684\u6743\u91cd\u77e9\u9635\uff0cshape\u4e3a[m, n] \u7c7b\u578b\u4e3a int8/fp32 \u6216\u4e0ex\u76f8\u540c\n    smooth (Tensor): smooth_quant\u7684smooth\u7cfb\u6570\uff0cshape\u4e3a[m, k]\uff0c\u7c7b\u578b\u4e3afp16\n    input_scale (Tensor): x\u4e3aint8\u65f6\u7684scale\u7cfb"
+        },
+        "static_quant2d_int4": {
+          "signature": "(x: torch.Tensor, y: torch.Tensor, scale: torch.Tensor, group_m: int, zero: torch.Tensor) -> int",
+          "doc": "\u9759\u6001\u91cf\u5316\u51fd\u6570\uff0c\u5c06\u6d6e\u70b9\u578b\u7684x\u8f6c\u6362\u6210int4\u7c7b\u578b\u7684y\u3002\n\u8ba1\u7b97\u516c\u5f0f\uff1ay = int4(x * (7.f / scale) + zero), y\u5143\u7d20\u53d6\u503c[-8, 7]\u3002\n\nArgs:\n    x (Tensor, required): \u8f93\u5165\u5f20\u91cf, \u5f62\u72b6\u4e3a[m, n], \u7c7b\u578b\u4e3afp32/fp16/bf16\u3002\n    scale (Tensor, required): \u8f93\u5165\u5f20\u91cf, \u7f29\u653e\u56e0\u5b50, \u5f62\u72b6\u4e3a[roundup_div(m, group_m)], \u7c7b\u578b\u4e3afp32\u6216\u4e0ex\u4e00\u81f4\u3002\n    group_m (int64, required): \u5206\u7ec4\u5927\u5c0f, \u6bcfgroup_m\u884c\u4e00\u7ec4\u8fdb\u884c\u91cf\u5316\u3002\n    zero ("
+        },
+        "static_quant2d_int8": {
+          "signature": "(x: torch.Tensor, y: torch.Tensor, scale: torch.Tensor, group_m: int, zero: torch.Tensor) -> int",
+          "doc": "\u9759\u6001\u91cf\u5316\u51fd\u6570\uff0c\u5c06\u6d6e\u70b9\u578b\u7684x\u8f6c\u6362\u6210int8\u7c7b\u578b\u7684y\u3002\n\u8ba1\u7b97\u516c\u5f0f: y = int8(x * (127.f / scale) + zero), y\u5143\u7d20\u53d6\u503c[-127, 127]\u3002\n\nArgs:\n    x (Tensor, required): \u8f93\u5165\u5f20\u91cf, \u5f62\u72b6\u4e3a[m, n], \u7c7b\u578b\u4e3afp32/fp16/bf16\u3002\n    scale (Tensor, required): \u8f93\u5165\u5f20\u91cf, \u7f29\u653e\u56e0\u5b50, \u5f62\u72b6\u4e3a[roundup_div(m, group_m)], \u7c7b\u578b\u4e3afp32\u6216\u4e0ex\u4e00\u81f4\u3002\n    group_m (int64, required): \u5206\u7ec4\u5927\u5c0f, \u6bcfgroup_m\u884c\u4e00\u7ec4\u8fdb\u884c\u91cf\u5316\u3002\n   "
+        },
+        "store_cache_quant": {
+          "signature": "(key: torch.Tensor, value: torch.Tensor, k_scale: torch.Tensor, v_scale: torch.Tensor, x_lod: torch.Tensor, offset: torch.Tensor, batch_size: int, max_seq_len: int, head_num: int, head_dim: int, key_cache: torch.Tensor, value_cache: torch.Tensor) -> int",
+          "doc": "\u5c06\u8f93\u5165 key \u548c value \u8fdb\u884c\u91cf\u5316\u5e76\u6309\u7167 x_lod \u548c offset \u4fe1\u606f\u5b58\u5165\u5230\u8f93\u51fa key_cache \u548c value_cache \u4e2d\u3002\n\nArgs:\n    key (torch.Tensor): \u8f93\u5165\u5f20\u91cfkey, lod\u6a21\u5f0f, \u652f\u6301BLHD\u683c\u5f0f\u3002\u7c7b\u578b\u4e3afp16/bfp16\n    value (torch.Tensor): \u8f93\u5165\u5f20\u91cfvalue, lod\u6a21\u5f0f, \u652f\u6301BLHD\u683c\u5f0f\u3002\u7c7b\u578b\u4e0ekey\u76f8\u540c\n    k_scale (torch.Tensor): \u91cf\u5316k\u6240\u9700\u7684scale\u503c, shape = {head_num * head_dim}\u3002\u7c7b\u578b\u4e3afp32\n    v_scale (t"
+        }
+      }
+    },
+    {
+      "name": "call_gemm_I8_I8_bf16_nt_two_args",
+      "status": "raised",
+      "error_type": "TypeError",
+      "error": "gemm_I8_I8_bf16_nt() missing 1 required positional argument: 'out'"
+    },
+    {
+      "name": "call_gemm_I8_I8_bf16_nt_four_args",
+      "status": "raised",
+      "error_type": "TypeError",
+      "error": "gemm_I8_I8_bf16_nt() takes 3 positional arguments but 4 were given"
+    },
+    {
+      "name": "call_gemm_I8_I8_bf16_nt_four_args_scalar",
+      "status": "raised",
+      "error_type": "TypeError",
+      "error": "gemm_I8_I8_bf16_nt() takes 3 positional arguments but 4 were given"
+    },
+    {
+      "name": "call_gemm_I8_I8_bf16_nt_three_args",
+      "status": "raised",
+      "error_type": "ValueError",
+      "error": "Check failed, matmul unimplemented"
+    },
+    {
+      "name": "call_gemm_I8_I8_bf16_nt_five_args_out",
+      "status": "raised",
+      "error_type": "TypeError",
+      "error": "gemm_I8_I8_bf16_nt() takes 3 positional arguments but 5 were given"
+    },
+    {
+      "name": "call_gemm_I8_I8_bf16_nt_v2_two_args",
+      "status": "raised",
+      "error_type": "TypeError",
+      "error": "gemm_I8_I8_bf16_nt_v2() missing 1 required positional argument: 'out'"
+    },
+    {
+      "name": "call_gemm_I8_I8_bf16_nt_v2_four_args",
+      "status": "raised",
+      "error_type": "TypeError",
+      "error": "gemm_I8_I8_bf16_nt_v2() takes 3 positional arguments but 4 were given"
+    },
+    {
+      "name": "call_gemm_I8_I8_bf16_nt_v2_four_args_scalar",
+      "status": "raised",
+      "error_type": "TypeError",
+      "error": "gemm_I8_I8_bf16_nt_v2() takes 3 positional arguments but 4 were given"
+    },
+    {
+      "name": "call_gemm_I8_I8_bf16_nt_v2_three_args",
+      "status": "raised",
+      "error_type": "TypeError",
+      "error": "matmul_v2(): incompatible function arguments. The following argument types are supported:\n    1. (arg0: torch.Tensor, arg1: torch.Tensor, arg2: torch.Tensor, arg3: bool, arg4: bool, arg5: typing.Suppo"
+    },
+    {
+      "name": "call_gemm_I8_I8_bf16_nt_v2_five_args_out",
+      "status": "raised",
+      "error_type": "TypeError",
+      "error": "gemm_I8_I8_bf16_nt_v2() takes 3 positional arguments but 5 were given"
+    },
+    {
+      "name": "xtorch_working",
+      "status": "observed",
+      "working": []
+    }
+  ],
+  "scope": "bounded API and numerical observations, not performance or universal fallback exclusion",
+  "route_scope": "int8 device-kernel signature discovery and bounded timing; not a qualification",
+  "torch_threads": 192,
+  "extension_path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir",
+  "api_schemas": {
+    "mm": "{'': aten::mm(Tensor self, Tensor mat2) -> Tensor, 'out': aten::mm.out(Tensor self, Tensor mat2, *, Tensor(a!) out) -> Tensor(a!), 'dtype_out': aten::mm.dtype_out(Tensor self, Tensor mat2, ScalarType out_dtype, *, Tensor(a!) out) -> Tensor(a!), 'dtype': aten::mm.dtype(Tensor self, Tensor mat2, ScalarType out_dtype) -> Tensor}",
+    "_int_mm": "{'': aten::_int_mm(Tensor self, Tensor mat2) -> Tensor, 'out': aten::_int_mm.out(Tensor self, Tensor mat2, *, Tensor(a!) out) -> Tensor(a!)}",
+    "_scaled_mm": "{'': aten::_scaled_mm(Tensor self, Tensor mat2, Tensor scale_a, Tensor scale_b, Tensor? bias=None, Tensor? scale_result=None, ScalarType? out_dtype=None, bool use_fast_accum=False) -> Tensor, 'out': aten::_scaled_mm.out(Tensor self, Tensor mat2, Tensor scale_a, Tensor scale_b, Tensor? bias=None, Tensor? scale_result=None, ScalarType? out_dtype=None, bool use_fast_accum=False, *, Tensor(a!) out) -> Tensor(a!)}"
+  },
+  "extension_symbols": [],
+  "source_precision_mentions": [
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/core/xpu_builder.py",
+      "sha256": "9d88fa9ad0f127bcdb9b40aedba6210524790ad6b9b63e2942cde85dcd0899e0",
+      "matches": [
+        {
+          "line": 38,
+          "text": "    Type.F64: torch.float64,"
+        }
+      ]
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/debug/validate_aten/validate/comparer.py",
+      "sha256": "3fc0bed114852057159c55b6a86c5440427330c865a27340d2e8df6ca98446b6",
+      "matches": [
+        {
+          "line": 129,
+          "text": "        # TODO\uff1adtype\u4e0d\u76f8\u7b49\u4e0d\u4e00\u5b9a\u662f\u9519\u8bef\uff0c\u6bd4\u5982 float32/float64\uff0c\u5982\u679c\u786e\u5b9e\u4e0d\u91cd\u8981\uff0c\u53ef\u4ee5\u8003\u8651\u5ffd\u7565"
+        }
+      ]
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/dynamo/ir.py",
+      "sha256": "85bdf7ceec44ebe257fa7cd09da9123ad87bc06ad267ad1344b65800baeb4a64",
+      "matches": [
+        {
+          "line": 21,
+          "text": "    torch.float64: 7,"
+        },
+        {
+          "line": 163,
+          "text": "    if dtype == torch.float64:"
+        }
+      ]
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/dynamo/xmlir_builder.py",
+      "sha256": "1007f84748fb957cbb435b9b11fd519c3a86a34711b3f4150ce6afd148effb79",
+      "matches": [
+        {
+          "line": 44,
+          "text": "    torch.float64: np.float64,"
+        }
+      ]
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/nn/linear.py",
+      "sha256": "8e389f014b5f63916cc8b7eb37de065c65be024ac0bd8f4b52a314df3f3cf548",
+      "matches": [
+        {
+          "line": 173,
+          "text": "    This module supports :ref:`TensorFloat32<tf32_on_ampere>`."
+        }
+      ]
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/test_utils/automated_test/comparer.py",
+      "sha256": "21e607fbfc41d02ae53ff29f4b35f1cb237f6f755a125261270afc319e333219",
+      "matches": [
+        {
+          "line": 811,
+          "text": "            # \u8f6c\u6362\u5230float64\u8ba1\u7b97, \u9632\u6b62\u6570\u503c\u8fc7\u5927\u53d8\u6210inf"
+        },
+        {
+          "line": 812,
+          "text": "            baseline_data = baseline_data.to(torch.float64)"
+        },
+        {
+          "line": 813,
+          "text": "            evaluated_data = evaluated_data.to(torch.float64)"
+        }
+      ]
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/test_utils/automated_test/generators.py",
+      "sha256": "da0af6dcc53c77413638e33bffd5c09d67e0be12a67156889b59ad3b8f92ee2c",
+      "matches": [
+        {
+          "line": 184,
+          "text": "    elif dtype in (torch.bfloat16, torch.float32, torch.float64):"
+        },
+        {
+          "line": 220,
+          "text": "        if dtype in (torch.float16, torch.bfloat16, torch.float32, torch.float64)"
+        }
+      ]
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xhpc/xblas/script/matrix_quantization_precision.py",
+      "sha256": "4f631fa91253c56763c45f7a9f2a30ba9c770accaa949c1f4ec6a0b71f9db005",
+      "matches": [
+        {
+          "line": 22,
+          "text": "\u652f\u6301\u591a\u79cd\u6570\u636e\u7c7b\u578b\uff1afloat32\u3001float16\u3001bfloat16\u3001int8\u3001int16\u3001float8_e4m3fn"
+        },
+        {
+          "line": 46,
+          "text": "--dtypes \u7c7b\u578b [\u7c7b\u578b ...]      \u8981\u6d4b\u8bd5\u7684\u6570\u636e\u7c7b\u578b\uff08\u9ed8\u8ba4\uff1afloat32 float16 bfloat16 int16 int8 float8_e4m3fn\uff09"
+        },
+        {
+          "line": 105,
+          "text": "        if dtype == torch.float8_e4m3fn:"
+        },
+        {
+          "line": 121,
+          "text": "            q_tensor = scaled_tensor.to(torch.float8_e4m3fn)"
+        },
+        {
+          "line": 125,
+          "text": "            return self._quantize_per_token(tensor, fp8_max, torch.float8_e4m3fn, return_scale)"
+        },
+        {
+          "line": 128,
+          "text": "            return self._quantize_group(tensor, fp8_max, torch.float8_e4m3fn, group_size, return_scale)"
+        },
+        {
+          "line": 302,
+          "text": "            'float8_e4m3fn': torch.float8_e4m3fn,"
+        },
+        {
+          "line": 743,
+          "text": "            'dtypes': [\"float32\", \"float16\", \"bfloat16\", \"int16\", \"int8\", \"float8_e4m3fn\"]"
+        },
+        {
+          "line": 1014,
+          "text": "            \"float8_e4m3fn\": torch.float8_e4m3fn,"
+        },
+        {
+          "line": 1155,
+          "text": "                                                        \"int16\", \"int8\", \"float8_e4m3fn\"],"
+        },
+        {
+          "line": 1158,
+          "text": "                                                        \"int16\", \"int8\", \"float8_e4m3fn\"],"
+        },
+        {
+          "line": 1180,
+          "text": "                      default=[\"float32\", \"float16\", \"bfloat16\", \"int16\", \"int8\", \"float8_e4m3fn\"],"
+        },
+        {
+          "line": 1181,
+          "text": "                      choices=[\"float32\", \"float16\", \"bfloat16\", \"int16\", \"int8\", \"float8_e4m3fn\"],"
+        }
+      ]
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xhpc/xblas/script/perf_regression/script/evaluate_fc_kl3.py",
+      "sha256": "ace990b2c29829104e2d6719574178a7eb92e486f08862ba4f1b682a132686e0",
+      "matches": [
+        {
+          "line": 55,
+          "text": "    if compute_type == \"CUBLAS_COMPUTE_32F_FAST_TF32\":"
+        }
+      ]
+    }
+  ]
+}

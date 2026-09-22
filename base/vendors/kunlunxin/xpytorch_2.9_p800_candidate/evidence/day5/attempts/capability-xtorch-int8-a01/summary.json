@@ -1,0 +1,32 @@
+{
+  "cleanup_status": "passed",
+  "container_exit_code": 0,
+  "device_bindings": [
+    {
+      "container_device_node": "/dev/xpu7",
+      "framework_device_name": "cuda:0",
+      "framework_local_rank": 0,
+      "framework_logical_id": 0,
+      "host_device_node": "/dev/xpu7",
+      "host_physical_id": 5,
+      "legacy_logical_id": null,
+      "pci_bdf": "0000:9c:00.0",
+      "request_index": 0,
+      "resource_key": "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87",
+      "serial_or_uuid": "f396486d-9850-50e4-81c4-50f2e9f6ca87",
+      "vendor": "kunlunxin"
+    }
+  ],
+  "finished_at": "2026-09-22T09:05:20.335604Z",
+  "kind": "benchmark-preflight",
+  "lease_released": true,
+  "measurement_status": "not-run",
+  "monitoring_status": "passed",
+  "postflight_status": "passed",
+  "probe_mode": "capability-XTORCH-INT8",
+  "run_id": "preflight-65e0d6a88ad241feb189c2d696416417",
+  "schema_version": 1,
+  "started_at": "2026-09-22T09:04:45.456909Z",
+  "status": "passed",
+  "vendor": "kunlunxin"
+}

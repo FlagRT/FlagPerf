@@ -30,7 +30,7 @@ Benchmark 控制面通过静态 Vendor Provider 接入厂商策略；生产 regi
 Ascend 性能执行与 Kunlunxin 单卡预检查/受控 FP32 性能执行。
 P800 的启动命令、正确性和计时合同见 [P800 FP32](benchmarks/computation-FP32/kunlunxin/P800/README.md)，
 实际资格结果见 [Day 4 审查](vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day4/review.md)；
-FP16/BF16/INT8 与传输合同的资格范围、能力矩阵和已知限制见
+FP16/BF16/INT8（8192³ 设备内核）与传输合同的资格范围、能力矩阵和已知限制见
 [Day 5 审查](vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day5/review.md)。
 预检查与性能验收分别记录；FP64/FP8/TF32 已有锁定栈能力结论，FlagGems、容量和通信仍待独立验收。
 接口、配置兼容变化与后续接入步骤见 [控制面迁移说明](docs/vendor-control-plane.md)。

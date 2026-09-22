@@ -1,0 +1,73 @@
+{
+  "case": "computation-INT8:P800",
+  "case_name": "computation-INT8",
+  "chip": "P800",
+  "configurations": {
+    "chip": {
+      "bytes": 269,
+      "relative_path": "benchmarks/computation-INT8/kunlunxin/P800/case_config.yaml",
+      "sha256": "41044be2be54c08651c162a014e81468211632efc8b8ebc3138a6862ae91d266"
+    },
+    "generic": {
+      "bytes": 653,
+      "relative_path": "benchmarks/computation-INT8/case_config.yaml",
+      "sha256": "3c5e8d18fbe971688ba7c1f8043769d8c30b83dc5b838ab4a8ecccd8b8a19be0"
+    },
+    "override": {
+      "bytes": 258,
+      "relative_path": "@override",
+      "sha256": "17a0fe63c3aa61684cd120bcc45201765f64decb05597f0e201e74f26044781e"
+    }
+  },
+  "entrypoint": {
+    "bytes": 732,
+    "relative_path": "benchmarks/computation-INT8/kunlunxin/P800/main.py",
+    "sha256": "6c634879ad45dd14060dd267a8787ba8a6516bade8acd7343c1000eeba3d2790"
+  },
+  "environments": [],
+  "merged_config": {
+    "ATOL": 0.02,
+    "DIST_BACKEND": "gloo",
+    "DTYPE": "int8",
+    "FAULT_MODE": "none",
+    "IMPLEMENTATION": "native-xpytorch",
+    "ITERS": 20,
+    "K": 8192,
+    "M": 8192,
+    "MODE": "smoke",
+    "N": 8192,
+    "OPERATOR": "xtorch_ops.gemm_I8_I8_bf16_nt",
+    "OUTPUT_DTYPE": "bfloat16",
+    "RTOL": 0.008,
+    "SCALE_A": 1.0,
+    "SCALE_B": 1.0,
+    "SEED": 519,
+    "WARMUP": 2
+  },
+  "requirement_files": [
+    {
+      "bytes": 538,
+      "relative_path": "benchmarks/computation-INT8/kunlunxin/P800/runtime_requirements.json",
+      "sha256": "94991951dbb1397ff50e7e8635bc9f7e840808d0ff6594baeac0886919801d6e"
+    }
+  ],
+  "requirements": {
+    "compatibility_note": "Signed INT8 torch._int_mm to INT32, scale 1, zero point 0; CPU INT64 reference; no output narrowing/saturation or peak claim.",
+    "correctness_required": true,
+    "implementation": "native-xpytorch",
+    "process_scope": {
+      "nnodes": 1,
+      "nproc_per_node": 1
+    },
+    "qualification_max_cv_percent": 5,
+    "qualification_min_measurement_seconds": 15,
+    "qualification_repetitions": 5,
+    "runtime_profile": "xpytorch_2.9_p800_candidate",
+    "runtime_role": "operator",
+    "schema_version": 1,
+    "supported": true
+  },
+  "schema_version": 1,
+  "selector": "kunlunxin/P800",
+  "vendor": "kunlunxin"
+}

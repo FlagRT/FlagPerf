@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "run_id": "preflight-d3f6674b99084699bbf778272f8e03c6",
+  "context_sha256": "f5fc22bb7f48863caaee0043944b661bacfe642b7ce1887f34a19e51fe8ac5fe",
+  "binding": {
+    "vendor": "kunlunxin",
+    "host_physical_id": 5,
+    "pci_bdf": "0000:9c:00.0",
+    "serial_or_uuid": "f396486d-9850-50e4-81c4-50f2e9f6ca87",
+    "host_device_node": "/dev/xpu7",
+    "container_device_node": "/dev/xpu7",
+    "framework_local_rank": 0,
+    "framework_logical_id": 0,
+    "framework_device_name": "cuda:0",
+    "request_index": 0,
+    "resource_key": "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87",
+    "legacy_logical_id": null
+  },
+  "precision": "MATMUL-ROUTES",
+  "tests": [
+    {
+      "name": "device_mm_fp16_4096",
+      "status": "observed",
+      "shape": [
+        4096,
+        4096,
+        4096
+      ],
+      "iterations": 3,
+      "dtype": "torch.float16",
+      "wall_seconds": 0.0017668930813670158,
+      "process_cpu_seconds": 0.001743175000001429,
+      "tops": 233.35699526142085,
+      "ms_per_iteration": 0.5889643604556719,
+      "process_cpu_over_wall": 0.9865763912849573,
+      "result_dtype": "torch.float16",
+      "result_device": "cuda:0"
+    },
+    {
+      "name": "device_mm_bf16_4096",
+      "status": "observed",
+      "shape": [
+        4096,
+        4096,
+        4096
+      ],
+      "iterations": 3,
+      "dtype": "torch.bfloat16",
+      "wall_seconds": 0.003713871818035841,
+      "process_cpu_seconds": 0.003712868999997454,
+      "tops": 111.02075693987264,
+      "ms_per_iteration": 1.2379572726786137,
+      "process_cpu_over_wall": 0.9997299804388733,
+      "result_dtype": "torch.bfloat16",
+      "result_device": "cuda:0"
+    },
+    {
+      "name": "device_mm_fp32_4096",
+      "status": "observed",
+      "shape": [
+        4096,
+        4096,
+        4096
+      ],
+      "iterations": 3,
+      "dtype": "torch.float32",
+      "wall_seconds": 0.0037746806629002094,
+      "process_cpu_seconds": 0.003773298000005809,
+      "tops": 109.23224962272799,
+      "ms_per_iteration": 1.258226887633403,
+      "process_cpu_over_wall": 0.9996337006973888,
+      "result_dtype": "torch.float32",
+      "result_device": "cuda:0"
+    }
+  ],
+  "scope": "bounded API and numerical observations, not performance or universal fallback exclusion",
+  "route_scope": "device-execution evidence via process CPU time; timing only, not a qualification",
+  "torch_threads": 192
+}

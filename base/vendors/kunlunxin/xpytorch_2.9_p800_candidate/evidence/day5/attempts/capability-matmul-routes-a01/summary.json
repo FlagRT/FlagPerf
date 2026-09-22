@@ -1,0 +1,18 @@
+{
+  "cleanup_status": "passed",
+  "error": "bounded container execution timed out",
+  "error_type": "TimeoutError",
+  "failure_stage": "container-probe",
+  "finished_at": "2026-09-22T09:04:19.334162Z",
+  "kind": "benchmark-preflight",
+  "lease_released": true,
+  "measurement_status": "not-run",
+  "monitoring_status": "partial",
+  "postflight_status": "passed",
+  "probe_mode": "capability-MATMUL-ROUTES",
+  "run_id": "preflight-d3f6674b99084699bbf778272f8e03c6",
+  "schema_version": 1,
+  "started_at": "2026-09-22T09:02:03.484968Z",
+  "status": "failed",
+  "vendor": "kunlunxin"
+}

@@ -1,0 +1,18 @@
+{
+  "Id": "62605339b8d5af6f2cd8f9e02fc7c803cf90fb5337d76a4c167359eb2f6f2e51",
+  "Image": "sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975",
+  "State": {
+    "Dead": false,
+    "Error": "",
+    "ExitCode": 0,
+    "FinishedAt": "0001-01-01T00:00:00Z",
+    "OOMKilled": false,
+    "Paused": false,
+    "Pid": 1829462,
+    "Restarting": false,
+    "Running": true,
+    "StartedAt": "2026-09-22T09:13:09.528454357Z",
+    "Status": "running"
+  },
+  "run_id": "benchmark-6816350b28514ed3b9e5ee5daafc6432"
+}

@@ -1,0 +1,77 @@
+{
+  "accumulation_scope": "int32 accumulation inside the device kernel; scales applied by the kernel",
+  "binding": {
+    "container_device_node": "/dev/xpu7",
+    "framework_device_name": "cuda:0",
+    "framework_local_rank": 0,
+    "framework_logical_id": 0,
+    "host_device_node": "/dev/xpu7",
+    "host_physical_id": 5,
+    "legacy_logical_id": null,
+    "pci_bdf": "0000:9c:00.0",
+    "request_index": 0,
+    "resource_key": "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87",
+    "serial_or_uuid": "f396486d-9850-50e4-81c4-50f2e9f6ca87",
+    "vendor": "kunlunxin"
+  },
+  "context_sha256": "9abb483a638bca8baad341a9b8298041f0ef7ab470c206658ed61fc2da15ad07",
+  "cuda_matmul_allow_tf32": false,
+  "dtype": "int8",
+  "error": "small computation CPU reference failed",
+  "error_type": "RuntimeError",
+  "fallback_scope": "UUID, tensor placement and locked native route; no universal fallback exclusion",
+  "operator": "xtorch_ops.gemm_I8_I8_bf16_nt",
+  "output_dtype": "torch.bfloat16",
+  "pid_namespace": "pid:[4026547995]",
+  "precision_scope": "native inputs/outputs as recorded by the case; compatibility controls do not certify internal arithmetic",
+  "rank": 0,
+  "reference_dtype": "float64",
+  "reference_inputs": "signed int8 inputs; CPU float64 accumulation of the quantized operands times SCALE_A*SCALE_B; int32 accumulation and bf16 output inside the device kernel",
+  "run_id": "benchmark-97944551564b4dcb8c76ed021f4a5271",
+  "scale_a": 1.0,
+  "scale_b": 1.0,
+  "schema_version": 1,
+  "seed": 519,
+  "small_cases": [
+    {
+      "atol": 0.02,
+      "failed_elements": 0,
+      "finite": true,
+      "first_failure": null,
+      "max_abs_error": 1.0,
+      "max_relative_error": 0.0038910505836575876,
+      "passed": true,
+      "relative_denominator": "max(abs(reference), atol)",
+      "rtol": 0.008,
+      "scope": "full output",
+      "shape": [
+        32,
+        32,
+        32
+      ]
+    },
+    {
+      "atol": 0.02,
+      "failed_elements": 255,
+      "finite": true,
+      "first_failure": [
+        0,
+        32
+      ],
+      "max_abs_error": 3.3230699894622897e+37,
+      "max_relative_error": 8.286957579706458e+34,
+      "passed": false,
+      "relative_denominator": "max(abs(reference), atol)",
+      "rtol": 0.008,
+      "scope": "full output",
+      "shape": [
+        16,
+        32,
+        48
+      ]
+    }
+  ],
+  "status": "failed",
+  "worker_parent_pid": 1,
+  "worker_pid": 102
+}

@@ -164,7 +164,10 @@ requested mode, not overlap evidence.
 See the [Day 5 review](../vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day5/review.md).
 Four pageable transfer groups qualified; the four pinned-mode groups stayed
 unstable on the current shared host and remain scheduled for a quiet window.
-The 4096-cubed INT8 configs were bimodal across two independent groups and are
-retained as failure evidence; the qualified INT8 scope is 2048-cubed. FP32
+The first INT8 round measured a host-CPU fallback (`torch._int_mm`) and is
+retracted; the case now runs the vendor device kernel `xtorch_ops.gemm_I8_I8_bf16_nt` at
+the Ascend 8192-cubed scale, qualifying at 504.591 TOPS with CV 0.3315%. FP16, BF16 and
+FP32 still run at 4096-cubed and the transfer payloads are still 64 MiB; an Ascend-scale
+comparability re-run is outstanding. FP32
 monitored regression on this host reproduced the day-4 value (113.1 TFLOPS, not
 merged into day-4 statistics). The manifest remains candidate, `validated: false`.

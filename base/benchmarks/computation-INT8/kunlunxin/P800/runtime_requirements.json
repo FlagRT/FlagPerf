@@ -12,5 +12,5 @@
   "qualification_repetitions": 5,
   "qualification_min_measurement_seconds": 15,
   "qualification_max_cv_percent": 5,
-  "compatibility_note": "Signed INT8 torch._int_mm to INT32, scale 1, zero point 0; CPU INT64 reference; no output narrowing/saturation or peak claim."
+  "compatibility_note": "Vendor device kernel xtorch_ops.gemm_I8_I8_bf16_nt: block-quantized signed INT8 GEMM, INT32 accumulation, bfloat16 output, SCALE_A/SCALE_B in the max/127 dequantization convention. torch.mm rejects int8 and torch._int_mm executes on the host CPU, so neither is used. No saturation, output-narrowing or peak claim."
 }

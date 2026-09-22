@@ -124,3 +124,71 @@ runtime manifest, certify pinned-mode bandwidth stability, resolve the
 4096-cubed INT8 bimodality, qualify TF32 or FP64/FP8, or cover device memory,
 capacity and multi-card communication. The runtime manifest remains `candidate`
 / `validated: false`.
+
+## Correction: the first INT8 round measured the host CPU (2026-09-22)
+
+The first INT8 qualification used `torch._int_mm`, which the locked stack executes on the
+host CPU even though it accepts device tensors and returns int32 device tensors. Two
+independent observations establish this:
+
+- Measured process CPU time inside the "device" loop equalled 192 times the wall time,
+  exactly the container thread count, while the same measurement for FP16, BF16 and FP32
+  was 1.0. CPU-only `torch._int_mm` at 2048-cubed was faster than the "device" call, and
+  the "device" per-iteration cost matched a PCIe round trip of the operands (3.77 ms)
+  plus the CPU product (1.07 ms).
+- Device telemetry during those runs stayed at idle: 0% utilization, 39 C, 92 W. Runs of
+  the same period for FP16, BF16 and FP32 show 100% utilization, 61-63 C and 296-400 W.
+
+The 4096-cubed bimodality was the same fallback alternating between CPU-bound and
+copy-bound regimes. The earlier INT8 numbers (4.1639 TOPS median at 2048-cubed, and the
+two 4096-cubed groups at 4.44 and 4.41 TOPS) are therefore **retracted**: they are host
+measurements and are not device results. `torch.mm` rejects int8 outright and
+`torch._scaled_mm` accepts only Float8, so this stack has no ATen int8 path.
+
+The case now uses the vendor device kernel `xtorch_ops.gemm_I8_I8_bf16_nt`, sharing the
+Ascend contract semantics (`SCALE_A`, `SCALE_B`, bfloat16 output) and now the Ascend
+scale of 8192-cubed. The kernel takes int8 quantization maxima and divides by 127
+internally, so passing `127 * SCALE` reproduces `(A @ B) * SCALE_A * SCALE_B` in bf16.
+
+| Run | TOPS | Window | Utilization | Temperature | Power |
+|---|---:|---:|---:|---:|---:|
+| device q31 | 506.36 | 17.37 s | 100% | 61 C | 400 W |
+| device q32 | 504.59 | 17.43 s | | | |
+| device q33 | 505.58 | 17.40 s | | | |
+| device q34 | 501.95 | 17.52 s | | | |
+| device q35 | 504.30 | 17.44 s | | | |
+
+Median **504.591 TOPS**, CV **0.3315%** (ddof=1), five identical runs at 8192-cubed with
+8000 iterations, warmup 10 and seed 519. This is 121 times the retracted figure and is
+consistent with the FP16 result at the same scale (253 TFLOPS device-measured, int8
+typically twice fp16 on this class of hardware).
+
+The retracted directories (`qualification-INT8-q01..q05`, `q11..q15`, `q21..q25`) and the
+probe directories that established the fallback (`capability-INT8-routes-a01`,
+`capability-matmul-routes-a01`, `capability-xtorch-int8-a01..a05`) remain in the raw
+result directory unchanged.
+
+## Scale alignment with the Ascend cases
+
+The Ascend computation cases run 8192-cubed with warmup 100; the transfer cases use
+`Melements: 1024` (a 4 GiB payload) with pinned memory and 100 iterations. The first P800
+round used 4096-cubed computation and a 64 MiB transfer payload, which is not comparable.
+
+Completed in this window: INT8 was re-specified and re-qualified at 8192-cubed (above).
+Still outstanding, to be run in the next window:
+
+- FP16 and BF16 at 8192-cubed. Their 4096-cubed results are valid device measurements
+  (100% utilization, 61-63 C, 296-400 W) but the shape differs from Ascend.
+- FP32 at 8192-cubed for a comparability round alongside the day-4 4096-cubed qualification.
+- Transfer payloads at the Ascend scale (4 GiB, `Melements: 1024`). The host budget check
+  allows this on this machine (12x payload against 10% of 1144 GiB available).
+  Iteration counts will be chosen per mode to hold the window at or above 15 s.
+- The four pinned-mode transfer groups stay unstable until a quiet window; the pageable
+  groups are expected to remain the qualified ones.
+
+## Monitoring note
+
+`xpu-smi` telemetry does record device activity for these workloads: 100% utilization,
+61-63 C and 296-400 W during compute runs, with memory in the 200-500 MiB range. The
+transfer runs show 0% utilization and idle temperature and power, which is expected for
+DMA-only traffic that does not engage the compute engine.
