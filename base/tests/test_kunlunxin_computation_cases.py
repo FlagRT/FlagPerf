@@ -40,7 +40,7 @@ class ComputationContractTests(unittest.TestCase):
             case = 'computation-' + precision + ':P800'
             validate_config(config, case)
             for change in ({'DTYPE': 'float32'}, {'OPERATOR': 'cast-mm'}, {'ATOL': 1.0},
-                           {'RTOL': float('nan')}, {'ITERS': 200001}, {'M': 8192},
+                           {'RTOL': float('nan')}, {'ITERS': 200001}, {'M': 8193},
                            {'FAULT_MODE': 'cpu-wait'}, {'DIST_BACKEND': 'nccl'}):
                 with self.subTest(precision=precision, change=change), self.assertRaises(ConfigurationError):
                     validate_config({**config, **change}, case)
@@ -144,20 +144,52 @@ class ComputationNumericalTests(unittest.TestCase):
         actual[0, 0] += 1
         self.assertFalse(correctness.compare(actual, reference, atol=0, rtol=0)['passed'])
 
-    def test_int8_full_case_outputs_tops_and_int32(self):
+    def test_int8_full_case_outputs_tops_and_device_bf16(self):
+        """The device int8 kernel path: TOPS metric, bf16 output, quantized reference."""
+        import types
+        from drivers import int8 as int8_driver
+
+        def fake_kernel(lhs, rhs, out):
+            a, a_scale = lhs
+            b, b_scale = rhs
+            factor = (a_scale.flatten()[0].item() / 127.0) * (b_scale.flatten()[0].item() / 127.0)
+            product = (a.double() @ b.double().t()) * factor
+            out.copy_(product.to(out.dtype))
+
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
             (root / 'context.json').write_text(json.dumps({'case_assets_sha256': 'case-hash'}))
+            config = {'M': 64, 'N': 64, 'K': 128, 'WARMUP': 1, 'ITERS': 4, 'SEED': 519,
+                      'SCALE_A': 1.0, 'SCALE_B': 1.0, 'OUTPUT_DTYPE': 'bfloat16', 'ATOL': 0.02, 'RTOL': 0.008,
+                      'DTYPE': 'int8', 'OPERATOR': 'xtorch_ops.gemm_I8_I8_bf16_nt', 'DIST_BACKEND': 'gloo',
+                      'IMPLEMENTATION': 'native-xpytorch', 'MODE': 'smoke', 'FAULT_MODE': 'none'}
             driver = Mock()
             driver.device.return_value = torch.device('cpu')
             driver.evidence.return_value = {'run_id': 'fixture', 'context_sha256': 'context'}
             env = {'FLAGPERF_BENCHMARK_OUTPUT': str(root), 'FLAGPERF_HOST_CONTEXT': str(root / 'context.json')}
-            with patch.dict(os.environ, env), patch.object(fp32, 'benchmark_measurement_start'), \
-                 patch.object(fp32, 'benchmark_measurement_finish'):
-                fp32.run_verified_computation(driver, config_for('INT8'), 0, 1, 0, 'INT8')
+            with patch.dict(os.environ, env), \
+                 patch.object(int8_driver, 'xtorch_ops', types.SimpleNamespace(gemm_I8_I8_bf16_nt=fake_kernel)), \
+                 patch.object(int8_driver, 'benchmark_measurement_start'), \
+                 patch.object(int8_driver, 'benchmark_measurement_finish'):
+                int8_driver.run_verified_int8(driver, config, 0, 1, 0)
             metric = json.loads((root / 'metric-rank-0.json').read_text())
-            self.assertEqual((metric['unit'], metric['dtype'], metric['output_dtype']), ('TOPS', 'int8', 'int32'))
-            self.assertEqual(json.loads((root / 'correctness-rank-0.json').read_text())['reference_dtype'], 'int64')
+            self.assertEqual((metric['unit'], metric['dtype'], metric['output_dtype']),
+                             ('TOPS', 'int8', 'bfloat16'))
+            self.assertEqual(metric['operator'], 'xtorch_ops.gemm_I8_I8_bf16_nt')
+            self.assertEqual(metric['shape'], [64, 64, 128])
+            self.assertEqual(metric['scale_a'], 1.0)
+            correctness = json.loads((root / 'correctness-rank-0.json').read_text())
+            self.assertEqual(correctness['reference_dtype'], 'float64')
+            self.assertEqual(correctness['status'], 'passed')
+            self.assertTrue(all(case['passed'] for case in correctness['small_cases']))
+            self.assertTrue(correctness['shape_before']['passed'] and correctness['shape_after']['passed'])
+
+    def test_int8_device_path_requires_the_vendor_kernel(self):
+        import types
+        from drivers import int8 as int8_driver
+        with patch.object(int8_driver, 'xtorch_ops', None):
+            with self.assertRaises(RuntimeError):
+                int8_driver.run_verified_int8(Mock(), {'VENDOR_CHIP': 'P800', 'MODE': 'smoke'}, 0, 1, 0)
 
 
 if __name__ == '__main__':

@@ -5,7 +5,7 @@ from pathlib import Path
 import traceback
 
 
-PRECISIONS = ('FP16', 'BF16', 'INT8', 'FP64', 'FP8', 'TF32')
+PRECISIONS = ('FP16', 'BF16', 'INT8', 'INT8-ROUTES', 'MATMUL-ROUTES', 'XTORCH-INT8', 'FP64', 'FP8', 'TF32')
 
 
 def probe(precision, device, identity, output):
@@ -61,6 +61,243 @@ def probe(precision, device, identity, output):
                     lambda: torch._scaled_mm(left.float().to(device).to(dtype), right.float().to(device).to(dtype),
                                              scale_a=torch.ones(1, device=device), scale_b=torch.ones(1, device=device),
                                              out_dtype=torch.float32), reference)
+    elif precision == 'INT8-ROUTES':
+        import time as _time
+        record['route_scope'] = 'timing decomposition only; not a qualification and not a universal fallback exclusion'
+        record['torch_threads'] = torch.get_num_threads()
+        record['cpu_name'] = open('/proc/cpuinfo').read().split('model name')[1].split(':')[1].split('\n')[0].strip()
+
+        def timed(where, size, iterations, label):
+            item = {'name': label, 'status': 'failed', 'shape': [size, size, size], 'iterations': iterations}
+            record['tests'].append(item)
+            try:
+                generator = torch.Generator().manual_seed(519)
+                left = torch.randint(-8, 9, (size, size), generator=generator, dtype=torch.int8).to(where)
+                right = torch.randint(-8, 9, (size, size), generator=generator, dtype=torch.int8).to(where)
+                for _ in range(2):
+                    torch._int_mm(left, right)
+                if where != torch.device('cpu'):
+                    torch.cuda.synchronize(device)
+                wall0, cpu0, thread0 = _time.perf_counter(), _time.process_time(), _time.thread_time()
+                for _ in range(iterations):
+                    result = torch._int_mm(left, right)
+                if where != torch.device('cpu'):
+                    torch.cuda.synchronize(device)
+                wall = _time.perf_counter() - wall0
+                cpu = _time.process_time() - cpu0
+                thread = _time.thread_time() - thread0
+                item.update(status='observed', wall_seconds=wall, process_cpu_seconds=cpu, thread_cpu_seconds=thread,
+                            tops=2 * size ** 3 * iterations / wall / 1e12, ms_per_iteration=wall / iterations * 1e3,
+                            process_cpu_over_wall=cpu / wall, thread_cpu_over_wall=thread / wall,
+                            result_dtype=str(result.dtype), result_device=str(result.device))
+                del left, right, result
+            except Exception as exc:
+                item.update(error_type=type(exc).__name__, error=str(exc)[:400], traceback=traceback.format_exc()[-800:])
+            (output / 'capability.json').write_text(json.dumps(record, indent=2) + '\n')
+
+        for size, iterations in ((1024, 20), (2048, 10), (4096, 3), (8192, 1)):
+            timed(device, size, iterations, 'device_int_mm_%d' % size)
+        for size, iterations in ((1024, 20), (2048, 10), (4096, 3)):
+            timed(torch.device('cpu'), size, iterations, 'cpu_int_mm_%d' % size)
+
+        # Transfer-only cost for the same tensors a host-executed 2048 int8 matmul needs each call.
+        transfer = {'name': 'transfer_round_trip_2048', 'status': 'failed'}
+        record['tests'].append(transfer)
+        try:
+            generator = torch.Generator().manual_seed(519)
+            left = torch.randint(-8, 9, (2048, 2048), generator=generator, dtype=torch.int8)
+            right = torch.randint(-8, 9, (2048, 2048), generator=generator, dtype=torch.int8)
+            result = torch._int_mm(left, right)
+            left_dev, right_dev, result_dev = left.to(device), right.to(device), result.to(device)
+            torch.cuda.synchronize(device)
+            wall0, cpu0 = _time.perf_counter(), _time.process_time()
+            for _ in range(10):
+                back = left_dev.cpu(), right_dev.cpu(), result_dev.cpu()
+            wall = _time.perf_counter() - wall0
+            transfer.update(status='observed', iterations=10, wall_seconds=wall, process_cpu_seconds=_time.process_time() - cpu0,
+                            ms_per_iteration=wall / 10 * 1e3,
+                            bytes_per_iteration=int(left.numel() * 2 + result.numel() * 4) * 3,
+                            scope='three int8 operands plus int32 result round-tripped once; host-execution lower bound')
+        except Exception as exc:
+            transfer.update(error_type=type(exc).__name__, error=str(exc)[:400])
+
+        # Case-parity candidates: scaled int8 matmul with bf16 output (the Ascend contract).
+        for label, call in (
+                ('int8_scaled_mm_bf16', lambda a, b: torch._scaled_mm(a, b, scale_a=torch.ones(1, device=device),
+                                                                       scale_b=torch.ones(1, device=device),
+                                                                       out_dtype=torch.bfloat16)),
+                ('int8_scaled_mm_fp32', lambda a, b: torch._scaled_mm(a, b, scale_a=torch.ones(1, device=device),
+                                                                      scale_b=torch.ones(1, device=device),
+                                                                      out_dtype=torch.float32)),
+                ('int8_mm_aten', lambda a, b: torch.mm(a, b))):
+            attempt(label, lambda call=call: call(torch.ones(64, 64, dtype=torch.int8, device=device),
+                                                 torch.ones(64, 64, dtype=torch.int8, device=device)),
+                    torch.full((64, 64), 64.0))
+        record['aten_int_mm_schema'] = str(getattr(torch.ops.aten._int_mm, '_schemas', None))
+        try:
+            import xtorch_ops  # noqa: F401
+            record['xtorch_ops_symbols'] = [name for name in dir(xtorch_ops)
+                                            if any(word in name.lower() for word in ('int8', 'matmul', 'mm', 'quant'))][:60]
+        except Exception as exc:
+            record['xtorch_ops_symbols'] = {'import_error': type(exc).__name__ + ': ' + str(exc)[:200]}
+        (output / 'capability.json').write_text(json.dumps(record, indent=2) + '\n')
+    elif precision == 'MATMUL-ROUTES':
+        import time as _time
+        record['route_scope'] = 'device-execution evidence via process CPU time; timing only, not a qualification'
+        record['torch_threads'] = torch.get_num_threads()
+
+        def run_mm(where, dtype, size, iterations, label, operator=None):
+            item = {'name': label, 'status': 'failed', 'shape': [size, size, size], 'iterations': iterations,
+                    'dtype': str(dtype)}
+            record['tests'].append(item)
+            try:
+                generator = torch.Generator().manual_seed(519)
+                op = operator or torch.mm
+                if dtype in (torch.float16, torch.bfloat16, torch.float32):
+                    left = (torch.randn(size, size, generator=generator) / size ** 0.5).to(dtype)
+                    right = (torch.randn(size, size, generator=generator) / size ** 0.5).to(dtype)
+                else:
+                    left = torch.randint(-8, 9, (size, size), generator=generator, dtype=dtype)
+                    right = torch.randint(-8, 9, (size, size), generator=generator, dtype=dtype)
+                left, right = left.to(where), right.to(where)
+                for _ in range(2):
+                    op(left, right)
+                if where != torch.device('cpu'):
+                    torch.cuda.synchronize(device)
+                wall0, cpu0 = _time.perf_counter(), _time.process_time()
+                for _ in range(iterations):
+                    result = op(left, right)
+                if where != torch.device('cpu'):
+                    torch.cuda.synchronize(device)
+                wall = _time.perf_counter() - wall0
+                cpu = _time.process_time() - cpu0
+                item.update(status='observed', wall_seconds=wall, process_cpu_seconds=cpu,
+                            tops=2 * size ** 3 * iterations / wall / 1e12, ms_per_iteration=wall / iterations * 1e3,
+                            process_cpu_over_wall=cpu / wall, result_dtype=str(result.dtype), result_device=str(result.device))
+                del left, right, result
+            except Exception as exc:
+                item.update(error_type=type(exc).__name__, error=str(exc)[:300], traceback=traceback.format_exc()[-600:])
+            (output / 'capability.json').write_text(json.dumps(record, indent=2) + '\n')
+
+        for dtype, name in ((torch.float16, 'fp16'), (torch.bfloat16, 'bf16'), (torch.float32, 'fp32')):
+            run_mm(device, dtype, 4096, 3, 'device_mm_%s_4096' % name)
+        # xtorch_ops int8 device kernels: schemas plus a bounded small-shape call.
+        try:
+            import xtorch_ops
+            namespace = getattr(torch.ops, 'xtorch_ops', None)
+            names = [name for name in dir(xtorch_ops) if 'gemm' in name.lower() or 'I8' in name]
+            record['xtorch_gemm_symbols'] = sorted(names)[:40]
+            schemas = {}
+            for name in sorted(names):
+                target = getattr(namespace, name, None) if namespace is not None else None
+                schemas[name] = str(getattr(target, '_schemas', None))[:400]
+            record['xtorch_gemm_schemas'] = schemas
+            generator = torch.Generator().manual_seed(519)
+            small_a = torch.randint(-8, 9, (64, 128), generator=generator, dtype=torch.int8).to(device)
+            small_b = torch.randint(-8, 9, (64, 128), generator=generator, dtype=torch.int8).to(device)
+            record['xtorch_call_probes'] = []
+            for name in sorted(names):
+                target = getattr(namespace, name, None) if namespace is not None else None
+                if target is None:
+                    continue
+                entry = {'name': name}
+                try:
+                    actual = target(small_a, small_b)
+                    torch.cuda.synchronize(device)
+                    entry.update(status='returned', dtype=str(actual.dtype), device=str(actual.device), shape=list(actual.shape))
+                except Exception as exc:
+                    entry.update(status='raised', error_type=type(exc).__name__, error=str(exc)[:300])
+                record['xtorch_call_probes'].append(entry)
+                (output / 'capability.json').write_text(json.dumps(record, indent=2) + '\n')
+        except Exception as exc:
+            record['xtorch_gemm_schemas'] = {'import_error': type(exc).__name__ + ': ' + str(exc)[:300]}
+        (output / 'capability.json').write_text(json.dumps(record, indent=2) + '\n')
+    elif precision == 'XTORCH-INT8':
+        record['route_scope'] = 'device int8 kernel convention discovery; not a qualification'
+
+        def note(name, **values):
+            item = {'name': name, 'status': values.pop('status', 'observed'), **values}
+            record['tests'].append(item)
+            (output / 'capability.json').write_text(json.dumps(record, indent=2) + '\n')
+            print('[probe]', json.dumps(item)[:700], flush=True)
+
+        import xtorch_ops
+        package = Path(xtorch_ops.__file__).parent
+        hits = []
+        for source in sorted(package.rglob('*.py')):
+            try:
+                content = source.read_text(errors='replace')
+            except OSError:
+                continue
+            for number, line in enumerate(content.splitlines(), 1):
+                if 'gemm_I8_I8_bf16_nt' in line or ('I8_I8' in line and 'quant' in line.lower()):
+                    hits.append({'path': str(source.relative_to(package)), 'line': number, 'text': line.strip()[:220]})
+        note('package_usage_hits', package=str(package), count=len(hits), hits=hits[:25])
+
+        kernel = getattr(xtorch_ops, 'gemm_I8_I8_bf16_nt')
+
+        def call(a_int8, b_int8, a_scale, b_scale, out):
+            kernel((a_int8, a_scale), (b_int8, b_scale), out)
+
+        # Ones inputs at unit scale: if the accumulate is a plain int32 sum the
+        # output must be exactly K everywhere.
+        for size in (128, 256, 512):
+            blocks = (size + 127) // 128
+            a_int8 = torch.ones(size, size, dtype=torch.int8, device=device)
+            b_int8 = torch.ones(size, size, dtype=torch.int8, device=device)
+            for scale in (1.0, 2.0, 0.5):
+                label = 'ones_%d_scale_%s' % (size, scale)
+                try:
+                    out = torch.zeros(size, size, dtype=torch.bfloat16, device=device)
+                    a_scale = torch.full((size, blocks), scale, dtype=torch.float32, device=device)
+                    b_scale = torch.full((size, blocks), scale, dtype=torch.float32, device=device)
+                    call(a_int8, b_int8, a_scale, b_scale, out)
+                    torch.cuda.synchronize(device)
+                    value = out.float().flatten()[0].item()
+                    note(label, first_element=value, expected_sum=float(size), ratio_to_sum=value / size,
+                         unique=len(torch.unique(out.float()).tolist()))
+                except Exception as exc:
+                    note(label, status='failed', error_type=type(exc).__name__, error=str(exc)[:200])
+
+        # Scale orientation and magnitude effects with a fixed random input pair.
+        generator = torch.Generator().manual_seed(519)
+        size = 256
+        blocks = (size + 127) // 128
+        a_int8 = torch.randint(-8, 9, (size, size), generator=generator, dtype=torch.int8).to(device)
+        b_int8 = torch.randint(-8, 9, (size, size), generator=generator, dtype=torch.int8).to(device)
+        reference = a_int8.cpu().long() @ b_int8.cpu().long().t()
+        for label, a_shape, b_shape, value in (
+                ('scales_row_block_1', (size, blocks), (size, blocks), 1.0),
+                ('scales_block_row_1', (blocks, size), (blocks, size), 1.0),
+                ('scales_128_1', (size, 1), (size, 1), 1.0),
+                ('scales_row_block_2', (size, blocks), (size, blocks), 2.0),
+                ('scales_row_block_half', (size, blocks), (size, blocks), 0.5)):
+            try:
+                out = torch.zeros(size, size, dtype=torch.bfloat16, device=device)
+                a_scale = torch.full(a_shape, value, dtype=torch.float32, device=device)
+                b_scale = torch.full(b_shape, value, dtype=torch.float32, device=device)
+                call(a_int8, b_int8, a_scale, b_scale, out)
+                torch.cuda.synchronize(device)
+                result = out.cpu().double()
+                ratio = (result.abs().max().item() / reference.double().abs().max().item()) if reference.double().abs().max() > 0 else None
+                note(label, max_output=result.abs().max().item(), max_reference=reference.double().abs().max().item(),
+                     amplitude_ratio=ratio)
+            except Exception as exc:
+                note(label, status='failed', error_type=type(exc).__name__, error=str(exc)[:200])
+
+        # Maybe the second tuple member is written by the kernel rather than read.
+        try:
+            out = torch.zeros(size, size, dtype=torch.bfloat16, device=device)
+            a_scale = torch.zeros(size, blocks, dtype=torch.float32, device=device)
+            b_scale = torch.zeros(size, blocks, dtype=torch.float32, device=device)
+            call(a_int8, b_int8, a_scale, b_scale, out)
+            torch.cuda.synchronize(device)
+            note('workspace_written', a_scale_after=str(a_scale.flatten()[:4].tolist()),
+                 b_scale_after=str(b_scale.flatten()[:4].tolist()),
+                 a_scale_nonzero=int((a_scale != 0).sum().item()), b_scale_nonzero=int((b_scale != 0).sum().item()))
+        except Exception as exc:
+            note('workspace_written', status='failed', error_type=type(exc).__name__, error=str(exc)[:200])
+        (output / 'capability.json').write_text(json.dumps(record, indent=2) + '\n')
     elif precision == 'TF32':
         record['initial_allow_tf32'] = torch.backends.cuda.matmul.allow_tf32
         left = torch.tensor([[1 + 2**-12, 1.0]], dtype=torch.float32).repeat(16, 16)
