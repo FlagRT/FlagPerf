@@ -1,5 +1,7 @@
-PAYLOAD_BYTES: 4294967296
-ITERS: 100
+# Aligned with the toolkit reference: 512 MiB payload (ascend-dmi -s 536870912).
+# Iterations are raised from the reference 50 to hold the 15 s measurement floor.
+PAYLOAD_BYTES: 536870912
+ITERS: 600
 WARMUP: 10
 PIN_MEMORY: false
 NON_BLOCKING: true
