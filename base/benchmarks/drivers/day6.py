@@ -314,7 +314,7 @@ def run_allreduce(driver, config, rank, world_size, local_rank):
         finished = time.perf_counter_ns()
         benchmark_measurement_finish(token)
         elapsed = (finished - started) / 1e9
-        algbw, algbw_gib, busbw, busbw_gib = allreduce_bandwidth(payload, elapsed, world_size)
+        algbw, algbw_gib, busbw, busbw_gib = allreduce_bandwidth(payload, config['ITERS'], elapsed, world_size)
         checked = _check_content(device_tensor, zero, 'post-loop')
         record['checks'].append({'phase': 'post-loop', **checked,
                                  'note': 'sign-paired inputs keep the repeated SUM at exactly zero'})
@@ -324,9 +324,9 @@ def run_allreduce(driver, config, rank, world_size, local_rank):
         metric = _metric_common(identity, case, config, rank, world_size, 'allreduce-algbw', 'GB/s', algbw)
         metric.update(value_gib_s=algbw_gib, busbw_gb_s=busbw, busbw_gib_s=busbw_gib,
                       elapsed_seconds=elapsed, started_monotonic_ns=started, finished_monotonic_ns=finished,
-                      message_bytes=payload,
+                      message_bytes=payload, total_bytes=payload * config['ITERS'],
                       timer='perf_counter_ns; collective plus barrier and device synchronization inside the window',
-                      scope='algbw=S/t; busbw=algbw*2*(world_size-1)/world_size; no additional multiplier',
+                      scope='algbw=message x iterations / window; busbw=algbw*2*(world_size-1)/world_size; no additional multiplier',
                       qualification_duration_passed=elapsed >= 15)
         save(output / f'metric-rank-{rank}.json', metric)
         _emit(f"[FlagPerf Result]Rank {rank}'s allreduce-algbw={_num(algbw)}GB/s")

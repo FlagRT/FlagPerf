@@ -1,5 +1,6 @@
 """Bounded P800 Day 6 contracts, formulas and artifact validation."""
 import math
+import re
 
 from base.vendors.protocol import ConfigurationError
 
@@ -64,8 +65,15 @@ def memory_bandwidth(payload, iterations, elapsed):
     return bandwidth(payload * 2 * iterations, elapsed)
 
 
-def allreduce_bandwidth(payload, elapsed, world_size):
-    algbw_gb, algbw_gib = bandwidth(payload, elapsed)
+def allreduce_bandwidth(payload, iterations, elapsed, world_size):
+    """Whole-window traffic over the window time.
+
+    Every timed iteration moves one payload per rank, so the algorithmic
+    bandwidth is (payload x iterations) / elapsed, matching the repository
+    reference (`datasize = ITERS * message / elapsed`) and the NCCL
+    convention; busbw applies 2 x (n-1) / n and nothing else.
+    """
+    algbw_gb, algbw_gib = bandwidth(payload * iterations, elapsed)
     factor = 2 * (world_size - 1) / world_size
     return algbw_gb, algbw_gib, algbw_gb * factor, algbw_gib * factor
 
@@ -137,9 +145,11 @@ def validate_metric(metric, correctness, context, context_hash, binding, config,
             raise RuntimeError('capacity tensors were not verifiably released')
     elif case == 'interconnect-MPI_intraserver:P800':
         payload = payload_bytes(config['Melements'])
-        algbw, algbw_gib, busbw, busbw_gib = allreduce_bandwidth(payload, elapsed, world_size)
+        algbw, algbw_gib, busbw, busbw_gib = allreduce_bandwidth(payload, config['ITERS'], elapsed, world_size)
         if metric.get('message_bytes') != payload:
             raise RuntimeError('allreduce message bytes differ from config')
+        if metric.get('total_bytes') != payload * config['ITERS']:
+            raise RuntimeError('allreduce total bytes differ from message x iterations')
         if not math.isclose(value, algbw, rel_tol=1e-9) or \
                 not math.isclose(metric.get('value_gib_s', 0), algbw_gib, rel_tol=1e-9) or \
                 not math.isclose(metric.get('busbw_gb_s', 0), busbw, rel_tol=1e-9) or \
@@ -171,6 +181,20 @@ STDOUT_VALUE_FIELDS = {
     'GB/s': 'value', 'GiB/s': 'value_gib_s', 'GB': 'value', 'GiB': 'value_gib_s',
     'busbw': 'busbw_gb_s',
 }
+
+
+STDOUT_LINE = re.compile(r"\[FlagPerf Result\]Rank (\d+)'s ([^=\n]+)=([0-9.]+)([A-Za-z/]+)")
+
+
+def parse_stdout_lines(text):
+    """Scan result lines anywhere in the text.
+
+    Every rank writes to the same container stdout, so a lost line boundary
+    between two concurrent writes must not hide a metric from the cross-check.
+    """
+    return [{'rank': int(match.group(1)), 'metric': match.group(2),
+             'value': float(match.group(3)), 'unit': match.group(4)}
+            for match in STDOUT_LINE.finditer(text)]
 
 
 def expected_stdout_pairs(case, metric):

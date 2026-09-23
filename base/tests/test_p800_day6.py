@@ -59,9 +59,10 @@ def metric_record(case, rank=0):
         held = 4096
         record.update(unit='GB', value=held * (1 << 20) / 1e9, value_gib_s=held / 1024, held_mib=held)
     elif case == 'interconnect-MPI_intraserver:P800':
-        algbw, algbw_gib, busbw, busbw_gib = contract.allreduce_bandwidth(payload, ELAPSED, world_size)
+        algbw, algbw_gib, busbw, busbw_gib = contract.allreduce_bandwidth(payload, config['ITERS'], ELAPSED, world_size)
         record.update(unit='GB/s', value=algbw, value_gib_s=algbw_gib,
-                      busbw_gb_s=busbw, busbw_gib_s=busbw_gib, message_bytes=payload)
+                      busbw_gb_s=busbw, busbw_gib_s=busbw_gib, message_bytes=payload,
+                      total_bytes=payload * config['ITERS'])
     else:
         gb, gib = contract.p2p_one_way_bandwidth(payload, config['ITERS'], ELAPSED)
         record.update(unit='GB/s', value=gb, value_gib_s=gib,
@@ -90,10 +91,12 @@ class Day6Formulas(unittest.TestCase):
     def test_allreduce_busbw_factor_never_doubles(self):
         payload = 64 << 20
         for world_size, factor in ((2, 1.0), (4, 1.5), (8, 1.75)):
-            algbw, _gib, busbw, _bgib = contract.allreduce_bandwidth(payload, 1.0, world_size)
+            algbw, _gib, busbw, _bgib = contract.allreduce_bandwidth(payload, 7, 1.0, world_size)
             self.assertAlmostEqual(busbw / algbw, factor)
-        algbw, _g, busbw, _b = contract.allreduce_bandwidth(payload, 1.0, 2)
+        algbw, _g, busbw, _b = contract.allreduce_bandwidth(payload, 7, 1.0, 2)
         self.assertAlmostEqual(busbw, algbw)  # ws=2: busbw == algbw, no extra x2
+        # The window carries one payload per rank per iteration.
+        self.assertAlmostEqual(algbw, payload * 7 / 1.0 / 1e9)
 
     def test_p2p_is_one_way_only(self):
         gb, gib = contract.p2p_one_way_bandwidth(1 << 20, 10, 0.01)
