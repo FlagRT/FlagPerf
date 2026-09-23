@@ -76,18 +76,19 @@ def validate_metric(metric, correctness, context, context_hash, binding, config)
 
 def validate_stdout(text, raw, case):
     if case in DAY6_CASES:
-        from benchmarks.day6_contract import expected_stdout_pairs
+        from benchmarks.day6_contract import expected_stdout_pairs, parse_stdout_lines
         ranks = day6_expected_ranks(case)
         parsed = parse_benchmark_results(text, ranks)
+        found = parse_stdout_lines(text)
         per_rank = {}
-        for item in parsed['metrics']:
+        for item in found:
             per_rank.setdefault(item['rank'], []).append(item)
         expected_lines = []
         for rank in range(ranks):
             for name, unit, value in expected_stdout_pairs(case, raw[rank]):
                 expected_lines.append((rank, name, unit, value))
-        check(parsed['status'] == 'passed' and len(parsed['metrics']) == len(expected_lines),
-              'stdout metric count or status differs')
+        check(parsed['status'] == 'passed' and len(found) == len(expected_lines),
+              'stdout metric count or rank coverage differs')
         for rank, name, unit, value in expected_lines:
             check(any(candidate['metric'] == name and candidate['unit'] == unit and
                       math.isclose(candidate['value'], value, rel_tol=1e-5)
