@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "supported": false,
+  "unsupported_reason": "the unified P800 entrypoint resolves nnodes=1 only; interserver cases are skipped before Docker and lease",
+  "runtime_profile": "xpytorch_2.9_p800_candidate",
+  "process_scope": {
+    "nnodes": 2,
+    "nproc_per_node": 1
+  }
+}
