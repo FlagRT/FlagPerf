@@ -1,0 +1,14 @@
+{
+  "case": "main_memory-capacity:P800",
+  "duration_s": 0.111975778,
+  "finished_at": "2026-09-23T04:07:48.682475Z",
+  "finished_monotonic_ns": 3977605602325655,
+  "kind": "measurement-window",
+  "local_rank": 0,
+  "pid": 102,
+  "rank": 0,
+  "schema_version": 1,
+  "started_at": "2026-09-23T04:07:48.570477Z",
+  "started_monotonic_ns": 3977605490349877,
+  "world_size": 1
+}

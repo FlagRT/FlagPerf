@@ -765,5 +765,76 @@
       },
       "missing": []
     }
+  },
+  "day6_memory_and_two_card": {
+    "date": "2026-09-23",
+    "timezone": "Asia/Shanghai",
+    "status": "complete-at-qualification-grade",
+    "tested_code_commits": [
+      "045a23b7",
+      "26e68bc3",
+      "bce75eea",
+      "405f7afe",
+      "23bcd20e",
+      "65cc3def",
+      "1c01aff7"
+    ],
+    "worktree_state_during_runs": "modified while the day-six series was written; every run records its own code identity",
+    "entrypoints": [
+      "base/run.py benchmark run --case <case>:P800",
+      "base/run.py benchmark preflight --physical-device-ids <id>"
+    ],
+    "authorization_reference": "user-20260923-execute-day6-plan",
+    "raw_evidence_directory": "base/result/p800-day6-20260923",
+    "review": "evidence/day6/review.md",
+    "memory_bandwidth": {
+      "status": "qualified-on-4gib-payload",
+      "payload": "Melements=1024 (4 GiB float32), 2 x payload formula",
+      "result_gb_s": 2236.822,
+      "result_gib_s": 2083.203,
+      "measurement_window_seconds": 16.129,
+      "physical_device_id": 5,
+      "evidence": "evidence/day6/memory-bandwidth/memory-qualification-a02-card5"
+    },
+    "memory_capacity": {
+      "status": "measured-at-high-risk-gate",
+      "held_mib": 98132,
+      "held_gb": 102.899,
+      "held_gib": 95.832,
+      "granularity_mib": 1,
+      "release_verified": true,
+      "monitoring_status": "partial (0.11 s search window, documented)",
+      "evidence": "evidence/day6/memory-capacity/capacity-full-a01-card5"
+    },
+    "communication": {
+      "verdict": "GO-qualification-grade",
+      "allreduce": "Melements 1/4/16/64 (4/16/64/256 MiB): 25.73 / 27.51 / 37.37 / 37.73 GB/s algbw, busbw equal at world size two, windows 17.5-19.0 s",
+      "p2p": "one-way rank0-to-rank1 (never doubled), 4/16/64/256 MiB: 25.19 / 31.18 / 32.98 / 33.60 GB/s",
+      "defects_fixed": [
+        "container network: --network none starves the BKCL socket bootstrap; the benchmark container now joins the --internal bridge flagperf-p800-internal",
+        "per-rank device selection: rank 1 kept cuda:0 as the current device; the first collective failed with invalid resource handle",
+        "per-rank binding: artifacts carried the first binding instead of the rank own binding",
+        "stdout integrity: concurrent rank writes merged result lines and small values lost precision",
+        "allreduce formula: the window iterations were not counted"
+      ],
+      "contended_card_note": "qualification-grade runs executed on cards another tenant was using under the one-day authorization; the official isolated rerun is pending a free pair",
+      "timeout_drills": "AllReduce and P2P cpu-wait drills passed (watchdog stop, postflight, cleanup, lease release)"
+    },
+    "interserver": {
+      "status": "supported-false-skipped-before-docker-and-lease",
+      "evidence": "runtime_requirements.json for both interserver cases"
+    },
+    "offline_tests": {
+      "base_suite": "182 collected, 1 failure + 14 errors identical to the HEAD baseline",
+      "day6_suite": "18 passed"
+    },
+    "two_card_gate": "GO (qualification grade); the official isolated rerun is day 7 first task; day 7 eight-card planning waits for it",
+    "open_items": [
+      "official two-card rerun on a free card pair",
+      "flagperf-p800-internal is a host prerequisite; consider a host-preflight presence check",
+      "1 MiB message point is not representable at the Melements granularity (4 MiB)",
+      "cards 1 and 2 stay excluded (sync hang, uncorrectable ECC)",
+      "the temporary contended preflight override must be reverted at the end of the day"
+    ]
   }
 }

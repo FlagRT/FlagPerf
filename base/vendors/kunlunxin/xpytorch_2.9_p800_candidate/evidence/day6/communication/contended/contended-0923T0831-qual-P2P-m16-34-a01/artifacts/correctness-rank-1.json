@@ -1,0 +1,93 @@
+{
+  "binding": {
+    "container_device_node": "/dev/xpu4",
+    "framework_device_name": "cuda:1",
+    "framework_local_rank": 1,
+    "framework_logical_id": 1,
+    "host_device_node": "/dev/xpu4",
+    "host_physical_id": 4,
+    "legacy_logical_id": null,
+    "pci_bdf": "0000:84:00.0",
+    "request_index": 1,
+    "resource_key": "kunlunxin/b7942319-362e-5a53-a8eb-a2d06fbe84f6",
+    "serial_or_uuid": "b7942319-362e-5a53-a8eb-a2d06fbe84f6",
+    "vendor": "kunlunxin"
+  },
+  "bindings": [
+    {
+      "container_device_node": "/dev/xpu1",
+      "framework_device_name": "cuda:0",
+      "framework_local_rank": 0,
+      "framework_logical_id": 0,
+      "host_device_node": "/dev/xpu1",
+      "host_physical_id": 3,
+      "legacy_logical_id": null,
+      "pci_bdf": "0000:2e:00.0",
+      "request_index": 0,
+      "resource_key": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "serial_or_uuid": "9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "vendor": "kunlunxin"
+    },
+    {
+      "container_device_node": "/dev/xpu4",
+      "framework_device_name": "cuda:1",
+      "framework_local_rank": 1,
+      "framework_logical_id": 1,
+      "host_device_node": "/dev/xpu4",
+      "host_physical_id": 4,
+      "legacy_logical_id": null,
+      "pci_bdf": "0000:84:00.0",
+      "request_index": 1,
+      "resource_key": "kunlunxin/b7942319-362e-5a53-a8eb-a2d06fbe84f6",
+      "serial_or_uuid": "b7942319-362e-5a53-a8eb-a2d06fbe84f6",
+      "vendor": "kunlunxin"
+    }
+  ],
+  "buffer": {
+    "contiguous": true,
+    "data_ptr": 276251541504,
+    "device": "cuda:1",
+    "dtype": "float32",
+    "numel": 16777216
+  },
+  "case": "interconnect-P2P_intraserver:P800",
+  "checks": [
+    {
+      "elements": 16777216,
+      "first_mismatch": null,
+      "mismatch_count": 0,
+      "passed": true,
+      "phase": "recv-0"
+    },
+    {
+      "elements": 16777216,
+      "first_mismatch": null,
+      "mismatch_count": 0,
+      "passed": true,
+      "phase": "recv-1"
+    },
+    {
+      "elements": 16777216,
+      "first_mismatch": null,
+      "mismatch_count": 0,
+      "passed": true,
+      "phase": "post-loop"
+    }
+  ],
+  "context_sha256": "f261b07acbd83a4e333501d84cd20e6186be59c60a36c19e8fba1fff2e5bd11c",
+  "cuda_matmul_allow_tf32": false,
+  "fallback_scope": "UUID, tensor placement and locked native route; no universal fallback exclusion",
+  "pid_namespace": "pid:[4026548000]",
+  "precision_scope": "native inputs/outputs as recorded by the case; compatibility controls do not certify internal arithmetic",
+  "rank": 1,
+  "run_id": "benchmark-e5089d9cb8b34d1386478c6376c99a80",
+  "schema_version": 1,
+  "semantics": {
+    "direction": "rank0-to-rank1",
+    "payload_bytes": 67108864,
+    "sentinel": "-999 destination prefill"
+  },
+  "status": "passed",
+  "worker_parent_pid": 168,
+  "worker_pid": 234
+}

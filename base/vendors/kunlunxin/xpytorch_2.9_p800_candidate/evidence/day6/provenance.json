@@ -1,0 +1,1553 @@
+{
+ "schema_version": 1,
+ "runs": [
+  {
+   "name": "comm-smoke-allreduce-a01-cards56",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/attempts/comm-smoke-allreduce-a01-cards56",
+   "status": "failed",
+   "failure_stage": "host-preflight",
+   "run_id": "benchmark-c1af796867dd434791484a837ed9cb36",
+   "command_record": "run-records/comm-smoke-allreduce-a01-cards56-command.json"
+  },
+  {
+   "name": "comm-smoke-allreduce-a01-cards57",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/attempts/comm-smoke-allreduce-a01-cards57",
+   "status": "failed",
+   "failure_stage": "container-probe",
+   "run_id": "benchmark-54987dfafdc34ab8a64a76db48306c31",
+   "command_record": "run-records/comm-smoke-allreduce-a01-cards57-command.json"
+  },
+  {
+   "name": "comm-smoke-allreduce-a02-cards57",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/attempts/comm-smoke-allreduce-a02-cards57",
+   "status": "failed",
+   "failure_stage": "host-preflight",
+   "run_id": "benchmark-67db97b7011e4b7f902bce1fd4968fc3",
+   "command_record": "run-records/comm-smoke-allreduce-a02-cards57-command.json"
+  },
+  {
+   "name": "comm-smoke-allreduce-a03-cards57",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/attempts/comm-smoke-allreduce-a03-cards57",
+   "status": "failed",
+   "failure_stage": "host-preflight",
+   "run_id": "benchmark-f56e4c83bb9b45bdbe64f617feeb56e9",
+   "command_record": "run-records/comm-smoke-allreduce-a03-cards57-command.json"
+  },
+  {
+   "name": "comm-smoke-allreduce-a05",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/attempts/comm-smoke-allreduce-a05",
+   "status": "failed",
+   "failure_stage": "container-probe",
+   "run_id": "benchmark-ea34567c259441cebfaef38a0c904c2f",
+   "command_record": "run-records/comm-smoke-allreduce-a05-command.json"
+  },
+  {
+   "name": "comm-smoke-allreduce-auto042727-56",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/attempts/comm-smoke-allreduce-auto042727-56",
+   "status": "failed",
+   "failure_stage": "container-probe",
+   "run_id": "benchmark-85486fb929814c7cbdb028f286fc9264",
+   "command_record": "run-records/comm-smoke-allreduce-auto042727-56-command.json"
+  },
+  {
+   "name": "contended-0923T0824-probe-MPI-m1-34-a01",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0824-probe-MPI-m1-34-a01",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-82a918663b01463e9d0bd3d46562eabb",
+   "command_record": "run-records/contended-0923T0824-probe-MPI-m1-34-a01-command.json"
+  },
+  {
+   "name": "contended-0923T0824-qual-MPI-m1-34-a01",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0824-qual-MPI-m1-34-a01",
+   "status": "failed",
+   "failure_stage": null,
+   "run_id": "benchmark-cbfc88319f3340f3ab5b640ed442eb5b",
+   "command_record": "run-records/contended-0923T0824-qual-MPI-m1-34-a01-command.json"
+  },
+  {
+   "name": "contended-0923T0824-qual-MPI-m1-34-a02",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0824-qual-MPI-m1-34-a02",
+   "status": "failed",
+   "failure_stage": null,
+   "run_id": "benchmark-d8eeed2356c74c4cade979fc1ae507bb",
+   "command_record": "run-records/contended-0923T0824-qual-MPI-m1-34-a02-command.json"
+  },
+  {
+   "name": "contended-0923T0824-smoke-allreduce-34-a01",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0824-smoke-allreduce-34-a01",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-9e5788d6a06f426698c6b1439384aaf5",
+   "command_record": "run-records/contended-0923T0824-smoke-allreduce-34-a01-command.json"
+  },
+  {
+   "name": "contended-0923T0826-probe-MPI-m1-34-a01",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0826-probe-MPI-m1-34-a01",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-9e534a3b2c4c482091e1fca6437d653b",
+   "command_record": "run-records/contended-0923T0826-probe-MPI-m1-34-a01-command.json"
+  },
+  {
+   "name": "contended-0923T0826-qual-MPI-m1-34-a01",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0826-qual-MPI-m1-34-a01",
+   "status": "partial",
+   "failure_stage": null,
+   "run_id": "benchmark-b2eca82a140f42a8bbe0725d2b3ccb42",
+   "command_record": "run-records/contended-0923T0826-qual-MPI-m1-34-a01-command.json"
+  },
+  {
+   "name": "contended-0923T0826-qual-MPI-m1-34-a02",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0826-qual-MPI-m1-34-a02",
+   "status": "partial",
+   "failure_stage": null,
+   "run_id": "benchmark-207b49434fd1470a945e20911983c23a",
+   "command_record": "run-records/contended-0923T0826-qual-MPI-m1-34-a02-command.json"
+  },
+  {
+   "name": "contended-0923T0826-qual-MPI-m1-34-a03",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0826-qual-MPI-m1-34-a03",
+   "status": "running",
+   "failure_stage": null,
+   "run_id": "benchmark-9d3cf356a17e4853867aca916ce67562",
+   "command_record": "run-records/contended-0923T0826-qual-MPI-m1-34-a03-command.json"
+  },
+  {
+   "name": "contended-0923T0826-smoke-allreduce-34-a01",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0826-smoke-allreduce-34-a01",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-feb195d7870b4d2b95e6a1c910c6caba",
+   "command_record": "run-records/contended-0923T0826-smoke-allreduce-34-a01-command.json"
+  },
+  {
+   "name": "contended-0923T0827-probe-MPI-m1-34-a01",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0827-probe-MPI-m1-34-a01",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-2f12ac05e24d4d5a8a9268db4332114c",
+   "command_record": "run-records/contended-0923T0827-probe-MPI-m1-34-a01-command.json"
+  },
+  {
+   "name": "contended-0923T0827-probe-MPI-m16-34-a01",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0827-probe-MPI-m16-34-a01",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-61c64defd56b45cc9debc85544c171c9",
+   "command_record": "run-records/contended-0923T0827-probe-MPI-m16-34-a01-command.json"
+  },
+  {
+   "name": "contended-0923T0827-probe-MPI-m4-34-a01",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0827-probe-MPI-m4-34-a01",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-316e71ace3ef45eab1851ea73e45bfd1",
+   "command_record": "run-records/contended-0923T0827-probe-MPI-m4-34-a01-command.json"
+  },
+  {
+   "name": "contended-0923T0827-probe-MPI-m64-34-a01",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0827-probe-MPI-m64-34-a01",
+   "status": "running",
+   "failure_stage": null,
+   "run_id": "benchmark-1bef8a3a407f42bf8dc4e09d2899d20d",
+   "command_record": "run-records/contended-0923T0827-probe-MPI-m64-34-a01-command.json"
+  },
+  {
+   "name": "contended-0923T0827-qual-MPI-m1-34-a01",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0827-qual-MPI-m1-34-a01",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-16c9ed77c9174b0c85f1e97499c0070f",
+   "command_record": "run-records/contended-0923T0827-qual-MPI-m1-34-a01-command.json"
+  },
+  {
+   "name": "contended-0923T0827-qual-MPI-m16-34-a01",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0827-qual-MPI-m16-34-a01",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-a38da32d15ab41bc801d358aa6120597",
+   "command_record": "run-records/contended-0923T0827-qual-MPI-m16-34-a01-command.json"
+  },
+  {
+   "name": "contended-0923T0827-qual-MPI-m4-34-a01",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0827-qual-MPI-m4-34-a01",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-3d4b3b4be7634423be136bd31004b567",
+   "command_record": "run-records/contended-0923T0827-qual-MPI-m4-34-a01-command.json"
+  },
+  {
+   "name": "contended-0923T0827-smoke-allreduce-34-a01",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0827-smoke-allreduce-34-a01",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-f659b5a7b9824674a6948ab8ef97aad1",
+   "command_record": "run-records/contended-0923T0827-smoke-allreduce-34-a01-command.json"
+  },
+  {
+   "name": "contended-0923T0831-probe-MPI-m1-37-a01",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0831-probe-MPI-m1-37-a01",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-a174bbff541c476c9ff8efd489211713",
+   "command_record": "run-records/contended-0923T0831-probe-MPI-m1-37-a01-command.json"
+  },
+  {
+   "name": "contended-0923T0831-probe-MPI-m16-37-a01",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0831-probe-MPI-m16-37-a01",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-c7875dfd266d4a77bc0feb33a8608af7",
+   "command_record": "run-records/contended-0923T0831-probe-MPI-m16-37-a01-command.json"
+  },
+  {
+   "name": "contended-0923T0831-probe-MPI-m4-37-a01",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0831-probe-MPI-m4-37-a01",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-ac83b4deffa74f0e90d0e4b67cfe7cab",
+   "command_record": "run-records/contended-0923T0831-probe-MPI-m4-37-a01-command.json"
+  },
+  {
+   "name": "contended-0923T0831-probe-MPI-m64-34-a01",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0831-probe-MPI-m64-34-a01",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-912a5a83298c4af48be75d3e1116d774",
+   "command_record": "run-records/contended-0923T0831-probe-MPI-m64-34-a01-command.json"
+  },
+  {
+   "name": "contended-0923T0831-probe-P2P-m1-34-a01",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0831-probe-P2P-m1-34-a01",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-58f40fac34d94438ab557323f4daefb5",
+   "command_record": "run-records/contended-0923T0831-probe-P2P-m1-34-a01-command.json"
+  },
+  {
+   "name": "contended-0923T0831-probe-P2P-m16-34-a01",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0831-probe-P2P-m16-34-a01",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-2508507f205d48bca387c6fbe6574e76",
+   "command_record": "run-records/contended-0923T0831-probe-P2P-m16-34-a01-command.json"
+  },
+  {
+   "name": "contended-0923T0831-probe-P2P-m4-34-a01",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0831-probe-P2P-m4-34-a01",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-7bdd109e322f48c28d08f174cd4fa837",
+   "command_record": "run-records/contended-0923T0831-probe-P2P-m4-34-a01-command.json"
+  },
+  {
+   "name": "contended-0923T0831-probe-P2P-m64-34-a01",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0831-probe-P2P-m64-34-a01",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-2d38b1b594854f91afdb94e43d5a3a9b",
+   "command_record": "run-records/contended-0923T0831-probe-P2P-m64-34-a01-command.json"
+  },
+  {
+   "name": "contended-0923T0831-qual-MPI-m1-37-a01",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0831-qual-MPI-m1-37-a01",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-cdb219eebd904ebd9615760205f4f0c9",
+   "command_record": "run-records/contended-0923T0831-qual-MPI-m1-37-a01-command.json"
+  },
+  {
+   "name": "contended-0923T0831-qual-MPI-m16-34-a01",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0831-qual-MPI-m16-34-a01",
+   "status": "partial",
+   "failure_stage": null,
+   "run_id": "benchmark-a74cf3876ef540d984dfef5f2d25fc15",
+   "command_record": "run-records/contended-0923T0831-qual-MPI-m16-34-a01-command.json"
+  },
+  {
+   "name": "contended-0923T0831-qual-MPI-m4-37-a01",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0831-qual-MPI-m4-37-a01",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-6a5596b3dad942fba28efebca40fb11c",
+   "command_record": "run-records/contended-0923T0831-qual-MPI-m4-37-a01-command.json"
+  },
+  {
+   "name": "contended-0923T0831-qual-MPI-m64-34-a01",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0831-qual-MPI-m64-34-a01",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-9ffa3fb9478c4f5e8869ca80800286e1",
+   "command_record": "run-records/contended-0923T0831-qual-MPI-m64-34-a01-command.json"
+  },
+  {
+   "name": "contended-0923T0831-qual-P2P-m1-34-a01",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0831-qual-P2P-m1-34-a01",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-c962202e621a44fb89dac05346bdf075",
+   "command_record": "run-records/contended-0923T0831-qual-P2P-m1-34-a01-command.json"
+  },
+  {
+   "name": "contended-0923T0831-qual-P2P-m16-34-a01",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0831-qual-P2P-m16-34-a01",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-e5089d9cb8b34d1386478c6376c99a80",
+   "command_record": "run-records/contended-0923T0831-qual-P2P-m16-34-a01-command.json"
+  },
+  {
+   "name": "contended-0923T0831-qual-P2P-m4-34-a01",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0831-qual-P2P-m4-34-a01",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-3cbcf322f5c6428d956b1ebc4dd667b0",
+   "command_record": "run-records/contended-0923T0831-qual-P2P-m4-34-a01-command.json"
+  },
+  {
+   "name": "contended-0923T0831-qual-P2P-m64-34-a01",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0831-qual-P2P-m64-34-a01",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-98e0af10a867430ca557c8774e699a8e",
+   "command_record": "run-records/contended-0923T0831-qual-P2P-m64-34-a01-command.json"
+  },
+  {
+   "name": "contended-0923T0831-smoke-allreduce-37-a01",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0831-smoke-allreduce-37-a01",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-2b56b7b005af493baeca1a3c2c02e672",
+   "command_record": "run-records/contended-0923T0831-smoke-allreduce-37-a01-command.json"
+  },
+  {
+   "name": "contended-0923T0831-timeout-MPI-34",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0831-timeout-MPI-34",
+   "status": "failed",
+   "failure_stage": "container-probe",
+   "run_id": "benchmark-3e4ca296a33a4714b613bdfd6a1cfdfe",
+   "command_record": "run-records/contended-0923T0831-timeout-MPI-34-command.json"
+  },
+  {
+   "name": "contended-0923T0831-timeout-P2P-34",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0831-timeout-P2P-34",
+   "status": "failed",
+   "failure_stage": "container-probe",
+   "run_id": "benchmark-3421105d8bc046f9bab1c6f7dc103a99",
+   "command_record": "run-records/contended-0923T0831-timeout-P2P-34-command.json"
+  },
+  {
+   "name": "contended-0923T0843-probe-MPI-m16-34",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0843-probe-MPI-m16-34",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-2230d025e51344b1a947278f2b05a8a3",
+   "command_record": "run-records/contended-0923T0843-probe-MPI-m16-34-command.json"
+  },
+  {
+   "name": "contended-0923T0843-qual-MPI-m16-34",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-0923T0843-qual-MPI-m16-34",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-d6c78b9aa8264ad4b5bd94e623be7e91",
+   "command_record": "run-records/contended-0923T0843-qual-MPI-m16-34-command.json"
+  },
+  {
+   "name": "contended-smoke-allreduce-34-a01",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-smoke-allreduce-34-a01",
+   "status": "failed",
+   "failure_stage": "container-probe",
+   "run_id": "benchmark-8f1e8014d797475793f33d4e97b19eb5",
+   "command_record": "run-records/contended-smoke-allreduce-34-a01-command.json"
+  },
+  {
+   "name": "contended-smoke-allreduce-34-a02",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-smoke-allreduce-34-a02",
+   "status": "failed",
+   "failure_stage": "container-probe",
+   "run_id": "benchmark-5a07d78a0a6e4362872199c9e77bb4d1",
+   "command_record": "run-records/contended-smoke-allreduce-34-a02-command.json"
+  },
+  {
+   "name": "contended-smoke-allreduce-34-a03",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-smoke-allreduce-34-a03",
+   "status": "running",
+   "failure_stage": null,
+   "run_id": "benchmark-29d8ada7341d41119a7c377c8be65f8e",
+   "command_record": "run-records/contended-smoke-allreduce-34-a03-command.json"
+  },
+  {
+   "name": "contended-smoke-allreduce-fix-a01",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-smoke-allreduce-fix-a01",
+   "status": "failed",
+   "failure_stage": "container-inspect",
+   "run_id": "benchmark-2b136bc7ab3c48e7aee47ace85fc21dd",
+   "command_record": "run-records/contended-smoke-allreduce-fix-a01-command.json"
+  },
+  {
+   "name": "contended-smoke-allreduce-fix-a02",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-smoke-allreduce-fix-a02",
+   "status": "failed",
+   "failure_stage": "container-probe",
+   "run_id": "benchmark-62abaa7ebeb040818469a87e9ce13d31",
+   "command_record": "run-records/contended-smoke-allreduce-fix-a02-command.json"
+  },
+  {
+   "name": "contended-smoke-allreduce-fix-a03",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-smoke-allreduce-fix-a03",
+   "status": "failed",
+   "failure_stage": "container-probe",
+   "run_id": "benchmark-f4b21dfd03944cb190268326dfa94880",
+   "command_record": "run-records/contended-smoke-allreduce-fix-a03-command.json"
+  },
+  {
+   "name": "contended-smoke-allreduce-fix-a04",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-smoke-allreduce-fix-a04",
+   "status": "failed",
+   "failure_stage": "container-probe",
+   "run_id": "benchmark-a6124e37e22443c5afcea8006c760874",
+   "command_record": "run-records/contended-smoke-allreduce-fix-a04-command.json"
+  },
+  {
+   "name": "contended-smoke-allreduce-fix-a05",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-smoke-allreduce-fix-a05",
+   "status": "failed",
+   "failure_stage": null,
+   "run_id": "benchmark-20142dfab0b64d4e8e3d5d4c64ffdbec",
+   "command_record": "run-records/contended-smoke-allreduce-fix-a05-command.json"
+  },
+  {
+   "name": "contended-smoke-allreduce-fix-a06",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/contended/contended-smoke-allreduce-fix-a06",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-727f45efb321415cb231917141543442",
+   "command_record": "run-records/contended-smoke-allreduce-fix-a06-command.json"
+  },
+  {
+   "name": "failed-01-sudo-ticket",
+   "category": "memory-bandwidth",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "memory-bandwidth/failed-01-sudo-ticket",
+   "status": "failed",
+   "failure_stage": "image-identity",
+   "run_id": "benchmark-33cad856c16941a4872f468c065c8b10"
+  },
+  {
+   "name": "memory-medium-a01-card5",
+   "category": "memory-bandwidth",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "memory-bandwidth/memory-medium-a01-card5",
+   "status": "failed",
+   "failure_stage": "container-probe",
+   "run_id": "benchmark-6b5fdc802ab0475eaea104560bad5fbc",
+   "command_record": "run-records/memory-medium-a01-card5-command.json"
+  },
+  {
+   "name": "memory-medium-a02-card5",
+   "category": "memory-bandwidth",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "memory-bandwidth/memory-medium-a02-card5",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-bd7eac7497c74e39aec3664d67b158f1",
+   "command_record": "run-records/memory-medium-a02-card5-command.json"
+  },
+  {
+   "name": "memory-qualification-a01-card5",
+   "category": "memory-bandwidth",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "memory-bandwidth/memory-qualification-a01-card5",
+   "status": "partial",
+   "failure_stage": null,
+   "run_id": "benchmark-5aa10f8c726e4dd7b33eccd0d009f7a0",
+   "command_record": "run-records/memory-qualification-a01-card5-command.json"
+  },
+  {
+   "name": "memory-qualification-a02-card5",
+   "category": "memory-bandwidth",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "memory-bandwidth/memory-qualification-a02-card5",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-0980224bdfed4777be8b3e364fd2cbc5",
+   "command_record": "run-records/memory-qualification-a02-card5-command.json"
+  },
+  {
+   "name": "memory-smoke-a01-card5",
+   "category": "memory-bandwidth",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "memory-bandwidth/memory-smoke-a01-card5",
+   "status": "partial",
+   "failure_stage": null,
+   "run_id": "benchmark-c8fc4d596aac4d199ab9720f2e916b31",
+   "command_record": "run-records/memory-smoke-a01-card5-command.json"
+  },
+  {
+   "name": "memory-timeout-a01-card5",
+   "category": "memory-bandwidth",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "memory-bandwidth/memory-timeout-a01-card5",
+   "status": "failed",
+   "failure_stage": "container-probe",
+   "run_id": "benchmark-062c845b6b454cb39c78da75a84df19a",
+   "command_record": "run-records/memory-timeout-a01-card5-command.json"
+  },
+  {
+   "name": "capacity-bounded-a01-card5",
+   "category": "memory-capacity",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "memory-capacity/capacity-bounded-a01-card5",
+   "status": "partial",
+   "failure_stage": null,
+   "run_id": "benchmark-0e34641a19324b70b522ea8695cfd356",
+   "command_record": "run-records/capacity-bounded-a01-card5-command.json"
+  },
+  {
+   "name": "capacity-full-a01-card5",
+   "category": "memory-capacity",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "memory-capacity/capacity-full-a01-card5",
+   "status": "partial",
+   "failure_stage": null,
+   "run_id": "benchmark-107ff3137c1840fb9266edf1c1f00b66",
+   "command_record": "run-records/capacity-full-a01-card5-command.json"
+  },
+  {
+   "name": "capacity-timeout-a02-card5",
+   "category": "memory-capacity",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "memory-capacity/capacity-timeout-a02-card5",
+   "status": "failed",
+   "failure_stage": "container-probe",
+   "run_id": "benchmark-f4f7ef1d1ae04499854844a0f0404268",
+   "command_record": "run-records/capacity-timeout-a02-card5-command.json"
+  }
+ ],
+ "files": [
+  {
+   "source": "base/result/p800-day6-20260923/authorization-day6.json",
+   "destination": "run-records/authorization-day6.json",
+   "source_sha256": "0b2d045ef4d4ad9d0f0c9be5e0c87844f653e9b5c5e6feb86b77c19724cc403e",
+   "archive_sha256": "0b2d045ef4d4ad9d0f0c9be5e0c87844f653e9b5c5e6feb86b77c19724cc403e",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/capacity-bounded-a01-card5-cli.log",
+   "destination": "run-records/capacity-bounded-a01-card5-cli.log",
+   "source_sha256": "8398554ae8a46fa3d797b3c983e62f8d1cbea449ade80b2228dbb140b398b7dd",
+   "archive_sha256": "8398554ae8a46fa3d797b3c983e62f8d1cbea449ade80b2228dbb140b398b7dd",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/capacity-bounded-a01-card5-command.json",
+   "destination": "run-records/capacity-bounded-a01-card5-command.json",
+   "source_sha256": "fce84c6bebd07c373e097975fe6ec867c0f6b9e36673c885a4bd8a316a4d3cb5",
+   "archive_sha256": "fce84c6bebd07c373e097975fe6ec867c0f6b9e36673c885a4bd8a316a4d3cb5",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/capacity-full-a01-card5-cli.log",
+   "destination": "run-records/capacity-full-a01-card5-cli.log",
+   "source_sha256": "be1a4a98ab8f1fe27fec0a0c9783782bb7f35240d589a80bfd721e2f076a9ca6",
+   "archive_sha256": "be1a4a98ab8f1fe27fec0a0c9783782bb7f35240d589a80bfd721e2f076a9ca6",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/capacity-full-a01-card5-command.json",
+   "destination": "run-records/capacity-full-a01-card5-command.json",
+   "source_sha256": "87ebe37894cee6792b57639e53235864381cc64e849c3bd3cfc6e2b495e6e45a",
+   "archive_sha256": "87ebe37894cee6792b57639e53235864381cc64e849c3bd3cfc6e2b495e6e45a",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/capacity-timeout-a01-card5-cli.log",
+   "destination": "run-records/capacity-timeout-a01-card5-cli.log",
+   "source_sha256": "baff171d62b05150ee47acd408d8c8794fd9673d9c0e11eb71fb38eb51fa91c2",
+   "archive_sha256": "baff171d62b05150ee47acd408d8c8794fd9673d9c0e11eb71fb38eb51fa91c2",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/capacity-timeout-a01-card5-command.json",
+   "destination": "run-records/capacity-timeout-a01-card5-command.json",
+   "source_sha256": "a6a916697c35b6e9198a064a064502542a925b652067f9f218c452ceb3aede34",
+   "archive_sha256": "a6a916697c35b6e9198a064a064502542a925b652067f9f218c452ceb3aede34",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/capacity-timeout-a02-card5-cli.log",
+   "destination": "run-records/capacity-timeout-a02-card5-cli.log",
+   "source_sha256": "155b466540a1e9db2a749ae23a94eb8287710e842783bdf227c170a575727b53",
+   "archive_sha256": "155b466540a1e9db2a749ae23a94eb8287710e842783bdf227c170a575727b53",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/capacity-timeout-a02-card5-command.json",
+   "destination": "run-records/capacity-timeout-a02-card5-command.json",
+   "source_sha256": "1c192974550e57e0a275c88136541b8955ae9f80c0a428e3cea731b6d6f0b135",
+   "archive_sha256": "1c192974550e57e0a275c88136541b8955ae9f80c0a428e3cea731b6d6f0b135",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/comm-smoke-allreduce-a01-cards56-cli.log",
+   "destination": "run-records/comm-smoke-allreduce-a01-cards56-cli.log",
+   "source_sha256": "ed8196c788f144e22f33996940c68abf27c0f95e77fdd0cfe98b39777ef7389c",
+   "archive_sha256": "ed8196c788f144e22f33996940c68abf27c0f95e77fdd0cfe98b39777ef7389c",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/comm-smoke-allreduce-a01-cards56-command.json",
+   "destination": "run-records/comm-smoke-allreduce-a01-cards56-command.json",
+   "source_sha256": "e48b5f89521464f916e7504a7543fe98a51700997bd8a03c1cc0ada6ad2d2656",
+   "archive_sha256": "e48b5f89521464f916e7504a7543fe98a51700997bd8a03c1cc0ada6ad2d2656",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/comm-smoke-allreduce-a01-cards57-cli.log",
+   "destination": "run-records/comm-smoke-allreduce-a01-cards57-cli.log",
+   "source_sha256": "0584fc151c7cce4f3c574c72e8f411791edb671090eed49a66d83ace9f42c35d",
+   "archive_sha256": "0584fc151c7cce4f3c574c72e8f411791edb671090eed49a66d83ace9f42c35d",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/comm-smoke-allreduce-a01-cards57-command.json",
+   "destination": "run-records/comm-smoke-allreduce-a01-cards57-command.json",
+   "source_sha256": "1e5e95f763a6edf2d781a4030c6a27e82e9fb38835ad1e0a1c55ff6db72f1d85",
+   "archive_sha256": "1e5e95f763a6edf2d781a4030c6a27e82e9fb38835ad1e0a1c55ff6db72f1d85",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/comm-smoke-allreduce-a02-cards57-cli.log",
+   "destination": "run-records/comm-smoke-allreduce-a02-cards57-cli.log",
+   "source_sha256": "87af795d9d65c43a798a839d09c0f345b7a7fc940eab62a9b4aca1ff6455321f",
+   "archive_sha256": "87af795d9d65c43a798a839d09c0f345b7a7fc940eab62a9b4aca1ff6455321f",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/comm-smoke-allreduce-a02-cards57-command.json",
+   "destination": "run-records/comm-smoke-allreduce-a02-cards57-command.json",
+   "source_sha256": "3c4eee530e0ffff06017cdf3eee409b76d45f3f18e6d4274b33f25c7b1382c39",
+   "archive_sha256": "3c4eee530e0ffff06017cdf3eee409b76d45f3f18e6d4274b33f25c7b1382c39",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/comm-smoke-allreduce-a03-cards57-cli.log",
+   "destination": "run-records/comm-smoke-allreduce-a03-cards57-cli.log",
+   "source_sha256": "53a15500edb5dcbaf4752b21c3ab91db3c745aeed0036281fd33daba7339cdd3",
+   "archive_sha256": "53a15500edb5dcbaf4752b21c3ab91db3c745aeed0036281fd33daba7339cdd3",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/comm-smoke-allreduce-a03-cards57-command.json",
+   "destination": "run-records/comm-smoke-allreduce-a03-cards57-command.json",
+   "source_sha256": "f5404ebee5f1d4f4c45bea98b6df89a6adb66c575cfa33880877f4a92723e7ee",
+   "archive_sha256": "f5404ebee5f1d4f4c45bea98b6df89a6adb66c575cfa33880877f4a92723e7ee",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/comm-smoke-allreduce-a05-cli.log",
+   "destination": "run-records/comm-smoke-allreduce-a05-cli.log",
+   "source_sha256": "9bbaaf79d4cf00c206e6333fa59bccdf0c177b23bc5075dcedd96cacf0b16d33",
+   "archive_sha256": "9bbaaf79d4cf00c206e6333fa59bccdf0c177b23bc5075dcedd96cacf0b16d33",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/comm-smoke-allreduce-a05-command.json",
+   "destination": "run-records/comm-smoke-allreduce-a05-command.json",
+   "source_sha256": "4c03117b5e5589c10497c5f81b0be68fb6969774c9b1f011f3dfd688cadd6063",
+   "archive_sha256": "4c03117b5e5589c10497c5f81b0be68fb6969774c9b1f011f3dfd688cadd6063",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/comm-smoke-allreduce-auto042727-56-cli.log",
+   "destination": "run-records/comm-smoke-allreduce-auto042727-56-cli.log",
+   "source_sha256": "f5efe12de74b4aeadaaee742a661070dfc04acd9dfae05e1cf200e1bbac4b173",
+   "archive_sha256": "f5efe12de74b4aeadaaee742a661070dfc04acd9dfae05e1cf200e1bbac4b173",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/comm-smoke-allreduce-auto042727-56-command.json",
+   "destination": "run-records/comm-smoke-allreduce-auto042727-56-command.json",
+   "source_sha256": "455412f09a6ca08d80ec775301e2622b3b9d9c0a40ded56043d4451477c3c39b",
+   "archive_sha256": "455412f09a6ca08d80ec775301e2622b3b9d9c0a40ded56043d4451477c3c39b",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0824-probe-MPI-m1-34-a01-cli.log",
+   "destination": "run-records/contended-0923T0824-probe-MPI-m1-34-a01-cli.log",
+   "source_sha256": "b4a21348edc72758a5b435c153d945a94eb48d121816157ebab33ddb24f3002f",
+   "archive_sha256": "b4a21348edc72758a5b435c153d945a94eb48d121816157ebab33ddb24f3002f",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0824-probe-MPI-m1-34-a01-command.json",
+   "destination": "run-records/contended-0923T0824-probe-MPI-m1-34-a01-command.json",
+   "source_sha256": "3c5e62b20e676d491411632efc9eab270e72d30e69f6af0e55affec4c82cc80e",
+   "archive_sha256": "3c5e62b20e676d491411632efc9eab270e72d30e69f6af0e55affec4c82cc80e",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0824-qual-MPI-m1-34-a01-cli.log",
+   "destination": "run-records/contended-0923T0824-qual-MPI-m1-34-a01-cli.log",
+   "source_sha256": "823397c5b97cf05d5abc392ecc106bdcea0787a08fd74a508e3d0f803fdfecb4",
+   "archive_sha256": "823397c5b97cf05d5abc392ecc106bdcea0787a08fd74a508e3d0f803fdfecb4",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0824-qual-MPI-m1-34-a01-command.json",
+   "destination": "run-records/contended-0923T0824-qual-MPI-m1-34-a01-command.json",
+   "source_sha256": "bdabbc84ff4e1359128cac56fb8f252ba32af868ff940435251f06f9b8dcf351",
+   "archive_sha256": "bdabbc84ff4e1359128cac56fb8f252ba32af868ff940435251f06f9b8dcf351",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0824-qual-MPI-m1-34-a02-cli.log",
+   "destination": "run-records/contended-0923T0824-qual-MPI-m1-34-a02-cli.log",
+   "source_sha256": "1e9e61562e329274dd956ab68d208b325428150fd863fa1413ba48cdaa4a66bf",
+   "archive_sha256": "1e9e61562e329274dd956ab68d208b325428150fd863fa1413ba48cdaa4a66bf",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0824-qual-MPI-m1-34-a02-command.json",
+   "destination": "run-records/contended-0923T0824-qual-MPI-m1-34-a02-command.json",
+   "source_sha256": "b4c9b5ef75f29e33d38ff5a85feb8b776aff0af128df283bc374a0eb69701d50",
+   "archive_sha256": "b4c9b5ef75f29e33d38ff5a85feb8b776aff0af128df283bc374a0eb69701d50",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0824-smoke-allreduce-34-a01-cli.log",
+   "destination": "run-records/contended-0923T0824-smoke-allreduce-34-a01-cli.log",
+   "source_sha256": "aba678a8d0f195cc4bfe23baa2a92ab117e38763c3e6f6a1b42c4cafd0b14d93",
+   "archive_sha256": "aba678a8d0f195cc4bfe23baa2a92ab117e38763c3e6f6a1b42c4cafd0b14d93",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0824-smoke-allreduce-34-a01-command.json",
+   "destination": "run-records/contended-0923T0824-smoke-allreduce-34-a01-command.json",
+   "source_sha256": "03e339a36dab46bd8b54c05ed2860f688037f9323e6640d35dba30c2acd01ec6",
+   "archive_sha256": "03e339a36dab46bd8b54c05ed2860f688037f9323e6640d35dba30c2acd01ec6",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0826-probe-MPI-m1-34-a01-cli.log",
+   "destination": "run-records/contended-0923T0826-probe-MPI-m1-34-a01-cli.log",
+   "source_sha256": "d5c8f0ce0e8254d76f991105d844b23f17bf4313294b1ac20c7b9faa8996b5b4",
+   "archive_sha256": "d5c8f0ce0e8254d76f991105d844b23f17bf4313294b1ac20c7b9faa8996b5b4",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0826-probe-MPI-m1-34-a01-command.json",
+   "destination": "run-records/contended-0923T0826-probe-MPI-m1-34-a01-command.json",
+   "source_sha256": "9f67e10870e7f4d16c57e36bae334122d41eefb98c5d4b3d7292fde24807f4c8",
+   "archive_sha256": "9f67e10870e7f4d16c57e36bae334122d41eefb98c5d4b3d7292fde24807f4c8",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0826-qual-MPI-m1-34-a01-cli.log",
+   "destination": "run-records/contended-0923T0826-qual-MPI-m1-34-a01-cli.log",
+   "source_sha256": "5e1719c23c9cdba9bc7d82382e5cffc226ce37b8baf9d8bd30f19e48a0d753cc",
+   "archive_sha256": "5e1719c23c9cdba9bc7d82382e5cffc226ce37b8baf9d8bd30f19e48a0d753cc",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0826-qual-MPI-m1-34-a01-command.json",
+   "destination": "run-records/contended-0923T0826-qual-MPI-m1-34-a01-command.json",
+   "source_sha256": "bb0246708fb9d0c5840641d3a31c5b959cecf6d5d61ac0bc866c60efbcf04fbe",
+   "archive_sha256": "bb0246708fb9d0c5840641d3a31c5b959cecf6d5d61ac0bc866c60efbcf04fbe",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0826-qual-MPI-m1-34-a02-cli.log",
+   "destination": "run-records/contended-0923T0826-qual-MPI-m1-34-a02-cli.log",
+   "source_sha256": "2f79714e9b986171bde34f28db13a93b18a6c0fce1d04b406096f4c99d60d25a",
+   "archive_sha256": "2f79714e9b986171bde34f28db13a93b18a6c0fce1d04b406096f4c99d60d25a",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0826-qual-MPI-m1-34-a02-command.json",
+   "destination": "run-records/contended-0923T0826-qual-MPI-m1-34-a02-command.json",
+   "source_sha256": "3e2bf7073f42e062664c029137df17003e509193f23425fd11d144df41e29c15",
+   "archive_sha256": "3e2bf7073f42e062664c029137df17003e509193f23425fd11d144df41e29c15",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0826-qual-MPI-m1-34-a03-cli.log",
+   "destination": "run-records/contended-0923T0826-qual-MPI-m1-34-a03-cli.log",
+   "source_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "archive_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0826-qual-MPI-m1-34-a03-command.json",
+   "destination": "run-records/contended-0923T0826-qual-MPI-m1-34-a03-command.json",
+   "source_sha256": "cb580c8e557172e2b3202ab35cf2b11fcfc4aca39bb1241edcd4deb5214f616b",
+   "archive_sha256": "cb580c8e557172e2b3202ab35cf2b11fcfc4aca39bb1241edcd4deb5214f616b",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0826-smoke-allreduce-34-a01-cli.log",
+   "destination": "run-records/contended-0923T0826-smoke-allreduce-34-a01-cli.log",
+   "source_sha256": "db568cc9d32aadb1b31d61c72d0911242240dfbc507b8faf3fac996d802fe695",
+   "archive_sha256": "db568cc9d32aadb1b31d61c72d0911242240dfbc507b8faf3fac996d802fe695",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0826-smoke-allreduce-34-a01-command.json",
+   "destination": "run-records/contended-0923T0826-smoke-allreduce-34-a01-command.json",
+   "source_sha256": "1bb7a062e0bd30ad025ea6c99da8e883ed7dbca8e2d71920d008d8ac55451d05",
+   "archive_sha256": "1bb7a062e0bd30ad025ea6c99da8e883ed7dbca8e2d71920d008d8ac55451d05",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0827-probe-MPI-m1-34-a01-cli.log",
+   "destination": "run-records/contended-0923T0827-probe-MPI-m1-34-a01-cli.log",
+   "source_sha256": "caf23f728fe008d470d9fc4094a3ea769a40483fc526c43f4aa237ba1511ab7d",
+   "archive_sha256": "caf23f728fe008d470d9fc4094a3ea769a40483fc526c43f4aa237ba1511ab7d",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0827-probe-MPI-m1-34-a01-command.json",
+   "destination": "run-records/contended-0923T0827-probe-MPI-m1-34-a01-command.json",
+   "source_sha256": "0ecd339361159504c4554f113b805a4b93ee46d4b9d836b272229b8469fa0e0f",
+   "archive_sha256": "0ecd339361159504c4554f113b805a4b93ee46d4b9d836b272229b8469fa0e0f",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0827-probe-MPI-m16-34-a01-cli.log",
+   "destination": "run-records/contended-0923T0827-probe-MPI-m16-34-a01-cli.log",
+   "source_sha256": "4aa7b2a82b45ce5fa55b7ce40d12134eb3b88a04ed190664ba2fa997495f1986",
+   "archive_sha256": "4aa7b2a82b45ce5fa55b7ce40d12134eb3b88a04ed190664ba2fa997495f1986",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0827-probe-MPI-m16-34-a01-command.json",
+   "destination": "run-records/contended-0923T0827-probe-MPI-m16-34-a01-command.json",
+   "source_sha256": "e62376ebf77daf9a7f8ae0896509e6e39b2b9b720f5d7a9e597497f1caaf1465",
+   "archive_sha256": "e62376ebf77daf9a7f8ae0896509e6e39b2b9b720f5d7a9e597497f1caaf1465",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0827-probe-MPI-m4-34-a01-cli.log",
+   "destination": "run-records/contended-0923T0827-probe-MPI-m4-34-a01-cli.log",
+   "source_sha256": "fda393c098d01e753c7fd619bcddf52f7bd200d2f382265207789710d22c73c2",
+   "archive_sha256": "fda393c098d01e753c7fd619bcddf52f7bd200d2f382265207789710d22c73c2",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0827-probe-MPI-m4-34-a01-command.json",
+   "destination": "run-records/contended-0923T0827-probe-MPI-m4-34-a01-command.json",
+   "source_sha256": "9d737b66ac577d6174dd67cf66d9e2ad7e0d27933957583a56726a7e1a49e6d6",
+   "archive_sha256": "9d737b66ac577d6174dd67cf66d9e2ad7e0d27933957583a56726a7e1a49e6d6",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0827-probe-MPI-m64-34-a01-cli.log",
+   "destination": "run-records/contended-0923T0827-probe-MPI-m64-34-a01-cli.log",
+   "source_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "archive_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0827-probe-MPI-m64-34-a01-command.json",
+   "destination": "run-records/contended-0923T0827-probe-MPI-m64-34-a01-command.json",
+   "source_sha256": "c613d62a0a28ec795689b57d7ce6c97d37ee669b416258123c74908312007aa1",
+   "archive_sha256": "c613d62a0a28ec795689b57d7ce6c97d37ee669b416258123c74908312007aa1",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0827-qual-MPI-m1-34-a01-cli.log",
+   "destination": "run-records/contended-0923T0827-qual-MPI-m1-34-a01-cli.log",
+   "source_sha256": "7b6e53cd9bc4d259b4088a33ea648180662ef8a76243dad258bdaf4997ff00e9",
+   "archive_sha256": "7b6e53cd9bc4d259b4088a33ea648180662ef8a76243dad258bdaf4997ff00e9",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0827-qual-MPI-m1-34-a01-command.json",
+   "destination": "run-records/contended-0923T0827-qual-MPI-m1-34-a01-command.json",
+   "source_sha256": "3856030739c4e3444af294a81eba1cddd50701d4550ccbf97eba8006500a3416",
+   "archive_sha256": "3856030739c4e3444af294a81eba1cddd50701d4550ccbf97eba8006500a3416",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0827-qual-MPI-m16-34-a01-cli.log",
+   "destination": "run-records/contended-0923T0827-qual-MPI-m16-34-a01-cli.log",
+   "source_sha256": "073edf261061c26075da37a29b08ac93c3c88be551f0ce1ad549054ee5760460",
+   "archive_sha256": "073edf261061c26075da37a29b08ac93c3c88be551f0ce1ad549054ee5760460",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0827-qual-MPI-m16-34-a01-command.json",
+   "destination": "run-records/contended-0923T0827-qual-MPI-m16-34-a01-command.json",
+   "source_sha256": "242cf92b442b3934b20fdd72ae30c0ce4d496ceadd42f1d549166346de96933b",
+   "archive_sha256": "242cf92b442b3934b20fdd72ae30c0ce4d496ceadd42f1d549166346de96933b",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0827-qual-MPI-m4-34-a01-cli.log",
+   "destination": "run-records/contended-0923T0827-qual-MPI-m4-34-a01-cli.log",
+   "source_sha256": "e87fda1800b795f24908cfa9c11f612d1bbfde435abf717b5c52a065d32e6d29",
+   "archive_sha256": "e87fda1800b795f24908cfa9c11f612d1bbfde435abf717b5c52a065d32e6d29",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0827-qual-MPI-m4-34-a01-command.json",
+   "destination": "run-records/contended-0923T0827-qual-MPI-m4-34-a01-command.json",
+   "source_sha256": "7d74e80713d91fb83aa36eb8b989bed739f95c7e01a7bef99d93a2003b542891",
+   "archive_sha256": "7d74e80713d91fb83aa36eb8b989bed739f95c7e01a7bef99d93a2003b542891",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0827-smoke-allreduce-34-a01-cli.log",
+   "destination": "run-records/contended-0923T0827-smoke-allreduce-34-a01-cli.log",
+   "source_sha256": "c3f4401b3934de94ce99117df4eb4e2cb239696040147e86e5a8cb8b3ff8054a",
+   "archive_sha256": "c3f4401b3934de94ce99117df4eb4e2cb239696040147e86e5a8cb8b3ff8054a",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0827-smoke-allreduce-34-a01-command.json",
+   "destination": "run-records/contended-0923T0827-smoke-allreduce-34-a01-command.json",
+   "source_sha256": "24a92153ac7bb7fbc803c30f5f116faead7e91f1028de7d9112da7f06f0c429d",
+   "archive_sha256": "24a92153ac7bb7fbc803c30f5f116faead7e91f1028de7d9112da7f06f0c429d",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-probe-MPI-m1-37-a01-cli.log",
+   "destination": "run-records/contended-0923T0831-probe-MPI-m1-37-a01-cli.log",
+   "source_sha256": "0ae86125c3e8eb09a202f263766ec9d6395e05bbe635c9ee8f71d3d09c00b353",
+   "archive_sha256": "0ae86125c3e8eb09a202f263766ec9d6395e05bbe635c9ee8f71d3d09c00b353",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-probe-MPI-m1-37-a01-command.json",
+   "destination": "run-records/contended-0923T0831-probe-MPI-m1-37-a01-command.json",
+   "source_sha256": "e7c1ca89a779aff80640c54179eab3f3ed21298d35d749de02b7bc478123ae2a",
+   "archive_sha256": "e7c1ca89a779aff80640c54179eab3f3ed21298d35d749de02b7bc478123ae2a",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-probe-MPI-m16-37-a01-cli.log",
+   "destination": "run-records/contended-0923T0831-probe-MPI-m16-37-a01-cli.log",
+   "source_sha256": "37b0081a63e38819a2eab25f55f553e4e7a5d1ee19471436005279129cbc9bed",
+   "archive_sha256": "37b0081a63e38819a2eab25f55f553e4e7a5d1ee19471436005279129cbc9bed",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-probe-MPI-m16-37-a01-command.json",
+   "destination": "run-records/contended-0923T0831-probe-MPI-m16-37-a01-command.json",
+   "source_sha256": "87e0a503d45b527f202508712c5721f80fa2b61d6d93543439e7d5791bd5ab3a",
+   "archive_sha256": "87e0a503d45b527f202508712c5721f80fa2b61d6d93543439e7d5791bd5ab3a",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-probe-MPI-m4-37-a01-cli.log",
+   "destination": "run-records/contended-0923T0831-probe-MPI-m4-37-a01-cli.log",
+   "source_sha256": "9cd3ecded4c9af19698849be7620a7fd49faed239195ed4dcbb50e4b0e38075e",
+   "archive_sha256": "9cd3ecded4c9af19698849be7620a7fd49faed239195ed4dcbb50e4b0e38075e",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-probe-MPI-m4-37-a01-command.json",
+   "destination": "run-records/contended-0923T0831-probe-MPI-m4-37-a01-command.json",
+   "source_sha256": "5229897975f31b317be2de53d68b4f37d16688d519dd3f64f9d8cd66a7bfd2f3",
+   "archive_sha256": "5229897975f31b317be2de53d68b4f37d16688d519dd3f64f9d8cd66a7bfd2f3",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-probe-MPI-m64-34-a01-cli.log",
+   "destination": "run-records/contended-0923T0831-probe-MPI-m64-34-a01-cli.log",
+   "source_sha256": "56d1bdb816cb6de36fd6cd4ebba8390802258c0eb3abec0508a960716038edb8",
+   "archive_sha256": "56d1bdb816cb6de36fd6cd4ebba8390802258c0eb3abec0508a960716038edb8",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-probe-MPI-m64-34-a01-command.json",
+   "destination": "run-records/contended-0923T0831-probe-MPI-m64-34-a01-command.json",
+   "source_sha256": "af123e97f27b59209ad17bde4952118bf02609efc9131cdf232b03d124324d2f",
+   "archive_sha256": "af123e97f27b59209ad17bde4952118bf02609efc9131cdf232b03d124324d2f",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-probe-P2P-m1-34-a01-cli.log",
+   "destination": "run-records/contended-0923T0831-probe-P2P-m1-34-a01-cli.log",
+   "source_sha256": "28ae01f3dbe8b20f7a206a99c9fe11c4459bed3823c8e5a658d6e4ba80caf198",
+   "archive_sha256": "28ae01f3dbe8b20f7a206a99c9fe11c4459bed3823c8e5a658d6e4ba80caf198",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-probe-P2P-m1-34-a01-command.json",
+   "destination": "run-records/contended-0923T0831-probe-P2P-m1-34-a01-command.json",
+   "source_sha256": "efbc1ea577358053c561e12c6bf055c56a45058ac4d579a1175566a721ddb9de",
+   "archive_sha256": "efbc1ea577358053c561e12c6bf055c56a45058ac4d579a1175566a721ddb9de",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-probe-P2P-m16-34-a01-cli.log",
+   "destination": "run-records/contended-0923T0831-probe-P2P-m16-34-a01-cli.log",
+   "source_sha256": "a3cfdfbd91f9a9d00e572c7e1460ca33436b963ea695d5b1db1f68f319eb7801",
+   "archive_sha256": "a3cfdfbd91f9a9d00e572c7e1460ca33436b963ea695d5b1db1f68f319eb7801",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-probe-P2P-m16-34-a01-command.json",
+   "destination": "run-records/contended-0923T0831-probe-P2P-m16-34-a01-command.json",
+   "source_sha256": "a70ff95c47e80fc327aac5e178c7d1a989cbb7d44af925d805928484f6046297",
+   "archive_sha256": "a70ff95c47e80fc327aac5e178c7d1a989cbb7d44af925d805928484f6046297",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-probe-P2P-m4-34-a01-cli.log",
+   "destination": "run-records/contended-0923T0831-probe-P2P-m4-34-a01-cli.log",
+   "source_sha256": "8ef4454ef5e5129c3c75e0396b091831f37e7e0f5c7985299d271a851f8a2ac7",
+   "archive_sha256": "8ef4454ef5e5129c3c75e0396b091831f37e7e0f5c7985299d271a851f8a2ac7",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-probe-P2P-m4-34-a01-command.json",
+   "destination": "run-records/contended-0923T0831-probe-P2P-m4-34-a01-command.json",
+   "source_sha256": "e15ef6bbd6eed558c00cf30b46c4cecda172964f1b2308549e3dbb6021d28376",
+   "archive_sha256": "e15ef6bbd6eed558c00cf30b46c4cecda172964f1b2308549e3dbb6021d28376",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-probe-P2P-m64-34-a01-cli.log",
+   "destination": "run-records/contended-0923T0831-probe-P2P-m64-34-a01-cli.log",
+   "source_sha256": "b7d118d92b07eda97a86e4c70c96ebda63849efe17b3c36693e1e3b593395fd5",
+   "archive_sha256": "b7d118d92b07eda97a86e4c70c96ebda63849efe17b3c36693e1e3b593395fd5",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-probe-P2P-m64-34-a01-command.json",
+   "destination": "run-records/contended-0923T0831-probe-P2P-m64-34-a01-command.json",
+   "source_sha256": "d70178b69b461ab799f378858d95d24ad0d8349509e49910cb8199015e2cfaf1",
+   "archive_sha256": "d70178b69b461ab799f378858d95d24ad0d8349509e49910cb8199015e2cfaf1",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-qual-MPI-m1-37-a01-cli.log",
+   "destination": "run-records/contended-0923T0831-qual-MPI-m1-37-a01-cli.log",
+   "source_sha256": "c082be4e2601162d7c070a395ecc3a8e8c58ff3ac8c96d3a42ad58444e0cca2d",
+   "archive_sha256": "c082be4e2601162d7c070a395ecc3a8e8c58ff3ac8c96d3a42ad58444e0cca2d",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-qual-MPI-m1-37-a01-command.json",
+   "destination": "run-records/contended-0923T0831-qual-MPI-m1-37-a01-command.json",
+   "source_sha256": "5e207fe6f7c42212ef232e3e20333a2f2f2c1ca222004121e6667f7e519fabb8",
+   "archive_sha256": "5e207fe6f7c42212ef232e3e20333a2f2f2c1ca222004121e6667f7e519fabb8",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-qual-MPI-m16-34-a01-cli.log",
+   "destination": "run-records/contended-0923T0831-qual-MPI-m16-34-a01-cli.log",
+   "source_sha256": "82a100940975f209b6cd4f2efcc334672d65326f161f7695d9cdbbd7f4fa7e4a",
+   "archive_sha256": "82a100940975f209b6cd4f2efcc334672d65326f161f7695d9cdbbd7f4fa7e4a",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-qual-MPI-m16-34-a01-command.json",
+   "destination": "run-records/contended-0923T0831-qual-MPI-m16-34-a01-command.json",
+   "source_sha256": "1c24857a67b73dcffbf465a13f88203800c23dab43d27de01ffc7ae563f42c5e",
+   "archive_sha256": "1c24857a67b73dcffbf465a13f88203800c23dab43d27de01ffc7ae563f42c5e",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-qual-MPI-m4-37-a01-cli.log",
+   "destination": "run-records/contended-0923T0831-qual-MPI-m4-37-a01-cli.log",
+   "source_sha256": "633b359aec4093f963c3496ca294818f1bfb96fc15db69f04414e57edec967c8",
+   "archive_sha256": "633b359aec4093f963c3496ca294818f1bfb96fc15db69f04414e57edec967c8",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-qual-MPI-m4-37-a01-command.json",
+   "destination": "run-records/contended-0923T0831-qual-MPI-m4-37-a01-command.json",
+   "source_sha256": "1212160d268f15402c5eee933955342c9feb69ad952e63fd47663c1a1e72bf78",
+   "archive_sha256": "1212160d268f15402c5eee933955342c9feb69ad952e63fd47663c1a1e72bf78",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-qual-MPI-m64-34-a01-cli.log",
+   "destination": "run-records/contended-0923T0831-qual-MPI-m64-34-a01-cli.log",
+   "source_sha256": "4442751a65a2e6fb9de24652fd91adc1f201703c2063ce8d1d6cc51099bc81a4",
+   "archive_sha256": "4442751a65a2e6fb9de24652fd91adc1f201703c2063ce8d1d6cc51099bc81a4",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-qual-MPI-m64-34-a01-command.json",
+   "destination": "run-records/contended-0923T0831-qual-MPI-m64-34-a01-command.json",
+   "source_sha256": "651b7c3d371e802a141092f25f4b1ab715503340d27602c344d17b382707b96b",
+   "archive_sha256": "651b7c3d371e802a141092f25f4b1ab715503340d27602c344d17b382707b96b",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-qual-P2P-m1-34-a01-cli.log",
+   "destination": "run-records/contended-0923T0831-qual-P2P-m1-34-a01-cli.log",
+   "source_sha256": "c53eb9dba0aa92246a71b953f60c764f248fa65c351ca007d111c10c73c37e15",
+   "archive_sha256": "c53eb9dba0aa92246a71b953f60c764f248fa65c351ca007d111c10c73c37e15",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-qual-P2P-m1-34-a01-command.json",
+   "destination": "run-records/contended-0923T0831-qual-P2P-m1-34-a01-command.json",
+   "source_sha256": "dc37072dad63f3cc293abb9a8437fe31d1e3fec0c3c97eaca10427edca93612a",
+   "archive_sha256": "dc37072dad63f3cc293abb9a8437fe31d1e3fec0c3c97eaca10427edca93612a",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-qual-P2P-m16-34-a01-cli.log",
+   "destination": "run-records/contended-0923T0831-qual-P2P-m16-34-a01-cli.log",
+   "source_sha256": "a236bd477deeb8a0a493c7ce15cdb7df223baf48c501d6f4d03099526f2171da",
+   "archive_sha256": "a236bd477deeb8a0a493c7ce15cdb7df223baf48c501d6f4d03099526f2171da",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-qual-P2P-m16-34-a01-command.json",
+   "destination": "run-records/contended-0923T0831-qual-P2P-m16-34-a01-command.json",
+   "source_sha256": "49325dec9377b2bc7cdf40c148a3d77ca45668d98cb5bd9dd1f6afb1e86e9593",
+   "archive_sha256": "49325dec9377b2bc7cdf40c148a3d77ca45668d98cb5bd9dd1f6afb1e86e9593",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-qual-P2P-m4-34-a01-cli.log",
+   "destination": "run-records/contended-0923T0831-qual-P2P-m4-34-a01-cli.log",
+   "source_sha256": "650547dbbc6ddad488204910229b56369b4cee093ccb790d730c7bad1348eef8",
+   "archive_sha256": "650547dbbc6ddad488204910229b56369b4cee093ccb790d730c7bad1348eef8",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-qual-P2P-m4-34-a01-command.json",
+   "destination": "run-records/contended-0923T0831-qual-P2P-m4-34-a01-command.json",
+   "source_sha256": "25be7a51a10c44d690d8505da55a39fd676eabbe86d384e49513822c66f5ed41",
+   "archive_sha256": "25be7a51a10c44d690d8505da55a39fd676eabbe86d384e49513822c66f5ed41",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-qual-P2P-m64-34-a01-cli.log",
+   "destination": "run-records/contended-0923T0831-qual-P2P-m64-34-a01-cli.log",
+   "source_sha256": "b9d1fe192811338d2785ce4aa5c9e84131feac81d2daac23e0479f04d468cb19",
+   "archive_sha256": "b9d1fe192811338d2785ce4aa5c9e84131feac81d2daac23e0479f04d468cb19",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-qual-P2P-m64-34-a01-command.json",
+   "destination": "run-records/contended-0923T0831-qual-P2P-m64-34-a01-command.json",
+   "source_sha256": "4f8a91103be5b492b305e50d36a7c123c0826a2203f9d23a2a23ef393b0367de",
+   "archive_sha256": "4f8a91103be5b492b305e50d36a7c123c0826a2203f9d23a2a23ef393b0367de",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-smoke-allreduce-37-a01-cli.log",
+   "destination": "run-records/contended-0923T0831-smoke-allreduce-37-a01-cli.log",
+   "source_sha256": "100f054595192ea3728bebe8d4bd71da00324f7e6f1830a8920ca4a9bd29ea56",
+   "archive_sha256": "100f054595192ea3728bebe8d4bd71da00324f7e6f1830a8920ca4a9bd29ea56",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-smoke-allreduce-37-a01-command.json",
+   "destination": "run-records/contended-0923T0831-smoke-allreduce-37-a01-command.json",
+   "source_sha256": "779d4235d8dffabaa378e6037e11118133f5282ed247c47684e45169c81368ca",
+   "archive_sha256": "779d4235d8dffabaa378e6037e11118133f5282ed247c47684e45169c81368ca",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-timeout-MPI-34-cli.log",
+   "destination": "run-records/contended-0923T0831-timeout-MPI-34-cli.log",
+   "source_sha256": "b58f147d6b62637888612718b879844a056466ae08da3e656d1bc5abeed2afc8",
+   "archive_sha256": "b58f147d6b62637888612718b879844a056466ae08da3e656d1bc5abeed2afc8",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-timeout-MPI-34-command.json",
+   "destination": "run-records/contended-0923T0831-timeout-MPI-34-command.json",
+   "source_sha256": "a722c190199983bf31a1b1ad1d5fbe018069750a5c4df2ff3e8792b8b7a24893",
+   "archive_sha256": "a722c190199983bf31a1b1ad1d5fbe018069750a5c4df2ff3e8792b8b7a24893",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-timeout-P2P-34-cli.log",
+   "destination": "run-records/contended-0923T0831-timeout-P2P-34-cli.log",
+   "source_sha256": "4936400eb4171fac263c7a784e37cc443b37bc8a72d01c8578ded2714bb97ec2",
+   "archive_sha256": "4936400eb4171fac263c7a784e37cc443b37bc8a72d01c8578ded2714bb97ec2",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0831-timeout-P2P-34-command.json",
+   "destination": "run-records/contended-0923T0831-timeout-P2P-34-command.json",
+   "source_sha256": "4bab13f212efd9b714872ef6ba314ef62054507a9ee8811fef9b4ee19af9f261",
+   "archive_sha256": "4bab13f212efd9b714872ef6ba314ef62054507a9ee8811fef9b4ee19af9f261",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0843-probe-MPI-m16-34-cli.log",
+   "destination": "run-records/contended-0923T0843-probe-MPI-m16-34-cli.log",
+   "source_sha256": "d7f2cc7e6a97a8f1d91de78b63a74738e4934075047d8e928f4b28ad466d646b",
+   "archive_sha256": "d7f2cc7e6a97a8f1d91de78b63a74738e4934075047d8e928f4b28ad466d646b",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0843-probe-MPI-m16-34-command.json",
+   "destination": "run-records/contended-0923T0843-probe-MPI-m16-34-command.json",
+   "source_sha256": "ae627eb44c110092a32087ecf9b87063b678f0696d6b4d9a4a13e9567696b4ed",
+   "archive_sha256": "ae627eb44c110092a32087ecf9b87063b678f0696d6b4d9a4a13e9567696b4ed",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0843-qual-MPI-m16-34-cli.log",
+   "destination": "run-records/contended-0923T0843-qual-MPI-m16-34-cli.log",
+   "source_sha256": "7277ded2a034d7d881d63f15152f9473b8cd8d69a7b9aef7fda2a0c44d8c1d3a",
+   "archive_sha256": "7277ded2a034d7d881d63f15152f9473b8cd8d69a7b9aef7fda2a0c44d8c1d3a",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-0923T0843-qual-MPI-m16-34-command.json",
+   "destination": "run-records/contended-0923T0843-qual-MPI-m16-34-command.json",
+   "source_sha256": "7d95850739aca3da5f5dc655ca04a0f35130f6b62fb74f5105333315ee108894",
+   "archive_sha256": "7d95850739aca3da5f5dc655ca04a0f35130f6b62fb74f5105333315ee108894",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-smoke-allreduce-34-a01-cli.log",
+   "destination": "run-records/contended-smoke-allreduce-34-a01-cli.log",
+   "source_sha256": "d4d0d9fc08ccab82da571d230bfc1e73031d3c10902b1545f2408b8547c140c5",
+   "archive_sha256": "d4d0d9fc08ccab82da571d230bfc1e73031d3c10902b1545f2408b8547c140c5",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-smoke-allreduce-34-a01-command.json",
+   "destination": "run-records/contended-smoke-allreduce-34-a01-command.json",
+   "source_sha256": "0b349f73e3bfbe18b93795a28c663e87f2651d7b23a008f3c7a8649d5df9fccf",
+   "archive_sha256": "0b349f73e3bfbe18b93795a28c663e87f2651d7b23a008f3c7a8649d5df9fccf",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-smoke-allreduce-34-a02-cli.log",
+   "destination": "run-records/contended-smoke-allreduce-34-a02-cli.log",
+   "source_sha256": "c1993144b6a06c73e9de3242e91e564aecf0a1c3d5b5beb27ec82485c70cdc89",
+   "archive_sha256": "c1993144b6a06c73e9de3242e91e564aecf0a1c3d5b5beb27ec82485c70cdc89",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-smoke-allreduce-34-a02-command.json",
+   "destination": "run-records/contended-smoke-allreduce-34-a02-command.json",
+   "source_sha256": "c2a61208e1f72591249dac9ddc140b1f43d8f15a4818850b1dd72044e71e2dfd",
+   "archive_sha256": "c2a61208e1f72591249dac9ddc140b1f43d8f15a4818850b1dd72044e71e2dfd",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-smoke-allreduce-34-a03-cli.log",
+   "destination": "run-records/contended-smoke-allreduce-34-a03-cli.log",
+   "source_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "archive_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-smoke-allreduce-34-a03-command.json",
+   "destination": "run-records/contended-smoke-allreduce-34-a03-command.json",
+   "source_sha256": "163287ae7d55276fa22d21b201fab64c810ad1541619f1cd8fbac950b4eaf78f",
+   "archive_sha256": "163287ae7d55276fa22d21b201fab64c810ad1541619f1cd8fbac950b4eaf78f",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-smoke-allreduce-fix-a01-cli.log",
+   "destination": "run-records/contended-smoke-allreduce-fix-a01-cli.log",
+   "source_sha256": "577e572f135220314b890db6c2e020b53b51719601d4590f3212a65a1f78dfcb",
+   "archive_sha256": "577e572f135220314b890db6c2e020b53b51719601d4590f3212a65a1f78dfcb",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-smoke-allreduce-fix-a01-command.json",
+   "destination": "run-records/contended-smoke-allreduce-fix-a01-command.json",
+   "source_sha256": "06fbe9baf83f93094c43b30203e2410cbc02323b379f461ab09e6a4025ffd448",
+   "archive_sha256": "06fbe9baf83f93094c43b30203e2410cbc02323b379f461ab09e6a4025ffd448",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-smoke-allreduce-fix-a02-cli.log",
+   "destination": "run-records/contended-smoke-allreduce-fix-a02-cli.log",
+   "source_sha256": "88cc46c808e7868f43df6a9615a507bc409e6c0eec045f5a5b925ed977c00e69",
+   "archive_sha256": "88cc46c808e7868f43df6a9615a507bc409e6c0eec045f5a5b925ed977c00e69",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-smoke-allreduce-fix-a02-command.json",
+   "destination": "run-records/contended-smoke-allreduce-fix-a02-command.json",
+   "source_sha256": "65ce83755872e990bebe989e7fb7c1f03bb985d7a172739f52f2281635796699",
+   "archive_sha256": "65ce83755872e990bebe989e7fb7c1f03bb985d7a172739f52f2281635796699",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-smoke-allreduce-fix-a03-cli.log",
+   "destination": "run-records/contended-smoke-allreduce-fix-a03-cli.log",
+   "source_sha256": "1546dd208c0ad8854b3bc8be4469a5e0d97c10f1cbb9a152c5c1e806451a368b",
+   "archive_sha256": "1546dd208c0ad8854b3bc8be4469a5e0d97c10f1cbb9a152c5c1e806451a368b",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-smoke-allreduce-fix-a03-command.json",
+   "destination": "run-records/contended-smoke-allreduce-fix-a03-command.json",
+   "source_sha256": "f76f56218c81610f5426bc40a4e609d9580be4c200d0fb09aa5e546d71a6b34e",
+   "archive_sha256": "f76f56218c81610f5426bc40a4e609d9580be4c200d0fb09aa5e546d71a6b34e",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-smoke-allreduce-fix-a04-cli.log",
+   "destination": "run-records/contended-smoke-allreduce-fix-a04-cli.log",
+   "source_sha256": "4957a31dcdd73c4dafb5fdb0c5b5f9c575bfb78f10b35feb9db0e3d41a9ba8ce",
+   "archive_sha256": "4957a31dcdd73c4dafb5fdb0c5b5f9c575bfb78f10b35feb9db0e3d41a9ba8ce",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-smoke-allreduce-fix-a04-command.json",
+   "destination": "run-records/contended-smoke-allreduce-fix-a04-command.json",
+   "source_sha256": "3f0b4360bbb6552f6cb4795a0b2e81de7693a37f73c4c2156377d04b1b26557f",
+   "archive_sha256": "3f0b4360bbb6552f6cb4795a0b2e81de7693a37f73c4c2156377d04b1b26557f",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-smoke-allreduce-fix-a05-cli.log",
+   "destination": "run-records/contended-smoke-allreduce-fix-a05-cli.log",
+   "source_sha256": "e872677aec6a7ae002a21aa83e43b567a0e856566aff1f24cdbb41802f8f087e",
+   "archive_sha256": "e872677aec6a7ae002a21aa83e43b567a0e856566aff1f24cdbb41802f8f087e",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-smoke-allreduce-fix-a05-command.json",
+   "destination": "run-records/contended-smoke-allreduce-fix-a05-command.json",
+   "source_sha256": "670f8c9bc15ec378e7c0b98624bdeb9aa3de889da4eb5aec0bd77feb4d7d9afc",
+   "archive_sha256": "670f8c9bc15ec378e7c0b98624bdeb9aa3de889da4eb5aec0bd77feb4d7d9afc",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-smoke-allreduce-fix-a06-cli.log",
+   "destination": "run-records/contended-smoke-allreduce-fix-a06-cli.log",
+   "source_sha256": "ac5dbb6891c7fe24ad46c296f392cb5966271a65a03b830d59980b65b7c591be",
+   "archive_sha256": "ac5dbb6891c7fe24ad46c296f392cb5966271a65a03b830d59980b65b7c591be",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/contended-smoke-allreduce-fix-a06-command.json",
+   "destination": "run-records/contended-smoke-allreduce-fix-a06-command.json",
+   "source_sha256": "469a09164255ead1fbaf85361a8ab8231c3c316784dcd397a896ccbf7a8e65ef",
+   "archive_sha256": "469a09164255ead1fbaf85361a8ab8231c3c316784dcd397a896ccbf7a8e65ef",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/memory-medium-a01-card5-cli.log",
+   "destination": "run-records/memory-medium-a01-card5-cli.log",
+   "source_sha256": "218e677a867a56a07993437152707063b91295346a9d7872b1a94dbb02fb3940",
+   "archive_sha256": "218e677a867a56a07993437152707063b91295346a9d7872b1a94dbb02fb3940",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/memory-medium-a01-card5-command.json",
+   "destination": "run-records/memory-medium-a01-card5-command.json",
+   "source_sha256": "5640099a20b1e4b9a9e57eeb195c4ae4a4b18a6a1a1cd389c22e6fd52a6c4196",
+   "archive_sha256": "5640099a20b1e4b9a9e57eeb195c4ae4a4b18a6a1a1cd389c22e6fd52a6c4196",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/memory-medium-a02-card5-cli.log",
+   "destination": "run-records/memory-medium-a02-card5-cli.log",
+   "source_sha256": "e5b6236f9d266ac4a594facf509ae6ec24b9a7c4dab78744f40eaccdf32f00b8",
+   "archive_sha256": "e5b6236f9d266ac4a594facf509ae6ec24b9a7c4dab78744f40eaccdf32f00b8",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/memory-medium-a02-card5-command.json",
+   "destination": "run-records/memory-medium-a02-card5-command.json",
+   "source_sha256": "337b84232a2999054c7da46d83419f09f5757790ae6acc282a2bd0ba91fa23cb",
+   "archive_sha256": "337b84232a2999054c7da46d83419f09f5757790ae6acc282a2bd0ba91fa23cb",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/memory-qualification-a01-card5-cli.log",
+   "destination": "run-records/memory-qualification-a01-card5-cli.log",
+   "source_sha256": "017d48d1cd831bc553d8e8ca36aa678dfeac7dccd0ae95f5b56b37e0e7370b92",
+   "archive_sha256": "017d48d1cd831bc553d8e8ca36aa678dfeac7dccd0ae95f5b56b37e0e7370b92",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/memory-qualification-a01-card5-command.json",
+   "destination": "run-records/memory-qualification-a01-card5-command.json",
+   "source_sha256": "2affa9ae70c956180df184cb16453eb208800dd04df4c8fc3c768acc5b6a2ea2",
+   "archive_sha256": "2affa9ae70c956180df184cb16453eb208800dd04df4c8fc3c768acc5b6a2ea2",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/memory-qualification-a02-card5-cli.log",
+   "destination": "run-records/memory-qualification-a02-card5-cli.log",
+   "source_sha256": "64e1ffa0f28f7b76d6a7378cbbcea5edd628759b158fd9941f76539fd086ada1",
+   "archive_sha256": "64e1ffa0f28f7b76d6a7378cbbcea5edd628759b158fd9941f76539fd086ada1",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/memory-qualification-a02-card5-command.json",
+   "destination": "run-records/memory-qualification-a02-card5-command.json",
+   "source_sha256": "e0bb2fc2f5c866728e0bf16f50e03e26566aa054ad5fdb165f3b68b001d75d47",
+   "archive_sha256": "e0bb2fc2f5c866728e0bf16f50e03e26566aa054ad5fdb165f3b68b001d75d47",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/memory-smoke-a01-card5-cli.log",
+   "destination": "run-records/memory-smoke-a01-card5-cli.log",
+   "source_sha256": "664cf73b4f64aa158a0aa438a6178ab05e41607e0284fce0f483e89a6e94c120",
+   "archive_sha256": "664cf73b4f64aa158a0aa438a6178ab05e41607e0284fce0f483e89a6e94c120",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/memory-smoke-a01-card5-command.json",
+   "destination": "run-records/memory-smoke-a01-card5-command.json",
+   "source_sha256": "fb3143f16e7763070b8eef42fe4c339f0aa9f8b19c7f2c028bb8070982b68c42",
+   "archive_sha256": "fb3143f16e7763070b8eef42fe4c339f0aa9f8b19c7f2c028bb8070982b68c42",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/memory-timeout-a01-card5-cli.log",
+   "destination": "run-records/memory-timeout-a01-card5-cli.log",
+   "source_sha256": "35c0c7cc7bb57c86e4016bc5c9ed320382eb542f03970357e60b92d5ba5e02e7",
+   "archive_sha256": "35c0c7cc7bb57c86e4016bc5c9ed320382eb542f03970357e60b92d5ba5e02e7",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/memory-timeout-a01-card5-command.json",
+   "destination": "run-records/memory-timeout-a01-card5-command.json",
+   "source_sha256": "43d6e6f3fa99d1c5b88c69ab987929f6b60d1a492d7f4b33363f8c6b9baf19f0",
+   "archive_sha256": "43d6e6f3fa99d1c5b88c69ab987929f6b60d1a492d7f4b33363f8c6b9baf19f0",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/preflight-a01-card5-cli.log",
+   "destination": "run-records/preflight-a01-card5-cli.log",
+   "source_sha256": "cfe5d16a2bc8b5ca6a7997e1a81f7427d62ca473e677f54ddd7d2521ababb09d",
+   "archive_sha256": "cfe5d16a2bc8b5ca6a7997e1a81f7427d62ca473e677f54ddd7d2521ababb09d",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/preflight-a01-card5-command.json",
+   "destination": "run-records/preflight-a01-card5-command.json",
+   "source_sha256": "1bc1e23df46ec4749ef432f274bc4053e290d511f4c1b728387febceda25b204",
+   "archive_sha256": "1bc1e23df46ec4749ef432f274bc4053e290d511f4c1b728387febceda25b204",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/preflight-a02-cards56-cli.log",
+   "destination": "run-records/preflight-a02-cards56-cli.log",
+   "source_sha256": "2e943cac3a55a3e115af5514e47c183f68b316d90e524742d1678df289abfc47",
+   "archive_sha256": "2e943cac3a55a3e115af5514e47c183f68b316d90e524742d1678df289abfc47",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/preflight-a02-cards56-command.json",
+   "destination": "run-records/preflight-a02-cards56-command.json",
+   "source_sha256": "85e6644b4f82d5b8bf415a1d139412ce5f5971d01925b9e125054bd553914721",
+   "archive_sha256": "85e6644b4f82d5b8bf415a1d139412ce5f5971d01925b9e125054bd553914721",
+   "byte_identical": true
+  }
+ ]
+}

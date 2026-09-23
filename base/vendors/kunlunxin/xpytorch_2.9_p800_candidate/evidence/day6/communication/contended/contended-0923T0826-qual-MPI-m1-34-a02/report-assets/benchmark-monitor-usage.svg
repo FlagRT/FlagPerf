@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="500" viewBox="0 0 1000 500">
+<rect width="100%" height="100%" fill="white"/>
+<text x="20" y="25" font-size="16">Raw telemetry overlapping rank measurement windows</text>
+<text x="20" y="60" font-size="13">kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57: Device utilization (%) [67, 67]</text>
+<circle cx="30.000" cy="135.000" r="3" fill="#2463a4"><title>9.119986085221171: 67</title></circle>
+<text x="20" y="170" font-size="13">kunlunxin/b7942319-362e-5a53-a8eb-a2d06fbe84f6: Device utilization (%) [49, 49]</text>
+<circle cx="30.000" cy="245.000" r="3" fill="#2463a4"><title>9.152220729272813: 49</title></circle>
+<text x="20" y="280" font-size="13">kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57: Allocated device memory (MiB) [2348, 2348]</text>
+<circle cx="30.000" cy="355.000" r="3" fill="#2463a4"><title>9.119986085221171: 2348</title></circle>
+<text x="20" y="390" font-size="13">kunlunxin/b7942319-362e-5a53-a8eb-a2d06fbe84f6: Allocated device memory (MiB) [2818, 2818]</text>
+<circle cx="30.000" cy="465.000" r="3" fill="#2463a4"><title>9.152220729272813: 2818</title></circle>
+</svg>

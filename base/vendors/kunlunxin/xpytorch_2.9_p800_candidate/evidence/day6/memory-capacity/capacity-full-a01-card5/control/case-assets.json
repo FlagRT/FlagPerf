@@ -1,0 +1,56 @@
+{
+  "case": "main_memory-capacity:P800",
+  "case_name": "main_memory-capacity",
+  "chip": "P800",
+  "configurations": {
+    "chip": {
+      "bytes": 235,
+      "relative_path": "benchmarks/main_memory-capacity/kunlunxin/P800/case_config.yaml",
+      "sha256": "27d86043f1693e0ab0425b6ccd591b03097d67fa99b7821049e99d65d4a66128"
+    },
+    "generic": {
+      "bytes": 620,
+      "relative_path": "benchmarks/main_memory-capacity/case_config.yaml",
+      "sha256": "89213928bbba4eb6837000d84079879a728cd02a1ee7baddeb8671e5354d67c1"
+    }
+  },
+  "entrypoint": {
+    "bytes": 1246,
+    "relative_path": "benchmarks/main_memory-capacity/kunlunxin/P800/main.py",
+    "sha256": "04dfc90c6473694b763b96b2007e7b7cd51e3b3d1d390f28048f4bb559c03356"
+  },
+  "environments": [],
+  "merged_config": {
+    "BOUND_REQUEST_BY_FREE_MEMORY": true,
+    "DIST_BACKEND": "gloo",
+    "DTYPE": "float32",
+    "IMPLEMENTATION": "native-xpytorch",
+    "INITSIZE": 8192,
+    "MIN_MIB": 1,
+    "MODE": "capacity",
+    "POST_TEST_WAIT_SECONDS": 0
+  },
+  "requirement_files": [
+    {
+      "bytes": 258,
+      "relative_path": "benchmarks/main_memory-capacity/kunlunxin/P800/runtime_requirements.json",
+      "sha256": "0b7f1fb8620fc23b04d5bbdb5d0d56f49761b5d4ea7e6cceae136baef1590e2f"
+    }
+  ],
+  "requirements": {
+    "correctness_required": true,
+    "high_risk": true,
+    "implementation": "native-xpytorch",
+    "process_scope": {
+      "nnodes": 1,
+      "nproc_per_node": 1
+    },
+    "runtime_profile": "xpytorch_2.9_p800_candidate",
+    "runtime_role": "operator",
+    "schema_version": 1,
+    "supported": true
+  },
+  "schema_version": 1,
+  "selector": "kunlunxin/P800",
+  "vendor": "kunlunxin"
+}

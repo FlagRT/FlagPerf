@@ -1,0 +1,80 @@
+{
+  "binding": {
+    "container_device_node": "/dev/xpu7",
+    "framework_device_name": "cuda:0",
+    "framework_local_rank": 0,
+    "framework_logical_id": 0,
+    "host_device_node": "/dev/xpu7",
+    "host_physical_id": 5,
+    "legacy_logical_id": null,
+    "pci_bdf": "0000:9c:00.0",
+    "request_index": 0,
+    "resource_key": "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87",
+    "serial_or_uuid": "f396486d-9850-50e4-81c4-50f2e9f6ca87",
+    "vendor": "kunlunxin"
+  },
+  "bindings": [
+    {
+      "container_device_node": "/dev/xpu7",
+      "framework_device_name": "cuda:0",
+      "framework_local_rank": 0,
+      "framework_logical_id": 0,
+      "host_device_node": "/dev/xpu7",
+      "host_physical_id": 5,
+      "legacy_logical_id": null,
+      "pci_bdf": "0000:9c:00.0",
+      "request_index": 0,
+      "resource_key": "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87",
+      "serial_or_uuid": "f396486d-9850-50e4-81c4-50f2e9f6ca87",
+      "vendor": "kunlunxin"
+    },
+    {
+      "container_device_node": "/dev/xpu5",
+      "framework_device_name": "cuda:1",
+      "framework_local_rank": 1,
+      "framework_logical_id": 1,
+      "host_device_node": "/dev/xpu5",
+      "host_physical_id": 6,
+      "legacy_logical_id": null,
+      "pci_bdf": "0000:b6:00.0",
+      "request_index": 1,
+      "resource_key": "kunlunxin/9e24d168-db57-5cd9-8cfb-aea4ae898897",
+      "serial_or_uuid": "9e24d168-db57-5cd9-8cfb-aea4ae898897",
+      "vendor": "kunlunxin"
+    }
+  ],
+  "case": "interconnect-MPI_intraserver:P800",
+  "checks": [],
+  "context_sha256": "9ded05603571fc3bde359802db5eb62c8130e68376f7fbb1274f14dfef38f60f",
+  "cuda_matmul_allow_tf32": false,
+  "error": "FLAGCX error in: /env/FlagCX/plugin/torch/flagcx/src/backend_flagcx.cpp:389, \nflagcxSystemError: System call (e.g. socket, malloc) or external library call failed or device error. \nLast error:\nUndefined: flagcxComm is not fully initialized.",
+  "error_type": "DistBackendError",
+  "fallback_scope": "UUID, tensor placement and locked native route; no universal fallback exclusion",
+  "input": {
+    "contiguous": true,
+    "data_ptr": 278176727040,
+    "device": "cuda:0",
+    "dtype": "float32",
+    "numel": 1048576
+  },
+  "input_checksum": {
+    "finite": true,
+    "first": 9,
+    "last": 157,
+    "sum": 140501585
+  },
+  "pid_namespace": "pid:[4026548129]",
+  "precision_scope": "native inputs/outputs as recorded by the case; compatibility controls do not certify internal arithmetic",
+  "rank": 0,
+  "run_id": "benchmark-85486fb929814c7cbdb028f286fc9264",
+  "schema_version": 1,
+  "semantics": {
+    "collective": "all_reduce SUM",
+    "message_bytes": 4194304,
+    "reference": "sum of both deterministic rank inputs computed on CPU",
+    "timed_loop": "sign-paired inputs (+base and -base) keep repeated SUM at exactly zero; wire traffic is unchanged"
+  },
+  "status": "failed",
+  "worker_parent_pid": 168,
+  "worker_pid": 233
+}

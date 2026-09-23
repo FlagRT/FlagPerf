@@ -1,0 +1,18 @@
+{
+  "argv": [
+    "sudo",
+    "-n",
+    "docker",
+    "image",
+    "inspect",
+    "sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975"
+  ],
+  "finished_monotonic_s": 3975142.057355268,
+  "returncode": 1,
+  "started_at": "2026-09-23T03:26:45.123478+00:00",
+  "started_monotonic_s": 3975142.043334925,
+  "stderr": "sudo: a password is required\n",
+  "stdout": "",
+  "timed_out": false,
+  "timeout_s": 10
+}

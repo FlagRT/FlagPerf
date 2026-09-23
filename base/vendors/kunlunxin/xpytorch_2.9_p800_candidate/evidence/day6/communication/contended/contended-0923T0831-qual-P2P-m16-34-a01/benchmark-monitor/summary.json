@@ -1,0 +1,85 @@
+{
+  "clock_domain": "same-host Linux monotonic",
+  "collector": "xpu-smi -m and selected -q",
+  "extensions": [],
+  "parsed_samples": {
+    "bytes": 19406,
+    "path": "benchmark-monitor/samples.jsonl",
+    "sha256": "6fbb0d38a80be2b4ab74734618cd0251e0e90333e4f732b16d22e5f8a4c71e14"
+  },
+  "policy": {
+    "automatic_workload_extension": false,
+    "collector": "xpu-smi -m and selected -q",
+    "enabled": true,
+    "metric_fields": [
+      {
+        "key": "utilization_percent",
+        "label": "Device utilization",
+        "unit": "%"
+      },
+      {
+        "key": "used_memory_mib",
+        "label": "Allocated device memory",
+        "unit": "MiB"
+      }
+    ],
+    "required_samples_per_target": 10,
+    "target_interval_s": 1.0,
+    "target_resource": "p800-device",
+    "vendor": "kunlunxin"
+  },
+  "primary_sample_counts_by_target": {
+    "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57": 17,
+    "kunlunxin/b7942319-362e-5a53-a8eb-a2d06fbe84f6": 17
+  },
+  "raw_samples": {
+    "bytes": 308992,
+    "path": "benchmark-monitor/samples.raw.jsonl",
+    "sha256": "6f0da9591d13b123b774beecc293f7303ff4e4a737b7953f6cd405caf06b30fd"
+  },
+  "reasons": [],
+  "sample_counts_by_target": {
+    "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57": 17,
+    "kunlunxin/b7942319-362e-5a53-a8eb-a2d06fbe84f6": 17
+  },
+  "schema_version": 2,
+  "status": "passed",
+  "target_resource": null,
+  "targets": [
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "pci_bdf": "0000:2e:00.0",
+      "physical_id": 3,
+      "uuid": "9429f5bd-7d13-5cc5-b1b4-c05ddc572f57"
+    },
+    {
+      "device_id": "kunlunxin/b7942319-362e-5a53-a8eb-a2d06fbe84f6",
+      "pci_bdf": "0000:84:00.0",
+      "physical_id": 4,
+      "uuid": "b7942319-362e-5a53-a8eb-a2d06fbe84f6"
+    }
+  ],
+  "total_sample_commands": 87,
+  "vendor": "kunlunxin",
+  "window_semantics": "FP32 loop including final full target synchronization",
+  "workload_windows": [
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_monotonic_ns": 3993828849459773,
+      "finished_offset_s": 26.862985766027123,
+      "rank": 0,
+      "role": "measurement",
+      "started_monotonic_ns": 3993811407298401,
+      "started_offset_s": 9.420824394095689
+    },
+    {
+      "device_id": "kunlunxin/b7942319-362e-5a53-a8eb-a2d06fbe84f6",
+      "finished_monotonic_ns": 3993828848924974,
+      "finished_offset_s": 26.862450967077166,
+      "rank": 1,
+      "role": "measurement",
+      "started_monotonic_ns": 3993811407263442,
+      "started_offset_s": 9.420789435040206
+    }
+  ]
+}

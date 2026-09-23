@@ -1,0 +1,78 @@
+checkpoint: UUID set verified; selecting device
+checkpoint: creating four-element tensor
+checkpoint: synchronizing device
+checkpoint: tensor readback passed
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/runpy.py:126: RuntimeWarning: 'torch.distributed.run' found in sys.modules after import of package 'torch.distributed', but prior to execution of 'torch.distributed.run'; this may result in unpredictable behaviour
+  warn(RuntimeWarning(msg))
+
+*****************************************
+Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+*****************************************
+[W923 12:14:55.140283364 socket.cpp:209] [c10d] The hostname of the client socket cannot be retrieved. err=-3
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+Traceback (most recent call last):
+  File "/workspace/FlagPerf/base/benchmarks/interconnect-MPI_intraserver/kunlunxin/P800/main.py", line 25, in <module>
+    bootstrap_vendor(config.vendor)
+  File "/workspace/FlagPerf/base/benchmarks/drivers/utils.py", line 30, in bootstrap_vendor
+    from . import kunlunxin
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/xpytorch_import_hook.py", line 132, in _custom_import
+    module = builtins.__origin__import__(
+  File "/workspace/FlagPerf/base/benchmarks/drivers/kunlunxin.py", line 10, in <module>
+    from base.vendors.kunlunxin.provider import binding_records
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/xpytorch_import_hook.py", line 132, in _custom_import
+    module = builtins.__origin__import__(
+ModuleNotFoundError: No module named 'base'
+Traceback (most recent call last):
+  File "/workspace/FlagPerf/base/benchmarks/interconnect-MPI_intraserver/kunlunxin/P800/main.py", line 25, in <module>
+    bootstrap_vendor(config.vendor)
+  File "/workspace/FlagPerf/base/benchmarks/drivers/utils.py", line 30, in bootstrap_vendor
+    from . import kunlunxin
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/xpytorch_import_hook.py", line 132, in _custom_import
+    module = builtins.__origin__import__(
+  File "/workspace/FlagPerf/base/benchmarks/drivers/kunlunxin.py", line 10, in <module>
+    from base.vendors.kunlunxin.provider import binding_records
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/xpytorch_import_hook.py", line 132, in _custom_import
+    module = builtins.__origin__import__(
+ModuleNotFoundError: No module named 'base'
+W0923 12:14:57.029000 168 site-packages/torch/distributed/elastic/multiprocessing/api.py:908] Sending process 234 closing signal SIGTERM
+E0923 12:14:57.061000 168 site-packages/torch/distributed/elastic/multiprocessing/api.py:882] failed (exitcode: 1) local_rank: 0 (pid: 233) of binary: /root/miniconda/envs/python310_torch29_cuda/bin/python
+Traceback (most recent call last):
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/distributed/run.py", line 940, in <module>
+    main()
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 357, in wrapper
+    return f(*args, **kwargs)
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/distributed/run.py", line 936, in main
+    run(args)
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/distributed/run.py", line 927, in run
+    elastic_launch(
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 156, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 293, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+/workspace/FlagPerf/base/benchmarks/interconnect-MPI_intraserver/kunlunxin/P800/main.py FAILED
+------------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-09-23_12:14:57
+  host      : 298be6a4c105
+  rank      : 0 (local_rank: 0)
+  exitcode  : 1 (pid: 233)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================

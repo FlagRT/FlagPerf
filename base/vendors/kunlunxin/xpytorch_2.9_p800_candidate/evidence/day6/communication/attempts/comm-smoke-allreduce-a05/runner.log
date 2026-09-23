@@ -1,0 +1,102 @@
+checkpoint: UUID set verified; selecting device
+checkpoint: creating four-element tensor
+checkpoint: synchronizing device
+checkpoint: tensor readback passed
+[Gloo] Rank [Gloo] Rank 1 is connected to 01 peer ranks. Expected number of connected peer ranks is :  is connected to 1
+1 peer ranks. Expected number of connected peer ranks is : 1
+[13:02:21][07397c27865c][233:233][INFO][XCCL][globals.cpp:299] xccl version: 0792b03 [rdma] [[BKCL-1245] allow masking GC signal handlers via BKCL_GC_SIGNAL_MASK] build data: Feb  9 2026 13:05:11
+[13:02:21][07397c27865c][233:233][WARN][XCCL][net_socket.cpp:132] NET/Socket : no ipv4/ipv6 net card found, expected 1, error code=0
+[13:02:21][07397c27865c][233:233][WARN][XCCL][net_socket.cpp:561] NET/Socket : net_socket_init failed, expected 0, error code=2
+[13:02:21][07397c27865c][233:233][WARN][XCCL][init.cpp:251] get_net_socket failed, expected 2, error code=0
+[13:02:21][07397c27865c][233:233][WARN][XCCL][bkcl.cpp:49] get_unique_id: init_root failed, expected 0, error code=2
+[13:02:21][07397c27865c][234:234][INFO][XCCL][globals.cpp:299] xccl version: 0792b03 [rdma] [[BKCL-1245] allow masking GC signal handlers via BKCL_GC_SIGNAL_MASK] build data: Feb  9 2026 13:05:11
+[13:02:21][07397c27865c][234:234][WARN][XCCL][net_socket.cpp:132] NET/Socket : no ipv4/ipv6 net card found, expected 1, error code=0
+[13:02:21][07397c27865c][234:234][WARN][XCCL][net_socket.cpp:561] NET/Socket : net_socket_init failed, expected 0, error code=2
+[13:02:21][07397c27865c][234:234][WARN][XCCL][init.cpp:1171] get_net_socket failed, expected 0, error code=2
+[13:02:21][07397c27865c][233:233][WARN][XCCL][net_socket.cpp:132] NET/Socket : no ipv4/ipv6 net card found, expected 1, error code=0
+[13:02:21][07397c27865c][233:233][WARN][XCCL][net_socket.cpp:561] NET/Socket : net_socket_init failed, expected 0, error code=2
+[13:02:21][07397c27865c][233:233][WARN][XCCL][init.cpp:1171] get_net_socket failed, expected 0, error code=2
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/runpy.py:126: RuntimeWarning: 'torch.distributed.run' found in sys.modules after import of package 'torch.distributed', but prior to execution of 'torch.distributed.run'; this may result in unpredictable behaviour
+  warn(RuntimeWarning(msg))
+
+*****************************************
+Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+*****************************************
+[W923 13:02:20.946163563 socket.cpp:209] [c10d] The hostname of the client socket cannot be retrieved. err=-3
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+[W923 13:02:21.622569921 socket.cpp:209] [c10d] The hostname of the client socket cannot be retrieved. err=-3
+[W923 13:02:21.623026501 ProcessGroupGloo.cpp:516] Warning: Unable to resolve hostname to a (local) address. Using the loopback address as fallback. Manually set the network interface to bind to with GLOO_SOCKET_IFNAME. (function operator())
+[W923 13:02:21.646189455 socket.cpp:209] [c10d] The hostname of the client socket cannot be retrieved. err=-3
+[W923 13:02:21.646812312 ProcessGroupGloo.cpp:516] Warning: Unable to resolve hostname to a (local) address. Using the loopback address as fallback. Manually set the network interface to bind to with GLOO_SOCKET_IFNAME. (function operator())
+/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/backends/cuda/__init__.py:131: UserWarning: Please use the new API settings to control TF32 behavior, such as torch.backends.cudnn.conv.fp32_precision = 'tf32' or torch.backends.cuda.matmul.fp32_precision = 'ieee'. Old settings, e.g, torch.backends.cuda.matmul.allow_tf32 = True, torch.backends.cudnn.allow_tf32 = True, allowTF32CuDNN() and allowTF32CuBLAS() will be deprecated after Pytorch 2.9. Please see https://pytorch.org/docs/main/notes/cuda.html#tensorfloat-32-tf32-on-ampere-and-later-devices (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:80.)
+  return torch._C._get_cublas_allow_tf32()
+/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/backends/cuda/__init__.py:131: UserWarning: Please use the new API settings to control TF32 behavior, such as torch.backends.cudnn.conv.fp32_precision = 'tf32' or torch.backends.cuda.matmul.fp32_precision = 'ieee'. Old settings, e.g, torch.backends.cuda.matmul.allow_tf32 = True, torch.backends.cudnn.allow_tf32 = True, allowTF32CuDNN() and allowTF32CuBLAS() will be deprecated after Pytorch 2.9. Please see https://pytorch.org/docs/main/notes/cuda.html#tensorfloat-32-tf32-on-ampere-and-later-devices (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:80.)
+  return torch._C._get_cublas_allow_tf32()
+[rank1]: Traceback (most recent call last):
+[rank1]:   File "/workspace/FlagPerf/base/benchmarks/interconnect-MPI_intraserver/kunlunxin/P800/main.py", line 37, in <module>
+[rank1]:     run_allreduce(kunlunxin, vars(case_config), rank, world_size, local_rank)
+[rank1]:   File "/workspace/FlagPerf/base/benchmarks/drivers/day6.py", line 266, in run_allreduce
+[rank1]:     dist.all_reduce(device_tensor, op=dist.ReduceOp.SUM)
+[rank1]:   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/distributed/c10d_logger.py", line 81, in wrapper
+[rank1]:     return func(*args, **kwargs)
+[rank1]:   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/distributed/distributed_c10d.py", line 2935, in all_reduce
+[rank1]:     work = group.allreduce([tensor], opts)
+[rank1]: torch.distributed.DistBackendError: FLAGCX error in: /env/FlagCX/plugin/torch/flagcx/src/backend_flagcx.cpp:389, 
+[rank1]: flagcxSystemError: System call (e.g. socket, malloc) or external library call failed or device error. 
+[rank1]: Last error:
+[rank1]: Undefined: flagcxComm is not fully initialized.
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "/workspace/FlagPerf/base/benchmarks/interconnect-MPI_intraserver/kunlunxin/P800/main.py", line 37, in <module>
+[rank0]:     run_allreduce(kunlunxin, vars(case_config), rank, world_size, local_rank)
+[rank0]:   File "/workspace/FlagPerf/base/benchmarks/drivers/day6.py", line 266, in run_allreduce
+[rank0]:     dist.all_reduce(device_tensor, op=dist.ReduceOp.SUM)
+[rank0]:   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/distributed/c10d_logger.py", line 81, in wrapper
+[rank0]:     return func(*args, **kwargs)
+[rank0]:   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/distributed/distributed_c10d.py", line 2935, in all_reduce
+[rank0]:     work = group.allreduce([tensor], opts)
+[rank0]: torch.distributed.DistBackendError: FLAGCX error in: /env/FlagCX/plugin/torch/flagcx/src/backend_flagcx.cpp:389, 
+[rank0]: flagcxSystemError: System call (e.g. socket, malloc) or external library call failed or device error. 
+[rank0]: Last error:
+[rank0]: Undefined: flagcxComm is not fully initialized.
+W0923 13:02:22.136000 168 site-packages/torch/distributed/elastic/multiprocessing/api.py:908] Sending process 234 closing signal SIGTERM
+E0923 13:02:22.168000 168 site-packages/torch/distributed/elastic/multiprocessing/api.py:882] failed (exitcode: 1) local_rank: 0 (pid: 233) of binary: /root/miniconda/envs/python310_torch29_cuda/bin/python
+Traceback (most recent call last):
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/distributed/run.py", line 940, in <module>
+    main()
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 357, in wrapper
+    return f(*args, **kwargs)
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/distributed/run.py", line 936, in main
+    run(args)
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/distributed/run.py", line 927, in run
+    elastic_launch(
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 156, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 293, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+/workspace/FlagPerf/base/benchmarks/interconnect-MPI_intraserver/kunlunxin/P800/main.py FAILED
+------------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-09-23_13:02:22
+  host      : 07397c27865c
+  rank      : 0 (local_rank: 0)
+  exitcode  : 1 (pid: 233)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================

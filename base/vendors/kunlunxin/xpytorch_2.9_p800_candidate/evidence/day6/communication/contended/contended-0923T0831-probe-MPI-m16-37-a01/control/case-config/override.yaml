@@ -1,0 +1,9 @@
+Melements: 16
+WARMUP: 5
+ITERS: 200
+SEED: 519
+DTYPE: float32
+DIST_BACKEND: cpu:gloo,cuda:flagcx
+IMPLEMENTATION: native-xpytorch
+MODE: smoke
+FAULT_MODE: none

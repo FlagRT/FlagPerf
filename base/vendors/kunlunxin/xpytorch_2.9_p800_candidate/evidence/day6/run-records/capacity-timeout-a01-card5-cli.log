@@ -1,0 +1,1 @@
+ERROR: Benchmark Case main_memory-capacity:P800 is high risk; explicitly pass --allow-high-risk-case after reserving an isolated device

@@ -1,0 +1,119 @@
+{
+  "binding": {
+    "container_device_node": "/dev/xpu4",
+    "framework_device_name": "cuda:1",
+    "framework_local_rank": 1,
+    "framework_logical_id": 1,
+    "host_device_node": "/dev/xpu4",
+    "host_physical_id": 4,
+    "legacy_logical_id": null,
+    "pci_bdf": "0000:84:00.0",
+    "request_index": 1,
+    "resource_key": "kunlunxin/b7942319-362e-5a53-a8eb-a2d06fbe84f6",
+    "serial_or_uuid": "b7942319-362e-5a53-a8eb-a2d06fbe84f6",
+    "vendor": "kunlunxin"
+  },
+  "bindings": [
+    {
+      "container_device_node": "/dev/xpu1",
+      "framework_device_name": "cuda:0",
+      "framework_local_rank": 0,
+      "framework_logical_id": 0,
+      "host_device_node": "/dev/xpu1",
+      "host_physical_id": 3,
+      "legacy_logical_id": null,
+      "pci_bdf": "0000:2e:00.0",
+      "request_index": 0,
+      "resource_key": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "serial_or_uuid": "9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "vendor": "kunlunxin"
+    },
+    {
+      "container_device_node": "/dev/xpu4",
+      "framework_device_name": "cuda:1",
+      "framework_local_rank": 1,
+      "framework_logical_id": 1,
+      "host_device_node": "/dev/xpu4",
+      "host_physical_id": 4,
+      "legacy_logical_id": null,
+      "pci_bdf": "0000:84:00.0",
+      "request_index": 1,
+      "resource_key": "kunlunxin/b7942319-362e-5a53-a8eb-a2d06fbe84f6",
+      "serial_or_uuid": "b7942319-362e-5a53-a8eb-a2d06fbe84f6",
+      "vendor": "kunlunxin"
+    }
+  ],
+  "case": "interconnect-MPI_intraserver:P800",
+  "checks": [
+    {
+      "elements": 1048576,
+      "first_mismatch": null,
+      "mismatch_count": 0,
+      "passed": true,
+      "phase": "cold"
+    },
+    {
+      "elements": 1048576,
+      "first_mismatch": null,
+      "mismatch_count": 0,
+      "passed": true,
+      "phase": "second"
+    },
+    {
+      "elements": 1048576,
+      "first_mismatch": null,
+      "mismatch_count": 0,
+      "note": "sign-paired inputs keep the repeated SUM at exactly zero",
+      "passed": true,
+      "phase": "post-loop"
+    }
+  ],
+  "context_sha256": "0732067ff719f8d4ec41cb5012bbb5e076a2e23f05c6b848860a63b48cfe67f9",
+  "cuda_matmul_allow_tf32": false,
+  "fallback_scope": "UUID, tensor placement and locked native route; no universal fallback exclusion",
+  "input": {
+    "contiguous": true,
+    "data_ptr": 276238958592,
+    "device": "cuda:1",
+    "dtype": "float32",
+    "numel": 1048576
+  },
+  "input_checksum": {
+    "finite": true,
+    "first": 10,
+    "last": 158,
+    "sum": 141550161
+  },
+  "output_checksum_cold": {
+    "finite": true,
+    "first": 19,
+    "last": 315,
+    "sum": 282051746
+  },
+  "output_checksum_second": {
+    "finite": true,
+    "first": 19,
+    "last": 315,
+    "sum": 282051746
+  },
+  "pid_namespace": "pid:[4026548068]",
+  "precision_scope": "native inputs/outputs as recorded by the case; compatibility controls do not certify internal arithmetic",
+  "rank": 1,
+  "run_id": "benchmark-feb195d7870b4d2b95e6a1c910c6caba",
+  "schema_version": 1,
+  "semantics": {
+    "collective": "all_reduce SUM",
+    "message_bytes": 4194304,
+    "reference": "sum of both deterministic rank inputs computed on CPU",
+    "timed_loop": "sign-paired inputs (+base and -base) keep repeated SUM at exactly zero; wire traffic is unchanged"
+  },
+  "status": "passed",
+  "timed_input_checksum": {
+    "finite": true,
+    "first": -9,
+    "last": -157,
+    "sum": -140501585
+  },
+  "worker_parent_pid": 168,
+  "worker_pid": 234
+}

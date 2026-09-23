@@ -1,0 +1,88 @@
+checkpoint: UUID set verified; selecting device
+checkpoint: creating four-element tensor
+checkpoint: synchronizing device
+checkpoint: tensor readback passed
+[Gloo] Rank 0 is connected to 1 peer ranks. Expected number of connected peer ranks is : 1
+[Gloo] Rank 1 is connected to 1 peer ranks. Expected number of connected peer ranks is : 1
+[16:19:48][b642b61259be][233:233][INFO][XCCL][globals.cpp:299] xccl version: 0792b03 [rdma] [[BKCL-1245] allow masking GC signal handlers via BKCL_GC_SIGNAL_MASK] build data: Feb  9 2026 13:05:11
+[16:19:48][b642b61259be][234:234][INFO][XCCL][globals.cpp:299] xccl version: 0792b03 [rdma] [[BKCL-1245] allow masking GC signal handlers via BKCL_GC_SIGNAL_MASK] build data: Feb  9 2026 13:05:11
+/**************************************************************************************/
+WARNING! Fallback to PCIE, because no XPULINK ring found.
+XCCL performance may be degraded.
+
+For further details, contact KLX XCCL team for help
+/**************************************************************************************/
+[16:19:48][b642b61259be][234:248][WARN][XCCL][device_wrapper_kl3.cpp:378] kernel check failed, error code=-400
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/runpy.py:126: RuntimeWarning: 'torch.distributed.run' found in sys.modules after import of package 'torch.distributed', but prior to execution of 'torch.distributed.run'; this may result in unpredictable behaviour
+  warn(RuntimeWarning(msg))
+
+*****************************************
+Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+*****************************************
+[W923 16:19:46.861508003 socket.cpp:209] [c10d] The hostname of the client socket cannot be retrieved. err=-3
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+[W923 16:19:48.559070967 socket.cpp:209] [c10d] The hostname of the client socket cannot be retrieved. err=-3
+[W923 16:19:48.582751041 socket.cpp:209] [c10d] The hostname of the client socket cannot be retrieved. err=-3
+/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/backends/cuda/__init__.py:131: UserWarning: Please use the new API settings to control TF32 behavior, such as torch.backends.cudnn.conv.fp32_precision = 'tf32' or torch.backends.cuda.matmul.fp32_precision = 'ieee'. Old settings, e.g, torch.backends.cuda.matmul.allow_tf32 = True, torch.backends.cudnn.allow_tf32 = True, allowTF32CuDNN() and allowTF32CuBLAS() will be deprecated after Pytorch 2.9. Please see https://pytorch.org/docs/main/notes/cuda.html#tensorfloat-32-tf32-on-ampere-and-later-devices (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:80.)
+  return torch._C._get_cublas_allow_tf32()
+/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/backends/cuda/__init__.py:131: UserWarning: Please use the new API settings to control TF32 behavior, such as torch.backends.cudnn.conv.fp32_precision = 'tf32' or torch.backends.cuda.matmul.fp32_precision = 'ieee'. Old settings, e.g, torch.backends.cuda.matmul.allow_tf32 = True, torch.backends.cudnn.allow_tf32 = True, allowTF32CuDNN() and allowTF32CuBLAS() will be deprecated after Pytorch 2.9. Please see https://pytorch.org/docs/main/notes/cuda.html#tensorfloat-32-tf32-on-ampere-and-later-devices (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:80.)
+  return torch._C._get_cublas_allow_tf32()
+XX: (pid 234,tid 138746389329472)cuda/src/api/apilaunch.cc:840:cuapi_xpu_launch_async cuapi_xpu_launch_async() failed in cuiStreamGetFromHandle, status= 400
+[rank1]: Traceback (most recent call last):
+[rank1]:   File "/workspace/FlagPerf/base/benchmarks/interconnect-MPI_intraserver/kunlunxin/P800/main.py", line 33, in <module>
+[rank1]:     run_allreduce(kunlunxin, vars(case_config), rank, world_size, local_rank)
+[rank1]:   File "/workspace/FlagPerf/base/benchmarks/drivers/day6.py", line 266, in run_allreduce
+[rank1]:     dist.all_reduce(device_tensor, op=dist.ReduceOp.SUM)
+[rank1]:   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/distributed/c10d_logger.py", line 81, in wrapper
+[rank1]:     return func(*args, **kwargs)
+[rank1]:   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/distributed/distributed_c10d.py", line 2935, in all_reduce
+[rank1]:     work = group.allreduce([tensor], opts)
+[rank1]: torch.AcceleratorError: CUDA error: invalid resource handle
+[rank1]: Search for `cudaErrorInvalidResourceHandle' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+[rank1]: CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+[rank1]: For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+[rank1]: Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+W0923 16:19:49.452000 168 site-packages/torch/distributed/elastic/multiprocessing/api.py:908] Sending process 233 closing signal SIGTERM
+W0923 16:20:19.453000 168 site-packages/torch/distributed/elastic/multiprocessing/api.py:927] Unable to shutdown process 233 via Signals.SIGTERM, forcefully exiting via Signals.SIGKILL
+E0923 16:20:23.238000 168 site-packages/torch/distributed/elastic/multiprocessing/api.py:882] failed (exitcode: 1) local_rank: 1 (pid: 234) of binary: /root/miniconda/envs/python310_torch29_cuda/bin/python
+Traceback (most recent call last):
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/distributed/run.py", line 940, in <module>
+    main()
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 357, in wrapper
+    return f(*args, **kwargs)
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/distributed/run.py", line 936, in main
+    run(args)
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/distributed/run.py", line 927, in run
+    elastic_launch(
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 156, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 293, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+/workspace/FlagPerf/base/benchmarks/interconnect-MPI_intraserver/kunlunxin/P800/main.py FAILED
+------------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-09-23_16:19:49
+  host      : b642b61259be
+  rank      : 1 (local_rank: 1)
+  exitcode  : 1 (pid: 234)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================

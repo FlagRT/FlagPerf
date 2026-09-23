@@ -1,0 +1,41 @@
+checkpoint: UUID set verified; selecting device
+checkpoint: creating four-element tensor
+checkpoint: synchronizing device
+checkpoint: tensor readback passed
+[Gloo] Rank [Gloo] Rank 10 is connected to  is connected to 11 peer ranks.  peer ranks. Expected number of connected peer ranks is : Expected number of connected peer ranks is : 11
+
+[16:37:53][7232a054cb48][233:233][INFO][XCCL][globals.cpp:299] xccl version: 0792b03 [rdma] [[BKCL-1245] allow masking GC signal handlers via BKCL_GC_SIGNAL_MASK] build data: Feb  9 2026 13:05:11
+[16:37:53][7232a054cb48][234:234][INFO][XCCL][globals.cpp:299] xccl version: 0792b03 [rdma] [[BKCL-1245] allow masking GC signal handlers via BKCL_GC_SIGNAL_MASK] build data: Feb  9 2026 13:05:11
+/**************************************************************************************/
+WARNING! Fallback to PCIE, because no XPULINK ring found.
+XCCL performance may be degraded.
+
+For further details, contact KLX XCCL team for help
+/**************************************************************************************/
+[FlagPerf Result]Rank 0's p2p-one-way-bandwidth=32.9808428GB/s
+[FlagPerf Result]Rank 0's p2p-one-way-bandwidth=30.7158034GiB/s
+[FlagPerf Result]Rank 1's p2p-one-way-bandwidth=32.981788GB/s
+[FlagPerf Result]Rank 1's p2p-one-way-bandwidth=30.7166837GiB/s
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/runpy.py:126: RuntimeWarning: 'torch.distributed.run' found in sys.modules after import of package 'torch.distributed', but prior to execution of 'torch.distributed.run'; this may result in unpredictable behaviour
+  warn(RuntimeWarning(msg))
+
+*****************************************
+Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+*****************************************
+[W923 16:37:51.708071111 socket.cpp:209] [c10d] The hostname of the client socket cannot be retrieved. err=-3
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+[W923 16:37:53.383382616 socket.cpp:209] [c10d] The hostname of the client socket cannot be retrieved. err=-3
+[W923 16:37:53.432930058 socket.cpp:209] [c10d] The hostname of the client socket cannot be retrieved. err=-3
+/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/backends/cuda/__init__.py:131: UserWarning: Please use the new API settings to control TF32 behavior, such as torch.backends.cudnn.conv.fp32_precision = 'tf32' or torch.backends.cuda.matmul.fp32_precision = 'ieee'. Old settings, e.g, torch.backends.cuda.matmul.allow_tf32 = True, torch.backends.cudnn.allow_tf32 = True, allowTF32CuDNN() and allowTF32CuBLAS() will be deprecated after Pytorch 2.9. Please see https://pytorch.org/docs/main/notes/cuda.html#tensorfloat-32-tf32-on-ampere-and-later-devices (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:80.)
+  return torch._C._get_cublas_allow_tf32()
+/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/backends/cuda/__init__.py:131: UserWarning: Please use the new API settings to control TF32 behavior, such as torch.backends.cudnn.conv.fp32_precision = 'tf32' or torch.backends.cuda.matmul.fp32_precision = 'ieee'. Old settings, e.g, torch.backends.cuda.matmul.allow_tf32 = True, torch.backends.cudnn.allow_tf32 = True, allowTF32CuDNN() and allowTF32CuBLAS() will be deprecated after Pytorch 2.9. Please see https://pytorch.org/docs/main/notes/cuda.html#tensorfloat-32-tf32-on-ampere-and-later-devices (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:80.)
+  return torch._C._get_cublas_allow_tf32()
+[rank0]:[W923 16:38:11.857438956 ProcessGroup.hpp:941] Warning: No backend of type 0 found for Process Group with name undefined. Assuming no hooks are registered. (function hasHooks)
+[rank1]:[W923 16:38:12.040806884 ProcessGroup.hpp:941] Warning: No backend of type 0 found for Process Group with name undefined. Assuming no hooks are registered. (function hasHooks)

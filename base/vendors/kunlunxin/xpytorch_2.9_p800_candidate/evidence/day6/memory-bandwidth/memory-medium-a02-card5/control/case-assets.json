@@ -1,0 +1,61 @@
+{
+  "case": "main_memory-bandwidth:P800",
+  "case_name": "main_memory-bandwidth",
+  "chip": "P800",
+  "configurations": {
+    "chip": {
+      "bytes": 239,
+      "relative_path": "benchmarks/main_memory-bandwidth/kunlunxin/P800/case_config.yaml",
+      "sha256": "4919cb8820c8aa81dc08a84e0ee6fc780176bede5e615939664533c12498bcff"
+    },
+    "generic": {
+      "bytes": 646,
+      "relative_path": "benchmarks/main_memory-bandwidth/case_config.yaml",
+      "sha256": "10f598c059e893845851f892d1cd332a14d6c31b3a005ffb950f614fd66c3726"
+    },
+    "override": {
+      "bytes": 141,
+      "relative_path": "@override",
+      "sha256": "e3829087498ce69d048f0e5c5a780bcfd6c25cb85acf050b5aef807e9873da8b"
+    }
+  },
+  "entrypoint": {
+    "bytes": 1248,
+    "relative_path": "benchmarks/main_memory-bandwidth/kunlunxin/P800/main.py",
+    "sha256": "30935a4a93d533d6aa6db5d98c3594b5831f3f0f507582df7c5448b581ea119a"
+  },
+  "environments": [],
+  "merged_config": {
+    "DIST_BACKEND": "gloo",
+    "DTYPE": "float32",
+    "FAULT_MODE": "none",
+    "IMPLEMENTATION": "native-xpytorch",
+    "ITERS": 10,
+    "MODE": "medium",
+    "Melements": 256,
+    "SEED": 519,
+    "WARMUP": 2
+  },
+  "requirement_files": [
+    {
+      "bytes": 239,
+      "relative_path": "benchmarks/main_memory-bandwidth/kunlunxin/P800/runtime_requirements.json",
+      "sha256": "fd96d385d0c7c5f369a87b354f2b2206c18777ef91016b022d65dc855a536588"
+    }
+  ],
+  "requirements": {
+    "correctness_required": true,
+    "implementation": "native-xpytorch",
+    "process_scope": {
+      "nnodes": 1,
+      "nproc_per_node": 1
+    },
+    "runtime_profile": "xpytorch_2.9_p800_candidate",
+    "runtime_role": "operator",
+    "schema_version": 1,
+    "supported": true
+  },
+  "schema_version": 1,
+  "selector": "kunlunxin/P800",
+  "vendor": "kunlunxin"
+}

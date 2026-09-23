@@ -1,0 +1,29 @@
+{
+  "command": [
+    "python3",
+    "-B",
+    "base/run.py",
+    "benchmark",
+    "preflight",
+    "--config",
+    "base/configs/kunlunxin_p800_xpytorch29.yaml",
+    "--physical-device-ids",
+    "5",
+    "--allow-candidate-runtime",
+    "--privilege-command",
+    "sudo -n",
+    "--reservation-end",
+    "2026-09-23T12:01:00.753217+00:00",
+    "--reservation-reference",
+    "user-20260923-execute-day6-plan",
+    "--monitor",
+    "on",
+    "--timeout",
+    "120",
+    "--result-dir",
+    "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day6/preflight-a01-card5"
+  ],
+  "started_at": "2026-09-23T04:01:00.753398+00:00",
+  "exit_code": 0,
+  "finished_at": "2026-09-23T04:01:25.015594+00:00"
+}

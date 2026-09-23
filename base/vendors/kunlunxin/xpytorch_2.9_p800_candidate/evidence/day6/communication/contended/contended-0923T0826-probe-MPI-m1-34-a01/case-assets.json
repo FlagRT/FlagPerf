@@ -1,0 +1,63 @@
+{
+  "case": "interconnect-MPI_intraserver:P800",
+  "case_name": "interconnect-MPI_intraserver",
+  "chip": "P800",
+  "configurations": {
+    "chip": {
+      "bytes": 165,
+      "relative_path": "benchmarks/interconnect-MPI_intraserver/kunlunxin/P800/case_config.yaml",
+      "sha256": "4cd1a06017cb4be230ba04daf7ceebf7e0e0aae9254eaccc0787e5915bf4e41f"
+    },
+    "generic": {
+      "bytes": 645,
+      "relative_path": "benchmarks/interconnect-MPI_intraserver/case_config.yaml",
+      "sha256": "4084480e3af08ab4c7a2c18d1256f9f951d58c5242ffb032657a65cdc68b9afd"
+    },
+    "override": {
+      "bytes": 155,
+      "relative_path": "@override",
+      "sha256": "e5b1ef58d31580c3c68dd17828f7e3512bda397c1db8e8951d15a768630defe5"
+    }
+  },
+  "entrypoint": {
+    "bytes": 1243,
+    "relative_path": "benchmarks/interconnect-MPI_intraserver/kunlunxin/P800/main.py",
+    "sha256": "a79775f1b3eab00a414c72001f8e720b559f541b4b338935f6cb2ecf61987c58"
+  },
+  "environments": [],
+  "merged_config": {
+    "DIST_BACKEND": "cpu:gloo,cuda:flagcx",
+    "DTYPE": "float32",
+    "FAULT_MODE": "none",
+    "IMPLEMENTATION": "native-xpytorch",
+    "ITERS": 200,
+    "MODE": "smoke",
+    "Melements": 1,
+    "SEED": 519,
+    "WARMUP": 5
+  },
+  "requirement_files": [
+    {
+      "bytes": 299,
+      "relative_path": "benchmarks/interconnect-MPI_intraserver/kunlunxin/P800/runtime_requirements.json",
+      "sha256": "ff88f5ea43c5d8044e0aa2baca818cd0015a7a4ce2d5edb698ac88cbb453bbcf"
+    }
+  ],
+  "requirements": {
+    "backend": "cpu:gloo,cuda:flagcx",
+    "correctness_required": true,
+    "implementation": "native-xpytorch",
+    "process_scope": {
+      "min_nproc_per_node": 2,
+      "nnodes": 1,
+      "nproc_per_node": 2
+    },
+    "runtime_profile": "xpytorch_2.9_p800_candidate",
+    "runtime_role": "operator",
+    "schema_version": 1,
+    "supported": true
+  },
+  "schema_version": 1,
+  "selector": "kunlunxin/P800",
+  "vendor": "kunlunxin"
+}

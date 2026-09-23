@@ -1,0 +1,102 @@
+{
+  "binding": {
+    "container_device_node": "/dev/xpu7",
+    "framework_device_name": "cuda:0",
+    "framework_local_rank": 0,
+    "framework_logical_id": 0,
+    "host_device_node": "/dev/xpu7",
+    "host_physical_id": 5,
+    "legacy_logical_id": null,
+    "pci_bdf": "0000:9c:00.0",
+    "request_index": 0,
+    "resource_key": "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87",
+    "serial_or_uuid": "f396486d-9850-50e4-81c4-50f2e9f6ca87",
+    "vendor": "kunlunxin"
+  },
+  "bindings": [
+    {
+      "container_device_node": "/dev/xpu7",
+      "framework_device_name": "cuda:0",
+      "framework_local_rank": 0,
+      "framework_logical_id": 0,
+      "host_device_node": "/dev/xpu7",
+      "host_physical_id": 5,
+      "legacy_logical_id": null,
+      "pci_bdf": "0000:9c:00.0",
+      "request_index": 0,
+      "resource_key": "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87",
+      "serial_or_uuid": "f396486d-9850-50e4-81c4-50f2e9f6ca87",
+      "vendor": "kunlunxin"
+    }
+  ],
+  "case": "main_memory-bandwidth:P800",
+  "checks": [
+    {
+      "elements": 1073741824,
+      "first_mismatch": null,
+      "mismatch_count": 0,
+      "passed": true,
+      "phase": "sentinel"
+    },
+    {
+      "elements": 1073741824,
+      "first_mismatch": null,
+      "mismatch_count": 0,
+      "passed": true,
+      "phase": "clone-equivalence"
+    },
+    {
+      "elements": 1073741824,
+      "first_mismatch": null,
+      "mismatch_count": 0,
+      "passed": true,
+      "phase": "changed-input"
+    },
+    {
+      "elements": 1073741824,
+      "first_mismatch": null,
+      "mismatch_count": 0,
+      "passed": true,
+      "phase": "after"
+    }
+  ],
+  "context_sha256": "20e8424aed7257fa1fa939c46a4f0758042b186c76d99f83bc9ea801fedaf708",
+  "cuda_matmul_allow_tf32": false,
+  "destination": {
+    "contiguous": true,
+    "data_ptr": 279479058432,
+    "device": "cuda:0",
+    "dtype": "float32",
+    "numel": 1073741824
+  },
+  "destination_reused": true,
+  "fallback_scope": "UUID, tensor placement and locked native route; no universal fallback exclusion",
+  "memory_budget": {
+    "device_available": 102907248640,
+    "device_bytes": 8589934592,
+    "device_total": 103079215104,
+    "scope": "source plus destination"
+  },
+  "pid_namespace": "pid:[4026548072]",
+  "precision_scope": "native inputs/outputs as recorded by the case; compatibility controls do not certify internal arithmetic",
+  "rank": 0,
+  "run_id": "benchmark-5aa10f8c726e4dd7b33eccd0d009f7a0",
+  "schema_version": 1,
+  "semantics": {
+    "api": "Tensor.copy_ on a preallocated destination",
+    "bytes_per_iteration": 8589934592,
+    "clone_equivalence": "verified outside the timed window",
+    "payload_bytes": 4294967296
+  },
+  "source": {
+    "contiguous": true,
+    "data_ptr": 275184091136,
+    "device": "cuda:0",
+    "dtype": "float32",
+    "numel": 1073741824
+  },
+  "source_reused": true,
+  "status": "passed",
+  "worker_parent_pid": 1,
+  "worker_pid": 102
+}

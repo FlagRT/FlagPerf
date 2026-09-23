@@ -1,0 +1,70 @@
+{
+  "clock_domain": "same-host Linux monotonic",
+  "collector": "xpu-smi -m and selected -q",
+  "extensions": [],
+  "parsed_samples": {
+    "bytes": 2323,
+    "path": "benchmark-monitor/samples.jsonl",
+    "sha256": "f1e305a6c592155117e40fce6c088d25473e913a708a64cac14d12870e35bcd8"
+  },
+  "policy": {
+    "automatic_workload_extension": false,
+    "collector": "xpu-smi -m and selected -q",
+    "enabled": true,
+    "metric_fields": [
+      {
+        "key": "utilization_percent",
+        "label": "Device utilization",
+        "unit": "%"
+      },
+      {
+        "key": "used_memory_mib",
+        "label": "Allocated device memory",
+        "unit": "MiB"
+      }
+    ],
+    "required_samples_per_target": 10,
+    "target_interval_s": 1.0,
+    "target_resource": "p800-device",
+    "vendor": "kunlunxin"
+  },
+  "primary_sample_counts_by_target": {
+    "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87": 1
+  },
+  "raw_samples": {
+    "bytes": 35096,
+    "path": "benchmark-monitor/samples.raw.jsonl",
+    "sha256": "db7064e9981dc80e937f22702598fe5a308cea3c25d99f7c38312886c6be8cfd"
+  },
+  "reasons": [
+    "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87: 1/10 valid samples"
+  ],
+  "sample_counts_by_target": {
+    "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87": 1
+  },
+  "schema_version": 2,
+  "status": "partial",
+  "target_resource": null,
+  "targets": [
+    {
+      "device_id": "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87",
+      "pci_bdf": "0000:9c:00.0",
+      "physical_id": 5,
+      "uuid": "f396486d-9850-50e4-81c4-50f2e9f6ca87"
+    }
+  ],
+  "total_sample_commands": 14,
+  "vendor": "kunlunxin",
+  "window_semantics": "FP32 loop including final full target synchronization",
+  "workload_windows": [
+    {
+      "device_id": "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87",
+      "finished_monotonic_ns": 3977553100931737,
+      "finished_offset_s": 5.045941024087369,
+      "rank": 0,
+      "role": "measurement",
+      "started_monotonic_ns": 3977552993945786,
+      "started_offset_s": 4.938955072779208
+    }
+  ]
+}

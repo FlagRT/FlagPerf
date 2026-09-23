@@ -1,0 +1,237 @@
+{
+  "case": "interconnect-MPI_intraserver:P800",
+  "cleanup_status": "passed",
+  "container_exit_code": 1,
+  "container_id": "298be6a4c1052ef2eb3c7f28df06460eb4d706c7203cb9650ba38a8297c16126",
+  "error": "container probe exited nonzero: 1",
+  "error_type": "RuntimeError",
+  "execution_status": "failed",
+  "failure_stage": "container-probe",
+  "finished_at": "2026-09-23T04:14:58.419707Z",
+  "kind": "benchmark",
+  "lease_released": true,
+  "measurement_evidence_status": "not_started",
+  "measurement_status": "failed",
+  "monitoring_status": "not-run",
+  "postflight_error": "selected physical device 5 is occupied",
+  "postflight_status": "failed",
+  "probe_mode": "performance",
+  "qualification": {
+    "expected_ranks": [
+      0,
+      1
+    ],
+    "max_cv_percent": 5,
+    "min_measurement_seconds": 15,
+    "mode": "smoke",
+    "repetitions_required": 5,
+    "scope": "two-card native XPYTORCH interconnect-MPI_intraserver:P800; candidate runtime"
+  },
+  "run_id": "benchmark-54987dfafdc34ab8a64a76db48306c31",
+  "schema_version": 3,
+  "started_at": "2026-09-23T04:14:43.026454Z",
+  "static_plan": {
+    "applicability": {
+      "reason": null,
+      "status": "applicable"
+    },
+    "case": "interconnect-MPI_intraserver:P800",
+    "case_assets": {
+      "case": "interconnect-MPI_intraserver:P800",
+      "case_name": "interconnect-MPI_intraserver",
+      "chip": "P800",
+      "configurations": {
+        "chip": {
+          "bytes": 153,
+          "relative_path": "benchmarks/interconnect-MPI_intraserver/kunlunxin/P800/case_config.yaml",
+          "sha256": "49dee4dc0f21aa47c421f633a85712b498dfec4c90bb01b8d7dadcad30299871"
+        },
+        "generic": {
+          "bytes": 645,
+          "relative_path": "benchmarks/interconnect-MPI_intraserver/case_config.yaml",
+          "sha256": "4084480e3af08ab4c7a2c18d1256f9f951d58c5242ffb032657a65cdc68b9afd"
+        },
+        "override": {
+          "bytes": 153,
+          "relative_path": "@override",
+          "sha256": "49dee4dc0f21aa47c421f633a85712b498dfec4c90bb01b8d7dadcad30299871"
+        }
+      },
+      "entrypoint": {
+        "bytes": 1243,
+        "relative_path": "benchmarks/interconnect-MPI_intraserver/kunlunxin/P800/main.py",
+        "sha256": "a79775f1b3eab00a414c72001f8e720b559f541b4b338935f6cb2ecf61987c58"
+      },
+      "environments": [],
+      "merged_config": {
+        "DIST_BACKEND": "cpu:gloo,cuda:flagcx",
+        "DTYPE": "float32",
+        "FAULT_MODE": "none",
+        "IMPLEMENTATION": "native-xpytorch",
+        "ITERS": 2,
+        "MODE": "smoke",
+        "Melements": 1,
+        "SEED": 519,
+        "WARMUP": 1
+      },
+      "requirement_files": [
+        {
+          "bytes": 299,
+          "relative_path": "benchmarks/interconnect-MPI_intraserver/kunlunxin/P800/runtime_requirements.json",
+          "sha256": "ff88f5ea43c5d8044e0aa2baca818cd0015a7a4ce2d5edb698ac88cbb453bbcf"
+        }
+      ],
+      "requirements": {
+        "backend": "cpu:gloo,cuda:flagcx",
+        "correctness_required": true,
+        "implementation": "native-xpytorch",
+        "process_scope": {
+          "min_nproc_per_node": 2,
+          "nnodes": 1,
+          "nproc_per_node": 2
+        },
+        "runtime_profile": "xpytorch_2.9_p800_candidate",
+        "runtime_role": "operator",
+        "schema_version": 1,
+        "supported": true
+      },
+      "schema_version": 1,
+      "selector": "kunlunxin/P800",
+      "vendor": "kunlunxin"
+    },
+    "case_config": {
+      "chip": {
+        "bytes": 153,
+        "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/interconnect-MPI_intraserver/kunlunxin/P800/case_config.yaml",
+        "relative_path": "benchmarks/interconnect-MPI_intraserver/kunlunxin/P800/case_config.yaml",
+        "sha256": "49dee4dc0f21aa47c421f633a85712b498dfec4c90bb01b8d7dadcad30299871"
+      },
+      "generic": {
+        "bytes": 645,
+        "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/interconnect-MPI_intraserver/case_config.yaml",
+        "relative_path": "benchmarks/interconnect-MPI_intraserver/case_config.yaml",
+        "sha256": "4084480e3af08ab4c7a2c18d1256f9f951d58c5242ffb032657a65cdc68b9afd"
+      },
+      "override": {
+        "bytes": 153,
+        "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/interconnect-MPI_intraserver/kunlunxin/P800/case_config.smoke.yaml",
+        "relative_path": "@override",
+        "sha256": "49dee4dc0f21aa47c421f633a85712b498dfec4c90bb01b8d7dadcad30299871"
+      }
+    },
+    "context": {
+      "config": "base/configs/kunlunxin_p800_xpytorch29.yaml",
+      "device_ids": null,
+      "dry_run": false,
+      "npu_ids": null,
+      "physical_device_ids": "5,7",
+      "result_root": null,
+      "timeout": 180
+    },
+    "host_config": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/configs/kunlunxin_p800_xpytorch29.yaml",
+    "image": "flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev:202608",
+    "kind": "benchmark",
+    "mode": "execution",
+    "monitoring": {
+      "automatic_workload_extension": false,
+      "collector": "xpu-smi -m and selected -q",
+      "enabled": false,
+      "metric_fields": [
+        {
+          "key": "utilization_percent",
+          "label": "Device utilization",
+          "unit": "%"
+        },
+        {
+          "key": "used_memory_mib",
+          "label": "Allocated device memory",
+          "unit": "MiB"
+        }
+      ],
+      "required_samples_per_target": 10,
+      "target_interval_s": 1.0,
+      "target_resource": "p800-device",
+      "vendor": "kunlunxin"
+    },
+    "nproc_per_node": 2,
+    "permissions": {
+      "active_dmi": false,
+      "candidate_runtime": true,
+      "cap_drop": [
+        "ALL"
+      ],
+      "ipc_namespace": "private",
+      "network": "none",
+      "pid_namespace": "private",
+      "privileged_root": false,
+      "read_only_root": true
+    },
+    "runtime_identity": {
+      "image_id": "deferred-until-image-inspection"
+    },
+    "runtime_lock": {
+      "image_manifest": {
+        "image": "flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev:202608",
+        "image_id": "sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975",
+        "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/image-manifest.json",
+        "release_stage": "candidate",
+        "schema_version": 1,
+        "sha256": "ab59dc1cd14b65a28ffaef7b1b21b1d0b51f5334619301659d4123a5c681acbf",
+        "validated": false,
+        "validation_scope": [],
+        "validation_status": null
+      },
+      "runtime_profile": "xpytorch_2.9_p800_candidate",
+      "stack_lock": {
+        "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/stack.lock.yaml",
+        "sha256": "8f200d0b955b7e60881bc13ed75c8784c2c38fe2c755d018c618f1dc7b46cded"
+      },
+      "vendor": "kunlunxin"
+    },
+    "runtime_requirements": {
+      "bytes": 299,
+      "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/interconnect-MPI_intraserver/kunlunxin/P800/runtime_requirements.json",
+      "relative_path": "benchmarks/interconnect-MPI_intraserver/kunlunxin/P800/runtime_requirements.json",
+      "requirements": {
+        "backend": "cpu:gloo,cuda:flagcx",
+        "correctness_required": true,
+        "implementation": "native-xpytorch",
+        "process_scope": {
+          "min_nproc_per_node": 2,
+          "nnodes": 1,
+          "nproc_per_node": 2
+        },
+        "runtime_profile": "xpytorch_2.9_p800_candidate",
+        "runtime_role": "operator",
+        "schema_version": 1,
+        "supported": true
+      },
+      "sha256": "ff88f5ea43c5d8044e0aa2baca818cd0015a7a4ce2d5edb698ac88cbb453bbcf",
+      "sources": [
+        {
+          "bytes": 299,
+          "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/interconnect-MPI_intraserver/kunlunxin/P800/runtime_requirements.json",
+          "relative_path": "benchmarks/interconnect-MPI_intraserver/kunlunxin/P800/runtime_requirements.json",
+          "sha256": "ff88f5ea43c5d8044e0aa2baca818cd0015a7a4ce2d5edb698ac88cbb453bbcf"
+        }
+      ]
+    },
+    "schema_version": 1,
+    "selection_note": "physical-to-logical mapping and idle state are resolved only by the side-effecting host preflight",
+    "selection_request": {
+      "expression": "5,7",
+      "requested_ids": [
+        5,
+        7
+      ],
+      "resolution_status": "deferred-until-host-preflight",
+      "source": "physical-device-ids"
+    },
+    "vendor": "kunlunxin",
+    "vendor_display_name": "Kunlunxin P800",
+    "worker": "benchmark_worker.py"
+  },
+  "status": "failed",
+  "vendor": "kunlunxin",
+  "vendor_display_name": "Kunlunxin P800"
+}

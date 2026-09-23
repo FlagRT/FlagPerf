@@ -1,0 +1,9 @@
+Melements: 4
+WARMUP: 2
+ITERS: 31393
+SEED: 519
+DTYPE: float32
+DIST_BACKEND: cpu:gloo,cuda:flagcx
+IMPLEMENTATION: native-xpytorch
+MODE: qualification
+FAULT_MODE: none

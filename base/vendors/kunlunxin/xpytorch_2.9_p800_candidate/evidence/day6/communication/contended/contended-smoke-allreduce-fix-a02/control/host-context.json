@@ -1,0 +1,97 @@
+{
+  "allow_candidate_runtime": true,
+  "case": "interconnect-MPI_intraserver:P800",
+  "case_assets_sha256": "147cbee5c748d055ab921765b712a4c8cab3d339b5a3171907f530612c1e50dd",
+  "host": {
+    "devices": [
+      {
+        "container_node": "/dev/xpu1",
+        "device_major": 195,
+        "device_minor": 1,
+        "driver": "5.0.21.47",
+        "free_memory_mib": 96460,
+        "host_device_node": "/dev/xpu1",
+        "host_physical_id": 3,
+        "pci_bdf": "0000:2e:00.0",
+        "power_w": 94.0,
+        "processes_empty": false,
+        "serial": "02K15K0263D002L7",
+        "temperature_c": 43.0,
+        "total_memory_mib": 98304,
+        "used_memory_mib": 1844,
+        "utilization_percent": 0,
+        "uuid": "9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+        "xpu_smi_runtime": "10.2"
+      },
+      {
+        "container_node": "/dev/xpu4",
+        "device_major": 195,
+        "device_minor": 4,
+        "driver": "5.0.21.47",
+        "free_memory_mib": 95836,
+        "host_device_node": "/dev/xpu4",
+        "host_physical_id": 4,
+        "pci_bdf": "0000:84:00.0",
+        "power_w": 94.0,
+        "processes_empty": false,
+        "serial": "02K15K0263D002KG",
+        "temperature_c": 40.0,
+        "total_memory_mib": 98304,
+        "used_memory_mib": 2468,
+        "utilization_percent": 0,
+        "uuid": "b7942319-362e-5a53-a8eb-a2d06fbe84f6",
+        "xpu_smi_runtime": "10.2"
+      }
+    ],
+    "machine_memory_unit": "numerically-cross-checked-with-query-MiB",
+    "readonly_observers": {
+      "3": [],
+      "4": []
+    },
+    "schema_version": 1,
+    "selection": {
+      "requested_ids": [
+        3,
+        4
+      ],
+      "source": "physical-device-ids"
+    },
+    "status": "passed",
+    "tolerated_occupancy": {
+      "3": {
+        "machine_used_mib": 1844,
+        "machine_utilization_percent": 0,
+        "policy": "temporary day-six contended-card qualification override",
+        "query_processes_empty": false,
+        "query_used_mib": 1844,
+        "query_utilization_percent": 0
+      },
+      "4": {
+        "machine_used_mib": 2468,
+        "machine_utilization_percent": 0,
+        "policy": "temporary day-six contended-card qualification override",
+        "query_processes_empty": false,
+        "query_used_mib": 2468,
+        "query_utilization_percent": 0
+      }
+    }
+  },
+  "image_identity": {
+    "Architecture": "amd64",
+    "Created": "2026-08-12T21:47:16.130386935+08:00",
+    "Id": "sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975",
+    "RepoDigests": [
+      "flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev@sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975"
+    ]
+  },
+  "kind": "benchmark",
+  "master_port": 29721,
+  "nproc_per_node": 2,
+  "probe_mode": "performance",
+  "reservation_end": "2026-09-23T12:01:00.753217+00:00",
+  "reservation_reference": "user-20260923-execute-day6-plan",
+  "reservation_start": "2026-09-23T08:19:39.783864Z",
+  "run_id": "benchmark-62abaa7ebeb040818469a87e9ce13d31",
+  "schema_version": 1,
+  "timeout": 180
+}

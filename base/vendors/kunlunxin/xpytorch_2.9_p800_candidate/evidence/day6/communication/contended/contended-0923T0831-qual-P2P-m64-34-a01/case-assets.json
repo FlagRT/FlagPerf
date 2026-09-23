@@ -1,0 +1,58 @@
+{
+  "case": "interconnect-P2P_intraserver:P800",
+  "case_name": "interconnect-P2P_intraserver",
+  "chip": "P800",
+  "configurations": {
+    "chip": {
+      "bytes": 165,
+      "relative_path": "benchmarks/interconnect-P2P_intraserver/kunlunxin/P800/case_config.yaml",
+      "sha256": "b6344d5b922fee39f904586ab5370652f821b47a91a2ef90d7061b4acdcb9cea"
+    },
+    "generic": {
+      "bytes": 646,
+      "relative_path": "benchmarks/interconnect-P2P_intraserver/case_config.yaml",
+      "sha256": "10f598c059e893845851f892d1cd332a14d6c31b3a005ffb950f614fd66c3726"
+    }
+  },
+  "entrypoint": {
+    "bytes": 1235,
+    "relative_path": "benchmarks/interconnect-P2P_intraserver/kunlunxin/P800/main.py",
+    "sha256": "6c4b4844f56f067a52502177344454a2a71338de7df5548bf28c4c93db2a5d60"
+  },
+  "environments": [],
+  "merged_config": {
+    "DIST_BACKEND": "cpu:gloo,cuda:flagcx",
+    "DTYPE": "float32",
+    "FAULT_MODE": "none",
+    "IMPLEMENTATION": "native-xpytorch",
+    "ITERS": 2185,
+    "MODE": "qualification",
+    "Melements": 64,
+    "SEED": 519,
+    "WARMUP": 2
+  },
+  "requirement_files": [
+    {
+      "bytes": 299,
+      "relative_path": "benchmarks/interconnect-P2P_intraserver/kunlunxin/P800/runtime_requirements.json",
+      "sha256": "ff88f5ea43c5d8044e0aa2baca818cd0015a7a4ce2d5edb698ac88cbb453bbcf"
+    }
+  ],
+  "requirements": {
+    "backend": "cpu:gloo,cuda:flagcx",
+    "correctness_required": true,
+    "implementation": "native-xpytorch",
+    "process_scope": {
+      "min_nproc_per_node": 2,
+      "nnodes": 1,
+      "nproc_per_node": 2
+    },
+    "runtime_profile": "xpytorch_2.9_p800_candidate",
+    "runtime_role": "operator",
+    "schema_version": 1,
+    "supported": true
+  },
+  "schema_version": 1,
+  "selector": "kunlunxin/P800",
+  "vendor": "kunlunxin"
+}

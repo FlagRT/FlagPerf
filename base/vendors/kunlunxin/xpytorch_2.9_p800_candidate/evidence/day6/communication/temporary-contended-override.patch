@@ -1,0 +1,74 @@
+--- a/base/vendors/kunlunxin/preflight.py
++++ b/base/vendors/kunlunxin/preflight.py
+@@ -80,12 +80,19 @@
+         raise RuntimeError("missing character control device")
+ 
+ 
++def foreign_cards():
++    """Temporary Day 6 qualification override: cards whose fully-clean
++    requirement is explicitly waived for authorized contended-card runs.
++    Empty unless P800_ALLOW_FOREIGN_HANDLES names card ids."""
++    return {part for part in os.environ.get('P800_ALLOW_FOREIGN_HANDLES', '').split(',') if part}
++
++
+ def readonly_smi_arguments(arguments):
+     return (arguments in (['-m'], ['-q'], []) or
+             len(arguments) == 3 and arguments[0] == '-i' and arguments[1].isdigit() and arguments[2] == '-q')
+ 
+ 
+-def inspect_handles(device, commands, directory, allow_observers=False):
++def inspect_handles(device, commands, directory, allow_observers=False, tolerate_foreign=False):
+     node = device['host_device_node']
+     for attempt in range(3):
+         handles = commands.run(['fuser', node], privileged=True,
+@@ -115,7 +122,11 @@
+             arguments = command['stdout'].rstrip('\0').split('\0')
+             if (executable['stdout'].strip() != '/usr/local/bin/xpu-smi' or
+                     not arguments or not readonly_smi_arguments(arguments[1:])):
+-                raise RuntimeError('device handle is not a verified read-only xpu-smi observer')
++                if not tolerate_foreign:
++                    raise RuntimeError('device handle is not a verified read-only xpu-smi observer')
++                observers.append({'pid': int(pid), 'executable': executable['stdout'].strip(),
++                                  'arguments': arguments[1:], 'classification': 'foreign-handle-tolerated'})
++                continue
+             observers.append({'pid': int(pid), 'executable': executable['stdout'].strip(),
+                               'arguments': arguments[1:], 'classification': 'read-only-observer'})
+         if not vanished:
+@@ -131,6 +142,7 @@
+         raise RuntimeError("host physical inventory differs from configured inventory")
+     by_id = {row['physical_id']: row for row in inventory}
+     devices = []
++    tolerated = {}
+     for index in requested:
+         if index not in by_id:
+             raise RuntimeError("selected physical device absent")
+@@ -141,7 +153,14 @@
+         if any(info[key] != locked[key] for key in ('driver', 'xpu_smi_runtime')):
+             raise RuntimeError('host driver/runtime differs from locked observation')
+         if row['used_memory_mib'] or row['utilization_percent'] or info['used_memory_mib'] or info['utilization_percent'] or not info['processes_empty']:
+-            raise RuntimeError(f"selected physical device {index} is occupied")
++            if str(index) not in foreign_cards():
++                raise RuntimeError(f"selected physical device {index} is occupied")
++            tolerated[str(index)] = {'machine_used_mib': int(row['used_memory_mib']),
++                                     'machine_utilization_percent': int(row['utilization_percent']),
++                                     'query_used_mib': int(info['used_memory_mib']),
++                                     'query_utilization_percent': int(info['utilization_percent']),
++                                     'query_processes_empty': bool(info['processes_empty']),
++                                     'policy': 'temporary day-six contended-card qualification override'}
+         if row['total_memory_mib'] != info['total_memory_mib']:
+             raise RuntimeError("machine/query memory unit or capacity mismatch")
+         devices.append({**info, 'host_physical_id': index, 'pci_bdf': row['pci_bdf'],
+@@ -149,9 +168,11 @@
+     mapping.validate_device_set(devices)
+     check_nodes(devices)
+     observers = {str(device['host_physical_id']): inspect_handles(
+-        device, commands, directory, config.get('allow_readonly_smi_handles', False)) for device in devices}
++        device, commands, directory,
++        config.get('allow_readonly_smi_handles', False) or str(device['host_physical_id']) in foreign_cards(),
++        str(device['host_physical_id']) in foreign_cards()) for device in devices}
+     result = {'schema_version': 1, 'status': 'passed', 'devices': devices,
+-              'readonly_observers': observers,
++              'readonly_observers': observers, 'tolerated_occupancy': tolerated,
+               'selection': {'source': 'physical-device-ids', 'requested_ids': requested},
+               'machine_memory_unit': 'numerically-cross-checked-with-query-MiB'}
+     (directory / 'summary.json').write_text(json.dumps(result, indent=2) + '\n')

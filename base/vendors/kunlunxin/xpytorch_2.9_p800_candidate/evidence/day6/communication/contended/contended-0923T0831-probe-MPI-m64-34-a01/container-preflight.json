@@ -1,0 +1,125 @@
+{
+  "binding": {
+    "container_device_node": "/dev/xpu1",
+    "framework_device_name": "cuda:0",
+    "framework_local_rank": 0,
+    "framework_logical_id": 0,
+    "host_device_node": "/dev/xpu1",
+    "host_physical_id": 3,
+    "legacy_logical_id": null,
+    "pci_bdf": "0000:2e:00.0",
+    "request_index": 0,
+    "resource_key": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+    "serial_or_uuid": "9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+    "vendor": "kunlunxin"
+  },
+  "context_sha256": "48d08da6d7cb907f76eb1acbefbc6ac665e16faa30b61059d1be4d398e4daab1",
+  "device_name": "GPU",
+  "extension": "OrderedDict([('XPYTORCH', 'XMLIR--bc1b1dc6f-dev+2026032411'), ('XHPC', '20770323'), ('XTDK', '3.6.0.1'), ('XRE', '5.13.0.0'), ('CUPTI', '1.1.0.0'), ('XCCL', '20260209_9'), ('compile_date', '20260324-11:53:49'), ('arch', 'x86_64')])",
+  "finished_monotonic_ns": 3993635086422445,
+  "loaded_libraries": [
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/_XMLIRC.cpython-310-x86_64-linux-gnu.so",
+      "sha256": "2c9b5ee09f7426cbff191c4627edf715adca57cb521ded4fb77332872d5670df"
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libLLVM-15.so",
+      "sha256": "74c07a384df09043b1392621acc54c8cdd4f4faf294aeeaed5911d30c4a9c12e"
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libXMLIRRuntime.so",
+      "sha256": "abd3ba489c54fe2d13045b59efe090b79377f2e1accb2eabb143e0af2dc240ac"
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libclang-cpp.so.15",
+      "sha256": "f2a00ae91c7c8a203be09bf5019c2a0a543cbe19ab457701eaa7930e63927678"
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libeager_fallback.so",
+      "sha256": "6434485f4dd28ffa4f20884e07e0ef26c9e0f44cca198547334686eac58875db"
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libomp.so",
+      "sha256": "b61287e955a4a787a1ca6c5c00274b15b888d648004869f3188719fdbea005e2"
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so",
+      "sha256": "cd8d9ba247f3485e591d71097ab069d590359f5ae5a0250298322b301552571c"
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxlog_adapter.so",
+      "sha256": "60e13c62b208f3fccda56487540795f1217596d8b95c841f7166ac2b378dd737"
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxmlir_custom_ops.so",
+      "sha256": "a317d5ee1c40d66a09faf28b1cb85d6cac0849050de13f1db12a769ac566848f"
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxpu_blas.so",
+      "sha256": "8b77a853c0225d538bdf387dee3b8e84fa68320b95bd641a0fa03491baba15e6"
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxpu_dnn.so",
+      "sha256": "6219be06e43bced32c8ea14e047bf7922a29f65c07530d32d43a78909b904bfe"
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxpu_flash_attention.so",
+      "sha256": "f31c800f66a45267733b2681c4461ad88699f6f3c0e9f4720fe868a8819690f7"
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxpuapi.so",
+      "sha256": "b2933b3313eb671d391b3f60429f9ca191cfc65d74732c9860ad2b55fe0eb918"
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxpujitc.so",
+      "sha256": "c3a6355f5d3c98cca4a55e9828b0bd1a7739d823d00ac41d6f27e7fcfde817d8"
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/op_deregister_C.so",
+      "sha256": "9df01e31db082a706bb8809cab014d6a55b1d3a85ef1ff88068bf60f3404580d"
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl/so/libbkcl.so",
+      "sha256": "5f1b968b110cad84be2d92530600400ac2e485ddfb221570d17f33b5e4e5dab3"
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/xcudart/lib/libcudart.so.12.9.1.kunlun",
+      "sha256": "ee5203a7c93844128d19227fe5c9b339042b6354f9cdaae0c8e3ea5a2ccdab2a"
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/xcudart/lib/libcupti.so.12.9",
+      "sha256": "7925cbcf2354dc52448a967abffd5692ae293663af2d8a78a4a28f9248f979ad"
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/xcudart/lib/libxpucuda.so.515.58.kunlun",
+      "sha256": "ba40fcfefa44c8e346cfcdcdb130a64f53d6b25fadaeae58761389b44f68397c"
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/xcudart/lib/libxpuml.so.515.58.kunlun",
+      "sha256": "9217fb1bcea49b2834387205e31009cfd3e8b47157d1a936f07cb6d78f12e9d7"
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/xcudart/lib/libxpunvidia-ml.so.515.58.kunlun",
+      "sha256": "ec9aac890f37b3f7a0f0eaee4fe7202ceaa195a3131dd245b5a8f389bf6f24a1"
+    },
+    {
+      "path": "/root/miniconda/envs/python310_torch29_cuda/xcudart/lib/libxpurt.so.12.9.1.kunlun",
+      "sha256": "2d1ceae4ab4e8037a5b2a134f8327de06987554962e39c53a3f8a0658f3738c3"
+    }
+  ],
+  "local_rank": 0,
+  "pid": 102,
+  "run_id": "benchmark-912a5a83298c4af48be75d3e1116d774",
+  "schema_version": 1,
+  "scope": "identity and four-element native tensor; no performance/fallback claim",
+  "started_monotonic_ns": 3993622503111559,
+  "status": "passed",
+  "tensor_readback": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+  ],
+  "torch_version": "2.9.0+cu129",
+  "worker_exit_code": 0
+}
