@@ -46,13 +46,28 @@ def initialize():
     return _binding
 
 
-def device(local_rank=0):
+def binding(local_rank=0):
+    """Return the verified binding record for one rank."""
     if _binding is None:
         initialize()
     matches = [item for item in (_bindings or []) if item['framework_local_rank'] == local_rank]
     if len(matches) != 1:
         raise RuntimeError('rank differs from verified P800 binding')
-    return torch.device(matches[0]['framework_device_name'])
+    return matches[0]
+
+
+def device(local_rank=0):
+    return torch.device(binding(local_rank)['framework_device_name'])
+
+
+def set_device(local_rank=0):
+    """Make this rank's verified device the current one.
+
+    initialize() selects the first binding, which is correct for single-rank
+    cases; multi-rank cases must switch per rank before creating tensors or the
+    collective sees a tensor from a different device context.
+    """
+    torch.cuda.set_device(device(local_rank))
 
 
 def synchronize():

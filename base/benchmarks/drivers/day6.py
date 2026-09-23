@@ -32,8 +32,11 @@ def _require_scope(case, rank, world_size, local_rank):
 
 def _identity(driver, config, case, rank, world_size, local_rank):
     _require_scope(case, rank, world_size, local_rank)
+    driver.set_device(local_rank)
     target = driver.device(local_rank)
     identity = driver.evidence()
+    # evidence() reports the first binding; every rank must record its own.
+    identity['binding'] = driver.binding(local_rank)
     output = Path(os.environ['FLAGPERF_BENCHMARK_OUTPUT'])
     return target, identity, output
 
@@ -69,6 +72,15 @@ def _check_content(actual, reference, phase):
 def _placement(tensor):
     return {'device': str(tensor.device), 'dtype': str(tensor.dtype).removeprefix('torch.'),
             'numel': tensor.numel(), 'contiguous': tensor.is_contiguous(), 'data_ptr': tensor.data_ptr()}
+
+
+def _emit(line):
+    """Write one result line atomically.
+
+    Two ranks share the container stdout; a single write below PIPE_BUF keeps
+    the line intact so the framework parser never sees merged lines.
+    """
+    os.write(1, (line + '\n').encode())
 
 
 def _metric_common(identity, case, config, rank, world_size, metric, unit, value):
@@ -148,8 +160,8 @@ def run_memory_bandwidth(driver, config, rank, world_size, local_rank):
                       scope='device copy bandwidth; 2 x payload per iteration; allocation and checks outside the window',
                       qualification_duration_passed=elapsed >= 15)
         save(output / 'metric-rank-0.json', metric)
-        print(f"[FlagPerf Result]Rank {rank}'s device-memory-bandwidth={gb:.6f}GB/s", flush=True)
-        print(f"[FlagPerf Result]Rank {rank}'s device-memory-bandwidth={gib:.6f}GiB/s", flush=True)
+        _emit(f"[FlagPerf Result]Rank {rank}'s device-memory-bandwidth={gb:.6f}GB/s")
+        _emit(f"[FlagPerf Result]Rank {rank}'s device-memory-bandwidth={gib:.6f}GiB/s")
         return gb, gib
     except Exception as exc:
         record.update(status='failed', error=str(exc), error_type=type(exc).__name__)
@@ -220,8 +232,8 @@ def run_memory_capacity(driver, config, rank, world_size, local_rank):
                       scope='successfully held device allocation only; free-memory hints bounded requests',
                       timer='perf_counter_ns enclosing the whole bounded search; monitor window evidence')
         save(output / 'metric-rank-0.json', metric)
-        print(f"[FlagPerf Result]Rank {rank}'s main_memory-capacity={value_gb:.6f}GB", flush=True)
-        print(f"[FlagPerf Result]Rank {rank}'s main_memory-capacity={total_mib / 1024:.6f}GiB", flush=True)
+        _emit(f"[FlagPerf Result]Rank {rank}'s main_memory-capacity={value_gb:.6f}GB")
+        _emit(f"[FlagPerf Result]Rank {rank}'s main_memory-capacity={total_mib / 1024:.6f}GiB")
         record['status'] = 'passed'
         return total_mib
     except Exception as exc:
@@ -307,8 +319,8 @@ def run_allreduce(driver, config, rank, world_size, local_rank):
                       scope='algbw=S/t; busbw=algbw*2*(world_size-1)/world_size; no additional multiplier',
                       qualification_duration_passed=elapsed >= 15)
         save(output / f'metric-rank-{rank}.json', metric)
-        print(f"[FlagPerf Result]Rank {rank}'s allreduce-algbw={algbw:.6f}GB/s", flush=True)
-        print(f"[FlagPerf Result]Rank {rank}'s allreduce-busbw={busbw:.6f}GB/s", flush=True)
+        _emit(f"[FlagPerf Result]Rank {rank}'s allreduce-algbw={algbw:.6f}GB/s")
+        _emit(f"[FlagPerf Result]Rank {rank}'s allreduce-busbw={busbw:.6f}GB/s")
         return algbw, busbw
     except Exception as exc:
         record.update(status='failed', error=str(exc), error_type=type(exc).__name__)
@@ -386,8 +398,8 @@ def run_p2p(driver, config, rank, world_size, local_rank):
                       scope='one-way payload x iterations / elapsed; never doubled; per-rank elapsed reported independently',
                       qualification_duration_passed=elapsed >= 15)
         save(output / f'metric-rank-{rank}.json', metric)
-        print(f"[FlagPerf Result]Rank {rank}'s p2p-one-way-bandwidth={gb:.6f}GB/s", flush=True)
-        print(f"[FlagPerf Result]Rank {rank}'s p2p-one-way-bandwidth={gib:.6f}GiB/s", flush=True)
+        _emit(f"[FlagPerf Result]Rank {rank}'s p2p-one-way-bandwidth={gb:.6f}GB/s")
+        _emit(f"[FlagPerf Result]Rank {rank}'s p2p-one-way-bandwidth={gib:.6f}GiB/s")
         return gb, gib
     except Exception as exc:
         record.update(status='failed', error=str(exc), error_type=type(exc).__name__)
