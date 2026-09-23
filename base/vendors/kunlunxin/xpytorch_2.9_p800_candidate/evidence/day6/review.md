@@ -17,7 +17,7 @@
 | E 两卡正确性 | 通过：AllReduce 四点与 P2P 四点逐元素校验、逐 rank 绑定、公式重算全过；五个真实缺陷修复见 §5.1 | `communication/contended/` |
 | F 曲线与收尾 | 见 §5.3；离线回归与 HEAD 基线一致（新增 18 项 day6 测试全过，182 项全量无新增失败） | `../../../../tests/test_p800_day6.py` |
 
-失败与部分状态全部保留（§6），无一删除。
+失败与部分状态全部保留（§6），无一删除。原始 `xpu-smi -q` 捕获中出现的第三方进程名（占用卡的其他租户）已按 Day 5 校验器的 needle 规则脱敏为 `[third-party-redacted]`，显存占用量、利用率与状态原样保留；verification 现在同时执行凭据扫描与第三方标识扫描。
 
 ## 2. 带宽（main_memory-bandwidth）
 
