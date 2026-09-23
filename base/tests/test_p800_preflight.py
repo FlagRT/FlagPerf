@@ -215,7 +215,23 @@ class ContractTests(unittest.TestCase):
         from run import main
         with patch('subprocess.run', side_effect=AssertionError('device access forbidden')):
             code = main(['benchmark', 'run', '--config', str(CONFIG), '--physical-device-ids', '1',
-                         '--case', 'main_memory-bandwidth:P800', '--timeout', '300', '--dry-run'])
+                         '--case', 'training-bert:P800', '--timeout', '300', '--dry-run'])
+        self.assertEqual(code, 2)
+
+    def test_p800_day6_memory_case_dry_run_resolves_without_device_access(self):
+        from run import main
+        with patch('subprocess.run', side_effect=AssertionError('device access forbidden')):
+            code = main(['benchmark', 'run', '--config', str(CONFIG), '--physical-device-ids', '1',
+                         '--case', 'main_memory-bandwidth:P800', '--timeout', '300',
+                         '--allow-candidate-runtime', '--dry-run'])
+        self.assertEqual(code, 0)
+
+    def test_p800_day6_communication_case_requires_two_ranks(self):
+        from run import main
+        with patch('subprocess.run', side_effect=AssertionError('device access forbidden')):
+            code = main(['benchmark', 'run', '--config', str(CONFIG), '--physical-device-ids', '1,3',
+                         '--case', 'interconnect-MPI_intraserver:P800', '--timeout', '300',
+                         '--allow-candidate-runtime', '--nproc-per-node', '1', '--dry-run'])
         self.assertEqual(code, 2)
 
     def test_supervisor_spawns_gated_no_site_child_and_propagates_failure(self):
