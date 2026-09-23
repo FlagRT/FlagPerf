@@ -4,16 +4,9 @@
 # -*- coding: UTF-8 -*-
 """P800 two-rank in-server AllReduce over the resolved FlagCX backend."""
 from argparse import ArgumentParser, Namespace
-import os
 from pathlib import Path
 import sys
 sys.path.append("..")
-
-# The bounded container runs with --network none, so loopback is the only
-# interface.  The BKCL/FlagCX socket bootstrap reads this at native-runtime
-# load, which happens during the first torch import below, so it must be set
-# before any torch import in this module.
-os.environ.setdefault("BKCL_SOCKET_IFNAME", "lo")
 
 import torch.distributed as dist
 

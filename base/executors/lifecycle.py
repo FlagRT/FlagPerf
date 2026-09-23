@@ -91,7 +91,7 @@ class ManagedContainer:
         mounts = {(d['Source'], d['Destination'], d['RW']) for d in record.get('Mounts', []) if d['Type'] == 'bind'}
         if mounts != set(expected['mounts']):
             raise RuntimeError("container mounts differ from planned paths/permissions")
-        if host.get('NetworkMode') != 'none' or not host.get('ReadonlyRootfs') or 'ALL' not in (host.get('CapDrop') or []):
+        if host.get('NetworkMode') != expected.get('network', 'none') or not host.get('ReadonlyRootfs') or 'ALL' not in (host.get('CapDrop') or []):
             raise RuntimeError("container isolation policy drift")
         if not any(s in ('no-new-privileges', 'no-new-privileges=true') for s in host.get('SecurityOpt') or []):
             raise RuntimeError("container missing no-new-privileges")

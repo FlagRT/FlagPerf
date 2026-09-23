@@ -15,6 +15,13 @@ class KunlunxinProvider:
     supports_preflight = True
     supports_bounded_benchmark = True
     fallback_markers = ()  # PR0 did not prove a universal fallback detector.
+    # The BKCL/FlagCX socket bootstrap enumerates IPv4/IPv6 interfaces and does
+    # not accept a loopback-only namespace, so `--network none` leaves two-rank
+    # collectives without a net card.  This bridge is created with `--internal`
+    # (no gateway, no external route), which keeps the no-egress intent while
+    # giving the runtime a usable interface.  Prerequisite on the host:
+    #   docker network create --internal --subnet 172.31.254.0/24 flagperf-p800-internal
+    container_network = 'flagperf-p800-internal'
 
     def runtime_root(self, base_dir, profile):
         if profile not in (None, self.default_runtime_profile):
@@ -86,7 +93,7 @@ class KunlunxinProvider:
                 'compatibility_paths': [Path('/tmp') / ('flagperf-p800-' + d['uuid'] + '.lock') for d in host['devices']]}
 
     def container_policy(self, config):
-        return {'network': 'none', 'ipc_namespace': 'private', 'pid_namespace': 'private',
+        return {'network': self.container_network, 'ipc_namespace': 'private', 'pid_namespace': 'private',
                 'privileged_root': False, 'read_only_root': True, 'cap_drop': ['ALL']}
 
     def probe_spec(self, base_dir, result_dir, config, host, image_id):
@@ -97,7 +104,8 @@ class KunlunxinProvider:
                  (str(output), '/workspace/FlagPerf/results', True)]
         devices = [(d['host_device_node'], d['container_node'], 'rwm') for d in host['devices']]
         devices.append(('/dev/xpuctrl', '/dev/xpuctrl', 'rwm'))
-        args = ['--network=none', '--ipc=private', '--cap-drop=ALL', '--security-opt=no-new-privileges',
+        args = ['--network=' + self.container_network, '--ipc=private', '--cap-drop=ALL',
+                '--security-opt=no-new-privileges',
                 '--read-only', '--pids-limit=512', '--shm-size=512m', '--group-add', str(os.getgid()),
                 '--tmpfs', '/tmp:rw,nosuid,size=512m', '--tmpfs', '/root/.cache:rw,nosuid,size=512m',
                 '--env', 'CUDA_VISIBLE_DEVICES=' + ','.join(str(i) for i in range(len(host['devices']))),
@@ -111,7 +119,8 @@ class KunlunxinProvider:
         args.extend(['--entrypoint', '/bin/bash', image_id,
                      '/workspace/FlagPerf/base/vendors/kunlunxin/runtime_bootstrap.sh',
                      '--context', '/run/flagperf/host-context.json', '--output', '/workspace/FlagPerf/results'])
-        return args, {'image_id': image_id, 'devices': devices, 'mounts': paths}
+        return args, {'image_id': image_id, 'devices': devices, 'mounts': paths,
+                      'network': self.container_network}
 
     def resolve_bindings(self, host, context_hash, result):
         if result.get('schema_version') != 1 or result.get('context_sha256') != context_hash:

@@ -24,6 +24,17 @@ development: the user accepts the tested version combination, confirms that
 recipients can obtain the same image, and confirms observing execution on card 2.
 These are explicit user decisions/observations, not vendor certification or a
 registry pull/named-kernel trace performed by this tool.
+The two-rank benchmark container runs on the internal-only bridge
+`flagperf-p800-internal`, created once per host:
+
+    docker network create --internal --subnet 172.31.254.0/24 flagperf-p800-internal
+
+`--network none` leaves the namespace with loopback only, and the BKCL/FlagCX
+socket bootstrap refuses to start without an IPv4/IPv6 net card; the internal
+bridge keeps the no-egress intent and gives the runtime a usable interface. The
+host preflight does not create it: a missing network fails the run at container
+creation.
+
 `image-manifest.json` remains `validated: false`, with empty aggregate validation scope;
 the new per-case qualification is recorded separately. No strict internal IEEE
 arithmetic, hardware peak, FlagGems, other precision or collective result is claimed.
