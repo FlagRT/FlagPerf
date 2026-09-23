@@ -38,8 +38,12 @@ def validate_context(context, environ, nodes, now=None):
     if benchmark:
         from base.benchmarks.computation_contract import CASES
         from base.benchmarks.transfer_contract import CASES as TRANSFER_CASES
-        require((context.get('case') in CASES or context.get('case') in TRANSFER_CASES)
-                and context.get('nproc_per_node') == 1, 'unqualified performance scope')
+        from base.benchmarks.day6_contract import CASES as DAY6_CASES
+        require((context.get('case') in CASES or context.get('case') in TRANSFER_CASES or context.get('case') in DAY6_CASES), 'unqualified performance scope')
+        if context.get('case') in DAY6_CASES:
+            require(context.get('nproc_per_node') in (1, 2), 'invalid day-six process scope')
+        else:
+            require(context.get('nproc_per_node') == 1, 'unqualified single-rank scope')
         require(isinstance(context.get('case_assets_sha256'), str) and len(context['case_assets_sha256']) == 64, 'missing case asset identity')
     require(context.get('reservation_reference'), 'reservation reference required')
     start = datetime.fromisoformat(context['reservation_start'].replace('Z', '+00:00'))
@@ -48,9 +52,9 @@ def validate_context(context, environ, nodes, now=None):
     require(start <= (now or datetime.now(timezone.utc)) < end, 'outside reservation')
     devices = context['host']['devices']
     mapping.validate_device_set(devices)
-    require(len(devices) == 1, 'PR2 real probe is single-device only')
+    require(len(devices) == context.get('nproc_per_node', 1), 'device count differs from process scope')
     require(set(nodes) == {d['container_node'] for d in devices} | {'/dev/xpuctrl'}, 'unexpected device nodes')
-    require(environ.get('CUDA_VISIBLE_DEVICES') == '0', 'incorrect selected-subset visibility')
+    require(environ.get('CUDA_VISIBLE_DEVICES') == ','.join(str(i) for i in range(len(devices))), 'incorrect selected-subset visibility')
     require(environ.get('XPU_VISIBLE_DEVICES') is None and environ.get('XPU_EVENT_KL3_ENABLE') is None, 'unqualified XPU environment')
     require(environ.get('USE_FLAGGEMS') == '0', 'native probe requires USE_FLAGGEMS=0')
     return devices
@@ -139,10 +143,11 @@ def main():
                   {'run_id': context['run_id'], 'context_sha256': context_hash, 'binding': binding}, output)
         if context.get('kind') == 'benchmark':
             from base.benchmark_worker import run_bound_case
-            run_bound_case(context, args.context, output)
+            code = run_bound_case(context, args.context, output)
             result['finished_monotonic_ns'] = time.monotonic_ns()
+            result['worker_exit_code'] = code
             save(output / 'probe.json', result)
-            return 0
+            return code
         save(output / 'probe-observation.json', observation)
         seconds = context['timeout'] + 30 if context['probe_mode'] == 'timeout-check' else 16
         time.sleep(seconds)

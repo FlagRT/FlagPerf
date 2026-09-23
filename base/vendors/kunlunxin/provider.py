@@ -41,17 +41,27 @@ class KunlunxinProvider:
     def validate_benchmark(self, request, assets):
         from benchmarks.computation_contract import validate_config, CASES
         from benchmarks.transfer_contract import validate_config as validate_transfer_config, CASES as TRANSFER_CASES
-        if request.case not in (*CASES, *TRANSFER_CASES) or request.nproc_per_node not in (None, 1):
-            raise ConfigurationError('P800 requires a registered single-rank case')
+        from benchmarks.day6_contract import CASES as DAY6_CASES
+        if request.case not in (*CASES, *TRANSFER_CASES, *DAY6_CASES):
+            raise ConfigurationError('P800 case is not registered')
+        if request.case in DAY6_CASES:
+            from benchmarks.day6_contract import validate_config as validate_day6_config, COMMUNICATION_CASES
+            validate_day6_config(assets['merged_config'], request.case)
+            expected_nproc = 2 if request.case in COMMUNICATION_CASES else 1
+            if (request.nproc_per_node or 1) != expected_nproc:
+                raise ConfigurationError('P800 day-six case requires exactly nproc-per-node=%d' % expected_nproc)
+        elif request.nproc_per_node not in (None, 1):
+            raise ConfigurationError('P800 computation and transfer cases are single-rank')
         if request.case in TRANSFER_CASES:
             validate_transfer_config(assets['merged_config'], request.case)
-        else:
+        elif request.case not in DAY6_CASES:
             validate_config(assets['merged_config'], request.case)
         if assets['environments']:
             raise ConfigurationError('P800 native case must not inject unqualified environment scripts')
         selected = request.context.selection_request()['requested_ids']
-        if len(selected) != 1 or not set(selected).issubset(request_assets_inventory(request)):
-            raise ConfigurationError('P800 performance requires one configured physical device')
+        required = 2 if request.case in ('interconnect-P2P_intraserver:P800', 'interconnect-MPI_intraserver:P800') else 1
+        if len(selected) != required or not set(selected).issubset(request_assets_inventory(request)):
+            raise ConfigurationError(f'P800 performance requires exactly {required} configured physical device(s)')
         if not 30 <= request.context.timeout <= 600:
             raise ConfigurationError('P800 performance timeout must be 30..600 seconds; pass --timeout 300')
         if request.allow_privileged_root:

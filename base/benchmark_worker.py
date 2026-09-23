@@ -27,22 +27,47 @@ LOGGER = logging.getLogger("flagperf.base.benchmark_worker")
 
 
 def run_bound_case(context, context_path, output):
-    """Run the explicitly single-rank case in the already gated child."""
-    if context.get('nproc_per_node') != 1 or context.get('kind') != 'benchmark':
-        raise RuntimeError('bound case worker requires a single-rank benchmark context')
+    """Run the bounded case in the already gated child (one or two ranks).
+
+    Two-rank Day 6 communication cases spawn torchrun, which sets
+    RANK/LOCAL_RANK/WORLD_SIZE per child; all FLAGPERF_* evidence variables
+    are inherited so each rank re-verifies its own device binding.
+    """
+    nproc = context.get('nproc_per_node') or 1
+    if nproc not in (1, 2) or context.get('kind') != 'benchmark':
+        raise RuntimeError('bound case worker requires a one- or two-rank benchmark context')
     base = Path(__file__).resolve().parent
     contract = context_path.parent / 'case-assets.json'
     assets = verify_worker_assets(base, contract, context['case'], 'kunlunxin')
-    os.environ.update({'RANK': '0', 'LOCAL_RANK': '0', 'WORLD_SIZE': '1',
-                       'MASTER_ADDR': '127.0.0.1', 'MASTER_PORT': str(context['master_port']),
-                       'FLAGPERF_CASE_ASSETS': str(contract),
-                       'FLAGPERF_HOST_CONTEXT': str(context_path),
-                       'FLAGPERF_RUNTIME_BINDINGS': str(output / 'runtime-bindings.json'),
-                       'FLAGPERF_BENCHMARK_OUTPUT': str(output),
-                       'FLAGPERF_BENCHMARK_EVENTS_DIR': str(output / 'benchmark-events'),
-                       'FLAGPERF_BENCHMARK_CASE': context['case']})
+    environment = {'MASTER_ADDR': '127.0.0.1', 'MASTER_PORT': str(context['master_port']),
+                   'FLAGPERF_CASE_ASSETS': str(contract),
+                   'FLAGPERF_HOST_CONTEXT': str(context_path),
+                   'FLAGPERF_RUNTIME_BINDINGS': str(output / 'runtime-bindings.json'),
+                   'FLAGPERF_BENCHMARK_OUTPUT': str(output),
+                   'FLAGPERF_BENCHMARK_EVENTS_DIR': str(output / 'benchmark-events'),
+                   'FLAGPERF_BENCHMARK_CASE': context['case']}
+    if nproc == 1:
+        environment.update({'RANK': '0', 'LOCAL_RANK': '0', 'WORLD_SIZE': '1'})
+    os.environ.update(environment)
     os.chdir(base / 'benchmarks' / assets['case_name'])
     sys.path.insert(0, str(base / 'benchmarks'))
+    if nproc > 1:
+        command = [sys.executable, '-m', 'torch.distributed.run',
+                   f'--nproc-per-node={nproc}', "--master-port=" + str(context['master_port']),
+                   assets['entrypoint']['path'], '--vendor=' + assets['selector'],
+                   f'--node_size={nproc}']
+        child = dict(os.environ)
+        # torchrun children need the full import surface the in-process rank
+        # gets: repo root for `base.*` provider bindings, base/ for the
+        # `benchmarks.day6_contract` package, base/benchmarks for `drivers`
+        # and `case_assets`.
+        parts = [str(base.parent), str(base), str(base / 'benchmarks')]
+        existing = child.get('PYTHONPATH')
+        if existing:
+            parts.append(existing)
+        child['PYTHONPATH'] = os.pathsep.join(parts)
+        completed = subprocess.run(command, check=False, env=child)
+        return completed.returncode
     sys.argv = [assets['entrypoint']['path'], '--vendor=' + assets['selector'], '--node_size=1']
     try:
         runpy.run_path(assets['entrypoint']['path'], run_name='__main__')
@@ -50,6 +75,7 @@ def run_bound_case(context, context_path, output):
         import torch.distributed as distributed
         if distributed.is_initialized():
             distributed.destroy_process_group()
+    return 0
 
 
 def utc_now() -> str:

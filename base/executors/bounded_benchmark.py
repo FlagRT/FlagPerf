@@ -8,6 +8,7 @@ import shutil
 
 from benchmarks.case_assets import portable_assets
 from benchmarks.computation_contract import contract, validate_config
+from benchmarks.day6_contract import CASES as DAY6_CASES, expected_ranks as day6_expected_ranks
 from benchmarks.transfer_contract import CASES as TRANSFER_CASES, contract as transfer_contract
 from executors.benchmark import parse_benchmark_results, request_assets, snapshot_case_configuration
 from executors.common import run_timestamp, write_json
@@ -27,6 +28,9 @@ def check(condition, message):
 
 def validate_metric(metric, correctness, context, context_hash, binding, config):
     case = context.get('case', 'computation-FP32:P800')
+    if case in DAY6_CASES:
+        from benchmarks.day6_contract import validate_metric as validate_day6_metric
+        return validate_day6_metric(metric, correctness, context, context_hash, binding, config, case)
     if case in TRANSFER_CASES:
         from benchmarks.transfer_contract import validate_metric as validate_transfer_metric
         return validate_transfer_metric(metric, correctness, context, context_hash, binding, config)
@@ -71,6 +75,25 @@ def validate_metric(metric, correctness, context, context_hash, binding, config)
 
 
 def validate_stdout(text, raw, case):
+    if case in DAY6_CASES:
+        from benchmarks.day6_contract import expected_stdout_pairs
+        ranks = day6_expected_ranks(case)
+        parsed = parse_benchmark_results(text, ranks)
+        per_rank = {}
+        for item in parsed['metrics']:
+            per_rank.setdefault(item['rank'], []).append(item)
+        expected_lines = []
+        for rank in range(ranks):
+            for name, unit, value in expected_stdout_pairs(case, raw[rank]):
+                expected_lines.append((rank, name, unit, value))
+        check(parsed['status'] == 'passed' and len(parsed['metrics']) == len(expected_lines),
+              'stdout metric count or status differs')
+        for rank, name, unit, value in expected_lines:
+            check(any(candidate['metric'] == name and candidate['unit'] == unit and
+                      math.isclose(candidate['value'], value, rel_tol=1e-5)
+                      for candidate in per_rank.get(rank, [])),
+                  'stdout rank metric differs from durable evidence')
+        return
     parsed = parse_benchmark_results(text, 1)
     metrics = parsed['metrics']
     spec = transfer_contract(case) if case in TRANSFER_CASES else contract(case)
@@ -90,14 +113,18 @@ class BenchmarkWorkload:
         self.request, self.provider = request, provider
         self.assets = request_assets(request)
         self.config = self.assets['merged_config']
+        self.ranks = day6_expected_ranks(self.request.case) if self.request.case in DAY6_CASES else 1
 
     def initial_summary(self, static):
+        scope = ('two-card native XPYTORCH ' if self.ranks == 2 else 'single-card native XPYTORCH ') \
+            + self.request.case + '; candidate runtime'
         return {'schema_version': 3, 'kind': 'benchmark', 'case': self.request.case,
                 'vendor_display_name': self.provider.display_name, 'static_plan': static,
                 'execution_status': 'running', 'measurement_status': 'not_started',
                 'qualification': {'mode': self.config['MODE'], 'repetitions_required': 5,
                                   'min_measurement_seconds': 15, 'max_cv_percent': 5,
-                                  'scope': 'single-card native XPYTORCH ' + self.request.case + '; candidate runtime'},
+                                  'expected_ranks': list(range(self.ranks)),
+                                  'scope': scope},
                 'measurement_evidence_status': 'not_started'}
 
     def prepare(self, root):
@@ -106,51 +133,67 @@ class BenchmarkWorkload:
         write_json(root / 'control/case-assets.json', contract)
         write_json(root / 'case-assets.json', contract)
         write_json(root / 'benchmark-result.json', {'schema_version': 1, 'status': 'failed', 'metrics': [],
-                                                   'expected_ranks': [0], 'observed_ranks': [], 'missing_ranks': [0]})
+                                                   'expected_ranks': list(range(self.ranks)), 'observed_ranks': [],
+                                                   'missing_ranks': list(range(self.ranks))})
 
     def context_record(self, root):
         return {'kind': 'benchmark', 'case': self.request.case, 'probe_mode': 'performance',
-                'nproc_per_node': 1, 'master_port': self.request.master_port,
+                'nproc_per_node': self.ranks, 'master_port': self.request.master_port,
                 'case_assets_sha256': hashlib.sha256((root / 'control/case-assets.json').read_bytes()).hexdigest()}
 
     def collect(self, root, context, context_hash, summary):
         output = root / 'artifacts'
-        check(sorted(path.name for path in output.glob('metric-rank-*.json')) == ['metric-rank-0.json'], 'missing/extra rank metrics')
-        check(sorted(path.name for path in output.glob('correctness-rank-*.json')) == ['correctness-rank-0.json'], 'missing/extra correctness ranks')
-        metric, correctness = read(output / 'metric-rank-0.json'), read(output / 'correctness-rank-0.json')
-        validate_metric(metric, correctness, context, context_hash, summary['device_bindings'][0], self.config)
+        expected_metrics = ['metric-rank-%d.json' % rank for rank in range(self.ranks)]
+        expected_correct = ['correctness-rank-%d.json' % rank for rank in range(self.ranks)]
+        check(sorted(path.name for path in output.glob('metric-rank-*.json')) == expected_metrics, 'missing/extra rank metrics')
+        check(sorted(path.name for path in output.glob('correctness-rank-*.json')) == expected_correct, 'missing/extra correctness ranks')
+        metrics = []
+        for rank in range(self.ranks):
+            metric, correctness = read(output / ('metric-rank-%d.json' % rank)), read(output / ('correctness-rank-%d.json' % rank))
+            validate_metric(metric, correctness, context, context_hash, summary['device_bindings'][rank], self.config)
+            metrics.append(metric)
+        metric = metrics[0]
         summary.update(execution_status='passed', measurement_status='passed', correctness_status='passed',
                        runtime={'image': summary['static_plan']['image'], 'image_id': context['image_identity']['Id'],
                                 'lock': summary['static_plan']['runtime_lock']},
                        host_preflight='host-preflight/summary.json', host_postflight='host-postflight/summary.json')
-        result = {'schema_version': 1, 'status': 'passed', 'case': self.request.case, 'expected_ranks': [0],
-                  'observed_ranks': [0], 'missing_ranks': [], 'metrics': [metric],
+        result = {'schema_version': 1, 'status': 'passed', 'case': self.request.case, 'expected_ranks': list(range(self.ranks)),
+                  'observed_ranks': list(range(self.ranks)), 'missing_ranks': [], 'metrics': metrics,
                   'correctness': 'artifacts/correctness-rank-0.json'}
         write_json(root / 'benchmark-result.json', result)
         try:
             events = sorted((output / 'benchmark-events').glob('measurement-rank-*.json'))
-            check(len(events) == 1 and events[0].name == 'measurement-rank-0.json', 'missing/extra measurement events')
-            event = read(events[0])
-            check(event.get('kind') == 'measurement-window' and event.get('case') == self.request.case
-                  and (event.get('rank'), event.get('local_rank'), event.get('world_size')) == (0, 0, 1), 'measurement event identity mismatch')
-            check(event.get('pid') == metric['worker_pid'], 'event worker PID mismatch')
-            check(event['started_monotonic_ns'] <= metric['started_monotonic_ns'] < metric['finished_monotonic_ns'] <= event['finished_monotonic_ns'],
-                  'measurement event does not enclose synchronized timer')
+            check([path.name for path in events] == ['measurement-rank-%d.json' % rank for rank in range(self.ranks)],
+                  'missing/extra measurement events')
+            for rank in range(self.ranks):
+                event = read(output / 'benchmark-events' / ('measurement-rank-%d.json' % rank))
+                check(event.get('kind') == 'measurement-window' and event.get('case') == self.request.case
+                      and (event.get('rank'), event.get('local_rank'), event.get('world_size')) == (rank, rank, self.ranks),
+                      'measurement event identity mismatch')
+                check(event.get('pid') == metrics[rank]['worker_pid'], 'event worker PID mismatch')
+                check(event['started_monotonic_ns'] <= metrics[rank]['started_monotonic_ns']
+                      < metrics[rank]['finished_monotonic_ns'] <= event['finished_monotonic_ns'],
+                      'measurement event does not enclose synchronized timer')
             summary['measurement_evidence_status'] = 'passed'
         except (OSError, ValueError, KeyError, TypeError, RuntimeError) as exc:
             summary.update(status='partial', measurement_evidence_status='partial', measurement_evidence_error=str(exc))
-        if self.config['MODE'] == 'qualification' and metric['elapsed_seconds'] < 15:
+        if self.config['MODE'] == 'qualification' and min(item['elapsed_seconds'] for item in metrics) < 15:
             summary.update(status='partial', qualification_error='measurement window shorter than 15 seconds')
 
     def monitor_windows(self, root, monitor, summary):
-        path = root / 'artifacts/metric-rank-0.json'
-        if not path.is_file() or summary.get('measurement_evidence_status') != 'passed':
+        windows = []
+        if summary.get('measurement_evidence_status') != 'passed':
             return []
-        metric = read(path)
-        return [{'role': 'measurement', 'rank': 0, 'device_id': metric['binding']['resource_key'],
-                 'started_monotonic_ns': metric['started_monotonic_ns'], 'finished_monotonic_ns': metric['finished_monotonic_ns'],
-                 'started_offset_s': metric['started_monotonic_ns'] / 1e9 - monitor.origin_monotonic_s,
-                 'finished_offset_s': metric['finished_monotonic_ns'] / 1e9 - monitor.origin_monotonic_s}]
+        for rank in range(self.ranks):
+            path = root / ('artifacts/metric-rank-%d.json' % rank)
+            if not path.is_file():
+                return []
+            metric = read(path)
+            windows.append({'role': 'measurement', 'rank': rank, 'device_id': metric['binding']['resource_key'],
+                            'started_monotonic_ns': metric['started_monotonic_ns'], 'finished_monotonic_ns': metric['finished_monotonic_ns'],
+                            'started_offset_s': metric['started_monotonic_ns'] / 1e9 - monitor.origin_monotonic_s,
+                            'finished_offset_s': metric['finished_monotonic_ns'] / 1e9 - monitor.origin_monotonic_s})
+        return windows
 
     def finalize(self, root, summary):
         try:
@@ -158,7 +201,8 @@ class BenchmarkWorkload:
             text = logs.get('stdout', '') + logs.get('stderr', '')
             (root / 'runner.log').write_text(text)
             if summary.get('measurement_status') == 'passed':
-                raw = read(root / 'benchmark-result.json')['metrics'][0]
+                metrics = read(root / 'benchmark-result.json')['metrics']
+                raw = metrics if self.request.case in DAY6_CASES else metrics[0]
                 check(logs.get('returncode') == 0, 'container log retrieval failed')
                 validate_stdout(text, raw, self.request.case)
             if self.request.monitor == 'off':
