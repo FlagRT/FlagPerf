@@ -107,12 +107,14 @@ P2P 单向（rank0→rank1，卡对 (3,4) PCIe，带宽不乘 2）：
 | communication/contended/contended-0923T0826-qual-MPI-m1-34-a0{1,2} | partial | ITERS 尺度错误（探针换算 bug）导致的 0.17 s 窗口 |
 | communication/contended/contended-0923T0831-qual-MPI-m16-34-a01 | partial | 13.13 s 窗口；补跑 19.00 s 通过（§5.3） |
 | communication/contended/contended-0923T0831-timeout-MPI/P2P-34 | failed（预期） | 两卡超时演练，看门狗链路全过 |
+| contended-smoke-allreduce-34-a03、contended-0923T0826-qual-MPI-m1-34-a03、contended-0923T0827-probe-MPI-m64-34-a01 | running（中断） | 链重启（修复迭代）时被中断：summary 停在 `running`、无 cleanup.json；残留容器在收尾核对中手工清理，记录原样保留 |
 
 ## 7. 超时与清理演练
 
 - 单卡：带宽与容量各一次 cpu-wait，60 s 看门狗终止，postflight/cleanup/lease 全过。
 - 两卡：AllReduce 与 P2P 各一次，同上（§5.3）。
-- 租约与锁：全部运行以同一双协议 lease + 设备锁运行，逐次获取/释放；连续运行反复重获同一批卡锁，未出现残留锁；最终一批运行后目标卡显存回到运行前水平（见 §9 的收尾核对）。
+- 租约与锁：全部运行以同一双协议 lease + 设备锁运行，逐次获取/释放；连续运行反复重获同一批卡锁（同一 UUID 的锁文件无持有者时被再次获取），未出现死锁。
+- **收尾核对**：无 `flagperf` 容器残留（§6 中 3 个被中断运行的容器已手工清理）；今日使用的卡（0/3/4/7）显存回到运行前租户水平；临时门禁覆盖已 `git checkout` 还原，工作树干净。
 
 ## 8. 回归与测试
 

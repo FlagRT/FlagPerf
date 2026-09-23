@@ -3246,7 +3246,7 @@
  "preflight/topology/xpu-smi-machine-snapshot.txt": "ad6e04ebd281d31b2c687ebbff269ac0462c34bf43ac59db1412ebfcd2990eae",
  "preflight/topology/xpu-smi-topo-matrix.txt": "4afe516e15607aae10c94446c9bf6ed1d5e850a878ef846af8530dbbdf5f76b2",
  "preflight/topology/xpu-smi-topo-oam.txt": "56fcd10477186928bf75d08888f9c0997f1b6d535d0f674ea184805f71bce343",
- "review.md": "0d06760b8ec3bc57d14fb4df7ac93a5500dee719193cde5870b5b5c5d88bcf59",
+ "review.md": "4f7e286c23449af2d98f610191fddf4c6a763534c62ef09bc43818548d17b622",
  "run-records/authorization-day6.json": "0b2d045ef4d4ad9d0f0c9be5e0c87844f653e9b5c5e6feb86b77c19724cc403e",
  "run-records/capacity-bounded-a01-card5-cli.log": "8398554ae8a46fa3d797b3c983e62f8d1cbea449ade80b2228dbb140b398b7dd",
  "run-records/capacity-bounded-a01-card5-command.json": "fce84c6bebd07c373e097975fe6ec867c0f6b9e36673c885a4bd8a316a4d3cb5",
