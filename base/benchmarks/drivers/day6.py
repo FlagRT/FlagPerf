@@ -74,6 +74,16 @@ def _placement(tensor):
             'numel': tensor.numel(), 'contiguous': tensor.is_contiguous(), 'data_ptr': tensor.data_ptr()}
 
 
+def _num(value):
+    """Format one published number with enough significant digits to round-trip.
+
+    A 1 MiB message reports about 0.0006 GB/s, and %.6f keeps only one
+    significant digit there, which breaks the stdout cross-check against the
+    durable artifact.
+    """
+    return f'{value:.9g}'
+
+
 def _emit(line):
     """Write one result line atomically.
 
@@ -160,8 +170,8 @@ def run_memory_bandwidth(driver, config, rank, world_size, local_rank):
                       scope='device copy bandwidth; 2 x payload per iteration; allocation and checks outside the window',
                       qualification_duration_passed=elapsed >= 15)
         save(output / 'metric-rank-0.json', metric)
-        _emit(f"[FlagPerf Result]Rank {rank}'s device-memory-bandwidth={gb:.6f}GB/s")
-        _emit(f"[FlagPerf Result]Rank {rank}'s device-memory-bandwidth={gib:.6f}GiB/s")
+        _emit(f"[FlagPerf Result]Rank {rank}'s device-memory-bandwidth={_num(gb)}GB/s")
+        _emit(f"[FlagPerf Result]Rank {rank}'s device-memory-bandwidth={_num(gib)}GiB/s")
         return gb, gib
     except Exception as exc:
         record.update(status='failed', error=str(exc), error_type=type(exc).__name__)
@@ -232,7 +242,7 @@ def run_memory_capacity(driver, config, rank, world_size, local_rank):
                       scope='successfully held device allocation only; free-memory hints bounded requests',
                       timer='perf_counter_ns enclosing the whole bounded search; monitor window evidence')
         save(output / 'metric-rank-0.json', metric)
-        _emit(f"[FlagPerf Result]Rank {rank}'s main_memory-capacity={value_gb:.6f}GB")
+        _emit(f"[FlagPerf Result]Rank {rank}'s main_memory-capacity={_num(value_gb)}GB")
         _emit(f"[FlagPerf Result]Rank {rank}'s main_memory-capacity={total_mib / 1024:.6f}GiB")
         record['status'] = 'passed'
         return total_mib
@@ -319,8 +329,8 @@ def run_allreduce(driver, config, rank, world_size, local_rank):
                       scope='algbw=S/t; busbw=algbw*2*(world_size-1)/world_size; no additional multiplier',
                       qualification_duration_passed=elapsed >= 15)
         save(output / f'metric-rank-{rank}.json', metric)
-        _emit(f"[FlagPerf Result]Rank {rank}'s allreduce-algbw={algbw:.6f}GB/s")
-        _emit(f"[FlagPerf Result]Rank {rank}'s allreduce-busbw={busbw:.6f}GB/s")
+        _emit(f"[FlagPerf Result]Rank {rank}'s allreduce-algbw={_num(algbw)}GB/s")
+        _emit(f"[FlagPerf Result]Rank {rank}'s allreduce-busbw={_num(busbw)}GB/s")
         return algbw, busbw
     except Exception as exc:
         record.update(status='failed', error=str(exc), error_type=type(exc).__name__)
@@ -398,8 +408,8 @@ def run_p2p(driver, config, rank, world_size, local_rank):
                       scope='one-way payload x iterations / elapsed; never doubled; per-rank elapsed reported independently',
                       qualification_duration_passed=elapsed >= 15)
         save(output / f'metric-rank-{rank}.json', metric)
-        _emit(f"[FlagPerf Result]Rank {rank}'s p2p-one-way-bandwidth={gb:.6f}GB/s")
-        _emit(f"[FlagPerf Result]Rank {rank}'s p2p-one-way-bandwidth={gib:.6f}GiB/s")
+        _emit(f"[FlagPerf Result]Rank {rank}'s p2p-one-way-bandwidth={_num(gb)}GB/s")
+        _emit(f"[FlagPerf Result]Rank {rank}'s p2p-one-way-bandwidth={_num(gib)}GiB/s")
         return gb, gib
     except Exception as exc:
         record.update(status='failed', error=str(exc), error_type=type(exc).__name__)
