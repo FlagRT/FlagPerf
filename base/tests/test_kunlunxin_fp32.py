@@ -48,7 +48,12 @@ def request(*extra):
 class DriverTests(unittest.TestCase):
     def setUp(self):
         kunlunxin._binding = None
+        kunlunxin._bindings = None
+        kunlunxin._active_rank = 0
         kunlunxin._identity = None
+
+    def tearDown(self):
+        self.setUp()
 
     def fixture(self, root, **changes):
         context = {'kind': 'benchmark', 'run_id': 'fixture', 'host': {'devices': [DEVICE]}}
@@ -95,9 +100,30 @@ class DriverTests(unittest.TestCase):
 
     def test_logical_device_not_derived_from_rank(self):
         kunlunxin._binding = {'framework_local_rank': 0, 'framework_logical_id': 7, 'framework_device_name': 'cuda:7'}
+        kunlunxin._bindings = [kunlunxin._binding]
         self.assertEqual(str(kunlunxin.device(0)), 'cuda:7')
         with self.assertRaises(RuntimeError):
             kunlunxin.device(7)
+
+    def test_rank_sync_and_memory_follow_verified_reordered_binding(self):
+        kunlunxin._bindings = [
+            {'framework_local_rank': 0, 'framework_logical_id': 1, 'framework_device_name': 'cuda:1'},
+            {'framework_local_rank': 1, 'framework_logical_id': 0, 'framework_device_name': 'cuda:0'},
+        ]
+        kunlunxin._binding = kunlunxin._bindings[0]
+        with patch.object(torch.cuda, 'set_device') as select, \
+             patch.object(torch.cuda, 'synchronize') as sync, \
+             patch.object(torch.cuda, 'mem_get_info', return_value=(10, 20)) as memory:
+            for rank, logical in ((0, 1), (1, 0)):
+                kunlunxin.set_device(rank)
+                kunlunxin.synchronize()
+                self.assertEqual(kunlunxin.memory_info(), (10, 20))
+                select.assert_called_with(torch.device('cuda', logical))
+                sync.assert_called_with(torch.device('cuda', logical))
+                memory.assert_called_with(torch.device('cuda', logical))
+            with self.assertRaises(RuntimeError):
+                kunlunxin.set_device(2)
+            self.assertEqual(kunlunxin._active_rank, 1)
 
     def test_dispatch_unknown_vendor_and_error_classification(self):
         with patch.object(kunlunxin, 'initialize') as initialize:

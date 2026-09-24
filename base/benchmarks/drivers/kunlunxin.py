@@ -13,6 +13,7 @@ from base.vendors.kunlunxin.provider import binding_records
 _binding = None
 _bindings = None
 _identity = None
+_active_rank = 0
 
 
 def initialize():
@@ -67,11 +68,13 @@ def set_device(local_rank=0):
     cases; multi-rank cases must switch per rank before creating tensors or the
     collective sees a tensor from a different device context.
     """
+    global _active_rank
     torch.cuda.set_device(device(local_rank))
+    _active_rank = local_rank
 
 
 def synchronize():
-    torch.cuda.synchronize(device())
+    torch.cuda.synchronize(device(_active_rank))
 
 
 def seed(value):
@@ -79,7 +82,7 @@ def seed(value):
 
 
 def memory_info():
-    return torch.cuda.mem_get_info(device())
+    return torch.cuda.mem_get_info(device(_active_rank))
 
 
 def is_out_of_memory(error):
