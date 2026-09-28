@@ -432,6 +432,12 @@ class BenchmarkExecutor:
             return 0
         _, config = load_host_config(request.context.config)
         provider = get_provider(config["vendor"])
+        if plan["applicability"]["status"] == "skipped" and getattr(provider, "supports_bounded_benchmark", False):
+            if request.result_dir is not None and request.context.result_root is not None:
+                raise ConfigurationError("choose result-dir or result-root, not both")
+            # Capability rejection must precede Docker, leases, privilege and
+            # reservation checks even when callers use the bounded run CLI.
+            return self._execute(request, plan, result_dir=request.result_dir)
         if plan["applicability"]["status"] != "skipped" and getattr(provider, "supports_bounded_benchmark", False):
             from executors.bounded_benchmark import execute
             return execute(request, plan, config, provider)
@@ -441,12 +447,13 @@ class BenchmarkExecutor:
 
     def _execute(
         self, request: BenchmarkRunRequest, static_plan: dict[str, Any],
+        *, result_dir: Path | None = None,
     ) -> int:
         config_path, config = load_host_config(request.context.config)
         provider = get_provider(config["vendor"])
         wall_started = time.perf_counter()
         run_id = "benchmark-" + run_timestamp()
-        result_dir = request.context.resolved_result_root(config) / run_id
+        result_dir = result_dir if result_dir is not None else request.context.resolved_result_root(config) / run_id
         result_dir.mkdir(parents=True, exist_ok=False)
         summary: dict[str, Any] = {
             "schema_version": 3,
