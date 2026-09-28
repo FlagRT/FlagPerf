@@ -1,0 +1,17 @@
+{
+  "argv": [
+    "sudo",
+    "-n",
+    "docker",
+    "start",
+    "71521508c75f54a8420d6ac8b54880350dfde83ad9a933467eadae9713bba38d"
+  ],
+  "finished_monotonic_s": 4430424.490978718,
+  "returncode": 0,
+  "started_at": "2026-09-28T09:54:47.095407+00:00",
+  "started_monotonic_s": 4430424.015259493,
+  "stderr": "[sudo] password for kzhang519: ",
+  "stdout": "71521508c75f54a8420d6ac8b54880350dfde83ad9a933467eadae9713bba38d\n",
+  "timed_out": false,
+  "timeout_s": 10
+}

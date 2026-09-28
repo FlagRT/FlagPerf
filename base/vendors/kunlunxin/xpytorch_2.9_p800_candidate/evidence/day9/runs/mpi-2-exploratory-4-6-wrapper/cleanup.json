@@ -1,0 +1,69 @@
+{
+  "commands": [
+    {
+      "argv": [
+        "sudo",
+        "-n",
+        "docker",
+        "ps",
+        "-a",
+        "--no-trunc",
+        "--filter",
+        "id=71521508c75f54a8420d6ac8b54880350dfde83ad9a933467eadae9713bba38d",
+        "--format",
+        "{{.ID}}"
+      ],
+      "finished_monotonic_s": 4430437.051496599,
+      "returncode": 0,
+      "started_at": "2026-09-28T09:55:00.044925+00:00",
+      "started_monotonic_s": 4430436.964781459,
+      "stderr": "[sudo] password for kzhang519: ",
+      "stdout": "71521508c75f54a8420d6ac8b54880350dfde83ad9a933467eadae9713bba38d\n",
+      "timed_out": false,
+      "timeout_s": 3
+    },
+    {
+      "argv": [
+        "sudo",
+        "-n",
+        "docker",
+        "rm",
+        "-f",
+        "71521508c75f54a8420d6ac8b54880350dfde83ad9a933467eadae9713bba38d"
+      ],
+      "finished_monotonic_s": 4430437.452913018,
+      "returncode": 0,
+      "started_at": "2026-09-28T09:55:00.374996+00:00",
+      "started_monotonic_s": 4430437.294849119,
+      "stderr": "[sudo] password for kzhang519: ",
+      "stdout": "71521508c75f54a8420d6ac8b54880350dfde83ad9a933467eadae9713bba38d\n",
+      "timed_out": false,
+      "timeout_s": 5
+    },
+    {
+      "argv": [
+        "sudo",
+        "-n",
+        "docker",
+        "ps",
+        "-a",
+        "--no-trunc",
+        "--filter",
+        "id=71521508c75f54a8420d6ac8b54880350dfde83ad9a933467eadae9713bba38d",
+        "--format",
+        "{{.ID}}"
+      ],
+      "finished_monotonic_s": 4430437.554145186,
+      "returncode": 0,
+      "started_at": "2026-09-28T09:55:00.533070+00:00",
+      "started_monotonic_s": 4430437.452922118,
+      "stderr": "[sudo] password for kzhang519: ",
+      "stdout": "",
+      "timed_out": false,
+      "timeout_s": 3
+    }
+  ],
+  "container_absent": true,
+  "container_id": "71521508c75f54a8420d6ac8b54880350dfde83ad9a933467eadae9713bba38d",
+  "status": "passed"
+}

@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "sudo",
+    "-n",
+    "fuser",
+    "/dev/xpu2"
+  ],
+  "finished_monotonic_s": 4430614.777194769,
+  "returncode": 1,
+  "started_at": "2026-09-28T09:57:56.667856+00:00",
+  "started_monotonic_s": 4430613.587711767,
+  "stderr": "[sudo] password for kzhang519: ",
+  "stdout": "",
+  "timed_out": false,
+  "timeout_s": 10
+}

@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "devices": [
+    {
+      "host_device_node": "/dev/xpu4",
+      "device_minor": 4,
+      "uuid": "b7942319-362e-5a53-a8eb-a2d06fbe84f6",
+      "driver": "5.0.21.47",
+      "xpu_smi_runtime": "10.2",
+      "total_memory_mib": 98304,
+      "used_memory_mib": 904,
+      "free_memory_mib": 97400,
+      "utilization_percent": 0,
+      "processes_empty": false,
+      "temperature_c": 39.0,
+      "power_w": 94.0,
+      "foreign_occupancy_observed": true,
+      "foreign_handles_authorized": true,
+      "host_physical_id": 4,
+      "pci_bdf": "0000:84:00.0",
+      "serial": "02K15K0263D002KG",
+      "container_node": "/dev/xpu4",
+      "device_major": 195
+    },
+    {
+      "host_device_node": "/dev/xpu5",
+      "device_minor": 5,
+      "uuid": "9e24d168-db57-5cd9-8cfb-aea4ae898897",
+      "driver": "5.0.21.47",
+      "xpu_smi_runtime": "10.2",
+      "total_memory_mib": 98304,
+      "used_memory_mib": 4312,
+      "free_memory_mib": 93992,
+      "utilization_percent": 85,
+      "processes_empty": false,
+      "temperature_c": 50.0,
+      "power_w": 148.0,
+      "foreign_occupancy_observed": true,
+      "foreign_handles_authorized": true,
+      "host_physical_id": 6,
+      "pci_bdf": "0000:b6:00.0",
+      "serial": "02K15K0263D002N9",
+      "container_node": "/dev/xpu5",
+      "device_major": 195
+    }
+  ],
+  "foreign_handles_authorized": true,
+  "foreign_occupancy_observed": true,
+  "readonly_observers": {
+    "4": [
+      {
+        "classification": "foreign-handles-authorized",
+        "inspection": "skipped-by-explicit-user-authorization"
+      }
+    ],
+    "6": [
+      {
+        "classification": "foreign-handles-authorized",
+        "inspection": "skipped-by-explicit-user-authorization"
+      }
+    ]
+  },
+  "selection": {
+    "source": "physical-device-ids",
+    "requested_ids": [
+      4,
+      6
+    ]
+  },
+  "machine_memory_unit": "numerically-cross-checked-with-query-MiB"
+}

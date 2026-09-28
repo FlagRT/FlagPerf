@@ -1,0 +1,95 @@
+{
+  "allow_candidate_runtime": true,
+  "case": "interconnect-MPI_intraserver:P800",
+  "case_assets_sha256": "bc7f9e59d60e660151a656e812ff50478418fbf210c9789a8b79aa04d6a44750",
+  "host": {
+    "devices": [
+      {
+        "container_node": "/dev/xpu4",
+        "device_major": 195,
+        "device_minor": 4,
+        "driver": "5.0.21.47",
+        "foreign_handles_authorized": true,
+        "foreign_occupancy_observed": true,
+        "free_memory_mib": 97400,
+        "host_device_node": "/dev/xpu4",
+        "host_physical_id": 4,
+        "pci_bdf": "0000:84:00.0",
+        "power_w": 94.0,
+        "processes_empty": false,
+        "serial": "02K15K0263D002KG",
+        "temperature_c": 40.0,
+        "total_memory_mib": 98304,
+        "used_memory_mib": 904,
+        "utilization_percent": 0,
+        "uuid": "b7942319-362e-5a53-a8eb-a2d06fbe84f6",
+        "xpu_smi_runtime": "10.2"
+      },
+      {
+        "container_node": "/dev/xpu5",
+        "device_major": 195,
+        "device_minor": 5,
+        "driver": "5.0.21.47",
+        "foreign_handles_authorized": true,
+        "foreign_occupancy_observed": true,
+        "free_memory_mib": 93992,
+        "host_device_node": "/dev/xpu5",
+        "host_physical_id": 6,
+        "pci_bdf": "0000:b6:00.0",
+        "power_w": 146.0,
+        "processes_empty": false,
+        "serial": "02K15K0263D002N9",
+        "temperature_c": 49.0,
+        "total_memory_mib": 98304,
+        "used_memory_mib": 4312,
+        "utilization_percent": 98,
+        "uuid": "9e24d168-db57-5cd9-8cfb-aea4ae898897",
+        "xpu_smi_runtime": "10.2"
+      }
+    ],
+    "foreign_handles_authorized": true,
+    "foreign_occupancy_observed": true,
+    "machine_memory_unit": "numerically-cross-checked-with-query-MiB",
+    "readonly_observers": {
+      "4": [
+        {
+          "classification": "foreign-handles-authorized",
+          "inspection": "skipped-by-explicit-user-authorization"
+        }
+      ],
+      "6": [
+        {
+          "classification": "foreign-handles-authorized",
+          "inspection": "skipped-by-explicit-user-authorization"
+        }
+      ]
+    },
+    "schema_version": 1,
+    "selection": {
+      "requested_ids": [
+        4,
+        6
+      ],
+      "source": "physical-device-ids"
+    },
+    "status": "passed"
+  },
+  "image_identity": {
+    "Architecture": "amd64",
+    "Created": "2026-08-12T21:47:16.130386935+08:00",
+    "Id": "sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975",
+    "RepoDigests": [
+      "flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev@sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975"
+    ]
+  },
+  "kind": "benchmark",
+  "master_port": 29721,
+  "nproc_per_node": 2,
+  "probe_mode": "performance",
+  "reservation_end": "2026-09-29T23:59:00+08:00",
+  "reservation_reference": "user-20260928-exploratory-pair-4-6-wrapper",
+  "reservation_start": "2026-09-28T09:54:46.690567Z",
+  "run_id": "benchmark-fb9bf00cbf5d4379b670e69119372ff4",
+  "schema_version": 1,
+  "timeout": 180
+}

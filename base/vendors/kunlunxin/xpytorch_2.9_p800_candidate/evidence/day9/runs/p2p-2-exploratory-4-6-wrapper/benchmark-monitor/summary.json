@@ -1,0 +1,88 @@
+{
+  "clock_domain": "same-host Linux monotonic",
+  "collector": "xpu-smi -m and selected -q",
+  "extensions": [],
+  "parsed_samples": {
+    "bytes": 8007,
+    "path": "benchmark-monitor/samples.jsonl",
+    "sha256": "5e1940a2b19d89123c21f26d78e1bc1c2be7ef7aceded9455ad335937279cc58"
+  },
+  "policy": {
+    "automatic_workload_extension": false,
+    "collector": "xpu-smi -m and selected -q",
+    "enabled": true,
+    "metric_fields": [
+      {
+        "key": "utilization_percent",
+        "label": "Device utilization",
+        "unit": "%"
+      },
+      {
+        "key": "used_memory_mib",
+        "label": "Allocated device memory",
+        "unit": "MiB"
+      }
+    ],
+    "required_samples_per_target": 10,
+    "target_interval_s": 1.0,
+    "target_resource": "p800-device",
+    "vendor": "kunlunxin"
+  },
+  "primary_sample_counts_by_target": {
+    "kunlunxin/9e24d168-db57-5cd9-8cfb-aea4ae898897": 0,
+    "kunlunxin/b7942319-362e-5a53-a8eb-a2d06fbe84f6": 0
+  },
+  "raw_samples": {
+    "bytes": 113072,
+    "path": "benchmark-monitor/samples.raw.jsonl",
+    "sha256": "65d579ee947b5a06c577531a3b36a239b1f73ce922ff4be047f917f8632a2b74"
+  },
+  "reasons": [
+    "kunlunxin/b7942319-362e-5a53-a8eb-a2d06fbe84f6: 0/10 valid samples",
+    "kunlunxin/9e24d168-db57-5cd9-8cfb-aea4ae898897: 0/10 valid samples"
+  ],
+  "sample_counts_by_target": {
+    "kunlunxin/9e24d168-db57-5cd9-8cfb-aea4ae898897": 0,
+    "kunlunxin/b7942319-362e-5a53-a8eb-a2d06fbe84f6": 0
+  },
+  "schema_version": 2,
+  "status": "partial",
+  "target_resource": null,
+  "targets": [
+    {
+      "device_id": "kunlunxin/b7942319-362e-5a53-a8eb-a2d06fbe84f6",
+      "pci_bdf": "0000:84:00.0",
+      "physical_id": 4,
+      "uuid": "b7942319-362e-5a53-a8eb-a2d06fbe84f6"
+    },
+    {
+      "device_id": "kunlunxin/9e24d168-db57-5cd9-8cfb-aea4ae898897",
+      "pci_bdf": "0000:b6:00.0",
+      "physical_id": 6,
+      "uuid": "9e24d168-db57-5cd9-8cfb-aea4ae898897"
+    }
+  ],
+  "total_sample_commands": 36,
+  "vendor": "kunlunxin",
+  "window_semantics": "FP32 loop including final full target synchronization",
+  "workload_windows": [
+    {
+      "device_id": "kunlunxin/b7942319-362e-5a53-a8eb-a2d06fbe84f6",
+      "finished_monotonic_ns": 4430539508636780,
+      "finished_offset_s": 9.72305519785732,
+      "rank": 0,
+      "role": "measurement",
+      "started_monotonic_ns": 4430539507312969,
+      "started_offset_s": 9.721731387078762
+    },
+    {
+      "device_id": "kunlunxin/9e24d168-db57-5cd9-8cfb-aea4ae898897",
+      "finished_monotonic_ns": 4430539508597141,
+      "finished_offset_s": 9.7230155589059,
+      "rank": 1,
+      "role": "measurement",
+      "started_monotonic_ns": 4430539507118453,
+      "started_offset_s": 9.721536871045828
+    }
+  ]
+}

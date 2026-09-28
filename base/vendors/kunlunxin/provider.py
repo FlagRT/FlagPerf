@@ -6,6 +6,7 @@ from pathlib import Path
 from base.vendors.protocol import ConfigurationError, DeviceBinding, runtime_root
 from base.vendors.kunlunxin import preflight
 from base.vendors.kunlunxin.reuse import mapping, runtime
+from benchmarks.day6_contract import COMMUNICATION_CASES
 
 
 class KunlunxinProvider:
@@ -52,7 +53,7 @@ class KunlunxinProvider:
         if request.case not in (*CASES, *TRANSFER_CASES, *DAY6_CASES):
             raise ConfigurationError('P800 case is not registered')
         if request.case in DAY6_CASES:
-            from benchmarks.day6_contract import validate_config as validate_day6_config, COMMUNICATION_CASES
+            from benchmarks.day6_contract import validate_config as validate_day6_config
             validate_day6_config(assets['merged_config'], request.case)
             if request.case in COMMUNICATION_CASES:
                 nproc = request.nproc_per_node or 2
