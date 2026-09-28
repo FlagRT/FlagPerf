@@ -54,9 +54,13 @@ class KunlunxinProvider:
         if request.case in DAY6_CASES:
             from benchmarks.day6_contract import validate_config as validate_day6_config, COMMUNICATION_CASES
             validate_day6_config(assets['merged_config'], request.case)
-            expected_nproc = 2 if request.case in COMMUNICATION_CASES else 1
-            if (request.nproc_per_node or 1) != expected_nproc:
-                raise ConfigurationError('P800 day-six case requires exactly nproc-per-node=%d' % expected_nproc)
+            if request.case in COMMUNICATION_CASES:
+                nproc = request.nproc_per_node or 2
+                max_nproc = 2 if request.case == 'interconnect-P2P_intraserver:P800' else 8
+                if not 2 <= nproc <= max_nproc:
+                    raise ConfigurationError('P800 communication case requires nproc-per-node in 2..%d' % max_nproc)
+            elif (request.nproc_per_node or 1) != 1:
+                raise ConfigurationError('P800 day-six memory case requires exactly nproc-per-node=1')
         elif request.nproc_per_node not in (None, 1):
             raise ConfigurationError('P800 computation and transfer cases are single-rank')
         if request.case in TRANSFER_CASES:
@@ -66,7 +70,10 @@ class KunlunxinProvider:
         if assets['environments']:
             raise ConfigurationError('P800 native case must not inject unqualified environment scripts')
         selected = request.context.selection_request()['requested_ids']
-        required = 2 if request.case in ('interconnect-P2P_intraserver:P800', 'interconnect-MPI_intraserver:P800') else 1
+        if request.case in COMMUNICATION_CASES:
+            required = request.nproc_per_node or 2
+        else:
+            required = 1
         if len(selected) != required or not set(selected).issubset(request_assets_inventory(request)):
             raise ConfigurationError(f'P800 performance requires exactly {required} configured physical device(s)')
         if not 30 <= request.context.timeout <= 600:

@@ -44,8 +44,10 @@ def validate_config(c, case):
     return c
 
 
-def expected_ranks(case):
-    return 2 if case in COMMUNICATION_CASES else 1
+def expected_ranks(case, world_size=None):
+    if case in COMMUNICATION_CASES:
+        return world_size or 2
+    return 1
 
 
 def payload_bytes(melements):
@@ -116,7 +118,7 @@ def _common_metric_checks(metric, correctness, context, context_hash, binding, c
 
 def validate_metric(metric, correctness, context, context_hash, binding, config, case):
     """Recompute every published number from the artifact's own raw bytes."""
-    world_size = expected_ranks(case)
+    world_size = context.get('nproc_per_node') if case in COMMUNICATION_CASES else 1
     rank, elapsed = _common_metric_checks(metric, correctness, context, context_hash, binding, config, case, world_size)
     name = METRIC_NAMES[case]
     unit = 'GB' if case == 'main_memory-capacity:P800' else 'GB/s'

@@ -34,8 +34,8 @@ def run_bound_case(context, context_path, output):
     are inherited so each rank re-verifies its own device binding.
     """
     nproc = context.get('nproc_per_node') or 1
-    if nproc not in (1, 2) or context.get('kind') != 'benchmark':
-        raise RuntimeError('bound case worker requires a one- or two-rank benchmark context')
+    if nproc not in range(1, 9) or context.get('kind') != 'benchmark':
+        raise RuntimeError('bound case worker requires a one- to eight-rank benchmark context')
     base = Path(__file__).resolve().parent
     contract = context_path.parent / 'case-assets.json'
     assets = verify_worker_assets(base, contract, context['case'], 'kunlunxin')

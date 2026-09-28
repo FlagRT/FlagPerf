@@ -77,7 +77,7 @@ def validate_metric(metric, correctness, context, context_hash, binding, config)
 def validate_stdout(text, raw, case):
     if case in DAY6_CASES:
         from benchmarks.day6_contract import expected_stdout_pairs, parse_stdout_lines
-        ranks = day6_expected_ranks(case)
+        ranks = raw[0].get('world_size', day6_expected_ranks(case))
         parsed = parse_benchmark_results(text, ranks)
         found = parse_stdout_lines(text)
         per_rank = {}
@@ -114,10 +114,10 @@ class BenchmarkWorkload:
         self.request, self.provider = request, provider
         self.assets = request_assets(request)
         self.config = self.assets['merged_config']
-        self.ranks = day6_expected_ranks(self.request.case) if self.request.case in DAY6_CASES else 1
+        self.ranks = (self.request.nproc_per_node or day6_expected_ranks(self.request.case)) if self.request.case in DAY6_CASES else 1
 
     def initial_summary(self, static):
-        scope = ('two-card native XPYTORCH ' if self.ranks == 2 else 'single-card native XPYTORCH ') \
+        scope = (f'{self.ranks}-card native XPYTORCH ' if self.request.case in DAY6_CASES else 'single-card native XPYTORCH ') \
             + self.request.case + '; candidate runtime'
         return {'schema_version': 3, 'kind': 'benchmark', 'case': self.request.case,
                 'vendor_display_name': self.provider.display_name, 'static_plan': static,

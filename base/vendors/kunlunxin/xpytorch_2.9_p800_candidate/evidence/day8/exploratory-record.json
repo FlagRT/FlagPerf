@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "day": "day8-exploratory-multicard",
+  "date": "2026-09-28",
+  "authorization": {
+    "reference": "user-20260928-allow-contended-8card",
+    "foreign_handles_authorized": true,
+    "scope": "exploratory only; existing processes were not terminated; no reset/driver/firmware changes"
+  },
+  "runs": [
+    {
+      "name": "mpi-2-regression",
+      "result_dir": "base/result/p800-day8-20260928/runs/mpi-2-regression",
+      "status": "partial",
+      "execution_status": "passed",
+      "correctness_status": "passed",
+      "measurement_status": "passed",
+      "monitoring_status": "partial",
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true,
+      "expected_ranks": [
+        0,
+        1
+      ]
+    },
+    {
+      "name": "mpi-8-smoke",
+      "result_dir": "base/result/p800-day8-20260928/runs/mpi-8-smoke-2",
+      "status": "failed",
+      "execution_status": "failed",
+      "error": "bounded container execution timed out",
+      "failure_stage": "container-probe",
+      "monitoring_status": "partial",
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true,
+      "expected_ranks": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "observed": "8 rank Gloo initialization and device tensor probe passed; FlagCX collective timed out"
+    }
+  ]
+}

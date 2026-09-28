@@ -140,17 +140,30 @@ def inspect_host(config, requested, commands, directory):
         locked = json.loads((runtime.ROOT / 'stack.lock.yaml').read_text())['host_observed']
         if any(info[key] != locked[key] for key in ('driver', 'xpu_smi_runtime')):
             raise RuntimeError('host driver/runtime differs from locked observation')
-        if row['used_memory_mib'] or row['utilization_percent'] or info['used_memory_mib'] or info['utilization_percent'] or not info['processes_empty']:
+        occupied = bool(row['used_memory_mib'] or row['utilization_percent'] or info['used_memory_mib'] or info['utilization_percent'] or not info['processes_empty'])
+        foreign_authorized = os.environ.get('P800_ALLOW_FOREIGN_HANDLES') == '1'
+        if occupied and not foreign_authorized:
             raise RuntimeError(f"selected physical device {index} is occupied")
+        if occupied and foreign_authorized:
+            info['foreign_occupancy_observed'] = True
+            info['foreign_handles_authorized'] = True
         if row['total_memory_mib'] != info['total_memory_mib']:
             raise RuntimeError("machine/query memory unit or capacity mismatch")
         devices.append({**info, 'host_physical_id': index, 'pci_bdf': row['pci_bdf'],
                         'serial': row['serial'], 'container_node': info['host_device_node']})
     mapping.validate_device_set(devices)
     check_nodes(devices)
-    observers = {str(device['host_physical_id']): inspect_handles(
-        device, commands, directory, config.get('allow_readonly_smi_handles', False)) for device in devices}
+    observers = {}
+    for device in devices:
+        if device.get('foreign_occupancy_observed') and os.environ.get('P800_ALLOW_FOREIGN_HANDLES') == '1':
+            observers[str(device['host_physical_id'])] = [{'classification': 'foreign-handles-authorized',
+                                                            'inspection': 'skipped-by-explicit-user-authorization'}]
+        else:
+            observers[str(device['host_physical_id'])] = inspect_handles(
+                device, commands, directory, config.get('allow_readonly_smi_handles', False))
     result = {'schema_version': 1, 'status': 'passed', 'devices': devices,
+              'foreign_handles_authorized': os.environ.get('P800_ALLOW_FOREIGN_HANDLES') == '1',
+              'foreign_occupancy_observed': any(d.get('foreign_occupancy_observed') for d in devices),
               'readonly_observers': observers,
               'selection': {'source': 'physical-device-ids', 'requested_ids': requested},
               'machine_memory_unit': 'numerically-cross-checked-with-query-MiB'}

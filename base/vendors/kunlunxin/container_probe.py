@@ -41,7 +41,12 @@ def validate_context(context, environ, nodes, now=None):
         from base.benchmarks.day6_contract import CASES as DAY6_CASES
         require((context.get('case') in CASES or context.get('case') in TRANSFER_CASES or context.get('case') in DAY6_CASES), 'unqualified performance scope')
         if context.get('case') in DAY6_CASES:
-            require(context.get('nproc_per_node') in (1, 2), 'invalid day-six process scope')
+            if context.get('case') == 'interconnect-P2P_intraserver:P800':
+                require(context.get('nproc_per_node') == 2, 'P800 P2P requires exactly two ranks')
+            elif context.get('case') == 'interconnect-MPI_intraserver:P800':
+                require(2 <= context.get('nproc_per_node', 0) <= 8, 'P800 MPI requires 2..8 ranks')
+            else:
+                require(context.get('nproc_per_node') == 1, 'invalid day-six process scope')
         else:
             require(context.get('nproc_per_node') == 1, 'unqualified single-rank scope')
         require(isinstance(context.get('case_assets_sha256'), str) and len(context['case_assets_sha256']) == 64, 'missing case asset identity')

@@ -25,7 +25,7 @@ from .fp32 import save
 
 
 def _require_scope(case, rank, world_size, local_rank):
-    validate_scope = expected_ranks(case)
+    validate_scope = expected_ranks(case, world_size)
     if world_size != validate_scope or rank != local_rank or rank not in range(world_size):
         raise RuntimeError('day-six case process scope differs from the container binding')
 
@@ -273,14 +273,14 @@ def run_allreduce(driver, config, rank, world_size, local_rank):
     payload = payload_bytes(config['Melements'])
     record = {'schema_version': 1, **identity, 'case': case, 'rank': rank, 'status': 'failed',
               'checks': [], 'semantics': {'collective': 'all_reduce SUM', 'message_bytes': payload,
-                                          'reference': 'sum of both deterministic rank inputs computed on CPU',
+                                          'reference': 'sum of deterministic rank inputs computed on CPU for the configured world size',
                                           'timed_loop': 'sign-paired inputs (+base and -base) keep repeated SUM at exactly zero; wire traffic is unchanged'}}
     try:
         if not dist.is_available() or not dist.is_initialized():
             raise RuntimeError('process group must be initialized before allreduce')
         base = torch.arange(payload // 4, dtype=torch.float32).remainder_(251).add_(config['SEED'] % 17)
         mine = base + rank
-        reference = base * 2 + 1  # (base+0) + (base+1)
+        reference = base * world_size + (world_size * (world_size - 1) // 2)
         device_tensor = mine.to(target)
         record.update(input=_placement(device_tensor), input_checksum=_checksum(device_tensor))
         for phase in ('cold', 'second'):

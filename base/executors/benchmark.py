@@ -250,9 +250,11 @@ def validate_case_runtime_requirements(
                 f"local ranks, got {request.nproc_per_node}"
             )
     minimum = process_scope.get("min_nproc_per_node")
-    if minimum is not None and request.nproc_per_node is not None:
-        if request.nproc_per_node < minimum:
-            raise ConfigurationError(f"Benchmark Case {request.case} requires at least {minimum} local ranks")
+    if minimum is not None and request.nproc_per_node is not None and request.nproc_per_node < minimum:
+        raise ConfigurationError(f"Benchmark Case {request.case} requires at least {minimum} local ranks")
+    maximum = process_scope.get("max_nproc_per_node")
+    if maximum is not None and request.nproc_per_node is not None and request.nproc_per_node > maximum:
+        raise ConfigurationError(f"Benchmark Case {request.case} permits at most {maximum} local ranks")
     requires_override = requirements.get(
         "requires_case_override",
         requirements.get("candidate_requires_case_override", False),
@@ -289,6 +291,9 @@ def validate_resolved_process_scope(
     minimum = process_scope.get("min_nproc_per_node")
     if minimum is not None and nproc < minimum:
         raise ConfigurationError(f"Benchmark Case {case} requires at least {minimum} local ranks")
+    maximum = process_scope.get("max_nproc_per_node")
+    if maximum is not None and nproc > maximum:
+        raise ConfigurationError(f"Benchmark Case {case} permits at most {maximum} local ranks")
     for field, actual in (("nnodes", nnodes), ("nproc_per_node", nproc)):
         expected = process_scope.get(field)
         if expected is not None and actual != expected:
