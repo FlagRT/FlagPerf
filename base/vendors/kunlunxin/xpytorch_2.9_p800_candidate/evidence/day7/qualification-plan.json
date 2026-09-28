@@ -1,0 +1,147 @@
+{
+  "schema_version": 1,
+  "execution_code_commit": "c1d900d8",
+  "groups": [
+    {
+      "group": "FP32",
+      "case": "computation-FP32:P800",
+      "config": "base/benchmarks/computation-FP32/kunlunxin/P800/case_config.yaml",
+      "config_sha256": "b207f580b0d0fecc379341df9bf0930b58638578c35535ead2e49a3c975d0a4a",
+      "cards": [
+        5
+      ],
+      "repeats": 5
+    },
+    {
+      "group": "FP16",
+      "case": "computation-FP16:P800",
+      "config": "base/benchmarks/computation-FP16/kunlunxin/P800/case_config.yaml",
+      "config_sha256": "a740b00a89c81dad8aa6b8191ce23619aded87137f983048269de1b0c8be9589",
+      "cards": [
+        5
+      ],
+      "repeats": 5
+    },
+    {
+      "group": "BF16",
+      "case": "computation-BF16:P800",
+      "config": "base/benchmarks/computation-BF16/kunlunxin/P800/case_config.yaml",
+      "config_sha256": "0aff5bab8c4b5a68504771d8568f0781deeb2f3a0c7c73e3eed7f1952d5e837b",
+      "cards": [
+        5
+      ],
+      "repeats": 5
+    },
+    {
+      "group": "INT8",
+      "case": "computation-INT8:P800",
+      "config": "base/benchmarks/computation-INT8/kunlunxin/P800/case_config.yaml",
+      "config_sha256": "9d9d583fa4029b108e449c9cc292269e631ffbdd507acfde84ee23e9ffb8607b",
+      "cards": [
+        5
+      ],
+      "repeats": 5
+    },
+    {
+      "group": "h2d-pageable-blocking",
+      "case": "interconnect-h2d:P800",
+      "config": "base/benchmarks/interconnect-h2d/kunlunxin/P800/case_config.measured-pageable-blocking.yaml",
+      "config_sha256": "22740c1c80a798b0b695a7424250660deeb0efab0e285cf6e26076123c7f6077",
+      "cards": [
+        5
+      ],
+      "repeats": 5,
+      "payload_bytes": 536870912
+    },
+    {
+      "group": "h2d-pageable-nonblocking",
+      "case": "interconnect-h2d:P800",
+      "config": "base/benchmarks/interconnect-h2d/kunlunxin/P800/case_config.measured-pageable-nonblocking.yaml",
+      "config_sha256": "d922d97e1f1e9151a8909e30884ec3c798bedae43a0589b63236cc441dca0f4b",
+      "cards": [
+        5
+      ],
+      "repeats": 5,
+      "payload_bytes": 536870912
+    },
+    {
+      "group": "h2d-pinned-blocking",
+      "case": "interconnect-h2d:P800",
+      "config": "base/benchmarks/interconnect-h2d/kunlunxin/P800/case_config.measured-pinned-blocking.yaml",
+      "config_sha256": "46bba02b5e271fa0a2cb0bfe17f69a325c75ef8add0a489b9be049d1d1980a40",
+      "cards": [
+        5
+      ],
+      "repeats": 5,
+      "payload_bytes": 536870912
+    },
+    {
+      "group": "h2d-pinned-nonblocking",
+      "case": "interconnect-h2d:P800",
+      "config": "base/benchmarks/interconnect-h2d/kunlunxin/P800/case_config.measured-pinned-nonblocking.yaml",
+      "config_sha256": "0fa0967d8541f2b507058092d5ef45bd4b54e4aa9211f015641bc81555a60bc1",
+      "cards": [
+        5
+      ],
+      "repeats": 5,
+      "payload_bytes": 536870912
+    },
+    {
+      "group": "d2h-pageable-blocking",
+      "case": "interconnect-d2h:P800",
+      "config": "base/benchmarks/interconnect-d2h/kunlunxin/P800/case_config.measured-pageable-blocking.yaml",
+      "config_sha256": "22740c1c80a798b0b695a7424250660deeb0efab0e285cf6e26076123c7f6077",
+      "cards": [
+        5
+      ],
+      "repeats": 5,
+      "payload_bytes": 536870912
+    },
+    {
+      "group": "d2h-pageable-nonblocking",
+      "case": "interconnect-d2h:P800",
+      "config": "base/benchmarks/interconnect-d2h/kunlunxin/P800/case_config.measured-pageable-nonblocking.yaml",
+      "config_sha256": "bdc8cee2123ffbd3a46142d9ce27fa71443bb866d70ff69f4c561d3cfefc6be5",
+      "cards": [
+        5
+      ],
+      "repeats": 5,
+      "payload_bytes": 536870912
+    },
+    {
+      "group": "d2h-pinned-blocking",
+      "case": "interconnect-d2h:P800",
+      "config": "base/benchmarks/interconnect-d2h/kunlunxin/P800/case_config.measured-pinned-blocking.yaml",
+      "config_sha256": "4fcda1736d114f817ef33ddc99df032fefa6e52cfa59ed6dce6b6e3b63494733",
+      "cards": [
+        5
+      ],
+      "repeats": 5,
+      "payload_bytes": 536870912
+    },
+    {
+      "group": "d2h-pinned-nonblocking",
+      "case": "interconnect-d2h:P800",
+      "config": "base/benchmarks/interconnect-d2h/kunlunxin/P800/case_config.measured-pinned-nonblocking.yaml",
+      "config_sha256": "7d48f7b6b4cf8c8eeba587f8b0e368f47e56e7573b8c93b65611400172755534",
+      "cards": [
+        5
+      ],
+      "repeats": 5,
+      "payload_bytes": 536870912
+    },
+    {
+      "group": "memory-bandwidth",
+      "case": "main_memory-bandwidth:P800",
+      "config": "base/benchmarks/main_memory-bandwidth/kunlunxin/P800/case_config.yaml",
+      "config_sha256": "088b4db94c36f9fea751cf7e8d700149635e79ad4e3ab8d4574e6190d564da1b",
+      "cards": [
+        5
+      ],
+      "repeats": 5
+    }
+  ],
+  "capacity": "one bounded full-search validation, not a throughput CV group",
+  "monitor_ab": "FP32/FP16/h2d pinned blocking, three alternating off/on pairs",
+  "eight_card": "blocked: unhealthy/unavailable cards and exactly-two-rank implementation; no arbitrary bypass"
+}

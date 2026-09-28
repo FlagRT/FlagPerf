@@ -1,0 +1,117 @@
+[
+  {
+    "group": "FP32",
+    "status": "passed",
+    "median": 117.87780515053663,
+    "unit": "TFLOPS",
+    "cv_percent": 0.36615484576830315,
+    "repetitions": 5
+  },
+  {
+    "group": "FP16",
+    "status": "passed",
+    "median": 258.7841983504385,
+    "unit": "TFLOPS",
+    "cv_percent": 0.04484491274909532,
+    "repetitions": 5
+  },
+  {
+    "group": "BF16",
+    "status": "passed",
+    "median": 118.96795986125177,
+    "unit": "TFLOPS",
+    "cv_percent": 0.0017619849746718901,
+    "repetitions": 5
+  },
+  {
+    "group": "INT8",
+    "status": "passed",
+    "median": 503.9037593846929,
+    "unit": "TOPS",
+    "cv_percent": 0.3211059782938446,
+    "repetitions": 5
+  },
+  {
+    "group": "h2d-pageable-blocking",
+    "status": "passed",
+    "median": 10.014424348520725,
+    "unit": "GB/s",
+    "cv_percent": 1.1785497388117585,
+    "repetitions": 5
+  },
+  {
+    "group": "h2d-pageable-nonblocking",
+    "status": "passed",
+    "median": 18.844314151096917,
+    "unit": "GB/s",
+    "cv_percent": 2.254722168897458,
+    "repetitions": 5
+  },
+  {
+    "group": "h2d-pinned-blocking",
+    "status": "unstable",
+    "median": 20.113559647669202,
+    "unit": "GB/s",
+    "cv_percent": 6.32066412565772,
+    "repetitions": 5
+  },
+  {
+    "group": "h2d-pinned-nonblocking",
+    "status": "passed",
+    "median": 19.289542181161412,
+    "unit": "GB/s",
+    "cv_percent": 4.165151213315993,
+    "repetitions": 5
+  },
+  {
+    "group": "d2h-pageable-blocking",
+    "status": "passed",
+    "median": 10.802936108913677,
+    "unit": "GB/s",
+    "cv_percent": 3.78922037427054,
+    "repetitions": 5
+  },
+  {
+    "group": "d2h-pageable-nonblocking",
+    "status": "passed",
+    "median": 17.54872710547543,
+    "unit": "GB/s",
+    "cv_percent": 3.322982718116306,
+    "repetitions": 5
+  },
+  {
+    "group": "d2h-pinned-blocking",
+    "status": "unstable",
+    "median": 24.727412259554253,
+    "unit": "GB/s",
+    "cv_percent": 5.592455322215141,
+    "repetitions": 5
+  },
+  {
+    "group": "d2h-pinned-nonblocking",
+    "status": "unstable",
+    "median": 25.154118614618735,
+    "unit": "GB/s",
+    "cv_percent": 5.932371282278915,
+    "repetitions": 5
+  },
+  {
+    "group": "memory-bandwidth",
+    "status": "passed",
+    "median": 2235.9018565562737,
+    "unit": "GB/s",
+    "cv_percent": 0.000777168138903794,
+    "repetitions": 5
+  },
+  {
+    "group": "comm-MPI-m64",
+    "status": "incomplete",
+    "completed_runs": 0
+  },
+  {
+    "group": "comm-P2P-m64",
+    "status": "incomplete",
+    "completed_runs": 0
+  }
+]
+AB [('FP32', 0, None), ('FP16', 0, None), ('h2d-pinned', 3, -0.9590609209122691), ('comm-MPI', 0, None), ('comm-P2P', 0, None)]

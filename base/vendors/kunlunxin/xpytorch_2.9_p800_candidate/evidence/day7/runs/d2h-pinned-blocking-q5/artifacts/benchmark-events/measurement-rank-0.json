@@ -1,0 +1,14 @@
+{
+  "case": "interconnect-d2h:P800",
+  "duration_s": 21.833995519,
+  "finished_at": "2026-09-24T13:30:22.519684Z",
+  "finished_monotonic_ns": 4097759439517147,
+  "kind": "measurement-window",
+  "local_rank": 0,
+  "pid": 102,
+  "rank": 0,
+  "schema_version": 1,
+  "started_at": "2026-09-24T13:30:00.685637Z",
+  "started_monotonic_ns": 4097737605521628,
+  "world_size": 1
+}

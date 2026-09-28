@@ -1,0 +1,249 @@
+/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-pr1-20260920-162724/cpu-test-venv/lib/python3.12/site-packages/torch/_subclasses/functional_tensor.py:295: UserWarning: Failed to initialize NumPy: No module named 'numpy' (Triggered internally at ../torch/csrc/utils/tensor_numpy.cpp:84.)
+  cpu = _conversion_method_template(device=torch.device("cpu"))
+.................................................finish initialization
+start warmup
+Init tensor size: 2 MiB...
+Allocated: 2 MiB
+Ascend allocation failed at 2 MiB; allocated=2 MiB; raw error: out of memory
+Reduce tensor size to 1 MiB
+Ascend allocation failed at 1 MiB; allocated=2 MiB; raw error: out of memory
+Reached the 1 MiB allocation granularity, finish test.
+Test Finished
+Init tensor size: 2 MiB...
+Allocated: 2 MiB
+Ascend allocation failed at 2 MiB; allocated=2 MiB; raw error: out of memory
+Reduce tensor size to 1 MiB
+Ascend allocation failed at 1 MiB; allocated=2 MiB; raw error: out of memory
+Reached the 1 MiB allocation granularity, finish test.
+Test Finished
+Ascend FP32 uses Torch-FL backend defaults; strict IEEE FP32 mode is not enforced
+finish initialization
+start warmup
+finish initialization
+start warmup
+D2H transfer semantics: host_memory=pinned, api=copy_, non_blocking=False
+Ascend FP32 uses Torch-FL backend defaults; strict IEEE FP32 mode is not enforced
+finish initialization
+start warmup
+H2D transfer semantics: host_memory=pinned, api=copy_, non_blocking=False
+Ascend FP32 uses Torch-FL backend defaults; strict IEEE FP32 mode is not enforced
+finish initialization
+Rank 0: AllReduce SUM correctness passed; expected=3
+start warmup
+Ascend FP32 uses Torch-FL backend defaults; strict IEEE FP32 mode is not enforced
+finish initialization
+Init tensor size: 1 MiB...
+Init tensor size: 1 MiB...
+Ascend allocation failed at 1 MiB; allocated=0 MiB; raw error: CachingDeviceAllocator: failed to allocate 4 bytes on device 0
+Init tensor size: 65536 MiB...
+Attempt allocation: 3 MiB; held=0 MiB
+Allocated: 3 MiB
+Attempt allocation: 1 MiB; held=3 MiB
+............................................................................................ERROR: Benchmark Case interconnect-MPI_intraserver:P800 requires exactly 2 local ranks, got 1
+..ERROR: Benchmark Case does not exist: training-bert
+....................................Ascend allocation failed at 1 MiB; allocated=3 MiB; raw error: CachingDeviceAllocator: failed to allocate 1048576 bytes on device 0
+Reached the 1 MiB allocation granularity, finish test.
+Test Finished
+Init tensor size: 2 MiB...
+Ascend allocation failed at 2 MiB; allocated=0 MiB; raw error: CachingDeviceAllocator: failed to allocate 2097152 bytes on device 0
+Reduce tensor size to 1 MiB
+Allocated: 1 MiB
+Ascend allocation failed at 1 MiB; allocated=1 MiB; raw error: CachingDeviceAllocator: failed to allocate 2097152 bytes on device 0
+Reached the 1 MiB allocation granularity, finish test.
+Test Finished
+{
+  "applicability": {
+    "reason": null,
+    "status": "applicable"
+  },
+  "case": "main_memory-bandwidth:P800",
+  "case_assets": {
+    "case": "main_memory-bandwidth:P800",
+    "case_name": "main_memory-bandwidth",
+    "chip": "P800",
+    "configurations": {
+      "chip": {
+        "bytes": 238,
+        "relative_path": "benchmarks/main_memory-bandwidth/kunlunxin/P800/case_config.yaml",
+        "sha256": "088b4db94c36f9fea751cf7e8d700149635e79ad4e3ab8d4574e6190d564da1b"
+      },
+      "generic": {
+        "bytes": 646,
+        "relative_path": "benchmarks/main_memory-bandwidth/case_config.yaml",
+        "sha256": "10f598c059e893845851f892d1cd332a14d6c31b3a005ffb950f614fd66c3726"
+      }
+    },
+    "entrypoint": {
+      "bytes": 1248,
+      "relative_path": "benchmarks/main_memory-bandwidth/kunlunxin/P800/main.py",
+      "sha256": "30935a4a93d533d6aa6db5d98c3594b5831f3f0f507582df7c5448b581ea119a"
+    },
+    "environments": [],
+    "merged_config": {
+      "DIST_BACKEND": "gloo",
+      "DTYPE": "float32",
+      "FAULT_MODE": "none",
+      "IMPLEMENTATION": "native-xpytorch",
+      "ITERS": 4200,
+      "MODE": "qualification",
+      "Melements": 1024,
+      "SEED": 519,
+      "WARMUP": 2
+    },
+    "requirement_files": [
+      {
+        "bytes": 239,
+        "relative_path": "benchmarks/main_memory-bandwidth/kunlunxin/P800/runtime_requirements.json",
+        "sha256": "fd96d385d0c7c5f369a87b354f2b2206c18777ef91016b022d65dc855a536588"
+      }
+    ],
+    "requirements": {
+      "correctness_required": true,
+      "implementation": "native-xpytorch",
+      "process_scope": {
+        "nnodes": 1,
+        "nproc_per_node": 1
+      },
+      "runtime_profile": "xpytorch_2.9_p800_candidate",
+      "runtime_role": "operator",
+      "schema_version": 1,
+      "supported": true
+    },
+    "schema_version": 1,
+    "selector": "kunlunxin/P800",
+    "vendor": "kunlunxin"
+  },
+  "case_config": {
+    "chip": {
+      "bytes": 238,
+      "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/main_memory-bandwidth/kunlunxin/P800/case_config.yaml",
+      "relative_path": "benchmarks/main_memory-bandwidth/kunlunxin/P800/case_config.yaml",
+      "sha256": "088b4db94c36f9fea751cf7e8d700149635e79ad4e3ab8d4574e6190d564da1b"
+    },
+    "generic": {
+      "bytes": 646,
+      "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/main_memory-bandwidth/case_config.yaml",
+      "relative_path": "benchmarks/main_memory-bandwidth/case_config.yaml",
+      "sha256": "10f598c059e893845851f892d1cd332a14d6c31b3a005ffb950f614fd66c3726"
+    }
+  },
+  "context": {
+    "config": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/configs/kunlunxin_p800_xpytorch29.yaml",
+    "device_ids": null,
+    "dry_run": true,
+    "npu_ids": null,
+    "physical_device_ids": "1",
+    "result_root": null,
+    "timeout": 300
+  },
+  "host_config": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/configs/kunlunxin_p800_xpytorch29.yaml",
+  "image": "flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev:202608",
+  "kind": "benchmark",
+  "mode": "static-dry-run",
+  "monitoring": {
+    "automatic_workload_extension": false,
+    "collector": "xpu-smi -m and selected -q",
+    "enabled": true,
+    "metric_fields": [
+      {
+        "key": "utilization_percent",
+        "label": "Device utilization",
+        "unit": "%"
+      },
+      {
+        "key": "used_memory_mib",
+        "label": "Allocated device memory",
+        "unit": "MiB"
+      }
+    ],
+    "required_samples_per_target": 10,
+    "target_interval_s": 1.0,
+    "target_resource": "p800-device",
+    "vendor": "kunlunxin"
+  },
+  "nproc_per_node": "derive-from-resolved-logical-devices",
+  "permissions": {
+    "active_dmi": false,
+    "candidate_runtime": true,
+    "cap_drop": [
+      "ALL"
+    ],
+    "ipc_namespace": "private",
+    "network": "flagperf-p800-internal",
+    "pid_namespace": "private",
+    "privileged_root": false,
+    "read_only_root": true
+  },
+  "runtime_identity": {
+    "image_id": "deferred-until-image-inspection"
+  },
+  "runtime_lock": {
+    "image_manifest": {
+      "image": "flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev:202608",
+      "image_id": "sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975",
+      "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/image-manifest.json",
+      "release_stage": "candidate",
+      "schema_version": 1,
+      "sha256": "ab59dc1cd14b65a28ffaef7b1b21b1d0b51f5334619301659d4123a5c681acbf",
+      "validated": false,
+      "validation_scope": [],
+      "validation_status": null
+    },
+    "runtime_profile": "xpytorch_2.9_p800_candidate",
+    "stack_lock": {
+      "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/stack.lock.yaml",
+      "sha256": "8f200d0b955b7e60881bc13ed75c8784c2c38fe2c755d018c618f1dc7b46cded"
+    },
+    "vendor": "kunlunxin"
+  },
+  "runtime_requirements": {
+    "bytes": 239,
+    "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/main_memory-bandwidth/kunlunxin/P800/runtime_requirements.json",
+    "relative_path": "benchmarks/main_memory-bandwidth/kunlunxin/P800/runtime_requirements.json",
+    "requirements": {
+      "correctness_required": true,
+      "implementation": "native-xpytorch",
+      "process_scope": {
+        "nnodes": 1,
+        "nproc_per_node": 1
+      },
+      "runtime_profile": "xpytorch_2.9_p800_candidate",
+      "runtime_role": "operator",
+      "schema_version": 1,
+      "supported": true
+    },
+    "sha256": "fd96d385d0c7c5f369a87b354f2b2206c18777ef91016b022d65dc855a536588",
+    "sources": [
+      {
+        "bytes": 239,
+        "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/main_memory-bandwidth/kunlunxin/P800/runtime_requirements.json",
+        "relative_path": "benchmarks/main_memory-bandwidth/kunlunxin/P800/runtime_requirements.json",
+        "sha256": "fd96d385d0c7c5f369a87b354f2b2206c18777ef91016b022d65dc855a536588"
+      }
+    ]
+  },
+  "schema_version": 1,
+  "selection_note": "physical-to-logical mapping and idle state are resolved only by the side-effecting host preflight",
+  "selection_request": {
+    "expression": "1",
+    "requested_ids": [
+      1
+    ],
+    "resolution_status": "deferred-until-host-preflight",
+    "source": "physical-device-ids"
+  },
+  "vendor": "kunlunxin",
+  "vendor_display_name": "Kunlunxin P800",
+  "worker": "benchmark_worker.py"
+}
+{
+  "status": "partial",
+  "manifest": "/tmp/tmp4b49d6kd/evidence/manifest.json"
+}
+..................[Benchmark] running | case 1/1: example:Chip | case elapsed=0.0s | completed=0/1 | elapsed=0.0s
+[Benchmark] container-exited (code=0) | case 1/1: example:Chip | case elapsed=0.0s | completed=1/1 | elapsed=0.0s
+....................
+----------------------------------------------------------------------
+Ran 217 tests in 3.342s
+
+OK

@@ -1,0 +1,84 @@
+{
+  "case": "computation-FP16:P800",
+  "correctness": "artifacts/correctness-rank-0.json",
+  "expected_ranks": [
+    0
+  ],
+  "metrics": [
+    {
+      "accumulation_scope": "numerical observations only; internal accumulator dtype not certified",
+      "allocation_semantics": "torch.mm returned output; allocator cost may be included",
+      "binding": {
+        "container_device_node": "/dev/xpu7",
+        "framework_device_name": "cuda:0",
+        "framework_local_rank": 0,
+        "framework_logical_id": 0,
+        "host_device_node": "/dev/xpu7",
+        "host_physical_id": 5,
+        "legacy_logical_id": null,
+        "pci_bdf": "0000:9c:00.0",
+        "request_index": 0,
+        "resource_key": "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87",
+        "serial_or_uuid": "f396486d-9850-50e4-81c4-50f2e9f6ca87",
+        "vendor": "kunlunxin"
+      },
+      "bindings": [
+        {
+          "container_device_node": "/dev/xpu7",
+          "framework_device_name": "cuda:0",
+          "framework_local_rank": 0,
+          "framework_logical_id": 0,
+          "host_device_node": "/dev/xpu7",
+          "host_physical_id": 5,
+          "legacy_logical_id": null,
+          "pci_bdf": "0000:9c:00.0",
+          "request_index": 0,
+          "resource_key": "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87",
+          "serial_or_uuid": "f396486d-9850-50e4-81c4-50f2e9f6ca87",
+          "vendor": "kunlunxin"
+        }
+      ],
+      "case_assets_sha256": "fed05fb364d230e3714404aed1083b87d90fa0d274573c1eec896f2a310d8874",
+      "context_sha256": "68d35e8633f270d2010938946aef6824354ac448c485db457c5e0f40623c3629",
+      "cuda_matmul_allow_tf32": false,
+      "dtype": "float16",
+      "elapsed_seconds": 21.243793763,
+      "fallback_scope": "UUID, tensor placement and locked native route; no universal fallback exclusion",
+      "finished_monotonic_ns": 4096207271417187,
+      "implementation": "native-xpytorch",
+      "iterations": 5000,
+      "metric": "computation-FP16",
+      "mode": "qualification",
+      "operations": 5497558138880000,
+      "operator": "torch.mm",
+      "output_dtype": "float16",
+      "pid_namespace": "pid:[4026547998]",
+      "precision_scope": "native inputs/outputs as recorded by the case; compatibility controls do not certify internal arithmetic",
+      "qualification_duration_passed": true,
+      "rank": 0,
+      "reference_inputs": "CPU inputs quantized to target dtype before FP64 reference",
+      "run_id": "benchmark-88be7e3165eb4602b943b3db1ed6af9f",
+      "schema_version": 1,
+      "shape": [
+        8192,
+        8192,
+        8192
+      ],
+      "started_monotonic_ns": 4096186027623424,
+      "status": "passed",
+      "timer": "perf_counter_ns with full target synchronization",
+      "unit": "TFLOPS",
+      "value": 258.7841983504385,
+      "warmup": 100,
+      "worker_parent_pid": 1,
+      "worker_pid": 102,
+      "world_size": 1
+    }
+  ],
+  "missing_ranks": [],
+  "observed_ranks": [
+    0
+  ],
+  "schema_version": 1,
+  "status": "passed"
+}

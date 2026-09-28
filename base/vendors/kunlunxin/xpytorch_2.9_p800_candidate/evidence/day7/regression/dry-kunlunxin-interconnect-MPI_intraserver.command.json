@@ -1,0 +1,23 @@
+{
+  "command": [
+    "python3",
+    "-B",
+    "base/run.py",
+    "benchmark",
+    "run",
+    "--case",
+    "interconnect-MPI_intraserver:P800",
+    "--config",
+    "base/configs/kunlunxin_p800_xpytorch29.yaml",
+    "--nproc-per-node",
+    "2",
+    "--timeout",
+    "300",
+    "--allow-high-risk-case",
+    "--allow-candidate-runtime",
+    "--dry-run",
+    "--physical-device-ids",
+    "5,6"
+  ],
+  "exit_code": 0
+}

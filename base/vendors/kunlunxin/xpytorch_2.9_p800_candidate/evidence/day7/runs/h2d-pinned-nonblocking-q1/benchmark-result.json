@@ -1,0 +1,82 @@
+{
+  "case": "interconnect-h2d:P800",
+  "correctness": "artifacts/correctness-rank-0.json",
+  "expected_ranks": [
+    0
+  ],
+  "metrics": [
+    {
+      "allocation_semantics": "preallocated source/destination; timed loop only Tensor.copy_; runtime staging may occur",
+      "api": "Tensor.copy_",
+      "binding": {
+        "container_device_node": "/dev/xpu7",
+        "framework_device_name": "cuda:0",
+        "framework_local_rank": 0,
+        "framework_logical_id": 0,
+        "host_device_node": "/dev/xpu7",
+        "host_physical_id": 5,
+        "legacy_logical_id": null,
+        "pci_bdf": "0000:9c:00.0",
+        "request_index": 0,
+        "resource_key": "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87",
+        "serial_or_uuid": "f396486d-9850-50e4-81c4-50f2e9f6ca87",
+        "vendor": "kunlunxin"
+      },
+      "bindings": [
+        {
+          "container_device_node": "/dev/xpu7",
+          "framework_device_name": "cuda:0",
+          "framework_local_rank": 0,
+          "framework_logical_id": 0,
+          "host_device_node": "/dev/xpu7",
+          "host_physical_id": 5,
+          "legacy_logical_id": null,
+          "pci_bdf": "0000:9c:00.0",
+          "request_index": 0,
+          "resource_key": "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87",
+          "serial_or_uuid": "f396486d-9850-50e4-81c4-50f2e9f6ca87",
+          "vendor": "kunlunxin"
+        }
+      ],
+      "case_assets_sha256": "d7e574bd69ae7e46a44cdd2f4050b4277022cfd13dfebbbccac95c73b238c1fe",
+      "context_sha256": "205a8c01cb8e27a939a37e01151875ec73913bd15ceee5cfa49e9606549c9127",
+      "cuda_matmul_allow_tf32": false,
+      "direction": "h2d",
+      "dtype": "float32",
+      "elapsed_seconds": 19.625861274,
+      "fallback_scope": "UUID, tensor placement and locked native route; no universal fallback exclusion",
+      "finished_monotonic_ns": 4097201709783439,
+      "host_memory": "pinned",
+      "implementation": "native-xpytorch",
+      "iterations": 700,
+      "metric": "transfer-bandwidth",
+      "mode": "measured",
+      "non_blocking": true,
+      "payload_bytes": 536870912,
+      "pid_namespace": "pid:[4026547998]",
+      "precision_scope": "native inputs/outputs as recorded by the case; compatibility controls do not certify internal arithmetic",
+      "qualification_duration_passed": true,
+      "rank": 0,
+      "run_id": "benchmark-315af2143ae7493f9b8aa289acdce835",
+      "schema_version": 1,
+      "scope": "effective single-direction API bandwidth; non_blocking is a request, not proof of overlap or DMA",
+      "started_monotonic_ns": 4097182083922165,
+      "status": "passed",
+      "timer": "perf_counter_ns with full target synchronization",
+      "total_bytes": 375809638400,
+      "unit": "GB/s",
+      "value": 19.148695344028855,
+      "value_gib_s": 17.83361224832838,
+      "warmup": 10,
+      "worker_parent_pid": 1,
+      "worker_pid": 102,
+      "world_size": 1
+    }
+  ],
+  "missing_ranks": [],
+  "observed_ranks": [
+    0
+  ],
+  "schema_version": 1,
+  "status": "passed"
+}

@@ -1,0 +1,418 @@
+[
+  {
+    "vendor": "kunlunxin",
+    "case": "computation-BF16",
+    "exit_code": 0,
+    "applicability": {
+      "reason": null,
+      "status": "applicable"
+    },
+    "entrypoint": {
+      "bytes": 3700,
+      "relative_path": "benchmarks/computation-BF16/main.py",
+      "sha256": "ba8e1bcdde913a52c2ec7bcb76b725ee25a1b46fc449b7cb51b652705f9d2fad"
+    }
+  },
+  {
+    "vendor": "kunlunxin",
+    "case": "computation-FP16",
+    "exit_code": 0,
+    "applicability": {
+      "reason": null,
+      "status": "applicable"
+    },
+    "entrypoint": {
+      "bytes": 3698,
+      "relative_path": "benchmarks/computation-FP16/main.py",
+      "sha256": "174f817a20c048c60b04ed44581c764b4c6e0c6575eab5a5d38dea37563a43bf"
+    }
+  },
+  {
+    "vendor": "kunlunxin",
+    "case": "computation-FP32",
+    "exit_code": 0,
+    "applicability": {
+      "reason": null,
+      "status": "applicable"
+    },
+    "entrypoint": {
+      "bytes": 3700,
+      "relative_path": "benchmarks/computation-FP32/main.py",
+      "sha256": "594d2b0799351fc56198be72113765e10d30866cb441ed044bc48bc9e88f2ac3"
+    }
+  },
+  {
+    "vendor": "kunlunxin",
+    "case": "computation-FP64",
+    "exit_code": 0,
+    "applicability": {
+      "reason": "capability probe returned float32 output for float64 input; native FP64 output is not proven",
+      "status": "skipped"
+    },
+    "entrypoint": {
+      "bytes": 2846,
+      "relative_path": "benchmarks/computation-FP64/main.py",
+      "sha256": "30fb2d57b214d6caac9c900b85ec4e0b9fea73007af247ff1862fe72e68fc503"
+    }
+  },
+  {
+    "vendor": "kunlunxin",
+    "case": "computation-FP8",
+    "exit_code": 0,
+    "applicability": {
+      "reason": "FP8 mm and scaled-mm APIs returned NOT IMPLEMENTED on the locked stack",
+      "status": "skipped"
+    },
+    "entrypoint": {
+      "bytes": 4895,
+      "relative_path": "benchmarks/computation-FP8/main.py",
+      "sha256": "e3638e0534ce422cb48b70d867c19864ef1f22c65e17c13158407223327b7d95"
+    }
+  },
+  {
+    "vendor": "kunlunxin",
+    "case": "computation-INT8",
+    "exit_code": 0,
+    "applicability": {
+      "reason": null,
+      "status": "applicable"
+    },
+    "entrypoint": {
+      "bytes": 732,
+      "relative_path": "benchmarks/computation-INT8/kunlunxin/P800/main.py",
+      "sha256": "6c634879ad45dd14060dd267a8787ba8a6516bade8acd7343c1000eeba3d2790"
+    }
+  },
+  {
+    "vendor": "kunlunxin",
+    "case": "computation-TF32",
+    "exit_code": 0,
+    "applicability": {
+      "reason": "blocked/unresolved: current stack TF32 route is not qualified; allow_tf32 A/B alone cannot establish support or hardware non-support",
+      "status": "skipped"
+    },
+    "entrypoint": {
+      "bytes": 3000,
+      "relative_path": "benchmarks/computation-TF32/main.py",
+      "sha256": "a469da559ac0e662312b35c45d7cde7f33555980bee2f11cf1b8c7219b11b5ba"
+    }
+  },
+  {
+    "vendor": "kunlunxin",
+    "case": "interconnect-MPI_interserver",
+    "exit_code": 0,
+    "applicability": {
+      "reason": "the unified P800 entrypoint resolves nnodes=1 only; interserver cases are skipped before Docker and lease",
+      "status": "skipped"
+    },
+    "entrypoint": {
+      "bytes": 5438,
+      "relative_path": "benchmarks/interconnect-MPI_interserver/main.py",
+      "sha256": "8e64a4674ca7b28cce4a3df7a0ed1e5fbaecc2d1fabd4410274493c760ef378b"
+    }
+  },
+  {
+    "vendor": "kunlunxin",
+    "case": "interconnect-MPI_intraserver",
+    "exit_code": 0,
+    "applicability": {
+      "reason": null,
+      "status": "applicable"
+    },
+    "entrypoint": {
+      "bytes": 1243,
+      "relative_path": "benchmarks/interconnect-MPI_intraserver/kunlunxin/P800/main.py",
+      "sha256": "a79775f1b3eab00a414c72001f8e720b559f541b4b338935f6cb2ecf61987c58"
+    }
+  },
+  {
+    "vendor": "kunlunxin",
+    "case": "interconnect-P2P_interserver",
+    "exit_code": 0,
+    "applicability": {
+      "reason": "the unified P800 entrypoint resolves nnodes=1 only; interserver cases are skipped before Docker and lease",
+      "status": "skipped"
+    },
+    "entrypoint": {
+      "bytes": 3977,
+      "relative_path": "benchmarks/interconnect-P2P_interserver/main.py",
+      "sha256": "a2a1c0b07601ae991da9d4351ab06670f13960c3da21d0e5a2bb2e0dbc4af85e"
+    }
+  },
+  {
+    "vendor": "kunlunxin",
+    "case": "interconnect-P2P_intraserver",
+    "exit_code": 0,
+    "applicability": {
+      "reason": null,
+      "status": "applicable"
+    },
+    "entrypoint": {
+      "bytes": 1235,
+      "relative_path": "benchmarks/interconnect-P2P_intraserver/kunlunxin/P800/main.py",
+      "sha256": "6c4b4844f56f067a52502177344454a2a71338de7df5548bf28c4c93db2a5d60"
+    }
+  },
+  {
+    "vendor": "kunlunxin",
+    "case": "interconnect-d2h",
+    "exit_code": 0,
+    "applicability": {
+      "reason": null,
+      "status": "applicable"
+    },
+    "entrypoint": {
+      "bytes": 3821,
+      "relative_path": "benchmarks/interconnect-d2h/main.py",
+      "sha256": "da88fcba4928ed61fdb0fbee2ef15c8974016c21ba590224c2f8e77fc7fc94fc"
+    }
+  },
+  {
+    "vendor": "kunlunxin",
+    "case": "interconnect-h2d",
+    "exit_code": 0,
+    "applicability": {
+      "reason": null,
+      "status": "applicable"
+    },
+    "entrypoint": {
+      "bytes": 4686,
+      "relative_path": "benchmarks/interconnect-h2d/main.py",
+      "sha256": "a9a3dbf9ef6762e7d590d71ee74887e58c75aaed61caa471f4995e65326e1b20"
+    }
+  },
+  {
+    "vendor": "kunlunxin",
+    "case": "main_memory-bandwidth",
+    "exit_code": 0,
+    "applicability": {
+      "reason": null,
+      "status": "applicable"
+    },
+    "entrypoint": {
+      "bytes": 1248,
+      "relative_path": "benchmarks/main_memory-bandwidth/kunlunxin/P800/main.py",
+      "sha256": "30935a4a93d533d6aa6db5d98c3594b5831f3f0f507582df7c5448b581ea119a"
+    }
+  },
+  {
+    "vendor": "kunlunxin",
+    "case": "main_memory-capacity",
+    "exit_code": 0,
+    "applicability": {
+      "reason": null,
+      "status": "applicable"
+    },
+    "entrypoint": {
+      "bytes": 1246,
+      "relative_path": "benchmarks/main_memory-capacity/kunlunxin/P800/main.py",
+      "sha256": "04dfc90c6473694b763b96b2007e7b7cd51e3b3d1d390f28048f4bb559c03356"
+    }
+  },
+  {
+    "vendor": "ascend",
+    "case": "computation-BF16",
+    "exit_code": 0,
+    "applicability": {
+      "reason": null,
+      "status": "applicable"
+    },
+    "entrypoint": {
+      "bytes": 3700,
+      "relative_path": "benchmarks/computation-BF16/main.py",
+      "sha256": "ba8e1bcdde913a52c2ec7bcb76b725ee25a1b46fc449b7cb51b652705f9d2fad"
+    }
+  },
+  {
+    "vendor": "ascend",
+    "case": "computation-FP16",
+    "exit_code": 0,
+    "applicability": {
+      "reason": null,
+      "status": "applicable"
+    },
+    "entrypoint": {
+      "bytes": 3698,
+      "relative_path": "benchmarks/computation-FP16/main.py",
+      "sha256": "174f817a20c048c60b04ed44581c764b4c6e0c6575eab5a5d38dea37563a43bf"
+    }
+  },
+  {
+    "vendor": "ascend",
+    "case": "computation-FP32",
+    "exit_code": 0,
+    "applicability": {
+      "reason": null,
+      "status": "applicable"
+    },
+    "entrypoint": {
+      "bytes": 3700,
+      "relative_path": "benchmarks/computation-FP32/main.py",
+      "sha256": "594d2b0799351fc56198be72113765e10d30866cb441ed044bc48bc9e88f2ac3"
+    }
+  },
+  {
+    "vendor": "ascend",
+    "case": "computation-FP64",
+    "exit_code": 0,
+    "applicability": {
+      "reason": "\u5f53\u524d Ascend 910C/A3 \u4e0d\u652f\u6301\u672c Case \u6240\u9700\u7684\u539f\u751f FP64 GEMM\uff1bTorch-FL \u7684 FP64 \u8f6c FP32 \u8def\u5f84\u4e0d\u80fd\u4f5c\u4e3a FP64 \u7b97\u529b\u7ed3\u679c",
+      "status": "skipped"
+    },
+    "entrypoint": {
+      "bytes": 2846,
+      "relative_path": "benchmarks/computation-FP64/main.py",
+      "sha256": "30fb2d57b214d6caac9c900b85ec4e0b9fea73007af247ff1862fe72e68fc503"
+    }
+  },
+  {
+    "vendor": "ascend",
+    "case": "computation-FP8",
+    "exit_code": 0,
+    "applicability": {
+      "reason": "\u5f53\u524d Ascend 910C/A3 \u4e0d\u652f\u6301\u672c Case \u6240\u9700\u7684\u539f\u751f FP8 GEMM\uff1b\u8f6c\u4e3a FP16/BF16 \u8ba1\u7b97\u4e0d\u80fd\u4f5c\u4e3a\u539f\u751f FP8 \u7b97\u529b\u7ed3\u679c",
+      "status": "skipped"
+    },
+    "entrypoint": {
+      "bytes": 4895,
+      "relative_path": "benchmarks/computation-FP8/main.py",
+      "sha256": "e3638e0534ce422cb48b70d867c19864ef1f22c65e17c13158407223327b7d95"
+    }
+  },
+  {
+    "vendor": "ascend",
+    "case": "computation-INT8",
+    "exit_code": 0,
+    "applicability": {
+      "reason": null,
+      "status": "applicable"
+    },
+    "entrypoint": {
+      "bytes": 4977,
+      "relative_path": "benchmarks/computation-INT8/ascend/main.py",
+      "sha256": "7e502948183b3ab237da779bb1cb08c0d29ef25f3719e473cd04ddcd5ca36d0a"
+    }
+  },
+  {
+    "vendor": "ascend",
+    "case": "computation-TF32",
+    "exit_code": 0,
+    "applicability": {
+      "reason": "TF32 Case \u672a\u539f\u751f\u9002\u914d Ascend\uff0c\u6682\u65f6\u8df3\u8fc7\uff1bAscend HF32 \u4e0d\u5728\u672c Case \u7684\u5f53\u524d\u9002\u914d\u8303\u56f4\u5185",
+      "status": "skipped"
+    },
+    "entrypoint": {
+      "bytes": 3000,
+      "relative_path": "benchmarks/computation-TF32/main.py",
+      "sha256": "a469da559ac0e662312b35c45d7cde7f33555980bee2f11cf1b8c7219b11b5ba"
+    }
+  },
+  {
+    "vendor": "ascend",
+    "case": "interconnect-MPI_interserver",
+    "exit_code": 0,
+    "applicability": {
+      "reason": "\u8de8\u673a AllReduce \u4e0d\u5728\u5f53\u524d Ascend \u5355\u5bbf\u4e3b\u7edf\u4e00\u5165\u53e3\u7684\u9002\u914d\u8303\u56f4\u5185\uff1b\u8be5\u5165\u53e3\u56fa\u5b9a nnodes=1",
+      "status": "skipped"
+    },
+    "entrypoint": {
+      "bytes": 5438,
+      "relative_path": "benchmarks/interconnect-MPI_interserver/main.py",
+      "sha256": "8e64a4674ca7b28cce4a3df7a0ed1e5fbaecc2d1fabd4410274493c760ef378b"
+    }
+  },
+  {
+    "vendor": "ascend",
+    "case": "interconnect-MPI_intraserver",
+    "exit_code": 0,
+    "applicability": {
+      "reason": null,
+      "status": "applicable"
+    },
+    "entrypoint": null,
+    "runtime_profile": "torch_fl_2.10_flagcx",
+    "previous_attempt": "operator profile correctly rejected; original outputs retained"
+  },
+  {
+    "vendor": "ascend",
+    "case": "interconnect-P2P_interserver",
+    "exit_code": 0,
+    "applicability": {
+      "reason": "\u8de8\u673a P2P \u4e0d\u5728\u5f53\u524d Ascend \u5355\u5bbf\u4e3b\u7edf\u4e00\u5165\u53e3\u7684\u9002\u914d\u8303\u56f4\u5185\uff1b\u8be5\u5165\u53e3\u56fa\u5b9a nnodes=1",
+      "status": "skipped"
+    },
+    "entrypoint": {
+      "bytes": 3977,
+      "relative_path": "benchmarks/interconnect-P2P_interserver/main.py",
+      "sha256": "a2a1c0b07601ae991da9d4351ab06670f13960c3da21d0e5a2bb2e0dbc4af85e"
+    }
+  },
+  {
+    "vendor": "ascend",
+    "case": "interconnect-P2P_intraserver",
+    "exit_code": 0,
+    "applicability": {
+      "reason": null,
+      "status": "applicable"
+    },
+    "entrypoint": null,
+    "runtime_profile": "torch_fl_2.10_flagcx",
+    "previous_attempt": "operator profile correctly rejected; original outputs retained"
+  },
+  {
+    "vendor": "ascend",
+    "case": "interconnect-d2h",
+    "exit_code": 0,
+    "applicability": {
+      "reason": null,
+      "status": "applicable"
+    },
+    "entrypoint": {
+      "bytes": 3821,
+      "relative_path": "benchmarks/interconnect-d2h/main.py",
+      "sha256": "da88fcba4928ed61fdb0fbee2ef15c8974016c21ba590224c2f8e77fc7fc94fc"
+    }
+  },
+  {
+    "vendor": "ascend",
+    "case": "interconnect-h2d",
+    "exit_code": 0,
+    "applicability": {
+      "reason": null,
+      "status": "applicable"
+    },
+    "entrypoint": {
+      "bytes": 4686,
+      "relative_path": "benchmarks/interconnect-h2d/main.py",
+      "sha256": "a9a3dbf9ef6762e7d590d71ee74887e58c75aaed61caa471f4995e65326e1b20"
+    }
+  },
+  {
+    "vendor": "ascend",
+    "case": "main_memory-bandwidth",
+    "exit_code": 0,
+    "applicability": {
+      "reason": null,
+      "status": "applicable"
+    },
+    "entrypoint": {
+      "bytes": 3637,
+      "relative_path": "benchmarks/main_memory-bandwidth/main.py",
+      "sha256": "a9e81b75fe5c6cc356c2ce37ff243bcbb7364af32e21e03b555a6588658c160b"
+    }
+  },
+  {
+    "vendor": "ascend",
+    "case": "main_memory-capacity",
+    "exit_code": 0,
+    "applicability": {
+      "reason": null,
+      "status": "applicable"
+    },
+    "entrypoint": {
+      "bytes": 5032,
+      "relative_path": "benchmarks/main_memory-capacity/main.py",
+      "sha256": "f7b8381afc6e79d505cf9707714a23eae6b61f42eec0451727d2d30fe9310f96"
+    }
+  }
+]

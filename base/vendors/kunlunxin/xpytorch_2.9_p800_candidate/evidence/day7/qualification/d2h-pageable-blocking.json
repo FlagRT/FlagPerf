@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "runs": [
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/runs/d2h-pageable-blocking-q1",
+      "run_id": "benchmark-617d44421852446bb3d5361f6aa2b7fa",
+      "value": 10.802936108913677,
+      "gb_s": 10.802936108913677,
+      "elapsed_seconds": 19.878703589,
+      "summary_sha256": "fc73462605f46c94402927d270e407b64a781a0d17e3644a4fa6ba97a9276730"
+    },
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/runs/d2h-pageable-blocking-q2",
+      "run_id": "benchmark-3edafeb60ab743e390f9b4d1c1aafc5c",
+      "value": 10.824846700759972,
+      "gb_s": 10.824846700759972,
+      "elapsed_seconds": 19.838467069,
+      "summary_sha256": "6b1f2f40da2db3e9c6c6ab79c09d207a3e14b26f0a8114eb2f7e24dae2f7a8b3"
+    },
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/runs/d2h-pageable-blocking-q3",
+      "run_id": "benchmark-69b4c13e899b4811983ea6216558c1bd",
+      "value": 11.047996407197754,
+      "gb_s": 11.047996407197754,
+      "elapsed_seconds": 19.437765626,
+      "summary_sha256": "823f501410a1dac153ee6af50266d80f92a235279cd583c626619615aa932bed"
+    },
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/runs/d2h-pageable-blocking-q4",
+      "run_id": "benchmark-386c4a3e7689419e8d5b0ca365786824",
+      "value": 10.614989748865696,
+      "gb_s": 10.614989748865696,
+      "elapsed_seconds": 20.230670955,
+      "summary_sha256": "a40c06dbde3f62a80355919bf9410e2b227ae57fcee154552f2aea731c95569d"
+    },
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/runs/d2h-pageable-blocking-q5",
+      "run_id": "benchmark-6fd9741a7716491ca0b044743aabf10f",
+      "value": 9.987665737458112,
+      "gb_s": 9.987665737458112,
+      "elapsed_seconds": 21.501356818,
+      "summary_sha256": "81942f10f7fc6dcbafa1cae661ab0fecf5dec20a1b99aa64bc2a6cc5d89d07ba"
+    }
+  ],
+  "repetitions": 5,
+  "metric": "d2h-bandwidth",
+  "unit": "GB/s",
+  "median": 10.802936108913677,
+  "min": 9.987665737458112,
+  "max": 11.047996407197754,
+  "mean": 10.655686940639042,
+  "sample_standard_deviation": 0.4037674605731798,
+  "ddof": 1,
+  "cv_percent": 3.78922037427054,
+  "max_cv_percent": 5,
+  "scope": "one physical UUID, locked M1/native d2h-bandwidth/config; no other dtype or communication qualification"
+}

@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "runs": [
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/runs/FP32-q1",
+      "run_id": "benchmark-bf423fe1c08f487f989f79a09721b853",
+      "value": 118.3780536728087,
+      "tflops": 118.3780536728087,
+      "elapsed_seconds": 18.576274802,
+      "summary_sha256": "18b2ccbc448a0d4506dc3ee21cc1c2504118f9f9564e01f96ed50c5296b3f538"
+    },
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/runs/FP32-q2",
+      "run_id": "benchmark-54f3605561244d95a94ddbcc9bb175ea",
+      "value": 118.00487555894072,
+      "tflops": 118.00487555894072,
+      "elapsed_seconds": 18.635020334,
+      "summary_sha256": "6c89d41b2594c4b421b7efd0a412fb558a7cd7b9f8af072a0993b074e9a2362d"
+    },
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/runs/FP32-q3",
+      "run_id": "benchmark-ca7dce0f2c3f4d89a8d1ca59c34d1797",
+      "value": 117.87780515053663,
+      "tflops": 117.87780515053663,
+      "elapsed_seconds": 18.655108591,
+      "summary_sha256": "cc33c950474cdc7fb8b8c1c47023e5933216943acda509c6241f16c3d615f6f8"
+    },
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/runs/FP32-q4",
+      "run_id": "benchmark-94cd2a0d007a40d9bfbe74f8e4669d83",
+      "value": 117.50819154363676,
+      "tflops": 117.50819154363676,
+      "elapsed_seconds": 18.7137869,
+      "summary_sha256": "559e2c26d69b949f88f1aae3ffcafe067b5025a2f94ff7ce67340fdb32bd604a"
+    },
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/runs/FP32-q5",
+      "run_id": "benchmark-1cbdcc17863647d88a7eebedc7ef50c5",
+      "value": 117.27338553114495,
+      "tflops": 117.27338553114495,
+      "elapsed_seconds": 18.751255842,
+      "summary_sha256": "0fdfdf225b784a4d0940d6ff1782027c9bbe1d7dd6ae0191615b4e9c107641e0"
+    }
+  ],
+  "repetitions": 5,
+  "metric": "computation-FP32",
+  "unit": "TFLOPS",
+  "median": 117.87780515053663,
+  "min": 117.27338553114495,
+  "max": 118.3780536728087,
+  "mean": 117.80846229141355,
+  "sample_standard_deviation": 0.43136139340513485,
+  "ddof": 1,
+  "cv_percent": 0.36615484576830315,
+  "max_cv_percent": 5,
+  "scope": "one physical UUID, locked M1/native computation-FP32/config; no other dtype or communication qualification"
+}

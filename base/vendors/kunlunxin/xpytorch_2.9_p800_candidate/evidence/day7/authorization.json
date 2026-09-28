@@ -1,0 +1,6 @@
+{
+  "reference": "user-20260924-execute-day7",
+  "scope": "Day7 on idle healthy cards, single-card qualification and capacity, two-card regression; no occupied-card override or eight-card run",
+  "reservation_end": "2026-09-24T20:58:55.172416+00:00",
+  "interpretation": "Execution budget under user instruction, not an external reservation"
+}

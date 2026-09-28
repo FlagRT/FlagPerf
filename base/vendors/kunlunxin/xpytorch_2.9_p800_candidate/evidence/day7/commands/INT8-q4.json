@@ -1,0 +1,33 @@
+{
+  "command": [
+    "python3",
+    "-B",
+    "base/run.py",
+    "benchmark",
+    "run",
+    "--config",
+    "base/configs/kunlunxin_p800_xpytorch29.yaml",
+    "--physical-device-ids",
+    "5",
+    "--allow-candidate-runtime",
+    "--privilege-command",
+    "sudo -n",
+    "--reservation-reference",
+    "user-20260924-execute-day7",
+    "--reservation-end",
+    "2026-09-24T20:58:55.172416+00:00",
+    "--timeout",
+    "600",
+    "--monitor",
+    "on",
+    "--result-dir",
+    "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/runs/INT8-q4",
+    "--case",
+    "computation-INT8:P800",
+    "--nproc-per-node",
+    "1"
+  ],
+  "started_at": "2026-09-24T13:12:08.443873+00:00",
+  "exit_code": 0,
+  "finished_at": "2026-09-24T13:12:38.541755+00:00"
+}

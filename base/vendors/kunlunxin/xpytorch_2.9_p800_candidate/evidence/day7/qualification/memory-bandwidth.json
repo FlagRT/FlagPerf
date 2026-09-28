@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "runs": [
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/runs/memory-bandwidth-q1",
+      "run_id": "benchmark-789648ead25a4c4890aab5dc45745545",
+      "value": 2235.9208340296514,
+      "gb_s": 2235.9208340296514,
+      "elapsed_seconds": 16.135511033,
+      "summary_sha256": "ae3db7502d7a5ccfa6e52657d9fabd6b5f7850c2a0bb628ca30b03edb3885461"
+    },
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/runs/memory-bandwidth-q2",
+      "run_id": "benchmark-feaf1f44080042da9288269bc8e17b62",
+      "value": 2235.9018565562737,
+      "gb_s": 2235.9018565562737,
+      "elapsed_seconds": 16.135647985,
+      "summary_sha256": "175e48bb2bbc3e6265dab828279bc3d91c73afa28423b9b1901308b065013bab"
+    },
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/runs/memory-bandwidth-q3",
+      "run_id": "benchmark-b508354f658a497e897b5aa6465833e5",
+      "value": 2235.8739804082225,
+      "gb_s": 2235.8739804082225,
+      "elapsed_seconds": 16.135849159,
+      "summary_sha256": "904645f54dbaf084a7ec64cac06450afb0f8a5e1368ed4c7f18ad1056854bb22"
+    },
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/runs/memory-bandwidth-q4",
+      "run_id": "benchmark-90dc2daa358b4f66be416f5d91785eb1",
+      "value": 2235.8906545496006,
+      "gb_s": 2235.8906545496006,
+      "elapsed_seconds": 16.135728826,
+      "summary_sha256": "b980f35d7677576af09a8f1ea4744e2ea73bb7d090fbba0159a9dcf9a2369ca6"
+    },
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/runs/memory-bandwidth-q5",
+      "run_id": "benchmark-a9fc3be51d884913896d62c1eb696421",
+      "value": 2235.9044223042574,
+      "gb_s": 2235.9044223042574,
+      "elapsed_seconds": 16.135629469,
+      "summary_sha256": "5ef9018ebca81eff2c046636f96be05dec4c303fabc28cfd94258d6007a402b4"
+    }
+  ],
+  "repetitions": 5,
+  "metric": "device-memory-bandwidth",
+  "unit": "GB/s",
+  "median": 2235.9018565562737,
+  "min": 2235.8739804082225,
+  "max": 2235.9208340296514,
+  "mean": 2235.898349569601,
+  "sample_standard_deviation": 0.017376689591130715,
+  "ddof": 1,
+  "cv_percent": 0.000777168138903794,
+  "max_cv_percent": 5,
+  "scope": "single physical UUID; native device copy, 4 GiB payload, read+write traffic, frozen configuration"
+}

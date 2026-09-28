@@ -1,0 +1,11 @@
+{
+  "command": [
+    "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-pr1-20260920-162724/cpu-test-venv/bin/python",
+    "-B",
+    "-m",
+    "unittest",
+    "base.tests.test_p800_day6",
+    "-v"
+  ],
+  "exit_code": 0
+}

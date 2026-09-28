@@ -1,0 +1,18 @@
+from pathlib import Path
+r=Path('/home/kzhang519/Zhiyu/runtime-team/FlagPerf')
+p=r/'base/README.md'; s=p.read_text()
+s=s.replace('当前统一入口支持 **Ascend 单宿主**，并接入 **P800 candidate 单卡原生 FP32/FP16/BF16/INT8 计算与 H2D/D2H 传输**。','当前统一入口支持 **Ascend 单宿主**，并接入 **P800 candidate 单卡计算/传输/内存及严格两 rank 同机通信**。八 rank 尚未实现和验收。')
+s=s.replace('Ascend 性能执行与 Kunlunxin 单卡预检查/受控 FP32 性能执行。','Ascend 性能执行与 Kunlunxin 有界预检查、单卡性能和双 rank 通信执行。')
+s=s.replace('预检查与性能验收分别记录；FP64/FP8/TF32 已有锁定栈能力结论，FlagGems、容量和通信仍待独立验收。','预检查与性能验收分别记录；FP64/FP8/TF32 按锁定栈证据跳过。内存、容量和两卡证据见 Day 6/7 审查；FlagGems、八卡与跨机不在已验证范围。当前范围与复现命令见 [P800 交付手册](docs/p800-day7.md)。')
+p.write_text(s)
+p=r/'base/docs/vendor-control-plane.md'; s=p.read_text(); start=s.index('The registry contains'); end=s.index('## Provider responsibilities')
+s=s[:start]+'The registry contains Ascend execution and Kunlunxin bounded preflight, single-rank computation/transfer/memory and exactly-two-rank communication. UUID bindings and rank-local synchronization are verified. Registration does not promote the candidate runtime. See [P800 handoff](p800-day7.md).\n\n'+s[end:]; p.write_text(s)
+p=r/'base/docs/p800-preflight.md'; s=p.read_text().replace('--physical-device-ids 1 --monitor on --dry-run','--physical-device-ids 5 --monitor on --dry-run')
+s=s.replace('This profile only accepts explicit physical IDs and\nexactly one card.','This profile accepts explicit physical IDs and multi-device identity checks. Computation/transfer/memory require one rank; communication requires exactly two.')
+s=s.replace('Four pageable transfer groups qualified; the four pinned-mode groups stayed\nunstable on the current shared host and remain scheduled for a quiet window.','Early 64 MiB/4 GiB unstable attempts remain historical. All eight later 512 MiB groups qualified; do not mix their payloads or repeat a blanket pinned-mode failure claim.')
+p.write_text(s)
+p=r/'base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/README.md'; s=p.read_text().replace('2048-cubed INT8 computation plus H2D/D2H copy cases:', '8192-cubed device-kernel INT8 computation plus H2D/D2H copy cases:')
+s=s.replace('arithmetic, hardware peak, FlagGems, other precision or collective result is claimed.','arithmetic, hardware peak or FlagGems claim is made. Exactly-two-rank communication is separately scoped in Day 6/7; eight ranks are not implemented or qualified. See [current handoff](../../../docs/p800-day7.md).')
+p.write_text(s)
+print('updated base README, two runbooks and candidate README')
+

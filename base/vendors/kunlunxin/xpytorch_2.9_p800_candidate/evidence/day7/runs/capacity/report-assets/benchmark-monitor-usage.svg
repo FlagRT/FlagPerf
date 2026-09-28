@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="280" viewBox="0 0 1000 280">
+<rect width="100%" height="100%" fill="white"/>
+<text x="20" y="25" font-size="16">Raw telemetry overlapping rank measurement windows</text>
+<text x="20" y="60" font-size="13">kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87: Device utilization (%) [21, 21]</text>
+<circle cx="30.000" cy="135.000" r="3" fill="#2463a4"><title>5.149522061925381: 21</title></circle>
+<text x="20" y="170" font-size="13">kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87: Allocated device memory (MiB) [88106, 88106]</text>
+<circle cx="30.000" cy="245.000" r="3" fill="#2463a4"><title>5.149522061925381: 88106</title></circle>
+</svg>

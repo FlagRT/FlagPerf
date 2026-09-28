@@ -1,0 +1,65 @@
+{
+  "case": "computation-FP32:P800",
+  "case_name": "computation-FP32",
+  "chip": "P800",
+  "configurations": {
+    "chip": {
+      "bytes": 206,
+      "relative_path": "benchmarks/computation-FP32/kunlunxin/P800/case_config.yaml",
+      "sha256": "b207f580b0d0fecc379341df9bf0930b58638578c35535ead2e49a3c975d0a4a"
+    },
+    "generic": {
+      "bytes": 653,
+      "relative_path": "benchmarks/computation-FP32/case_config.yaml",
+      "sha256": "a299308c594c20454b73d370a2960d5a54a20c45c3481d44b82812113dc085af"
+    }
+  },
+  "entrypoint": {
+    "bytes": 3700,
+    "relative_path": "benchmarks/computation-FP32/main.py",
+    "sha256": "594d2b0799351fc56198be72113765e10d30866cb441ed044bc48bc9e88f2ac3"
+  },
+  "environments": [],
+  "merged_config": {
+    "ATOL": 0.0001,
+    "DIST_BACKEND": "gloo",
+    "DTYPE": "float32",
+    "FAULT_MODE": "none",
+    "IMPLEMENTATION": "native-xpytorch",
+    "ITERS": 2000,
+    "K": 8192,
+    "M": 8192,
+    "MODE": "qualification",
+    "N": 8192,
+    "OPERATOR": "torch.mm",
+    "RTOL": 0.0001,
+    "SEED": 519,
+    "WARMUP": 100
+  },
+  "requirement_files": [
+    {
+      "bytes": 522,
+      "relative_path": "benchmarks/computation-FP32/kunlunxin/P800/runtime_requirements.json",
+      "sha256": "06a09993c5ea5224b3e0a43077b3139466d602925154710073ea00d879ebd294"
+    }
+  ],
+  "requirements": {
+    "compatibility_note": "Candidate opt-in, context-bound UUID and bounded FP32 config validation required. No other precision or collective scope.",
+    "correctness_required": true,
+    "implementation": "native-xpytorch",
+    "process_scope": {
+      "nnodes": 1,
+      "nproc_per_node": 1
+    },
+    "qualification_max_cv_percent": 5,
+    "qualification_min_measurement_seconds": 15,
+    "qualification_repetitions": 5,
+    "runtime_profile": "xpytorch_2.9_p800_candidate",
+    "runtime_role": "operator",
+    "schema_version": 1,
+    "supported": true
+  },
+  "schema_version": 1,
+  "selector": "kunlunxin/P800",
+  "vendor": "kunlunxin"
+}

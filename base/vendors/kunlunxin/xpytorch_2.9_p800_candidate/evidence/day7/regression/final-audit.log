@@ -1,0 +1,33 @@
+base-release 0 uda (test_vendor_registry.VendorTests.test_unknown_driver_vendor_never_calls_cuda) ... ok
+test_unknown_environment_rejected (test_vendor_registry.VendorTests.test_unknown_environment_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 220 tests in 3.349s
+
+OK
+
+pr0-release 0 icationTests.test_xpu_inventory_quoted_product_and_pci_domain) ... ok
+test_xpu_inventory_rejects_unknown_format (test_qualification.QualificationTests.test_xpu_inventory_rejects_unknown_format) ... ok
+
+----------------------------------------------------------------------
+Ran 32 tests in 0.129s
+
+OK
+
+toolkit-release 0 s.test_selection_is_rejected_with_legacy_probe) ... ok
+test_toolkit_accepts_each_selector_and_default_all (test_run_local.StaticArgumentTests.test_toolkit_accepts_each_selector_and_default_all) ... ok
+
+----------------------------------------------------------------------
+Ran 80 tests in 0.169s
+
+OK
+
+day6-release 0 _unsupported_before_docker) ... ok
+test_report_regenerates_from_archived_smoke_artifacts (base.tests.test_p800_day6.Day6ReportRegeneration.test_report_regenerates_from_archived_smoke_artifacts) ... ok
+
+----------------------------------------------------------------------
+Ran 18 tests in 0.035s
+
+OK
+
+RELEASE OFFLINE AUDIT PASSED

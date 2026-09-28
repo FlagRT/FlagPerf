@@ -1,0 +1,23 @@
+{
+  "command": [
+    "python3",
+    "-B",
+    "base/run.py",
+    "benchmark",
+    "run",
+    "--case",
+    "interconnect-P2P_intraserver",
+    "--config",
+    "base/configs/ascend910_cann9_local.yaml",
+    "--nproc-per-node",
+    "2",
+    "--timeout",
+    "300",
+    "--allow-high-risk-case",
+    "--allow-candidate-runtime",
+    "--dry-run",
+    "--device-ids",
+    "14,15"
+  ],
+  "exit_code": 2
+}

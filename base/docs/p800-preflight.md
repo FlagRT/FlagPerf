@@ -14,12 +14,11 @@ locks, result writes or telemetry:
 ```bash
 python3 -B base/run.py benchmark preflight \
   --config base/configs/kunlunxin_p800_xpytorch29.yaml \
-  --physical-device-ids 1 --monitor on --dry-run
+  --physical-device-ids 5 --monitor on --dry-run
 ```
 
 The ID is an example, not a reservation. Runtime UUID, node/minor and framework
-logical ID remain deferred. This profile only accepts explicit physical IDs and
-exactly one card. Its `expected_device_ids` describes host inventory; requalify
+logical ID remain deferred. The standalone preflight CLI accepts exactly one explicit physical ID. Two-rank communication uses benchmark run, which performs its joint host checks, leases and container UUID binding independently. Its `expected_device_ids` describes host inventory; requalify
 that configuration on a different machine.
 
 For an authorized, idle card, supply a fresh end time with timezone, an actual
@@ -162,8 +161,7 @@ report GB/s and GiB/s from the same bytes and time; `non_blocking` records a
 requested mode, not overlap evidence.
 
 See the [Day 5 review](../vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day5/review.md).
-Four pageable transfer groups qualified; the four pinned-mode groups stayed
-unstable on the current shared host and remain scheduled for a quiet window.
+Early 64 MiB/4 GiB unstable attempts remain historical. All eight later 512 MiB groups qualified; do not mix their payloads or repeat a blanket pinned-mode failure claim.
 The first INT8 round measured a host-CPU fallback (`torch._int_mm`) and is
 retracted; the case now runs the vendor device kernel `xtorch_ops.gemm_I8_I8_bf16_nt` at
 the Ascend 8192-cubed scale, qualifying at 504.591 TOPS with CV 0.3315%. Every computation case

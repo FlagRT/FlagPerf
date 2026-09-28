@@ -1,0 +1,21 @@
+test_base_plans_are_usable_without_runtime (test_public_distribution.PublicDistributionTests.test_base_plans_are_usable_without_runtime) ... ok
+test_maintained_surface_has_no_development_stages_or_private_paths (test_public_distribution.PublicDistributionTests.test_maintained_surface_has_no_development_stages_or_private_paths) ... 
+  test_maintained_surface_has_no_development_stages_or_private_paths (test_public_distribution.PublicDistributionTests.test_maintained_surface_has_no_development_stages_or_private_paths) (path='base/configs/ascend910_cann9_local.yaml') ... FAIL
+test_operation_catalog_and_vendor_plans (test_public_distribution.PublicDistributionTests.test_operation_catalog_and_vendor_plans) ... ok
+test_p2p_config_hashes_and_public_record_match (test_public_distribution.PublicDistributionTests.test_p2p_config_hashes_and_public_record_match) ... ok
+test_p2p_plans_need_no_private_experiment_directory (test_public_distribution.PublicDistributionTests.test_p2p_plans_need_no_private_experiment_directory) ... ok
+test_public_coverage_has_exact_denominators (test_public_distribution.PublicDistributionTests.test_public_coverage_has_exact_denominators) ... ok
+test_public_document_links_resolve_inside_checkout (test_public_distribution.PublicDistributionTests.test_public_document_links_resolve_inside_checkout) ... ok
+
+======================================================================
+FAIL: test_maintained_surface_has_no_development_stages_or_private_paths (test_public_distribution.PublicDistributionTests.test_maintained_surface_has_no_development_stages_or_private_paths) (path='base/configs/ascend910_cann9_local.yaml')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/tests/test_public_distribution.py", line 106, in test_maintained_surface_has_no_development_stages_or_private_paths
+    self.assertIsNone(private.search(path.read_text()))
+AssertionError: <re.Match object; span=(351, 366), match='/home/kzhang520'> is not None
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.798s
+
+FAILED (failures=1)

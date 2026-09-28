@@ -1,0 +1,341 @@
+{
+  "binding": {
+    "container_device_node": "/dev/xpu7",
+    "framework_device_name": "cuda:0",
+    "framework_local_rank": 0,
+    "framework_logical_id": 0,
+    "host_device_node": "/dev/xpu7",
+    "host_physical_id": 5,
+    "legacy_logical_id": null,
+    "pci_bdf": "0000:9c:00.0",
+    "request_index": 0,
+    "resource_key": "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87",
+    "serial_or_uuid": "f396486d-9850-50e4-81c4-50f2e9f6ca87",
+    "vendor": "kunlunxin"
+  },
+  "bindings": [
+    {
+      "container_device_node": "/dev/xpu7",
+      "framework_device_name": "cuda:0",
+      "framework_local_rank": 0,
+      "framework_logical_id": 0,
+      "host_device_node": "/dev/xpu7",
+      "host_physical_id": 5,
+      "legacy_logical_id": null,
+      "pci_bdf": "0000:9c:00.0",
+      "request_index": 0,
+      "resource_key": "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87",
+      "serial_or_uuid": "f396486d-9850-50e4-81c4-50f2e9f6ca87",
+      "vendor": "kunlunxin"
+    }
+  ],
+  "case": "main_memory-capacity:P800",
+  "context_sha256": "6b995b2b734d6e4b92150e6dac8936c1d945b73cf3bfd98a5fb387a5b68dab38",
+  "cuda_matmul_allow_tf32": false,
+  "fallback_scope": "UUID, tensor placement and locked native route; no universal fallback exclusion",
+  "free_after_mib": 98138,
+  "free_at_peak_mib": 0,
+  "free_before_mib": 98140,
+  "held_mib": 98132,
+  "oom_errors": [
+    {
+      "error": "CUDA out of memory. Tried to allocate 20.00 MiB. GPU 0 has a total capacity of 96.00 GiB of which 18.00 MiB is free. Of the allocated memory 95.82 GiB is allocated by PyTorch, and 0 bytes is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)",
+      "error_type": "OutOfMemoryError",
+      "request_mib": 9
+    },
+    {
+      "error": "CUDA out of memory. Tried to allocate 20.00 MiB. GPU 0 has a total capacity of 96.00 GiB of which 18.00 MiB is free. Of the allocated memory 95.82 GiB is allocated by PyTorch, and 0 bytes is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)",
+      "error_type": "OutOfMemoryError",
+      "request_mib": 4
+    },
+    {
+      "error": "CUDA out of memory. Tried to allocate 20.00 MiB. GPU 0 has a total capacity of 96.00 GiB of which 18.00 MiB is free. Of the allocated memory 95.82 GiB is allocated by PyTorch, and 0 bytes is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)",
+      "error_type": "OutOfMemoryError",
+      "request_mib": 2
+    },
+    {
+      "error": "CUDA out of memory. Tried to allocate 20.00 MiB. GPU 0 has a total capacity of 96.00 GiB of which 16.00 MiB is free. Of the allocated memory 95.82 GiB is allocated by PyTorch, and 1024.00 KiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)",
+      "error_type": "OutOfMemoryError",
+      "request_mib": 2
+    },
+    {
+      "error": "CUDA out of memory. Tried to allocate 20.00 MiB. GPU 0 has a total capacity of 96.00 GiB of which 16.00 MiB is free. Of the allocated memory 95.82 GiB is allocated by PyTorch, and 0 bytes is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)",
+      "error_type": "OutOfMemoryError",
+      "request_mib": 2
+    },
+    {
+      "error": "CUDA out of memory. Tried to allocate 20.00 MiB. GPU 0 has a total capacity of 96.00 GiB of which 14.00 MiB is free. Of the allocated memory 95.83 GiB is allocated by PyTorch, and 1024.00 KiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)",
+      "error_type": "OutOfMemoryError",
+      "request_mib": 2
+    },
+    {
+      "error": "CUDA out of memory. Tried to allocate 20.00 MiB. GPU 0 has a total capacity of 96.00 GiB of which 14.00 MiB is free. Of the allocated memory 95.83 GiB is allocated by PyTorch, and 0 bytes is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)",
+      "error_type": "OutOfMemoryError",
+      "request_mib": 2
+    },
+    {
+      "error": "CUDA out of memory. Tried to allocate 20.00 MiB. GPU 0 has a total capacity of 96.00 GiB of which 12.00 MiB is free. Of the allocated memory 95.83 GiB is allocated by PyTorch, and 1024.00 KiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)",
+      "error_type": "OutOfMemoryError",
+      "request_mib": 2
+    },
+    {
+      "error": "CUDA out of memory. Tried to allocate 20.00 MiB. GPU 0 has a total capacity of 96.00 GiB of which 12.00 MiB is free. Of the allocated memory 95.83 GiB is allocated by PyTorch, and 0 bytes is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)",
+      "error_type": "OutOfMemoryError",
+      "request_mib": 2
+    },
+    {
+      "error": "CUDA out of memory. Tried to allocate 20.00 MiB. GPU 0 has a total capacity of 96.00 GiB of which 10.00 MiB is free. Of the allocated memory 95.83 GiB is allocated by PyTorch, and 1024.00 KiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)",
+      "error_type": "OutOfMemoryError",
+      "request_mib": 2
+    },
+    {
+      "error": "CUDA out of memory. Tried to allocate 20.00 MiB. GPU 0 has a total capacity of 96.00 GiB of which 10.00 MiB is free. Of the allocated memory 95.83 GiB is allocated by PyTorch, and 0 bytes is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)",
+      "error_type": "OutOfMemoryError",
+      "request_mib": 2
+    },
+    {
+      "error": "CUDA out of memory. Tried to allocate 20.00 MiB. GPU 0 has a total capacity of 96.00 GiB of which 8.00 MiB is free. Of the allocated memory 95.83 GiB is allocated by PyTorch, and 1024.00 KiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)",
+      "error_type": "OutOfMemoryError",
+      "request_mib": 2
+    },
+    {
+      "error": "CUDA out of memory. Tried to allocate 20.00 MiB. GPU 0 has a total capacity of 96.00 GiB of which 8.00 MiB is free. Of the allocated memory 95.83 GiB is allocated by PyTorch, and 0 bytes is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)",
+      "error_type": "OutOfMemoryError",
+      "request_mib": 2
+    },
+    {
+      "error": "CUDA out of memory. Tried to allocate 20.00 MiB. GPU 0 has a total capacity of 96.00 GiB of which 6.00 MiB is free. Of the allocated memory 95.83 GiB is allocated by PyTorch, and 1024.00 KiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)",
+      "error_type": "OutOfMemoryError",
+      "request_mib": 2
+    },
+    {
+      "error": "CUDA out of memory. Tried to allocate 20.00 MiB. GPU 0 has a total capacity of 96.00 GiB of which 6.00 MiB is free. Of the allocated memory 95.83 GiB is allocated by PyTorch, and 0 bytes is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)",
+      "error_type": "OutOfMemoryError",
+      "request_mib": 2
+    },
+    {
+      "error": "CUDA out of memory. Tried to allocate 20.00 MiB. GPU 0 has a total capacity of 96.00 GiB of which 4.00 MiB is free. Of the allocated memory 95.83 GiB is allocated by PyTorch, and 1024.00 KiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)",
+      "error_type": "OutOfMemoryError",
+      "request_mib": 2
+    },
+    {
+      "error": "CUDA out of memory. Tried to allocate 20.00 MiB. GPU 0 has a total capacity of 96.00 GiB of which 4.00 MiB is free. Of the allocated memory 95.84 GiB is allocated by PyTorch, and 0 bytes is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)",
+      "error_type": "OutOfMemoryError",
+      "request_mib": 2
+    },
+    {
+      "error": "CUDA out of memory. Tried to allocate 2.00 MiB. GPU 0 has a total capacity of 96.00 GiB of which 0 bytes is free. Of the allocated memory 95.84 GiB is allocated by PyTorch, and 0 bytes is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)",
+      "error_type": "OutOfMemoryError",
+      "request_mib": 1
+    }
+  ],
+  "pid_namespace": "pid:[4026547998]",
+  "precision_scope": "native inputs/outputs as recorded by the case; compatibility controls do not certify internal arithmetic",
+  "rank": 0,
+  "release_verified": true,
+  "released": true,
+  "run_id": "benchmark-d3fdf2a6aca04de586a48fd3fc1dfe81",
+  "schema_version": 1,
+  "semantics": {
+    "bound_request_by_free_memory": true,
+    "granularity_mib": 1,
+    "result": "sum of device MiB actually held at the search peak"
+  },
+  "status": "passed",
+  "trail": [
+    {
+      "free_hint_mib": 98140,
+      "held_total_mib": 8192,
+      "request_mib": 8192,
+      "stage": "held"
+    },
+    {
+      "free_hint_mib": 89948,
+      "held_total_mib": 24576,
+      "request_mib": 16384,
+      "stage": "held"
+    },
+    {
+      "free_hint_mib": 73564,
+      "held_total_mib": 57344,
+      "request_mib": 32768,
+      "stage": "held"
+    },
+    {
+      "free_hint_mib": 40796,
+      "held_total_mib": 77742,
+      "request_mib": 20398,
+      "stage": "held"
+    },
+    {
+      "free_hint_mib": 20398,
+      "held_total_mib": 87941,
+      "request_mib": 10199,
+      "stage": "held"
+    },
+    {
+      "free_hint_mib": 10198,
+      "held_total_mib": 93040,
+      "request_mib": 5099,
+      "stage": "held"
+    },
+    {
+      "free_hint_mib": 5098,
+      "held_total_mib": 95589,
+      "request_mib": 2549,
+      "stage": "held"
+    },
+    {
+      "free_hint_mib": 2548,
+      "held_total_mib": 96863,
+      "request_mib": 1274,
+      "stage": "held"
+    },
+    {
+      "free_hint_mib": 1274,
+      "held_total_mib": 97500,
+      "request_mib": 637,
+      "stage": "held"
+    },
+    {
+      "free_hint_mib": 636,
+      "held_total_mib": 97818,
+      "request_mib": 318,
+      "stage": "held"
+    },
+    {
+      "free_hint_mib": 318,
+      "held_total_mib": 97977,
+      "request_mib": 159,
+      "stage": "held"
+    },
+    {
+      "free_hint_mib": 158,
+      "held_total_mib": 98056,
+      "request_mib": 79,
+      "stage": "held"
+    },
+    {
+      "free_hint_mib": 78,
+      "held_total_mib": 98095,
+      "request_mib": 39,
+      "stage": "held"
+    },
+    {
+      "free_hint_mib": 38,
+      "held_total_mib": 98114,
+      "request_mib": 19,
+      "stage": "held"
+    },
+    {
+      "free_hint_mib": 18,
+      "held_total_mib": 98115,
+      "request_mib": 1,
+      "stage": "held"
+    },
+    {
+      "free_hint_mib": 16,
+      "held_total_mib": 98116,
+      "request_mib": 1,
+      "stage": "held"
+    },
+    {
+      "free_hint_mib": 16,
+      "held_total_mib": 98117,
+      "request_mib": 1,
+      "stage": "held"
+    },
+    {
+      "free_hint_mib": 14,
+      "held_total_mib": 98118,
+      "request_mib": 1,
+      "stage": "held"
+    },
+    {
+      "free_hint_mib": 14,
+      "held_total_mib": 98119,
+      "request_mib": 1,
+      "stage": "held"
+    },
+    {
+      "free_hint_mib": 12,
+      "held_total_mib": 98120,
+      "request_mib": 1,
+      "stage": "held"
+    },
+    {
+      "free_hint_mib": 12,
+      "held_total_mib": 98121,
+      "request_mib": 1,
+      "stage": "held"
+    },
+    {
+      "free_hint_mib": 10,
+      "held_total_mib": 98122,
+      "request_mib": 1,
+      "stage": "held"
+    },
+    {
+      "free_hint_mib": 10,
+      "held_total_mib": 98123,
+      "request_mib": 1,
+      "stage": "held"
+    },
+    {
+      "free_hint_mib": 8,
+      "held_total_mib": 98124,
+      "request_mib": 1,
+      "stage": "held"
+    },
+    {
+      "free_hint_mib": 8,
+      "held_total_mib": 98125,
+      "request_mib": 1,
+      "stage": "held"
+    },
+    {
+      "free_hint_mib": 6,
+      "held_total_mib": 98126,
+      "request_mib": 1,
+      "stage": "held"
+    },
+    {
+      "free_hint_mib": 6,
+      "held_total_mib": 98127,
+      "request_mib": 1,
+      "stage": "held"
+    },
+    {
+      "free_hint_mib": 4,
+      "held_total_mib": 98128,
+      "request_mib": 1,
+      "stage": "held"
+    },
+    {
+      "free_hint_mib": 4,
+      "held_total_mib": 98129,
+      "request_mib": 1,
+      "stage": "held"
+    },
+    {
+      "free_hint_mib": 2,
+      "held_total_mib": 98130,
+      "request_mib": 1,
+      "stage": "held"
+    },
+    {
+      "free_hint_mib": 2,
+      "held_total_mib": 98131,
+      "request_mib": 1,
+      "stage": "held"
+    },
+    {
+      "free_hint_mib": 0,
+      "held_total_mib": 98132,
+      "request_mib": 1,
+      "stage": "held"
+    }
+  ],
+  "worker_parent_pid": 1,
+  "worker_pid": 102
+}

@@ -1,0 +1,2 @@
+SKIPPED: computation-FP64:P800: capability probe returned float32 output for float64 input; native FP64 output is not proven
+Result directory: /home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/early-skip-fp64-a02/benchmark-20260924T130334Z

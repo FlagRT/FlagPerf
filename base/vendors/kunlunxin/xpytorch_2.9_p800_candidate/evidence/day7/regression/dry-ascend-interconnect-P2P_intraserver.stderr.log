@@ -1,0 +1,1 @@
+ERROR: Benchmark Case interconnect-P2P_intraserver requires runtime profile 'torch_fl_2.10_flagcx', got 'torch_fl_2.10'; use the dedicated communication host config

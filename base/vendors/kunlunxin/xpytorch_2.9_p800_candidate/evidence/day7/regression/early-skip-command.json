@@ -1,0 +1,23 @@
+{
+  "command": [
+    "python3",
+    "-B",
+    "base/run.py",
+    "benchmark",
+    "run",
+    "--case",
+    "computation-FP64:P800",
+    "--config",
+    "base/configs/kunlunxin_p800_xpytorch29.yaml",
+    "--physical-device-ids",
+    "5",
+    "--nproc-per-node",
+    "1",
+    "--timeout",
+    "300",
+    "--allow-candidate-runtime",
+    "--result-dir",
+    "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/runs/early-skip-fp64"
+  ],
+  "exit_code": 2
+}

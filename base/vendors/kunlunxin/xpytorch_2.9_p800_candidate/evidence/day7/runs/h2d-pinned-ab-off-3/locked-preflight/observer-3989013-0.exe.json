@@ -1,0 +1,17 @@
+{
+  "argv": [
+    "sudo",
+    "-n",
+    "readlink",
+    "-e",
+    "/proc/3989013/exe"
+  ],
+  "finished_monotonic_s": 4098647.219021728,
+  "returncode": 0,
+  "started_at": "2026-09-24T13:45:10.271628+00:00",
+  "started_monotonic_s": 4098647.191481534,
+  "stderr": "",
+  "stdout": "/usr/local/bin/xpu-smi\n",
+  "timed_out": false,
+  "timeout_s": 10
+}

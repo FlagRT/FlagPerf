@@ -1,0 +1,222 @@
+{
+  "benchmark_result": "benchmark-result.json",
+  "case": "computation-FP64:P800",
+  "execution_status": "not-run",
+  "finished_at": "2026-09-28T07:05:08.291737Z",
+  "host_config": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/configs/kunlunxin_p800_xpytorch29.yaml",
+  "kind": "benchmark",
+  "measurement_status": "not-run",
+  "monitoring_status": "not-run",
+  "report_generation": {
+    "assets": [],
+    "bytes": 2440,
+    "input_facts": {
+      "benchmark_monitor": null,
+      "benchmark_result": {
+        "bytes": 214,
+        "path": "benchmark-result.json",
+        "sha256": "fb599fe64748c541d737f23d9be0a46ff40ca33141d9189a01a82f16deffad9d"
+      },
+      "summary_canonical_sha256": "1d631c5648bda23c5d7a51043c2dcccc2703c59103d5a825b32b8b9f024bb7c7"
+    },
+    "input_schemas": {
+      "benchmark_monitor": null,
+      "benchmark_result": 1,
+      "summary": 3
+    },
+    "monitor_bytes": 707,
+    "monitor_path": "report_monitor.md",
+    "monitor_sha256": "0c292d122a1373a706e8cf76ddefc1a0d90b4e50e7818d727215b29638ba3761",
+    "outputs": {
+      "main": {
+        "bytes": 2440,
+        "path": "report.md",
+        "sha256": "dc2279c0f050721383130cfae903b6258d1e7aed9eca2eb468cd83242e22e7d5"
+      },
+      "monitor": {
+        "bytes": 707,
+        "path": "report_monitor.md",
+        "sha256": "0c292d122a1373a706e8cf76ddefc1a0d90b4e50e7818d727215b29638ba3761"
+      }
+    },
+    "path": "report.md",
+    "schema_version": 3,
+    "sha256": "dc2279c0f050721383130cfae903b6258d1e7aed9eca2eb468cd83242e22e7d5",
+    "status": "passed"
+  },
+  "run_id": "benchmark-20260928T070508Z",
+  "schema_version": 3,
+  "skip_reason": "capability probe returned float32 output for float64 input; native FP64 output is not proven",
+  "started_at": "2026-09-28T07:05:08.291272Z",
+  "static_plan": {
+    "applicability": {
+      "reason": "capability probe returned float32 output for float64 input; native FP64 output is not proven",
+      "status": "skipped"
+    },
+    "case": "computation-FP64:P800",
+    "case_assets": {
+      "case": "computation-FP64:P800",
+      "case_name": "computation-FP64",
+      "chip": "P800",
+      "configurations": {
+        "generic": {
+          "bytes": 653,
+          "relative_path": "benchmarks/computation-FP64/case_config.yaml",
+          "sha256": "a299308c594c20454b73d370a2960d5a54a20c45c3481d44b82812113dc085af"
+        }
+      },
+      "entrypoint": {
+        "bytes": 2846,
+        "relative_path": "benchmarks/computation-FP64/main.py",
+        "sha256": "30fb2d57b214d6caac9c900b85ec4e0b9fea73007af247ff1862fe72e68fc503"
+      },
+      "environments": [],
+      "merged_config": {
+        "DIST_BACKEND": "mpi",
+        "ITERS": 10000,
+        "K": 4096,
+        "M": 4096,
+        "N": 4096,
+        "WARMUP": 100
+      },
+      "requirement_files": [
+        {
+          "bytes": 287,
+          "relative_path": "benchmarks/computation-FP64/kunlunxin/P800/runtime_requirements.json",
+          "sha256": "5e7c0ec5ddb6dc553079a2f1ac22a3c24e86785937f6a9d95593b0047bada218"
+        }
+      ],
+      "requirements": {
+        "process_scope": {
+          "nnodes": 1,
+          "nproc_per_node": 1
+        },
+        "runtime_profile": "xpytorch_2.9_p800_candidate",
+        "schema_version": 1,
+        "supported": false,
+        "unsupported_reason": "capability probe returned float32 output for float64 input; native FP64 output is not proven"
+      },
+      "schema_version": 1,
+      "selector": "kunlunxin/P800",
+      "vendor": "kunlunxin"
+    },
+    "case_config": {
+      "generic": {
+        "bytes": 653,
+        "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/computation-FP64/case_config.yaml",
+        "relative_path": "benchmarks/computation-FP64/case_config.yaml",
+        "sha256": "a299308c594c20454b73d370a2960d5a54a20c45c3481d44b82812113dc085af"
+      }
+    },
+    "context": {
+      "config": "base/configs/kunlunxin_p800_xpytorch29.yaml",
+      "device_ids": null,
+      "dry_run": false,
+      "npu_ids": null,
+      "physical_device_ids": "5",
+      "result_root": null,
+      "timeout": 300
+    },
+    "host_config": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/configs/kunlunxin_p800_xpytorch29.yaml",
+    "image": "flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev:202608",
+    "kind": "benchmark",
+    "mode": "execution",
+    "monitoring": {
+      "automatic_workload_extension": false,
+      "collector": "xpu-smi -m and selected -q",
+      "enabled": true,
+      "metric_fields": [
+        {
+          "key": "utilization_percent",
+          "label": "Device utilization",
+          "unit": "%"
+        },
+        {
+          "key": "used_memory_mib",
+          "label": "Allocated device memory",
+          "unit": "MiB"
+        }
+      ],
+      "required_samples_per_target": 10,
+      "target_interval_s": 1.0,
+      "target_resource": "p800-device",
+      "vendor": "kunlunxin"
+    },
+    "nproc_per_node": 1,
+    "permissions": {
+      "active_dmi": false,
+      "candidate_runtime": true,
+      "cap_drop": [
+        "ALL"
+      ],
+      "ipc_namespace": "private",
+      "network": "flagperf-p800-internal",
+      "pid_namespace": "private",
+      "privileged_root": false,
+      "read_only_root": true
+    },
+    "runtime_identity": {
+      "image_id": "deferred-until-image-inspection"
+    },
+    "runtime_lock": {
+      "image_manifest": {
+        "image": "flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev:202608",
+        "image_id": "sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975",
+        "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/image-manifest.json",
+        "release_stage": "candidate",
+        "schema_version": 1,
+        "sha256": "ab59dc1cd14b65a28ffaef7b1b21b1d0b51f5334619301659d4123a5c681acbf",
+        "validated": false,
+        "validation_scope": [],
+        "validation_status": null
+      },
+      "runtime_profile": "xpytorch_2.9_p800_candidate",
+      "stack_lock": {
+        "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/stack.lock.yaml",
+        "sha256": "8f200d0b955b7e60881bc13ed75c8784c2c38fe2c755d018c618f1dc7b46cded"
+      },
+      "vendor": "kunlunxin"
+    },
+    "runtime_requirements": {
+      "bytes": 287,
+      "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/computation-FP64/kunlunxin/P800/runtime_requirements.json",
+      "relative_path": "benchmarks/computation-FP64/kunlunxin/P800/runtime_requirements.json",
+      "requirements": {
+        "process_scope": {
+          "nnodes": 1,
+          "nproc_per_node": 1
+        },
+        "runtime_profile": "xpytorch_2.9_p800_candidate",
+        "schema_version": 1,
+        "supported": false,
+        "unsupported_reason": "capability probe returned float32 output for float64 input; native FP64 output is not proven"
+      },
+      "sha256": "5e7c0ec5ddb6dc553079a2f1ac22a3c24e86785937f6a9d95593b0047bada218",
+      "sources": [
+        {
+          "bytes": 287,
+          "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/benchmarks/computation-FP64/kunlunxin/P800/runtime_requirements.json",
+          "relative_path": "benchmarks/computation-FP64/kunlunxin/P800/runtime_requirements.json",
+          "sha256": "5e7c0ec5ddb6dc553079a2f1ac22a3c24e86785937f6a9d95593b0047bada218"
+        }
+      ]
+    },
+    "schema_version": 1,
+    "selection_note": "physical-to-logical mapping and idle state are resolved only by the side-effecting host preflight",
+    "selection_request": {
+      "expression": "5",
+      "requested_ids": [
+        5
+      ],
+      "resolution_status": "deferred-until-host-preflight",
+      "source": "physical-device-ids"
+    },
+    "vendor": "kunlunxin",
+    "vendor_display_name": "Kunlunxin P800",
+    "worker": "benchmark_worker.py"
+  },
+  "status": "skipped",
+  "vendor": "kunlunxin",
+  "vendor_display_name": "Kunlunxin P800",
+  "wall_clock_duration_s": 0.0006
+}

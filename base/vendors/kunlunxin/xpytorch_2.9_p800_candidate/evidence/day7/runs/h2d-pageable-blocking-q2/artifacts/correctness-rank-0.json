@@ -1,0 +1,104 @@
+{
+  "api": "Tensor.copy_",
+  "binding": {
+    "container_device_node": "/dev/xpu7",
+    "framework_device_name": "cuda:0",
+    "framework_local_rank": 0,
+    "framework_logical_id": 0,
+    "host_device_node": "/dev/xpu7",
+    "host_physical_id": 5,
+    "legacy_logical_id": null,
+    "pci_bdf": "0000:9c:00.0",
+    "request_index": 0,
+    "resource_key": "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87",
+    "serial_or_uuid": "f396486d-9850-50e4-81c4-50f2e9f6ca87",
+    "vendor": "kunlunxin"
+  },
+  "bindings": [
+    {
+      "container_device_node": "/dev/xpu7",
+      "framework_device_name": "cuda:0",
+      "framework_local_rank": 0,
+      "framework_logical_id": 0,
+      "host_device_node": "/dev/xpu7",
+      "host_physical_id": 5,
+      "legacy_logical_id": null,
+      "pci_bdf": "0000:9c:00.0",
+      "request_index": 0,
+      "resource_key": "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87",
+      "serial_or_uuid": "f396486d-9850-50e4-81c4-50f2e9f6ca87",
+      "vendor": "kunlunxin"
+    }
+  ],
+  "checks": [
+    {
+      "elements": 134217728,
+      "first_mismatch": null,
+      "mismatch_count": 0,
+      "passed": true,
+      "phase": "sentinel"
+    },
+    {
+      "elements": 134217728,
+      "first_mismatch": null,
+      "mismatch_count": 0,
+      "passed": true,
+      "phase": "changed-input"
+    },
+    {
+      "elements": 134217728,
+      "first_mismatch": null,
+      "mismatch_count": 0,
+      "passed": true,
+      "phase": "before"
+    },
+    {
+      "elements": 134217728,
+      "first_mismatch": null,
+      "mismatch_count": 0,
+      "passed": true,
+      "phase": "after"
+    }
+  ],
+  "context_sha256": "4c057545c6fabe7fcedeb0d0d5e30d98401cdd429cd4a4258106bbe7b020f91e",
+  "cuda_matmul_allow_tf32": false,
+  "destination": {
+    "contiguous": true,
+    "data_ptr": 275184091136,
+    "device": "cuda:0",
+    "dtype": "float32",
+    "numel": 134217728
+  },
+  "destination_reused": true,
+  "direction": "h2d",
+  "dtype": "float32",
+  "fallback_scope": "UUID, tensor placement and locked native route; no universal fallback exclusion",
+  "host_is_pinned": false,
+  "host_memory": "pageable",
+  "memory_budget": {
+    "device_available": 102907248640,
+    "device_bytes": 1073741824,
+    "host_available": 1508897112064,
+    "host_bytes": 6442450944,
+    "pinned_bytes": 0,
+    "scope": "conservative simultaneous buffer and validation temporary upper bounds"
+  },
+  "non_blocking": false,
+  "payload_bytes": 536870912,
+  "pid_namespace": "pid:[4026547998]",
+  "precision_scope": "native inputs/outputs as recorded by the case; compatibility controls do not certify internal arithmetic",
+  "rank": 0,
+  "run_id": "benchmark-7ecf41f57d6247a9a8f1efbbd241fb8b",
+  "schema_version": 1,
+  "source": {
+    "contiguous": true,
+    "data_ptr": 132661339217984,
+    "device": "cpu",
+    "dtype": "float32",
+    "numel": 134217728
+  },
+  "source_reused": true,
+  "status": "passed",
+  "worker_parent_pid": 1,
+  "worker_pid": 102
+}

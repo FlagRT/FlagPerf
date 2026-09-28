@@ -1,0 +1,86 @@
+{
+  "case": "computation-INT8:P800",
+  "correctness": "artifacts/correctness-rank-0.json",
+  "expected_ranks": [
+    0
+  ],
+  "metrics": [
+    {
+      "accumulation_scope": "int32 accumulation inside the device kernel; scales applied by the kernel",
+      "allocation_semantics": "preallocated bf16 output reused across iterations; no allocation in the timed loop",
+      "binding": {
+        "container_device_node": "/dev/xpu7",
+        "framework_device_name": "cuda:0",
+        "framework_local_rank": 0,
+        "framework_logical_id": 0,
+        "host_device_node": "/dev/xpu7",
+        "host_physical_id": 5,
+        "legacy_logical_id": null,
+        "pci_bdf": "0000:9c:00.0",
+        "request_index": 0,
+        "resource_key": "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87",
+        "serial_or_uuid": "f396486d-9850-50e4-81c4-50f2e9f6ca87",
+        "vendor": "kunlunxin"
+      },
+      "bindings": [
+        {
+          "container_device_node": "/dev/xpu7",
+          "framework_device_name": "cuda:0",
+          "framework_local_rank": 0,
+          "framework_logical_id": 0,
+          "host_device_node": "/dev/xpu7",
+          "host_physical_id": 5,
+          "legacy_logical_id": null,
+          "pci_bdf": "0000:9c:00.0",
+          "request_index": 0,
+          "resource_key": "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87",
+          "serial_or_uuid": "f396486d-9850-50e4-81c4-50f2e9f6ca87",
+          "vendor": "kunlunxin"
+        }
+      ],
+      "case_assets_sha256": "da8f5f16c7ab640f18e09fbb227528afe7e77b651a26d5655e666311ce21cfa1",
+      "context_sha256": "a5d6b5f3c0ec5c54390d1b42958f2c0bee4666e3d227e9c2709169d223802bd8",
+      "cuda_matmul_allow_tf32": false,
+      "dtype": "int8",
+      "elapsed_seconds": 17.455898787,
+      "fallback_scope": "UUID, tensor placement and locked native route; no universal fallback exclusion",
+      "finished_monotonic_ns": 4096662737202080,
+      "implementation": "native-xpytorch",
+      "iterations": 8000,
+      "metric": "computation-INT8",
+      "mode": "qualification",
+      "operations": 8796093022208000,
+      "operator": "xtorch_ops.gemm_I8_I8_bf16_nt",
+      "output_dtype": "bfloat16",
+      "pid_namespace": "pid:[4026547998]",
+      "precision_scope": "native inputs/outputs as recorded by the case; compatibility controls do not certify internal arithmetic",
+      "qualification_duration_passed": true,
+      "rank": 0,
+      "reference_inputs": "signed int8 inputs; CPU float64 accumulation of the quantized operands times SCALE_A*SCALE_B; int32 accumulation and bf16 output inside the device kernel",
+      "run_id": "benchmark-030d9ee42cfa4786a16c3b53aa6b24ce",
+      "scale_a": 1.0,
+      "scale_b": 1.0,
+      "schema_version": 1,
+      "shape": [
+        8192,
+        8192,
+        8192
+      ],
+      "started_monotonic_ns": 4096645281303293,
+      "status": "passed",
+      "timer": "perf_counter_ns with full target synchronization",
+      "unit": "TOPS",
+      "value": 503.9037593846929,
+      "warmup": 10,
+      "worker_parent_pid": 1,
+      "worker_pid": 102,
+      "world_size": 1
+    }
+  ],
+  "missing_ranks": [],
+  "observed_ranks": [
+    0
+  ],
+  "schema_version": 1,
+  "status": "passed"
+}

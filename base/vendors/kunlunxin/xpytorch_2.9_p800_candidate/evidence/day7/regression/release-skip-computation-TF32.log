@@ -1,0 +1,2 @@
+SKIPPED: computation-TF32:P800: blocked/unresolved: current stack TF32 route is not qualified; allow_tf32 A/B alone cannot establish support or hardware non-support
+Result directory: /home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/early-skip-final/computation-TF32

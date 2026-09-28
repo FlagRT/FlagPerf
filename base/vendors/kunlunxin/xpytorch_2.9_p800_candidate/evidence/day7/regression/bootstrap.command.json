@@ -1,0 +1,8 @@
+{
+  "command": [
+    "bash",
+    "-n",
+    "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/container_bootstrap.sh"
+  ],
+  "exit_code": 0
+}

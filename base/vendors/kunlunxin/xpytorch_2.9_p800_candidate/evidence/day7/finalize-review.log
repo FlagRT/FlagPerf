@@ -1,0 +1,87 @@
+{
+  "status": "scoped-delivery; full-week acceptance incomplete",
+  "qualification": [
+    [
+      "FP32",
+      "passed"
+    ],
+    [
+      "FP16",
+      "passed"
+    ],
+    [
+      "BF16",
+      "passed"
+    ],
+    [
+      "INT8",
+      "passed"
+    ],
+    [
+      "h2d-pageable-blocking",
+      "passed"
+    ],
+    [
+      "h2d-pageable-nonblocking",
+      "passed"
+    ],
+    [
+      "h2d-pinned-blocking",
+      "unstable"
+    ],
+    [
+      "h2d-pinned-nonblocking",
+      "passed"
+    ],
+    [
+      "d2h-pageable-blocking",
+      "passed"
+    ],
+    [
+      "d2h-pageable-nonblocking",
+      "passed"
+    ],
+    [
+      "d2h-pinned-blocking",
+      "unstable"
+    ],
+    [
+      "d2h-pinned-nonblocking",
+      "unstable"
+    ],
+    [
+      "memory-bandwidth",
+      "passed"
+    ],
+    [
+      "comm-MPI-m64",
+      "incomplete"
+    ],
+    [
+      "comm-P2P-m64",
+      "incomplete"
+    ]
+  ],
+  "tests": [
+    [
+      "base-release",
+      220
+    ],
+    [
+      "pr0-release",
+      32
+    ],
+    [
+      "toolkit-release",
+      80
+    ],
+    [
+      "day6-release",
+      18
+    ]
+  ],
+  "runs": {
+    "passed": 78,
+    "partial": 7
+  }
+}

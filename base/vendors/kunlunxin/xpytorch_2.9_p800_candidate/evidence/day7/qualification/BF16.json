@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "runs": [
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/runs/BF16-q1",
+      "run_id": "benchmark-73eeacc43f844c2da1fe4d22aa8eeedb",
+      "value": 118.9681575587812,
+      "tflops": 118.9681575587812,
+      "elapsed_seconds": 46.210332678,
+      "summary_sha256": "b81a84a8ee5b841998d9931f893ef78b15ab08bbfbbc4d5cadf890ddd7a8f07c"
+    },
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/runs/BF16-q2",
+      "run_id": "benchmark-0e35a45df1264ea18870a55714100d40",
+      "value": 118.97055011372423,
+      "tflops": 118.97055011372423,
+      "elapsed_seconds": 46.209403366,
+      "summary_sha256": "4b6365299b1222b248b08e7d494578eb40b57dc01c1e9894ccf1d377a901860f"
+    },
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/runs/BF16-q3",
+      "run_id": "benchmark-84688ff3b0794c3cb28ce22ddd7170b9",
+      "value": 118.96467485373763,
+      "tflops": 118.96467485373763,
+      "elapsed_seconds": 46.211685491,
+      "summary_sha256": "1f6dabbdf22c45d5f6e231d4d8676561fd4247e52c884f814eadbe363959c81d"
+    },
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/runs/BF16-q4",
+      "run_id": "benchmark-1828336a5ee54953982a7a206301b4c5",
+      "value": 118.96748538316822,
+      "tflops": 118.96748538316822,
+      "elapsed_seconds": 46.21059377,
+      "summary_sha256": "51a991da0b69c3457b6919f884ec185c6c3ef989dd88de9b7de03aeaceaa9255"
+    },
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/runs/BF16-q5",
+      "run_id": "benchmark-9ef90dcf9cc849a6b261175ad362ab22",
+      "value": 118.96795986125177,
+      "tflops": 118.96795986125177,
+      "elapsed_seconds": 46.210409469,
+      "summary_sha256": "fb7c52f8d0ab9113c742532ae5ede7d2ff297948740e567c0286b5afd7f70e03"
+    }
+  ],
+  "repetitions": 5,
+  "metric": "computation-BF16",
+  "unit": "TFLOPS",
+  "median": 118.96795986125177,
+  "min": 118.96467485373763,
+  "max": 118.97055011372423,
+  "mean": 118.96776555413261,
+  "sample_standard_deviation": 0.002096194153766697,
+  "ddof": 1,
+  "cv_percent": 0.0017619849746718901,
+  "max_cv_percent": 5,
+  "scope": "one physical UUID, locked M1/native computation-BF16/config; no other dtype or communication qualification"
+}

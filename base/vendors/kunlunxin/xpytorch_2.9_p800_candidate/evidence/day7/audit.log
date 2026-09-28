@@ -1,0 +1,63 @@
+base-final 0 orTests.test_unknown_environment_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 217 tests in 3.304s
+
+OK
+
+pr0 0 .test_xpu_inventory_rejects_unknown_format) ... ok
+
+----------------------------------------------------------------------
+Ran 32 tests in 0.125s
+
+OK
+
+toolkit 0 lkit_accepts_each_selector_and_default_all) ... ok
+
+----------------------------------------------------------------------
+Ran 80 tests in 0.177s
+
+OK
+
+day6 0 _regenerates_from_archived_smoke_artifacts) ... ok
+
+----------------------------------------------------------------------
+Ran 18 tests in 0.038s
+
+OK
+
+bootstrap 0 
+dry-kunlunxin-computation-BF16 0 
+dry-kunlunxin-computation-FP16 0 
+dry-kunlunxin-computation-FP32 0 
+dry-kunlunxin-computation-FP64 0 
+dry-kunlunxin-computation-FP8 0 
+dry-kunlunxin-computation-INT8 0 
+dry-kunlunxin-computation-TF32 0 
+dry-kunlunxin-interconnect-MPI_interserver 0 
+dry-kunlunxin-interconnect-MPI_intraserver 0 
+dry-kunlunxin-interconnect-P2P_interserver 0 
+dry-kunlunxin-interconnect-P2P_intraserver 0 
+dry-kunlunxin-interconnect-d2h 0 
+dry-kunlunxin-interconnect-h2d 0 
+dry-kunlunxin-main_memory-bandwidth 0 
+dry-kunlunxin-main_memory-capacity 0 
+dry-ascend-computation-BF16 0 
+dry-ascend-computation-FP16 0 
+dry-ascend-computation-FP32 0 
+dry-ascend-computation-FP64 0 
+dry-ascend-computation-FP8 0 
+dry-ascend-computation-INT8 0 
+dry-ascend-computation-TF32 0 
+dry-ascend-interconnect-MPI_interserver 0 
+dry-ascend-interconnect-MPI_intraserver 2 k Case interconnect-MPI_intraserver requires runtime profile 'torch_fl_2.10_flagcx', got 'torch_fl_2.10'; use the dedicated communication host config
+
+dry-ascend-interconnect-P2P_interserver 0 
+dry-ascend-interconnect-P2P_intraserver 2 k Case interconnect-P2P_intraserver requires runtime profile 'torch_fl_2.10_flagcx', got 'torch_fl_2.10'; use the dedicated communication host config
+
+dry-ascend-interconnect-d2h 0 
+dry-ascend-interconnect-h2d 0 
+dry-ascend-main_memory-bandwidth 0 
+dry-ascend-main_memory-capacity 0 
+REPORTS [{"status": "failed", "source": "base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day6/communication/attempts/comm-smoke-allreduce-a01-cards57", "deterministic": true, "summary_unchanged": true, "hashes": {"report.md": "caa1af6c3a0efa62c7eb14a341e1011146efbd55a2bfa2403cb9609a3a1a3b93", "report_monitor.md": "0601ae5178d597227b6edc31cbe5f0aeebd2cd51d764b2690ce514f58a806612"}}, {"status": "passed", "source": "base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day6/communication/contended/contended-0923T0824-probe-MPI-m1-34-a01", "deterministic": true, "summary_unchanged": true, "hashes": {"report.md": "7d8c050d2129ee273af1a7542eab3b90ba7d3cdc75eedffd0296fffd7a63e9e3", "report_monitor.md": "0601ae5178d597227b6edc31cbe5f0aeebd2cd51d764b2690ce514f58a806612"}}, {"status": "partial", "source": "base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day6/communication/contended/contended-0923T0826-qual-MPI-m1-34-a01", "deterministic": true, "summary_unchanged": true, "hashes": {"report.md": "178770063485bb5d2757d9920b18e5629643ea82319783c3b074cf187dc521fe", "report_monitor.md": "85cf04a95473ce1790d02303eea727e83d435ca322b04b35c5f67d0a1d9e3c04"}}]
+AUDIT-DONE

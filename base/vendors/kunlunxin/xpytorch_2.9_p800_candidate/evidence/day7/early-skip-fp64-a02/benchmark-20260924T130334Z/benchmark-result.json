@@ -1,0 +1,7 @@
+{
+  "case": "computation-FP64:P800",
+  "metrics": [],
+  "schema_version": 1,
+  "skip_reason": "capability probe returned float32 output for float64 input; native FP64 output is not proven",
+  "status": "skipped"
+}

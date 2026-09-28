@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "runs": [
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/runs/INT8-q1",
+      "run_id": "benchmark-8b3a789f2c0346ca9db5d30ea8949923",
+      "value": 501.6634013029431,
+      "tops": 501.6634013029431,
+      "elapsed_seconds": 17.533854372,
+      "summary_sha256": "60d169ef884b5deceaf3247e78705c839a7fd6d474a412053d194daa500a3a55"
+    },
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/runs/INT8-q2",
+      "run_id": "benchmark-07efec883eb64dc3ac6d6a302204d2ac",
+      "value": 501.6566450756685,
+      "tops": 501.6566450756685,
+      "elapsed_seconds": 17.534090515,
+      "summary_sha256": "26d4e8c18349ee62320766b666a9d691485d2c5fa6ed3ae6e891449b224841c5"
+    },
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/runs/INT8-q3",
+      "run_id": "benchmark-030d9ee42cfa4786a16c3b53aa6b24ce",
+      "value": 503.9037593846929,
+      "tops": 503.9037593846929,
+      "elapsed_seconds": 17.455898787,
+      "summary_sha256": "3579c6dd366a80feab50e1de7aa0e815f386e2e9320ff62f9cb79d5efd9b7054"
+    },
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/runs/INT8-q4",
+      "run_id": "benchmark-b5b14b72871a4cc982150034eadd3983",
+      "value": 505.1809945177127,
+      "tops": 505.1809945177127,
+      "elapsed_seconds": 17.411765521,
+      "summary_sha256": "ae9115eb12a860b43ec8db87cc44963dcbbca0ea522d808ed4efd9c3f9927146"
+    },
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/runs/INT8-q5",
+      "run_id": "benchmark-6653dad21f68480aaf1c846087549685",
+      "value": 504.38875822437245,
+      "tops": 504.38875822437245,
+      "elapsed_seconds": 17.439113935,
+      "summary_sha256": "df37ece2412780144213db1fe59ef7c720ecbd9eff45dd02522baf4868b0ed6e"
+    }
+  ],
+  "repetitions": 5,
+  "metric": "computation-INT8",
+  "unit": "TOPS",
+  "median": 503.9037593846929,
+  "min": 501.6566450756685,
+  "max": 505.1809945177127,
+  "mean": 503.35871170107794,
+  "sample_standard_deviation": 1.6163149155350391,
+  "ddof": 1,
+  "cv_percent": 0.3211059782938446,
+  "max_cv_percent": 5,
+  "scope": "one physical UUID, locked M1/native computation-INT8/config; no other dtype or communication qualification"
+}

@@ -1,0 +1,26 @@
+# Benchmark device telemetry
+
+| Field | Evidence |
+|---|---|
+| vendor | kunlunxin |
+| status | passed |
+| collector | xpu-smi -m and selected -q |
+| reasons | [] |
+| policy | {"automatic_workload_extension": false, "collector": "xpu-smi -m and selected -q", "enabled": true, "metric_fields": [{"key": "utilization_percent", "label": "Device utilization", "unit": "%"}, {"key": "used_memory_mib", "label": "Allocated device memory", "unit": "MiB"}], "required_samples_per_target": 10, "target_interval_s": 1.0, "target_resource": "p800-device", "vendor": "kunlunxin"} |
+| rank_device_map | not recorded |
+| measurement_windows | [{"device_id": "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87", "finished_monotonic_ns": 4098584452942688, "finished_offset_s": 24.28737737890333, "rank": 0, "role": "measurement", "started_monotonic_ns": 4098567149054824, "started_offset_s": 6.983489514794201}] |
+| lifecycle_windows | not recorded |
+| raw_samples | {"bytes": 134199, "path": "benchmark-monitor/samples.raw.jsonl", "sha256": "a407647e5edadb9b1a33eb4989228a57115c5097a09bde32ebb5a5d675889459"} |
+| parsed_samples | {"bytes": 8629, "path": "benchmark-monitor/samples.jsonl", "sha256": "95533cda95daa5aca52cc2654146d48d70c7c4a1c24c3cec61b19761d50778dc"} |
+| sample_counts | {"kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87": 18} |
+| events | not recorded |
+
+| Device | Metric | Unit | Samples | Min | Median | Max |
+|---|---|---|---|---|---|---|
+| kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87 | Device utilization | % | 18 | 0 | 0.0 | 0 |
+| kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87 | Allocated device memory | MiB | 18 | 676 | 676.0 | 676 |
+
+![Device telemetry](report-assets/benchmark-monitor-usage.svg)
+
+Only command intervals overlapping the recorded rank measurement windows are summarized.
+Missing or invalid measurements remain missing. Driver integration windows and theoretical utilization are not inferred.

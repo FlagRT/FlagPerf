@@ -1,9 +1,7 @@
 # Benchmark vendor control plane
 
 PR1 prepares the host/worker/monitor/report contracts for additional vendors.
-The registry contains Ascend performance execution and Kunlunxin standalone
-preflight capability. P800 performance contracts and driver integration remain
-separate work; registration does not promote the candidate runtime.
+The registry contains Ascend execution and Kunlunxin bounded preflight, single-rank computation/transfer/memory and exactly-two-rank communication. UUID bindings and rank-local synchronization are verified. Registration does not promote the candidate runtime. See [P800 handoff](p800-day7.md).
 
 ## Provider responsibilities
 

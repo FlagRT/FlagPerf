@@ -1,0 +1,7 @@
+preflight-card5 2 {'status': None, 'failure_stage': None, 'error': None, 'cleanup_status': None, 'lease_released': None}
+Traceback (most recent call last):
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/run_day7.py", line 76, in <module>
+    batch()
+  File "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/run_day7.py", line 52, in batch
+    raise RuntimeError('card5 preflight failed')
+RuntimeError: card5 preflight failed

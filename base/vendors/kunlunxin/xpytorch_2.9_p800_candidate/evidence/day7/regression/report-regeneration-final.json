@@ -1,0 +1,42 @@
+[
+  {
+    "status": "failed",
+    "source": "base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day6/communication/attempts/comm-smoke-allreduce-a01-cards57",
+    "deterministic": true,
+    "summary_unchanged": true,
+    "hashes": {
+      "report.md": "caa1af6c3a0efa62c7eb14a341e1011146efbd55a2bfa2403cb9609a3a1a3b93",
+      "report_monitor.md": "0601ae5178d597227b6edc31cbe5f0aeebd2cd51d764b2690ce514f58a806612"
+    }
+  },
+  {
+    "status": "passed",
+    "source": "base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day6/communication/contended/contended-0923T0824-probe-MPI-m1-34-a01",
+    "deterministic": true,
+    "summary_unchanged": true,
+    "hashes": {
+      "report.md": "7d8c050d2129ee273af1a7542eab3b90ba7d3cdc75eedffd0296fffd7a63e9e3",
+      "report_monitor.md": "0601ae5178d597227b6edc31cbe5f0aeebd2cd51d764b2690ce514f58a806612"
+    }
+  },
+  {
+    "status": "partial",
+    "source": "base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day6/communication/contended/contended-0923T0826-qual-MPI-m1-34-a01",
+    "deterministic": true,
+    "summary_unchanged": true,
+    "hashes": {
+      "report.md": "178770063485bb5d2757d9920b18e5629643ea82319783c3b074cf187dc521fe",
+      "report_monitor.md": "85cf04a95473ce1790d02303eea727e83d435ca322b04b35c5f67d0a1d9e3c04"
+    }
+  },
+  {
+    "status": "skipped",
+    "source": "base/result/p800-day7-20260924/early-skip-fp64-a02/benchmark-20260924T130334Z",
+    "summary_unchanged": true,
+    "deterministic": true,
+    "hashes": {
+      "report.md": "810a29de31cc96a8cc6953a459783c5a3ad6a392da30a760240ec6ba2cbbc44d",
+      "report_monitor.md": "0c292d122a1373a706e8cf76ddefc1a0d90b4e50e7818d727215b29638ba3761"
+    }
+  }
+]

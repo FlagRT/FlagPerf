@@ -1,0 +1,37 @@
+test_duplicate_host_identity_rejected (test_device_mapping.DeviceMappingTests.test_duplicate_host_identity_rejected) ... ok
+test_empty_selection_and_negative_index_rejected (test_device_mapping.DeviceMappingTests.test_empty_selection_and_negative_index_rejected) ... ok
+test_missing_extra_wrong_and_duplicate_runtime_uuid (test_device_mapping.DeviceMappingTests.test_missing_extra_wrong_and_duplicate_runtime_uuid) ... ok
+test_multi_binding_exact_nodes_and_visibility (test_device_mapping.DeviceMappingTests.test_multi_binding_exact_nodes_and_visibility) ... ok
+test_no_eight_card_limit_or_single_digit_minor (test_device_mapping.DeviceMappingTests.test_no_eight_card_limit_or_single_digit_minor) ... ok
+test_runtime_order_does_not_define_requested_rank (test_device_mapping.DeviceMappingTests.test_runtime_order_does_not_define_requested_rank) ... ok
+test_selection_reordering_changes_ranks_not_identity (test_device_mapping.DeviceMappingTests.test_selection_reordering_changes_ranks_not_identity) ... ok
+test_uuid_format_and_ambiguous_query_rejected (test_device_mapping.DeviceMappingTests.test_uuid_format_and_ambiguous_query_rejected) ... ok
+test_binding_rejects_missing_uuid (test_qualification.QualificationTests.test_binding_rejects_missing_uuid) ... ok
+test_binding_rejects_wrong_minor (test_qualification.QualificationTests.test_binding_rejects_wrong_minor) ... ok
+test_binding_supports_nonidentity_minor_mapping (test_qualification.QualificationTests.test_binding_supports_nonidentity_minor_mapping) ... ok
+test_empty_kl3_is_not_unset (test_qualification.QualificationTests.test_empty_kl3_is_not_unset) ... ok
+test_exact_image (test_qualification.QualificationTests.test_exact_image) ... ok
+test_hung_worker_is_killed (test_qualification.QualificationTests.test_hung_worker_is_killed) ... ok
+test_native_visibility_must_match_record (test_qualification.QualificationTests.test_native_visibility_must_match_record) ... ok
+test_no_self_promotion (test_qualification.QualificationTests.test_no_self_promotion) ... ok
+test_pci_domain_does_not_truncate (test_qualification.QualificationTests.test_pci_domain_does_not_truncate) ... ok
+test_physical_index_is_not_device_minor (test_qualification.QualificationTests.test_physical_index_is_not_device_minor) ... ok
+test_query_needs_uuid_and_minor (test_qualification.QualificationTests.test_query_needs_uuid_and_minor) ... ok
+test_query_pci_must_match_selected_card (test_qualification.QualificationTests.test_query_pci_must_match_selected_card) ... ok
+test_reject_expired_reservation (test_qualification.QualificationTests.test_reject_expired_reservation) ... ok
+test_reject_extra_card (test_qualification.QualificationTests.test_reject_extra_card) ... ok
+test_reject_image_substitution (test_qualification.QualificationTests.test_reject_image_substitution) ... ok
+test_reject_kl3 (test_qualification.QualificationTests.test_reject_kl3) ... ok
+test_reject_package_drift (test_qualification.QualificationTests.test_reject_package_drift) ... ok
+test_reject_wrong_visibility (test_qualification.QualificationTests.test_reject_wrong_visibility) ... ok
+test_single_card_binding (test_qualification.QualificationTests.test_single_card_binding) ... ok
+test_static_evidence_matches_lock (test_qualification.QualificationTests.test_static_evidence_matches_lock) ... ok
+test_worker_exit_and_logs (test_qualification.QualificationTests.test_worker_exit_and_logs) ... ok
+test_xpu_inventory_missing_or_duplicate_card (test_qualification.QualificationTests.test_xpu_inventory_missing_or_duplicate_card) ... ok
+test_xpu_inventory_quoted_product_and_pci_domain (test_qualification.QualificationTests.test_xpu_inventory_quoted_product_and_pci_domain) ... ok
+test_xpu_inventory_rejects_unknown_format (test_qualification.QualificationTests.test_xpu_inventory_rejects_unknown_format) ... ok
+
+----------------------------------------------------------------------
+Ran 32 tests in 0.125s
+
+OK

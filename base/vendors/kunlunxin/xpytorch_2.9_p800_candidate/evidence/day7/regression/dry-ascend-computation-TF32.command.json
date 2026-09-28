@@ -1,0 +1,23 @@
+{
+  "command": [
+    "python3",
+    "-B",
+    "base/run.py",
+    "benchmark",
+    "run",
+    "--case",
+    "computation-TF32",
+    "--config",
+    "base/configs/ascend910_cann9_local.yaml",
+    "--nproc-per-node",
+    "1",
+    "--timeout",
+    "300",
+    "--allow-high-risk-case",
+    "--allow-candidate-runtime",
+    "--dry-run",
+    "--device-ids",
+    "14"
+  ],
+  "exit_code": 0
+}

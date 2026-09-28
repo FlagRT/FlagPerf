@@ -1,0 +1,14 @@
+{
+  "case": "main_memory-bandwidth:P800",
+  "duration_s": 16.135731667,
+  "finished_at": "2026-09-24T13:36:21.231788Z",
+  "finished_monotonic_ns": 4098118151633192,
+  "kind": "measurement-window",
+  "local_rank": 0,
+  "pid": 103,
+  "rank": 0,
+  "schema_version": 1,
+  "started_at": "2026-09-24T13:36:05.096002Z",
+  "started_monotonic_ns": 4098102015901525,
+  "world_size": 1
+}

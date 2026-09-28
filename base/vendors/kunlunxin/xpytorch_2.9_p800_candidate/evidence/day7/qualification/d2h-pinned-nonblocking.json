@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "status": "unstable",
+  "runs": [
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/runs/d2h-pinned-nonblocking-q1",
+      "run_id": "benchmark-254b617286074c13bbef155b2a0d5729",
+      "value": 25.154118614618735,
+      "gb_s": 25.154118614618735,
+      "elapsed_seconds": 21.343260729,
+      "summary_sha256": "f81902a179680ff54b97681669db3ce17ba71cfa2896c086ac26f7279ff9fef5"
+    },
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/runs/d2h-pinned-nonblocking-q2",
+      "run_id": "benchmark-42d60321c65c4d9988f33378b515f9b7",
+      "value": 27.275077643614242,
+      "gb_s": 27.275077643614242,
+      "elapsed_seconds": 19.683570438,
+      "summary_sha256": "9f5dcea920d0a0f8fbdb8a174da5a9d5d12777e19c62b6daf7d7e752f170398b"
+    },
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/runs/d2h-pinned-nonblocking-q3",
+      "run_id": "benchmark-4b4dda77342044bc92f35a2153872aee",
+      "value": 24.929011940546502,
+      "gb_s": 24.929011940546502,
+      "elapsed_seconds": 21.535988401,
+      "summary_sha256": "6780a7cd6838854339898fc2bcd61ac41e4c77f676738002c9cc9d6c682900e6"
+    },
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/runs/d2h-pinned-nonblocking-q4",
+      "run_id": "benchmark-638fb7d477404d1abebf31350a05c07b",
+      "value": 27.07005318314735,
+      "gb_s": 27.07005318314735,
+      "elapsed_seconds": 19.832650803,
+      "summary_sha256": "a80d3c0ddc6ff5a01c1c575d6d258b30de5de46f6c7fdd1c582dc6c94379fbaa"
+    },
+    {
+      "directory": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/runs/d2h-pinned-nonblocking-q5",
+      "run_id": "benchmark-13ed944acd624479a19264830a9cf255",
+      "value": 23.694636557982196,
+      "gb_s": 23.694636557982196,
+      "elapsed_seconds": 22.657908708,
+      "summary_sha256": "108f60f85c4f9d3419bdb52ca354a05d77ecad8e04242187d98f063898af15d3"
+    }
+  ],
+  "repetitions": 5,
+  "metric": "d2h-bandwidth",
+  "unit": "GB/s",
+  "median": 25.154118614618735,
+  "min": 23.694636557982196,
+  "max": 27.275077643614242,
+  "mean": 25.624579587981806,
+  "sample_standard_deviation": 1.5201452006821374,
+  "ddof": 1,
+  "cv_percent": 5.932371282278915,
+  "max_cv_percent": 5,
+  "scope": "one physical UUID, locked M1/native d2h-bandwidth/config; no other dtype or communication qualification"
+}

@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "sudo",
+    "-n",
+    "cat",
+    "/proc/3657090/cmdline"
+  ],
+  "finished_monotonic_s": 4096974.377358903,
+  "returncode": 1,
+  "started_at": "2026-09-24T13:17:17.434585+00:00",
+  "started_monotonic_s": 4096974.354439953,
+  "stderr": "cat: /proc/3657090/cmdline: No such file or directory\n",
+  "stdout": "",
+  "timed_out": false,
+  "timeout_s": 10
+}

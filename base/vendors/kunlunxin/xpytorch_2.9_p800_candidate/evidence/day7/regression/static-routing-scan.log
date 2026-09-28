@@ -1,0 +1,50 @@
+base/executors/benchmark.py:131:    nproc_per_node: int | None
+base/executors/benchmark.py:157:            nproc_per_node=args.nproc_per_node,
+base/executors/benchmark.py:182:        if self.nproc_per_node is not None and self.nproc_per_node <= 0:
+base/executors/benchmark.py:245:    exact_nproc = process_scope.get("nproc_per_node")
+base/executors/benchmark.py:246:    if request.nproc_per_node is not None and exact_nproc is not None:
+base/executors/benchmark.py:247:        if request.nproc_per_node != exact_nproc:
+base/executors/benchmark.py:250:                f"local ranks, got {request.nproc_per_node}"
+base/executors/benchmark.py:252:    minimum = process_scope.get("min_nproc_per_node")
+base/executors/benchmark.py:253:    if minimum is not None and request.nproc_per_node is not None:
+base/executors/benchmark.py:254:        if request.nproc_per_node < minimum:
+base/executors/benchmark.py:289:    minimum = process_scope.get("min_nproc_per_node")
+base/executors/benchmark.py:292:    for field, actual in (("nnodes", nnodes), ("nproc_per_node", nproc)):
+base/executors/benchmark.py:323:def parse_benchmark_results(text: str, expected_ranks: int) -> dict[str, Any]:
+base/executors/benchmark.py:336:    expected = list(range(expected_ranks))
+base/executors/benchmark.py:346:        "expected_ranks": expected,
+base/executors/benchmark.py:412:            "nproc_per_node": (
+base/executors/benchmark.py:413:                request.nproc_per_node
+base/executors/benchmark.py:414:                if request.nproc_per_node is not None
+base/executors/benchmark.py:540:            nproc = request.nproc_per_node or len(selected_ids)
+base/executors/benchmark.py:618:                "--nproc_per_node", str(nproc),
+base/executors/benchmark.py:643:                "nproc_per_node": nproc,
+base/executors/benchmark.py:797:                "fallback_count": (
+base/executors/benchmark.py:799:                        for marker in provider.fallback_markers)
+base/executors/benchmark.py:806:            if parsed["fallback_count"]:
+base/executors/benchmark.py:808:                parsed["failure_reason"] = "cpu-fallback-detected"
+base/executors/bounded_benchmark.py:11:from benchmarks.day6_contract import CASES as DAY6_CASES, expected_ranks as day6_expected_ranks
+base/executors/bounded_benchmark.py:80:        ranks = day6_expected_ranks(case)
+base/executors/bounded_benchmark.py:117:        self.ranks = day6_expected_ranks(self.request.case) if self.request.case in DAY6_CASES else 1
+base/executors/bounded_benchmark.py:127:                                  'expected_ranks': list(range(self.ranks)),
+base/executors/bounded_benchmark.py:137:                                                   'expected_ranks': list(range(self.ranks)), 'observed_ranks': [],
+base/executors/bounded_benchmark.py:142:                'nproc_per_node': self.ranks, 'master_port': self.request.master_port,
+base/executors/bounded_benchmark.py:161:        result = {'schema_version': 1, 'status': 'passed', 'case': self.request.case, 'expected_ranks': list(range(self.ranks)),
+base/benchmark_worker.py:36:    nproc = context.get('nproc_per_node') or 1
+base/benchmark_worker.py:111:    parser.add_argument("--nproc_per_node", type=int, required=True)
+base/benchmark_worker.py:169:        f"--nproc-per-node={config.nproc_per_node}",
+base/benchmark_worker.py:176:        f"--node_size={config.nproc_per_node}",
+base/benchmarks/drivers/kunlunxin.py:103:            'fallback_scope': 'UUID, tensor placement and locked native route; no universal fallback exclusion'}
+base/benchmarks/drivers/day6.py:17:    expected_ranks,
+base/benchmarks/drivers/day6.py:28:    validate_scope = expected_ranks(case)
+base/vendors/kunlunxin/container_probe.py:44:            require(context.get('nproc_per_node') in (1, 2), 'invalid day-six process scope')
+base/vendors/kunlunxin/container_probe.py:46:            require(context.get('nproc_per_node') == 1, 'unqualified single-rank scope')
+base/vendors/kunlunxin/container_probe.py:55:    require(len(devices) == context.get('nproc_per_node', 1), 'device count differs from process scope')
+base/vendors/kunlunxin/container_probe.py:136:                      scope='identity and four-element native tensor; no performance/fallback claim')
+base/vendors/kunlunxin/provider.py:17:    fallback_markers = ()  # PR0 did not prove a universal fallback detector.
+base/vendors/kunlunxin/provider.py:58:            if (request.nproc_per_node or 1) != expected_nproc:
+base/vendors/kunlunxin/provider.py:60:        elif request.nproc_per_node not in (None, 1):
+base/vendors/kunlunxin/computation_probe.py:15:              'scope': 'bounded API and numerical observations, not performance or universal fallback exclusion'}
+base/vendors/kunlunxin/computation_probe.py:66:        record['route_scope'] = 'timing decomposition only; not a qualification and not a universal fallback exclusion'
+base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/hardware_probe.py:155:                      rtol=1e-4, atol=1e-4, fallback_status='requires selected-card telemetry review')
+base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/hardware_probe.py:262:               'physical_mapping_verified': False, 'cpu_fallback_excluded': False}

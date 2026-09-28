@@ -1,0 +1,2 @@
+SKIPPED: interconnect-MPI_interserver:P800: the unified P800 entrypoint resolves nnodes=1 only; interserver cases are skipped before Docker and lease
+Result directory: /home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/early-skip-final/interconnect-MPI_interserver

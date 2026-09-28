@@ -1,0 +1,13 @@
+{
+  "command": [
+    "python3",
+    "-B",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "base/toolkits/_common/ascend/A3/tests",
+    "-v"
+  ],
+  "exit_code": 0
+}

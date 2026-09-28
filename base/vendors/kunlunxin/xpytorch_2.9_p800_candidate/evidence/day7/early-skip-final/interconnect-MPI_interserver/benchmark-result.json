@@ -1,0 +1,7 @@
+{
+  "case": "interconnect-MPI_interserver:P800",
+  "metrics": [],
+  "schema_version": 1,
+  "skip_reason": "the unified P800 entrypoint resolves nnodes=1 only; interserver cases are skipped before Docker and lease",
+  "status": "skipped"
+}

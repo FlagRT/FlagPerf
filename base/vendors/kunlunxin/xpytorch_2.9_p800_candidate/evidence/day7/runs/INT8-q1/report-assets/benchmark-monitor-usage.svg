@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="280" viewBox="0 0 1000 280">
+<rect width="100%" height="100%" fill="white"/>
+<text x="20" y="25" font-size="16">Raw telemetry overlapping rank measurement windows</text>
+<text x="20" y="60" font-size="13">kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87: Device utilization (%) [14, 100]</text>
+<circle cx="30.000" cy="135.000" r="3" fill="#2463a4"><title>9.12225436931476: 14</title></circle>
+<circle cx="85.082" cy="80.000" r="3" fill="#2463a4"><title>10.129528685938567: 100</title></circle>
+<circle cx="139.459" cy="80.000" r="3" fill="#2463a4"><title>11.123894235119224: 100</title></circle>
+<circle cx="194.036" cy="80.000" r="3" fill="#2463a4"><title>12.12192983692512: 100</title></circle>
+<circle cx="248.813" cy="80.000" r="3" fill="#2463a4"><title>13.123618721030653: 100</title></circle>
+<circle cx="303.472" cy="80.000" r="3" fill="#2463a4"><title>14.123155761044472: 100</title></circle>
+<circle cx="357.417" cy="80.000" r="3" fill="#2463a4"><title>15.109633605927229: 100</title></circle>
+<circle cx="413.057" cy="80.000" r="3" fill="#2463a4"><title>16.127111009322107: 100</title></circle>
+<circle cx="467.859" cy="80.000" r="3" fill="#2463a4"><title>17.12926176423207: 100</title></circle>
+<circle cx="522.288" cy="80.000" r="3" fill="#2463a4"><title>18.124592422042042: 100</title></circle>
+<circle cx="576.921" cy="80.000" r="3" fill="#2463a4"><title>19.123642710968852: 100</title></circle>
+<circle cx="631.661" cy="80.000" r="3" fill="#2463a4"><title>20.12465749401599: 100</title></circle>
+<circle cx="686.368" cy="80.000" r="3" fill="#2463a4"><title>21.125082588288933: 100</title></circle>
+<circle cx="741.088" cy="80.000" r="3" fill="#2463a4"><title>22.125725869089365: 100</title></circle>
+<circle cx="796.106" cy="80.000" r="3" fill="#2463a4"><title>23.131820644252002: 100</title></circle>
+<circle cx="850.610" cy="80.000" r="3" fill="#2463a4"><title>24.128516938071698: 100</title></circle>
+<circle cx="905.109" cy="80.000" r="3" fill="#2463a4"><title>25.12513314327225: 100</title></circle>
+<circle cx="960.000" cy="80.000" r="3" fill="#2463a4"><title>26.12890927726403: 100</title></circle>
+<text x="20" y="170" font-size="13">kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87: Allocated device memory (MiB) [506, 506]</text>
+<circle cx="30.000" cy="245.000" r="3" fill="#2463a4"><title>9.12225436931476: 506</title></circle>
+<circle cx="85.082" cy="245.000" r="3" fill="#2463a4"><title>10.129528685938567: 506</title></circle>
+<circle cx="139.459" cy="245.000" r="3" fill="#2463a4"><title>11.123894235119224: 506</title></circle>
+<circle cx="194.036" cy="245.000" r="3" fill="#2463a4"><title>12.12192983692512: 506</title></circle>
+<circle cx="248.813" cy="245.000" r="3" fill="#2463a4"><title>13.123618721030653: 506</title></circle>
+<circle cx="303.472" cy="245.000" r="3" fill="#2463a4"><title>14.123155761044472: 506</title></circle>
+<circle cx="357.417" cy="245.000" r="3" fill="#2463a4"><title>15.109633605927229: 506</title></circle>
+<circle cx="413.057" cy="245.000" r="3" fill="#2463a4"><title>16.127111009322107: 506</title></circle>
+<circle cx="467.859" cy="245.000" r="3" fill="#2463a4"><title>17.12926176423207: 506</title></circle>
+<circle cx="522.288" cy="245.000" r="3" fill="#2463a4"><title>18.124592422042042: 506</title></circle>
+<circle cx="576.921" cy="245.000" r="3" fill="#2463a4"><title>19.123642710968852: 506</title></circle>
+<circle cx="631.661" cy="245.000" r="3" fill="#2463a4"><title>20.12465749401599: 506</title></circle>
+<circle cx="686.368" cy="245.000" r="3" fill="#2463a4"><title>21.125082588288933: 506</title></circle>
+<circle cx="741.088" cy="245.000" r="3" fill="#2463a4"><title>22.125725869089365: 506</title></circle>
+<circle cx="796.106" cy="245.000" r="3" fill="#2463a4"><title>23.131820644252002: 506</title></circle>
+<circle cx="850.610" cy="245.000" r="3" fill="#2463a4"><title>24.128516938071698: 506</title></circle>
+<circle cx="905.109" cy="245.000" r="3" fill="#2463a4"><title>25.12513314327225: 506</title></circle>
+<circle cx="960.000" cy="245.000" r="3" fill="#2463a4"><title>26.12890927726403: 506</title></circle>
+</svg>

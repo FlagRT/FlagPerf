@@ -685,7 +685,7 @@
       }
     },
     "transfer_payload_realignment": {
-      "governing_reference": "参考资料/20260914T133423Z (toolkit bundle): ascend-dmi --bw -s 536870912 --et 50 = 512 MiB x 50",
+      "governing_reference": "\u53c2\u8003\u8d44\u6599/20260914T133423Z (toolkit bundle): ascend-dmi --bw -s 536870912 --et 50 = 512 MiB x 50",
       "superseded": "the 4 GiB payload came from the Ascend Base case config (Melements 1024), a different suite",
       "iteration_rule": "iterations raised from the reference 50 to hold the 15 s measurement floor; per-variant counts recorded",
       "pinned_nonblocking": "runs at 512 MiB, so the earlier 2 GiB scope was a payload workaround; the vendor error 999 is payload-specific (4 GiB) not mode-specific",
@@ -836,5 +836,231 @@
       "cards 1 and 2 stay excluded (sync hang, uncorrectable ECC)",
       "the temporary contended preflight override must be reverted at the end of the day"
     ]
+  },
+  "day7_acceptance": {
+    "schema_version": 1,
+    "date": "2026-09-24",
+    "timezone": "Asia/Shanghai",
+    "status": "scoped-delivery; full-week acceptance incomplete",
+    "measurement_code_commit": "c1d900d8d89eadba48540b34ec7873fb26da4671",
+    "release_code_commit": "e373664aa5324a21c04196d1971f9ea013ab9f3c",
+    "qualification": [
+      {
+        "group": "FP32",
+        "status": "passed",
+        "median": 117.87780515053663,
+        "unit": "TFLOPS",
+        "cv_percent": 0.36615484576830315,
+        "repetitions": 5
+      },
+      {
+        "group": "FP16",
+        "status": "passed",
+        "median": 258.7841983504385,
+        "unit": "TFLOPS",
+        "cv_percent": 0.04484491274909532,
+        "repetitions": 5
+      },
+      {
+        "group": "BF16",
+        "status": "passed",
+        "median": 118.96795986125177,
+        "unit": "TFLOPS",
+        "cv_percent": 0.0017619849746718901,
+        "repetitions": 5
+      },
+      {
+        "group": "INT8",
+        "status": "passed",
+        "median": 503.9037593846929,
+        "unit": "TOPS",
+        "cv_percent": 0.3211059782938446,
+        "repetitions": 5
+      },
+      {
+        "group": "h2d-pageable-blocking",
+        "status": "passed",
+        "median": 10.014424348520725,
+        "unit": "GB/s",
+        "cv_percent": 1.1785497388117585,
+        "repetitions": 5
+      },
+      {
+        "group": "h2d-pageable-nonblocking",
+        "status": "passed",
+        "median": 18.844314151096917,
+        "unit": "GB/s",
+        "cv_percent": 2.254722168897458,
+        "repetitions": 5
+      },
+      {
+        "group": "h2d-pinned-blocking",
+        "status": "unstable",
+        "median": 20.113559647669202,
+        "unit": "GB/s",
+        "cv_percent": 6.32066412565772,
+        "repetitions": 5
+      },
+      {
+        "group": "h2d-pinned-nonblocking",
+        "status": "passed",
+        "median": 19.289542181161412,
+        "unit": "GB/s",
+        "cv_percent": 4.165151213315993,
+        "repetitions": 5
+      },
+      {
+        "group": "d2h-pageable-blocking",
+        "status": "passed",
+        "median": 10.802936108913677,
+        "unit": "GB/s",
+        "cv_percent": 3.78922037427054,
+        "repetitions": 5
+      },
+      {
+        "group": "d2h-pageable-nonblocking",
+        "status": "passed",
+        "median": 17.54872710547543,
+        "unit": "GB/s",
+        "cv_percent": 3.322982718116306,
+        "repetitions": 5
+      },
+      {
+        "group": "d2h-pinned-blocking",
+        "status": "unstable",
+        "median": 24.727412259554253,
+        "unit": "GB/s",
+        "cv_percent": 5.592455322215141,
+        "repetitions": 5
+      },
+      {
+        "group": "d2h-pinned-nonblocking",
+        "status": "unstable",
+        "median": 25.154118614618735,
+        "unit": "GB/s",
+        "cv_percent": 5.932371282278915,
+        "repetitions": 5
+      },
+      {
+        "group": "memory-bandwidth",
+        "status": "passed",
+        "median": 2235.9018565562737,
+        "unit": "GB/s",
+        "cv_percent": 0.000777168138903794,
+        "repetitions": 5
+      },
+      {
+        "group": "comm-MPI-m64",
+        "status": "incomplete",
+        "completed_runs": 0
+      },
+      {
+        "group": "comm-P2P-m64",
+        "status": "incomplete",
+        "completed_runs": 0
+      }
+    ],
+    "communication_curves": [
+      {
+        "case": "MPI",
+        "message_mib": 4,
+        "run": "runs/comm-MPI-m1-q1",
+        "status": "not-qualified",
+        "reason": "FileNotFoundError(2, 'No such file or directory')"
+      },
+      {
+        "case": "MPI",
+        "message_mib": 16,
+        "run": "runs/comm-MPI-m4-q1",
+        "status": "not-qualified",
+        "reason": "FileNotFoundError(2, 'No such file or directory')"
+      },
+      {
+        "case": "MPI",
+        "message_mib": 64,
+        "run": "runs/comm-MPI-m16-q1",
+        "status": "not-qualified",
+        "reason": "FileNotFoundError(2, 'No such file or directory')"
+      },
+      {
+        "case": "MPI",
+        "message_mib": 256,
+        "run": "runs/comm-MPI-m64-q1",
+        "status": "not-qualified",
+        "reason": "FileNotFoundError(2, 'No such file or directory')"
+      },
+      {
+        "case": "P2P",
+        "message_mib": 4,
+        "run": "runs/comm-P2P-m1-q1",
+        "status": "not-qualified",
+        "reason": "FileNotFoundError(2, 'No such file or directory')"
+      },
+      {
+        "case": "P2P",
+        "message_mib": 16,
+        "run": "runs/comm-P2P-m4-q1",
+        "status": "not-qualified",
+        "reason": "FileNotFoundError(2, 'No such file or directory')"
+      },
+      {
+        "case": "P2P",
+        "message_mib": 64,
+        "run": "runs/comm-P2P-m16-q1",
+        "status": "not-qualified",
+        "reason": "FileNotFoundError(2, 'No such file or directory')"
+      },
+      {
+        "case": "P2P",
+        "message_mib": 256,
+        "run": "runs/comm-P2P-m64-q1",
+        "status": "not-qualified",
+        "reason": "FileNotFoundError(2, 'No such file or directory')"
+      }
+    ],
+    "timeouts": [],
+    "capacity": {
+      "status": "partial",
+      "measurement_status": "passed",
+      "monitoring_status": "partial",
+      "correctness_status": "passed",
+      "cleanup_status": "passed",
+      "lease_released": true
+    },
+    "run_status_counts": {
+      "passed": 78,
+      "partial": 7
+    },
+    "eight_card": {
+      "status": "not-implemented-and-not-qualified",
+      "reasons": [
+        "cards 1/2 health exclusions",
+        "no healthy idle whole-host window",
+        "provider, runtime requirements, contract and reference remain exactly two ranks"
+      ]
+    },
+    "candidate_validated": false,
+    "resource_check": "final-resource-check.json",
+    "review": "evidence/day7/review.md",
+    "verification": "evidence/day7/verification.json",
+    "cpu_regression": {
+      "base-release": {
+        "tests": 220,
+        "exit_code": 0
+      },
+      "pr0-release": {
+        "tests": 32,
+        "exit_code": 0
+      },
+      "toolkit-release": {
+        "tests": 80,
+        "exit_code": 0
+      },
+      "day6-release": {
+        "tests": 18,
+        "exit_code": 0
+      }
+    },
+    "historical_day6_formal_reruns": "Already completed by user on 4+7 and 3+4; current Day6 index 5811 verified; supersedes the older pending note without rewriting historical evidence"
   }
 }

@@ -1,0 +1,7 @@
+{
+  "case": "computation-FP8:P800",
+  "metrics": [],
+  "schema_version": 1,
+  "skip_reason": "FP8 mm and scaled-mm APIs returned NOT IMPLEMENTED on the locked stack",
+  "status": "skipped"
+}

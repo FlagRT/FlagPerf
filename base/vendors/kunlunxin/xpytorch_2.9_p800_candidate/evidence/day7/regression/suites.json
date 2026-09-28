@@ -1,0 +1,22 @@
+{
+  "base-final": {
+    "exit_code": 0,
+    "tail": "st_vendor_registry.VendorTests.test_runtime_path_is_contained_even_for_symlinks) ... ok\ntest_shared_helpers_do_not_import_another_domains_vendor_package (test_vendor_registry.VendorTests.test_shared_helpers_do_not_import_another_domains_vendor_package) ... ok\ntest_unknown_driver_vendor_never_calls_cuda (test_vendor_registry.VendorTests.test_unknown_driver_vendor_never_calls_cuda) ... ok\ntest_unknown_environment_rejected (test_vendor_registry.VendorTests.test_unknown_environment_rejected) ... ok\n\n----------------------------------------------------------------------\nRan 217 tests in 3.304s\n\nOK\n"
+  },
+  "pr0": {
+    "exit_code": 0,
+    "tail": "_exit_and_logs (test_qualification.QualificationTests.test_worker_exit_and_logs) ... ok\ntest_xpu_inventory_missing_or_duplicate_card (test_qualification.QualificationTests.test_xpu_inventory_missing_or_duplicate_card) ... ok\ntest_xpu_inventory_quoted_product_and_pci_domain (test_qualification.QualificationTests.test_xpu_inventory_quoted_product_and_pci_domain) ... ok\ntest_xpu_inventory_rejects_unknown_format (test_qualification.QualificationTests.test_xpu_inventory_rejects_unknown_format) ... ok\n\n----------------------------------------------------------------------\nRan 32 tests in 0.125s\n\nOK\n"
+  },
+  "toolkit": {
+    "exit_code": 0,
+    "tail": "ses_current_schema_and_preserves_status (test_run_local.StaticArgumentTests.test_report_fallback_uses_current_schema_and_preserves_status) ... WARNING: toolkit Markdown report generation failed: fixture report failure\nok\ntest_selection_is_rejected_with_legacy_probe (test_run_local.StaticArgumentTests.test_selection_is_rejected_with_legacy_probe) ... ok\ntest_toolkit_accepts_each_selector_and_default_all (test_run_local.StaticArgumentTests.test_toolkit_accepts_each_selector_and_default_all) ... ok\n\n----------------------------------------------------------------------\nRan 80 tests in 0.177s\n\nOK\n"
+  },
+  "day6": {
+    "exit_code": 0,
+    "tail": "Day6Formulas.test_p2p_is_one_way_only) ... ok\ntest_payload_bytes_counts_mebielements (base.tests.test_p800_day6.Day6Formulas.test_payload_bytes_counts_mebielements) ... ok\ntest_interserver_cases_marked_unsupported_before_docker (base.tests.test_p800_day6.Day6Interserver.test_interserver_cases_marked_unsupported_before_docker) ... ok\ntest_report_regenerates_from_archived_smoke_artifacts (base.tests.test_p800_day6.Day6ReportRegeneration.test_report_regenerates_from_archived_smoke_artifacts) ... ok\n\n----------------------------------------------------------------------\nRan 18 tests in 0.038s\n\nOK\n"
+  },
+  "bootstrap": {
+    "exit_code": 0,
+    "tail": ""
+  }
+}

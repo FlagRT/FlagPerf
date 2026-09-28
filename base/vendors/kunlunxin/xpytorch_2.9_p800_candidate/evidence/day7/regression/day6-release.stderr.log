@@ -1,0 +1,23 @@
+test_capacity_requires_verified_release_and_granularity (base.tests.test_p800_day6.Day6ArtifactValidation.test_capacity_requires_verified_release_and_granularity) ... ok
+test_each_case_validates_with_recomputed_numbers (base.tests.test_p800_day6.Day6ArtifactValidation.test_each_case_validates_with_recomputed_numbers) ... ok
+test_rank_outside_world_size_rejected (base.tests.test_p800_day6.Day6ArtifactValidation.test_rank_outside_world_size_rejected) ... ok
+test_stdout_pairs_cover_every_published_number (base.tests.test_p800_day6.Day6ArtifactValidation.test_stdout_pairs_cover_every_published_number) ... ok
+test_tampered_values_are_rejected (base.tests.test_p800_day6.Day6ArtifactValidation.test_tampered_values_are_rejected) ... ok
+test_two_rank_cases_validate_both_ranks (base.tests.test_p800_day6.Day6ArtifactValidation.test_two_rank_cases_validate_both_ranks) ... ok
+test_capacity_is_the_only_high_risk_case (base.tests.test_p800_day6.Day6ConfigValidation.test_capacity_is_the_only_high_risk_case) ... ok
+test_capacity_must_bound_requests_and_skip_wait (base.tests.test_p800_day6.Day6ConfigValidation.test_capacity_must_bound_requests_and_skip_wait) ... ok
+test_rejects_out_of_range_fields (base.tests.test_p800_day6.Day6ConfigValidation.test_rejects_out_of_range_fields) ... ok
+test_rejects_wrong_dtype_backend_and_implementation (base.tests.test_p800_day6.Day6ConfigValidation.test_rejects_wrong_dtype_backend_and_implementation) ... ok
+test_valid_configs_accepted (base.tests.test_p800_day6.Day6ConfigValidation.test_valid_configs_accepted) ... ok
+test_allreduce_busbw_factor_never_doubles (base.tests.test_p800_day6.Day6Formulas.test_allreduce_busbw_factor_never_doubles) ... ok
+test_expected_ranks_split_memory_and_communication (base.tests.test_p800_day6.Day6Formulas.test_expected_ranks_split_memory_and_communication) ... ok
+test_memory_bandwidth_counts_read_and_write (base.tests.test_p800_day6.Day6Formulas.test_memory_bandwidth_counts_read_and_write) ... ok
+test_p2p_is_one_way_only (base.tests.test_p800_day6.Day6Formulas.test_p2p_is_one_way_only) ... ok
+test_payload_bytes_counts_mebielements (base.tests.test_p800_day6.Day6Formulas.test_payload_bytes_counts_mebielements) ... ok
+test_interserver_cases_marked_unsupported_before_docker (base.tests.test_p800_day6.Day6Interserver.test_interserver_cases_marked_unsupported_before_docker) ... ok
+test_report_regenerates_from_archived_smoke_artifacts (base.tests.test_p800_day6.Day6ReportRegeneration.test_report_regenerates_from_archived_smoke_artifacts) ... ok
+
+----------------------------------------------------------------------
+Ran 18 tests in 0.035s
+
+OK

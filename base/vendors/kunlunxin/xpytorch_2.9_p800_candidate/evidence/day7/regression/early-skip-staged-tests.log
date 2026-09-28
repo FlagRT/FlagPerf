@@ -1,0 +1,8 @@
+test_conflicting_output_paths_rejected_before_side_effects (base.tests.test_p800_day7.BoundedEarlySkipTests.test_conflicting_output_paths_rejected_before_side_effects) ... ok
+test_every_unsupported_case_skips_without_commands_and_preserves_reason (base.tests.test_p800_day7.BoundedEarlySkipTests.test_every_unsupported_case_skips_without_commands_and_preserves_reason) ... ok
+test_existing_evidence_is_not_overwritten (base.tests.test_p800_day7.BoundedEarlySkipTests.test_existing_evidence_is_not_overwritten) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.066s
+
+OK

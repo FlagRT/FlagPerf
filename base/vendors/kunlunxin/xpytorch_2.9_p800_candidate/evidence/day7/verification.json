@@ -1,0 +1,10 @@
+{
+  "status": "passed",
+  "index_entries": 4948,
+  "provenance_entries": 4947,
+  "redacted_files": 1,
+  "index_mismatches": [],
+  "source_mismatches": [],
+  "credential_pattern_matches": [],
+  "qualification_status": "see qualification/overview.json; package integrity does not imply every experiment passed"
+}

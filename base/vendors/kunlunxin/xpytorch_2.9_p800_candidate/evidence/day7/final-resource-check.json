@@ -1,0 +1,801 @@
+{
+  "checked_at": "2026-09-28T07:08:08.543115+00:00",
+  "owned_container_ids": [
+    "0370d9ab6fde91d86d41e49baade80c47ebd84327adf2f4cb4813ab90c54c1e8",
+    "05f77dbb1ed951036509615e79425adee32cda9da7f1cacca550c56a4c377a58",
+    "091f407f8ed1b2a3b51b760ede60337dce2dd317af1cbb94914d7f9fa993ed29",
+    "0a283777c27f778834a9534466cb5236c8608cf147f6d5cc4641dd1461255a7e",
+    "0adf72230324685f52e307d353c38a16fd40f056c06ae8e93d7ef39ef967621e",
+    "0af2a52002dd286288cdf6f06908deb0fb163a36afdbee2f8e9da967fd9c05ec",
+    "105674752ad2de4283c68f27bddb1db4f58fe4cb56e9c7d04c1de2b37893181b",
+    "15598fe0505fee674db5fc8059fa4a0c9aa669171aaea18b7aa3a77cbea91a03",
+    "190919893cae911f05e0ae8e15f544d7336dc3851909622f16a281487d995d36",
+    "234cc7f7ba06d4fb3a7f04e5e7b071f0e46a16ef125cceb58dd31a98ed2c8bf2",
+    "28b0c4170d231ac08bf538f9283a369ee38a3b1e5f668dd76d56eb0a7aee9b1a",
+    "2957795be71f88cffe5690b50064c3e19dfd1a9bc6cdbc684f237ea2db6bcc17",
+    "30ffc6bb79cd4275806d80831dcbacff2c9c66fc188311206f287e757c9bf4f3",
+    "317a63ae81fb1641f34ce4508e7c520ce1025257420063e7e3b094e60985389e",
+    "3231d707da8058f26805618cc2d9e2c6e57c0ef2a4c74073db43e66b0db49724",
+    "33da0a3bc24ee9d76c03d6d5bee4d02e1f37f14a2c887885dfb2f9c0c851546d",
+    "34d512859b6bb9e51799efb81d496dfe2ff6cda6d22cf7e845898b4ae1627501",
+    "36bbf8bc95bffa5ce57bd8ec14fc6771d4b65a5187700dfb853b7f5677a3713a",
+    "36db16375a40196fdeeafa9efa8dc03f03e9df6c8709520b33b954c2e16b8b5f",
+    "38cc3bb2e64e7b96688ca1e9b6fda73a3ccbc2c0e69333061adc52cf2378a268",
+    "3a6f259d7b7400b63d21cdd5dba72bd0af3a9b8cf040d7217a31547357df0b35",
+    "45aa9acbb9aee6a71d33fafe0c2427f63f514be02320534d4780421382cb60e3",
+    "47c734bfff09d25464cf0a2dc2bbee101c5997df4dde8ed37f909241dffbb13d",
+    "4880de9d002fe2826e22fc9590ccac9491df52f3665822790f4890efb71ff0f7",
+    "4a3c6156e4cd2757f906871cd3973b8629427f41bf8e7ffb639f31bf54b510d4",
+    "4abb928567dae6da4917afa8b1a8c27cb47c3c85b922053ceb29e966f657488c",
+    "4d6ca44f37fdebd524ad19a5ec5b60372ec01f1f6d0020193e2250a29ba1e40c",
+    "51ef323e3013783003f67da12ba0a10bba94d501df27e05f532998492900a786",
+    "52b412c105961f2a83ac16681768e172c8981ed9fab7416b8b00c45d5ed5ea97",
+    "52ea2ab4d1f38fa7c648d3f4ad4cf85932d9f73cd50a4518edacc7f463c20edd",
+    "54ad3e8432992b1d1f83b1fd24a4ad7c07b4ed8310c7e30eed2057ffb5a36c12",
+    "557e8e0ed67a775d3d0333c6ee3bcb7e018f32d15a31b3963a77888aa68f6d3d",
+    "609ce38eb2ccf1cd9cd4837896a24327fb7c55b1c020fd820fc4d4b27d2f6eba",
+    "61bc6ed4d553dabfa1084c761bd704389ad1c2e0396d6dd788816cce07e3ba28",
+    "624182c9a20c84465cec79f6f3f896bb603ced1d4217080f147b12112540fc93",
+    "62d621d83019fd37212bfe7aa17710456b02d7e6b3c485fb45478d9b1f090944",
+    "6b8eefdaa3ecfdc2f0c91ef2838742be4a567758e674e145bcc31b1a18813716",
+    "6d4edb5472279a83926b0d410ac1855663e80c948047835389cefe635a7f1dc0",
+    "71c2195bb04598d4647af0420af935b63ccba87cbf9584ceb48ff3c3f836ee51",
+    "72e52192b67e20456d094449d3d1be7db7d8c3b7ceb1e91338363170d8c0022a",
+    "73e3bc48301759de1d6b52932b42dddf8d48b99cd30f54dc417505bf3c963d15",
+    "7607af8531f75f70e49eb013f36623dd9afe7d5ef7661dc35292b4cbd9f9f845",
+    "7a18e24e0945077ed532763cf16e023f1f252d87c6e2480c8ca2c3b270c6d8fa",
+    "7ec4d2f7dd987f564a8be53d68e70a6769afe412488dbe4cc5c9956d38586bfa",
+    "826b979d4e8293de6dfe09cf3f77784b7b0e99f28107555c5318441607065fd2",
+    "850d7fd0db12999dd25e8b9a33a1acbf56612f21d1da104f65bf76bcda4853d8",
+    "899e2135b129d9db402b60da685f0b232f0c4233413a379f9cc63d50f55270b2",
+    "89f95be071d9cb8d4766ce09fbd8b012002a830917a6b9aafa462d0f599b4395",
+    "92a8a5cd462ac88252813fcd23a83fce09c53f856ef01efee421546840e6ff6c",
+    "9cc3d64ec2c6378bced625850cc74c4e0dbdd5bd4675fe912fbc5fd7e882f2a2",
+    "a482ffcc2a13e063c459e39bd52334e6aca4c04b33fef7f2e22f01da590bc675",
+    "a6177a638cf0df430399168981f6d6f54daed8acba6873407306a3a7cbe6eca4",
+    "a7768861f7c2838f2b6e884775b21d1f907f3e279c372553f05e94352e900cc8",
+    "ae39239e30dda28e9c7ba282cab43dc17e2d6cfeb318182fe1140eee7b7fe739",
+    "b1f1e8f25afa1dfe9ca3e36bcc64181300dee819c9b00c46b62ec17838b02e9e",
+    "b39abab6d4ff4246f5f505cf75f55a2f566885e40d35d5de4b1fc6c6a2fed11f",
+    "b696bec8741e3e9e98b5eb5b5e5b6b213a023e49802981266237077e77d631e5",
+    "b7ba39677d05595ce3c65dfa9647609695821a357ef6f7a293f1ea228f388742",
+    "b9b7aab9abf4951107d2ae64c73be4631c9c8e59513f9773370aaa52b24b5963",
+    "bb13df58468dd20d9cc478e827c2bac7eb8cf4484eeb7f843373611417771c23",
+    "bcb045c6e79aa4e72f24b8b8ce50c112338f1dbfbf71dbbdc4792b77aa5b48b0",
+    "bec98322b86151ad54726dd3973298af66c289476c23089f94dfc235276c1a18",
+    "c3ab47ed814a06cba511d116988bde0ebffbd04ef8f9831c5411ce217c8f703b",
+    "c5b61007e69d5d89673445e2ca01a577d68eb586eb0390fd825d6a1a97271897",
+    "c9a8f5134a6599385cfb875df16386f4ed031a7d47eae4a205d1cd1f4af1328e",
+    "cb5dac6df0fa183dedb657b2e739e09ac1fd77ace538576ab925bde2b8893fb6",
+    "cce7f76f9980a2289ace9d934a22b82a86852fc3f0bb065213b4c0e331cfc59d",
+    "d0117dd7d5f4e3204acd708705e32982b9b38221c79e923fb6434ead67328eda",
+    "d15cdc03aa0d01ac1236857bddf19c02fde5e4ab0a5cefa6f16c05abcbaaac0a",
+    "d6229ecf061d83b906e05df1ce6ff5649b162cf36fb989e9667c26fb67f4be61",
+    "d7f129c7cf4dcf0eef71ee28ad0a4f3b5cb4ecdb2c15d9a53ac9e1f01f9a686a",
+    "d811499843e74766df46eba98344ff0294b8c9d0854e18176711ece56cd54bc2",
+    "d9c47b7fc9b842cb3c5f56f6c0586a4cd2913e57c85e8b668513a491c4f9aaae",
+    "dc908a9fcf6e481c98a5a4f807a8e38ab9fa599fa7f33636c3aa3ca7a56ff682",
+    "de8cf8c469c38333693c9f2f95042a8388d04383893f284f4a354384b47fe041",
+    "e20bbe942f7dc124ba82d909f3a232deec1044c9eba01f49b3c2a5b8003f5552",
+    "e4a92e8c796cfdac78cde71ec40d25f954681edbd1291964698649b9452c3b66",
+    "ea5e3725f1c1b787ae6255d4d8ce1137c222263f2d9f2c20b72bb0adf34fad3e",
+    "f4b2554e0ece964dde7458d27b08d90d3f766f5da6acbc5745ee2db6e84e40b7",
+    "f53f1d5ae7d346b1e404fb391c43621cf645152353988ed0a925993c4131f5d0",
+    "f73273a879525ffdebadc5454d41767d996e9061a24183ec86fe49180f52be2f",
+    "f96f5c6cc62a2364b2f341cb0a5a87b9ee6d9989b24ede5335d8e11b2ac71c44",
+    "fae61be6e8898b859fba0b55d6860ff535c93ae768c81494f1f2d1219b215f8d",
+    "fb5c80300f6d19868d19a9a66c4378aac843269f4190983dcf98f15381769f82"
+  ],
+  "owned_containers_remaining": [],
+  "all_started_runs_terminal": true,
+  "run_states": [
+    {
+      "run": "BF16-q1",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "BF16-q2",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "BF16-q3",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "BF16-q4",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "BF16-q5",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "FP16-ab-off-1",
+      "status": "partial",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "FP16-ab-off-2",
+      "status": "partial",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "FP16-ab-off-3",
+      "status": "partial",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "FP16-ab-on-1",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "FP16-ab-on-2",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "FP16-ab-on-3",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "FP16-q1",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "FP16-q2",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "FP16-q3",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "FP16-q4",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "FP16-q5",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "FP32-ab-off-1",
+      "status": "partial",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "FP32-ab-off-2",
+      "status": "partial",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "FP32-ab-off-3",
+      "status": "partial",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "FP32-ab-on-1",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "FP32-ab-on-2",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "FP32-ab-on-3",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "FP32-q1",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "FP32-q2",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "FP32-q3",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "FP32-q4",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "FP32-q5",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "INT8-q1",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "INT8-q2",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "INT8-q3",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "INT8-q4",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "INT8-q5",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "capacity",
+      "status": "partial",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "d2h-pageable-blocking-q1",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "d2h-pageable-blocking-q2",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "d2h-pageable-blocking-q3",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "d2h-pageable-blocking-q4",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "d2h-pageable-blocking-q5",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "d2h-pageable-nonblocking-q1",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "d2h-pageable-nonblocking-q2",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "d2h-pageable-nonblocking-q3",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "d2h-pageable-nonblocking-q4",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "d2h-pageable-nonblocking-q5",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "d2h-pinned-blocking-q1",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "d2h-pinned-blocking-q2",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "d2h-pinned-blocking-q3",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "d2h-pinned-blocking-q4",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "d2h-pinned-blocking-q5",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "d2h-pinned-nonblocking-q1",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "d2h-pinned-nonblocking-q2",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "d2h-pinned-nonblocking-q3",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "d2h-pinned-nonblocking-q4",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "d2h-pinned-nonblocking-q5",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "h2d-pageable-blocking-q1",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "h2d-pageable-blocking-q2",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "h2d-pageable-blocking-q3",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "h2d-pageable-blocking-q4",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "h2d-pageable-blocking-q5",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "h2d-pageable-nonblocking-q1",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "h2d-pageable-nonblocking-q2",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "h2d-pageable-nonblocking-q3",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "h2d-pageable-nonblocking-q4",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "h2d-pageable-nonblocking-q5",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "h2d-pinned-ab-off-1",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "h2d-pinned-ab-off-2",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "h2d-pinned-ab-off-3",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "h2d-pinned-ab-on-1",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "h2d-pinned-ab-on-2",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "h2d-pinned-ab-on-3",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "h2d-pinned-blocking-q1",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "h2d-pinned-blocking-q2",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "h2d-pinned-blocking-q3",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "h2d-pinned-blocking-q4",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "h2d-pinned-blocking-q5",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "h2d-pinned-nonblocking-q1",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "h2d-pinned-nonblocking-q2",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "h2d-pinned-nonblocking-q3",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "h2d-pinned-nonblocking-q4",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "h2d-pinned-nonblocking-q5",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "memory-bandwidth-q1",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "memory-bandwidth-q2",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "memory-bandwidth-q3",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "memory-bandwidth-q4",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "memory-bandwidth-q5",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    },
+    {
+      "run": "preflight-card5-a02",
+      "status": "passed",
+      "failure_stage": null,
+      "cleanup_status": "passed",
+      "postflight_status": "passed",
+      "lease_released": true
+    }
+  ],
+  "unfinished_command_records": [],
+  "cleanup_failures": [],
+  "dual_protocol_locks_reacquired": true,
+  "lease_record": {
+    "backend": "flock",
+    "root": "/tmp/flagperf-base-device-leases",
+    "compatibility_paths": [
+      "/tmp/flagperf-p800-f396486d-9850-50e4-81c4-50f2e9f6ca87.lock"
+    ],
+    "device_ids": [],
+    "resource_keys": [
+      "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87"
+    ],
+    "run_id": "p800-day7-final-reacquire",
+    "pid": 2689927,
+    "acquired_at": "2026-09-28T07:08:08.857744Z"
+  },
+  "selected_cards_idle_under_lock": false,
+  "host_check_error": "selected physical device 5 is occupied",
+  "final_locks_released": true,
+  "network": {
+    "Name": "flagperf-p800-internal",
+    "Id": "b8d4bd1e4e093ef7e54b71c30b15751b308599455de25abb7e1383fd73167880",
+    "Driver": "bridge",
+    "Internal": true
+  },
+  "foreign_override_absent": true,
+  "final_check_passed": false
+}

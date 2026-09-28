@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="280" viewBox="0 0 1000 280">
+<rect width="100%" height="100%" fill="white"/>
+<text x="20" y="25" font-size="16">Raw telemetry overlapping rank measurement windows</text>
+<text x="20" y="60" font-size="13">kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87: Device utilization (%) [34, 65]</text>
+<circle cx="30.000" cy="80.000" r="3" fill="#2463a4"><title>6.124005322810262: 65</title></circle>
+<circle cx="92.241" cy="103.065" r="3" fill="#2463a4"><title>7.127901423722506: 52</title></circle>
+<circle cx="153.956" cy="90.645" r="3" fill="#2463a4"><title>8.123313870746642: 59</title></circle>
+<circle cx="215.674" cy="117.258" r="3" fill="#2463a4"><title>9.118784276768565: 44</title></circle>
+<circle cx="277.922" cy="113.710" r="3" fill="#2463a4"><title>10.122792494948953: 46</title></circle>
+<circle cx="341.033" cy="115.484" r="3" fill="#2463a4"><title>11.140713452827185: 45</title></circle>
+<circle cx="402.073" cy="97.742" r="3" fill="#2463a4"><title>12.125238847918808: 55</title></circle>
+<circle cx="463.946" cy="135.000" r="3" fill="#2463a4"><title>13.123206940013915: 34</title></circle>
+<circle cx="525.944" cy="108.387" r="3" fill="#2463a4"><title>14.123187029734254: 49</title></circle>
+<circle cx="588.133" cy="87.097" r="3" fill="#2463a4"><title>15.126231975853443: 61</title></circle>
+<circle cx="650.152" cy="110.161" r="3" fill="#2463a4"><title>16.12655206862837: 48</title></circle>
+<circle cx="711.855" cy="90.645" r="3" fill="#2463a4"><title>17.121774049010128: 59</title></circle>
+<circle cx="774.244" cy="99.516" r="3" fill="#2463a4"><title>18.128053986933082: 54</title></circle>
+<circle cx="835.930" cy="81.774" r="3" fill="#2463a4"><title>19.123011672869325: 64</title></circle>
+<circle cx="898.178" cy="115.484" r="3" fill="#2463a4"><title>20.12700909888372: 45</title></circle>
+<circle cx="960.000" cy="122.581" r="3" fill="#2463a4"><title>21.124152418691665: 41</title></circle>
+<text x="20" y="170" font-size="13">kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87: Allocated device memory (MiB) [676, 676]</text>
+<circle cx="30.000" cy="245.000" r="3" fill="#2463a4"><title>6.124005322810262: 676</title></circle>
+<circle cx="92.241" cy="245.000" r="3" fill="#2463a4"><title>7.127901423722506: 676</title></circle>
+<circle cx="153.956" cy="245.000" r="3" fill="#2463a4"><title>8.123313870746642: 676</title></circle>
+<circle cx="215.674" cy="245.000" r="3" fill="#2463a4"><title>9.118784276768565: 676</title></circle>
+<circle cx="277.922" cy="245.000" r="3" fill="#2463a4"><title>10.122792494948953: 676</title></circle>
+<circle cx="341.033" cy="245.000" r="3" fill="#2463a4"><title>11.140713452827185: 676</title></circle>
+<circle cx="402.073" cy="245.000" r="3" fill="#2463a4"><title>12.125238847918808: 676</title></circle>
+<circle cx="463.946" cy="245.000" r="3" fill="#2463a4"><title>13.123206940013915: 676</title></circle>
+<circle cx="525.944" cy="245.000" r="3" fill="#2463a4"><title>14.123187029734254: 676</title></circle>
+<circle cx="588.133" cy="245.000" r="3" fill="#2463a4"><title>15.126231975853443: 676</title></circle>
+<circle cx="650.152" cy="245.000" r="3" fill="#2463a4"><title>16.12655206862837: 676</title></circle>
+<circle cx="711.855" cy="245.000" r="3" fill="#2463a4"><title>17.121774049010128: 676</title></circle>
+<circle cx="774.244" cy="245.000" r="3" fill="#2463a4"><title>18.128053986933082: 676</title></circle>
+<circle cx="835.930" cy="245.000" r="3" fill="#2463a4"><title>19.123011672869325: 676</title></circle>
+<circle cx="898.178" cy="245.000" r="3" fill="#2463a4"><title>20.12700909888372: 676</title></circle>
+<circle cx="960.000" cy="245.000" r="3" fill="#2463a4"><title>21.124152418691665: 676</title></circle>
+</svg>

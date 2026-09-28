@@ -1,0 +1,7 @@
+{
+  "case": "computation-TF32:P800",
+  "metrics": [],
+  "schema_version": 1,
+  "skip_reason": "blocked/unresolved: current stack TF32 route is not qualified; allow_tf32 A/B alone cannot establish support or hardware non-support",
+  "status": "skipped"
+}

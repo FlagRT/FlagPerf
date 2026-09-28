@@ -1,0 +1,483 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-24",
+  "timezone": "Asia/Shanghai",
+  "status": "scoped-delivery; full-week acceptance incomplete",
+  "measurement_code_commit": "c1d900d8d89eadba48540b34ec7873fb26da4671",
+  "release_code_commit": "e373664aa5324a21c04196d1971f9ea013ab9f3c",
+  "qualification": [
+    {
+      "group": "FP32",
+      "status": "passed",
+      "median": 117.87780515053663,
+      "unit": "TFLOPS",
+      "cv_percent": 0.36615484576830315,
+      "repetitions": 5
+    },
+    {
+      "group": "FP16",
+      "status": "passed",
+      "median": 258.7841983504385,
+      "unit": "TFLOPS",
+      "cv_percent": 0.04484491274909532,
+      "repetitions": 5
+    },
+    {
+      "group": "BF16",
+      "status": "passed",
+      "median": 118.96795986125177,
+      "unit": "TFLOPS",
+      "cv_percent": 0.0017619849746718901,
+      "repetitions": 5
+    },
+    {
+      "group": "INT8",
+      "status": "passed",
+      "median": 503.9037593846929,
+      "unit": "TOPS",
+      "cv_percent": 0.3211059782938446,
+      "repetitions": 5
+    },
+    {
+      "group": "h2d-pageable-blocking",
+      "status": "passed",
+      "median": 10.014424348520725,
+      "unit": "GB/s",
+      "cv_percent": 1.1785497388117585,
+      "repetitions": 5
+    },
+    {
+      "group": "h2d-pageable-nonblocking",
+      "status": "passed",
+      "median": 18.844314151096917,
+      "unit": "GB/s",
+      "cv_percent": 2.254722168897458,
+      "repetitions": 5
+    },
+    {
+      "group": "h2d-pinned-blocking",
+      "status": "unstable",
+      "median": 20.113559647669202,
+      "unit": "GB/s",
+      "cv_percent": 6.32066412565772,
+      "repetitions": 5
+    },
+    {
+      "group": "h2d-pinned-nonblocking",
+      "status": "passed",
+      "median": 19.289542181161412,
+      "unit": "GB/s",
+      "cv_percent": 4.165151213315993,
+      "repetitions": 5
+    },
+    {
+      "group": "d2h-pageable-blocking",
+      "status": "passed",
+      "median": 10.802936108913677,
+      "unit": "GB/s",
+      "cv_percent": 3.78922037427054,
+      "repetitions": 5
+    },
+    {
+      "group": "d2h-pageable-nonblocking",
+      "status": "passed",
+      "median": 17.54872710547543,
+      "unit": "GB/s",
+      "cv_percent": 3.322982718116306,
+      "repetitions": 5
+    },
+    {
+      "group": "d2h-pinned-blocking",
+      "status": "unstable",
+      "median": 24.727412259554253,
+      "unit": "GB/s",
+      "cv_percent": 5.592455322215141,
+      "repetitions": 5
+    },
+    {
+      "group": "d2h-pinned-nonblocking",
+      "status": "unstable",
+      "median": 25.154118614618735,
+      "unit": "GB/s",
+      "cv_percent": 5.932371282278915,
+      "repetitions": 5
+    },
+    {
+      "group": "memory-bandwidth",
+      "status": "passed",
+      "median": 2235.9018565562737,
+      "unit": "GB/s",
+      "cv_percent": 0.000777168138903794,
+      "repetitions": 5
+    },
+    {
+      "group": "comm-MPI-m64",
+      "status": "incomplete",
+      "completed_runs": 0
+    },
+    {
+      "group": "comm-P2P-m64",
+      "status": "incomplete",
+      "completed_runs": 0
+    }
+  ],
+  "monitor_ab": [
+    {
+      "group": "FP32",
+      "pairs": [],
+      "excluded": [
+        {
+          "path": "runs/FP32-ab-off-1",
+          "reason": "AssertionError()"
+        },
+        {
+          "path": "runs/FP32-ab-off-2",
+          "reason": "AssertionError()"
+        },
+        {
+          "path": "runs/FP32-ab-off-3",
+          "reason": "AssertionError()"
+        }
+      ],
+      "identity_matches": true,
+      "status": "incomplete",
+      "median_on_minus_off_percent": null,
+      "interpretation": "observed paired difference, shared-host noise included; not a causal overhead estimate"
+    },
+    {
+      "group": "FP16",
+      "pairs": [],
+      "excluded": [
+        {
+          "path": "runs/FP16-ab-off-1",
+          "reason": "AssertionError()"
+        },
+        {
+          "path": "runs/FP16-ab-off-2",
+          "reason": "AssertionError()"
+        },
+        {
+          "path": "runs/FP16-ab-off-3",
+          "reason": "AssertionError()"
+        }
+      ],
+      "identity_matches": true,
+      "status": "incomplete",
+      "median_on_minus_off_percent": null,
+      "interpretation": "observed paired difference, shared-host noise included; not a causal overhead estimate"
+    },
+    {
+      "group": "h2d-pinned",
+      "pairs": [
+        {
+          "pair": 1,
+          "off": 19.539258812848477,
+          "on": 20.166918298517704,
+          "evidence": {
+            "off": {
+              "path": "runs/h2d-pinned-ab-off-1",
+              "summary_sha256": "e0e6dfa24e643d091214f28ff64da785feb8c32b61daa0d7c5ebf54b759227f5",
+              "rank_values": [
+                19.539258812848477
+              ]
+            },
+            "on": {
+              "path": "runs/h2d-pinned-ab-on-1",
+              "summary_sha256": "6fa19b541cb9bb5435022af05839fc8eac692cb5321bd6e5f91de7cfa1b5a2ff",
+              "rank_values": [
+                20.166918298517704
+              ]
+            }
+          },
+          "on_minus_off_percent": 3.2122993593620697
+        },
+        {
+          "pair": 2,
+          "off": 20.454624387946254,
+          "on": 17.70298596918389,
+          "evidence": {
+            "off": {
+              "path": "runs/h2d-pinned-ab-off-2",
+              "summary_sha256": "b5ee43520c5bee642bbbd5ae8deb19b9606cf0f490482e6fa52b92699672a572",
+              "rank_values": [
+                20.454624387946254
+              ]
+            },
+            "on": {
+              "path": "runs/h2d-pinned-ab-on-2",
+              "summary_sha256": "32381990011eb138e00927eacda40a953e63efe11b63d0daf14ec32706ae53cd",
+              "rank_values": [
+                17.70298596918389
+              ]
+            }
+          },
+          "on_minus_off_percent": -13.452402579359434
+        },
+        {
+          "pair": 3,
+          "off": 19.80431974804282,
+          "on": 19.61438425668683,
+          "evidence": {
+            "off": {
+              "path": "runs/h2d-pinned-ab-off-3",
+              "summary_sha256": "b4629406b644208d0b0b4d4026c53ad08f03a6940f023e6b6c702da6a02a76a7",
+              "rank_values": [
+                19.80431974804282
+              ]
+            },
+            "on": {
+              "path": "runs/h2d-pinned-ab-on-3",
+              "summary_sha256": "0e92cddd3ab5ea2689833b6fdaad8846c549cc593be0de45dfd70a096c138458",
+              "rank_values": [
+                19.61438425668683
+              ]
+            }
+          },
+          "on_minus_off_percent": -0.9590609209122691
+        }
+      ],
+      "excluded": [],
+      "identity_matches": true,
+      "status": "complete",
+      "median_on_minus_off_percent": -0.9590609209122691,
+      "interpretation": "observed paired difference, shared-host noise included; not a causal overhead estimate"
+    },
+    {
+      "group": "comm-MPI",
+      "pairs": [],
+      "excluded": [],
+      "identity_matches": false,
+      "status": "incomplete",
+      "median_on_minus_off_percent": null,
+      "interpretation": "observed paired difference, shared-host noise included; not a causal overhead estimate"
+    },
+    {
+      "group": "comm-P2P",
+      "pairs": [],
+      "excluded": [],
+      "identity_matches": false,
+      "status": "incomplete",
+      "median_on_minus_off_percent": null,
+      "interpretation": "observed paired difference, shared-host noise included; not a causal overhead estimate"
+    }
+  ],
+  "communication_curves": [
+    {
+      "case": "MPI",
+      "message_mib": 4,
+      "run": "runs/comm-MPI-m1-q1",
+      "status": "not-qualified",
+      "reason": "FileNotFoundError(2, 'No such file or directory')"
+    },
+    {
+      "case": "MPI",
+      "message_mib": 16,
+      "run": "runs/comm-MPI-m4-q1",
+      "status": "not-qualified",
+      "reason": "FileNotFoundError(2, 'No such file or directory')"
+    },
+    {
+      "case": "MPI",
+      "message_mib": 64,
+      "run": "runs/comm-MPI-m16-q1",
+      "status": "not-qualified",
+      "reason": "FileNotFoundError(2, 'No such file or directory')"
+    },
+    {
+      "case": "MPI",
+      "message_mib": 256,
+      "run": "runs/comm-MPI-m64-q1",
+      "status": "not-qualified",
+      "reason": "FileNotFoundError(2, 'No such file or directory')"
+    },
+    {
+      "case": "P2P",
+      "message_mib": 4,
+      "run": "runs/comm-P2P-m1-q1",
+      "status": "not-qualified",
+      "reason": "FileNotFoundError(2, 'No such file or directory')"
+    },
+    {
+      "case": "P2P",
+      "message_mib": 16,
+      "run": "runs/comm-P2P-m4-q1",
+      "status": "not-qualified",
+      "reason": "FileNotFoundError(2, 'No such file or directory')"
+    },
+    {
+      "case": "P2P",
+      "message_mib": 64,
+      "run": "runs/comm-P2P-m16-q1",
+      "status": "not-qualified",
+      "reason": "FileNotFoundError(2, 'No such file or directory')"
+    },
+    {
+      "case": "P2P",
+      "message_mib": 256,
+      "run": "runs/comm-P2P-m64-q1",
+      "status": "not-qualified",
+      "reason": "FileNotFoundError(2, 'No such file or directory')"
+    }
+  ],
+  "timeouts": [],
+  "capacity": {
+    "status": "partial",
+    "measurement_status": "passed",
+    "monitoring_status": "partial",
+    "correctness_status": "passed",
+    "cleanup_status": "passed",
+    "lease_released": true
+  },
+  "capacity_metric": {
+    "allocation_count": 32,
+    "backend": "gloo",
+    "binding": {
+      "container_device_node": "/dev/xpu7",
+      "framework_device_name": "cuda:0",
+      "framework_local_rank": 0,
+      "framework_logical_id": 0,
+      "host_device_node": "/dev/xpu7",
+      "host_physical_id": 5,
+      "legacy_logical_id": null,
+      "pci_bdf": "0000:9c:00.0",
+      "request_index": 0,
+      "resource_key": "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87",
+      "serial_or_uuid": "f396486d-9850-50e4-81c4-50f2e9f6ca87",
+      "vendor": "kunlunxin"
+    },
+    "bindings": [
+      {
+        "container_device_node": "/dev/xpu7",
+        "framework_device_name": "cuda:0",
+        "framework_local_rank": 0,
+        "framework_logical_id": 0,
+        "host_device_node": "/dev/xpu7",
+        "host_physical_id": 5,
+        "legacy_logical_id": null,
+        "pci_bdf": "0000:9c:00.0",
+        "request_index": 0,
+        "resource_key": "kunlunxin/f396486d-9850-50e4-81c4-50f2e9f6ca87",
+        "serial_or_uuid": "f396486d-9850-50e4-81c4-50f2e9f6ca87",
+        "vendor": "kunlunxin"
+      }
+    ],
+    "case": "main_memory-capacity:P800",
+    "case_assets_sha256": "88b31225509539ecbbffa785018a5d8cf3f1cc3dbe6d8bd9d809b788e9260e62",
+    "context_sha256": "6b995b2b734d6e4b92150e6dac8936c1d945b73cf3bfd98a5fb387a5b68dab38",
+    "cuda_matmul_allow_tf32": false,
+    "dtype": "float32",
+    "elapsed_seconds": 0.114685122,
+    "fallback_scope": "UUID, tensor placement and locked native route; no universal fallback exclusion",
+    "finished_monotonic_ns": 4098131131145908,
+    "held_mib": 98132,
+    "implementation": "native-xpytorch",
+    "iterations": null,
+    "metric": "main_memory-capacity",
+    "mode": "capacity",
+    "pid_namespace": "pid:[4026547998]",
+    "precision_scope": "native inputs/outputs as recorded by the case; compatibility controls do not certify internal arithmetic",
+    "rank": 0,
+    "run_id": "benchmark-d3fdf2a6aca04de586a48fd3fc1dfe81",
+    "schema_version": 1,
+    "scope": "successfully held device allocation only; free-memory hints bounded requests",
+    "started_monotonic_ns": 4098131016460786,
+    "status": "passed",
+    "timer": "perf_counter_ns enclosing the whole bounded search; monitor window evidence",
+    "unit": "GB",
+    "value": 102.898860032,
+    "value_gib_s": 95.83203125,
+    "warmup": null,
+    "worker_parent_pid": 1,
+    "worker_pid": 102,
+    "world_size": 1
+  },
+  "offline_suites": [
+    {
+      "label": "base-release",
+      "command": [
+        "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-pr1-20260920-162724/cpu-test-venv/bin/python",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "base/tests",
+        "-p",
+        "test_*.py",
+        "-v"
+      ],
+      "exit_code": 0,
+      "checked_at": "2026-09-28T07:07:41.244737+00:00",
+      "tests": 220
+    },
+    {
+      "label": "pr0-release",
+      "command": [
+        "python3",
+        "-S",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate",
+        "-p",
+        "test_*.py",
+        "-v"
+      ],
+      "exit_code": 0,
+      "checked_at": "2026-09-28T07:07:41.462296+00:00",
+      "tests": 32
+    },
+    {
+      "label": "toolkit-release",
+      "command": [
+        "python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "base/toolkits/_common/ascend/A3/tests",
+        "-v"
+      ],
+      "exit_code": 0,
+      "checked_at": "2026-09-28T07:07:41.747355+00:00",
+      "tests": 80
+    },
+    {
+      "label": "day6-release",
+      "command": [
+        "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-pr1-20260920-162724/cpu-test-venv/bin/python",
+        "-B",
+        "-m",
+        "unittest",
+        "base.tests.test_p800_day6",
+        "-v"
+      ],
+      "exit_code": 0,
+      "checked_at": "2026-09-28T07:07:41.877297+00:00",
+      "tests": 18
+    }
+  ],
+  "run_status_counts": {
+    "passed": 78,
+    "partial": 7
+  },
+  "eight_card": {
+    "status": "not-implemented-and-not-qualified",
+    "reasons": [
+      "cards 1/2 health exclusions",
+      "no healthy idle whole-host window",
+      "provider, runtime requirements, contract and reference remain exactly two ranks"
+    ]
+  },
+  "candidate_validated": false,
+  "resource_check": "final-resource-check.json",
+  "historical_unchanged": {
+    "index_entries": 5811,
+    "index_mismatches": [],
+    "formal_summaries_unchanged": true,
+    "checked_at": "2026-09-28T07:08:38.901213+00:00"
+  }
+}

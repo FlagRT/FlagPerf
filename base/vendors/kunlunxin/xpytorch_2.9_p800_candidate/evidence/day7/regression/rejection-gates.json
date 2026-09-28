@@ -1,0 +1,55 @@
+[
+  {
+    "name": "capacity-no-opt-in",
+    "command": [
+      "python3",
+      "-B",
+      "base/run.py",
+      "benchmark",
+      "run",
+      "--config",
+      "base/configs/kunlunxin_p800_xpytorch29.yaml",
+      "--case",
+      "main_memory-capacity:P800",
+      "--physical-device-ids",
+      "5",
+      "--timeout",
+      "300",
+      "--allow-candidate-runtime",
+      "--result-dir",
+      "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/runs/capacity-no-opt-in"
+    ],
+    "exit_code": 2,
+    "output": "ERROR: Benchmark Case main_memory-capacity:P800 is high risk; explicitly pass --allow-high-risk-case after reserving an isolated device\n"
+  },
+  {
+    "name": "eight-rank-rejected",
+    "command": [
+      "python3",
+      "-B",
+      "base/run.py",
+      "benchmark",
+      "run",
+      "--config",
+      "base/configs/kunlunxin_p800_xpytorch29.yaml",
+      "--case",
+      "main_memory-capacity:P800",
+      "--physical-device-ids",
+      "5",
+      "--timeout",
+      "300",
+      "--allow-candidate-runtime",
+      "--case",
+      "interconnect-MPI_intraserver:P800",
+      "--physical-device-ids",
+      "0,1,2,3,4,5,6,7",
+      "--nproc-per-node",
+      "8",
+      "--dry-run",
+      "--result-dir",
+      "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-day7-20260924/runs/eight-rank-rejected"
+    ],
+    "exit_code": 2,
+    "output": "ERROR: Benchmark Case interconnect-MPI_intraserver:P800 requires exactly 2 local ranks, got 8\n"
+  }
+]

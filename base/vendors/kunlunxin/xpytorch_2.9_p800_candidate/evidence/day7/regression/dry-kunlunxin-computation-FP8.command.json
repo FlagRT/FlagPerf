@@ -1,0 +1,23 @@
+{
+  "command": [
+    "python3",
+    "-B",
+    "base/run.py",
+    "benchmark",
+    "run",
+    "--case",
+    "computation-FP8:P800",
+    "--config",
+    "base/configs/kunlunxin_p800_xpytorch29.yaml",
+    "--nproc-per-node",
+    "1",
+    "--timeout",
+    "300",
+    "--allow-high-risk-case",
+    "--allow-candidate-runtime",
+    "--dry-run",
+    "--physical-device-ids",
+    "5"
+  ],
+  "exit_code": 0
+}

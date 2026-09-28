@@ -1,0 +1,140 @@
+[
+  {
+    "group": "FP32",
+    "pairs": [],
+    "excluded": [
+      {
+        "path": "runs/FP32-ab-off-1",
+        "reason": "AssertionError()"
+      },
+      {
+        "path": "runs/FP32-ab-off-2",
+        "reason": "AssertionError()"
+      },
+      {
+        "path": "runs/FP32-ab-off-3",
+        "reason": "AssertionError()"
+      }
+    ],
+    "identity_matches": true,
+    "status": "incomplete",
+    "median_on_minus_off_percent": null,
+    "interpretation": "observed paired difference, shared-host noise included; not a causal overhead estimate"
+  },
+  {
+    "group": "FP16",
+    "pairs": [],
+    "excluded": [
+      {
+        "path": "runs/FP16-ab-off-1",
+        "reason": "AssertionError()"
+      },
+      {
+        "path": "runs/FP16-ab-off-2",
+        "reason": "AssertionError()"
+      },
+      {
+        "path": "runs/FP16-ab-off-3",
+        "reason": "AssertionError()"
+      }
+    ],
+    "identity_matches": true,
+    "status": "incomplete",
+    "median_on_minus_off_percent": null,
+    "interpretation": "observed paired difference, shared-host noise included; not a causal overhead estimate"
+  },
+  {
+    "group": "h2d-pinned",
+    "pairs": [
+      {
+        "pair": 1,
+        "off": 19.539258812848477,
+        "on": 20.166918298517704,
+        "evidence": {
+          "off": {
+            "path": "runs/h2d-pinned-ab-off-1",
+            "summary_sha256": "e0e6dfa24e643d091214f28ff64da785feb8c32b61daa0d7c5ebf54b759227f5",
+            "rank_values": [
+              19.539258812848477
+            ]
+          },
+          "on": {
+            "path": "runs/h2d-pinned-ab-on-1",
+            "summary_sha256": "6fa19b541cb9bb5435022af05839fc8eac692cb5321bd6e5f91de7cfa1b5a2ff",
+            "rank_values": [
+              20.166918298517704
+            ]
+          }
+        },
+        "on_minus_off_percent": 3.2122993593620697
+      },
+      {
+        "pair": 2,
+        "off": 20.454624387946254,
+        "on": 17.70298596918389,
+        "evidence": {
+          "off": {
+            "path": "runs/h2d-pinned-ab-off-2",
+            "summary_sha256": "b5ee43520c5bee642bbbd5ae8deb19b9606cf0f490482e6fa52b92699672a572",
+            "rank_values": [
+              20.454624387946254
+            ]
+          },
+          "on": {
+            "path": "runs/h2d-pinned-ab-on-2",
+            "summary_sha256": "32381990011eb138e00927eacda40a953e63efe11b63d0daf14ec32706ae53cd",
+            "rank_values": [
+              17.70298596918389
+            ]
+          }
+        },
+        "on_minus_off_percent": -13.452402579359434
+      },
+      {
+        "pair": 3,
+        "off": 19.80431974804282,
+        "on": 19.61438425668683,
+        "evidence": {
+          "off": {
+            "path": "runs/h2d-pinned-ab-off-3",
+            "summary_sha256": "b4629406b644208d0b0b4d4026c53ad08f03a6940f023e6b6c702da6a02a76a7",
+            "rank_values": [
+              19.80431974804282
+            ]
+          },
+          "on": {
+            "path": "runs/h2d-pinned-ab-on-3",
+            "summary_sha256": "0e92cddd3ab5ea2689833b6fdaad8846c549cc593be0de45dfd70a096c138458",
+            "rank_values": [
+              19.61438425668683
+            ]
+          }
+        },
+        "on_minus_off_percent": -0.9590609209122691
+      }
+    ],
+    "excluded": [],
+    "identity_matches": true,
+    "status": "complete",
+    "median_on_minus_off_percent": -0.9590609209122691,
+    "interpretation": "observed paired difference, shared-host noise included; not a causal overhead estimate"
+  },
+  {
+    "group": "comm-MPI",
+    "pairs": [],
+    "excluded": [],
+    "identity_matches": false,
+    "status": "incomplete",
+    "median_on_minus_off_percent": null,
+    "interpretation": "observed paired difference, shared-host noise included; not a causal overhead estimate"
+  },
+  {
+    "group": "comm-P2P",
+    "pairs": [],
+    "excluded": [],
+    "identity_matches": false,
+    "status": "incomplete",
+    "median_on_minus_off_percent": null,
+    "interpretation": "observed paired difference, shared-host noise included; not a causal overhead estimate"
+  }
+]

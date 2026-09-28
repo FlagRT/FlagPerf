@@ -1,0 +1,39 @@
+{
+  "reports": [
+    {
+      "status": "passed",
+      "source": "runs/BF16-q1",
+      "deterministic": true,
+      "summary_unchanged": true,
+      "all_original_files_unchanged": true,
+      "hashes": {
+        "report.md": "ebe939fe6095ff16156223f5257946b126419bc4e6c9369dea85853e19c0835f",
+        "report_monitor.md": "4cc056617800b846fee1395351259238d93c2c1c5c5025404b65b12d38e18ecd"
+      }
+    },
+    {
+      "status": "partial",
+      "source": "runs/FP16-ab-off-1",
+      "deterministic": true,
+      "summary_unchanged": true,
+      "all_original_files_unchanged": true,
+      "hashes": {
+        "report.md": "c8b3894cf78acf6e64bfa9c72f9203b4da7bcb7fec3910e25fd159640bbb9494",
+        "report_monitor.md": "0601ae5178d597227b6edc31cbe5f0aeebd2cd51d764b2690ce514f58a806612"
+      }
+    },
+    {
+      "status": "skipped",
+      "source": "early-skip-final/computation-FP64",
+      "deterministic": true,
+      "summary_unchanged": true,
+      "all_original_files_unchanged": true,
+      "hashes": {
+        "report.md": "dc2279c0f050721383130cfae903b6258d1e7aed9eca2eb468cd83242e22e7d5",
+        "report_monitor.md": "0c292d122a1373a706e8cf76ddefc1a0d90b4e50e7818d727215b29638ba3761"
+      }
+    }
+  ],
+  "missing_failed": true,
+  "prior_failed_coverage": "regression/report-regeneration-final.json"
+}

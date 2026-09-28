@@ -1,0 +1,18 @@
+{
+  "label": "pr0-release",
+  "command": [
+    "python3",
+    "-S",
+    "-B",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate",
+    "-p",
+    "test_*.py",
+    "-v"
+  ],
+  "exit_code": 0,
+  "checked_at": "2026-09-28T07:07:41.462296+00:00"
+}

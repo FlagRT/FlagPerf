@@ -1,0 +1,9 @@
+Melements: 1024
+WARMUP: 2
+ITERS: 4200  # measured 2236.9 GB/s at 4 GiB (3.74 ms/iter); 4200 iterations give a ~15.7 s window
+SEED: 519
+DTYPE: float32
+DIST_BACKEND: gloo
+IMPLEMENTATION: native-xpytorch
+MODE: qualification
+FAULT_MODE: none
