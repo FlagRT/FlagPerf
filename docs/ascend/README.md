@@ -1,8 +1,11 @@
 # Ascend 适配指南
 
-当前适配采用 CANN 9.0.0、Python 3.11.15、PyTorch 2.10、Torch-FL、triton_ascend 和 FlagGems，
+Base / Operation 当前适配采用 CANN 9.0.0、Python 3.11.15、PyTorch 2.10、Torch-FL、triton_ascend 和 FlagGems，
 Toolkit 使用 MindCluster ToolBox 26.1.0。目标硬件验证记录来自 Ascend 910C / A3。
 Torch-FL 在此组合中拥有 `PrivateUse1`，设备名为 `flagos:<index>`；不能向这套锁定镜像混装 `torch_npu`。
+
+Inference 使用独立的 torch_npu 运行栈，配置方式见 [Inference 环境准备](../inference/environment.md)。
+不要将两个模块的镜像要求混用。
 
 ## 入口和支持范围
 
@@ -13,11 +16,12 @@ Torch-FL 在此组合中拥有 `PrivateUse1`，设备名为 `flagos:<index>`；�
 | Base Benchmark | `python3 base/run.py benchmark run ...` | 保留 Case、配置合并、rank、计时和结果公式；一次调用选择一个 Case |
 | Ascend Toolkit | `python3 base/run.py toolkit run ...` | 单机厂商测量与诊断；独立权限、测量、监控和诊断状态 |
 | Operation | `python3 operation/run.py run --vendor ascend ...` | 52 个 Case 已接入；每个 dtype/路径的通过状态单独报告 |
+| Inference | `python3 inference/run.py accuracy / performance ...` | Qwen3-Embedding-0.6B；同设备配置的模型/模块差异及整体性能；环境单独准备 |
 | P2P 资格验证 | `python3 base/vendors/ascend/torch_fl_2.10_flagcx/run_p2p_qualification.py` | 单机双 rank、指定拓扑/方向/大小；默认只输出计划 |
 
-这次适配不代表 Training、Inference、Generate、跨节点通信或其他厂商经过重新验证。
+各模块的支持范围独立；不由 Base/Operation 记录推定 Training、Generate、Inference 或其他厂商的运行结果。
 Operation 是单算子输入上的 CPU 参考检查及路由取证，没有实现 NVIDIA—Ascend 模型逐层差分、
-纯设备 kernel profiling、自动重试、节点隔离或模型热更新。
+自动重试、节点隔离或模型热更新。Operation 的独立 profiling 仅报告可关联的目标窗口，不代表全部硬件 kernel 覆盖。
 
 ## 环境准备
 

@@ -51,7 +51,7 @@ def workload(case, profile='daily', size=None, warmup=None, iters=None, rounds=N
         if key in caps:
             cfg[key] = min(cfg[key], caps[key])
     cfg.update(WARMUP=2 if smoke else 5, ITERS=5 if smoke else 20,
-               KERNELWARMUP=5, KERNELITERS=20, rounds=1 if smoke else 3)
+               KERNELWARMUP=5, KERNELITERS=20, rounds=1 if smoke else 10)
     if size:
         for field in size.split(','):
             key, value = field.split('=', 1)

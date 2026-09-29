@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "models": [
+    {
+      "name": "qwen3_embedding_0.6b",
+      "engine": "pytorch_transformers_eager",
+      "weights": "user_supplied_local_directory",
+      "dtypes": [
+        "bfloat16",
+        "float16",
+        "float32"
+      ]
+    }
+  ],
+  "vendors": {
+    "ascend": {
+      "parallelism": [
+        "single",
+        "tp"
+      ],
+      "tp_world_sizes": [
+        2,
+        4,
+        8
+      ],
+      "runtime": "torch_npu / CANN 9",
+      "hardware_scope": "Ascend 910C / A3; validation is specific to the selected runtime and workload"
+    },
+    "nvidia": {
+      "parallelism": [
+        "single"
+      ],
+      "hardware_validation": "not_performed"
+    }
+  },
+  "commands": {
+    "list": "capabilities without model or device execution",
+    "preview": "FlagGems selection and per-environment/rank verification",
+    "accuracy": "model and selected module outputs; no universal acceptance threshold",
+    "performance": "total model latency, throughput and allocator memory; independent TP communication sampling",
+    "export": "first fixed batch CPU native FX/ONNX graph; single-device preparation"
+  },
+  "component_controls": {
+    "components": [
+      "flaggems",
+      "flagtree",
+      "flagcx"
+    ],
+    "values": [
+      "off",
+      "on",
+      "both"
+    ],
+    "defaults": {
+      "flaggems": "off",
+      "flagtree": "off",
+      "flagcx": "off"
+    },
+    "comparison_axes_max": 1,
+    "policy_schema_version": 3,
+    "flagtree_flagcx_vendors": [
+      "ascend"
+    ]
+  },
+  "preview": {
+    "resume": true,
+    "execution_analysis_identity_split": true,
+    "verified_meaning": "complete execution, selected functions hit on every rank, finite checked output boundaries; not accuracy acceptance"
+  },
+  "limits": [
+    "only listed model adapter is implemented",
+    "single-device FlagCX comparison is not applicable",
+    "eager execution may not call the Triton compiler",
+    "FlagCX lifecycle is scoped to one-shot workers",
+    "2/4/8 TP parameter support does not imply hardware qualification at every scale",
+    "graph export does not verify ONNX Runtime or vendor engine numerics",
+    "call-level routing is not hardware kernel fallback coverage"
+  ],
+  "not_implemented": [
+    "task_scoring",
+    "cross_device_reference_comparison",
+    "performance_request_layer_operator_levels",
+    "hardware_kernel_fallback_ratio",
+    "operator_tensor_accuracy"
+  ]
+}

@@ -1,0 +1,65 @@
+schema_version: 1
+model:
+  name: qwen3_embedding_0.6b
+  # Set a local model directory here or pass --model-path.
+  path: null
+  dtype: bfloat16
+  attention: eager
+inputs:
+  path: ../inputs/minimal.jsonl
+  batch_size: 4
+  max_length: 256
+  padding_side: left
+accuracy:
+  # These options also apply when runtime.parallelism is tp.
+  flaggems: 'off'
+  flagtree: 'off'
+  flagcx: 'off'
+  levels: [model]
+  layers: [all]
+  worst_samples: 5
+  task_score: false
+  data_path: null
+performance:
+  flaggems: 'off'
+  flagtree: 'off'
+  flagcx: 'off'
+  level: total
+  warmup_rounds: 5
+  measure_rounds: 30
+  repeats: 3
+  communication_profile_rounds: 1
+runtime:
+  vendor: ascend
+  device: 0
+  parallelism: single
+  devices: null
+  seed: 2026
+  timeout_seconds: 900
+  output_root: ../result
+container:
+  # Set a compatible local Docker image here or pass --image.
+  image: null
+  shm_size: 4g
+vendors:
+  ascend:
+    vendor_compiler: ../runtime_assets/ascend-triton
+    env:
+      TORCH_DEVICE_BACKEND_AUTOLOAD: '0'
+      GEMS_VENDOR: ascend
+      TRITON_ENABLE_TASKQUEUE: 'true'
+      TASK_QUEUE_ENABLE: '0'
+  nvidia:
+    env:
+      TORCH_DEVICE_BACKEND_AUTOLOAD: '0'
+      GEMS_VENDOR: nvidia
+policy:
+  path: null
+preview:
+  flaggems: 'off'
+  flagtree: 'off'
+  flagcx: 'off'
+  budget_seconds: 3600
+  resume_from: null
+export:
+  formats: [fx, onnx]

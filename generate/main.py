@@ -31,7 +31,7 @@ gpuname = config_dict["vendor"]
 with open('output.txt', 'w') as f:
     run_path = "result/" + "" + infer_api + "_" + gpuname + "_" + time.strftime(
         "%Y%m%d%H%M%S")
-    utils_path = "../inference/docker_images/" + gpuname + "/" + gpuname + "_monitor.py"
+    utils_path = os.path.join(CURR_PATH, "monitoring", gpuname + "_monitor.py")
     monitor_process = subprocess.Popen(
         ["python", utils_path, "-o", "restart", "-l", run_path],
         stdout=f,

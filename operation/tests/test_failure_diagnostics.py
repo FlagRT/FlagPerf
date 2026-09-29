@@ -38,9 +38,9 @@ class FailureDiagnosticsTests(unittest.TestCase):
                  'status': 'partial'}]})
             seal(root)
             text = report(root).read_text()
-            section = text.split('## 失败与底层缺口')[1]
-            self.assertIn('numerical-mismatch', section)
-            self.assertIn('routing-evidence', section)
+            section = text.split('## 异常与下一步')[1]
+            self.assertIn('正确性门禁失败', section)
+            self.assertIn('目标执行路径待确认', section)
             self.assertIn('未记录', section)
 
     def test_diagnostic_error_preserves_original_gate_and_closes_pool(self):
@@ -48,20 +48,29 @@ class FailureDiagnosticsTests(unittest.TestCase):
             closed = False
             def phase(self, *args): raise RuntimeError('watchdog')
             def close(self): self.closed = True
-        pool = Pool()
-        item = {'status': 'failed', 'correctness': {'status': 'failed'}}
-        diagnostics.collect(pool, None, {'diagnostics_mode': 'failures'}, item)
-        self.assertEqual(item['status'], 'failed')
-        self.assertTrue(pool.closed)
-        self.assertEqual(item['diagnostics']['results']['diagnose']['status'], 'failed')
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for name in ('inputs.pt', 'reference.pt'): (root / name).touch()
+            pool = Pool()
+            item = {'status': 'failed', 'correctness': {'status': 'failed'}}
+            diagnostics.collect(pool, root, {'diagnostics_mode': 'failures'}, item)
+            self.assertEqual(item['status'], 'failed')
+            self.assertTrue(pool.closed)
+            self.assertEqual(item['diagnostics']['results']['reference-check']['status'], 'failed')
+            self.assertEqual(item['diagnostics']['results']['diagnose']['execution_status'], 'skipped')
 
     def test_cleanup_failure_not_swallowed(self):
         class Pool:
             def phase(self, *args): raise RuntimeError('watchdog')
             def close(self): raise cli.CleanupError('still running')
-        with self.assertRaises(cli.CleanupError):
-            diagnostics.collect(Pool(), None, {'diagnostics_mode': 'failures'},
-                                {'correctness': {'status': 'failed'}})
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for name in ('inputs.pt', 'reference.pt'): (root / name).touch()
+            with self.assertRaises(cli.CleanupError):
+                diagnostics.collect(Pool(), root, {'diagnostics_mode': 'failures'},
+                                    {'correctness': {'status': 'failed'}})
+            data = json.loads((root / 'diagnostic-checks.json').read_text())
+            self.assertEqual(data['status'], 'failed')
 
     def test_error_statistics_near_zero_and_nonfinite(self):
         import torch

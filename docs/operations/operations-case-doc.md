@@ -20,14 +20,14 @@
 
 ## 当前公共入口
 
-单机算子评测使用 `python3 operation/run.py list|run|report`，通过 CLI 指定 vendor、设备、
+单机算子评测使用 `python3 operation/run.py list|run|report|diagnose`，通过 CLI 指定 vendor、设备、
 Case、dtype、实现路径和规模，不读取 `host.yaml` 或初始化 SSH。
 完整命令、状态与计时约定见 [Operation 指南](../../operation/README.md)，
 Ascend 环境和硬件边界见 [Ascend 指南](../ascend/README.md)。
 
 原 `benchmarks/<case>/main.py` 仍提供算子与输入构造；`build_case` 被新 worker 和旧 Case 主入口
 共用。公共生命周期和证据位于 `runtime/`，厂商策略位于 `vendors/<vendor>/adapter.py`。
-新 CLI 的短时 profile 会显式记录有效配置，不能与旧集群 YAML 的大规模结果不加区分地比较。
+新 CLI 的 workload 预设 会显式记录有效配置，不能与旧集群 YAML 的大规模结果不加区分地比较。
 
 下文保留原 SSH 集群适配约定，只适用于显式调用 `operation/legacy/cluster_run.py` 的方式。
 它不代表当前通用 CLI 的启动流程。

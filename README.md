@@ -8,6 +8,22 @@
 
 **FlagPerf是智源研究院联合AI硬件厂商共建的一体化AI硬件评测引擎，旨在建立以产业实践为导向的指标体系，评测AI硬件在软件栈组合（模型+框架+编译器）下的实际能力。**
 
+## 第一次使用，从这里开始
+
+先按要测量的对象选择模块，各模块的环境和启动方式不同：
+
+| 你想了解什么 | 阅读入口 |
+|---|---|
+| 基础算力、内存、互连及厂商诊断 | [Base 入门](base/README.md) |
+| 一个算子的正确性、性能与失败原因 | [Operation 入门](operation/README.md) |
+| 模型输出差异、整体性能及组件开关影响 | [Inference 入门](inference/README.md) |
+| 模型训练 | [Training 文档](training/README.md) |
+| 生成式服务评测 | [Generate 文档](docs/generate/generate-case-doc.md) |
+
+当前 Inference 面向 Qwen3-Embedding-0.6B；支持 Ascend 单卡/单机 TP，NVIDIA 单卡接口尚未实机验证。
+Base、Operation、Inference 的当前单机入口不要求 SSH。先阅读所选模块的环境准备，再执行其最小示例。
+完整导航见 [docs](docs/README.md)。
+
 ## 📣 FlagPerf评测亮点
 
 ![cooperation](assets/imgs/overview.png)
@@ -26,7 +42,7 @@
 
    **在训练任务场景中**，除了支持 PyTorch、TensorFlow，FlagPerf 还在积极与 PaddlePaddle、MindSpore 研发团队密切配合。作为国产训练框架的领军者，百度 Paddle团队、华为昇思MindSpore 团队正在将 Llama、GPT3 等明星模型集成至 FlagPerf 测试样例集。
 
-   **在推理任务场景中**，FlagPerf 适配了多家芯片厂商和训练框架研发团队的推理加速引擎，以更灵活地连接AI硬件与软件生态，拓宽评测的边界和效率，如英伟达TensorRT、昆仑芯XTCL（XPU Tensor Compilation Library）、天数智芯IxRT（Iluvatar CoreX RunTime）、PyTorch TorchInductor。
+   **在推理任务场景中**，当前 Inference 使用 PyTorch/Transformers eager，提供模型输出与模块输出比较、整体性能及 FlagGems/FlagTree/FlagCX 组件比较。原编译引擎案例见 [旧版恢复说明](docs/inference/migration.md)。
 
 4. **支持多测试环境，综合考察单卡、单机、多机性能**
 
@@ -234,208 +250,28 @@
 </tbody></table>
 
 
-推理列表：
+当前推理能力：
 
-<table width="960" border="0" cellpadding="0" cellspacing="0" style='width:960pt;border-collapse:collapse;table-layout:fixed;'>
-   <col width="73.60" style='mso-width-source:userset;mso-width-alt:3588;'/>
-   <col width="70" style='mso-width-source:userset;mso-width-alt:3413;'/>
-   <col width="200.75" style='mso-width-source:userset;mso-width-alt:9788;'/>
-   <col width="195.80" style='mso-width-source:userset;mso-width-alt:9547;'/>
-   <col width="185.40" style='mso-width-source:userset;mso-width-alt:9040;'/>
-   <tr height="16.80" class="xl65" style='height:16.80pt;'>
-   </tr>
-   <tr height="16.80" style='height:16.80pt;'>
-    <td class="xl65" x:str>编号</td>
-       <td class="xl65" x:str>模型名称</td>
-       <td class="xl65" x:str>模型类型</td>
-    <td class="xl65" x:str>英伟达</td>
-    <td class="xl65" x:str>昆仑芯</td>
-    <td class="xl65" x:str>天数智芯</td>
-    <td class="xl65" x:str>腾讯九霄</td>
-    <td class="xl65" x:str>沐曦</td>
-    <td class="xl65" x:str>海飞科</td>
-   </tr>
-   <tr height="16.80" style='height:16.80pt;'>
-    <td class="xl65" x:str>1</td>
-       <td class="xl65" height="33.60"  style='height:33.60pt;border-right:none;border-bottom:none;' x:str><a href="https://github.com/FlagOpen/FlagPerf/tree/main/inference/benchmarks/resnet50" style="text-decoration:none" target="_parent">resnet50</a></td>
-       <td class="xl69" x:str>CV</td>
-    <td class="xl69" x:str>f32/f16</td>
-    <td class="xl69" x:str>f32/f16</td>
-    <td class="xl69" x:str>f16</td>
-       <td class="xl69" x:str>f16</td>
-       <td class="xl69" x:str>f32/f16</td>
-       <td class="xl69" x:str>N/A</td>
-   </tr>
-    <tr height="16.80" style='height:16.80pt;'>
-    <td class="xl65" x:str>2</td>
-        <td class="xl65" height="33.60"  style='height:33.60pt;border-right:none;border-bottom:none;' x:str><a href="https://github.com/FlagOpen/FlagPerf/tree/main/inference/benchmarks/bertLarge" style="text-decoration:none" target="_parent">BertLarge</a></td>
-        <td class="xl69" x:str>NLP</td>
-    <td class="xl69" x:str>f32/f16</td>
-    <td class="xl69" x:str>W32A16</td>
-    <td class="xl69" x:str>f16</td>
-        <td class="xl69" x:str>N/A</td>
-        <td class="xl69" x:str>f32/f16</td>
-        <td class="xl69" x:str>N/A</td>
-   </tr>
-    <tr height="16.80" style='height:16.80pt;'>
-    <td class="xl65" x:str>3</td>
-        <td class="xl65" height="33.60"  style='height:33.60pt;border-right:none;border-bottom:none;' x:str><a href="https://github.com/FlagOpen/FlagPerf/tree/main/inference/benchmarks/vit_l_16" style="text-decoration:none" target="_parent">VisionTransformer</a></td>
-        <td class="xl69" x:str>CV</td>
-    <td class="xl69" x:str>f32/f16</td>
-    <td class="xl69" x:str>W32A16</td>
-    <td class="xl69" x:str>N/A</td>
-        <td class="xl69" x:str>N/A</td>
-        <td class="xl69" x:str>f32/f16</td>
-        <td class="xl69" x:str>N/A</td>
-   </tr>
-    <tr height="16.80" style='height:16.80pt;'>
-    <td class="xl65" x:str>4</td>
-        <td class="xl65" height="33.60" style='height:33.60pt;border-right:none;border-bottom:none;' x:str><a href="https://github.com/FlagOpen/FlagPerf/tree/main/inference/benchmarks/yolov5" style="text-decoration:none" target="_parent">Yolov5_large</a></td>
-        <td class="xl69" x:str>CV</td>
-    <td class="xl69" x:str>f32/f16</td>
-    <td class="xl69" x:str>f32</td>
-    <td class="xl69" x:str>f16</td>
-        <td class="xl69" x:str>N/A</td>
-        <td class="xl69" x:str>f32/f16</td>
-        <td class="xl69" x:str>N/A</td>
-   </tr>
-   <tr height="16.80" style='height:16.80pt;'>
-    <td class="xl65" x:str>5</td>
-       <td class="xl65" height="33.60"  style='height:33.60pt;border-right:none;border-bottom:none;' x:str><a href="https://github.com/FlagOpen/FlagPerf/tree/main/inference/benchmarks/stable_diffusion_v1_4" style="text-decoration:none" target="_parent">Stable Diffusion v1.4</a></td>
-       <td class="xl69" x:str>MultiModal</td>
-    <td class="xl69" x:str>f32/f16</td>
-    <td class="xl69" x:str>f32</td>
-    <td class="xl69" x:str>N/A</td>
-       <td class="xl69" x:str>N/A</td>
-       <td class="xl69" x:str>f32/f16</td>
-       <td class="xl69" x:str>N/A</td>
-   </tr>
-    <tr height="16.80" style='height:16.80pt;'>
-    <td class="xl65" x:str>6</td>
-        <td class="xl65" height="33.60"  style='height:33.60pt;border-right:none;border-bottom:none;' x:str><a href="https://github.com/FlagOpen/FlagPerf/tree/main/inference/benchmarks/swinTransformer" style="text-decoration:none" target="_parent">SwinTransformer</td>
-        <td class="xl69" x:str>CV</td>
-    <td class="xl69" x:str>f32/f16</td>
-    <td class="xl69" x:str>W32A16</td>
-    <td class="xl69" x:str>N/A</td>
-        <td class="xl69" x:str>N/A</td>
-        <td class="xl69" x:str>f32/f16</td>
-        <td class="xl69" x:str>N/A</td>
-   </tr>
-    <tr height="16.80" style='height:16.80pt;'>
-    <td class="xl65" x:str>7</td>
-        <td class="xl65" height="33.60" style='height:33.60pt;border-right:none;border-bottom:none;' x:str><a href="https://github.com/FlagOpen/FlagPerf/tree/main/inference/benchmarks/llama2_7b_mmlu" style="text-decoration:none" target="_parent">Llama2-7B-mmlu</td>
-        <td class="xl69" x:str>NLP</td>
-    <td class="xl69" x:str>f32/f16</td>
-    <td class="xl69" x:str>N/A</td>
-    <td class="xl69" x:str>N/A</td>
-        <td class="xl69" x:str>N/A</td>
-        <td class="xl69" x:str>f32/f16</td>
-        <td class="xl69" x:str>f32/f16</td>
-   </tr>
-    <tr height="16.80" style='height:16.80pt;'>
-    <td class="xl65" x:str>8</td>
-        <td class="xl65" height="33.60" style='height:33.60pt;border-right:none;border-bottom:none;' x:str><a href="https://github.com/FlagOpen/FlagPerf/tree/main/inference/benchmarks/Aquila_7b_mmlu" style="text-decoration:none" target="_parent">Aquila-7B-mmlu</td>
-        <td class="xl69" x:str>LLM</td>
-    <td class="xl69" x:str>fp16</td>
-    <td class="xl69" x:str>N/A</td>
-    <td class="xl69" x:str>N/A</td>
-        <td class="xl69" x:str>N/A</td>
-        <td class="xl69" x:str>f16</td>
-        <td class="xl69" x:str>N/A</td>
-    </tr>
-<tr height="16.80" style='height:16.80pt;'>
-   <td class="xl65" x:str>9</td>
-    <td class="xl65" height="33.60" style='height:33.60pt;border-right:none;border-bottom:none;' x:str><a href="https://github.com/FlagOpen/FlagPerf/tree/main/inference/benchmarks/sam_h" style="text-decoration:none" target="_parent">SegmentAnything</td>
-        <td class="xl69" x:str>MultiModal</td>
-    <td class="xl69" x:str>fp16</td>
-    <td class="xl69" x:str>W32A16</td>
-    <td class="xl69" x:str>N/A</td>
-        <td class="xl69" x:str>N/A</td>
-        <td class="xl69" x:str>f32/f16</td>
-        <td class="xl69" x:str>N/A</td>
-    </tr>
-    <tr height="16.80" style='height:16.80pt;'>
-   <td class="xl65" x:str>10</td>
-    <td class="xl65" height="33.60" style='height:33.60pt;border-right:none;border-bottom:none;' x:str><a href="https://github.com/FlagOpen/FlagPerf/tree/main/inference/benchmarks/deepseek_7b_mmlu" style="text-decoration:none" target="_parent">DeepSeek-7B MMLU</td>
-        <td class="xl69" x:str>LLM</td>
-    <td class="xl69" x:str>fp16</td>
-    <td class="xl69" x:str>N/A</td>
-    <td class="xl69" x:str>N/A</td>
-        <td class="xl69" x:str>N/A</td>
-        <td class="xl69" x:str>N/A</td>
-        <td class="xl69" x:str>N/A</td>
-    </tr><tr height="16.80" style='height:16.80pt;'>
-   <td class="xl65" x:str>11</td>
-    <td class="xl65" height="33.60" style='height:33.60pt;border-right:none;border-bottom:none;' x:str><a href="https://github.com/FlagOpen/FlagPerf/tree/main/inference/benchmarks/llama3_8b_mmlu" style="text-decoration:none" target="_parent">LLaMA3-8B MMLU</td>
-        <td class="xl69" x:str>LLM</td>
-    <td class="xl69" x:str>fp16</td>
-    <td class="xl69" x:str>N/A</td>
-    <td class="xl69" x:str>N/A</td>
-        <td class="xl69" x:str>N/A</td>
-        <td class="xl69" x:str>N/A</td>
-        <td class="xl69" x:str>N/A</td>
-    </tr>
-</table>
+| 模型 | 执行方式 | 主要能力 | 入口 |
+|---|---|---|---|
+| Qwen3-Embedding-0.6B | PyTorch/Transformers eager | 模型/模块精度、整体性能、TP 通信采样、组件比较、图导出 | [Inference](inference/README.md) |
 
+支持与限制以 [能力清单](inference/support.json) 为准；旧模型和编译引擎不属于当前支持范围。
 
 ## 如何使用FlagPerf进行AI硬件评测
 
-### 基础环境确认
+### 当前单机入口
 
-#### 物理机器内启动[默认]
+Base、Operation 和 Inference 的依赖分别在各自指南中准备。宿主负责启动，设备依赖在对应镜像中运行；
+无需套用下方历史训练流程的 SSH、host.yaml 或容器启动方式。
 
-1. 安装docker，python
-2. 确保硬件驱动、网络、硬件虚拟化等服务器基础配置齐全
-   1. 确保可连中国大陆可访问网站，速率正常
-   2. 确保可在容器内找到硬件
-   3. 确保各服务器间root帐号的ssh信任关系和sudo免密
-   4. 确保monitor相关工具已安装:包括cpu(sysstat)、内存(free)、功耗(ipmitool)、系统信息(加速卡状态查看命令)。例如ubuntu系统中，使用apt install [sysstat/ipmitool]安装
+### 基础规格评测启动说明
 
-#### 容器内启动
-
-1. 设置环境变量
-```bash
-export EXEC_IN_CONTAINER=True
-```
-2. 确保容器内硬件驱动、网络、硬件虚拟化等服务器基础配置齐全
-   1. 确保可连中国大陆可访问网站，速率正常
-   2. 确保容器镜像、容器内软件包对应版本安装正确
-   3. 确保可在容器内找到硬件
-   4. 确保各服务器间root帐号的ssh信任关系和sudo免密
-   5. 确保monitor相关工具已安装:包括cpu(sysstat)、内存(free)、功耗(ipmitool)、系统信息(加速卡状态查看命令)。例如ubuntu系统中，使用apt install [sysstat/ipmitool]安装
-
-更多阅读：
-1. [容器内启动评测简述](./docs/utils/definitions/IN_CONTAINER_LAUNCH.md)
-
-## 基础规格评测启动说明
-
-1. **下载FlagPerf并部署**
-
-```bash
-# 先各服务器间root帐号的ssh信任关系和sudo免密配置
-git clone https://github.com/FlagOpen/FlagPerf.git
-cd FlagPerf/base/
-```
-
-2. **修改机器配置文件**
-
-```bash
-cd FlagPerf/base/
-vim configs/host.yaml
-```
-
-具体项修改方式及原则见[基础规格文档](https://github.com/FlagOpen/FlagPerf/blob/main/docs/base/base-case-doc.md)中的**运行时流程**章节
-
-3. **启动测试**
-
-```bash
-cd FlagPerf/base/
-sudo python3 run.py
-```
+见 [Base 入门](base/README.md)，选择 Benchmark 或厂商 Toolkit，并先查看 `--dry-run` 计划。
 
 ### 算子评测启动说明
 
-1. 同基础规格评测
+见 [Operation 入门](operation/README.md)。可先运行 `python3 operation/run.py list` 查看算子，无需设备依赖。
 
 ### 训练评测启动说明
 
@@ -513,126 +349,16 @@ nvidia_monitor.log  rank1.out.log    rank4.out.log  rank7.out.log
 
 ### 推理评测启动说明
 
-1. **下载FlagPerf并部署**
-
-```Bash
-# 先各服务器间root帐号的ssh信任关系和sudo免密配置
-git clone https://github.com/FlagOpen/FlagPerf.git
-cd FlagPerf/inference/
-pip3 install -r requirements.txt
-```
-
-2. **修改机器配置文件**
-
-```Bash
-cd Flagperf/inference/
-vim configs/host.yaml
-```
-
-集群配置文件主要包括集群主机列表和SSH端口，修改`HOSTS`和`SSH_PORT`为机器实际地址
-
-```Bash
-#必须修改项
-FLAGPERF_PATH: "/home/FlagPerf/inference" #FlagPerf inference 路径
-HOSTS: ["127.0.0.1"] # 机器地址
-VENDOR = "nvidia" #测试机器对象，nvidia/kunlunxin/iluvatar
-CASES:  #待测case，记得修改数据地址
-    "resnet50:pytorch_1.13": "/raid/dataset/ImageNet/imagenet/val"
-```
-
-3. **用户需要根据评测对象，配置configs/<case>/configuration.yaml，如不修改可用默认配置**
-
-```Bash
-batch_size: 256
-# 1 item(like 1 sequence, 1 image) flops
-# Attention! For transformer decoder like bert, 1 token cause 2*param flops, so we need 2*length*params like 2*512*0.33B here
-# format: a_1*a*2*...*a_nea_0,like 2*512*0.33e9(bert) or 4.12e9(resnet50)
-flops: 4.12e9
-fp16: true
-compiler: tensorrt
-num_workers: 8
-log_freq: 30
-repeat: 5
-# skip validation(will also skip create_model, export onnx). Assert exist_onnx_path != null
-no_validation: false
-# set a real onnx_path to use exist, or set it to anything but null to avoid export onnx manually(like torch-tensorrt)
-exist_onnx_path: null
-# set a exist path of engine file like resnet50.trt/resnet50.plan/resnet50.engine
-exist_compiler_path: null
-```
-
-必改项：
-
-```Bash
-VENDOR = "nvidia" #选择本次运行的硬件
-FLAGPERF_PATH="" # FlagPerf项目路径，如"/home/FlagPerf/training"
-CASES={} # 本次运行的测例，按照对应模型readme准备好数据，修改模型对应的地址
-#如运行"bert:pytorch_1.8:A100:1:8:1": "/raid/home_datasets_ckpt/bert/train/"，需要把:后面的路径替换为本地路径
-```
-
-4. **启动测试**
-
-```Bash
-sudo python inference/run.py
-```
-
+按 [Inference 入门](inference/README.md) 准备兼容镜像和本地权重，先运行原生路径，再进行组件比较。
+配置、TP、preview 续探和结果含义均从该入口下钻。旧版启动方式见 [迁移说明](docs/inference/migration.md)。
 
 ### 生成式推理评测启动说明
 
-1. **下载FlagPerf并部署**
-
-```Bash
-# 按照FlagPerf/inference中安装相关环境
-git clone https://github.com/FlagOpen/FlagPerf.git
-cd FlagPerf/inference/
-pip3 install -r requirements.txt
-```
-
-2. **修改机器配置文件**
-
-```Bash
-cd Flagperf/generate/
-vim host.yaml
-```
-
-
-```Bash
-#必须修改项
-data_path: "/Xsum.csv" #数据路径
-model_path: "/llama3_70b_hf"#模型路径，该测量的标程应选用Llama3 70b进行测量
-VENDOR :"nvidia" #测试机器对象，nvidia/kunlunxin
-engine :"hf"  #推理框架类型，现支持vllm、huggingface。推理框架需自己本地配置
-log_path :"/log" #日志路径
-config_path :"./host.yaml" #host.yaml文件所在路径
-nproc_per_node: 8 #参与推理评测的GPU数量
-chip："A100_40_SXM" #芯片名称
-```
-
-3. **用户需要根据评测对象，配置tasks/<engine>/<vendor>/task.yaml**
-
-```Bash
-# 必改项
-GPU_NAME: "A100_40_SXM"
-#Theoretical FLOPs peak of the GPU for different precision computations (measured in TFLOPs)
-TFLOPS_FP16:312
-```
-```Bash
-# 若不修改则采用默认任务数量配置，需要保证总推理评测时间在5-15分钟内完成且并发数不应高于256
-task_nums: 256
-```
-
-4. **启动测试**
-
-```Bash
-sudo python generate/main.py
-```
-
-- 更多基础规格/训练/推理说明见[基础规格文档](https://github.com/FlagOpen/FlagPerf/blob/main/docs/base/base-case-doc.md)，[训练文档](https://github.com/FlagOpen/FlagPerf/blob/main/training/README.md)和[推理文档](https://github.com/FlagOpen/FlagPerf/blob/main/docs/inference/inference-case-doc.md)
-[生成式推理文档](https://github.com/FlagOpen/FlagPerf/blob/main/docs/generate/generate-case-doc.md)
+Generate 使用独立的环境与配置。请先阅读 [Generate 部署说明](generate/README.md) 和 [案例配置](docs/generate/generate-case-doc.md)，准备对应引擎后，在 `generate` 目录运行 `python3 main.py`。
 
 ## 参与共建FlagPerf
 
-如需参与共建FlagPerf基础规格、训练、推理评测，请参考详细文档，依次位于[基础规格文档目录](https://github.com/shh2000/FlagPerf/tree/ud0401/docs/base)、[训练文档目录](https://github.com/shh2000/FlagPerf/tree/ud0401/docs/training)、[推理文档目录](https://github.com/shh2000/FlagPerf/tree/ud0401/docs/inference)。
+如需参与共建FlagPerf基础规格、训练、推理评测，请参考详细文档，依次位于[基础规格文档目录](https://github.com/shh2000/FlagPerf/tree/ud0401/docs/base)、[训练文档目录](https://github.com/shh2000/FlagPerf/tree/ud0401/docs/training)、[推理文档目录](docs/inference)。
 
 为了更直观的展示厂商参与共建的实际工作量，下面给出6个已经合并进FlagPerf，面向不同特征厂商的Pull Request。
 
@@ -645,8 +371,8 @@ sudo python generate/main.py
 
 2. 模型推理适配
 
-  - **第一次参与推理**适配的工作内容较多。除了适配case外，还包括厂商的dockerfile、编译器实现方式、monitor等，如 [#256](https://github.com/FlagOpen/FlagPerf/pull/256)
-  - **后续参与推理**适配时，通常不需要适配工作量、仅需运行软件完成测试。如 [#227](https://github.com/FlagOpen/FlagPerf/pull/227)
+   当前模型适配、设备边界及目录职责见 [Inference 扩展说明](docs/inference/inference-case-doc.md)。
+   新模型需明确输入、输出、padding 与 TP 分片语义；当前工具不会自动发现原框架的旧案例。
 
 ## FlagPerf合作伙伴
 
