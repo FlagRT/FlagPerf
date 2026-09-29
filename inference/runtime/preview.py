@@ -9,15 +9,19 @@ import time
 import yaml
 from runtime.common import (read_json, write_json, digest, file_hash,
                             assert_source_snapshot, identity_differences)
+from runtime.preview_evidence import resource_failure
+from runtime.preview_cache import CacheLedger
+from runtime.preview_budget import Budget
 
-# Calibration changes these constants only between sealed source versions.
+# Legacy configurations retain the sequential/fixed reference behavior.
 BUDGET_MODE = 'fixed'
-COST_MARGIN = 1.5
-CHECKPOINT_SCHEMA = 1
+CHECKPOINT_SCHEMA = 2
 
 
 def usable(result, require_hit=None):
     if result.get('status') != 'completed' or result.get('numerical_anomalies'):
+        return False
+    if result.get('preview_evidence_required') and not result.get('preview_evidence_validated'):
         return False
     route = result.get('route', {})
     ranks = route.get('rank_function_calls', {})
@@ -71,6 +75,25 @@ def load_resume(source):
         names = {r['function'] for r in row['candidates'] or []}
         if len(accepted) != len(set(accepted)) or not set(accepted) <= names:
             raise ValueError('invalid checkpoint accepted selection')
+        excluded = set(row['excluded'])
+        if not excluded <= names or excluded.intersection(accepted):
+            raise ValueError('invalid checkpoint excluded selection')
+        tree = row.get('search_tree')
+        if tree:
+            pending = []
+            if len(tree['queue']) != len(set(tree['queue'])):
+                raise ValueError('duplicate checkpoint search task')
+            for task in tree['queue']:
+                node = tree['nodes'].get(task, {})
+                members = node.get('members', [])
+                if (not members or node.get('status') not in ('pending', 'running')
+                        or not set(members) <= names - set(accepted) - excluded):
+                    raise ValueError('invalid checkpoint pending search task')
+                pending.extend(members)
+            if len(pending) != len(set(pending)):
+                raise ValueError('duplicate checkpoint pending candidate')
+            if any(int(task) >= tree['next_id'] for task in tree['nodes']):
+                raise ValueError('invalid checkpoint search task counter')
     return state
 
 
@@ -99,37 +122,6 @@ def import_resume(source, root, state):
     return target
 
 
-class Budget:
-    def __init__(self, seconds, timeout, profiles, mode=None, clock=None):
-        self.clock = clock or time.monotonic
-        self.started = self.clock(); self.seconds = seconds; self.timeout = timeout
-        self.profiles = profiles; self.mode = mode or BUDGET_MODE
-        self.cleanup = 0.0
-
-    def remaining(self):
-        return max(0.0, self.seconds - (self.clock()-self.started-self.cleanup))
-
-    def estimate(self, key, phase, candidate=None):
-        history = self.profiles[key]['timings']
-        good = [r['seconds'] for r in history if r['phase'] == phase and r['completed'] and not r['timed_out']]
-        if not good:
-            good = [r['seconds'] for r in history if r['completed'] and not r['timed_out']]
-        estimate = COST_MARGIN * max(good[-8:]) if good else max(1.0, self.seconds/4/max(1,len(self.profiles)))
-        lower = [r['allowance'] for r in history if r['timed_out'] and
-                 ((candidate is not None and r.get('candidate') == candidate) or
-                  (candidate is None and r['phase'] == phase))]
-        if lower: estimate = max(estimate, COST_MARGIN*max(lower))
-        return min(self.timeout, max(1.0, estimate))
-
-    def reserve(self):
-        if self.mode == 'fixed' or any(not any(t['completed'] and not t['timed_out'] for t in p['timings']) for p in self.profiles.values()):
-            return min(self.seconds*0.25, 2*len(self.profiles)*self.timeout)
-        # Discovery may change the intersection. Reserve at most two workers per environment.
-        return sum(2*self.estimate(k, 'final') for k in self.profiles)
-
-    def room(self):
-        return max(0.0, self.remaining()-self.reserve())
-
 
 def run_profiles(cfg, root, contexts, invoke, progress, restored=None):
     unique = {c['key']:c for c in contexts.values()}
@@ -142,6 +134,10 @@ def run_profiles(cfg, root, contexts, invoke, progress, restored=None):
                      for p in restored['profiles'].values()] for k,c in unique.items()}
         write_json(root/'resume-mismatch.json', changes)
         raise ValueError('resume execution identity/environment mismatch; see resume-mismatch.json; run fresh preview')
+    strategy = cfg['preview'].get('search_strategy', 'sequential')
+    budget_mode = cfg['preview'].get('budget_mode', BUDGET_MODE)
+    if restored and (restored.get('search_strategy') != strategy or restored.get('budget_mode') != budget_mode):
+        raise ValueError('resume search strategy/budget mode changed; run fresh preview')
     profiles = deepcopy(restored['profiles']) if restored else {}
     generation = restored['generation']+1 if restored else 0
     for index,(key,ctx) in enumerate(unique.items()):
@@ -151,16 +147,21 @@ def run_profiles(cfg, root, contexts, invoke, progress, restored=None):
                 'attempted':[], 'inflight':None, 'timings':[], 'decisions':[], 'index':index}
     prepared_files = {}
     for ctx in unique.values():
-        for name in ['inputs.pt','samples.json','identity.json','identity-key.json','analysis-identity.json']:
+        for name in ['inputs.pt','samples.json','forward-inputs.json','identity.json','identity-key.json','analysis-identity.json']:
             p = ctx['prepared']/name
             if p.is_file(): prepared_files[p.relative_to(root).as_posix()] = file_hash(p)
     state = {'policy_schema':3, 'generation':generation, 'profiles':profiles,
         'input_prepared':next(iter(unique.values()))['prepared'].relative_to(root).as_posix(),
         'prepared_files':prepared_files, 'evidence_files':deepcopy(restored['evidence_files']) if restored else {},
         'source':str(cfg['preview'].get('resume_from') or ''), 'phase':'prepared',
-        'environment_request':request, 'budget_mode':BUDGET_MODE, 'budget_seconds':cfg['preview']['budget_seconds']}
+        'environment_request':request, 'search_strategy':strategy, 'budget_mode':budget_mode, 'budget_seconds':cfg['preview']['budget_seconds']}
     inherited = {k:list(p['accepted']) for k,p in profiles.items()}
-    budget = Budget(cfg['preview']['budget_seconds'],cfg['runtime']['timeout_seconds'],profiles)
+    caches = {k:CacheLedger(root,k,unique[k]['stack']) for k in profiles}
+    cache_import = {k:cache.import_from(cfg['preview'].get('resume_from'),
+        profiles[k].get('cache') if restored else None,cfg['preview'].get('resume_cache','auto')=='auto')
+        for k,cache in caches.items()}
+    write_json(folder/'cache-import.json',cache_import)
+    budget = Budget(cfg['preview']['budget_seconds'],cfg['runtime']['timeout_seconds'],profiles,mode=budget_mode)
     trials = []; skipped = []; counts = {k:0 for k in profiles}
 
     def save():
@@ -172,24 +173,33 @@ def run_profiles(cfg, root, contexts, invoke, progress, restored=None):
         assert_source_snapshot(cfg.get('_source_snapshot'))
         write_json(folder/'checkpoint.json', {'schema_version':CHECKPOINT_SCHEMA,'state':state,'sha256':digest(state)})
 
-    def trial(key, phase, include, candidate=None, limit=None):
-        room = budget.remaining() if phase in ['baseline','restore','final','common'] else budget.room()
-        allowance = min(budget.timeout,room,limit if limit is not None else budget.timeout)
+    def trial(key, phase, include, candidate=None, limit=None, group=None):
+        limits = {'worker_timeout':budget.timeout,'global_budget':budget.remaining()}
+        if phase not in ['baseline','restore','final','common']: limits['search_allowance']=budget.room((key,include))
+        if limit is not None: limits['environment_share']=limit
+        allowance = min(limits.values())
+        limiting = [name for name,value in limits.items() if abs(value-allowance)<0.001]
         if allowance < 1:
             return None
         row = profiles[key]; ctx = unique[key]
         label = f'g{generation}-p{row["index"]}-{len(trials):04}-{phase}'
         destination = folder/label
         state['phase'] = phase
-        row['inflight'] = {'candidate':candidate,'phase':phase,'include':include,'trial':label}
+        row['inflight'] = {'candidate':candidate,'phase':phase,'include':include,'trial':label,'group':group}
         save()
         progress.phase = 'preview/'+label
         started = budget.clock()
-        value = invoke(ctx['cfg'],root,'forward',destination,ctx['prepared'],include,True,allowance)
+        selected = deepcopy(ctx['cfg'])
+        selected['_preview_trial'] = {'phase':phase,'evidence_mode':cfg['preview'].get('evidence_mode','lightweight')}
+        warm_estimate = budget.verification(key,include)
+        value = invoke(selected,root,'forward',destination,ctx['prepared'],include,True,allowance)
         elapsed = budget.clock()-started
         cleanup = float(value.get('cleanup_seconds',0))
         budget.cleanup += cleanup
         elapsed = max(0,elapsed-cleanup)
+        if value.get('timed_out'):
+            value['timeout_reason'] = ('global_budget_exhausted' if 'global_budget' in limiting else
+                'worker_timeout' if 'worker_timeout' in limiting else 'search_allowance_exhausted')
         if value.get('status') == 'completed':
             if value.get('identity_key') != key:
                 raise ValueError('preview worker execution identity mismatch')
@@ -198,13 +208,24 @@ def run_profiles(cfg, root, contexts, invoke, progress, restored=None):
                 ranks = value.get('ranks',{})
                 if set(ranks) != expected or any(v.get('identity_key') != key for v in ranks.values()):
                     raise ValueError('preview missing rank or rank identity mismatch')
-        timing = {'phase':phase,'candidate':candidate,'seconds':elapsed,'allowance':allowance,
+        row['cache'], cache_seal_seconds = caches[key].seal()
+        timing = {'phase':phase,'candidate':candidate,'group':group or ([candidate] if candidate else []),
+            'selection_sha256':digest(include),'include_count':len(include or []),
+            'warm_estimate':warm_estimate,'usable':usable(value),'seconds':elapsed,'allowance':allowance,
+            'limit_sources':limiting,'limits':limits,'cache_seal_seconds':cache_seal_seconds,
+            'diagnostics':value.get('preview_diagnostics',{}),
+            'orchestration_timing':value.get('orchestration_timing',{}),
             'completed':value.get('status')=='completed','timed_out':bool(value.get('timed_out'))}
         row['timings'].append(timing)
         name = f'preview/evidence/g{generation}/{label}.json'
         write_json(root/name, {'result':value,'timing':timing,'include':include,
                              'large_evidence_directory':str(destination.resolve())})
         state['evidence_files'][name] = file_hash(root/name)
+        proof_roots = list(destination.glob('rank-*')) if ctx['cfg']['runtime'].get('parallelism') == 'tp' else [destination]
+        for proof_root in proof_roots:
+            for filename in ['forward-checks.json','stages.json']:
+                proof = proof_root/filename
+                if proof.is_file(): state['evidence_files'][proof.relative_to(root).as_posix()] = file_hash(proof)
         trials.append(dict(timing,environment=key,evidence=name))
         return value, name
 
@@ -220,7 +241,7 @@ def run_profiles(cfg, root, contexts, invoke, progress, restored=None):
             common_trial = final if set(include) == set(common) else (trial(key,'common',common) if common else None)
             joint_ok = bool(common_trial) and bool(common) and valid(common_trial[0],key,common)
             verified = verified and ok and joint_ok
-            unknown = [dict(c, **{k:v for k,v in row['unknown'].get(c['function'], {'reason':'budget_exhausted'}).items() if k!='function'})
+            unknown = [dict(c, **{k:v for k,v in row['unknown'].get(c['function'], {'reason':'not_scheduled','attempted':False}).items() if k!='function'})
                        for c in row['candidates'] or [] if c['function'] not in include and c['function'] not in row['excluded']]
             entries[key] = {'status':'verified' if ok and joint_ok else 'unverified',
                 'selection_sha256':digest(common), 'identity':row['identity'],
@@ -237,21 +258,31 @@ def run_profiles(cfg, root, contexts, invoke, progress, restored=None):
         assert_source_snapshot(cfg.get('_source_snapshot'))
         policy = {'schema_version':3,'status':'verified' if verified else 'unverified',
             'include':common,'verified_selection_sha256':digest(common) if verified else None,
-            'profiles':entries,'finite_error_policy':'report_only',
+            'profiles':entries,'finite_error_policy':'report_only','search_strategy':strategy,
+            'group_evidence':'members of an accepted group share one full-input trial; not independent singleton experiments',
             'selection':'cumulative, order-dependent; current full-input per-rank verification; not accuracy acceptance',
             'analysis_key':cfg.get('_source_snapshot',{}).get('analysis_key')}
         (folder/'policy.yaml').write_text(yaml.safe_dump(policy,sort_keys=False,allow_unicode=True))
+        next_cost = sum(t['seconds'] for t in budget.verification_tasks())
+        for key,row in profiles.items():
+            next_cost += budget.estimate(key,'baseline')
+            if row['accepted']:
+                next_cost += budget.estimate(key,'restore',include=row['accepted'])
+            pending = next((c['function'] for c in row['candidates'] or []
+                            if c['function'] not in row['accepted'] and c['function'] not in row['excluded']),None)
+            if pending:
+                next_cost += budget.estimate(key,'candidate',pending,include=row['accepted']+[pending])
         report = {'mode':budget.mode,'seconds':budget.seconds,'charged_seconds':budget.clock()-budget.started-budget.cleanup,
-            'cleanup_seconds':budget.cleanup,'trials':trials,'skipped':skipped,
-            'estimated_minimum_next_budget_seconds':math.ceil(sum(budget.estimate(k,'baseline')+
-                (budget.estimate(k,'restore') if p['accepted'] else 0)+2*budget.estimate(k,'final')+
-                budget.estimate(k,'candidate') for k,p in profiles.items()))}
+            'cleanup_seconds':budget.cleanup,'search_strategy':strategy,'trials':trials,
+            'search':state.get('search',{}),'skipped':skipped,'cache_import':cache_import,
+            'estimated_minimum_next_budget_seconds':math.ceil(next_cost)}
         write_json(folder/'budget.json',report)
         state['phase'] = 'verified' if verified else 'unverified'; save()
         return {'status':'completed' if verified else 'partial','policy':'preview/policy.yaml','verified':verified,
             'accepted':len(common),'excluded':sum(len(e['excluded']) for e in entries.values()),
             'unknown':sum(len(e['unknown']) for e in entries.values()),'policy_profiles':entries,
-            'resume':{'source':state['source'] or None,'generation':generation,'inherited':inherited},'budget':report}
+            'resume':{'source':state['source'] or None,'generation':generation,'inherited':inherited},'budget':report,
+            'cache_import_seconds':sum(v['seconds'] for v in cache_import.values())}
 
     save()
     # All profiles get their prerequisites before any profile consumes the search allowance.
@@ -282,6 +313,10 @@ def run_profiles(cfg, root, contexts, invoke, progress, restored=None):
             if not valid(restored_trial[0],key,inherited[key]):
                 raise RuntimeError('previous accepted set failed reverification; refusing to shrink it')
             row['inflight'] = None; save()
+    if strategy == 'grouped':
+        from runtime.preview_search import search
+        search(profiles,state,budget,trial,save,valid,usable,generation,skipped)
+        return finish()
     queues = {}
     for key,row in profiles.items():
         names = [c['function'] for c in row['candidates'] if c['function'] not in row['accepted'] and c['function'] not in row['excluded']]
@@ -300,33 +335,54 @@ def run_profiles(cfg, root, contexts, invoke, progress, restored=None):
                 estimate = budget.estimate(key,'candidate',name)
                 if room < estimate:
                     if not borrow: deferred[key].append(name)
-                    else: skipped.append({'environment':key,'candidate':name,'reason':'insufficient_candidate_and_verification_budget','estimated_seconds':estimate})
+                    else:
+                        reason = 'global_budget_exhausted' if budget.remaining()<1 else 'search_allowance_exhausted' if budget.room()<1 else 'estimate_does_not_fit'
+                        detail = {'reason':reason,'attempted':False,'estimated_seconds':estimate,
+                                  'remaining_seconds':budget.remaining(),'search_seconds':budget.room()}
+                        skipped.append(dict(detail,environment=key,candidate=name))
+                        if name not in row['attempted']: row['unknown'][name]=detail
                     continue
                 started = budget.clock(); proposed = row['accepted']+[name]
                 result = trial(key,'candidate',proposed,name,room)
                 if result is None: continue
                 value, evidence = result
-                decision = 'unknown'; reason = 'failure_not_confirmed_within_budget'
+                last_value = value
+                decision = 'unknown'; reason = 'confirmation_incomplete'
+                confirmation = {}
                 if valid(value,key,proposed):
                     decision = 'accepted'; row['accepted'].append(name)
                 elif usable(value): reason = 'not_observed'
-                elif not value.get('timed_out'):
+                elif value.get('timed_out'): reason = value['timeout_reason']
+                elif resource_failure(value): reason = 'resource_failure'
+                elif value.get('preview_evidence_error'): reason = 'evidence_incomplete'
+                else:
                     def extra(phase,selected):
                         remaining = budget.room() if borrow else min(budget.room(),max(0,allowance-spent[key]-(budget.clock()-started)))
                         return trial(key,phase,selected,name,remaining) if remaining >= budget.estimate(key,phase,name) else None
                     repeated = extra('repeat',proposed)
-                    control = extra('control',row['accepted'] or None) if repeated else None
+                    if repeated:
+                        confirmation['repeat']=repeated[1]
+                        last_value = repeated[0]
+                    control = extra('control',row['accepted'] or None) if repeated and not (resource_failure(repeated[0]) or repeated[0].get('timed_out') or repeated[0].get('preview_evidence_error')) else None
+                    if control:
+                        confirmation['control']=control[1]
+                        last_value = control[0]
+                    if repeated and resource_failure(repeated[0]): reason='resource_failure'
+                    elif repeated and repeated[0].get('timed_out'): reason=repeated[0]['timeout_reason']
+                    elif repeated and repeated[0].get('preview_evidence_error'): reason='evidence_incomplete'
                     if repeated and control:
                         again = repeated[0]
-                        resource = any(v.get('exit_code') in [-9,-15,137,143] or any(w in str(v.get('error','')).lower() for w in ['out of memory','oom','device unavailable']) for v in [value,again])
+                        resource = any(resource_failure(v) for v in [value,again,control[0]])
                         same = all(value.get(k)==again.get(k) for k in ['exception_type','exit_code','error','numerical_anomalies'])
-                        if not usable(again) and usable(control[0]) and same and not resource and not again.get('timed_out'):
+                        if not usable(again) and usable(control[0]) and same and not resource and not again.get('timed_out') and not again.get('preview_evidence_error'):
                             decision = 'excluded'
                             row['excluded'][name] = {'function':name,'reason':'reproduced_failure_in_cumulative_configuration',
                                 'with_functions':list(row['accepted']),'trial':evidence,'repeat':repeated[1],'control':control[1],
                                 'exclusion_scope':'historical cumulative configuration only; not global operator qualification'}
-                        else: reason = 'unresolved_or_resource_failure'
-                if decision == 'unknown': row['unknown'][name] = {'reason':reason,'trial':evidence}
+                        else: reason = ('resource_failure' if resource else 'evidence_incomplete' if control[0].get('preview_evidence_error') else control[0].get('timeout_reason','unresolved_failure'))
+                if decision == 'unknown': row['unknown'][name] = {'reason':reason,'trial':evidence,
+                    'attempted':True,**confirmation,'limit_sources':trials[-1]['limit_sources'],
+                    'last_stages':{r:d['last_stage'] for r,d in last_value.get('preview_diagnostics',{}).items()}}
                 else: row['unknown'].pop(name,None)
                 if name not in row['attempted']: row['attempted'].append(name)
                 row['decisions'].append({'generation':generation,'function':name,'decision':decision,'trial':evidence,'with_functions':proposed})

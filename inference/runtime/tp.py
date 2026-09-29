@@ -75,11 +75,13 @@ def global_batches(ranks):
     return output
 
 
-def aggregate(cfg, destination, action, process):
+def aggregate(cfg, destination, action, process, prepared=None):
     root = Path(destination)
     ranks = {}
+    missing = []
     for rank in range(len(cfg['runtime']['devices'])):
         p = root/f'rank-{rank}'/'result.json'
+        if not p.is_file(): missing.append(str(rank))
         ranks[str(rank)] = read_json(p) if p.is_file() else {'status':'failed','error':'rank exited without result'}
     result = {'status':'failed','ranks':ranks,'world_size':len(ranks),'parallelism':'tp'}
     failures = [(r,v) for r,v in ranks.items() if v['status'] != 'completed']
@@ -90,6 +92,9 @@ def aggregate(cfg, destination, action, process):
         result.update(error=f'rank {rank}: {value.get("error",value["status"] if "status" in value else "failed")}',
                       exception_type=value.get('exception_type'),failure_count=len(failures),
                       failure_count_scope='failed_or_missing_rank_results; not failed batches')
+        if missing and cfg.get('_preview_trial'):
+            result.update(preview_evidence_error=True,preview_evidence_validated=False,
+                          missing_ranks=missing)
     else:
         try:
             values = list(ranks.values())
@@ -99,7 +104,12 @@ def aggregate(cfg, destination, action, process):
             if action == 'forward':
                 inventory, candidates, calls = {}, {}, {}
                 for rank, value in ranks.items():
-                    if not isinstance(value.get('artifacts'), list) or not value['artifacts']:
+                    if cfg.get('_preview_trial'):
+                        from runtime.preview_evidence import validate_checks
+                        validate_checks(root/f'rank-{rank}',value,read_json(Path(prepared)/'forward-inputs.json'))
+                        if value['forward_evidence']['mode'] != cfg['_preview_trial']['evidence_mode']:
+                            raise ValueError('rank preview evidence mode differs from request')
+                    elif not isinstance(value.get('artifacts'), list) or not value['artifacts']:
                         raise ValueError(f'rank {rank} has no sealed forward artifacts')
                     for key,row in value.get('inventory',{}).items():
                         merged = inventory.setdefault(key,{'calls':0,'signatures':[]})
@@ -117,6 +127,9 @@ def aggregate(cfg, destination, action, process):
                     rank_function_calls={r:v['route'].get('actual_function_calls',{}) for r,v in ranks.items()})
                 result.update(inventory=inventory,candidates=list(candidates.values()),route=route,
                     numerical_anomalies=[dict(a,rank=r) for r,v in ranks.items() for a in v.get('numerical_anomalies',[])])
+                if cfg.get('_preview_trial'):
+                    result.update(preview_evidence_required=True,preview_evidence_validated=True,
+                                  inventory_collected=all(v.get('inventory_collected',False) for v in values))
             elif action == 'performance':
                 rows = global_batches(values)
                 (root/'batches.jsonl').write_text(''.join(json.dumps(r)+'\n' for r in rows))
@@ -129,13 +142,23 @@ def aggregate(cfg, destination, action, process):
                 result['communication'] = analyze(root, len(ranks))
                 if result['communication']['status'] != 'completed':
                     result.update(status='partial',error='communication evidence is incomplete; see coverage and issues')
+            elif action.startswith('layer_'):
+                if any(v.get('completed_batches') != v.get('expected_batches') or
+                       not v.get('instrumentation_output_equal') for v in values):
+                    raise ValueError('incomplete layer measurement or changed instrumented output')
+                if any(v['modules'] != values[0]['modules'] for v in values):
+                    # Weight storage may differ across ranks in future uneven sharding.
+                    if any([m['module'] for m in v['modules']] != [m['module'] for m in values[0]['modules']] for v in values):
+                        raise ValueError('rank module selections differ')
         except Exception as error:
             result.update(status='failed',error=str(error),exception_type=type(error).__name__)
+            if cfg.get('_preview_trial'):
+                result.update(preview_evidence_error=True,preview_evidence_validated=False)
     write_json(root/'result.json',result)
     return result
 
 
-def run(cfg, root, prepared, include, repeat_index, profile=False):
+def run(cfg, root, prepared, include, repeat_index, profile=False, phase=None):
     import torch
     import torch.distributed as dist
     from vendors.device import initialize
@@ -204,6 +227,10 @@ def run(cfg, root, prepared, include, repeat_index, profile=False):
             for inputs,_,_ in data:
                 pooled,embedding=forward(inputs);backend.synchronize();del pooled,embedding
         warmup_seconds=(time.perf_counter_ns()-begin)/1e9
+        if phase:
+            from runtime.layer_capture import run_pass
+            return run_pass(cfg,root,model,forward,data,batch_metadata,backend,repeat_index,phase,
+                            digest(expected),registered,rank,barrier)
         barrier(); baseline=memory(); backend.reset_peak_memory_stats(rank)
         result={'status':'completed','identity_key':digest(expected),'rank':rank,'repeat':repeat_index,
                 'path':'on' if include is not None else 'off','model_load_seconds':load_seconds,

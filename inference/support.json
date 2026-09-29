@@ -37,8 +37,9 @@
     "list": "capabilities without model or device execution",
     "preview": "FlagGems selection and per-environment/rank verification",
     "accuracy": "model and selected module outputs; no universal acceptance threshold",
-    "performance": "total model latency, throughput and allocator memory; independent TP communication sampling",
-    "export": "first fixed batch CPU native FX/ONNX graph; single-device preparation"
+    "performance": "total model or selected layer latency, throughput and allocator memory; independent profiler sampling",
+    "export": "first fixed batch CPU native FX/ONNX graph; single-device preparation",
+    "report": "read-only performance views, layer/rank/shape filters, portable evidence and bounded profiler reanalysis"
   },
   "component_controls": {
     "components": [
@@ -65,7 +66,12 @@
   "preview": {
     "resume": true,
     "execution_analysis_identity_split": true,
-    "verified_meaning": "complete execution, selected functions hit on every rank, finite checked output boundaries; not accuracy acceptance"
+    "verified_meaning": "complete execution, selected functions hit on every rank, finite checked output boundaries; not accuracy acceptance",
+    "checkpoint_schema_version": 2,
+    "evidence_mode_default": "lightweight",
+    "resume_cache_default": "auto",
+    "search_strategy_default": "grouped",
+    "budget_mode_default": "adaptive"
   },
   "limits": [
     "only listed model adapter is implemented",
@@ -74,13 +80,29 @@
     "FlagCX lifecycle is scoped to one-shot workers",
     "2/4/8 TP parameter support does not imply hardware qualification at every scale",
     "graph export does not verify ONNX Runtime or vendor engine numerics",
-    "call-level routing is not hardware kernel fallback coverage"
+    "call-level routing is not hardware kernel fallback coverage",
+    "execution changes require a new preview; historical reports remain readable",
+    "grouped preview verifies combinations, not independent function compatibility",
+    "layer device events include stream waits and host supply gaps"
   ],
   "not_implemented": [
     "task_scoring",
     "cross_device_reference_comparison",
-    "performance_request_layer_operator_levels",
+    "performance_request_operator_levels",
     "hardware_kernel_fallback_ratio",
     "operator_tensor_accuracy"
-  ]
+  ],
+  "layer_performance": {
+    "default_selection": "all Transformer blocks",
+    "selection": "module names; nested modules supported",
+    "parallelism": [
+      "single",
+      "tp"
+    ],
+    "sampling": "independent uninstrumented baseline, layer timing, profiler and allocator passes",
+    "default_profile_rounds": 1,
+    "timing": "inclusive module windows; parent and child durations are not additive",
+    "memory": "process allocator window peaks; not exclusive module allocation",
+    "comparison": "paired module invocation, rank and workload"
+  }
 }

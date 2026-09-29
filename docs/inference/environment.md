@@ -69,6 +69,7 @@ Ascend 默认统一设置 `TASK_QUEUE_ENABLE=0`、`TRITON_ENABLE_TASKQUEUE=true`
 | 找不到编译器清单 | 运行资产准备工具，并核对配置的目录 |
 | 编译器摘要不匹配 | 保留旧资产，重新导出到新目录；重新 preview |
 | Docker 无权限或设备不可见 | 核对当前账号权限、驱动和所选物理编号；程序不自动换卡 |
+| `npu-smi` 无进程，但容器设备不可用或返回 `EBUSY` | 检查普通容器能否访问选中设备；宿主可见不等于容器可用。保留失败记录，由操作者选择可用设备后重新 preview，勿用 CPU 回退掩盖问题 |
 | 设备忙、HCCL 初始化失败 | 检查当前占用、设备映射及网络配置；不是精度判定 |
 | 策略身份不匹配 | 查看 `policy-mismatch.json`，在当前源码、环境与输入下重新 preview |
 | preview 预算不足 | 查看报告及 `preview/budget.json`，按进阶指南在新目录续探 |

@@ -30,6 +30,7 @@ def output_directory(args, cfg):
 
 
 def invoke_worker(cfg, root, action, destination, prepared=None, include=None, probe=False, timeout=None, repeat_index=None):
+    orchestration_started = time.monotonic()
     assert_source_snapshot(cfg.get('_source_snapshot'))
     if '_stack' in cfg and action not in ['prepare','export']:
         from copy import deepcopy
@@ -43,23 +44,27 @@ def invoke_worker(cfg, root, action, destination, prepared=None, include=None, p
     if include is not None: argv += ['--include',json.dumps(include)]
     if probe: argv += ['--probe']
     if repeat_index is not None: argv += ['--repeat-index',str(repeat_index)]
+    environment_started = time.monotonic()
     env = environment(cfg)
     if '_stack' in cfg:
         from vendors.stack import worker_environment
         selected = worker_environment(cfg,root)
         selected.update({k:v for k,v in env.items() if k not in ['PYTHONPATH','TRITON_CACHE_DIR','TORCHINDUCTOR_CACHE_DIR']})
         env = selected
+    environment_seconds = time.monotonic()-environment_started
     tp = cfg['runtime'].get('parallelism') == 'tp' and action != 'prepare'
     if tp:
         argv = [sys.executable,'-u','-m','torch.distributed.run','--standalone',
                 '--nnodes=1',f'--nproc-per-node={len(cfg["runtime"]["devices"])}',
                 '--max-restarts=0','--module','runtime.worker'] + argv[4:]
     env['PYTHONPATH'] = str(ROOT) + os.pathsep + env.get('PYTHONPATH','')
+    launch_started = time.monotonic()
     process = execute(argv,destination,timeout or cfg['runtime']['timeout_seconds'],env)
+    process_finished = time.monotonic()
     assert_source_snapshot(cfg.get('_source_snapshot'))
     if tp:
         from runtime.tp import aggregate
-        aggregate(cfg,destination,action,process)
+        aggregate(cfg,destination,action,process,prepared=prepared)
     path = destination/'result.json'
     result = read_json(path) if path.exists() else {'status':'failed','error':'worker terminated without result'}
     if process['exit_code'] != 0:
@@ -69,6 +74,22 @@ def invoke_worker(cfg, root, action, destination, prepared=None, include=None, p
     result['worker_wall_seconds'] = process.get('wall_seconds_diagnostic_only',0)
     result['cleanup_seconds'] = process.get('cleanup_seconds',0)
     if process['timed_out']: result['error'] = 'worker timeout'
+    if cfg.get('_preview_trial'):
+        from runtime.preview_evidence import validate_checks, diagnostic_summary
+        result['preview_evidence_required'] = True
+        if result['status'] == 'completed' and not tp:
+            try:
+                validate_checks(destination,result,read_json(prepared/'forward-inputs.json'))
+                if result['forward_evidence']['mode'] != cfg['_preview_trial']['evidence_mode']:
+                    raise ValueError('preview evidence mode differs from request')
+                result['preview_evidence_validated'] = True
+            except (OSError, ValueError, KeyError, TypeError) as error:
+                result.update(status='failed', error=str(error), preview_evidence_error=True)
+        result['preview_diagnostics'] = diagnostic_summary(destination,result,tp)
+        result['orchestration_timing'] = {'setup_seconds':launch_started-orchestration_started,
+            'environment_and_assets_seconds':environment_seconds,
+            'process_seconds':process_finished-launch_started,
+            'postprocess_seconds':time.monotonic()-process_finished}
     return result
 
 
@@ -232,7 +253,12 @@ def performance(cfg, root, prepared, progress, contexts=None):
     policy = None if contexts else verified_policy(cfg,root,prepared,'performance')
     selection = ('both' if len(contexts)==2 else next(iter(contexts))) if contexts else cfg['performance']['flaggems']
     sides = ['off','on'] if selection=='both' else [selection]
-    result = {'status':'completed','level':'total','paths':{},'summary':{},'comparison':None}
+    result = {'status':'completed','level':cfg['performance'].get('level','total'),'paths':{},'summary':{},'comparison':None}
+    layer_mode = result['level'] == 'layer'
+    if layer_mode:
+        cfg['_layer_audit'] = True
+        for context in (contexts or {}).values():
+            context['cfg']['_layer_audit'] = True
     tp = cfg['runtime'].get('parallelism') == 'tp'
     if tp:
         result.update(parallelism='tp',devices=cfg['runtime']['devices'],profiles={})
@@ -310,7 +336,10 @@ def performance(cfg, root, prepared, progress, contexts=None):
             raise ValueError('off/on measurement workloads differ')
         result['comparison'] = {'off_over_on_measured_time':off['measured_seconds']/on['measured_seconds'],
                                 'on_over_off_samples_per_second':on['samples_per_second']/off['samples_per_second']}
-    if tp:
+    if layer_mode:
+        from runtime.layer_coordinator import collect
+        collect(cfg, root, result, contexts, prepared, policy, sides, progress, invoke_worker)
+    if tp and not layer_mode:
         for repeat in range(cfg['performance']['repeats']):
             for side in (sides if repeat%2==0 else list(reversed(sides))):
                 label = f'repeat-{repeat:02}'
@@ -379,6 +408,9 @@ def run(args, cfg):
 def main():
     args = parser().parse_args()
     try:
+        if args.command == 'report':
+            from reporting.replay import run as run_report
+            return run_report(args)
         cfg = load(args)
         if args.command == 'list':
             print((ROOT/'support.json').read_text())

@@ -7,6 +7,15 @@ from runtime.performance import summarize
 
 
 REASONS = {
+    'not_scheduled': '尚未调度，没有执行证据',
+    'estimate_does_not_fit': '剩余探测额度放不下估计成本，尚未执行',
+    'global_budget_exhausted': '本次总探测预算耗尽',
+    'search_allowance_exhausted': '探测额度耗尽，仍可能保留最终复验额度',
+    'worker_timeout': '单 worker 执行上限触发，不能据此认定总预算不足',
+    'confirmation_incomplete': '已尝试，但重复或对照未完成',
+    'resource_failure': '设备或内存等资源故障，不能认定算子不支持',
+    'evidence_incomplete': '执行检查证据不完整或不一致',
+    'unresolved_failure': '失败原因未确定或对照不成立',
     'budget_exhausted': '预算耗尽，尚未充分探测',
     'not_observed': '未观测到函数命中',
     'failure_not_confirmed_within_budget': '失败待确认，预算不足',
@@ -153,6 +162,9 @@ def assess(root, result):
         import yaml
         output['policy'] = coverage(yaml.safe_load(path.read_text()))
     if result.get('command') == 'performance':
+        if result.get('level') == 'layer':
+            output['layer_status'] = result.get('layer', {}).get('timing', {}).get('status', 'incomplete')
+            output['layer_pairing'] = result.get('layer', {}).get('timing', {}).get('paired', False)
         output['performance_groups'] = grouped_performance(result)
         output['measurement_status'] = 'completed' if result.get('summary') else 'incomplete'
         profiles = result.get('profiles', {})

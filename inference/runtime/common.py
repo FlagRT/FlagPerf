@@ -57,6 +57,8 @@ ANALYSIS_FILES = frozenset({
     'analysis/metrics.py', 'analysis/assessment.py', 'analysis/communication.py',
     'reporting/model.py', 'reporting/parallel.py', 'reporting/components.py',
     'analysis/__init__.py', 'reporting/__init__.py',
+    'analysis/layer_trace.py', 'reporting/layer.py', 'reporting/replay.py',
+    'analysis/layer.py', 'reporting/layer_view.py',
 })
 
 

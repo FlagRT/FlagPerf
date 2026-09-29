@@ -39,6 +39,12 @@ TP 的各 rank 共同处理同一批输入，按全局批次窗口报告时延�
 单卡 FlagCX 没有模型集合通信，比较“不适用”；eager 原生路径可能没有 Triton JIT 调用，FlagTree 则可能“未观测到参与”。
 此时即使算出了两侧耗时，也不能据此宣称相应组件带来优化。
 
+## 逐层性能与独立视图
+
+层级报告首页先呈现无插桩整模型变化，再给采样扰动和重点层。`layer-index.md` 按模块、rank、shape 下钻；`layer-details.md` 保留全表。层窗口包含子模块和设备流等待，窗口显存属于整个进程分配器。详见[逐层判读](layer.md)和[指标来源矩阵](metrics.md)。
+
+离线筛选保留整模型原始工作量；重新分析分别记录来源执行状态和本次分析状态。缺失证据仍显示 partial，不能用新报告抹去历史失败。
+
 ## 策略与执行身份
 
 preview 的 `verified` 只证明本次输入下选定函数逐 rank 命中、执行完成且检查边界没有非有限输出。
@@ -58,6 +64,8 @@ schema 3 策略绑定执行源码、镜像、依赖、模型与输入、设备/r
 | `comparison.json` | 精度配对与差异；仅相应比较产生 |
 | `off/`、`on/` | 各路径的 worker 日志、张量或逐批次数据；TP 再按 rank 分层 |
 | `audit/`、`profiles/` | 独立路由取证与 TP 通信采样 |
+| `layer/`、`layer-index.md`、`layer-view.json` | 独立层级采集、阅读索引与结构化视图 |
+| `package-manifest.json`、`reanalysis.json` | portable 文件哈希与重新分析记录，仅相应命令产生 |
 | `preview/` | 策略、预算、检查点、轻量决策证据 |
 | `source-snapshot.json`、`source-code/` | 源码摘要及当次可读源码副本 |
 | `policy-mismatch.json` | 策略失配时可展开的身份差异 |

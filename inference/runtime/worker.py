@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 import sys
 import traceback
+from contextlib import nullcontext
 import yaml
 from runtime.common import ROOT, write_json, read_json, digest, file_hash, source_identity, source_snapshot, assert_source_snapshot
 
@@ -65,6 +66,11 @@ def prepare(cfg, root, shared=None):
         batches = torch.load(root/'inputs.pt',map_location='cpu',weights_only=True)
         samples = read_json(shared/'samples.json')
     write_json(root/'samples.json',samples)
+    from runtime.preview_evidence import input_batches
+    architecture = read_json(Path(cfg['model']['path'])/'config.json')
+    write_json(root/'forward-inputs.json', {'schema_version': 1, 'batches': input_batches(batches),
+        'hidden_size': architecture['hidden_size'],
+        'boundaries': [f'layers.{i}' for i in range(architecture['num_hidden_layers'])]+['pooled','embedding']})
     ident = identity(cfg,backend)
     ident['tokenized_sha256'] = file_hash(root/'inputs.pt')
     write_json(root/'identity.json',ident)
@@ -78,29 +84,44 @@ def prepare(cfg, root, shared=None):
 
 
 def execute_forward(cfg, root, prepared, include, probe):
-    import torch
-    from vendors.device import initialize
-    from models.qwen3_embedding.model import load_model
-    from engines.pytorch import forward, candidates
-    device, backend = initialize(cfg)
-    expected = read_json(prepared/'identity.json')
-    # Recheck model and environment in each new process; the archive is shared read-only.
-    current = identity(cfg,backend)
-    current['tokenized_sha256'] = file_hash(prepared/'inputs.pt')
-    if current != expected:
-        write_json(root/'observed-identity.json',current)
-        from runtime.common import identity_differences
-        differences = identity_differences(expected,current)
-        raise ValueError('worker identity differs from prepared inputs/environment: '+', '.join(sorted(differences)))
-    model = load_model(cfg,device)
-    batches = torch.load(prepared/'inputs.pt',map_location='cpu',weights_only=True)
+    from runtime.preview_evidence import Stages, input_batches
+    preview = cfg.get('_preview_trial')
+    stages = Stages(root) if preview else None
+    measure = stages.measure if stages else lambda name: nullcontext()
+    with measure('initialization'):
+        import torch
+        from vendors.device import initialize
+        from models.qwen3_embedding.model import load_model
+        from engines.pytorch import forward, candidates
+        device, backend = initialize(cfg)
+    with measure('identity'):
+        expected = read_json(prepared/'identity.json')
+        # A complete content check still runs in every independent worker.
+        current = identity(cfg,backend)
+        current['tokenized_sha256'] = file_hash(prepared/'inputs.pt')
+        if current != expected:
+            write_json(root/'observed-identity.json',current)
+            from runtime.common import identity_differences
+            differences = identity_differences(expected,current)
+            raise ValueError('worker identity differs from prepared inputs/environment: '+', '.join(sorted(differences)))
+    with measure('model_load'):
+        model = load_model(cfg,device)
+    with measure('input_load'):
+        batches = torch.load(prepared/'inputs.pt',map_location='cpu',weights_only=True)
+        if preview:
+            expected_checks = {'schema_version': 1, 'batches': input_batches(batches),
+                'hidden_size': model.config.hidden_size,
+                'boundaries': [f'layers.{i}' for i in range(len(model.layers))]+['pooled','embedding']}
+            if expected_checks != read_json(prepared/'forward-inputs.json'):
+                raise ValueError('prepared forward check workload differs from sealed inputs/model')
     from runtime.stack_audit import StackAudit
-    with StackAudit(cfg,root) as audit:
-        result = forward(model,batches,cfg,device,root,include,probe)
+    with StackAudit(cfg,root,compiler=current['compiler'] if preview else None) as audit:
+        result = forward(model,batches,cfg,device,root,include,probe,
+                         evidence_mode=preview['evidence_mode'] if preview else None, stages=stages)
         backend.synchronize()
     result["components"] = audit.result
     backend.synchronize()
-    if probe and include is None:
+    if probe and include is None and (not preview or preview['phase'] == 'baseline'):
         result['candidates'] = candidates(result['inventory'])
     result['status'] = 'completed'
     result['identity_key'] = digest(expected)
@@ -151,7 +172,8 @@ def export_graphs(cfg, root, prepared):
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument('action',choices=['prepare','forward','export','performance','profile'])
+    p.add_argument('action',choices=['prepare','forward','export','performance','profile',
+                                   'layer_timing','layer_memory','layer_profile'])
     p.add_argument('--config',required=True)
     p.add_argument('--output',required=True)
     p.add_argument('--prepared')
@@ -170,7 +192,7 @@ def main():
         assert_source_snapshot(cfg.get('_source_snapshot'))
         if args.action == 'prepare': result = prepare(cfg,root,Path(args.prepared) if args.prepared else None)
         elif args.action == 'export': result = export_graphs(cfg,root,Path(args.prepared))
-        elif args.action in ['performance','profile']:
+        elif args.action in ['performance','profile','layer_timing','layer_memory','layer_profile']:
             import json
             if distributed:
                 from runtime.tp import run
@@ -178,7 +200,8 @@ def main():
                 from runtime.performance import run
             result = run(cfg,root,Path(args.prepared),
                          json.loads(args.include) if args.include is not None else None,args.repeat_index,
-                         **({'profile':args.action=='profile'} if distributed else {}))
+                         **({'profile':args.action=='profile'} if distributed else {}),
+                         **({'phase':args.action} if args.action.startswith('layer_') else {}))
         else:
             import json
             result = execute_forward(cfg,root,Path(args.prepared),json.loads(args.include) if args.include is not None else None,args.probe)
@@ -187,12 +210,15 @@ def main():
     except Exception as error:
         result['status'] = 'failed'
         result.update(error=str(error),traceback=traceback.format_exc(),exception_type=type(error).__name__)
+        if getattr(error, 'errno', None) is not None: result['errno'] = error.errno
         traceback.print_exc()
     finally:
         write_json(root/'result.json',result)
         if distributed:
             from runtime.tp import close_group
-            close_group()
+            from runtime.preview_evidence import Stages
+            with Stages(root,append=True).measure('cleanup') if cfg.get('_preview_trial') else nullcontext():
+                close_group()
             from vendors.stack import communication_backend
             result['cleanup'] = {'groups_deregistered':True,
                 'native_backend_lifetime':'worker_process' if communication_backend(cfg)=='flagcx' else 'group'}

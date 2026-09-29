@@ -8,8 +8,9 @@ Ascend 支持单卡与单机张量并行（TP：把同一模型分到多张卡�
 |---|---|---|
 | 查看能力与限制 | `list` | 当前模型、厂商和功能清单 |
 | 记录输出、比较数值 | `accuracy` | 模型输出或指定模块输出的差异 |
-| 测量模型整体性能 | `performance` | 时延、吞吐、显存；TP 另有通信采样 |
+| 测量模型整体或逐层性能 | `performance` | 时延、吞吐、显存；TP 另有通信采样 |
 | 找到可用于当前环境的 FlagGems 函数集合 | `preview` | 探测记录、可恢复检查点、通过复验的策略 |
+| 筛选或打包已有性能报告 | `report` | total/layer 视图、模块/rank/shape 筛选及实体证据包 |
 | 导出模型图 | `export` | FX 或 ONNX 图及检查结果 |
 
 组件开关 `off` 表示使用对应的默认实现，`on` 表示启用该组件，`both` 表示分别运行两侧进行比较。
@@ -84,7 +85,7 @@ python3 run.py preview --config config/local.yaml --device 0 \
 ```
 
 preview 会多次启动 worker，耗时比一次模型运行更长。可加 `--budget-seconds 300` 先做有限探测；
-该预算不包含准备和清理，复验未完成时不会发布 verified 策略，可按进阶指南续探。
+该预算不包含准备、缓存导入和清理，复验未完成时不会发布 verified 策略，可按 [Preview 指南](../docs/inference/preview.md)续探。
 
 在报告中确认策略为 `verified` 后，精度和性能可使用同一份策略：
 
@@ -103,9 +104,21 @@ python3 run.py performance --config config/local.yaml --device 0 \
 性能主时延从输入已在设备上开始，覆盖 forward、pooling、归一化及最终同步；加载和搬运另列。
 更多解释见 [如何读结果](../docs/inference/results.md)。
 
+## 4. 找到具体耗时层
+
+```bash
+python3 run.py performance --config config/local.yaml --device 0 \
+  --level layer --layers all --output result/layer-native
+```
+
+层级模式会独立运行整模型基准、层计时、profiler 和显存采集。先读 `report.md` 的整体变化，再进入 `layer-index.md` 查看具体层。
+如何选择模块、切换视图、筛选和打包报告，见[逐层性能指南](../docs/inference/layer.md)。
+
 ## 接下来做什么
 
 - [配置参考](../docs/inference/configuration.md)：输入、层选择、采样参数、设备与覆盖规则。
+- [Preview 与续探](../docs/inference/preview.md)：分组搜索、预算、缓存和 unknown 原因。
+- [指标来源](../docs/inference/metrics.md)：采集 API、公式、原始字段与适用边界。
 - [进阶使用](../docs/inference/advanced.md)：TP、FlagTree/FlagCX 比较、preview 续探、图导出、报告重建。
 - [环境准备与排错](../docs/inference/environment.md)：依赖、模型目录、设备权限及策略失配。
 - [目录与扩展边界](../docs/inference/inference-case-doc.md)：各目录职责和执行流程。

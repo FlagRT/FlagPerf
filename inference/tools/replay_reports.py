@@ -15,6 +15,16 @@ def replay(source, destination):
         raise ValueError('sealed source result.json is missing: '+str(source))
     if destination.is_relative_to(source) or source.is_relative_to(destination):
         raise ValueError('replay output and sealed source directories must not overlap')
+    result = read_json(source/'result.json')
+    if result.get('command') == 'performance':
+        # Share the generated-file exclusions and source protection with report.
+        # In particular, layer-index.md must never be rendered through a source link.
+        from reporting.replay import replay as performance_view
+        performance_view(source, destination, result.get('level', 'total'))
+        record = {'source': str(source), 'report': str(destination/'report.md'),
+                  'source_unchanged': True, 'new_device_execution': False}
+        write_json(destination/'report-replay.json', record)
+        return record
     destination.mkdir(parents=True,exist_ok=False)
     protected = {name:file_hash(source/name) for name in
                  ['result.json','report.md','comparison.json','policy.yaml','preview/policy.yaml','report-source.json']

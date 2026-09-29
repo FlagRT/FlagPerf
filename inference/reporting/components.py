@@ -11,15 +11,15 @@ def description(result):
         return ('本次主动探测 FlagGems，'+environment+'。表中的 FlagGems 是背景配置值；'
                 '实际探测从原生基线开始，逐步启用候选，再完整复验最终集合。这里不生成精度差分或性能比。')
     if axis:
-        return f'本次只比较 {NAMES[axis]}：off 为参照，on 为待比较路径；其他组件保持固定，完整配置见下表。off 不是数学真值或 A100 Oracle。'
-    return '本次为固定组件组合的单路径执行，不生成 off/on 差分或加速比。路径名沿用 FlagGems 状态，完整配置见下表。'
+        return f'本次只比较 {NAMES[axis]}：off 为参照，on 为待比较路径；其他组件保持固定，完整配置见下表。off 提供本次组件对照的参照结果。'
+    return '本次为固定组件组合的单路径执行，展示该路径的观测指标。路径名沿用 FlagGems 状态，完整配置见下表。'
 
 
 def add_evidence(root,result):
     if 'component_profiles' not in result: return
     lines=['## 三组件配置与生效证据','']
-    lines += ['', 'FlagTree off/on 分别选择厂商 Triton-Ascend/镜像内 FlagTree；FlagCX off/on 分别选择 HCCL/FlagCX 模型通信组。Gloo 仅用于测试协调。FlagCX 在 Ascend 下调用底层 HCCL 不等于框架选择 HCCL。', '',
-              '编译器 import 版本、包元数据版本可能不同；以实际模块路径和源码摘要核验选择。未观测到 JIT 调用不代表编译器没有安装，也不能把数值比解释为编译器优化效果。', '',
+    lines += ['', 'FlagTree off/on 分别选择厂商 Triton-Ascend/镜像内 FlagTree；FlagCX off/on 分别选择 HCCL/FlagCX 模型通信组。Gloo 仅用于测试协调。FlagCX 在 Ascend 下通过底层 HCCL 执行通信，框架选择见模型通信后端列。', '',
+              '编译器 import 版本、包元数据版本可能不同；以实际模块路径和源码摘要核验选择。JIT 调用列记录本次实际参与；结合配对计时查看编译器路径差异。', '',
               '| 路径/rank | 编译器 | JIT 执行调用 | launch hook | 模型通信后端 | collective 调用 | 通信状态 | 证据 |',
               '|---|---|---:|---:|---|---:|---|---|']
     sources=result.get('component_audits',{}) if result.get('command')=='performance' else result.get('paths',{})
@@ -32,7 +32,7 @@ def add_evidence(root,result):
             if rank!='single': base+='/rank-'+rank
             link=f'[组件证据]({base}/components.json)' if (root/base/'components.json').is_file() else '未生成'
             lines.append(f"| {side}/{rank} | {compiler.get('provider','未采集')} | {compiler.get('jit_run_calls','未采集')} | {compiler.get('launch_hook_calls') if compiler.get('launch_hook_calls') is not None else '未采集'} | {', '.join(comm.get('observed_backends',[])) or '未观测'} | {comm.get('model_collective_calls','未采集')} | {status} | {link} |")
-    lines += ['', '上表来自精度执行或独立性能诊断；正式性能计时不携带调用 hook。JIT/launch 计数可能包含自动调优，不与 ATen 调用一一对应；调用数不是硬件 kernel 覆盖率。单卡通信不适用；缺少设备通信时间时保持未知，不填零。', '',
+    lines += ['', '上表来自精度执行或独立性能诊断。JIT/launch 计数覆盖实际调用和可能的自动调优；ATen 路由与硬件事件各自计数。单卡集合通信标为不适用；缺少设备通信时间时保持未知，已采集项展示实测值。', '',
               '[两侧配置与身份](comparison-context.json) · [完整执行结果](result.json)', '']
     if result.get('policy_profiles'):
         lines += ['### 联合策略各环境记录','',
@@ -53,7 +53,7 @@ def add_evidence(root,result):
                   '| 类别 | 顶层 ATen 调用数 |','|---|---:|']
         labels={'excluded':'策略已排除','unverified':'未纳入本次策略','uncovered':'无候选覆盖','allowed_function_observed':'候选函数已命中','ambiguous':'无法唯一归因'}
         for name,count in summary['counts'].items(): lines.append(f'| {labels.get(name,name)} | {count} |')
-        lines += ['', '分类由该环境独立原生取证与 FlagGems 取证生成；硬件 kernel fallback 未采集。辅助原生取证不构成额外的性能比较侧。','']
+        lines += ['', '分类由该环境独立原生取证与 FlagGems 取证生成；硬件 kernel fallback 未采集。辅助原生取证提供路由分类参照。','']
     path=root/'report.md'
     text=path.read_text()
     title,_,body=text.partition('\n')
@@ -125,10 +125,15 @@ def overview(root, result, assessment):
         recommendations.append('先核对组件证据与适用条件；当前数值不能用于评价该组件收益。')
     if policy:
         reasons = {reason for row in policy['environments'].values() for reason in row['unknown_reasons']}
-        if 'budget_exhausted' in reasons or 'failure_not_confirmed_within_budget' in reasons:
-            recommendations.append('增加本次 --budget-seconds，在新目录续探；若来源没有新版检查点，则先运行一次全新 preview。')
-        if 'unresolved_or_resource_failure' in reasons:
+        if reasons & {'budget_exhausted','failure_not_confirmed_within_budget','not_scheduled',
+                      'estimate_does_not_fit','global_budget_exhausted','search_allowance_exhausted','confirmation_incomplete'}:
+            recommendations.append('先查看实际剩余额度、成本估计及未完成阶段，再安排足够的 --budget-seconds 在新目录续探；尚未执行不表示算子失败。')
+        if 'worker_timeout' in reasons:
+            recommendations.append('查看 worker 最后阶段及 runtime.timeout_seconds；单纯增加总预算不会提高单 worker 上限，超时不能直接定位为算子问题。')
+        if reasons & {'unresolved_or_resource_failure','resource_failure','unresolved_failure'}:
             recommendations.append('先查看失败日志及资源占用，排除资源问题后重新 preview；未知不能当作不支持。')
+        if 'evidence_incomplete' in reasons:
+            recommendations.append('核对 forward-checks.json 的摘要、样本和检查边界；缺失检查证据不能发布策略。')
         if 'not_observed' in reasons:
             recommendations.append('查看未命中函数的候选签名和路由记录；当前输入没有提供足够调用证据。')
         if any(row['excluded'] for row in policy['environments'].values()):
@@ -156,6 +161,8 @@ def overview(root, result, assessment):
             argv += ['--'+component, section.get(component,'off')]
         if (root/'preview/checkpoint.json').is_file():
             argv += ['--resume-from', str(root), '--budget-seconds', str(cfg.get('preview',{}).get('budget_seconds',3600))]
+            argv += ['--preview-search', cfg.get('preview',{}).get('search_strategy','sequential'),
+                     '--preview-budget', cfg.get('preview',{}).get('budget_mode','fixed')]
         argv += ['--output', str(root)+'-preview-next']
         lines += ['重新探测的命令（在 inference 目录执行，输出目录必须不存在）：', '',
                   '```bash', shlex.join(argv), '```', '',
@@ -221,7 +228,13 @@ def detail_lines(root, assessment):
                     attempts = []
                     for name in ('trial','repeat','control'):
                         if name not in record: continue
-                        target = evidence_base/record[name]/'result.json'
+                        reference = Path(record[name])
+                        if reference.parts and reference.parts[0] == 'preview':
+                            run_root = evidence_policy.parent.parent if evidence_policy.parent.name == 'preview' else evidence_policy.parent
+                            target = run_root/reference
+                        else:
+                            target = evidence_base/reference
+                        if target.suffix != '.json': target = target/'result.json'
                         attempts.append(f'[{name}](<{target}>)' if target.is_file() else name+'='+str(record[name])+'（原记录当前不可读）')
                     if attempts: text += '；' + ', '.join(attempts)
                     lines.append(f"| {record.get('function','未记录')} | {status}：{REASONS.get(record.get('reason'),record.get('reason','未记录'))} | {text} |")

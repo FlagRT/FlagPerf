@@ -16,7 +16,7 @@
 |---|---|
 | 基础算力、内存、互连及厂商诊断 | [Base 入门](base/README.md) |
 | 一个算子的正确性、性能与失败原因 | [Operation 入门](operation/README.md) |
-| 模型输出差异、整体性能及组件开关影响 | [Inference 入门](inference/README.md) |
+| 模型输出差异、整体/逐层性能及组件开关影响 | [Inference 入门](inference/README.md) |
 | 模型训练 | [Training 文档](training/README.md) |
 | 生成式服务评测 | [Generate 文档](docs/generate/generate-case-doc.md) |
 
@@ -254,7 +254,7 @@ Base、Operation、Inference 的当前单机入口不要求 SSH。先阅读所�
 
 | 模型 | 执行方式 | 主要能力 | 入口 |
 |---|---|---|---|
-| Qwen3-Embedding-0.6B | PyTorch/Transformers eager | 模型/模块精度、整体性能、TP 通信采样、组件比较、图导出 | [Inference](inference/README.md) |
+| Qwen3-Embedding-0.6B | PyTorch/Transformers eager | 模型/模块精度、整体与逐层性能、TP 通信采样、组件比较、报告筛选与图导出 | [Inference](inference/README.md) |
 
 支持与限制以 [能力清单](inference/support.json) 为准；旧模型和编译引擎不属于当前支持范围。
 

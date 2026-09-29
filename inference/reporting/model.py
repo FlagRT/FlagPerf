@@ -7,6 +7,18 @@ from reporting.components import description
 
 def render(root, result):
     _render(root,result)
+    if result.get('command') == 'performance' and result.get('level') == 'layer':
+        from reporting.components import add_evidence
+        add_evidence(root, result)
+        (root/'report.md').replace(root/'layer-details.md')
+        from reporting.layer_view import build, render_summary
+        evidence = build(result, result.get('report_view', {}).get('selection', {}))
+        render_summary(root, result, evidence)
+        from runtime.common import ROOT, file_hash, write_json
+        write_json(root/'report-source.json', {'generator_sha256': {
+            name:file_hash(ROOT/name) for name in ['reporting/layer.py', 'analysis/layer.py', 'analysis/layer_trace.py', 'reporting/layer_view.py', 'reporting/replay.py', 'reporting/model.py', 'reporting/components.py', 'analysis/assessment.py']},
+            'result_sha256':file_hash(root/'result.json') if (root/'result.json').is_file() else None})
+        return
     from reporting.components import add_evidence
     add_evidence(root,result)
     from reporting.components import add_overview
@@ -144,6 +156,9 @@ def render_tp_accuracy(root, result):
 
 
 def render_performance(root, result):
+    if result.get('level') == 'layer':
+        from reporting.layer import render
+        return render(root, result)
     if result.get('parallelism') == 'tp':
         from reporting.parallel import render
         return render(root,result)
@@ -429,14 +444,60 @@ def add_resume_evidence(root, result):
         for row in budget['trials']:
             group=groups[row['phase']];group[0]+=1;group[1]+=row['seconds'];group[2]+=int(row['timed_out'])
         lines += ['## 探测时间花在哪里', '',
-                  f"预算策略：{budget['mode']}；本次预算 {budget['seconds']} 秒，已计费 {budget['charged_seconds']:.2f} 秒。", '',
+                  f"搜索策略：{budget.get('search_strategy','sequential')}；预算策略：{budget['mode']}；本次预算 {budget['seconds']} 秒，已计费 {budget['charged_seconds']:.2f} 秒。", '',
                   '| 阶段 | worker 次数 | 实测秒数 | 超时次数 |', '|---|---:|---:|---:|']
         for phase,(count,seconds,timeouts) in groups.items():
             lines.append(f'| {phase} | {count} | {seconds:.2f} | {timeouts} |')
-        lines += ['', f"因预算估计暂缓的候选：{len(budget['skipped'])}；建议下次预算至少约 {budget['estimated_minimum_next_budget_seconds']} 秒（估计，不保证完成）。",
+        if budget.get('search_strategy') == 'grouped':
+            search = budget.get('search', {})
+            lines += ['', '分组成功表示这一累积组合在完整输入中通过逐层有限值与逐 rank 命中检查；组内函数共享证据，并非各自独立试验。失败组拆分定位，单函数排除仍须重复失败与成功对照；最终集合另起 worker 复验。',
+                      f"本次复用相同环境及有序累积组合的搜索证据 {len(search.get('reused_trials',[]))} 次；不复用失败确认或最终复验。分组树及调度估计分别见检查点与预算记录。", '']
+        lines += ['', f"因预算暂缓或中止的记录（含必要阶段）：{len(budget['skipped'])}；建议下次预算至少约 {budget['estimated_minimum_next_budget_seconds']} 秒（估计，不保证完成）。",
                   '本预算覆盖基线、旧集合复验、候选及最终复验；准备、复制、清理另列。上述耗时是实验周转成本，不是模型推理性能。', '']
         for name,seconds in result.get('preparation_seconds',{}).items():
             lines.append(f'- {name}：{seconds:.2f} 秒。')
         lines.append(f"- 超时清理：{budget['cleanup_seconds']:.2f} 秒。")
+        if 'cache_import' in budget:
+            lines += ['', '## 轻量证据与续探缓存', '',
+                '完整输入、逐层有限值检查和逐 rank 命中仍执行。lightweight 模式只保存检查清单、路由和异常位置，不能事后恢复成功试验的完整 tensor；full 模式保留 tensor。', '',
+                '| 环境 | 缓存导入状态 | 完整组数 | 复制字节 | 导入秒 | 跳过组数 |',
+                '|---|---|---:|---:|---:|---:|']
+            for key, entry in budget['cache_import'].items():
+                lines.append(f"| {key[:12]} | {entry['status']} | {entry['imported_groups']} | {entry['copied_bytes']} | {entry['seconds']:.3f} | {len(entry['skipped'])} |")
+            lines += ['', '[缓存导入明细](preview/cache-import.json)。缓存只复制到新目录，旧缓存不被写入；不完整组会重新编译。导入时间属于准备成本，比较收益时必须计入。', '',
+                '| 执行环境/rank | worker 内阶段 | 累计已记录秒 | 无时长记录数 |', '|---|---|---:|---:|']
+            stage_totals=defaultdict(float)
+            stage_missing=defaultdict(int)
+            cache_reads=defaultdict(lambda:[0,0,0,0])
+            orchestration=defaultdict(float)
+            tensor_bytes=check_bytes=0
+            for trial in budget['trials']:
+                for name,seconds in trial.get('orchestration_timing',{}).items(): orchestration[name]+=seconds
+                for rank, entry in trial.get('diagnostics',{}).items():
+                    tensor_bytes+=entry['tensor_bytes'];check_bytes+=entry['check_bytes']
+                    counters=entry.get('cache_groups')
+                    if counters is not None:
+                        row=cache_reads[trial['environment'][:12]+'/'+rank]
+                        row[0]+=1;row[1]+=counters['lookups'];row[2]+=counters['complete_reads'];row[3]+=counters['writes']
+                    for stage in entry['stages']:
+                        key=(trial['environment'][:12]+'/'+rank,stage['stage'])
+                        if stage.get('seconds') is None: stage_missing[key]+=1
+                        else: stage_totals[key]+=stage['seconds']
+            for rank,stage in sorted(set(stage_totals)|set(stage_missing)):
+                key=(rank,stage)
+                seconds=f'{stage_totals[key]:.3f}' if key in stage_totals else '未采集'
+                lines.append(f'| {rank} | {stage} | {seconds} | {stage_missing[key]} |')
+            lines += ['', f'输出 tensor 文件逻辑大小合计 {tensor_bytes} 字节；检查清单合计 {check_bytes} 字节（不含输入归档、日志和编译缓存）。',
+                '前向阶段包含首次编译与逐层 CPU 采集；没有独立测量 kernel 或编译时间。TP 各 rank 阶段可能重叠，不相加作为整体耗时；整体使用上方协调进程的试验墙时。',
+                '异常终止阶段可能没有结束时长：仅累计已记录值，缺失数量另列；全部缺失显示未采集，不补 0。',
+                '进程启动、检查清单校验及控制记录等未覆盖部分仍包含在试验/总墙时中；异常退出的最后阶段见每个试验的 stages.json。', '']
+            lines += ['| 环境/rank | 有缓存计数的 worker | 查找组次数 | 完整组读取次数 | 写组次数 |',
+                      '|---|---:|---:|---:|---:|']
+            for rank,counts in sorted(cache_reads.items()):
+                lines.append('| '+rank+' | '+' | '.join(str(v) for v in counts)+' |')
+            lines += ['', '缓存计数是 Python 文件缓存行为，不是硬件 kernel 命中率；写组次数也不是精确编译次数。', '',
+                      '| 协调进程阶段 | 累计秒 |','|---|---:|']
+            for name,seconds in sorted(orchestration.items()): lines.append(f'| {name} | {seconds:.3f} |')
+            lines += ['', 'environment_and_assets_seconds 是 setup_seconds 的子集，worker 内阶段包含在 process_seconds 中，均不可重复相加。process_seconds 含超时清理，试验计费秒数扣除清理；缓存封存耗时单列在 budget.json 各次试验中，计入本次探测预算。', '']
     path=root/'report.md'
     path.write_text(path.read_text()+'\n'+'\n'.join(lines))

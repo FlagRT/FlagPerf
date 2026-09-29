@@ -23,10 +23,11 @@ def signature(value):
 
 
 class Inventory(TorchDispatchMode):
-    def __init__(self, route=None):
+    def __init__(self, route=None, scopes=None):
         super().__init__()
         self.ops = {}
         self.route = route
+        self.scopes = scopes
 
     def __torch_dispatch__(self, func, types, args=(), kwargs=None):
         nested = bool(self.route and self.route.depth)
@@ -42,6 +43,7 @@ class Inventory(TorchDispatchMode):
             return output
         name = str(func).replace('aten.','',1)
         if name.endswith('.default'): name = name[:-8]
+        if self.scopes: self.scopes.observe(name, 'aten')
         sig = signature({'args':args,'kwargs':kwargs or {}})
         row = self.ops.setdefault(name, {'calls':0,'signatures':[]})
         row['calls'] += 1
@@ -61,6 +63,7 @@ class GemsRoute:
         self.lib = None
         self.log = None
         self.depth = 0
+        self.scopes = None
 
     def enable(self):
         import flag_gems
@@ -71,6 +74,7 @@ class GemsRoute:
                 @functools.wraps(fn)
                 def observed(*args, **kwargs):
                     owner.calls[fn.__name__] += 1
+                    if owner.scopes: owner.scopes.observe(fn.__name__, 'function')
                     if fn.__name__ not in owner.signatures:
                         sig = signature({'args':args,'kwargs':kwargs})
                         owner.signatures[fn.__name__] = sig
@@ -119,12 +123,18 @@ def candidates(inventory):
     return [by_function[k] for k in sorted(by_function)]
 
 
-def forward(model, batches, cfg, device, directory, include=None, probe=False):
+def forward(model, batches, cfg, device, directory, include=None, probe=False, evidence_mode=None, stages=None):
     root = Path(directory)
     route = GemsRoute(include, root) if include is not None else None
     captures, handles, errors = {}, [], []
+    layer_audit = bool(probe and cfg.get('_layer_audit'))
+    scopes = None
+    if layer_audit:
+        from runtime.layer_capture import RouteScopes
+        scopes = RouteScopes(selected_layers(model, cfg['performance']['layers']))
+        if route: route.scopes = scopes
     names = cfg['accuracy']['layers'] if not probe else ['all']
-    if probe or 'layer' in cfg['accuracy']['levels']:
+    if not layer_audit and (probe or 'layer' in cfg['accuracy']['levels']):
         for name, module in selected_layers(model, names).items():
             def hook(_module, _args, output, name=name):
                 value = output[0] if isinstance(output,(tuple,list)) else output
@@ -132,32 +142,72 @@ def forward(model, batches, cfg, device, directory, include=None, probe=False):
                     raise ValueError(f'{name}: expected batch/sequence/hidden tensor')
                 captures[name] = value.detach().cpu()
             handles.append(module.register_forward_hook(hook))
-    inventory = Inventory(route)
+    inventory = Inventory(route, scopes)
+    collect_inventory = bool(probe and (not cfg.get('_preview_trial') or
+                                       cfg['_preview_trial']['phase'] == 'baseline'))
     artifacts = []
+    checks = []
+    measure = stages.measure if stages else lambda name: nullcontext()
     try:
         if route: route.enable()
+        if scopes: scopes.__enter__()
         for index, batch in enumerate(batches):
             captures.clear()
             inputs = {k:v.to(device) for k,v in batch['inputs'].items()}
-            with torch.inference_mode(), (inventory if probe else nullcontext()):
-                hidden = model(**inputs, use_cache=False, return_dict=True).last_hidden_state
-                pooled, embedding = pool(hidden, inputs['attention_mask'])
+            if scopes: scopes.begin({'batch_index': index})
+            try:
+                with measure('forward_and_capture'), torch.inference_mode(), (inventory if collect_inventory else nullcontext()):
+                    hidden = model(**inputs, use_cache=False, return_dict=True).last_hidden_state
+                    pooled, embedding = pool(hidden, inputs['attention_mask'])
+            finally:
+                if scopes: scopes.active = False
             # All diagnostics run outside the monitored device scope.
-            values = {'pooled':pooled.detach().cpu(), 'embedding':embedding.detach().cpu(), **captures}
-            mask = batch['inputs']['attention_mask'].bool()
-            for i, sample in enumerate(batch['ids']):
-                for boundary, tensor in values.items():
-                    row = tensor[i] if boundary in ['pooled','embedding'] else tensor[i][mask[i]]
-                    if not bool(torch.isfinite(row).all()): errors.append({'sample_id':sample,'boundary':boundary,'kind':'nonfinite'})
-            artifact = root / f'batch-{index:04}.pt'
-            torch.save({'ids':batch['ids'],'mask':batch['inputs']['attention_mask'],'outputs':values}, artifact)
-            artifacts.append(artifact.name)
-        return {'numerical_anomalies':errors,'inventory':inventory.ops,'artifacts':artifacts,
+            with measure('finite_checks'):
+                values = {'pooled':pooled.detach().cpu(), 'embedding':embedding.detach().cpu(), **captures}
+                mask = batch['inputs']['attention_mask'].bool()
+                batch_checks = []
+                for i, sample in enumerate(batch['ids']):
+                    for boundary, tensor in values.items():
+                        row = tensor[i] if boundary in ['pooled','embedding'] else tensor[i][mask[i]]
+                        finite = torch.isfinite(row)
+                        good = bool(finite.all())
+                        if not good: errors.append({'sample_id':sample,'boundary':boundary,'kind':'nonfinite'})
+                        if evidence_mode:
+                            bad = (~finite).nonzero() if not good else None
+                            batch_checks.append({'sample_id':sample,'boundary':boundary,
+                                'shape':list(row.shape),'dtype':str(row.dtype),'checked_elements':row.numel(),
+                                'nonfinite_count':0 if good else int(bad.shape[0]),
+                                'first_nonfinite':[] if good else [{'index':p.tolist(),'value':str(row[tuple(p.tolist())].item())} for p in bad[:16]]})
+                if evidence_mode:
+                    checks.append({'batch_index':index,'sample_ids':batch['ids'],
+                        'input_shape':list(batch['inputs']['input_ids'].shape),'checks':batch_checks})
+            with measure('evidence_write'):
+                if evidence_mode != 'lightweight':
+                    artifact = root / f'batch-{index:04}.pt'
+                    torch.save({'ids':batch['ids'],'mask':batch['inputs']['attention_mask'],'outputs':values}, artifact)
+                    artifacts.append(artifact.name)
+                if evidence_mode:
+                    # A killed worker leaves readable checks, but never a completed certificate.
+                    from runtime.common import write_json
+                    write_json(root/'forward-checks.json', {'schema_version':1,'mode':evidence_mode,
+                               'complete':False,'batches':checks})
+        evidence = {}
+        if evidence_mode:
+            from runtime.preview_evidence import seal_checks
+            with measure('evidence_write'):
+                evidence['forward_evidence'] = seal_checks(root,evidence_mode,checks)
+        return {'numerical_anomalies':errors,'inventory':inventory.ops,'inventory_collected':collect_inventory,'artifacts':artifacts,
+                **evidence,
+                **({'layer_routes': scopes.evidence()} if scopes else {}),
                 'route':route.evidence() if route else {'requested':False,'observed':False,'actual_function_calls':{}}}
     finally:
         from runtime.common import write_json
-        write_json(root/'inventory.json',inventory.ops)
+        if collect_inventory or not cfg.get('_preview_trial'):
+            write_json(root/'inventory.json',inventory.ops)
         if route:
             write_json(root/'route.json',route.evidence())
             route.close()
+        if scopes:
+            write_json(root/'layer-routes.json', scopes.evidence())
+            scopes.__exit__(None, None, None)
         for handle in handles: handle.remove()

@@ -5,7 +5,7 @@
 | Ascend 环境、支持范围与公开验证记录 | [Ascend 适配指南](ascend/README.md) |
 | 基础算力、内存、传输与厂商诊断 | [Base 使用指南](../base/README.md) |
 | 算子正确性、路由、性能与失败诊断 | [Operation 使用指南](../operation/README.md) |
-| 模型输出差异、整体性能与组件比较 | [Inference 使用指南](../inference/README.md) |
+| 模型输出差异、整体/逐层性能与组件比较 | [Inference 使用指南](../inference/README.md) |
 | 单机双 rank 通信资格验证 | [P2P 协议](ascend/p2p.md) |
 | 适配维护、离线回归与发布检查 | [验证与维护](ascend/validation.md) |
 | 正式功能与文档更新记录 | [变更记录](CHANGELOG.md) |

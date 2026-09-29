@@ -20,20 +20,30 @@ class ConfigError(ValueError):
 
 def parser():
     p = argparse.ArgumentParser(description='Inference accuracy and performance')
-    p.add_argument('command', choices=['accuracy', 'performance', 'preview', 'export', 'list'])
+    p.add_argument('command', choices=['accuracy', 'performance', 'preview', 'export', 'list', 'report'])
+    p.add_argument('--source', help='Sealed performance run for offline reporting')
+    p.add_argument('--ranks', nargs='+', type=int, help='Report view: selected logical ranks')
+    p.add_argument('--shapes', nargs='+', help='Report view: input shapes, e.g. 4,20 4,256')
+    p.add_argument('--portable', action='store_true', help='Copy evidence into a self-contained report directory')
+    p.add_argument('--reanalyze', action='store_true', help='Analyze profiler evidence in a new copied directory')
     p.add_argument('--config', default=str(DEFAULT_CONFIG))
     p.add_argument('--output', help='New output directory; existing evidence is never overwritten')
     p.add_argument('--image', help='Compatible local Docker image; overrides container.image')
     for component in ('flaggems', 'flagtree', 'flagcx'):
         p.add_argument('--'+component, choices=['off', 'on', 'both'])
     p.add_argument('--levels', nargs='+', choices=['model', 'layer'])
-    p.add_argument('--level', choices=['total'])
+    p.add_argument('--level', choices=['total', 'layer'])
+    p.add_argument('--layer-profile-rounds', type=int)
     p.add_argument('--warmup-rounds', type=int)
     p.add_argument('--measure-rounds', type=int)
     p.add_argument('--repeats', type=int)
     p.add_argument('--layers', nargs='+')
     p.add_argument('--resume-from', help='Read-only schema 3 preview source directory')
     p.add_argument('--budget-seconds', type=int, help='This preview run: baseline, search and verification budget')
+    p.add_argument('--preview-evidence', choices=['lightweight','full'], help='Preview output evidence; all checks run in either mode')
+    p.add_argument('--resume-cache', choices=['auto','off'], help='Import sealed cache groups from a compatible preview source')
+    p.add_argument('--preview-search', choices=['grouped','sequential'], help='Preview candidate search strategy')
+    p.add_argument('--preview-budget', choices=['adaptive','fixed'], help='Preview cost and verification reservation policy')
     p.add_argument('--policy')
     p.add_argument('--model-path')
     p.add_argument('--input-path')
@@ -51,6 +61,8 @@ def parser():
 
 
 def load(args):
+    if args.source is not None:
+        raise ConfigError('--source requires report')
     path = Path(args.config).expanduser().resolve()
     default = yaml.safe_load(DEFAULT_CONFIG.read_text())
     provided = yaml.safe_load(path.read_text())
@@ -92,20 +104,29 @@ def load(args):
     merge(cfg, provided)
     if args.device is not None and args.devices is not None:
         raise ConfigError('--device and --devices are mutually exclusive')
-    if args.command == 'performance' and (args.levels is not None or args.layers is not None):
-        raise ConfigError('performance uses --level total; --levels/--layers belong to accuracy')
+    if args.command == 'performance' and args.levels is not None:
+        raise ConfigError('performance uses --level; --levels belongs to accuracy')
     if args.command != 'performance' and any(getattr(args,k) is not None for k in ('level','warmup_rounds','measure_rounds','repeats')):
         raise ConfigError('--level and performance sampling options require performance')
     if args.command != 'preview' and (args.resume_from is not None or args.budget_seconds is not None):
         raise ConfigError('--resume-from and --budget-seconds require preview')
+    if args.command != 'preview' and (args.preview_evidence is not None or args.resume_cache is not None):
+        raise ConfigError('--preview-evidence and --resume-cache require preview')
+    if args.command != 'preview' and (args.preview_search is not None or args.preview_budget is not None):
+        raise ConfigError('--preview-search and --preview-budget require preview')
+    if args.command != 'report' and (args.ranks is not None or args.shapes is not None or args.portable or args.reanalyze):
+        raise ConfigError('--ranks, --shapes, --portable and --reanalyze require report')
     component_section = args.command if args.command in ['accuracy','performance','preview'] else 'accuracy'
     mapping = {'image': ('container', 'image'), 'flaggems': (component_section,'flaggems'),
                'flagtree': (component_section,'flagtree'), 'flagcx': (component_section,'flagcx'),
                'levels':('accuracy','levels'), 'level':('performance','level'),
                'warmup_rounds':('performance','warmup_rounds'),
                'measure_rounds':('performance','measure_rounds'), 'repeats':('performance','repeats'),
-               'layers':('accuracy','layers'), 'policy':('policy','path'),
+               'layers':('performance' if args.command == 'performance' else 'accuracy','layers'), 'policy':('policy','path'),
+               'layer_profile_rounds':('performance','layer_profile_rounds'),
                 'resume_from':('preview','resume_from'), 'budget_seconds':('preview','budget_seconds'),
+               'preview_evidence':('preview','evidence_mode'), 'resume_cache':('preview','resume_cache'),
+               'preview_search':('preview','search_strategy'), 'preview_budget':('preview','budget_mode'),
                'model_path':('model','path'), 'input_path':('inputs','path'),
                'vendor':('runtime','vendor'), 'device':('runtime','device'),
                'devices':('runtime','devices'), 'parallelism':('runtime','parallelism'),
@@ -122,6 +143,13 @@ def load(args):
         raise ConfigError('TP uses --devices, not --device')
     if args.communication_profile_rounds is not None and args.command != 'performance':
         raise ConfigError('--communication-profile-rounds requires performance')
+    layer_mode = args.command == 'performance' and cfg['performance']['level'] == 'layer'
+    if args.layer_profile_rounds is not None and not layer_mode:
+        raise ConfigError('--layer-profile-rounds requires performance --level layer')
+    if args.layers is not None and args.command != 'accuracy' and not layer_mode:
+        raise ConfigError('--layers requires accuracy or performance --level layer')
+    if layer_mode and args.communication_profile_rounds is not None:
+        raise ConfigError('layer uses --layer-profile-rounds for shared layer/communication profiling')
     if args.command == 'export' and any(getattr(args, k) not in [None, 'off'] for k in ('flaggems','flagtree','flagcx')):
         raise ConfigError('export supports native off components only')
     validate(cfg, args.command)
@@ -158,12 +186,20 @@ def validate(c, command):
                        ('inputs', 'max_length')]
     if command == 'preview':
         positive_fields.append(('preview', 'budget_seconds'))
+        if c['preview']['evidence_mode'] not in ['lightweight','full']:
+            raise ConfigError('preview.evidence_mode must be lightweight or full')
+        if c['preview']['resume_cache'] not in ['auto','off']:
+            raise ConfigError('preview.resume_cache must be auto or off (quote YAML values)')
+        if c['preview']['search_strategy'] not in ['grouped','sequential']:
+            raise ConfigError('preview.search_strategy must be grouped or sequential')
+        if c['preview']['budget_mode'] not in ['adaptive','fixed']:
+            raise ConfigError('preview.budget_mode must be adaptive or fixed')
     if command == 'accuracy':
         positive_fields.append(('accuracy', 'worst_samples'))
     if command == 'performance':
         positive_fields.extend(('performance', key) for key in
                                ['warmup_rounds', 'measure_rounds', 'repeats',
-                                'communication_profile_rounds'])
+                                'communication_profile_rounds', 'layer_profile_rounds'])
     for group, key in positive_fields:
         if type(c[group][key]) is not int or c[group][key] < 1:
             raise ConfigError(f'{group}.{key} must be a positive integer')
@@ -179,8 +215,14 @@ def validate(c, command):
             raise ConfigError('FlagTree/FlagCX adapters currently require ascend')
     if c['runtime']['vendor'] == 'ascend' and c['vendors']['ascend']['env'].get('TASK_QUEUE_ENABLE') != '0':
         raise ConfigError('validated Ascend stack requires TASK_QUEUE_ENABLE=0')
-    if command == 'performance' and c['performance']['level'] != 'total':
-        raise ConfigError('performance supports level total only')
+    if command == 'performance':
+        if c['performance']['level'] not in ['total', 'layer']:
+            raise ConfigError('performance supports level total or layer')
+        names = c['performance']['layers']
+        if (not isinstance(names, list) or not names or
+                any(not isinstance(n, str) or not n.strip() for n in names) or
+                len(set(names)) != len(names) or ('all' in names and names != ['all'])):
+            raise ConfigError('performance.layers must be unique module names or [all]')
     if command in ['accuracy', 'export']:
         key, allowed = ('levels', {'model', 'layer'}) if command == 'accuracy' else ('formats', {'fx', 'onnx'})
         values = c[command][key]

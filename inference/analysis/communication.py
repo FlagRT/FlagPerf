@@ -61,8 +61,18 @@ def analyze_rank(folder,rank):
     issues=[]
     result=read_json(folder/'result.json')
     calls=read_json(folder/'collectives.json')
+    profile_folder=folder/'profiler'
+    recovery_path=folder/'profiler-recovery/recovery.json'
+    if recovery_path.is_file():
+        recovery=read_json(recovery_path)
+        if recovery.get('status')=='completed':
+            from analysis.layer_trace import capture_hashes
+            source=folder/recovery['source']
+            if capture_hashes(source)!=recovery['source_sha256']:
+                raise ValueError('raw profiler capture changed after independent export')
+            profile_folder=folder/'profiler-recovery/capture'
     def one(name):
-        files=list((folder/'profiler').rglob(name))
+        files=list(profile_folder.rglob(name))
         if len(files)!=1: raise ValueError(f'{name}: expected one capture, got {len(files)}')
         return read_json(files[0]),str(files[0].relative_to(folder))
     comm,comm_path=one('communication.json')

@@ -15,7 +15,7 @@ CLI 相对路径按当前工作目录解析；输出中的 `effective.yaml` 保�
 | `model` | `path`、`dtype`、`attention` | 用户模型目录；BF16/FP16/FP32；当前 attention 为 eager |
 | `inputs` | `path`、`batch_size`、`max_length`、`padding_side` | JSONL 文件；默认 4 条/批、最长 256 token、左 padding |
 | `accuracy` | 三组件开关、`levels`、`layers`、`worst_samples` | 默认仅记录原生模型输出；可比较模型与指定模块 |
-| `performance` | 三组件开关、`level`、`warmup_rounds`、`measure_rounds`、`repeats` | 只支持 total；默认预热 5 轮、测量 30 轮、重复 3 次 |
+| `performance` | 三组件开关、`level`、`warmup_rounds`、`measure_rounds`、`repeats` | 支持 total/layer，默认 total；默认预热 5 轮、测量 30 轮、重复 3 次 |
 | `runtime` | `vendor`、`device`、`parallelism`、`devices`、`timeout_seconds` | 单卡用 device，TP 用 devices；超时作用于 worker 阶段 |
 | `container` | `image`、`shm_size` | 用户兼容镜像；默认共享内存 4g，TP 示例为 8g |
 | `vendors.ascend` | `vendor_compiler`、`env` | 只读编译器资产及统一环境变量 |
@@ -45,9 +45,27 @@ python3 run.py performance --config config/local.yaml --device 0 \
 ```
 
 `--image` 覆盖 `container.image`；`--model-path` 和 `--input-path` 覆盖对应路径。
-`--device` 与 `--devices` 不混用。性能用 `--level total`，精度用 `--levels model layer`。
+`--device` 与 `--devices` 不混用。性能用 `--level total|layer`，精度用 `--levels model layer`。
 模型级输出包括 pooled vector 和最终 embedding；`--layers all` 表示所有 Transformer blocks。
 模块名字来自当前模型，不是通用硬件算子名称。
 
 `--task-score` / `--data-path` 是保留接口，任务评分尚未实现，指定后明确报错。
 不同命令只验证自身的专属选项，不会用另一模式的采样参数替代当前配置。
+
+## 新增性能与 Preview 选项
+
+| 配置字段 | CLI | 默认与范围 |
+|---|---|---|
+| `performance.layers` | `--layers` | `[all]`；仅在性能 layer 模式选择模块，不改 accuracy 的层选择 |
+| `performance.layer_profile_rounds` | `--layer-profile-rounds` | 1；正整数，控制独立诊断轮数 |
+| `preview.evidence_mode` | `--preview-evidence` | `lightweight`，可选 `full` |
+| `preview.resume_cache` | `--resume-cache` | `auto`，可选 `'off'` |
+| `preview.search_strategy` | `--preview-search` | `grouped`，可选 `sequential` |
+| `preview.budget_mode` | `--preview-budget` | `adaptive`，可选 `fixed` |
+
+layer 模式以 `--layer-profile-rounds` 控制层与通信诊断，不接受 `--communication-profile-rounds`。
+续探保持来源的搜索策略和预算模式。具体机制与例子见 [Preview](preview.md) 和 [逐层性能](layer.md)。
+
+`report` 独立读取 `--source`，要求 `--level total|layer` 和新 `--output`；不读取运行配置或模型。
+`--layers`、`--ranks`、`--shapes` 只筛选 layer 视图；`--portable` 携带实体证据；`--reanalyze` 在实体副本中重新分析 layer profiler。
+这些选项不用于重新执行模型。

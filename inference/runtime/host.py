@@ -74,6 +74,9 @@ def main():
     args = parser().parse_args()
     root, name = None, None
     try:
+        if args.command == 'report':
+            from reporting.replay import run as run_report
+            return run_report(args)
         cfg = load(args)
         if args.command == 'list':
             print((ROOT/'support.json').read_text()); return 0
@@ -100,6 +103,10 @@ def main():
             paths = 2 if any(cfg['performance'].get(k)=='both' for k in ['flaggems','flagtree','flagcx']) else 1
             audits = 2*paths
             phases = 2 if cfg['runtime'].get('parallelism') == 'tp' else 1
+            if cfg['performance']['level'] == 'layer':
+                # Baseline, timing, trace and memory; memory repeats disjoint groups.
+                names = cfg['performance']['layers']
+                phases = 4 + (0 if names == ['all'] else len(names))
             timeout = (paths+audits+phases*paths*cfg['performance']['repeats'])*cfg['runtime']['timeout_seconds']+120
         else:
             timeout = (cfg['preview']['budget_seconds'] if args.command=='preview' else 2*cfg['runtime']['timeout_seconds']) + 4*cfg['runtime']['timeout_seconds'] + 120

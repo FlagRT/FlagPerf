@@ -25,6 +25,8 @@ performance:
   flagtree: 'off'
   flagcx: 'off'
   level: total
+  layers: [all]
+  layer_profile_rounds: 1
   warmup_rounds: 5
   measure_rounds: 30
   repeats: 3
@@ -61,5 +63,9 @@ preview:
   flagcx: 'off'
   budget_seconds: 3600
   resume_from: null
+  evidence_mode: lightweight
+  resume_cache: auto
+  search_strategy: grouped
+  budget_mode: adaptive
 export:
   formats: [fx, onnx]

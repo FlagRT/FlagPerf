@@ -52,7 +52,7 @@ def memory_state(backend):
             'reserved_bytes':backend.memory_reserved(0)}
 
 
-def run(cfg, root, prepared, include, repeat_index):
+def run(cfg, root, prepared, include, repeat_index, phase=None):
     import torch
     from vendors.device import initialize
     from models.qwen3_embedding.model import load_model_cpu, pool
@@ -143,6 +143,10 @@ def run(cfg, root, prepared, include, repeat_index):
                 backend.synchronize()
                 del embedding
         warmup_seconds = (time.perf_counter_ns()-started)/1e9
+        if phase:
+            from runtime.layer_capture import run_pass
+            return run_pass(cfg,root,model,forward,data,batch_metadata,backend,repeat_index,phase,
+                            digest(expected),registered)
         backend.synchronize()
         baseline = memory_state(backend)
         backend.reset_peak_memory_stats(0)

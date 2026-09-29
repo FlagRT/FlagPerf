@@ -120,6 +120,8 @@ def run_stack(command,cfg,root,progress,invoke):
         print('[plan] preview 预算 '+str(cfg['preview']['budget_seconds'])+' 秒，按环境均分；基线、候选及所有复验共享本次预算', file=sys.stderr, flush=True)
     if command == 'performance':
         print('[plan] warmup/measure/repeats='+ '/'.join(str(cfg['performance'][k]) for k in ['warmup_rounds','measure_rounds','repeats'])+'；先独立取证，再正式计时；TP 通信为另一次采样', file=sys.stderr, flush=True)
+        if cfg['performance'].get('level') == 'layer':
+            print('[plan] layer='+str(cfg['performance']['layers'])+'；无插桩基准、Event计时、profiler和分组显存分别执行；诊断轮数='+str(cfg['performance']['layer_profile_rounds']), file=sys.stderr, flush=True)
     if axis == 'flagcx' and cfg['runtime'].get('parallelism') != 'tp':
         print('[notice] 单卡没有模型集合通信，FlagCX 比较不适用；继续保留执行结果，不能评价组件收益', file=sys.stderr, flush=True)
     env=cfg.get('vendors',{}).get(cfg['runtime'].get('vendor'),{}).get('env',{})
@@ -161,7 +163,8 @@ def run_stack(command,cfg,root,progress,invoke):
         load_policy(cfg,root,contexts)
         from runtime.coordinator import accuracy,performance
         result=(accuracy if command=='accuracy' else performance)(cfg,root,shared,progress,contexts=contexts)
-    result['preparation_seconds']={'resume_validation_and_copy':copy_seconds,'prepare':prepare_seconds}
+    result['preparation_seconds']={'resume_validation_and_copy':copy_seconds,'prepare':prepare_seconds,
+                                   'cache_import':result.get('cache_import_seconds',0)}
     result.update(manifest)
     if cfg['runtime'].get('parallelism')=='tp': result.update(parallelism='tp',devices=cfg['runtime']['devices'])
     return result

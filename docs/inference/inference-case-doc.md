@@ -10,10 +10,10 @@
 | `config/` / `inputs/` | 默认与场景配置 / 小型 JSONL 输入示例 |
 | `models/qwen3_embedding/` | 模型加载、tokenization、pooling 与模块选择 |
 | `engines/` | forward、输出捕获及候选调用清单 |
-| `runtime/` | 配置、任务目录、进程生命周期、preview、TP、性能和通信采集 |
+| `runtime/` | 配置、任务目录、进程生命周期、preview、TP、性能、分组 preview、缓存导入及层/通信采集 |
 | `vendors/` | 设备 API、编译器选择及通信后端选择 |
-| `analysis/` | 数值差异、比较证据判断和离线通信解析 |
-| `reporting/` | 单卡/TP/组件报告及可读证据入口 |
+| `analysis/` | 数值差异、比较证据判断、离线层统计与设备/通信解析 |
+| `reporting/` | 单卡/TP/组件/层级报告、筛选视图及只读重建 |
 | `tools/` | 资产准备与离线报告重建 |
 
 一次运行的顺序是：解析配置 → 宿主解析镜像 ID 并只读挂载输入 → prepare 封存输入与身份 →

@@ -48,23 +48,15 @@ python3 run.py accuracy --config config/local.yaml --parallelism tp --devices 0 
 FlagTree on 选择编译器，不额外启用 `torch.compile`。FlagCX on 选择模型通信组后端；Gloo 协调组与模型通信组分开。
 是否实际参与以报告中的取证为准。
 
-## Preview 续探
+## Preview 续探与效率选项
 
-```bash
-python3 run.py preview --config config/local.yaml --device 0 \
-  --budget-seconds 300 --output result/preview-seed
-python3 run.py preview --config config/local.yaml --device 0 \
-  --resume-from result/preview-seed --budget-seconds 300 --output result/preview-next
-```
+首次探测、短预算续探、轻量/完整证据、缓存与分组搜索的完整步骤见 [Preview 指南](preview.md)。
+TP 或联合比较的续探须保留来源设备顺序、组件组合、搜索策略和预算模式。当前默认 grouped + adaptive，检查点 envelope 为 schema 2，策略为 schema 3。执行源码升级后建立新来源。
 
-来源只读，新目录不能与来源相互包含。保留原模型、输入、设备顺序及组件组合；TP 或联合比较两次需使用相同参数。
-续探先校验来源摘要和执行身份，重新执行原生基线并复验旧接受集合，通过后才继续候选探测。
-旧集合失效会停止，不会悄悄减少函数集合。中断项、未探测项、历史未知项按保存的顺序处理；明确排除项不重试。
+## 逐层性能和报告筛选
 
-预算从 prepare 完成后起算，覆盖所有环境的基线、恢复复验、候选决策和最终复验；准备与清理另列。
-预算不足会保存可恢复进度，必要复验未完成时不会发布 verified 策略。
-新目录复制必要的轻量证据与 tokenized 输入，大张量/trace 可能仍引用来源，因此不能把续探目录当作独立完整备份。
-旧 schema 1/2 仅用于历史报告读取，不能直接执行或续探。
+在 performance 命令追加 `--level layer --layers all`；`--layer-profile-rounds` 控制层与通信共享的独立诊断，不与 `--communication-profile-rounds` 混用。
+选择 Attention 等子模块、筛选 rank/shape、制作 portable 证据包及重新分析 profiler，见 [逐层指南](layer.md)。
 
 ## 图导出
 
@@ -85,4 +77,5 @@ python3 tools/replay_reports.py --source result/performance --output result/repo
 
 不执行模型、不改变历史判定和策略；在新目录生成报告，并校验原记录摘要未变。
 可通过 `--source` 后的多个目录重建多份报告，各来源目录名必须不同。
+此兼容工具继续支持多份精度、preview 和性能报告；性能重建与 `run.py report` 共用来源保护逻辑。
 输出通过符号链接读取原始数据，依赖原目录继续存在。报告中记录原结果与当前生成器身份。
