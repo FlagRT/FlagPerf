@@ -1,0 +1,131 @@
+{
+  "cases": {
+    "computation-BF16": {
+      "commands": [],
+      "diagnosis_status": "not-supported",
+      "error": "selected card has uncorrectable ECC evidence: 2",
+      "measurement_status": "not-run",
+      "metrics": [],
+      "monitoring_status": "not-run",
+      "status": "not-run",
+      "targets": []
+    },
+    "computation-FP16": {
+      "commands": [],
+      "diagnosis_status": "not-supported",
+      "error": "selected card has uncorrectable ECC evidence: 2",
+      "measurement_status": "not-run",
+      "metrics": [],
+      "monitoring_status": "not-run",
+      "status": "not-run",
+      "targets": []
+    },
+    "computation-FP32": {
+      "commands": [],
+      "diagnosis_status": "not-supported",
+      "error": "selected card has uncorrectable ECC evidence: 2",
+      "measurement_status": "not-run",
+      "metrics": [],
+      "monitoring_status": "not-run",
+      "status": "not-run",
+      "targets": []
+    },
+    "computation-INT8": {
+      "commands": [],
+      "diagnosis_status": "not-supported",
+      "error": "selected card has uncorrectable ECC evidence: 2",
+      "measurement_status": "not-run",
+      "metrics": [],
+      "monitoring_status": "not-run",
+      "status": "not-run",
+      "targets": []
+    },
+    "interconnect-P2P_intraserver": {
+      "commands": [],
+      "diagnosis_status": "not-supported",
+      "error": "selected card has uncorrectable ECC evidence: 2",
+      "measurement_status": "not-run",
+      "metrics": [],
+      "monitoring_status": "not-run",
+      "status": "not-run",
+      "targets": []
+    },
+    "interconnect-P2P_intraserver-latency": {
+      "commands": [],
+      "diagnosis_status": "not-supported",
+      "error": "selected card has uncorrectable ECC evidence: 2",
+      "measurement_status": "not-run",
+      "metrics": [],
+      "monitoring_status": "not-run",
+      "status": "not-run",
+      "targets": []
+    },
+    "interconnect-d2h": {
+      "commands": [],
+      "diagnosis_status": "not-supported",
+      "error": "selected card has uncorrectable ECC evidence: 2",
+      "measurement_status": "not-run",
+      "metrics": [],
+      "monitoring_status": "not-run",
+      "status": "not-run",
+      "targets": []
+    },
+    "interconnect-d2h-latency": {
+      "commands": [],
+      "diagnosis_status": "not-supported",
+      "error": "selected card has uncorrectable ECC evidence: 2",
+      "measurement_status": "not-run",
+      "metrics": [],
+      "monitoring_status": "not-run",
+      "status": "not-run",
+      "targets": []
+    },
+    "interconnect-h2d": {
+      "commands": [],
+      "diagnosis_status": "not-supported",
+      "error": "selected card has uncorrectable ECC evidence: 2",
+      "measurement_status": "not-run",
+      "metrics": [],
+      "monitoring_status": "not-run",
+      "status": "not-run",
+      "targets": []
+    },
+    "interconnect-h2d-latency": {
+      "commands": [],
+      "diagnosis_status": "not-supported",
+      "error": "selected card has uncorrectable ECC evidence: 2",
+      "measurement_status": "not-run",
+      "metrics": [],
+      "monitoring_status": "not-run",
+      "status": "not-run",
+      "targets": []
+    },
+    "main_memory-bandwidth": {
+      "commands": [],
+      "diagnosis_status": "not-supported",
+      "error": "selected card has uncorrectable ECC evidence: 2",
+      "measurement_status": "not-run",
+      "metrics": [],
+      "monitoring_status": "not-run",
+      "status": "not-run",
+      "targets": []
+    },
+    "main_memory-capacity": {
+      "commands": [],
+      "diagnosis_status": "not-supported",
+      "error": "selected card has uncorrectable ECC evidence: 2",
+      "measurement_status": "not-run",
+      "metrics": [],
+      "monitoring_status": "not-run",
+      "status": "not-run",
+      "targets": []
+    }
+  },
+  "diagnosis_status": "not-supported",
+  "measurement_status": "not-run",
+  "monitoring_status": "not-run",
+  "run_id": "20260929T043035Z-4b54bb7f",
+  "schema_version": 1,
+  "status": "failed",
+  "suite": "kunlunxin-p800-toolkit"
+}

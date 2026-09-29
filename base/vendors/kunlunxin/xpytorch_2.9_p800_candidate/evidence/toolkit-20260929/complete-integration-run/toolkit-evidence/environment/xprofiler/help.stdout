@@ -1,0 +1,41 @@
+Usage: 
+ $ xpuprof PROG [ARGS]
+ Klprof will start before executing of PROG and stop after PROG exit
+
+General:
+ -b BUFSIZE, --buffer-size=BUFSIZE
+             specify ring-buffer size for record xpu trace data in MB (default 0)
+ -x DEVIDS, --xpu=DEVIDS
+             enable trace on xpu with DEVIDS
+             e.g. --xpu=0,1,2 or --xpu=all
+ -d, --deamonize
+             xpuprof will be triggered by xpu_profiler_start/stop
+ -t TIMES, --time=TIMES
+             xpuprof will run TIMES seconds and then exit
+ -V
+             version check
+ -h, --help
+             print help information
+Note: 
+  Root privleges and kunlun-driver version higher than 4.0.28 needed for using xpuprof
+  User can only select one running mode from PROG [ARGS] or --time or --deamonize
+
+Metrics:
+ -A, --profile-api-trace
+             xpuprof can collect information from CPU-side XRE API, root or sudo access required
+ -s, --sse-trace
+             kernel execution flow will be recorded.
+ -S, --settings
+             xpuprof read signal settings from this json file
+             a default settings (enable --profile-api-trace and --sse-trace) will be used without of this option.
+
+Timer:
+ -r INTERVAL, --resolution-interval=INTERVAL
+             tracer timer interval in ns (default 0)
+
+Output format:
+ -e PROFILE, --export-profile=PROFILE
+             save profiling result to PROFILE
+             If PROFILE is a directory, content will be saved inside it
+             If PROFILE is a file and exists already, content will be overwritten
+             User can display this json file in chrome://tracing/.

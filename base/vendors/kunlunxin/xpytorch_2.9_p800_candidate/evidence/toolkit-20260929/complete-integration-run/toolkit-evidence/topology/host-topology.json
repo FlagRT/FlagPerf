@@ -1,0 +1,15 @@
+{
+  "argv": [
+    "xpu-smi",
+    "topo",
+    "-m"
+  ],
+  "finished_monotonic_s": 4497432.323208665,
+  "returncode": 0,
+  "started_at": "2026-09-29T04:31:34.848179+00:00",
+  "started_monotonic_s": 4497431.768032424,
+  "stderr": "",
+  "stdout": "\t\u001b[4mXPU0\tXPU1\tXPU2\tXPU3\tXPU4\tXPU5\tXPU6\tXPU7\tNIC0\tNIC1\tNIC2\tNIC3\tNIC4\tNIC5\tNIC6\tNIC7\tCPU Affinity\tNUMA Affinity\u001b[0m\nXPU0\t X \tXL\tXL\tXL\tSYS\tXL\tSYS\tSYS\tPIX\tNODE\tNODE\tNODE\tSYS\tSYS\tSYS\tSYS\t0-95,192-287\t0\nXPU1\tXL\t X \tXL\tXL\tXL\tSYS\tSYS\tSYS\tNODE\tPIX\tPHB\tNODE\tSYS\tSYS\tSYS\tSYS\t0-95,192-287\t0\nXPU2\tXL\tXL\t X \tXL\tSYS\tSYS\tXL\tSYS\tNODE\tPHB\tPIX\tNODE\tSYS\tSYS\tSYS\tSYS\t0-95,192-287\t0\nXPU3\tXL\tXL\tXL\t X \tSYS\tSYS\tSYS\tXL\tNODE\tNODE\tNODE\tPIX\tSYS\tSYS\tSYS\tSYS\t0-95,192-287\t0\nXPU4\tSYS\tXL\tSYS\tSYS\t X \tXL\tXL\tXL\tSYS\tSYS\tSYS\tSYS\tPIX\tNODE\tNODE\tNODE\t96-191,288-383\t1\nXPU5\tXL\tSYS\tSYS\tSYS\tXL\t X \tXL\tXL\tSYS\tSYS\tSYS\tSYS\tNODE\tPIX\tNODE\tNODE\t96-191,288-383\t1\nXPU6\tSYS\tSYS\tXL\tSYS\tXL\tXL\t X \tXL\tSYS\tSYS\tSYS\tSYS\tNODE\tNODE\tPIX\tPHB\t96-191,288-383\t1\nXPU7\tSYS\tSYS\tSYS\tXL\tXL\tXL\tXL\t X \tSYS\tSYS\tSYS\tSYS\tNODE\tNODE\tPHB\tPIX\t96-191,288-383\t1\nNIC0\tPIX\tNODE\tNODE\tNODE\tSYS\tSYS\tSYS\tSYS\t X \tNODE\tNODE\tNODE\tSYS\tSYS\tSYS\tSYS\t\t\nNIC1\tNODE\tPIX\tPHB\tNODE\tSYS\tSYS\tSYS\tSYS\tNODE\t X \tPHB\tNODE\tSYS\tSYS\tSYS\tSYS\t\t\nNIC2\tNODE\tPHB\tPIX\tNODE\tSYS\tSYS\tSYS\tSYS\tNODE\tPHB\t X \tNODE\tSYS\tSYS\tSYS\tSYS\t\t\nNIC3\tNODE\tNODE\tNODE\tPIX\tSYS\tSYS\tSYS\tSYS\tNODE\tNODE\tNODE\t X \tSYS\tSYS\tSYS\tSYS\t\t\nNIC4\tSYS\tSYS\tSYS\tSYS\tPIX\tNODE\tNODE\tNODE\tSYS\tSYS\tSYS\tSYS\t X \tNODE\tNODE\tNODE\t\t\nNIC5\tSYS\tSYS\tSYS\tSYS\tNODE\tPIX\tNODE\tNODE\tSYS\tSYS\tSYS\tSYS\tNODE\t X \tNODE\tNODE\t\t\nNIC6\tSYS\tSYS\tSYS\tSYS\tNODE\tNODE\tPIX\tPHB\tSYS\tSYS\tSYS\tSYS\tNODE\tNODE\t X \tPHB\t\t\nNIC7\tSYS\tSYS\tSYS\tSYS\tNODE\tNODE\tPHB\tPIX\tSYS\tSYS\tSYS\tSYS\tNODE\tNODE\tPHB\t X \t\t\n\nLegend:\n\n  X    = Self\n  SYS  = Connection traversing PCIe as well as the SMP interconnect between NUMA nodes (e.g., QPI/UPI)\n  NODE = Connection traversing PCIe as well as the interconnect between PCIe Host Bridges within a NUMA node\n  PHB  = Connection traversing PCIe as well as a PCIe Host Bridge (typically the CPU)\n  PXB  = Connection traversing multiple PCIe bridges (without traversing the PCIe Host Bridge)\n  PIX  = Connection traversing at most a single PCIe bridge\n  XL   = Connection traversing XPULink\n\nNIC Legend:\n\n  NIC0: mlx5_bond_0\n  NIC1: mlx5_bond_1\n  NIC2: mlx5_bond_2\n  NIC3: mlx5_bond_3\n  NIC4: mlx5_bond_4\n  NIC5: mlx5_bond_5\n  NIC6: mlx5_bond_6\n  NIC7: mlx5_bond_7\n\n",
+  "timed_out": false,
+  "timeout_s": 10
+}

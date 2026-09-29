@@ -1,0 +1,51 @@
+{
+  "command": [
+    "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+    "--mode",
+    "p2p",
+    "--src",
+    "0",
+    "--src-pci",
+    "00000000:2e:00.0",
+    "--samples",
+    "25",
+    "--warmup",
+    "2",
+    "--minimum-seconds",
+    "0.0",
+    "--dimension",
+    "128",
+    "--dst",
+    "1",
+    "--dst-pci",
+    "00000000:bb:00.0",
+    "--bytes",
+    "1048576",
+    "--pinned",
+    "0",
+    "--async",
+    "0",
+    "--pinned-api",
+    "register",
+    "--async-chunk-bytes",
+    "1048576"
+  ],
+  "duration_s": 0.11542924027889967,
+  "finished_at": "2026-09-29T04:31:52.675658Z",
+  "finished_monotonic_s": 4497449.595553195,
+  "returncode": 0,
+  "started_at": "2026-09-29T04:31:52.560239Z",
+  "started_monotonic_s": 4497449.480123955,
+  "stderr": {
+    "bytes": 4258,
+    "path": "cases/interconnect-P2P_intraserver/physical-3-to-7-single-direction-1048576B/repeat-1/microbenchmark.stderr",
+    "sha256": "91bb2a6b877b5a3ffd1f05676d975fc0dad72fd19ead072f0f09fdcb1759b14b"
+  },
+  "stdout": {
+    "bytes": 574,
+    "path": "cases/interconnect-P2P_intraserver/physical-3-to-7-single-direction-1048576B/repeat-1/microbenchmark.stdout",
+    "sha256": "8a83ace90cbeb646bd0274cc1720816cb35be4fb6aac182b9bde2a35a0bf74c6"
+  },
+  "timed_out": false,
+  "timeout_s": 180
+}

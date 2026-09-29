@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="1060" viewBox="0 0 1100 1060">
+<rect width="100%" height="100%" fill="white"/>
+<g font-family="sans-serif" font-size="13" fill="#263247">
+<text x="20" y="28" font-size="18">interconnect-h2d-latency (ns)</text>
+<line x1="420" y1="50" x2="420" y2="1030" stroke="#b7c0ca"/>
+<text x="420" y="1050">0</text>
+<text x="16" y="75">card 3 / 512 B / pageable / blocking / R1</text>
+<rect x="420" y="60" width="38.581" height="20" fill="#3873a5"/>
+<text x="466.581" y="75">12379</text>
+<text x="16" y="105">card 3 / 512 B / pageable / async / R1</text>
+<rect x="420" y="90" width="44.724" height="20" fill="#3873a5"/>
+<text x="472.724" y="105">14350</text>
+<text x="16" y="135">card 3 / 512 B / pinned / blocking / R1</text>
+<rect x="420" y="120" width="38.051" height="20" fill="#3873a5"/>
+<text x="466.051" y="135">12209</text>
+<text x="16" y="165">card 3 / 512 B / pinned / async / R1</text>
+<rect x="420" y="150" width="39.329" height="20" fill="#3873a5"/>
+<text x="467.329" y="165">12619</text>
+<text x="16" y="195">card 3 / 4096 B / pageable / blocking / R1</text>
+<rect x="420" y="180" width="40.388" height="20" fill="#3873a5"/>
+<text x="468.388" y="195">12959</text>
+<text x="16" y="225">card 3 / 4096 B / pageable / async / R1</text>
+<rect x="420" y="210" width="48.775" height="20" fill="#3873a5"/>
+<text x="476.775" y="225">15650</text>
+<text x="16" y="255">card 3 / 4096 B / pinned / blocking / R1</text>
+<rect x="420" y="240" width="40.014" height="20" fill="#3873a5"/>
+<text x="468.014" y="255">12839</text>
+<text x="16" y="285">card 3 / 4096 B / pinned / async / R1</text>
+<rect x="420" y="270" width="39.952" height="20" fill="#3873a5"/>
+<text x="467.952" y="285">12819</text>
+<text x="16" y="315">card 3 / 65536 B / pageable / blocking / R1</text>
+<rect x="420" y="300" width="122.047" height="20" fill="#3873a5"/>
+<text x="550.047" y="315">39160</text>
+<text x="16" y="345">card 3 / 65536 B / pageable / async / R1</text>
+<rect x="420" y="330" width="64.729" height="20" fill="#3873a5"/>
+<text x="492.729" y="345">20769</text>
+<text x="16" y="375">card 3 / 65536 B / pinned / blocking / R1</text>
+<rect x="420" y="360" width="68.033" height="20" fill="#3873a5"/>
+<text x="496.033" y="375">21829</text>
+<text x="16" y="405">card 3 / 65536 B / pinned / async / R1</text>
+<rect x="420" y="390" width="69.438" height="20" fill="#3873a5"/>
+<text x="497.438" y="405">22280</text>
+<text x="16" y="435">card 3 / 1048576 B / pageable / blocking / R1</text>
+<rect x="420" y="420" width="350.797" height="20" fill="#3873a5"/>
+<text x="778.797" y="435">112557</text>
+<text x="16" y="465">card 3 / 1048576 B / pageable / async / R1</text>
+<rect x="420" y="450" width="339.456" height="20" fill="#3873a5"/>
+<text x="767.456" y="465">108918</text>
+<text x="16" y="495">card 3 / 1048576 B / pinned / blocking / R1</text>
+<rect x="420" y="480" width="398.575" height="20" fill="#3873a5"/>
+<text x="826.575" y="495">127887</text>
+<text x="16" y="525">card 3 / 1048576 B / pinned / async / R1</text>
+<rect x="420" y="510" width="530.000" height="20" fill="#3873a5"/>
+<text x="958.000" y="525">170056</text>
+<text x="16" y="555">card 7 / 512 B / pageable / blocking / R1</text>
+<rect x="420" y="540" width="47.996" height="20" fill="#3873a5"/>
+<text x="475.996" y="555">15400</text>
+<text x="16" y="585">card 7 / 512 B / pageable / async / R1</text>
+<rect x="420" y="570" width="46.718" height="20" fill="#3873a5"/>
+<text x="474.718" y="585">14990</text>
+<text x="16" y="615">card 7 / 512 B / pinned / blocking / R1</text>
+<rect x="420" y="600" width="39.643" height="20" fill="#3873a5"/>
+<text x="467.643" y="615">12720</text>
+<text x="16" y="645">card 7 / 512 B / pinned / async / R1</text>
+<rect x="420" y="630" width="49.679" height="20" fill="#3873a5"/>
+<text x="477.679" y="645">15940</text>
+<text x="16" y="675">card 7 / 4096 B / pageable / blocking / R1</text>
+<rect x="420" y="660" width="54.198" height="20" fill="#3873a5"/>
+<text x="482.198" y="675">17390</text>
+<text x="16" y="705">card 7 / 4096 B / pageable / async / R1</text>
+<rect x="420" y="690" width="95.743" height="20" fill="#3873a5"/>
+<text x="523.743" y="705">30720</text>
+<text x="16" y="735">card 7 / 4096 B / pinned / blocking / R1</text>
+<rect x="420" y="720" width="64.296" height="20" fill="#3873a5"/>
+<text x="492.296" y="735">20630</text>
+<text x="16" y="765">card 7 / 4096 B / pinned / async / R1</text>
+<rect x="420" y="750" width="61.865" height="20" fill="#3873a5"/>
+<text x="489.865" y="765">19850</text>
+<text x="16" y="795">card 7 / 65536 B / pageable / blocking / R1</text>
+<rect x="420" y="780" width="56.629" height="20" fill="#3873a5"/>
+<text x="484.629" y="795">18170</text>
+<text x="16" y="825">card 7 / 65536 B / pageable / async / R1</text>
+<rect x="420" y="810" width="89.509" height="20" fill="#3873a5"/>
+<text x="517.509" y="825">28720</text>
+<text x="16" y="855">card 7 / 65536 B / pinned / blocking / R1</text>
+<rect x="420" y="840" width="63.607" height="20" fill="#3873a5"/>
+<text x="491.607" y="855">20409</text>
+<text x="16" y="885">card 7 / 65536 B / pinned / async / R1</text>
+<rect x="420" y="870" width="77.476" height="20" fill="#3873a5"/>
+<text x="505.476" y="885">24859</text>
+<text x="16" y="915">card 7 / 1048576 B / pageable / blocking / R1</text>
+<rect x="420" y="900" width="328.267" height="20" fill="#3873a5"/>
+<text x="756.267" y="915">105328</text>
+<text x="16" y="945">card 7 / 1048576 B / pageable / async / R1</text>
+<rect x="420" y="930" width="338.957" height="20" fill="#3873a5"/>
+<text x="766.957" y="945">108758</text>
+<text x="16" y="975">card 7 / 1048576 B / pinned / blocking / R1</text>
+<rect x="420" y="960" width="472.003" height="20" fill="#3873a5"/>
+<text x="900.003" y="975">151447</text>
+<text x="16" y="1005">card 7 / 1048576 B / pinned / async / R1</text>
+<rect x="420" y="990" width="522.554" height="20" fill="#3873a5"/>
+<text x="950.554" y="1005">167667</text>
+</g></svg>

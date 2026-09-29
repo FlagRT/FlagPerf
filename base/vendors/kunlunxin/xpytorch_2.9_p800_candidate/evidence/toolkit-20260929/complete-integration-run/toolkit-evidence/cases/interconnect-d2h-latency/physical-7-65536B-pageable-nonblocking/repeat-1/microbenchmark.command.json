@@ -1,0 +1,47 @@
+{
+  "command": [
+    "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+    "--mode",
+    "d2h",
+    "--src",
+    "1",
+    "--src-pci",
+    "00000000:bb:00.0",
+    "--samples",
+    "25",
+    "--warmup",
+    "2",
+    "--minimum-seconds",
+    "0.0",
+    "--dimension",
+    "128",
+    "--bytes",
+    "65536",
+    "--pinned",
+    "0",
+    "--async",
+    "1",
+    "--pinned-api",
+    "register",
+    "--async-chunk-bytes",
+    "1048576"
+  ],
+  "duration_s": 0.06509395502507687,
+  "finished_at": "2026-09-29T04:31:51.843125Z",
+  "finished_monotonic_s": 4497448.763023868,
+  "returncode": 0,
+  "started_at": "2026-09-29T04:31:51.778058Z",
+  "started_monotonic_s": 4497448.697929913,
+  "stderr": {
+    "bytes": 4258,
+    "path": "cases/interconnect-d2h-latency/physical-7-65536B-pageable-nonblocking/repeat-1/microbenchmark.stderr",
+    "sha256": "5083f312a31bfe983f081da0f309243d4c280c5cea05b71beb3dc4461dbad362"
+  },
+  "stdout": {
+    "bytes": 545,
+    "path": "cases/interconnect-d2h-latency/physical-7-65536B-pageable-nonblocking/repeat-1/microbenchmark.stdout",
+    "sha256": "986d8e945e25bfc4a8e12a9e44540738807098b35cb150998e72bf126a1d916b"
+  },
+  "timed_out": false,
+  "timeout_s": 180
+}

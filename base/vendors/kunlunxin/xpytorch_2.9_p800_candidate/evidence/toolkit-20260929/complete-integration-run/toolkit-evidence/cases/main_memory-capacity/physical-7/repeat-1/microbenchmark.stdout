@@ -1,0 +1,70 @@
+
+==============XPUSMI LOG==============
+
+Timestamp                                 : Tue Sep 29 12:31:45 2026
+Driver Version                            : 5.0.21.47
+XPU-RT Version                            : 10.2
+
+Attached XPUs                             : 2
+XPU 00000000:BB:00.0
+    Product Name                          : P800 OAM
+    Product Brand                         : KUNLUNXIN
+    Product Architecture                  : KL3
+    Serial Number                         : Unknown Error
+    XPU UUID                              : GPU-4922595e-feb9-5762-9082-d8fd7f11abf5
+    Minor Number                          : 6
+    OAM Id                                : 4
+    XPU Part Number                       : Unknown Error
+    Firmware Version
+        PBL Version                       : 1.0
+        PCIE Version                      : 2.43
+        SBL Version                       : 1.86
+        ALL Version                       : 1.0.2.43.1.86
+        CPLD Version                      : 5.3
+    PCI
+        Bus                               : 0xBB
+        Device                            : 0x00
+        Function                          : 0x0
+        Domain                            : 0x0000
+        Device Id                         : 0x36881D22
+        Bus Id                            : 00000000:BB:00.0
+        Sub System Id                     : 0x00010001
+        XPU Link Info
+            PCIe Generation
+                Max                       : 5
+                Current                   : 5
+            Link Width
+                Max                       : 16x
+                Current                   : 16x
+    Memory Usage
+        Total                             : 98304 MiB
+        Reserved                          : 0 MiB
+        Used                              : 75590 MiB
+        Free                              : 22714 MiB
+    L3 Usage
+        Total                             : 96 MiB
+        Reserved                          : 0 MiB
+        Used                              : 0 MiB
+        Free                              : 96 MiB
+    Utilization
+        Xpu                               : 81 %
+    Ecc Mode
+        Current                           : Enabled
+        Pending                           : Enabled
+    ECC Errors
+        Volatile
+            DRAM Correctable              : 0
+            DRAM Uncorrectable            : 0
+        Aggregate
+            DRAM Correctable              : 0
+            DRAM Uncorrectable            : 0
+    Temperature
+        XPU Current Temp                  : 58 C
+    Power Readings
+        Enforced Power Limit              : 400.00 W
+        Power Draw                        : 223.00 W
+    Clocks
+        Cluster                           : 1450 MHz
+        CDNN                              : 1450 MHz
+    Processes                             : None
+

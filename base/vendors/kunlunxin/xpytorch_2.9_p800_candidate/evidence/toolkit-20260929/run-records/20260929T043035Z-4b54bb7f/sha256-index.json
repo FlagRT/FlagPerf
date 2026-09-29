@@ -1,0 +1,56 @@
+{
+  "files": [
+    {
+      "bytes": 76,
+      "path": "cleanup.json",
+      "sha256": "7410d08b7eee6bedb50dc822ee9ddd94cae691bbb839dbbd23355d47ba6aa0ac"
+    },
+    {
+      "bytes": 1487,
+      "path": "host-preflight/VM-0-2-ubuntu/machine.json",
+      "sha256": "dc73808faf9dd6b2c7f73b46c8d60fbe6582759147c51d13547d58004baa376c"
+    },
+    {
+      "bytes": 3859,
+      "path": "host-preflight/VM-0-2-ubuntu/query-2.json",
+      "sha256": "49672d98b33f331b3ec5dc1a6ee3bd20ef25cd61eb182d4838fb90a176391ff9"
+    },
+    {
+      "bytes": 318,
+      "path": "image-identity.json",
+      "sha256": "3f9c9f70378fa62b32fd4c66bbe50b3121f11812d8edbfcc425d33e36d59f08a"
+    },
+    {
+      "bytes": 4825,
+      "path": "image-inspect.json",
+      "sha256": "213b1dfc9c97d89dc48171ff8b86bcb5dfd86e801eea1aaafb01814147aaccac"
+    },
+    {
+      "bytes": 5696,
+      "path": "report.md",
+      "sha256": "de4c644e3664bab77068181c82a17b5dc82509e3a18d373421dbb71a7fb46e84"
+    },
+    {
+      "bytes": 399,
+      "path": "report_monitor.md",
+      "sha256": "02aec7021aea0920946d9dd0dd3e187b6b7e4f654e6062c7ba5d8f3556d83263"
+    },
+    {
+      "bytes": 3383,
+      "path": "resolved-plan.json",
+      "sha256": "0f8aadbbc5fd70ced23f87b4d61a36d813a99c76f690e8a9e76670f6701ad7a5"
+    },
+    {
+      "bytes": 4859,
+      "path": "summary.json",
+      "sha256": "579c49729106cd8e1b04d695a0f917b50ce2e4634a2135f4bc0868c48b9428af"
+    },
+    {
+      "bytes": 4016,
+      "path": "toolkit-evidence/manifest.json",
+      "sha256": "6804ccc745e4d38a2238983c5703ea4a6b2fd9802075f6c867770d647bea6ba3"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "all regular files under run root except this index"
+}

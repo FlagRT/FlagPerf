@@ -1,0 +1,1066 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-18",
+  "release_stage": "candidate",
+  "validated": false,
+  "validation_scope": [],
+  "flagperf_base_commit": "3e7c558b6f56e6ea5f9c8b318852d97d1517a14c",
+  "team_source_commit": "e740bf78c08e1463c3920959e47dad3ed348118c",
+  "branch": "zhiyu/kunlunxin-p800",
+  "static_inventory": "passed",
+  "offline_tests": {
+    "passed": 32,
+    "scope": "identity, lock, binding, UUID/minor, reordered multi-device mapping, visibility, reservation, worker timeout/exit and host inventory parser"
+  },
+  "host_launcher": "single_card_api_and_two_card_mapping_hardware_verified",
+  "hardware": "six_api_stages_and_native_route_control_passed",
+  "day1_status": "complete_for_development_with_user_accepted_compatibility",
+  "day1_acceptance": {
+    "host_and_image_static_inventory": "complete",
+    "candidate_assets_and_offline_checks": "complete",
+    "fp32_cpu_reference_and_sync": "passed_32x32_fp32_vs_fp64_reference",
+    "seed_memory_pinned_oom_api": "passed_api_probe_no_oom_allocation",
+    "physical_container_logical_mapping": "verified_pci_minor_uuid_and_opened_nodes",
+    "cpu_fallback_excluded": "broad_claim_not_made_native_launch_delta_supports_tested_fp32_device_route",
+    "hardware_selected_card_isolation": "verified_final_attempt_only_earlier_wrong_minor_attempts_retained",
+    "version_discrepancy": "accepted_by_user_for_current_tested_stack_not_vendor_certified",
+    "maintainer_confirmation": "waived_by_user_for_continued_development",
+    "core_smoke_go_no_go": "go_for_further_candidate_development_not_formal_benchmarks"
+  },
+  "decision": "retain tested M1; compatibility accepted by user; proceed with development and scoped tests; formal benchmark results require case qualification",
+  "compatibility_acceptance": {
+    "date": "2026-09-18",
+    "authority": "user instruction: accept version compatibility for now",
+    "scope": "observed host driver and locked M1 image only",
+    "vendor_confirmation_obtained": false,
+    "metadata_discrepancy_explained": false,
+    "blocks_development": false
+  },
+  "user_confirmations": {
+    "date": "2026-09-18",
+    "same_image_available_to_recipients": true,
+    "observed_program_execution_on_card_2": true,
+    "source": "explicit user confirmation in development session",
+    "registry_pull_exercised_by_agent": false,
+    "named_kernel_trace_captured_by_agent": false,
+    "blocks_day1": false
+  },
+  "device_mapping": {
+    "implementation": "device_mapping.py",
+    "code_commit": "f632019c",
+    "multi_card_raw_evidence": "base/result/p800-mapping-20260918-cards6-2-attempt01",
+    "single_card_regression_evidence": "base/result/p800-mapping-20260918-card2-regression02",
+    "scope": "UUID mapping plus independent small FP32 on selected devices; no multi-rank collectives",
+    "requested_physical_order": [
+      6,
+      2
+    ],
+    "observed_logical_order": [
+      1,
+      0
+    ]
+  },
+  "raw_evidence_directory": "base/result/p800-pr0-20260918",
+  "portable_evidence": [
+    "evidence/static-audit.json",
+    "evidence/day1/review.md",
+    "evidence/mapping/review.md"
+  ],
+  "final_hardware_evidence_directory": "base/result/p800-pr0-20260918-card2-attempt16",
+  "hardware_code_commit": "f38d2684",
+  "open_items": [
+    "Image availability and device execution are user-confirmed; retain exact image identity and per-run device checks for recipients",
+    "FlagCX source HEAD recorded as 3b43bdb237fc93736eddf3e118edf32f664b7861, but binary build correspondence and collectives not qualified",
+    "vllm-plugin-FL source Git audit denied by ownership check; vLLM is outside this Base PR0 scope"
+  ],
+  "maintainer_questions_unsent": [
+    "For driver 5.0.21.47, what is the supported interpretation of xpu-smi runtime 10.2 versus XPURT_VERSION_STR 5.0.21?",
+    "Is XPYTORCH XMLIR--bc1b1dc6f-dev+2026032411 supported with this M1 image, including XRE 5.13 and XHPC metadata requiring 5.18?",
+    "Which XRE/XCCL shared-library paths and FlagCX build are authoritative for this image?",
+    "What is the canonical registry digest or reproducible distribution source for M1?"
+  ],
+  "day3": {
+    "date": "2026-09-20",
+    "status": "complete_for_single_card_preflight_development",
+    "tested_code_commit": "e936db64446d62c73b380317fd37b80fcacfee1a",
+    "entrypoint": "base/run.py benchmark preflight",
+    "normal_attempt": "normal-attempt12-card6",
+    "timeout_attempt": "timeout-attempt02-card6",
+    "physical_id": 6,
+    "uuid": "9e24d168-db57-5cd9-8cfb-aea4ae898897",
+    "host_device_node": "/dev/xpu5",
+    "framework_logical_id": 0,
+    "valid_observation_samples": 16,
+    "offline_tests": {
+      "base": 154,
+      "pr0": 32,
+      "toolkit": 80
+    },
+    "runtime_promoted": false,
+    "performance_qualified": false,
+    "open_item": "Physical card 1 synchronization timed out in bounded probes; cause unproven. Do not infer all-card health.",
+    "review": "evidence/day3/review.md"
+  },
+  "day3_recheck": {
+    "date": "2026-09-20",
+    "tested_code_commit": "e936db64446d62c73b380317fd37b80fcacfee1a",
+    "repository_head_at_recheck": "80dd3f98b69bcca914325f4e51ce46df81131a1f",
+    "attempt_count": 33,
+    "cards": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "occupied_cards_not_workload_tested": [
+      0,
+      3,
+      4,
+      5
+    ],
+    "preferred_cards_for_fresh_preflight": [
+      6,
+      7
+    ],
+    "card1": "sync timeout reproduced with own monitor on/off; selected PCI kernel exceptions; root cause unproven",
+    "card2": "tensor and observation passed; historical uncorrectable ECC 8/8 and remap pending YES; avoid performance baseline",
+    "controlled_timeout_drills": [
+      {
+        "card": 2,
+        "attempt": "allcards-timeout-card2-attempt01",
+        "experiment_status": "failed",
+        "cleanup_drill": "passed",
+        "original_postflight": "passed"
+      },
+      {
+        "card": 6,
+        "attempt": "allcards-timeout-card6-attempt01",
+        "experiment_status": "failed",
+        "cleanup_drill": "passed",
+        "original_postflight": "passed"
+      },
+      {
+        "card": 7,
+        "attempt": "allcards-timeout-card7-attempt01",
+        "experiment_status": "failed",
+        "cleanup_drill": "passed",
+        "original_postflight": "passed"
+      }
+    ],
+    "final_idle_verified": true,
+    "performance_qualified": false,
+    "runtime_promoted": false,
+    "review": "evidence/day3-recheck/review.md"
+  },
+  "day4_fp32": {
+    "date": "2026-09-21",
+    "timezone": "Asia/Shanghai",
+    "tested_code_commit": "7bf4c9bf",
+    "physical_device_id": 6,
+    "uuid": "9e24d168-db57-5cd9-8cfb-aea4ae898897",
+    "host_device_node": "/dev/xpu5",
+    "framework_logical_id": 0,
+    "case": "computation-FP32:P800",
+    "shape": [
+      4096,
+      4096,
+      4096
+    ],
+    "iterations": 20000,
+    "warmup": 10,
+    "repetitions": 5,
+    "median_tflops": 113.05773712582776,
+    "cv_percent": 0.08874402347040153,
+    "offline_tests": {
+      "base": 176,
+      "pr0": 32,
+      "toolkit": 80
+    },
+    "performance_qualified": true,
+    "runtime_promoted": false,
+    "scope": "Single-card native FP32 input/output; full small-matrix and sampled large-matrix CPU FP64 references, synchronized wall clock and target telemetry. No internal IEEE/peak/universal fallback/other dtype/collective claim.",
+    "review": "evidence/day4/review.md"
+  },
+  "day5_pr4_pr5": {
+    "date": "2026-09-22",
+    "timezone": "Asia/Shanghai",
+    "tested_code_commit": "ed731d876024f494d0774d4696dd206ab20f1b2f",
+    "worktree_state_during_runs": "modified (day-5 changes under review; code identity recorded per run)",
+    "entrypoints": [
+      "base/run.py benchmark run --case <case>:P800",
+      "base/run.py benchmark preflight --probe-mode capability-*"
+    ],
+    "physical_device_id": 5,
+    "uuid": "f396486d-9850-50e4-81c4-50f2e9f6ca87",
+    "pci_bdf": "0000:9c:00.0",
+    "host_device_node": "/dev/xpu7",
+    "framework_device": "cuda:0",
+    "authorization_reference": "user-20260922-complete-day5-and-continue-existing-draft",
+    "raw_evidence_directory": "base/result/p800-pr4-pr5-20260922-0935",
+    "capability_matrix": {
+      "computation-FP16": {
+        "status": "supported-and-qualified",
+        "evidence": "five qualification runs"
+      },
+      "computation-BF16": {
+        "status": "supported-and-qualified",
+        "evidence": "five qualification runs"
+      },
+      "computation-INT8": {
+        "status": "supported-and-qualified-at-8192",
+        "operator": "xtorch_ops.gemm_I8_I8_bf16_nt",
+        "output_dtype": "bfloat16",
+        "metric": "TOPS (multiply-add counted as two operations)",
+        "evidence": "five qualification runs at 8192-cubed",
+        "known_limit": "the ATen int8 path (torch.mm, torch._int_mm) is unusable: mm rejects int8 and _int_mm runs on the host CPU"
+      },
+      "computation-FP64": {
+        "status": "unsupported-for-locked-stack",
+        "evidence": "capability probe observed float32 output for float64 input"
+      },
+      "computation-FP8": {
+        "status": "unsupported-for-locked-stack",
+        "evidence": "E4M3/E5M2 torch.mm and torch._scaled_mm returned NOT IMPLEMENTED"
+      },
+      "computation-TF32": {
+        "status": "blocked/unresolved",
+        "evidence": "allow_tf32 True/False produced element-identical outputs; no controllable TF32 route demonstrated"
+      },
+      "interconnect-h2d": {
+        "status": "four request modes smoked; four qualification groups executed"
+      },
+      "interconnect-d2h": {
+        "status": "four request modes smoked; four qualification groups executed"
+      }
+    },
+    "computation_qualification": {
+      "shape": "4096x4096x4096",
+      "seed": 519,
+      "warmup": 10,
+      "iterations": 100000,
+      "FP16": {
+        "median_tflops": 253.127,
+        "cv_percent": 0.0796,
+        "atol": 0.001,
+        "rtol": 0.001,
+        "elapsed_seconds_per_run": 54.29,
+        "status": "passed"
+      },
+      "BF16": {
+        "median_tflops": 114.0087,
+        "cv_percent": 0.0068,
+        "atol": 0.008,
+        "rtol": 0.008,
+        "elapsed_seconds_per_run": 120.55,
+        "status": "passed"
+      },
+      "INT8_2048": {
+        "status": "retracted",
+        "reason": "torch._int_mm executes on the host CPU on this stack",
+        "evidence": "process CPU time equalled 192x wall time during the device loop; device telemetry stayed at 0% utilization, 39 C, 92 W; CPU-only call was faster than the device call"
+      },
+      "int8_4096_attempts": {
+        "status": "retracted",
+        "reason": "same host fallback; the two modes were CPU-bound and copy-bound regimes of that fallback"
+      },
+      "INT8_8192_device_kernel": {
+        "status": "passed",
+        "median_tops": 504.591,
+        "cv_percent": 0.3315,
+        "min_tops": 501.95,
+        "max_tops": 506.36,
+        "shape": "8192x8192x8192",
+        "iterations": 8000,
+        "warmup": 10,
+        "seed": 519,
+        "operator": "xtorch_ops.gemm_I8_I8_bf16_nt",
+        "output_dtype": "bfloat16",
+        "scales": "SCALE_A=SCALE_B=1.0 passed as 127*SCALE through the kernel max/127 convention",
+        "window_seconds": 17.43,
+        "device_telemetry": "100% utilization, 61 C, 400 W"
+      },
+      "fp16_8192": {
+        "status": "passed",
+        "median_tflops": 258.8694376553051,
+        "cv_percent": 0.22941606711715715,
+        "window_seconds": 21.22,
+        "config": "Ascend values: warmup 100, 5000 iterations"
+      },
+      "bf16_8192": {
+        "status": "passed",
+        "median_tflops": 118.97044548995414,
+        "cv_percent": 0.0028597628177598586,
+        "window_seconds": 46.21,
+        "config": "Ascend values: warmup 100, 5000 iterations",
+        "limitation": "the locked stack runs bf16 at fp32-equivalent throughput; the vendor dense GEMM matches ATen exactly"
+      },
+      "fp32_8192": {
+        "status": "passed",
+        "median_tflops": 117.04902861351002,
+        "cv_percent": 0.08600405602476272,
+        "window_seconds": 18.8,
+        "config": "warmup 100, 2000 iterations; Ascend uses 1000, which measures 9.3 s here"
+      }
+    },
+    "transfer_qualification": {
+      "payload_bytes": 67108864,
+      "iterations": 10000,
+      "warmup": 10,
+      "dtype": "float32",
+      "api": "Tensor.copy_",
+      "timer": "perf_counter_ns with full target synchronization",
+      "h2d_pageable_blocking": {
+        "median_gb_s": 10.7706,
+        "cv_percent": 0.1937,
+        "status": "passed"
+      },
+      "h2d_pageable_nonblocking": {
+        "median_gb_s": 20.2045,
+        "cv_percent": 0.7236,
+        "status": "passed"
+      },
+      "d2h_pageable_blocking": {
+        "median_gb_s": 11.6205,
+        "cv_percent": 1.1461,
+        "status": "passed"
+      },
+      "d2h_pageable_nonblocking": {
+        "median_gb_s": 18.4105,
+        "cv_percent": 2.4006,
+        "status": "passed"
+      },
+      "h2d_pinned_blocking": {
+        "median_gb_s": 17.9045,
+        "cv_percent": 7.4488,
+        "status": "unstable"
+      },
+      "h2d_pinned_nonblocking": {
+        "median_gb_s": 16.052,
+        "cv_percent": 14.1804,
+        "status": "unstable"
+      },
+      "d2h_pinned_blocking": {
+        "median_gb_s": 19.4425,
+        "cv_percent": 18.6162,
+        "status": "unstable"
+      },
+      "d2h_pinned_nonblocking": {
+        "median_gb_s": 23.2407,
+        "cv_percent": 5.4358,
+        "status": "unstable"
+      },
+      "pinned_note": "all four pinned groups unstable on a shared host with concurrent third-party workloads; sample counts and device identity were consistent between fast and slow rounds",
+      "scope": "effective single-direction API bandwidth under full synchronization; non_blocking is a request mode, not proof of overlap"
+    },
+    "controlled_timeout_recheck": {
+      "computation": "timeout-FP16-a01 failed with TimeoutError at container-probe; cleanup, postflight and lease release passed",
+      "transfer": "timeout-h2d-a01 failed with TimeoutError at container-probe; cleanup, postflight and lease release passed"
+    },
+    "fp32_regression": {
+      "smoke": "passed",
+      "monitored_measured_round_tflops": 113.1,
+      "note": "consistent with day-4 five-run median 113.057737 TFLOPS; not merged into day-4 statistics"
+    },
+    "offline_regression": {
+      "base_tests": 195,
+      "pr0_tests": 32,
+      "toolkit_tests": 80,
+      "targeted_computation": 9,
+      "targeted_transfer": 7,
+      "targeted_fp32": 22,
+      "targeted_preflight": 37,
+      "ascend_case_matrix": {
+        "total": 15,
+        "applicable": 10,
+        "skipped": 5
+      },
+      "p800_planning_matrix": {
+        "computation_applicable": 4,
+        "computation_skipped_with_evidence": 3,
+        "transfer_applicable": 2
+      },
+      "public_distribution": {
+        "tests": 7,
+        "passed": 6,
+        "known_preexisting_failure": 1
+      },
+      "selector_gates": "ascend selectors pass; p800 requires --physical-device-ids and rejects legacy aliases; preflight requires explicit selection",
+      "capacity_gate": "high-risk capacity refused without --allow-high-risk-case"
+    },
+    "acceptance_review": "base/result/p800-pr4-pr5-20260922-0935/acceptance-review.json (status passed; lock reacquired; card 5 idle under lock)",
+    "open_items": [
+      "Transfer groups that fail the stability gate on the shared host are rerun in a quiet window: see the alignment table",
+      "TF32 remains blocked/unresolved: no verifiable runtime mode evidence",
+      "BF16 throughput limitation is a vendor-kernel property of the locked stack, not a configuration error",
+      "Device memory, capacity and multi-card communication remain outside day-5 scope"
+    ],
+    "scope_limits": "Single physical card 5, locked M1/native XPYTORCH with USE_FLAGGEMS=0, single rank. No multi-card, capacity, or other-vendor hardware validation. Candidate manifest remains validated:false.",
+    "scale_alignment": {
+      "ascend_reference": "computation 8192-cubed with warmup 100; transfer Melements 1024 (4 GiB), pinned, 100 iterations",
+      "status": "completed for computation FP16/BF16/FP32/INT8 and all eight transfer request modes",
+      "iteration_rule": "Ascend iteration counts are kept where the window stays at or above 15 s; FP32 and INT8 raise them because the Ascend values would measure 9.3 s and 0.22 s",
+      "results": {
+        "FP16-8192": {
+          "status": "passed",
+          "median": 258.8694376553051,
+          "min": 258.5207819298615,
+          "max": 260.06836571593806,
+          "cv_percent": 0.22941606711715715,
+          "unit": "TFLOPS",
+          "mean_seconds": 21.22
+        },
+        "BF16-8192": {
+          "status": "passed",
+          "median": 118.97044548995414,
+          "min": 118.9667461743431,
+          "max": 118.97478886608226,
+          "cv_percent": 0.0028597628177598586,
+          "unit": "TFLOPS",
+          "mean_seconds": 46.21
+        },
+        "FP32-8192": {
+          "status": "passed",
+          "median": 117.04902861351002,
+          "min": 116.8322216667718,
+          "max": 117.0766653764408,
+          "cv_percent": 0.08600405602476272,
+          "unit": "TFLOPS",
+          "mean_seconds": 18.8
+        },
+        "INT8-8192": {
+          "status": "passed",
+          "median": 504.5911867102491,
+          "min": 501.9466479349661,
+          "max": 506.3632506169405,
+          "cv_percent": 0.331463845653001,
+          "unit": "TOPS",
+          "mean_seconds": 17.43
+        },
+        "h2d-pageable-blocking-4G": {
+          "status": "passed",
+          "median": 10.1470878901719,
+          "min": 9.54165472587984,
+          "max": 10.322289603824862,
+          "cv_percent": 3.310653085869755,
+          "unit": "GB/s",
+          "mean_seconds": 42.97
+        }
+      },
+      "day4_note": "the day-four FP32 4096-cubed qualification remains valid and keeps its own snapshotted contract; the 8192-cubed round is the Ascend-parity companion",
+      "results_at_ascend_scale": {
+        "FP16-8192": {
+          "status": "passed",
+          "median": 258.8694376553051,
+          "unit": "TFLOPS",
+          "cv_percent": 0.22941606711715715,
+          "min": 258.5207819298615,
+          "max": 260.06836571593806,
+          "mean_seconds": 21.22,
+          "runs": 5
+        },
+        "BF16-8192": {
+          "status": "passed",
+          "median": 118.97044548995414,
+          "unit": "TFLOPS",
+          "cv_percent": 0.0028597628177598586,
+          "min": 118.9667461743431,
+          "max": 118.97478886608226,
+          "mean_seconds": 46.21,
+          "runs": 5
+        },
+        "FP32-8192": {
+          "status": "passed",
+          "median": 117.04902861351002,
+          "unit": "TFLOPS",
+          "cv_percent": 0.08600405602476272,
+          "min": 116.8322216667718,
+          "max": 117.0766653764408,
+          "mean_seconds": 18.8,
+          "runs": 5
+        },
+        "INT8-8192": {
+          "status": "passed",
+          "median": 504.5911867102491,
+          "unit": "TOPS",
+          "cv_percent": 0.331463845653001,
+          "min": 501.9466479349661,
+          "max": 506.3632506169405,
+          "mean_seconds": 17.43,
+          "runs": 5
+        },
+        "h2d-pageable-blocking-4G": {
+          "status": "passed",
+          "median": 10.1470878901719,
+          "unit": "GB/s",
+          "cv_percent": 3.310653085869755,
+          "min": 9.54165472587984,
+          "max": 10.322289603824862,
+          "mean_seconds": 42.97,
+          "runs": 5
+        },
+        "h2d-pageable-nonblocking-4G": {
+          "status": "passed",
+          "median": 16.66490411491491,
+          "unit": "GB/s",
+          "cv_percent": 3.4531026348976313,
+          "min": 15.547724023711066,
+          "max": 17.051393569176575,
+          "mean_seconds": 26.1,
+          "runs": 5
+        },
+        "h2d-pinned-blocking-4G": {
+          "status": "passed",
+          "median": 18.398788867741025,
+          "unit": "GB/s",
+          "cv_percent": 3.652114208899594,
+          "min": 18.250641319947647,
+          "max": 19.72565428010285,
+          "mean_seconds": 22.83,
+          "runs": 5
+        },
+        "h2d-pinned-nonblocking-4G": {
+          "status": "unstable",
+          "median": 20.864195766886304,
+          "unit": "GB/s",
+          "cv_percent": 6.3299218870860114,
+          "min": 17.9817002708883,
+          "max": 20.925459361120748,
+          "mean_seconds": 31.89,
+          "runs": 5
+        },
+        "d2h-pageable-blocking-4G": {
+          "status": "passed",
+          "median": 9.940040232309297,
+          "unit": "GB/s",
+          "cv_percent": 3.5950981831558306,
+          "min": 9.235456951652587,
+          "max": 10.085632255033316,
+          "mean_seconds": 44.04,
+          "runs": 5
+        },
+        "d2h-pageable-nonblocking-4G": {
+          "status": "unstable",
+          "median": 14.221810470069082,
+          "unit": "GB/s",
+          "cv_percent": 6.8655167111416375,
+          "min": 13.898636068942746,
+          "max": 16.15465385623378,
+          "mean_seconds": 29.08,
+          "runs": 5
+        },
+        "d2h-pinned-blocking-4G": {
+          "status": "passed",
+          "median": 28.790717447006376,
+          "unit": "GB/s",
+          "cv_percent": 2.3411125259425116,
+          "min": 27.52802284193794,
+          "max": 28.879626294182344,
+          "mean_seconds": 22.73,
+          "runs": 5
+        },
+        "d2h-pinned-nonblocking-4G": {
+          "status": "passed",
+          "median": 29.065817838418134,
+          "unit": "GB/s",
+          "cv_percent": 1.2001175882475905,
+          "min": 28.445557103606816,
+          "max": 29.24816932148736,
+          "mean_seconds": 22.3,
+          "runs": 5
+        }
+      },
+      "groups_pending": []
+    },
+    "monitoring_correction": "xpu-smi telemetry does observe these workloads (100% utilization, 61-63 C, 296-400 W during compute; idle readings during the retracted _int_mm runs). An earlier note claiming the monitor was blind to all cases came from reading the wrong JSON nesting and is withdrawn.",
+    "bf16_throughput_finding": {
+      "summary": "bf16 GEMM executes at fp32-equivalent throughput on this stack",
+      "evidence": {
+        "aten_torch_mm_bf16_ms": 9.265,
+        "aten_torch_mm_bf16_tflops": 118.7,
+        "aten_torch_mm_fp16_tflops": 268.8,
+        "vendor_matmul_bf16_tflops": 116.3,
+        "vendor_matmul_fp16_tflops": 263.3,
+        "fp32_reference_tflops": 118.2,
+        "process_cpu_over_wall": 1.0
+      },
+      "rejected_routes": "the grouped bf16 kernel rejects a plain dense call (moe_fc_v3_block error); no other dense bf16 path exists"
+    },
+    "pending_alignment_targets": {
+      "main_memory-bandwidth": "Melements 1024 (4 GiB) with warmup 2 and 10 iterations; the clone() form counts 2 x payload per call",
+      "main_memory-capacity": "POST_TEST_WAIT_SECONDS 0 and BOUND_REQUEST_BY_FREE_MEMORY true; the search must hold real allocations, not read the free-memory hint as a result",
+      "interconnect-P2P_intraserver": "device collective backend (Ascend uses flagos); the P800 profile needs its XCCL backend resolved first",
+      "interconnect-MPI_intraserver": "Melements 1 with warmup 10 and 100 iterations on the device collective backend",
+      "interconnect-P2P_interserver / interconnect-MPI_interserver": "explicitly unsupported: the unified entrypoint fixes nnodes=1"
+    },
+    "transfer_limitations": {
+      "nonblocking_pinned_above_2GiB": "pinned non-blocking copy raises vendor error 999 at a 4 GiB payload, deterministically and in both directions; works at 64 MiB through 2 GiB. Evidence: capability-transfer-pinned-a01 walks pin, device allocation, fill, sync, blocking copy and non-blocking copy at six payloads",
+      "pinned_nonblocking_scope": "qualified at a 2 GiB payload with 300 iterations, the largest this runtime accepts",
+      "d2h_pinned_blocking_iterations": "raised from the Ascend 100 to 150 because 100 produced 14.77-16.97 s windows and two runs fell below the 15 s floor",
+      "unstable_group": "d2h pageable non-blocking at the Ascend payload: CV 6.87 percent, retained as measured"
+    },
+    "transfer_qualification_ascend_scale": {
+      "h2d-pageable-blocking-4G": {
+        "status": "passed",
+        "median": 10.1470878901719,
+        "unit": "GB/s",
+        "cv_percent": 3.310653085869755,
+        "min": 9.54165472587984,
+        "max": 10.322289603824862,
+        "mean_seconds": 42.97,
+        "runs": 5
+      },
+      "h2d-pageable-nonblocking-4G": {
+        "status": "passed",
+        "median": 16.66490411491491,
+        "unit": "GB/s",
+        "cv_percent": 3.4531026348976313,
+        "min": 15.547724023711066,
+        "max": 17.051393569176575,
+        "mean_seconds": 26.1,
+        "runs": 5
+      },
+      "h2d-pinned-blocking-4G": {
+        "status": "passed",
+        "median": 18.398788867741025,
+        "unit": "GB/s",
+        "cv_percent": 3.652114208899594,
+        "min": 18.250641319947647,
+        "max": 19.72565428010285,
+        "mean_seconds": 22.83,
+        "runs": 5
+      },
+      "h2d-pinned-nonblocking-4G": {
+        "status": "unstable",
+        "median": 20.864195766886304,
+        "unit": "GB/s",
+        "cv_percent": 6.3299218870860114,
+        "min": 17.9817002708883,
+        "max": 20.925459361120748,
+        "mean_seconds": 31.89,
+        "runs": 5
+      },
+      "d2h-pageable-blocking-4G": {
+        "status": "passed",
+        "median": 9.940040232309297,
+        "unit": "GB/s",
+        "cv_percent": 3.5950981831558306,
+        "min": 9.235456951652587,
+        "max": 10.085632255033316,
+        "mean_seconds": 44.04,
+        "runs": 5
+      },
+      "d2h-pageable-nonblocking-4G": {
+        "status": "unstable",
+        "median": 14.221810470069082,
+        "unit": "GB/s",
+        "cv_percent": 6.8655167111416375,
+        "min": 13.898636068942746,
+        "max": 16.15465385623378,
+        "mean_seconds": 29.08,
+        "runs": 5
+      },
+      "d2h-pinned-blocking-4G": {
+        "status": "passed",
+        "median": 28.790717447006376,
+        "unit": "GB/s",
+        "cv_percent": 2.3411125259425116,
+        "min": 27.52802284193794,
+        "max": 28.879626294182344,
+        "mean_seconds": 22.73,
+        "runs": 5
+      },
+      "d2h-pinned-nonblocking-4G": {
+        "status": "passed",
+        "median": 29.065817838418134,
+        "unit": "GB/s",
+        "cv_percent": 1.2001175882475905,
+        "min": 28.445557103606816,
+        "max": 29.24816932148736,
+        "mean_seconds": 22.3,
+        "runs": 5
+      }
+    },
+    "transfer_payload_realignment": {
+      "governing_reference": "\u53c2\u8003\u8d44\u6599/20260914T133423Z (toolkit bundle): ascend-dmi --bw -s 536870912 --et 50 = 512 MiB x 50",
+      "superseded": "the 4 GiB payload came from the Ascend Base case config (Melements 1024), a different suite",
+      "iteration_rule": "iterations raised from the reference 50 to hold the 15 s measurement floor; per-variant counts recorded",
+      "pinned_nonblocking": "runs at 512 MiB, so the earlier 2 GiB scope was a payload workaround; the vendor error 999 is payload-specific (4 GiB) not mode-specific",
+      "results_512MiB": {
+        "h2d-pageable-blocking": {
+          "status": "passed",
+          "median_gb_s": 9.05873738694354,
+          "cv_percent": 4.351668951209485,
+          "min": 8.520777892506196,
+          "max": 9.332824229363673,
+          "window_seconds": 24.03,
+          "iterations": 400
+        },
+        "h2d-pageable-nonblocking": {
+          "status": "passed",
+          "median_gb_s": 17.235107505005104,
+          "cv_percent": 4.335179109699786,
+          "min": 15.70114090222531,
+          "max": 17.372988945032592,
+          "window_seconds": 19.17,
+          "iterations": 600
+        },
+        "h2d-pinned-blocking": {
+          "status": "passed",
+          "median_gb_s": 20.49592052396569,
+          "cv_percent": 1.5475570379882106,
+          "min": 20.06733640479456,
+          "max": 20.896744359611485,
+          "window_seconds": 17.03,
+          "iterations": 650
+        },
+        "h2d-pinned-nonblocking": {
+          "status": "passed",
+          "median_gb_s": 20.742245800183582,
+          "cv_percent": 1.661333693475141,
+          "min": 20.07425172821236,
+          "max": 20.968242552529276,
+          "window_seconds": 18.2,
+          "iterations": 700
+        },
+        "d2h-pageable-blocking": {
+          "status": "passed",
+          "median_gb_s": 10.162388526694086,
+          "cv_percent": 1.3816296861545108,
+          "min": 9.946988490605532,
+          "max": 10.294490901014257,
+          "window_seconds": 21.22,
+          "iterations": 400
+        },
+        "d2h-pageable-nonblocking": {
+          "status": "passed",
+          "median_gb_s": 15.089063978995377,
+          "cv_percent": 0.8810595015417594,
+          "min": 14.896449467331289,
+          "max": 15.214572089531698,
+          "window_seconds": 17.82,
+          "iterations": 500
+        },
+        "d2h-pinned-blocking": {
+          "status": "passed",
+          "median_gb_s": 27.29736505148278,
+          "cv_percent": 2.721169057968525,
+          "min": 26.340486634993606,
+          "max": 28.38288885363892,
+          "window_seconds": 19.64,
+          "iterations": 1000
+        },
+        "d2h-pinned-nonblocking": {
+          "status": "passed",
+          "median_gb_s": 27.947769861512516,
+          "cv_percent": 3.1904143342173468,
+          "min": 26.432570690422825,
+          "max": 28.58927157588132,
+          "window_seconds": 19.33,
+          "iterations": 1000
+        }
+      },
+      "missing": []
+    }
+  },
+  "day6_memory_and_two_card": {
+    "date": "2026-09-23",
+    "timezone": "Asia/Shanghai",
+    "status": "complete-at-qualification-grade",
+    "tested_code_commits": [
+      "045a23b7",
+      "26e68bc3",
+      "bce75eea",
+      "405f7afe",
+      "23bcd20e",
+      "65cc3def",
+      "1c01aff7"
+    ],
+    "worktree_state_during_runs": "modified while the day-six series was written; every run records its own code identity",
+    "entrypoints": [
+      "base/run.py benchmark run --case <case>:P800",
+      "base/run.py benchmark preflight --physical-device-ids <id>"
+    ],
+    "authorization_reference": "user-20260923-execute-day6-plan",
+    "raw_evidence_directory": "base/result/p800-day6-20260923",
+    "review": "evidence/day6/review.md",
+    "memory_bandwidth": {
+      "status": "qualified-on-4gib-payload",
+      "payload": "Melements=1024 (4 GiB float32), 2 x payload formula",
+      "result_gb_s": 2236.822,
+      "result_gib_s": 2083.203,
+      "measurement_window_seconds": 16.129,
+      "physical_device_id": 5,
+      "evidence": "evidence/day6/memory-bandwidth/memory-qualification-a02-card5"
+    },
+    "memory_capacity": {
+      "status": "measured-at-high-risk-gate",
+      "held_mib": 98132,
+      "held_gb": 102.899,
+      "held_gib": 95.832,
+      "granularity_mib": 1,
+      "release_verified": true,
+      "monitoring_status": "partial (0.11 s search window, documented)",
+      "evidence": "evidence/day6/memory-capacity/capacity-full-a01-card5"
+    },
+    "communication": {
+      "verdict": "GO-qualification-grade",
+      "allreduce": "Melements 1/4/16/64 (4/16/64/256 MiB): 25.73 / 27.51 / 37.37 / 37.73 GB/s algbw, busbw equal at world size two, windows 17.5-19.0 s",
+      "p2p": "one-way rank0-to-rank1 (never doubled), 4/16/64/256 MiB: 25.19 / 31.18 / 32.98 / 33.60 GB/s",
+      "defects_fixed": [
+        "container network: --network none starves the BKCL socket bootstrap; the benchmark container now joins the --internal bridge flagperf-p800-internal",
+        "per-rank device selection: rank 1 kept cuda:0 as the current device; the first collective failed with invalid resource handle",
+        "per-rank binding: artifacts carried the first binding instead of the rank own binding",
+        "stdout integrity: concurrent rank writes merged result lines and small values lost precision",
+        "allreduce formula: the window iterations were not counted"
+      ],
+      "contended_card_note": "qualification-grade runs executed on cards another tenant was using under the one-day authorization; the official isolated rerun is pending a free pair",
+      "timeout_drills": "AllReduce and P2P cpu-wait drills passed (watchdog stop, postflight, cleanup, lease release)"
+    },
+    "interserver": {
+      "status": "supported-false-skipped-before-docker-and-lease",
+      "evidence": "runtime_requirements.json for both interserver cases"
+    },
+    "offline_tests": {
+      "base_suite": "182 collected, 1 failure + 14 errors identical to the HEAD baseline",
+      "day6_suite": "18 passed"
+    },
+    "two_card_gate": "GO (qualification grade); the official isolated rerun is day 7 first task; day 7 eight-card planning waits for it",
+    "open_items": [
+      "official two-card rerun on a free card pair",
+      "flagperf-p800-internal is a host prerequisite; consider a host-preflight presence check",
+      "1 MiB message point is not representable at the Melements granularity (4 MiB)",
+      "cards 1 and 2 stay excluded (sync hang, uncorrectable ECC)",
+      "the temporary contended preflight override must be reverted at the end of the day"
+    ]
+  },
+  "day7_acceptance": {
+    "schema_version": 1,
+    "date": "2026-09-24",
+    "timezone": "Asia/Shanghai",
+    "status": "scoped-delivery; full-week acceptance incomplete",
+    "measurement_code_commit": "c1d900d8d89eadba48540b34ec7873fb26da4671",
+    "release_code_commit": "e373664aa5324a21c04196d1971f9ea013ab9f3c",
+    "qualification": [
+      {
+        "group": "FP32",
+        "status": "passed",
+        "median": 117.87780515053663,
+        "unit": "TFLOPS",
+        "cv_percent": 0.36615484576830315,
+        "repetitions": 5
+      },
+      {
+        "group": "FP16",
+        "status": "passed",
+        "median": 258.7841983504385,
+        "unit": "TFLOPS",
+        "cv_percent": 0.04484491274909532,
+        "repetitions": 5
+      },
+      {
+        "group": "BF16",
+        "status": "passed",
+        "median": 118.96795986125177,
+        "unit": "TFLOPS",
+        "cv_percent": 0.0017619849746718901,
+        "repetitions": 5
+      },
+      {
+        "group": "INT8",
+        "status": "passed",
+        "median": 503.9037593846929,
+        "unit": "TOPS",
+        "cv_percent": 0.3211059782938446,
+        "repetitions": 5
+      },
+      {
+        "group": "h2d-pageable-blocking",
+        "status": "passed",
+        "median": 10.014424348520725,
+        "unit": "GB/s",
+        "cv_percent": 1.1785497388117585,
+        "repetitions": 5
+      },
+      {
+        "group": "h2d-pageable-nonblocking",
+        "status": "passed",
+        "median": 18.844314151096917,
+        "unit": "GB/s",
+        "cv_percent": 2.254722168897458,
+        "repetitions": 5
+      },
+      {
+        "group": "h2d-pinned-blocking",
+        "status": "unstable",
+        "median": 20.113559647669202,
+        "unit": "GB/s",
+        "cv_percent": 6.32066412565772,
+        "repetitions": 5
+      },
+      {
+        "group": "h2d-pinned-nonblocking",
+        "status": "passed",
+        "median": 19.289542181161412,
+        "unit": "GB/s",
+        "cv_percent": 4.165151213315993,
+        "repetitions": 5
+      },
+      {
+        "group": "d2h-pageable-blocking",
+        "status": "passed",
+        "median": 10.802936108913677,
+        "unit": "GB/s",
+        "cv_percent": 3.78922037427054,
+        "repetitions": 5
+      },
+      {
+        "group": "d2h-pageable-nonblocking",
+        "status": "passed",
+        "median": 17.54872710547543,
+        "unit": "GB/s",
+        "cv_percent": 3.322982718116306,
+        "repetitions": 5
+      },
+      {
+        "group": "d2h-pinned-blocking",
+        "status": "unstable",
+        "median": 24.727412259554253,
+        "unit": "GB/s",
+        "cv_percent": 5.592455322215141,
+        "repetitions": 5
+      },
+      {
+        "group": "d2h-pinned-nonblocking",
+        "status": "unstable",
+        "median": 25.154118614618735,
+        "unit": "GB/s",
+        "cv_percent": 5.932371282278915,
+        "repetitions": 5
+      },
+      {
+        "group": "memory-bandwidth",
+        "status": "passed",
+        "median": 2235.9018565562737,
+        "unit": "GB/s",
+        "cv_percent": 0.000777168138903794,
+        "repetitions": 5
+      },
+      {
+        "group": "comm-MPI-m64",
+        "status": "incomplete",
+        "completed_runs": 0
+      },
+      {
+        "group": "comm-P2P-m64",
+        "status": "incomplete",
+        "completed_runs": 0
+      }
+    ],
+    "communication_curves": [
+      {
+        "case": "MPI",
+        "message_mib": 4,
+        "run": "runs/comm-MPI-m1-q1",
+        "status": "not-qualified",
+        "reason": "FileNotFoundError(2, 'No such file or directory')"
+      },
+      {
+        "case": "MPI",
+        "message_mib": 16,
+        "run": "runs/comm-MPI-m4-q1",
+        "status": "not-qualified",
+        "reason": "FileNotFoundError(2, 'No such file or directory')"
+      },
+      {
+        "case": "MPI",
+        "message_mib": 64,
+        "run": "runs/comm-MPI-m16-q1",
+        "status": "not-qualified",
+        "reason": "FileNotFoundError(2, 'No such file or directory')"
+      },
+      {
+        "case": "MPI",
+        "message_mib": 256,
+        "run": "runs/comm-MPI-m64-q1",
+        "status": "not-qualified",
+        "reason": "FileNotFoundError(2, 'No such file or directory')"
+      },
+      {
+        "case": "P2P",
+        "message_mib": 4,
+        "run": "runs/comm-P2P-m1-q1",
+        "status": "not-qualified",
+        "reason": "FileNotFoundError(2, 'No such file or directory')"
+      },
+      {
+        "case": "P2P",
+        "message_mib": 16,
+        "run": "runs/comm-P2P-m4-q1",
+        "status": "not-qualified",
+        "reason": "FileNotFoundError(2, 'No such file or directory')"
+      },
+      {
+        "case": "P2P",
+        "message_mib": 64,
+        "run": "runs/comm-P2P-m16-q1",
+        "status": "not-qualified",
+        "reason": "FileNotFoundError(2, 'No such file or directory')"
+      },
+      {
+        "case": "P2P",
+        "message_mib": 256,
+        "run": "runs/comm-P2P-m64-q1",
+        "status": "not-qualified",
+        "reason": "FileNotFoundError(2, 'No such file or directory')"
+      }
+    ],
+    "timeouts": [],
+    "capacity": {
+      "status": "partial",
+      "measurement_status": "passed",
+      "monitoring_status": "partial",
+      "correctness_status": "passed",
+      "cleanup_status": "passed",
+      "lease_released": true
+    },
+    "run_status_counts": {
+      "passed": 78,
+      "partial": 7
+    },
+    "eight_card": {
+      "status": "not-implemented-and-not-qualified",
+      "reasons": [
+        "cards 1/2 health exclusions",
+        "no healthy idle whole-host window",
+        "provider, runtime requirements, contract and reference remain exactly two ranks"
+      ]
+    },
+    "candidate_validated": false,
+    "resource_check": "final-resource-check.json",
+    "review": "evidence/day7/review.md",
+    "verification": "evidence/day7/verification.json",
+    "cpu_regression": {
+      "base-release": {
+        "tests": 220,
+        "exit_code": 0
+      },
+      "pr0-release": {
+        "tests": 32,
+        "exit_code": 0
+      },
+      "toolkit-release": {
+        "tests": 80,
+        "exit_code": 0
+      },
+      "day6-release": {
+        "tests": 18,
+        "exit_code": 0
+      }
+    },
+    "historical_day6_formal_reruns": "Already completed by user on 4+7 and 3+4; current Day6 index 5811 verified; supersedes the older pending note without rewriting historical evidence"
+  }
+}

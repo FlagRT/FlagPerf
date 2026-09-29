@@ -1,0 +1,26 @@
+test_bidirectional_uses_joint_time_and_checks_both_payloads (test_p800_toolkit.ContractTests.test_bidirectional_uses_joint_time_and_checks_both_payloads) ... ok
+test_chunk_protocol_requires_matching_mode_payload_and_count (test_p800_toolkit.ContractTests.test_chunk_protocol_requires_matching_mode_payload_and_count) ... ok
+test_computation_dtype_shape_and_sampled_correctness (test_p800_toolkit.ContractTests.test_computation_dtype_shape_and_sampled_correctness) ... ok
+test_excluded_card_and_invalid_selection (test_p800_toolkit.ContractTests.test_excluded_card_and_invalid_selection) ... ok
+test_failure_propagates (test_p800_toolkit.ContractTests.test_failure_propagates) ... ok
+test_identity_join_uses_pci_not_ordinal (test_p800_toolkit.ContractTests.test_identity_join_uses_pci_not_ordinal) ... ok
+test_native_json_missing_or_ambiguous (test_p800_toolkit.ContractTests.test_native_json_missing_or_ambiguous) ... ok
+test_pairs_are_unordered_and_never_infer_reverse (test_p800_toolkit.ContractTests.test_pairs_are_unordered_and_never_infer_reverse) ... ok
+test_reject_exit_zero_without_correct_data (test_p800_toolkit.ContractTests.test_reject_exit_zero_without_correct_data) ... ok
+test_sweep_cardinality_and_modes (test_p800_toolkit.ContractTests.test_sweep_cardinality_and_modes) ... ok
+test_twelve_cases (test_p800_toolkit.ContractTests.test_twelve_cases) ... ok
+test_unit_formula_and_no_factor_of_two (test_p800_toolkit.ContractTests.test_unit_formula_and_no_factor_of_two) ... ok
+test_hash_index_detects_mutation (test_p800_toolkit.EvidenceTests.test_hash_index_detects_mutation) ... ok
+test_monitor_only_counts_complete_samples_inside_measurement_window (test_p800_toolkit.EvidenceTests.test_monitor_only_counts_complete_samples_inside_measurement_window) ... ok
+test_report_regeneration_preserves_status_and_is_deterministic (test_p800_toolkit.EvidenceTests.test_report_regeneration_preserves_status_and_is_deterministic) ... ok
+test_setup_failure_is_failed_and_keeps_each_requested_case (test_p800_toolkit.EvidenceTests.test_setup_failure_is_failed_and_keeps_each_requested_case) ... ok
+test_timeout_keeps_output (test_p800_toolkit.EvidenceTests.test_timeout_keeps_output) ... ok
+test_aliases_and_vendor_flags_rejected (test_p800_toolkit.FacadeTests.test_aliases_and_vendor_flags_rejected) ... ok
+test_range_excludes_card_one_before_execution (test_p800_toolkit.FacadeTests.test_range_excludes_card_one_before_execution) ... ok
+test_smoke_scope_and_busy_authorization_are_explicit (test_p800_toolkit.FacadeTests.test_smoke_scope_and_busy_authorization_are_explicit) ... ok
+test_static_plan_never_calls_subprocess (test_p800_toolkit.FacadeTests.test_static_plan_never_calls_subprocess) ... ok
+
+----------------------------------------------------------------------
+Ran 21 tests in 0.142s
+
+OK

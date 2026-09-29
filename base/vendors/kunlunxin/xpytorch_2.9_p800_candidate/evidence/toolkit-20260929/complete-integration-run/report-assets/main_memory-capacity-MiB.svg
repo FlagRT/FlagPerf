@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="280" viewBox="0 0 1100 280">
+<rect width="100%" height="100%" fill="white"/>
+<g font-family="sans-serif" font-size="13" fill="#263247">
+<text x="20" y="28" font-size="18">main_memory-capacity (MiB)</text>
+<line x1="420" y1="50" x2="420" y2="250" stroke="#b7c0ca"/>
+<text x="420" y="270">0</text>
+<text x="16" y="75">card 3 / total_memory_mib / RQ</text>
+<rect x="420" y="60" width="530.000" height="20" fill="#3873a5"/>
+<text x="958.000" y="75">98304</text>
+<text x="16" y="105">card 3 / used_memory_mib / RQ</text>
+<rect x="420" y="90" width="110.147" height="20" fill="#3873a5"/>
+<text x="538.147" y="105">20430</text>
+<text x="16" y="135">card 3 / free_memory_mib / RQ</text>
+<rect x="420" y="120" width="419.853" height="20" fill="#3873a5"/>
+<text x="847.853" y="135">77874</text>
+<text x="16" y="165">card 7 / total_memory_mib / RQ</text>
+<rect x="420" y="150" width="530.000" height="20" fill="#3873a5"/>
+<text x="958.000" y="165">98304</text>
+<text x="16" y="195">card 7 / used_memory_mib / RQ</text>
+<rect x="420" y="180" width="407.539" height="20" fill="#3873a5"/>
+<text x="835.539" y="195">75590</text>
+<text x="16" y="225">card 7 / free_memory_mib / RQ</text>
+<rect x="420" y="210" width="122.461" height="20" fill="#3873a5"/>
+<text x="550.461" y="225">22714</text>
+</g></svg>

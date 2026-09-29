@@ -1,0 +1,177 @@
+{
+  "cases": {
+    "computation-INT8": {
+      "commands": [
+        {
+          "command": [
+            "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+            "--mode",
+            "gemm",
+            "--src",
+            "0",
+            "--src-pci",
+            "00000000:84:00.0",
+            "--samples",
+            "25",
+            "--warmup",
+            "2",
+            "--minimum-seconds",
+            "0.0",
+            "--dimension",
+            "128",
+            "--dtype",
+            "INT8"
+          ],
+          "duration_s": 0.11543007288128138,
+          "finished_at": "2026-09-29T03:48:04.674018Z",
+          "finished_monotonic_s": 4494821.593902835,
+          "returncode": 1,
+          "started_at": "2026-09-29T03:48:04.558600Z",
+          "started_monotonic_s": 4494821.478472762,
+          "stderr": {
+            "bytes": 399,
+            "path": "cases/computation-INT8/physical-4/repeat-1/microbenchmark.stderr",
+            "sha256": "f40f8013035e03d07dc38aed8a4755ee750572395fda96d8e63b37d706cd6212"
+          },
+          "stdout": {
+            "bytes": 0,
+            "path": "cases/computation-INT8/physical-4/repeat-1/microbenchmark.stdout",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "timed_out": false,
+          "timeout_s": 180
+        }
+      ],
+      "diagnosis_status": "not-supported",
+      "duration_s": 0.11543007288128138,
+      "measurement_status": "failed",
+      "metrics": [],
+      "monitoring_status": "not-run",
+      "status": "failed",
+      "sweep_scope": {
+        "physical_ids": [
+          4
+        ],
+        "point_count": 1,
+        "repeat": 1
+      },
+      "targets": [
+        {
+          "bindings": [
+            {
+              "container_node": "/dev/xpu4",
+              "device_major": 195,
+              "device_minor": 4,
+              "driver": "5.0.21.47",
+              "foreign_handles_authorized": false,
+              "foreign_occupancy_observed": false,
+              "free_memory_mib": 98304,
+              "host_device_node": "/dev/xpu4",
+              "host_physical_id": 4,
+              "native_id": 0,
+              "pci_bdf": "0000:84:00.0",
+              "power_w": 94.0,
+              "processes_empty": true,
+              "serial": "02K15K0263D002KG",
+              "temperature_c": 39.0,
+              "total_memory_mib": 98304,
+              "uncorrectable_ecc_counts": [
+                0,
+                0
+              ],
+              "used_memory_mib": 0,
+              "utilization_percent": 0,
+              "uuid": "b7942319-362e-5a53-a8eb-a2d06fbe84f6",
+              "xpu_smi_runtime": "10.2"
+            }
+          ],
+          "commands": [
+            {
+              "command": [
+                "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+                "--mode",
+                "gemm",
+                "--src",
+                "0",
+                "--src-pci",
+                "00000000:84:00.0",
+                "--samples",
+                "25",
+                "--warmup",
+                "2",
+                "--minimum-seconds",
+                "0.0",
+                "--dimension",
+                "128",
+                "--dtype",
+                "INT8"
+              ],
+              "duration_s": 0.11543007288128138,
+              "finished_at": "2026-09-29T03:48:04.674018Z",
+              "finished_monotonic_s": 4494821.593902835,
+              "returncode": 1,
+              "started_at": "2026-09-29T03:48:04.558600Z",
+              "started_monotonic_s": 4494821.478472762,
+              "stderr": {
+                "bytes": 399,
+                "path": "cases/computation-INT8/physical-4/repeat-1/microbenchmark.stderr",
+                "sha256": "f40f8013035e03d07dc38aed8a4755ee750572395fda96d8e63b37d706cd6212"
+              },
+              "stdout": {
+                "bytes": 0,
+                "path": "cases/computation-INT8/physical-4/repeat-1/microbenchmark.stdout",
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "timed_out": false,
+              "timeout_s": 180
+            }
+          ],
+          "diagnosis_status": "not-supported",
+          "duration_s": 0.11543007288128138,
+          "error": "native command exited 1",
+          "measurement_status": "failed",
+          "metrics": [],
+          "monitoring_status": "not-run",
+          "point": {
+            "dtype": "INT8",
+            "mode": "gemm",
+            "source": 4
+          },
+          "repetition": 1,
+          "schema_version": 1,
+          "status": "failed",
+          "sweep_scope": "explicit physical cards/mode/payload; native operation",
+          "target": "physical-4/repeat-1"
+        }
+      ]
+    }
+  },
+  "context_sha256": "89e8bc284956d0eb4b7fc9c9c9cb72ad5a7d19462bef1891d56b000e2a1a83bd",
+  "diagnosis_status": "not-supported",
+  "finished_at": "2026-09-29T03:48:04.676279Z",
+  "kind": "toolkit",
+  "measurement_status": "failed",
+  "monitoring_status": "not-run",
+  "run_id": "20260929T034759Z-09a7592c",
+  "schema_version": 1,
+  "selected_physical_device_ids": [
+    4
+  ],
+  "settings": {
+    "allow_busy_devices": false,
+    "allow_candidate_runtime": true,
+    "command_timeout": 180,
+    "matrix_size": 128,
+    "minimum_seconds": 0.0,
+    "payload_bytes": 1048576,
+    "privilege_command": "",
+    "repeat": 1,
+    "samples": 25,
+    "smoke": true,
+    "warmup": 2
+  },
+  "started_at": "2026-09-29T03:48:02.056000Z",
+  "status": "failed",
+  "suite": "kunlunxin-p800-toolkit",
+  "vendor": "kunlunxin"
+}

@@ -1,0 +1,636 @@
+{
+  "clock_domain": "same-host Linux monotonic",
+  "collector": "xpu-smi -m and selected -q",
+  "extensions": [],
+  "parsed_samples": {
+    "bytes": 24884,
+    "path": "toolkit-evidence/monitor/samples.jsonl",
+    "sha256": "bb4585e318f615ccd1bf639ebcfb99a7f014ec67ff48cbd3074f3380edc68b01"
+  },
+  "primary_sample_counts_by_target": {
+    "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5": 11,
+    "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57": 8
+  },
+  "raw_samples": {
+    "bytes": 362516,
+    "path": "toolkit-evidence/monitor/samples.raw.jsonl",
+    "sha256": "d9f9e6de9af4f3c4b25280365becade285fd0822da3bfb580ff0e97958e682f8"
+  },
+  "reasons": [
+    "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57: 8/10 valid samples"
+  ],
+  "sample_counts_by_target": {
+    "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5": 11,
+    "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57": 8
+  },
+  "schema_version": 2,
+  "status": "partial",
+  "target_resource": null,
+  "targets": [
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "pci_bdf": "0000:2e:00.0",
+      "physical_id": 3,
+      "uuid": "9429f5bd-7d13-5cc5-b1b4-c05ddc572f57"
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "pci_bdf": "0000:bb:00.0",
+      "physical_id": 7,
+      "uuid": "4922595e-feb9-5762-9082-d8fd7f11abf5"
+    }
+  ],
+  "total_sample_commands": 111,
+  "vendor": "kunlunxin",
+  "window_semantics": "native completed-operation intervals; initialization excluded",
+  "workload_windows": [
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 4.472343981266022,
+      "role": "measurement",
+      "started_offset_s": 4.4720390466973186
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 4.623431272804737,
+      "role": "measurement",
+      "started_offset_s": 4.620346138253808
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 6.056513160467148,
+      "role": "measurement",
+      "started_offset_s": 6.0562189957126975
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 6.20367047470063,
+      "role": "measurement",
+      "started_offset_s": 6.20282129291445
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 7.71087493840605,
+      "role": "measurement",
+      "started_offset_s": 7.665535247884691
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 7.851244094781578,
+      "role": "measurement",
+      "started_offset_s": 7.850253256037831
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 9.306845139712095,
+      "role": "measurement",
+      "started_offset_s": 9.287948476150632
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 9.43934109248221,
+      "role": "measurement",
+      "started_offset_s": 9.4386126967147
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 17.08402186818421,
+      "role": "measurement",
+      "started_offset_s": 17.08092326298356
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 17.08402186818421,
+      "role": "measurement",
+      "started_offset_s": 17.08092326298356
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 17.202630351297557,
+      "role": "measurement",
+      "started_offset_s": 17.195613347925246
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 17.202630351297557,
+      "role": "measurement",
+      "started_offset_s": 17.195613347925246
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 17.36713793221861,
+      "role": "measurement",
+      "started_offset_s": 17.366467197425663
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 17.36713793221861,
+      "role": "measurement",
+      "started_offset_s": 17.366467197425663
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 10.628985942341387,
+      "role": "measurement",
+      "started_offset_s": 10.626352237537503
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 10.699084643274546,
+      "role": "measurement",
+      "started_offset_s": 10.696533545851707
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 10.771483465097845,
+      "role": "measurement",
+      "started_offset_s": 10.769371359609067
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 10.84257737454027,
+      "role": "measurement",
+      "started_offset_s": 10.839574247598648
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 10.959086991846561,
+      "role": "measurement",
+      "started_offset_s": 10.956064835190773
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 11.085409614257514,
+      "role": "measurement",
+      "started_offset_s": 11.082907506264746
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 11.1975690824911,
+      "role": "measurement",
+      "started_offset_s": 11.193285741843283
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 11.31225295830518,
+      "role": "measurement",
+      "started_offset_s": 11.309668742120266
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 14.293854651041329,
+      "role": "measurement",
+      "started_offset_s": 14.293539297766984
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 14.364394311793149,
+      "role": "measurement",
+      "started_offset_s": 14.36398530099541
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 14.431709000840783,
+      "role": "measurement",
+      "started_offset_s": 14.431390957906842
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 14.48742954339832,
+      "role": "measurement",
+      "started_offset_s": 14.486856155097485
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 14.553836431354284,
+      "role": "measurement",
+      "started_offset_s": 14.553447188809514
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 14.620662580244243,
+      "role": "measurement",
+      "started_offset_s": 14.620044423267245
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 14.692810078151524,
+      "role": "measurement",
+      "started_offset_s": 14.692473964765668
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 14.766534201800823,
+      "role": "measurement",
+      "started_offset_s": 14.765876956284046
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 14.834587735123932,
+      "role": "measurement",
+      "started_offset_s": 14.834032827056944
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 14.901920144446194,
+      "role": "measurement",
+      "started_offset_s": 14.901360136456788
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 14.957555216737092,
+      "role": "measurement",
+      "started_offset_s": 14.956930960528553
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 15.043515805155039,
+      "role": "measurement",
+      "started_offset_s": 15.042958687059581
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 15.15675089135766,
+      "role": "measurement",
+      "started_offset_s": 15.154347921721637
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 15.22188716661185,
+      "role": "measurement",
+      "started_offset_s": 15.219340899027884
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 15.295971753075719,
+      "role": "measurement",
+      "started_offset_s": 15.292233691550791
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 15.404279482550919,
+      "role": "measurement",
+      "started_offset_s": 15.400518401525915
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 15.47536233253777,
+      "role": "measurement",
+      "started_offset_s": 15.475029098801315
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 15.545277075842023,
+      "role": "measurement",
+      "started_offset_s": 15.544457273557782
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 15.661664485931396,
+      "role": "measurement",
+      "started_offset_s": 15.661277944222093
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 15.728333879262209,
+      "role": "measurement",
+      "started_offset_s": 15.727868097834289
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 15.791949454694986,
+      "role": "measurement",
+      "started_offset_s": 15.79128375928849
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 15.87314174324274,
+      "role": "measurement",
+      "started_offset_s": 15.872747400775552
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 15.979680059477687,
+      "role": "measurement",
+      "started_offset_s": 15.979252938181162
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 16.05407148040831,
+      "role": "measurement",
+      "started_offset_s": 16.052718488499522
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 16.167892354540527,
+      "role": "measurement",
+      "started_offset_s": 16.16744741331786
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 16.276201283559203,
+      "role": "measurement",
+      "started_offset_s": 16.275618394836783
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 16.35453452076763,
+      "role": "measurement",
+      "started_offset_s": 16.353576831519604
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 16.47333435062319,
+      "role": "measurement",
+      "started_offset_s": 16.47099302895367
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 16.592627039179206,
+      "role": "measurement",
+      "started_offset_s": 16.589058394543827
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 16.703505755402148,
+      "role": "measurement",
+      "started_offset_s": 16.70052163861692
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 16.823174016550183,
+      "role": "measurement",
+      "started_offset_s": 16.820868995040655
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 16.936435922048986,
+      "role": "measurement",
+      "started_offset_s": 16.93214460182935
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 9.83297793008387,
+      "role": "measurement",
+      "started_offset_s": 9.83050003182143
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 9.90917996224016,
+      "role": "measurement",
+      "started_offset_s": 9.906382731162012
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 10.02096881903708,
+      "role": "measurement",
+      "started_offset_s": 10.015968413092196
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 10.154668216593564,
+      "role": "measurement",
+      "started_offset_s": 10.149374026805162
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 10.251776870340109,
+      "role": "measurement",
+      "started_offset_s": 10.248275413177907
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 10.315357327461243,
+      "role": "measurement",
+      "started_offset_s": 10.312737901695073
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 10.395663913339376,
+      "role": "measurement",
+      "started_offset_s": 10.390249647200108
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 10.513850215822458,
+      "role": "measurement",
+      "started_offset_s": 10.508919889107347
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 11.448114950209856,
+      "role": "measurement",
+      "started_offset_s": 11.447804575785995
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 11.552924822084606,
+      "role": "measurement",
+      "started_offset_s": 11.55256651993841
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 11.629292942583561,
+      "role": "measurement",
+      "started_offset_s": 11.628984848037362
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 11.693906647153199,
+      "role": "measurement",
+      "started_offset_s": 11.693587253801525
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 11.765671271830797,
+      "role": "measurement",
+      "started_offset_s": 11.764755472540855
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 11.8724137051031,
+      "role": "measurement",
+      "started_offset_s": 11.872007953003049
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 11.944210520014167,
+      "role": "measurement",
+      "started_offset_s": 11.943883606232703
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 12.018098360858858,
+      "role": "measurement",
+      "started_offset_s": 12.01736614573747
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 12.072744685225189,
+      "role": "measurement",
+      "started_offset_s": 12.071733126416802
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 12.150323048233986,
+      "role": "measurement",
+      "started_offset_s": 12.149768210016191
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 12.219192255288363,
+      "role": "measurement",
+      "started_offset_s": 12.218644016422331
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 12.283840948715806,
+      "role": "measurement",
+      "started_offset_s": 12.282845510169864
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 12.347349137999117,
+      "role": "measurement",
+      "started_offset_s": 12.344536917284131
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 12.409687320701778,
+      "role": "measurement",
+      "started_offset_s": 12.406940829008818
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 12.490599145181477,
+      "role": "measurement",
+      "started_offset_s": 12.486754425801337
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 12.60937515553087,
+      "role": "measurement",
+      "started_offset_s": 12.604457418434322
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 12.725342273712158,
+      "role": "measurement",
+      "started_offset_s": 12.724391934461892
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 12.844628552906215,
+      "role": "measurement",
+      "started_offset_s": 12.844251750968397
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 12.960874816402793,
+      "role": "measurement",
+      "started_offset_s": 12.960556533187628
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 13.076667118817568,
+      "role": "measurement",
+      "started_offset_s": 13.076248867437243
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 13.141716784797609,
+      "role": "measurement",
+      "started_offset_s": 13.14116683602333
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 13.20488638151437,
+      "role": "measurement",
+      "started_offset_s": 13.203999439254403
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 13.281673581339419,
+      "role": "measurement",
+      "started_offset_s": 13.281077973544598
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 13.395268239080906,
+      "role": "measurement",
+      "started_offset_s": 13.394705571234226
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 13.454962448216975,
+      "role": "measurement",
+      "started_offset_s": 13.454501148313284
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 13.53427102509886,
+      "role": "measurement",
+      "started_offset_s": 13.533000382594764
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 13.646048352122307,
+      "role": "measurement",
+      "started_offset_s": 13.645527033135295
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 13.710551700554788,
+      "role": "measurement",
+      "started_offset_s": 13.709926763549447
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 13.78818594198674,
+      "role": "measurement",
+      "started_offset_s": 13.785507557913661
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 13.907319675199687,
+      "role": "measurement",
+      "started_offset_s": 13.904554203152657
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 14.028019374236465,
+      "role": "measurement",
+      "started_offset_s": 14.024003149010241
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 14.148967199027538,
+      "role": "measurement",
+      "started_offset_s": 14.144131700508296
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 9.538199730217457,
+      "role": "measurement",
+      "started_offset_s": 9.535305520519614
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 9.615449880249798,
+      "role": "measurement",
+      "started_offset_s": 9.611456234008074
+    },
+    {
+      "device_id": "kunlunxin/9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "finished_offset_s": 9.698364222422242,
+      "role": "measurement",
+      "started_offset_s": 9.633122069761157
+    },
+    {
+      "device_id": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "finished_offset_s": 9.768561880104244,
+      "role": "measurement",
+      "started_offset_s": 9.702830088324845
+    }
+  ]
+}

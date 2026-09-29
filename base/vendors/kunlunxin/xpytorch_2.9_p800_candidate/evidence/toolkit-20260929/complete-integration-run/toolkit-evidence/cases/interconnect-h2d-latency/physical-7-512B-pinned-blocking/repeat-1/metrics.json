@@ -1,0 +1,138 @@
+{
+  "bindings": [
+    {
+      "container_node": "/dev/xpu6",
+      "device_major": 195,
+      "device_minor": 6,
+      "driver": "5.0.21.47",
+      "foreign_handles_authorized": true,
+      "foreign_occupancy_observed": true,
+      "free_memory_mib": 22714,
+      "host_device_node": "/dev/xpu6",
+      "host_physical_id": 7,
+      "native_id": 1,
+      "pci_bdf": "0000:bb:00.0",
+      "power_w": 220.0,
+      "processes_empty": false,
+      "serial": "02K15K0263D002GM",
+      "temperature_c": 57.0,
+      "total_memory_mib": 98304,
+      "uncorrectable_ecc_counts": [
+        0,
+        0
+      ],
+      "used_memory_mib": 75590,
+      "utilization_percent": 79,
+      "uuid": "4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "xpu_smi_runtime": "10.2"
+    }
+  ],
+  "commands": [
+    {
+      "command": [
+        "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+        "--mode",
+        "h2d",
+        "--src",
+        "1",
+        "--src-pci",
+        "00000000:bb:00.0",
+        "--samples",
+        "25",
+        "--warmup",
+        "2",
+        "--minimum-seconds",
+        "0.0",
+        "--dimension",
+        "128",
+        "--bytes",
+        "512",
+        "--pinned",
+        "1",
+        "--async",
+        "0",
+        "--pinned-api",
+        "register",
+        "--async-chunk-bytes",
+        "1048576"
+      ],
+      "duration_s": 0.11535449139773846,
+      "finished_at": "2026-09-29T04:31:48.569973Z",
+      "finished_monotonic_s": 4497445.489866507,
+      "returncode": 0,
+      "started_at": "2026-09-29T04:31:48.454640Z",
+      "started_monotonic_s": 4497445.374512016,
+      "stderr": {
+        "bytes": 4284,
+        "path": "cases/interconnect-h2d-latency/physical-7-512B-pinned-blocking/repeat-1/microbenchmark.stderr",
+        "sha256": "79100d579c3b6f227962f0801adeccf73ced16a159df2f526bcac9bbb95e7e85"
+      },
+      "stdout": {
+        "bytes": 541,
+        "path": "cases/interconnect-h2d-latency/physical-7-512B-pinned-blocking/repeat-1/microbenchmark.stdout",
+        "sha256": "d3d0cb210520f90d05b81d7c1203af0f02063dc23b6a61f1c519d7181c748bd1"
+      },
+      "timed_out": false,
+      "timeout_s": 180
+    }
+  ],
+  "diagnosis_status": "not-supported",
+  "duration_s": 0.11535449139773846,
+  "invalid_monitor_samples": 0,
+  "measurement_status": "passed",
+  "measurement_window": {
+    "finished_monotonic_s": 4497445.43249117,
+    "role": "measurement",
+    "started_monotonic_s": 4497445.432172887
+  },
+  "metrics": [
+    {
+      "api_calls_per_sample": 1,
+      "async_chunk_bytes": 0,
+      "checked_values": 512,
+      "compute_semantics": null,
+      "correctness": true,
+      "field": "P800_METRIC/samples_ns",
+      "formula": "median(completed API copy + synchronization nanoseconds)",
+      "host_pinned_api": "register",
+      "max_ns": 13260,
+      "median_ns": 12720,
+      "min_ns": 11900,
+      "physical_device_id": 7,
+      "point": {
+        "async": false,
+        "bytes": 512,
+        "mode": "h2d",
+        "pinned": true,
+        "source": 7
+      },
+      "repetition": 1,
+      "sample_count": 25,
+      "sample_cv": 0.02364646945288978,
+      "scope": "completed native API operation; not theoretical peak or device-only kernel time",
+      "source": "cases/interconnect-h2d-latency/physical-7-512B-pinned-blocking/repeat-1/microbenchmark.stdout",
+      "source_kind": "native-xre",
+      "stability_status": "observed",
+      "submission_scope": "single native operation",
+      "timer": "CLOCK_MONOTONIC completed API operation including synchronization",
+      "unit": "ns",
+      "value": 12720
+    }
+  ],
+  "monitor_sample_counts": {
+    "7": 0
+  },
+  "monitoring_status": "partial",
+  "point": {
+    "async": false,
+    "bytes": 512,
+    "mode": "h2d",
+    "pinned": true,
+    "source": 7
+  },
+  "repetition": 1,
+  "schema_version": 1,
+  "status": "partial",
+  "sweep_scope": "explicit physical cards/mode/payload; native operation",
+  "target": "physical-7-512B-pinned-blocking/repeat-1"
+}

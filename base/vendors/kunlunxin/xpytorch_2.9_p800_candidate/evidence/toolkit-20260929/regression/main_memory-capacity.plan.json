@@ -1,0 +1,95 @@
+{
+  "cases": [
+    "main_memory-capacity"
+  ],
+  "chip": "P800",
+  "excluded_physical_ids": [
+    1
+  ],
+  "host_config": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf-toolkit-validation-0929/base/configs/kunlunxin_p800_xpytorch29.yaml",
+  "identity_gate": "host UUID/PCI/minor -> selected nodes -> native XRE PCI join before allocating",
+  "kind": "toolkit",
+  "mode": "static-dry-run",
+  "monitoring": {
+    "compute": "on",
+    "data_movement": "on",
+    "required_samples": 10
+  },
+  "permissions": {
+    "allow_busy_devices": false,
+    "cap_drop": [
+      "ALL"
+    ],
+    "ipc_namespace": "private",
+    "network": "none",
+    "pid_namespace": "private",
+    "privileged_root": false,
+    "read_only_root": true
+  },
+  "point_counts": {
+    "main_memory-capacity": 4
+  },
+  "runtime_lock": {
+    "image_manifest": {
+      "image": "flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev:202608",
+      "image_id": "sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975",
+      "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf-toolkit-validation-0929/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/image-manifest.json",
+      "release_stage": "candidate",
+      "schema_version": 1,
+      "sha256": "ab59dc1cd14b65a28ffaef7b1b21b1d0b51f5334619301659d4123a5c681acbf",
+      "validated": false,
+      "validation_scope": [],
+      "validation_status": null
+    },
+    "runtime_profile": "xpytorch_2.9_p800_candidate",
+    "stack_lock": {
+      "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf-toolkit-validation-0929/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/stack.lock.yaml",
+      "sha256": "8f200d0b955b7e60881bc13ed75c8784c2c38fe2c755d018c618f1dc7b46cded"
+    },
+    "vendor": "kunlunxin"
+  },
+  "schema_version": 1,
+  "selection_request": {
+    "expression": "0,4-6",
+    "requested_ids": [
+      0,
+      4,
+      5,
+      6
+    ],
+    "resolution_status": "deferred-until-host-preflight",
+    "source": "physical-device-ids"
+  },
+  "settings": {
+    "allow_busy_devices": false,
+    "allow_candidate_runtime": false,
+    "async_chunk_bytes": 1048576,
+    "command_timeout": 180,
+    "matrix_size": 2048,
+    "minimum_seconds": 0.0,
+    "payload_bytes": 536870912,
+    "pinned_api": "register",
+    "privilege_command": "",
+    "repeat": 1,
+    "samples": 50,
+    "smoke": false,
+    "warmup": 5
+  },
+  "source": "independent native XRE/XBLAS Toolkit microbenchmark; no Base workload reuse",
+  "stages": [
+    "image-identity",
+    "preflight",
+    "lease",
+    "locked-preflight",
+    "container-inspect",
+    "native-run",
+    "monitor-finalize",
+    "cleanup",
+    "postflight",
+    "lease-release",
+    "report",
+    "hash-index"
+  ],
+  "suite": "kunlunxin-p800-toolkit",
+  "vendor": "kunlunxin"
+}

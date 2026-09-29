@@ -1,0 +1,137 @@
+{
+  "bindings": [
+    {
+      "container_node": "/dev/xpu1",
+      "device_major": 195,
+      "device_minor": 1,
+      "driver": "5.0.21.47",
+      "foreign_handles_authorized": true,
+      "foreign_occupancy_observed": true,
+      "free_memory_mib": 77876,
+      "host_device_node": "/dev/xpu1",
+      "host_physical_id": 3,
+      "native_id": 0,
+      "pci_bdf": "0000:2e:00.0",
+      "power_w": 130.0,
+      "processes_empty": false,
+      "serial": "02K15K0263D002L7",
+      "temperature_c": 48.0,
+      "total_memory_mib": 98304,
+      "uncorrectable_ecc_counts": [
+        0,
+        0
+      ],
+      "used_memory_mib": 20428,
+      "utilization_percent": 100,
+      "uuid": "9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "xpu_smi_runtime": "10.2"
+    }
+  ],
+  "commands": [
+    {
+      "command": [
+        "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+        "--mode",
+        "d2h",
+        "--src",
+        "0",
+        "--src-pci",
+        "00000000:2e:00.0",
+        "--samples",
+        "25",
+        "--warmup",
+        "2",
+        "--minimum-seconds",
+        "0.0",
+        "--dimension",
+        "128",
+        "--bytes",
+        "1048576",
+        "--pinned",
+        "0",
+        "--async",
+        "0",
+        "--pinned-api",
+        "register",
+        "--async-chunk-bytes",
+        "1048576"
+      ],
+      "duration_s": 0.06517258379608393,
+      "finished_at": "2026-09-29T04:31:50.717462Z",
+      "finished_monotonic_s": 4497447.637350377,
+      "returncode": 0,
+      "started_at": "2026-09-29T04:31:50.652305Z",
+      "started_monotonic_s": 4497447.572177793,
+      "stderr": {
+        "bytes": 4258,
+        "path": "cases/interconnect-d2h-latency/physical-3-1048576B-pageable-blocking/repeat-1/microbenchmark.stderr",
+        "sha256": "593b8a3ac73168e9f3474219cce9a8cdaec9164982c7233fd477bc261a178fd4"
+      },
+      "stdout": {
+        "bytes": 551,
+        "path": "cases/interconnect-d2h-latency/physical-3-1048576B-pageable-blocking/repeat-1/microbenchmark.stdout",
+        "sha256": "f60db683a591f4abafdbe6e6e90ed1fbafc5756c49d8bafdd273f3d4146f0d37"
+      },
+      "timed_out": false,
+      "timeout_s": 180
+    }
+  ],
+  "diagnosis_status": "not-supported",
+  "duration_s": 0.06517258379608393,
+  "invalid_monitor_samples": 0,
+  "measurement_status": "passed",
+  "measurement_window": {
+    "finished_monotonic_s": 4497447.628367245,
+    "role": "measurement",
+    "started_monotonic_s": 4497447.625964276
+  },
+  "metrics": [
+    {
+      "api_calls_per_sample": 1,
+      "async_chunk_bytes": 0,
+      "checked_values": 1048576,
+      "compute_semantics": null,
+      "correctness": true,
+      "field": "P800_METRIC/samples_ns",
+      "formula": "median(completed API copy + synchronization nanoseconds)",
+      "max_ns": 104888,
+      "median_ns": 95338,
+      "min_ns": 92668,
+      "physical_device_id": 3,
+      "point": {
+        "async": false,
+        "bytes": 1048576,
+        "mode": "d2h",
+        "pinned": false,
+        "source": 3
+      },
+      "repetition": 1,
+      "sample_count": 25,
+      "sample_cv": 0.03042289947788643,
+      "scope": "completed native API operation; not theoretical peak or device-only kernel time",
+      "source": "cases/interconnect-d2h-latency/physical-3-1048576B-pageable-blocking/repeat-1/microbenchmark.stdout",
+      "source_kind": "native-xre",
+      "stability_status": "observed",
+      "submission_scope": "single native operation",
+      "timer": "CLOCK_MONOTONIC completed API operation including synchronization",
+      "unit": "ns",
+      "value": 95338
+    }
+  ],
+  "monitor_sample_counts": {
+    "3": 0
+  },
+  "monitoring_status": "partial",
+  "point": {
+    "async": false,
+    "bytes": 1048576,
+    "mode": "d2h",
+    "pinned": false,
+    "source": 3
+  },
+  "repetition": 1,
+  "schema_version": 1,
+  "status": "partial",
+  "sweep_scope": "explicit physical cards/mode/payload; native operation",
+  "target": "physical-3-1048576B-pageable-blocking/repeat-1"
+}

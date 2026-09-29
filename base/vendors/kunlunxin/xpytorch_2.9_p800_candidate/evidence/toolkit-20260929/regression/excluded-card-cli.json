@@ -1,0 +1,20 @@
+[
+  {
+    "selector": "1",
+    "exit_code": 2,
+    "stderr": "ERROR: physical card 1 is excluded by the operator; ranges containing 1 are also rejected\n",
+    "stdout": ""
+  },
+  {
+    "selector": "0-7",
+    "exit_code": 2,
+    "stderr": "ERROR: physical card 1 is excluded by the operator; ranges containing 1 are also rejected\n",
+    "stdout": ""
+  },
+  {
+    "selector": "0,1,4",
+    "exit_code": 2,
+    "stderr": "ERROR: physical card 1 is excluded by the operator; ranges containing 1 are also rejected\n",
+    "stdout": ""
+  }
+]

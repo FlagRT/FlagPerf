@@ -1,0 +1,1794 @@
+{
+  "cases": {
+    "computation-FP32": {
+      "commands": [
+        {
+          "command": [
+            "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+            "--mode",
+            "gemm",
+            "--src",
+            "0",
+            "--src-pci",
+            "00000000:2e:00.0",
+            "--samples",
+            "50",
+            "--warmup",
+            "5",
+            "--minimum-seconds",
+            "6.0",
+            "--dimension",
+            "2048",
+            "--dtype",
+            "FP32"
+          ],
+          "duration_s": 7.879229455254972,
+          "finished_at": "2026-09-29T04:03:14.329484Z",
+          "finished_monotonic_s": 4495731.249375474,
+          "returncode": 0,
+          "started_at": "2026-09-29T04:03:06.450274Z",
+          "started_monotonic_s": 4495723.370146018,
+          "stderr": {
+            "bytes": 4425,
+            "path": "cases/computation-FP32/physical-3/repeat-1/microbenchmark.stderr",
+            "sha256": "6968aa651267049c3d325f327325c2441d5960e1c1938ef8628936e86abbb319"
+          },
+          "stdout": {
+            "bytes": 22809,
+            "path": "cases/computation-FP32/physical-3/repeat-1/microbenchmark.stdout",
+            "sha256": "d140a1d754380540743f46de5063957031d8fb8c2e786248aad956a35d5f767e"
+          },
+          "timed_out": false,
+          "timeout_s": 180
+        }
+      ],
+      "diagnosis_status": "not-supported",
+      "duration_s": 7.879229455254972,
+      "measurement_status": "passed",
+      "metrics": [
+        {
+          "checked_values": 257,
+          "compute_semantics": "XBLAS GemmEx FP32 accumulation/output",
+          "correctness": true,
+          "field": "P800_METRIC/samples_ns",
+          "formula": "2*M*N*K / median_elapsed_ns / 1000",
+          "max_ns": 1897519123,
+          "median_ns": 176126,
+          "min_ns": 170746,
+          "physical_device_id": 3,
+          "point": {
+            "dtype": "FP32",
+            "mode": "gemm",
+            "source": 3
+          },
+          "repetition": 1,
+          "sample_count": 3147,
+          "sample_cv": 17.92654379264372,
+          "scope": "completed native API operation; not theoretical peak or device-only kernel time",
+          "source": "cases/computation-FP32/physical-3/repeat-1/microbenchmark.stdout",
+          "source_kind": "native-xblas",
+          "stability_status": "unstable",
+          "timer": "CLOCK_MONOTONIC completed API operation including synchronization",
+          "unit": "TFLOPS",
+          "value": 97.54306112669339
+        }
+      ],
+      "monitoring_status": "passed",
+      "status": "partial",
+      "sweep_scope": {
+        "physical_ids": [
+          3
+        ],
+        "point_count": 1,
+        "repeat": 1
+      },
+      "targets": [
+        {
+          "bindings": [
+            {
+              "container_node": "/dev/xpu1",
+              "device_major": 195,
+              "device_minor": 1,
+              "driver": "5.0.21.47",
+              "foreign_handles_authorized": true,
+              "foreign_occupancy_observed": true,
+              "free_memory_mib": 77876,
+              "host_device_node": "/dev/xpu1",
+              "host_physical_id": 3,
+              "native_id": 0,
+              "pci_bdf": "0000:2e:00.0",
+              "power_w": 132.0,
+              "processes_empty": false,
+              "serial": "02K15K0263D002L7",
+              "temperature_c": 48.0,
+              "total_memory_mib": 98304,
+              "uncorrectable_ecc_counts": [
+                0,
+                0
+              ],
+              "used_memory_mib": 20428,
+              "utilization_percent": 77,
+              "uuid": "9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+              "xpu_smi_runtime": "10.2"
+            }
+          ],
+          "commands": [
+            {
+              "command": [
+                "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+                "--mode",
+                "gemm",
+                "--src",
+                "0",
+                "--src-pci",
+                "00000000:2e:00.0",
+                "--samples",
+                "50",
+                "--warmup",
+                "5",
+                "--minimum-seconds",
+                "6.0",
+                "--dimension",
+                "2048",
+                "--dtype",
+                "FP32"
+              ],
+              "duration_s": 7.879229455254972,
+              "finished_at": "2026-09-29T04:03:14.329484Z",
+              "finished_monotonic_s": 4495731.249375474,
+              "returncode": 0,
+              "started_at": "2026-09-29T04:03:06.450274Z",
+              "started_monotonic_s": 4495723.370146018,
+              "stderr": {
+                "bytes": 4425,
+                "path": "cases/computation-FP32/physical-3/repeat-1/microbenchmark.stderr",
+                "sha256": "6968aa651267049c3d325f327325c2441d5960e1c1938ef8628936e86abbb319"
+              },
+              "stdout": {
+                "bytes": 22809,
+                "path": "cases/computation-FP32/physical-3/repeat-1/microbenchmark.stdout",
+                "sha256": "d140a1d754380540743f46de5063957031d8fb8c2e786248aad956a35d5f767e"
+              },
+              "timed_out": false,
+              "timeout_s": 180
+            }
+          ],
+          "diagnosis_status": "not-supported",
+          "duration_s": 7.879229455254972,
+          "invalid_monitor_samples": 0,
+          "measurement_status": "passed",
+          "measurement_window": {
+            "finished_monotonic_s": 4495731.181329708,
+            "role": "measurement",
+            "started_monotonic_s": 4495725.181030193
+          },
+          "metrics": [
+            {
+              "checked_values": 257,
+              "compute_semantics": "XBLAS GemmEx FP32 accumulation/output",
+              "correctness": true,
+              "field": "P800_METRIC/samples_ns",
+              "formula": "2*M*N*K / median_elapsed_ns / 1000",
+              "max_ns": 1897519123,
+              "median_ns": 176126,
+              "min_ns": 170746,
+              "physical_device_id": 3,
+              "point": {
+                "dtype": "FP32",
+                "mode": "gemm",
+                "source": 3
+              },
+              "repetition": 1,
+              "sample_count": 3147,
+              "sample_cv": 17.92654379264372,
+              "scope": "completed native API operation; not theoretical peak or device-only kernel time",
+              "source": "cases/computation-FP32/physical-3/repeat-1/microbenchmark.stdout",
+              "source_kind": "native-xblas",
+              "stability_status": "unstable",
+              "timer": "CLOCK_MONOTONIC completed API operation including synchronization",
+              "unit": "TFLOPS",
+              "value": 97.54306112669339
+            }
+          ],
+          "monitor_sample_counts": {
+            "3": 12
+          },
+          "monitoring_status": "passed",
+          "point": {
+            "dtype": "FP32",
+            "mode": "gemm",
+            "source": 3
+          },
+          "repetition": 1,
+          "schema_version": 1,
+          "status": "partial",
+          "sweep_scope": "explicit physical cards/mode/payload; native operation",
+          "target": "physical-3/repeat-1"
+        }
+      ]
+    },
+    "interconnect-d2h": {
+      "commands": [
+        {
+          "command": [
+            "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+            "--mode",
+            "d2h",
+            "--src",
+            "0",
+            "--src-pci",
+            "00000000:2e:00.0",
+            "--samples",
+            "50",
+            "--warmup",
+            "5",
+            "--minimum-seconds",
+            "6.0",
+            "--dimension",
+            "2048",
+            "--bytes",
+            "536870912",
+            "--pinned",
+            "0",
+            "--async",
+            "0",
+            "--pinned-api",
+            "register"
+          ],
+          "duration_s": 7.377280662767589,
+          "finished_at": "2026-09-29T04:03:44.782877Z",
+          "finished_monotonic_s": 4495761.702770871,
+          "returncode": 0,
+          "started_at": "2026-09-29T04:03:37.405618Z",
+          "started_monotonic_s": 4495754.325490208,
+          "stderr": {
+            "bytes": 4258,
+            "path": "cases/interconnect-d2h/physical-3-536870912B-pageable-blocking/repeat-1/microbenchmark.stderr",
+            "sha256": "0ed90691c0bc6506f34c589cf70ec63938f269517573a83afe47290db60b859f"
+          },
+          "stdout": {
+            "bytes": 1385,
+            "path": "cases/interconnect-d2h/physical-3-536870912B-pageable-blocking/repeat-1/microbenchmark.stdout",
+            "sha256": "2989af554f97ac3594795d65ba592973d6649007a8dcf8a6da730e6746998f59"
+          },
+          "timed_out": false,
+          "timeout_s": 180
+        },
+        {
+          "command": [
+            "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+            "--mode",
+            "d2h",
+            "--src",
+            "0",
+            "--src-pci",
+            "00000000:2e:00.0",
+            "--samples",
+            "50",
+            "--warmup",
+            "5",
+            "--minimum-seconds",
+            "6.0",
+            "--dimension",
+            "2048",
+            "--bytes",
+            "536870912",
+            "--pinned",
+            "0",
+            "--async",
+            "1",
+            "--pinned-api",
+            "register"
+          ],
+          "duration_s": 7.226983688771725,
+          "finished_at": "2026-09-29T04:03:52.012727Z",
+          "finished_monotonic_s": 4495768.93262037,
+          "returncode": 0,
+          "started_at": "2026-09-29T04:03:44.785764Z",
+          "started_monotonic_s": 4495761.705636681,
+          "stderr": {
+            "bytes": 4258,
+            "path": "cases/interconnect-d2h/physical-3-536870912B-pageable-nonblocking/repeat-1/microbenchmark.stderr",
+            "sha256": "4a98424ed7eac67d62a60ce503d32ae272674ffd0296f94021f9747f8e3553dc"
+          },
+          "stdout": {
+            "bytes": 1755,
+            "path": "cases/interconnect-d2h/physical-3-536870912B-pageable-nonblocking/repeat-1/microbenchmark.stdout",
+            "sha256": "1fbe317aeae72559b862f5a5688f91fa8f56cb585eee2b0dc6263bf3cbf23879"
+          },
+          "timed_out": false,
+          "timeout_s": 180
+        },
+        {
+          "command": [
+            "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+            "--mode",
+            "d2h",
+            "--src",
+            "0",
+            "--src-pci",
+            "00000000:2e:00.0",
+            "--samples",
+            "50",
+            "--warmup",
+            "5",
+            "--minimum-seconds",
+            "6.0",
+            "--dimension",
+            "2048",
+            "--bytes",
+            "536870912",
+            "--pinned",
+            "1",
+            "--async",
+            "0",
+            "--pinned-api",
+            "register"
+          ],
+          "duration_s": 7.177667290903628,
+          "finished_at": "2026-09-29T04:03:59.193334Z",
+          "finished_monotonic_s": 4495776.11322143,
+          "returncode": 0,
+          "started_at": "2026-09-29T04:03:52.015681Z",
+          "started_monotonic_s": 4495768.935554139,
+          "stderr": {
+            "bytes": 4284,
+            "path": "cases/interconnect-d2h/physical-3-536870912B-pinned-blocking/repeat-1/microbenchmark.stderr",
+            "sha256": "dc0f59afc4d4118f5a01a1e7c67068e0bccf4f09bc74a654d88eb0680f9091fd"
+          },
+          "stdout": {
+            "bytes": 1815,
+            "path": "cases/interconnect-d2h/physical-3-536870912B-pinned-blocking/repeat-1/microbenchmark.stdout",
+            "sha256": "a5a4d5c4fcf51fc5c732ef75ab9681496da3bb49407484e0193091dc200dea47"
+          },
+          "timed_out": false,
+          "timeout_s": 180
+        },
+        {
+          "command": [
+            "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+            "--mode",
+            "d2h",
+            "--src",
+            "0",
+            "--src-pci",
+            "00000000:2e:00.0",
+            "--samples",
+            "50",
+            "--warmup",
+            "5",
+            "--minimum-seconds",
+            "6.0",
+            "--dimension",
+            "2048",
+            "--bytes",
+            "536870912",
+            "--pinned",
+            "1",
+            "--async",
+            "1",
+            "--pinned-api",
+            "register"
+          ],
+          "duration_s": 0.7664292585104704,
+          "finished_at": "2026-09-29T04:03:59.961429Z",
+          "finished_monotonic_s": 4495776.881315923,
+          "returncode": 1,
+          "started_at": "2026-09-29T04:03:59.195022Z",
+          "started_monotonic_s": 4495776.114886665,
+          "stderr": {
+            "bytes": 245,
+            "path": "cases/interconnect-d2h/physical-3-536870912B-pinned-nonblocking/repeat-1/microbenchmark.stderr",
+            "sha256": "d14804b21487f3cf90e7c42cd5b3f14e2f9248f7edd504d7bc00fab17d9c0eb0"
+          },
+          "stdout": {
+            "bytes": 0,
+            "path": "cases/interconnect-d2h/physical-3-536870912B-pinned-nonblocking/repeat-1/microbenchmark.stdout",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "timed_out": false,
+          "timeout_s": 180
+        }
+      ],
+      "diagnosis_status": "not-supported",
+      "duration_s": 22.548360900953412,
+      "measurement_status": "failed",
+      "metrics": [
+        {
+          "checked_values": 536870912,
+          "compute_semantics": null,
+          "correctness": true,
+          "field": "P800_METRIC/samples_ns",
+          "formula": "completed payload bytes / median_elapsed_ns (decimal GB/s)",
+          "max_ns": 113293089,
+          "median_ns": 50462369.0,
+          "min_ns": 46397179,
+          "physical_device_id": 3,
+          "point": {
+            "async": false,
+            "bytes": 536870912,
+            "mode": "d2h",
+            "pinned": false,
+            "source": 3
+          },
+          "repetition": 1,
+          "sample_count": 114,
+          "sample_cv": 0.18800717542577797,
+          "scope": "completed native API operation; not theoretical peak or device-only kernel time",
+          "source": "cases/interconnect-d2h/physical-3-536870912B-pageable-blocking/repeat-1/microbenchmark.stdout",
+          "source_kind": "native-xre",
+          "stability_status": "unstable",
+          "timer": "CLOCK_MONOTONIC completed API operation including synchronization",
+          "unit": "GB/s",
+          "value": 10.639035040150414
+        },
+        {
+          "checked_values": 536870912,
+          "compute_semantics": null,
+          "correctness": true,
+          "field": "P800_METRIC/samples_ns",
+          "formula": "completed payload bytes / median_elapsed_ns (decimal GB/s)",
+          "max_ns": 365641716,
+          "median_ns": 34618906,
+          "min_ns": 28259099,
+          "physical_device_id": 3,
+          "point": {
+            "async": true,
+            "bytes": 536870912,
+            "mode": "d2h",
+            "pinned": false,
+            "source": 3
+          },
+          "repetition": 1,
+          "sample_count": 155,
+          "sample_cv": 0.8800379647577888,
+          "scope": "completed native API operation; not theoretical peak or device-only kernel time",
+          "source": "cases/interconnect-d2h/physical-3-536870912B-pageable-nonblocking/repeat-1/microbenchmark.stdout",
+          "source_kind": "native-xre",
+          "stability_status": "unstable",
+          "timer": "CLOCK_MONOTONIC completed API operation including synchronization",
+          "unit": "GB/s",
+          "value": 15.50802651013871
+        },
+        {
+          "checked_values": 536870912,
+          "compute_semantics": null,
+          "correctness": true,
+          "field": "P800_METRIC/samples_ns",
+          "formula": "completed payload bytes / median_elapsed_ns (decimal GB/s)",
+          "host_pinned_api": "register",
+          "max_ns": 89637284,
+          "median_ns": 34772807.5,
+          "min_ns": 33453959,
+          "physical_device_id": 3,
+          "point": {
+            "async": false,
+            "bytes": 536870912,
+            "mode": "d2h",
+            "pinned": true,
+            "source": 3
+          },
+          "repetition": 1,
+          "sample_count": 162,
+          "sample_cv": 0.20392174852260286,
+          "scope": "completed native API operation; not theoretical peak or device-only kernel time",
+          "source": "cases/interconnect-d2h/physical-3-536870912B-pinned-blocking/repeat-1/microbenchmark.stdout",
+          "source_kind": "native-xre",
+          "stability_status": "unstable",
+          "timer": "CLOCK_MONOTONIC completed API operation including synchronization",
+          "unit": "GB/s",
+          "value": 15.439389298663906
+        }
+      ],
+      "monitoring_status": "partial",
+      "status": "failed",
+      "sweep_scope": {
+        "physical_ids": [
+          3
+        ],
+        "point_count": 4,
+        "repeat": 1
+      },
+      "targets": [
+        {
+          "bindings": [
+            {
+              "container_node": "/dev/xpu1",
+              "device_major": 195,
+              "device_minor": 1,
+              "driver": "5.0.21.47",
+              "foreign_handles_authorized": true,
+              "foreign_occupancy_observed": true,
+              "free_memory_mib": 77876,
+              "host_device_node": "/dev/xpu1",
+              "host_physical_id": 3,
+              "native_id": 0,
+              "pci_bdf": "0000:2e:00.0",
+              "power_w": 132.0,
+              "processes_empty": false,
+              "serial": "02K15K0263D002L7",
+              "temperature_c": 48.0,
+              "total_memory_mib": 98304,
+              "uncorrectable_ecc_counts": [
+                0,
+                0
+              ],
+              "used_memory_mib": 20428,
+              "utilization_percent": 77,
+              "uuid": "9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+              "xpu_smi_runtime": "10.2"
+            }
+          ],
+          "commands": [
+            {
+              "command": [
+                "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+                "--mode",
+                "d2h",
+                "--src",
+                "0",
+                "--src-pci",
+                "00000000:2e:00.0",
+                "--samples",
+                "50",
+                "--warmup",
+                "5",
+                "--minimum-seconds",
+                "6.0",
+                "--dimension",
+                "2048",
+                "--bytes",
+                "536870912",
+                "--pinned",
+                "0",
+                "--async",
+                "0",
+                "--pinned-api",
+                "register"
+              ],
+              "duration_s": 7.377280662767589,
+              "finished_at": "2026-09-29T04:03:44.782877Z",
+              "finished_monotonic_s": 4495761.702770871,
+              "returncode": 0,
+              "started_at": "2026-09-29T04:03:37.405618Z",
+              "started_monotonic_s": 4495754.325490208,
+              "stderr": {
+                "bytes": 4258,
+                "path": "cases/interconnect-d2h/physical-3-536870912B-pageable-blocking/repeat-1/microbenchmark.stderr",
+                "sha256": "0ed90691c0bc6506f34c589cf70ec63938f269517573a83afe47290db60b859f"
+              },
+              "stdout": {
+                "bytes": 1385,
+                "path": "cases/interconnect-d2h/physical-3-536870912B-pageable-blocking/repeat-1/microbenchmark.stdout",
+                "sha256": "2989af554f97ac3594795d65ba592973d6649007a8dcf8a6da730e6746998f59"
+              },
+              "timed_out": false,
+              "timeout_s": 180
+            }
+          ],
+          "diagnosis_status": "not-supported",
+          "duration_s": 7.377280662767589,
+          "invalid_monitor_samples": 0,
+          "measurement_status": "passed",
+          "measurement_window": {
+            "finished_monotonic_s": 4495761.323542809,
+            "role": "measurement",
+            "started_monotonic_s": 4495755.232946704
+          },
+          "metrics": [
+            {
+              "checked_values": 536870912,
+              "compute_semantics": null,
+              "correctness": true,
+              "field": "P800_METRIC/samples_ns",
+              "formula": "completed payload bytes / median_elapsed_ns (decimal GB/s)",
+              "max_ns": 113293089,
+              "median_ns": 50462369.0,
+              "min_ns": 46397179,
+              "physical_device_id": 3,
+              "point": {
+                "async": false,
+                "bytes": 536870912,
+                "mode": "d2h",
+                "pinned": false,
+                "source": 3
+              },
+              "repetition": 1,
+              "sample_count": 114,
+              "sample_cv": 0.18800717542577797,
+              "scope": "completed native API operation; not theoretical peak or device-only kernel time",
+              "source": "cases/interconnect-d2h/physical-3-536870912B-pageable-blocking/repeat-1/microbenchmark.stdout",
+              "source_kind": "native-xre",
+              "stability_status": "unstable",
+              "timer": "CLOCK_MONOTONIC completed API operation including synchronization",
+              "unit": "GB/s",
+              "value": 10.639035040150414
+            }
+          ],
+          "monitor_sample_counts": {
+            "3": 12
+          },
+          "monitoring_status": "passed",
+          "point": {
+            "async": false,
+            "bytes": 536870912,
+            "mode": "d2h",
+            "pinned": false,
+            "source": 3
+          },
+          "repetition": 1,
+          "schema_version": 1,
+          "status": "partial",
+          "sweep_scope": "explicit physical cards/mode/payload; native operation",
+          "target": "physical-3-536870912B-pageable-blocking/repeat-1"
+        },
+        {
+          "bindings": [
+            {
+              "container_node": "/dev/xpu1",
+              "device_major": 195,
+              "device_minor": 1,
+              "driver": "5.0.21.47",
+              "foreign_handles_authorized": true,
+              "foreign_occupancy_observed": true,
+              "free_memory_mib": 77876,
+              "host_device_node": "/dev/xpu1",
+              "host_physical_id": 3,
+              "native_id": 0,
+              "pci_bdf": "0000:2e:00.0",
+              "power_w": 132.0,
+              "processes_empty": false,
+              "serial": "02K15K0263D002L7",
+              "temperature_c": 48.0,
+              "total_memory_mib": 98304,
+              "uncorrectable_ecc_counts": [
+                0,
+                0
+              ],
+              "used_memory_mib": 20428,
+              "utilization_percent": 77,
+              "uuid": "9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+              "xpu_smi_runtime": "10.2"
+            }
+          ],
+          "commands": [
+            {
+              "command": [
+                "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+                "--mode",
+                "d2h",
+                "--src",
+                "0",
+                "--src-pci",
+                "00000000:2e:00.0",
+                "--samples",
+                "50",
+                "--warmup",
+                "5",
+                "--minimum-seconds",
+                "6.0",
+                "--dimension",
+                "2048",
+                "--bytes",
+                "536870912",
+                "--pinned",
+                "0",
+                "--async",
+                "1",
+                "--pinned-api",
+                "register"
+              ],
+              "duration_s": 7.226983688771725,
+              "finished_at": "2026-09-29T04:03:52.012727Z",
+              "finished_monotonic_s": 4495768.93262037,
+              "returncode": 0,
+              "started_at": "2026-09-29T04:03:44.785764Z",
+              "started_monotonic_s": 4495761.705636681,
+              "stderr": {
+                "bytes": 4258,
+                "path": "cases/interconnect-d2h/physical-3-536870912B-pageable-nonblocking/repeat-1/microbenchmark.stderr",
+                "sha256": "4a98424ed7eac67d62a60ce503d32ae272674ffd0296f94021f9747f8e3553dc"
+              },
+              "stdout": {
+                "bytes": 1755,
+                "path": "cases/interconnect-d2h/physical-3-536870912B-pageable-nonblocking/repeat-1/microbenchmark.stdout",
+                "sha256": "1fbe317aeae72559b862f5a5688f91fa8f56cb585eee2b0dc6263bf3cbf23879"
+              },
+              "timed_out": false,
+              "timeout_s": 180
+            }
+          ],
+          "diagnosis_status": "not-supported",
+          "duration_s": 7.226983688771725,
+          "invalid_monitor_samples": 0,
+          "measurement_status": "passed",
+          "measurement_window": {
+            "finished_monotonic_s": 4495768.53802199,
+            "role": "measurement",
+            "started_monotonic_s": 4495762.513490562
+          },
+          "metrics": [
+            {
+              "checked_values": 536870912,
+              "compute_semantics": null,
+              "correctness": true,
+              "field": "P800_METRIC/samples_ns",
+              "formula": "completed payload bytes / median_elapsed_ns (decimal GB/s)",
+              "max_ns": 365641716,
+              "median_ns": 34618906,
+              "min_ns": 28259099,
+              "physical_device_id": 3,
+              "point": {
+                "async": true,
+                "bytes": 536870912,
+                "mode": "d2h",
+                "pinned": false,
+                "source": 3
+              },
+              "repetition": 1,
+              "sample_count": 155,
+              "sample_cv": 0.8800379647577888,
+              "scope": "completed native API operation; not theoretical peak or device-only kernel time",
+              "source": "cases/interconnect-d2h/physical-3-536870912B-pageable-nonblocking/repeat-1/microbenchmark.stdout",
+              "source_kind": "native-xre",
+              "stability_status": "unstable",
+              "timer": "CLOCK_MONOTONIC completed API operation including synchronization",
+              "unit": "GB/s",
+              "value": 15.50802651013871
+            }
+          ],
+          "monitor_sample_counts": {
+            "3": 12
+          },
+          "monitoring_status": "passed",
+          "point": {
+            "async": true,
+            "bytes": 536870912,
+            "mode": "d2h",
+            "pinned": false,
+            "source": 3
+          },
+          "repetition": 1,
+          "schema_version": 1,
+          "status": "partial",
+          "sweep_scope": "explicit physical cards/mode/payload; native operation",
+          "target": "physical-3-536870912B-pageable-nonblocking/repeat-1"
+        },
+        {
+          "bindings": [
+            {
+              "container_node": "/dev/xpu1",
+              "device_major": 195,
+              "device_minor": 1,
+              "driver": "5.0.21.47",
+              "foreign_handles_authorized": true,
+              "foreign_occupancy_observed": true,
+              "free_memory_mib": 77876,
+              "host_device_node": "/dev/xpu1",
+              "host_physical_id": 3,
+              "native_id": 0,
+              "pci_bdf": "0000:2e:00.0",
+              "power_w": 132.0,
+              "processes_empty": false,
+              "serial": "02K15K0263D002L7",
+              "temperature_c": 48.0,
+              "total_memory_mib": 98304,
+              "uncorrectable_ecc_counts": [
+                0,
+                0
+              ],
+              "used_memory_mib": 20428,
+              "utilization_percent": 77,
+              "uuid": "9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+              "xpu_smi_runtime": "10.2"
+            }
+          ],
+          "commands": [
+            {
+              "command": [
+                "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+                "--mode",
+                "d2h",
+                "--src",
+                "0",
+                "--src-pci",
+                "00000000:2e:00.0",
+                "--samples",
+                "50",
+                "--warmup",
+                "5",
+                "--minimum-seconds",
+                "6.0",
+                "--dimension",
+                "2048",
+                "--bytes",
+                "536870912",
+                "--pinned",
+                "1",
+                "--async",
+                "0",
+                "--pinned-api",
+                "register"
+              ],
+              "duration_s": 7.177667290903628,
+              "finished_at": "2026-09-29T04:03:59.193334Z",
+              "finished_monotonic_s": 4495776.11322143,
+              "returncode": 0,
+              "started_at": "2026-09-29T04:03:52.015681Z",
+              "started_monotonic_s": 4495768.935554139,
+              "stderr": {
+                "bytes": 4284,
+                "path": "cases/interconnect-d2h/physical-3-536870912B-pinned-blocking/repeat-1/microbenchmark.stderr",
+                "sha256": "dc0f59afc4d4118f5a01a1e7c67068e0bccf4f09bc74a654d88eb0680f9091fd"
+              },
+              "stdout": {
+                "bytes": 1815,
+                "path": "cases/interconnect-d2h/physical-3-536870912B-pinned-blocking/repeat-1/microbenchmark.stdout",
+                "sha256": "a5a4d5c4fcf51fc5c732ef75ab9681496da3bb49407484e0193091dc200dea47"
+              },
+              "timed_out": false,
+              "timeout_s": 180
+            }
+          ],
+          "diagnosis_status": "not-supported",
+          "duration_s": 7.177667290903628,
+          "invalid_monitor_samples": 0,
+          "measurement_status": "passed",
+          "measurement_window": {
+            "finished_monotonic_s": 4495775.740184078,
+            "role": "measurement",
+            "started_monotonic_s": 4495769.711238943
+          },
+          "metrics": [
+            {
+              "checked_values": 536870912,
+              "compute_semantics": null,
+              "correctness": true,
+              "field": "P800_METRIC/samples_ns",
+              "formula": "completed payload bytes / median_elapsed_ns (decimal GB/s)",
+              "host_pinned_api": "register",
+              "max_ns": 89637284,
+              "median_ns": 34772807.5,
+              "min_ns": 33453959,
+              "physical_device_id": 3,
+              "point": {
+                "async": false,
+                "bytes": 536870912,
+                "mode": "d2h",
+                "pinned": true,
+                "source": 3
+              },
+              "repetition": 1,
+              "sample_count": 162,
+              "sample_cv": 0.20392174852260286,
+              "scope": "completed native API operation; not theoretical peak or device-only kernel time",
+              "source": "cases/interconnect-d2h/physical-3-536870912B-pinned-blocking/repeat-1/microbenchmark.stdout",
+              "source_kind": "native-xre",
+              "stability_status": "unstable",
+              "timer": "CLOCK_MONOTONIC completed API operation including synchronization",
+              "unit": "GB/s",
+              "value": 15.439389298663906
+            }
+          ],
+          "monitor_sample_counts": {
+            "3": 12
+          },
+          "monitoring_status": "passed",
+          "point": {
+            "async": false,
+            "bytes": 536870912,
+            "mode": "d2h",
+            "pinned": true,
+            "source": 3
+          },
+          "repetition": 1,
+          "schema_version": 1,
+          "status": "partial",
+          "sweep_scope": "explicit physical cards/mode/payload; native operation",
+          "target": "physical-3-536870912B-pinned-blocking/repeat-1"
+        },
+        {
+          "bindings": [
+            {
+              "container_node": "/dev/xpu1",
+              "device_major": 195,
+              "device_minor": 1,
+              "driver": "5.0.21.47",
+              "foreign_handles_authorized": true,
+              "foreign_occupancy_observed": true,
+              "free_memory_mib": 77876,
+              "host_device_node": "/dev/xpu1",
+              "host_physical_id": 3,
+              "native_id": 0,
+              "pci_bdf": "0000:2e:00.0",
+              "power_w": 132.0,
+              "processes_empty": false,
+              "serial": "02K15K0263D002L7",
+              "temperature_c": 48.0,
+              "total_memory_mib": 98304,
+              "uncorrectable_ecc_counts": [
+                0,
+                0
+              ],
+              "used_memory_mib": 20428,
+              "utilization_percent": 77,
+              "uuid": "9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+              "xpu_smi_runtime": "10.2"
+            }
+          ],
+          "commands": [
+            {
+              "command": [
+                "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+                "--mode",
+                "d2h",
+                "--src",
+                "0",
+                "--src-pci",
+                "00000000:2e:00.0",
+                "--samples",
+                "50",
+                "--warmup",
+                "5",
+                "--minimum-seconds",
+                "6.0",
+                "--dimension",
+                "2048",
+                "--bytes",
+                "536870912",
+                "--pinned",
+                "1",
+                "--async",
+                "1",
+                "--pinned-api",
+                "register"
+              ],
+              "duration_s": 0.7664292585104704,
+              "finished_at": "2026-09-29T04:03:59.961429Z",
+              "finished_monotonic_s": 4495776.881315923,
+              "returncode": 1,
+              "started_at": "2026-09-29T04:03:59.195022Z",
+              "started_monotonic_s": 4495776.114886665,
+              "stderr": {
+                "bytes": 245,
+                "path": "cases/interconnect-d2h/physical-3-536870912B-pinned-nonblocking/repeat-1/microbenchmark.stderr",
+                "sha256": "d14804b21487f3cf90e7c42cd5b3f14e2f9248f7edd504d7bc00fab17d9c0eb0"
+              },
+              "stdout": {
+                "bytes": 0,
+                "path": "cases/interconnect-d2h/physical-3-536870912B-pinned-nonblocking/repeat-1/microbenchmark.stdout",
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "timed_out": false,
+              "timeout_s": 180
+            }
+          ],
+          "diagnosis_status": "not-supported",
+          "duration_s": 0.7664292585104704,
+          "error": "native command exited 1",
+          "measurement_status": "failed",
+          "metrics": [],
+          "monitoring_status": "not-run",
+          "point": {
+            "async": true,
+            "bytes": 536870912,
+            "mode": "d2h",
+            "pinned": true,
+            "source": 3
+          },
+          "repetition": 1,
+          "schema_version": 1,
+          "status": "failed",
+          "sweep_scope": "explicit physical cards/mode/payload; native operation",
+          "target": "physical-3-536870912B-pinned-nonblocking/repeat-1"
+        }
+      ]
+    },
+    "interconnect-h2d": {
+      "commands": [
+        {
+          "command": [
+            "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+            "--mode",
+            "h2d",
+            "--src",
+            "0",
+            "--src-pci",
+            "00000000:2e:00.0",
+            "--samples",
+            "50",
+            "--warmup",
+            "5",
+            "--minimum-seconds",
+            "6.0",
+            "--dimension",
+            "2048",
+            "--bytes",
+            "536870912",
+            "--pinned",
+            "0",
+            "--async",
+            "0",
+            "--pinned-api",
+            "register"
+          ],
+          "duration_s": 7.377855401486158,
+          "finished_at": "2026-09-29T04:03:21.719724Z",
+          "finished_monotonic_s": 4495738.639613156,
+          "returncode": 0,
+          "started_at": "2026-09-29T04:03:14.341884Z",
+          "started_monotonic_s": 4495731.261757755,
+          "stderr": {
+            "bytes": 4258,
+            "path": "cases/interconnect-h2d/physical-3-536870912B-pageable-blocking/repeat-1/microbenchmark.stderr",
+            "sha256": "ed42bfe7186f078d7bda28a3623217239bcf5363e325ce170aa5d4709b0df5f2"
+          },
+          "stdout": {
+            "bytes": 1190,
+            "path": "cases/interconnect-h2d/physical-3-536870912B-pageable-blocking/repeat-1/microbenchmark.stdout",
+            "sha256": "f5fa21be023e54cb0f7895e880041c0ef69bbcc0b13ef0a43805ab59f894aed5"
+          },
+          "timed_out": false,
+          "timeout_s": 180
+        },
+        {
+          "command": [
+            "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+            "--mode",
+            "h2d",
+            "--src",
+            "0",
+            "--src-pci",
+            "00000000:2e:00.0",
+            "--samples",
+            "50",
+            "--warmup",
+            "5",
+            "--minimum-seconds",
+            "6.0",
+            "--dimension",
+            "2048",
+            "--bytes",
+            "536870912",
+            "--pinned",
+            "0",
+            "--async",
+            "1",
+            "--pinned-api",
+            "register"
+          ],
+          "duration_s": 7.377877631224692,
+          "finished_at": "2026-09-29T04:03:29.100433Z",
+          "finished_monotonic_s": 4495746.020327067,
+          "returncode": 0,
+          "started_at": "2026-09-29T04:03:21.722576Z",
+          "started_monotonic_s": 4495738.642449436,
+          "stderr": {
+            "bytes": 4258,
+            "path": "cases/interconnect-h2d/physical-3-536870912B-pageable-nonblocking/repeat-1/microbenchmark.stderr",
+            "sha256": "75954d754d1489b96f820e2650413023a894ef6038796ce44807bbd955b88092"
+          },
+          "stdout": {
+            "bytes": 1826,
+            "path": "cases/interconnect-h2d/physical-3-536870912B-pageable-nonblocking/repeat-1/microbenchmark.stdout",
+            "sha256": "ff4f2bf0300912324a3999a6463825c10e8fe5a3c0b3a97764c4bb33c0ae4d42"
+          },
+          "timed_out": false,
+          "timeout_s": 180
+        },
+        {
+          "command": [
+            "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+            "--mode",
+            "h2d",
+            "--src",
+            "0",
+            "--src-pci",
+            "00000000:2e:00.0",
+            "--samples",
+            "50",
+            "--warmup",
+            "5",
+            "--minimum-seconds",
+            "6.0",
+            "--dimension",
+            "2048",
+            "--bytes",
+            "536870912",
+            "--pinned",
+            "1",
+            "--async",
+            "0",
+            "--pinned-api",
+            "register"
+          ],
+          "duration_s": 7.577775196172297,
+          "finished_at": "2026-09-29T04:03:36.681373Z",
+          "finished_monotonic_s": 4495753.601266437,
+          "returncode": 0,
+          "started_at": "2026-09-29T04:03:29.103618Z",
+          "started_monotonic_s": 4495746.023491241,
+          "stderr": {
+            "bytes": 4284,
+            "path": "cases/interconnect-h2d/physical-3-536870912B-pinned-blocking/repeat-1/microbenchmark.stderr",
+            "sha256": "88ac71347b04a3e1fc423c7007218dd2430fd79fc180466d11e1ecfbf27f03cf"
+          },
+          "stdout": {
+            "bytes": 1113,
+            "path": "cases/interconnect-h2d/physical-3-536870912B-pinned-blocking/repeat-1/microbenchmark.stdout",
+            "sha256": "5c90fcde9b089c9e9632eb02ac9733fa6014482f15fed6a591596411bd813707"
+          },
+          "timed_out": false,
+          "timeout_s": 180
+        },
+        {
+          "command": [
+            "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+            "--mode",
+            "h2d",
+            "--src",
+            "0",
+            "--src-pci",
+            "00000000:2e:00.0",
+            "--samples",
+            "50",
+            "--warmup",
+            "5",
+            "--minimum-seconds",
+            "6.0",
+            "--dimension",
+            "2048",
+            "--bytes",
+            "536870912",
+            "--pinned",
+            "1",
+            "--async",
+            "1",
+            "--pinned-api",
+            "register"
+          ],
+          "duration_s": 0.7162276674062014,
+          "finished_at": "2026-09-29T04:03:37.400091Z",
+          "finished_monotonic_s": 4495754.319984063,
+          "returncode": 1,
+          "started_at": "2026-09-29T04:03:36.683885Z",
+          "started_monotonic_s": 4495753.603756395,
+          "stderr": {
+            "bytes": 245,
+            "path": "cases/interconnect-h2d/physical-3-536870912B-pinned-nonblocking/repeat-1/microbenchmark.stderr",
+            "sha256": "d14804b21487f3cf90e7c42cd5b3f14e2f9248f7edd504d7bc00fab17d9c0eb0"
+          },
+          "stdout": {
+            "bytes": 0,
+            "path": "cases/interconnect-h2d/physical-3-536870912B-pinned-nonblocking/repeat-1/microbenchmark.stdout",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "timed_out": false,
+          "timeout_s": 180
+        }
+      ],
+      "diagnosis_status": "not-supported",
+      "duration_s": 23.04973589628935,
+      "measurement_status": "failed",
+      "metrics": [
+        {
+          "checked_values": 536870912,
+          "compute_semantics": null,
+          "correctness": true,
+          "field": "P800_METRIC/samples_ns",
+          "formula": "completed payload bytes / median_elapsed_ns (decimal GB/s)",
+          "max_ns": 343216296,
+          "median_ns": 58310524.5,
+          "min_ns": 50174480,
+          "physical_device_id": 3,
+          "point": {
+            "async": false,
+            "bytes": 536870912,
+            "mode": "h2d",
+            "pinned": false,
+            "source": 3
+          },
+          "repetition": 1,
+          "sample_count": 92,
+          "sample_cv": 0.5616735853947911,
+          "scope": "completed native API operation; not theoretical peak or device-only kernel time",
+          "source": "cases/interconnect-h2d/physical-3-536870912B-pageable-blocking/repeat-1/microbenchmark.stdout",
+          "source_kind": "native-xre",
+          "stability_status": "unstable",
+          "timer": "CLOCK_MONOTONIC completed API operation including synchronization",
+          "unit": "GB/s",
+          "value": 9.20710140413846
+        },
+        {
+          "checked_values": 536870912,
+          "compute_semantics": null,
+          "correctness": true,
+          "field": "P800_METRIC/samples_ns",
+          "formula": "completed payload bytes / median_elapsed_ns (decimal GB/s)",
+          "max_ns": 301204765,
+          "median_ns": 31869173,
+          "min_ns": 28905115,
+          "physical_device_id": 3,
+          "point": {
+            "async": true,
+            "bytes": 536870912,
+            "mode": "h2d",
+            "pinned": false,
+            "source": 3
+          },
+          "repetition": 1,
+          "sample_count": 163,
+          "sample_cv": 0.8339355017497014,
+          "scope": "completed native API operation; not theoretical peak or device-only kernel time",
+          "source": "cases/interconnect-h2d/physical-3-536870912B-pageable-nonblocking/repeat-1/microbenchmark.stdout",
+          "source_kind": "native-xre",
+          "stability_status": "unstable",
+          "timer": "CLOCK_MONOTONIC completed API operation including synchronization",
+          "unit": "GB/s",
+          "value": 16.846088601044023
+        },
+        {
+          "checked_values": 536870912,
+          "compute_semantics": null,
+          "correctness": true,
+          "field": "P800_METRIC/samples_ns",
+          "formula": "completed payload bytes / median_elapsed_ns (decimal GB/s)",
+          "host_pinned_api": "register",
+          "max_ns": 83731358,
+          "median_ns": 70533853.5,
+          "min_ns": 67233553,
+          "physical_device_id": 3,
+          "point": {
+            "async": false,
+            "bytes": 536870912,
+            "mode": "h2d",
+            "pinned": true,
+            "source": 3
+          },
+          "repetition": 1,
+          "sample_count": 84,
+          "sample_cv": 0.050232784826555764,
+          "scope": "completed native API operation; not theoretical peak or device-only kernel time",
+          "source": "cases/interconnect-h2d/physical-3-536870912B-pinned-blocking/repeat-1/microbenchmark.stdout",
+          "source_kind": "native-xre",
+          "stability_status": "unstable",
+          "timer": "CLOCK_MONOTONIC completed API operation including synchronization",
+          "unit": "GB/s",
+          "value": 7.611535246688315
+        }
+      ],
+      "monitoring_status": "partial",
+      "status": "failed",
+      "sweep_scope": {
+        "physical_ids": [
+          3
+        ],
+        "point_count": 4,
+        "repeat": 1
+      },
+      "targets": [
+        {
+          "bindings": [
+            {
+              "container_node": "/dev/xpu1",
+              "device_major": 195,
+              "device_minor": 1,
+              "driver": "5.0.21.47",
+              "foreign_handles_authorized": true,
+              "foreign_occupancy_observed": true,
+              "free_memory_mib": 77876,
+              "host_device_node": "/dev/xpu1",
+              "host_physical_id": 3,
+              "native_id": 0,
+              "pci_bdf": "0000:2e:00.0",
+              "power_w": 132.0,
+              "processes_empty": false,
+              "serial": "02K15K0263D002L7",
+              "temperature_c": 48.0,
+              "total_memory_mib": 98304,
+              "uncorrectable_ecc_counts": [
+                0,
+                0
+              ],
+              "used_memory_mib": 20428,
+              "utilization_percent": 77,
+              "uuid": "9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+              "xpu_smi_runtime": "10.2"
+            }
+          ],
+          "commands": [
+            {
+              "command": [
+                "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+                "--mode",
+                "h2d",
+                "--src",
+                "0",
+                "--src-pci",
+                "00000000:2e:00.0",
+                "--samples",
+                "50",
+                "--warmup",
+                "5",
+                "--minimum-seconds",
+                "6.0",
+                "--dimension",
+                "2048",
+                "--bytes",
+                "536870912",
+                "--pinned",
+                "0",
+                "--async",
+                "0",
+                "--pinned-api",
+                "register"
+              ],
+              "duration_s": 7.377855401486158,
+              "finished_at": "2026-09-29T04:03:21.719724Z",
+              "finished_monotonic_s": 4495738.639613156,
+              "returncode": 0,
+              "started_at": "2026-09-29T04:03:14.341884Z",
+              "started_monotonic_s": 4495731.261757755,
+              "stderr": {
+                "bytes": 4258,
+                "path": "cases/interconnect-h2d/physical-3-536870912B-pageable-blocking/repeat-1/microbenchmark.stderr",
+                "sha256": "ed42bfe7186f078d7bda28a3623217239bcf5363e325ce170aa5d4709b0df5f2"
+              },
+              "stdout": {
+                "bytes": 1190,
+                "path": "cases/interconnect-h2d/physical-3-536870912B-pageable-blocking/repeat-1/microbenchmark.stdout",
+                "sha256": "f5fa21be023e54cb0f7895e880041c0ef69bbcc0b13ef0a43805ab59f894aed5"
+              },
+              "timed_out": false,
+              "timeout_s": 180
+            }
+          ],
+          "diagnosis_status": "not-supported",
+          "duration_s": 7.377855401486158,
+          "invalid_monitor_samples": 0,
+          "measurement_status": "passed",
+          "measurement_window": {
+            "finished_monotonic_s": 4495738.163187288,
+            "role": "measurement",
+            "started_monotonic_s": 4495732.137371127
+          },
+          "metrics": [
+            {
+              "checked_values": 536870912,
+              "compute_semantics": null,
+              "correctness": true,
+              "field": "P800_METRIC/samples_ns",
+              "formula": "completed payload bytes / median_elapsed_ns (decimal GB/s)",
+              "max_ns": 343216296,
+              "median_ns": 58310524.5,
+              "min_ns": 50174480,
+              "physical_device_id": 3,
+              "point": {
+                "async": false,
+                "bytes": 536870912,
+                "mode": "h2d",
+                "pinned": false,
+                "source": 3
+              },
+              "repetition": 1,
+              "sample_count": 92,
+              "sample_cv": 0.5616735853947911,
+              "scope": "completed native API operation; not theoretical peak or device-only kernel time",
+              "source": "cases/interconnect-h2d/physical-3-536870912B-pageable-blocking/repeat-1/microbenchmark.stdout",
+              "source_kind": "native-xre",
+              "stability_status": "unstable",
+              "timer": "CLOCK_MONOTONIC completed API operation including synchronization",
+              "unit": "GB/s",
+              "value": 9.20710140413846
+            }
+          ],
+          "monitor_sample_counts": {
+            "3": 12
+          },
+          "monitoring_status": "passed",
+          "point": {
+            "async": false,
+            "bytes": 536870912,
+            "mode": "h2d",
+            "pinned": false,
+            "source": 3
+          },
+          "repetition": 1,
+          "schema_version": 1,
+          "status": "partial",
+          "sweep_scope": "explicit physical cards/mode/payload; native operation",
+          "target": "physical-3-536870912B-pageable-blocking/repeat-1"
+        },
+        {
+          "bindings": [
+            {
+              "container_node": "/dev/xpu1",
+              "device_major": 195,
+              "device_minor": 1,
+              "driver": "5.0.21.47",
+              "foreign_handles_authorized": true,
+              "foreign_occupancy_observed": true,
+              "free_memory_mib": 77876,
+              "host_device_node": "/dev/xpu1",
+              "host_physical_id": 3,
+              "native_id": 0,
+              "pci_bdf": "0000:2e:00.0",
+              "power_w": 132.0,
+              "processes_empty": false,
+              "serial": "02K15K0263D002L7",
+              "temperature_c": 48.0,
+              "total_memory_mib": 98304,
+              "uncorrectable_ecc_counts": [
+                0,
+                0
+              ],
+              "used_memory_mib": 20428,
+              "utilization_percent": 77,
+              "uuid": "9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+              "xpu_smi_runtime": "10.2"
+            }
+          ],
+          "commands": [
+            {
+              "command": [
+                "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+                "--mode",
+                "h2d",
+                "--src",
+                "0",
+                "--src-pci",
+                "00000000:2e:00.0",
+                "--samples",
+                "50",
+                "--warmup",
+                "5",
+                "--minimum-seconds",
+                "6.0",
+                "--dimension",
+                "2048",
+                "--bytes",
+                "536870912",
+                "--pinned",
+                "0",
+                "--async",
+                "1",
+                "--pinned-api",
+                "register"
+              ],
+              "duration_s": 7.377877631224692,
+              "finished_at": "2026-09-29T04:03:29.100433Z",
+              "finished_monotonic_s": 4495746.020327067,
+              "returncode": 0,
+              "started_at": "2026-09-29T04:03:21.722576Z",
+              "started_monotonic_s": 4495738.642449436,
+              "stderr": {
+                "bytes": 4258,
+                "path": "cases/interconnect-h2d/physical-3-536870912B-pageable-nonblocking/repeat-1/microbenchmark.stderr",
+                "sha256": "75954d754d1489b96f820e2650413023a894ef6038796ce44807bbd955b88092"
+              },
+              "stdout": {
+                "bytes": 1826,
+                "path": "cases/interconnect-h2d/physical-3-536870912B-pageable-nonblocking/repeat-1/microbenchmark.stdout",
+                "sha256": "ff4f2bf0300912324a3999a6463825c10e8fe5a3c0b3a97764c4bb33c0ae4d42"
+              },
+              "timed_out": false,
+              "timeout_s": 180
+            }
+          ],
+          "diagnosis_status": "not-supported",
+          "duration_s": 7.377877631224692,
+          "invalid_monitor_samples": 0,
+          "measurement_status": "passed",
+          "measurement_window": {
+            "finished_monotonic_s": 4495745.428098833,
+            "role": "measurement",
+            "started_monotonic_s": 4495739.422366402
+          },
+          "metrics": [
+            {
+              "checked_values": 536870912,
+              "compute_semantics": null,
+              "correctness": true,
+              "field": "P800_METRIC/samples_ns",
+              "formula": "completed payload bytes / median_elapsed_ns (decimal GB/s)",
+              "max_ns": 301204765,
+              "median_ns": 31869173,
+              "min_ns": 28905115,
+              "physical_device_id": 3,
+              "point": {
+                "async": true,
+                "bytes": 536870912,
+                "mode": "h2d",
+                "pinned": false,
+                "source": 3
+              },
+              "repetition": 1,
+              "sample_count": 163,
+              "sample_cv": 0.8339355017497014,
+              "scope": "completed native API operation; not theoretical peak or device-only kernel time",
+              "source": "cases/interconnect-h2d/physical-3-536870912B-pageable-nonblocking/repeat-1/microbenchmark.stdout",
+              "source_kind": "native-xre",
+              "stability_status": "unstable",
+              "timer": "CLOCK_MONOTONIC completed API operation including synchronization",
+              "unit": "GB/s",
+              "value": 16.846088601044023
+            }
+          ],
+          "monitor_sample_counts": {
+            "3": 12
+          },
+          "monitoring_status": "passed",
+          "point": {
+            "async": true,
+            "bytes": 536870912,
+            "mode": "h2d",
+            "pinned": false,
+            "source": 3
+          },
+          "repetition": 1,
+          "schema_version": 1,
+          "status": "partial",
+          "sweep_scope": "explicit physical cards/mode/payload; native operation",
+          "target": "physical-3-536870912B-pageable-nonblocking/repeat-1"
+        },
+        {
+          "bindings": [
+            {
+              "container_node": "/dev/xpu1",
+              "device_major": 195,
+              "device_minor": 1,
+              "driver": "5.0.21.47",
+              "foreign_handles_authorized": true,
+              "foreign_occupancy_observed": true,
+              "free_memory_mib": 77876,
+              "host_device_node": "/dev/xpu1",
+              "host_physical_id": 3,
+              "native_id": 0,
+              "pci_bdf": "0000:2e:00.0",
+              "power_w": 132.0,
+              "processes_empty": false,
+              "serial": "02K15K0263D002L7",
+              "temperature_c": 48.0,
+              "total_memory_mib": 98304,
+              "uncorrectable_ecc_counts": [
+                0,
+                0
+              ],
+              "used_memory_mib": 20428,
+              "utilization_percent": 77,
+              "uuid": "9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+              "xpu_smi_runtime": "10.2"
+            }
+          ],
+          "commands": [
+            {
+              "command": [
+                "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+                "--mode",
+                "h2d",
+                "--src",
+                "0",
+                "--src-pci",
+                "00000000:2e:00.0",
+                "--samples",
+                "50",
+                "--warmup",
+                "5",
+                "--minimum-seconds",
+                "6.0",
+                "--dimension",
+                "2048",
+                "--bytes",
+                "536870912",
+                "--pinned",
+                "1",
+                "--async",
+                "0",
+                "--pinned-api",
+                "register"
+              ],
+              "duration_s": 7.577775196172297,
+              "finished_at": "2026-09-29T04:03:36.681373Z",
+              "finished_monotonic_s": 4495753.601266437,
+              "returncode": 0,
+              "started_at": "2026-09-29T04:03:29.103618Z",
+              "started_monotonic_s": 4495746.023491241,
+              "stderr": {
+                "bytes": 4284,
+                "path": "cases/interconnect-h2d/physical-3-536870912B-pinned-blocking/repeat-1/microbenchmark.stderr",
+                "sha256": "88ac71347b04a3e1fc423c7007218dd2430fd79fc180466d11e1ecfbf27f03cf"
+              },
+              "stdout": {
+                "bytes": 1113,
+                "path": "cases/interconnect-h2d/physical-3-536870912B-pinned-blocking/repeat-1/microbenchmark.stdout",
+                "sha256": "5c90fcde9b089c9e9632eb02ac9733fa6014482f15fed6a591596411bd813707"
+              },
+              "timed_out": false,
+              "timeout_s": 180
+            }
+          ],
+          "diagnosis_status": "not-supported",
+          "duration_s": 7.577775196172297,
+          "invalid_monitor_samples": 0,
+          "measurement_status": "passed",
+          "measurement_window": {
+            "finished_monotonic_s": 4495753.11286438,
+            "role": "measurement",
+            "started_monotonic_s": 4495747.066412291
+          },
+          "metrics": [
+            {
+              "checked_values": 536870912,
+              "compute_semantics": null,
+              "correctness": true,
+              "field": "P800_METRIC/samples_ns",
+              "formula": "completed payload bytes / median_elapsed_ns (decimal GB/s)",
+              "host_pinned_api": "register",
+              "max_ns": 83731358,
+              "median_ns": 70533853.5,
+              "min_ns": 67233553,
+              "physical_device_id": 3,
+              "point": {
+                "async": false,
+                "bytes": 536870912,
+                "mode": "h2d",
+                "pinned": true,
+                "source": 3
+              },
+              "repetition": 1,
+              "sample_count": 84,
+              "sample_cv": 0.050232784826555764,
+              "scope": "completed native API operation; not theoretical peak or device-only kernel time",
+              "source": "cases/interconnect-h2d/physical-3-536870912B-pinned-blocking/repeat-1/microbenchmark.stdout",
+              "source_kind": "native-xre",
+              "stability_status": "unstable",
+              "timer": "CLOCK_MONOTONIC completed API operation including synchronization",
+              "unit": "GB/s",
+              "value": 7.611535246688315
+            }
+          ],
+          "monitor_sample_counts": {
+            "3": 12
+          },
+          "monitoring_status": "passed",
+          "point": {
+            "async": false,
+            "bytes": 536870912,
+            "mode": "h2d",
+            "pinned": true,
+            "source": 3
+          },
+          "repetition": 1,
+          "schema_version": 1,
+          "status": "partial",
+          "sweep_scope": "explicit physical cards/mode/payload; native operation",
+          "target": "physical-3-536870912B-pinned-blocking/repeat-1"
+        },
+        {
+          "bindings": [
+            {
+              "container_node": "/dev/xpu1",
+              "device_major": 195,
+              "device_minor": 1,
+              "driver": "5.0.21.47",
+              "foreign_handles_authorized": true,
+              "foreign_occupancy_observed": true,
+              "free_memory_mib": 77876,
+              "host_device_node": "/dev/xpu1",
+              "host_physical_id": 3,
+              "native_id": 0,
+              "pci_bdf": "0000:2e:00.0",
+              "power_w": 132.0,
+              "processes_empty": false,
+              "serial": "02K15K0263D002L7",
+              "temperature_c": 48.0,
+              "total_memory_mib": 98304,
+              "uncorrectable_ecc_counts": [
+                0,
+                0
+              ],
+              "used_memory_mib": 20428,
+              "utilization_percent": 77,
+              "uuid": "9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+              "xpu_smi_runtime": "10.2"
+            }
+          ],
+          "commands": [
+            {
+              "command": [
+                "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+                "--mode",
+                "h2d",
+                "--src",
+                "0",
+                "--src-pci",
+                "00000000:2e:00.0",
+                "--samples",
+                "50",
+                "--warmup",
+                "5",
+                "--minimum-seconds",
+                "6.0",
+                "--dimension",
+                "2048",
+                "--bytes",
+                "536870912",
+                "--pinned",
+                "1",
+                "--async",
+                "1",
+                "--pinned-api",
+                "register"
+              ],
+              "duration_s": 0.7162276674062014,
+              "finished_at": "2026-09-29T04:03:37.400091Z",
+              "finished_monotonic_s": 4495754.319984063,
+              "returncode": 1,
+              "started_at": "2026-09-29T04:03:36.683885Z",
+              "started_monotonic_s": 4495753.603756395,
+              "stderr": {
+                "bytes": 245,
+                "path": "cases/interconnect-h2d/physical-3-536870912B-pinned-nonblocking/repeat-1/microbenchmark.stderr",
+                "sha256": "d14804b21487f3cf90e7c42cd5b3f14e2f9248f7edd504d7bc00fab17d9c0eb0"
+              },
+              "stdout": {
+                "bytes": 0,
+                "path": "cases/interconnect-h2d/physical-3-536870912B-pinned-nonblocking/repeat-1/microbenchmark.stdout",
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "timed_out": false,
+              "timeout_s": 180
+            }
+          ],
+          "diagnosis_status": "not-supported",
+          "duration_s": 0.7162276674062014,
+          "error": "native command exited 1",
+          "measurement_status": "failed",
+          "metrics": [],
+          "monitoring_status": "not-run",
+          "point": {
+            "async": true,
+            "bytes": 536870912,
+            "mode": "h2d",
+            "pinned": true,
+            "source": 3
+          },
+          "repetition": 1,
+          "schema_version": 1,
+          "status": "failed",
+          "sweep_scope": "explicit physical cards/mode/payload; native operation",
+          "target": "physical-3-536870912B-pinned-nonblocking/repeat-1"
+        }
+      ]
+    }
+  },
+  "context_sha256": "6a17f508eaac6cfe0502d06d0509e6f3642c588a2d8e38c7e288d0fb08c2c9be",
+  "diagnosis_status": "not-supported",
+  "finished_at": "2026-09-29T04:03:59.965374Z",
+  "kind": "toolkit",
+  "measurement_status": "failed",
+  "monitoring_status": "partial",
+  "run_id": "20260929T040300Z-ecf3d9ff",
+  "schema_version": 1,
+  "selected_physical_device_ids": [
+    3
+  ],
+  "settings": {
+    "allow_busy_devices": true,
+    "allow_candidate_runtime": true,
+    "command_timeout": 180,
+    "matrix_size": 2048,
+    "minimum_seconds": 6.0,
+    "payload_bytes": 536870912,
+    "pinned_api": "register",
+    "privilege_command": "",
+    "repeat": 1,
+    "samples": 50,
+    "smoke": false,
+    "warmup": 5
+  },
+  "started_at": "2026-09-29T04:03:03.638716Z",
+  "status": "failed",
+  "suite": "kunlunxin-p800-toolkit",
+  "vendor": "kunlunxin"
+}

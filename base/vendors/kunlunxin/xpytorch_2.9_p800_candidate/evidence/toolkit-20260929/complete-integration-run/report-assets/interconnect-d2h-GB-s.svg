@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="340" viewBox="0 0 1100 340">
+<rect width="100%" height="100%" fill="white"/>
+<g font-family="sans-serif" font-size="13" fill="#263247">
+<text x="20" y="28" font-size="18">interconnect-d2h (GB/s)</text>
+<line x1="420" y1="50" x2="420" y2="310" stroke="#b7c0ca"/>
+<text x="420" y="330">0</text>
+<text x="16" y="75">card 3 / 1048576 B / pageable / blocking / R1</text>
+<rect x="420" y="60" width="433.955" height="20" fill="#3873a5"/>
+<text x="861.955" y="75">10.412</text>
+<text x="16" y="105">card 3 / 1048576 B / pageable / async / R1</text>
+<rect x="420" y="90" width="429.773" height="20" fill="#3873a5"/>
+<text x="857.773" y="105">10.3117</text>
+<text x="16" y="135">card 3 / 1048576 B / pinned / blocking / R1</text>
+<rect x="420" y="120" width="530.000" height="20" fill="#3873a5"/>
+<text x="958.000" y="135">12.7165</text>
+<text x="16" y="165">card 3 / 1048576 B / pinned / async / R1</text>
+<rect x="420" y="150" width="486.137" height="20" fill="#3873a5"/>
+<text x="914.137" y="165">11.6641</text>
+<text x="16" y="195">card 7 / 1048576 B / pageable / blocking / R1</text>
+<rect x="420" y="180" width="359.670" height="20" fill="#3873a5"/>
+<text x="787.670" y="195">8.62969</text>
+<text x="16" y="225">card 7 / 1048576 B / pageable / async / R1</text>
+<rect x="420" y="210" width="441.272" height="20" fill="#3873a5"/>
+<text x="869.272" y="225">10.5876</text>
+<text x="16" y="255">card 7 / 1048576 B / pinned / blocking / R1</text>
+<rect x="420" y="240" width="260.761" height="20" fill="#3873a5"/>
+<text x="688.761" y="255">6.25653</text>
+<text x="16" y="285">card 7 / 1048576 B / pinned / async / R1</text>
+<rect x="420" y="270" width="472.115" height="20" fill="#3873a5"/>
+<text x="900.115" y="285">11.3276</text>
+</g></svg>

@@ -1,0 +1,29 @@
+NAME
+    test_memcpy_peer - test xpu_memcpy_peer API
+
+SYNOPSIS
+    test_memcpy_peer [--unit] [--perf] [--auto] 
+             [--loop <loop_count>] [-hv] <src_id> <dst_id> <size>
+
+DESCRIPTION
+    Perform the xpu_memcpy_peer test. The basic test process is DMA <size> bytes from
+    XPU device src_id memory A into XPU device dst_id memory B. This whole process will
+    be executed in <loop_count> interations.
+
+OPTIONS
+    --unit  Test the correntness of xpu_memcpy_peer API, the src_id dst_id size must
+            provided.
+
+    --perf  Test the performance of xpu_memcpy_peer API, the src_id dst_id size must
+            provided.
+
+    --auto  Automaticly test the performance and correctness of xpu_memcpy_peer API. The
+            process is getting the current device count and forming a ring for all XPU
+            devices. Then, performing xpu_memcpy_peer across the ring.
+
+    --l3  Set test memory type to L3, default to HBM.
+    --loop <loop_count>  Do <loop_count> iteration of DMA test in total, 1 if not set.
+
+    -v  Print verbose information.
+
+    -h  Print this message

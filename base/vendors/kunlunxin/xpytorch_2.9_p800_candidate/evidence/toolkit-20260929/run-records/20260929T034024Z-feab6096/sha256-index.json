@@ -1,0 +1,91 @@
+{
+  "files": [
+    {
+      "bytes": 76,
+      "path": "cleanup.json",
+      "sha256": "7410d08b7eee6bedb50dc822ee9ddd94cae691bbb839dbbd23355d47ba6aa0ac"
+    },
+    {
+      "bytes": 282,
+      "path": "host-postflight/handles-4.json",
+      "sha256": "94eea7bb4af86efe2f4ebbb36b0f35a551267f6dbbb058febbc8829547a20b42"
+    },
+    {
+      "bytes": 1487,
+      "path": "host-postflight/machine.json",
+      "sha256": "ba18783b05e62e8d7ff2fbd459878594300dbbe4e53d72ef65bcbbedcbe38dce"
+    },
+    {
+      "bytes": 3480,
+      "path": "host-postflight/query-4.json",
+      "sha256": "ab2bb67c807bf0435503c6e278aa7afff831748f8960090724b3791a2d552254"
+    },
+    {
+      "bytes": 955,
+      "path": "host-postflight/summary.json",
+      "sha256": "985a7d1325ec77d73daa4987e68d67936b6bbb1dd5e40fc4bb05a1f906bf66b8"
+    },
+    {
+      "bytes": 282,
+      "path": "host-preflight/VM-0-2-ubuntu/handles-4.json",
+      "sha256": "907556eefb41153fe24d1d2344f3b33907656c8c07db6c4bced4af72f14fe9d7"
+    },
+    {
+      "bytes": 1488,
+      "path": "host-preflight/VM-0-2-ubuntu/machine.json",
+      "sha256": "027105a4b504ae4b97b3ea9697786bf7823e76249bf41dd8f10403d49d503d0f"
+    },
+    {
+      "bytes": 3479,
+      "path": "host-preflight/VM-0-2-ubuntu/query-4.json",
+      "sha256": "57d63aa6ff900a737f80d05062cb8962f7e99dde40342e63c17252f2e55dfdef"
+    },
+    {
+      "bytes": 955,
+      "path": "host-preflight/VM-0-2-ubuntu/summary.json",
+      "sha256": "985a7d1325ec77d73daa4987e68d67936b6bbb1dd5e40fc4bb05a1f906bf66b8"
+    },
+    {
+      "bytes": 318,
+      "path": "image-identity.json",
+      "sha256": "3f9c9f70378fa62b32fd4c66bbe50b3121f11812d8edbfcc425d33e36d59f08a"
+    },
+    {
+      "bytes": 4825,
+      "path": "image-inspect.json",
+      "sha256": "46c706ff543f7d688157c9879c72229b71b1259f041505a8e524bbcd17e5d968"
+    },
+    {
+      "bytes": 2188,
+      "path": "report.md",
+      "sha256": "b811a3d30cacccf27bf954fabe0b32e4b83d68540beaaddf18e3df2561ac3ef1"
+    },
+    {
+      "bytes": 399,
+      "path": "report_monitor.md",
+      "sha256": "02aec7021aea0920946d9dd0dd3e187b6b7e4f654e6062c7ba5d8f3556d83263"
+    },
+    {
+      "bytes": 2569,
+      "path": "resolved-plan.json",
+      "sha256": "98a066415c0503d5f303e5b75cb3913ed3a84923ddbaf9885597d4684da6664b"
+    },
+    {
+      "bytes": 5021,
+      "path": "summary.json",
+      "sha256": "f20906ed1a6e428a003c7c763d525747ad1655e56b90f9b26d98d8a8b76e33f0"
+    },
+    {
+      "bytes": 955,
+      "path": "toolkit-evidence/health/post.json",
+      "sha256": "985a7d1325ec77d73daa4987e68d67936b6bbb1dd5e40fc4bb05a1f906bf66b8"
+    },
+    {
+      "bytes": 609,
+      "path": "toolkit-evidence/manifest.json",
+      "sha256": "acc4aa00fc2975fa749d881b966387eabfd859d8de0a726809b34795d4b5b2c3"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "all regular files under run root except this index"
+}

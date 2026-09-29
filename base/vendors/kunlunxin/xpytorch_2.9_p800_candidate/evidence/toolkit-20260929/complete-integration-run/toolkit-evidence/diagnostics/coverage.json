@@ -1,0 +1,13 @@
+{
+  "available_observations": [
+    "xpu-smi pre/post UUID/PCI",
+    "uncorrectable ECC",
+    "temperature",
+    "power",
+    "capacity",
+    "topology"
+  ],
+  "reason": "No equivalent vendor threshold aiflops/bandwidth/hbm/signalQuality diagnosis in this toolchain",
+  "status": "not-supported",
+  "xprofiler": "tool availability/help archived; kernel trace not claimed by this measurement mode"
+}

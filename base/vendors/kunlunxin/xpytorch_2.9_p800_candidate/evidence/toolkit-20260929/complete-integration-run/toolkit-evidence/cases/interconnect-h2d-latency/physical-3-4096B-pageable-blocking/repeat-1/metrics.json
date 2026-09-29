@@ -1,0 +1,137 @@
+{
+  "bindings": [
+    {
+      "container_node": "/dev/xpu1",
+      "device_major": 195,
+      "device_minor": 1,
+      "driver": "5.0.21.47",
+      "foreign_handles_authorized": true,
+      "foreign_occupancy_observed": true,
+      "free_memory_mib": 77876,
+      "host_device_node": "/dev/xpu1",
+      "host_physical_id": 3,
+      "native_id": 0,
+      "pci_bdf": "0000:2e:00.0",
+      "power_w": 130.0,
+      "processes_empty": false,
+      "serial": "02K15K0263D002L7",
+      "temperature_c": 48.0,
+      "total_memory_mib": 98304,
+      "uncorrectable_ecc_counts": [
+        0,
+        0
+      ],
+      "used_memory_mib": 20428,
+      "utilization_percent": 100,
+      "uuid": "9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "xpu_smi_runtime": "10.2"
+    }
+  ],
+  "commands": [
+    {
+      "command": [
+        "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+        "--mode",
+        "h2d",
+        "--src",
+        "0",
+        "--src-pci",
+        "00000000:2e:00.0",
+        "--samples",
+        "25",
+        "--warmup",
+        "2",
+        "--minimum-seconds",
+        "0.0",
+        "--dimension",
+        "128",
+        "--bytes",
+        "4096",
+        "--pinned",
+        "0",
+        "--async",
+        "0",
+        "--pinned-api",
+        "register",
+        "--async-chunk-bytes",
+        "1048576"
+      ],
+      "duration_s": 0.11542867962270975,
+      "finished_at": "2026-09-29T04:31:47.375112Z",
+      "finished_monotonic_s": 4497444.295072875,
+      "returncode": 0,
+      "started_at": "2026-09-29T04:31:47.259773Z",
+      "started_monotonic_s": 4497444.179644195,
+      "stderr": {
+        "bytes": 4258,
+        "path": "cases/interconnect-h2d-latency/physical-3-4096B-pageable-blocking/repeat-1/microbenchmark.stderr",
+        "sha256": "ed531254ae71ae4ceac3537a88e8b029db01cb04958b30efc4ffd6fae5046846"
+      },
+      "stdout": {
+        "bytes": 545,
+        "path": "cases/interconnect-h2d-latency/physical-3-4096B-pageable-blocking/repeat-1/microbenchmark.stdout",
+        "sha256": "810450c3a94dc29095a589f89a952d056ae125c3538167977a7bcb24fa48d029"
+      },
+      "timed_out": false,
+      "timeout_s": 180
+    }
+  ],
+  "diagnosis_status": "not-supported",
+  "duration_s": 0.11542867962270975,
+  "invalid_monitor_samples": 0,
+  "measurement_status": "passed",
+  "measurement_window": {
+    "finished_monotonic_s": 4497444.237287626,
+    "role": "measurement",
+    "started_monotonic_s": 4497444.236371826
+  },
+  "metrics": [
+    {
+      "api_calls_per_sample": 1,
+      "async_chunk_bytes": 0,
+      "checked_values": 4096,
+      "compute_semantics": null,
+      "correctness": true,
+      "field": "P800_METRIC/samples_ns",
+      "formula": "median(completed API copy + synchronization nanoseconds)",
+      "max_ns": 320293,
+      "median_ns": 12959,
+      "min_ns": 11790,
+      "physical_device_id": 3,
+      "point": {
+        "async": false,
+        "bytes": 4096,
+        "mode": "h2d",
+        "pinned": false,
+        "source": 3
+      },
+      "repetition": 1,
+      "sample_count": 25,
+      "sample_cv": 1.7083170173274638,
+      "scope": "completed native API operation; not theoretical peak or device-only kernel time",
+      "source": "cases/interconnect-h2d-latency/physical-3-4096B-pageable-blocking/repeat-1/microbenchmark.stdout",
+      "source_kind": "native-xre",
+      "stability_status": "unstable",
+      "submission_scope": "single native operation",
+      "timer": "CLOCK_MONOTONIC completed API operation including synchronization",
+      "unit": "ns",
+      "value": 12959
+    }
+  ],
+  "monitor_sample_counts": {
+    "3": 0
+  },
+  "monitoring_status": "partial",
+  "point": {
+    "async": false,
+    "bytes": 4096,
+    "mode": "h2d",
+    "pinned": false,
+    "source": 3
+  },
+  "repetition": 1,
+  "schema_version": 1,
+  "status": "partial",
+  "sweep_scope": "explicit physical cards/mode/payload; native operation",
+  "target": "physical-3-4096B-pageable-blocking/repeat-1"
+}

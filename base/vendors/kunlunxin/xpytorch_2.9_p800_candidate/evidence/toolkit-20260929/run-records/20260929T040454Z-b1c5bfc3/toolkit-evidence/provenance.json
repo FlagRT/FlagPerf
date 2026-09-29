@@ -1,0 +1,112 @@
+{
+  "backend": "independent-native-xre-xblas",
+  "context_sha256": "007db155d291132350098f8e2b10389ffd6c8f0a58d21f4c1578f6cd9cf54183",
+  "environment": {
+    "HOME": "/tmp",
+    "LD_LIBRARY_PATH": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/so:/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir:/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xhpc/xblas/dependency_so",
+    "USE_FLAGGEMS": "0"
+  },
+  "native_binary": {
+    "bytes": 96824,
+    "path": "build/native_bench",
+    "sha256": "5249dc9fbc7091d0d3232e7362fb7a0ae341234f80711d39a8afd42a9afc94cb"
+  },
+  "native_source": {
+    "bytes": 17993,
+    "path": "toolkits/_common/kunlunxin/P800/native_bench.cpp",
+    "sha256": "442f5000cf31b1e5f0dedfb2b8ec61e68529c9a5e3c2ee805956a43a8cf6ef17"
+  },
+  "no_base_workload": true,
+  "official_fc_effciency_status": "not-run; matching XBLAS unittest not supplied; native XBLAS API adapter used",
+  "runtime_lock": {
+    "image_manifest": {
+      "image": "flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev:202608",
+      "image_id": "sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975",
+      "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf-toolkit-validation-0929/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/image-manifest.json",
+      "release_stage": "candidate",
+      "schema_version": 1,
+      "sha256": "ab59dc1cd14b65a28ffaef7b1b21b1d0b51f5334619301659d4123a5c681acbf",
+      "validated": false,
+      "validation_scope": [],
+      "validation_status": null
+    },
+    "runtime_profile": "xpytorch_2.9_p800_candidate",
+    "stack_lock": {
+      "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf-toolkit-validation-0929/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/stack.lock.yaml",
+      "sha256": "8f200d0b955b7e60881bc13ed75c8784c2c38fe2c755d018c618f1dc7b46cded"
+    },
+    "vendor": "kunlunxin"
+  },
+  "tools": {
+    "fc_effciency": {
+      "bytes": 3681,
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xhpc/xblas/script/fc_effciency/run_eff.py",
+      "present": true,
+      "resolved_path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xhpc/xblas/script/fc_effciency/run_eff.py",
+      "sha256": "8cf46d49adb3c85e1a076f1dbcd6663a77f0f933807e68b46ca2cc44c8fb771a"
+    },
+    "test_dma": {
+      "bytes": 19216,
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/tools/test_dma",
+      "present": true,
+      "resolved_path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/tools/test_dma",
+      "sha256": "a929d551e264fdbab2f5715b7538219468e988e98bf3f918fc2b1b2c3ead6597"
+    },
+    "test_memcpy_peer": {
+      "bytes": 14880,
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/tools/test_memcpy_peer",
+      "present": true,
+      "resolved_path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/tools/test_memcpy_peer",
+      "sha256": "18ea3940671b66f92ac103fde335a650a73a99369aa2c6e9be73d672e676b223"
+    },
+    "vendor_versions": {
+      "bytes": 162,
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/_versions.txt",
+      "present": true,
+      "resolved_path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/_versions.txt",
+      "sha256": "cc1125447699bfa9092fe6b224e4ddcd7a87f141ac63360bf1629813ac6e5fc0"
+    },
+    "xblas_header": {
+      "bytes": 13840,
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xhpc/xblas/include/cublas_api.h",
+      "present": true,
+      "resolved_path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xhpc/xblas/include/cublas_api.h",
+      "sha256": "d352c4267e5429e133d61962359d9ed37f07d1d17035fa4e05fc020b9bf75ed0"
+    },
+    "xblas_library": {
+      "bytes": 1119053880,
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxpu_blas.so",
+      "present": true,
+      "resolved_path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxpu_blas.so",
+      "sha256": "8b77a853c0225d538bdf387dee3b8e84fa68320b95bd641a0fa03491baba15e6"
+    },
+    "xprofiler": {
+      "bytes": 430336,
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/profiler/xprofiler",
+      "present": true,
+      "resolved_path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/profiler/xprofiler",
+      "sha256": "5eb4d7065334961c31263ee2ae405242fac1639f0501b4ef91291943619384e6"
+    },
+    "xpu-smi": {
+      "bytes": 537064,
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/bin/xpu-smi",
+      "present": true,
+      "resolved_path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/bin/xpu-smi",
+      "sha256": "ae54267793275b7f3b19aa5367c5b8d265b0d26ff47f82e74268bab56ce09191"
+    },
+    "xre_header": {
+      "bytes": 18237,
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/include/xpu/runtime.h",
+      "present": true,
+      "resolved_path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/include/xpu/runtime.h",
+      "sha256": "99dc5422733774daf6667420c190c990aad4516deafe474d5196edf0f5bd6d32"
+    },
+    "xre_library": {
+      "bytes": 257528,
+      "path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/so/libxpurt.so",
+      "present": true,
+      "resolved_path": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/so/libxpurt.so",
+      "sha256": "2d1ceae4ab4e8037a5b2a134f8327de06987554962e39c53a3f8a0658f3738c3"
+    }
+  }
+}

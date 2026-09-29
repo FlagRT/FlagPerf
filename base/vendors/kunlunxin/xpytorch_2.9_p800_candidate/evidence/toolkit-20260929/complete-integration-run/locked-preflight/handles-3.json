@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "fuser",
+    "/dev/xpu1"
+  ],
+  "finished_monotonic_s": 4497430.708901938,
+  "returncode": 1,
+  "started_at": "2026-09-29T04:31:33.035298+00:00",
+  "started_monotonic_s": 4497429.955149669,
+  "stderr": "",
+  "stdout": "",
+  "timed_out": false,
+  "timeout_s": 10
+}

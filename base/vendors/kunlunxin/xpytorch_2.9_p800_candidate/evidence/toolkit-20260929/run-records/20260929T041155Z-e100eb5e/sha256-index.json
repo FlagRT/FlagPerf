@@ -1,0 +1,2306 @@
+{
+  "files": [
+    {
+      "bytes": 1725,
+      "path": "cleanup.json",
+      "sha256": "9171bbf3cf54ddcd344febaa4bb8a46b9fb09aaedde1f16c13d62502e8bb5ffd"
+    },
+    {
+      "bytes": 11990,
+      "path": "code-identity.json",
+      "sha256": "1215abfe3d436dbcfceed835f8582741e38ef4c2b7e7cef8011e2baf5759f832"
+    },
+    {
+      "bytes": 477,
+      "path": "code-source/configs/kunlunxin_p800_xpytorch29.yaml",
+      "sha256": "c35af43382bbd981aa66b03a48f2dddcf203d363a1f1c341c65111b23380dce2"
+    },
+    {
+      "bytes": 15686,
+      "path": "code-source/executors/common.py",
+      "sha256": "7cca8f4b6a906e181d23265c75c69bbf4fe15189121678cf8d46e4c511b97ee2"
+    },
+    {
+      "bytes": 8044,
+      "path": "code-source/executors/lifecycle.py",
+      "sha256": "47b9b6aeb3c7dd937c5b4eb0cf9e68256570c5bc499ff07ecc1133581d795ea3"
+    },
+    {
+      "bytes": 24194,
+      "path": "code-source/executors/p800_toolkit.py",
+      "sha256": "71197cff8c566cf6bafc274272050504ce96d363bd37e945156602bee25350d7"
+    },
+    {
+      "bytes": 30355,
+      "path": "code-source/executors/toolkit.py",
+      "sha256": "df270e5075d2693d3d47c2fb57aec0092de9fb4e09b672be7251083438a2ee4d"
+    },
+    {
+      "bytes": 97003,
+      "path": "code-source/generate_toolkit_report.py",
+      "sha256": "ae2e24f0ca0179800466d4b87d6c40d845f2a06b55a02a8675a3b44ee176b493"
+    },
+    {
+      "bytes": 163,
+      "path": "code-source/monitoring/__init__.py",
+      "sha256": "f2b1f19fb0bd0acd4f6c42144d248241708d10451af98086f0b80cbffab954c2"
+    },
+    {
+      "bytes": 15939,
+      "path": "code-source/monitoring/ascend_usage.py",
+      "sha256": "b9b77db663a9b22821f18cef0eb70f42b32038fcb9efa8beabc70de46ac0a2fb"
+    },
+    {
+      "bytes": 6179,
+      "path": "code-source/monitoring/kunlunxin_usage.py",
+      "sha256": "29c686fdf649271a3801d4c7390d39160847159e6db0d86c3d74bf1a67930acb"
+    },
+    {
+      "bytes": 5369,
+      "path": "code-source/run.py",
+      "sha256": "b7a5d891f9bd3d042a7ba956a12c8285bdf196b0e9b2e572d0d9ea5436da4a39"
+    },
+    {
+      "bytes": 583,
+      "path": "code-source/toolkits/_common/kunlunxin/P800/bootstrap.sh",
+      "sha256": "c61773d3ad34a25f07220f46c8a86ed008a300af8faead7e2ea47d3a02ea035d"
+    },
+    {
+      "bytes": 9475,
+      "path": "code-source/toolkits/_common/kunlunxin/P800/contract.py",
+      "sha256": "ed643926065d42708ef440dd59dbfd770ad14f9541752509398234874507438a"
+    },
+    {
+      "bytes": 3673,
+      "path": "code-source/toolkits/_common/kunlunxin/P800/evidence.py",
+      "sha256": "9e0ad84db8c93e7d4c50b160764138cb5acc3d4ce2d746e589f67fca5a12790e"
+    },
+    {
+      "bytes": 14627,
+      "path": "code-source/toolkits/_common/kunlunxin/P800/evidence_runner.py",
+      "sha256": "d0454b4eecc297f4fac10f028758a94155c77c243fa94b3231d95b6c135d7e0a"
+    },
+    {
+      "bytes": 17993,
+      "path": "code-source/toolkits/_common/kunlunxin/P800/native_bench.cpp",
+      "sha256": "442f5000cf31b1e5f0dedfb2b8ec61e68529c9a5e3c2ee805956a43a8cf6ef17"
+    },
+    {
+      "bytes": 13540,
+      "path": "code-source/toolkits/_common/kunlunxin/P800/report.py",
+      "sha256": "86f3dfc9d1300d534bb9757e39885664b82cd4c00df9675466eba9f383837d1b"
+    },
+    {
+      "bytes": 2225,
+      "path": "code-source/toolkits/_common/kunlunxin/P800/toolkit-contract.json",
+      "sha256": "5c0aa065580e2b4d4f541285d833d945b4fa8c37e32eaae54c4ae18ef6541b80"
+    },
+    {
+      "bytes": 234,
+      "path": "code-source/toolkits/computation-BF16/kunlunxin/P800/main.sh",
+      "sha256": "f805a98a9ad5a5f3d2638dc89ffeef3b6640c739c83231f1430996db9326bb14"
+    },
+    {
+      "bytes": 234,
+      "path": "code-source/toolkits/computation-FP16/kunlunxin/P800/main.sh",
+      "sha256": "e558d268affd613f91e34f8b30de9170a15d17aca8404d1167cf79973cd85ea9"
+    },
+    {
+      "bytes": 234,
+      "path": "code-source/toolkits/computation-FP32/kunlunxin/P800/main.sh",
+      "sha256": "b3679be253eb832468f2ab06907741bb323a16f4ca52c5acfe780e13d80aa37b"
+    },
+    {
+      "bytes": 234,
+      "path": "code-source/toolkits/computation-INT8/kunlunxin/P800/main.sh",
+      "sha256": "df4a1ab785d838229cd2a36da47a48602dda405bec4f310bd8556caad9d1a0e8"
+    },
+    {
+      "bytes": 234,
+      "path": "code-source/toolkits/interconnect-d2h/kunlunxin/P800/main.sh",
+      "sha256": "e72faf3d6dfe868b0efe0e4ea67eb1bdb569dfaac22bd348305c977bb73f1555"
+    },
+    {
+      "bytes": 242,
+      "path": "code-source/toolkits/interconnect-d2h-latency/kunlunxin/P800/main.sh",
+      "sha256": "bcc28eaa86e3e128d73660d06fae726002141e1ecff5a38b3569be4519aace91"
+    },
+    {
+      "bytes": 234,
+      "path": "code-source/toolkits/interconnect-h2d/kunlunxin/P800/main.sh",
+      "sha256": "05c022697af01b09ef88e27d2dcfbb98244df100276f54222877c39f5fdc2fb8"
+    },
+    {
+      "bytes": 242,
+      "path": "code-source/toolkits/interconnect-h2d-latency/kunlunxin/P800/main.sh",
+      "sha256": "639725edea0ee81ae0fa53653133b10ebfd7141794b220996d70516e5923ae37"
+    },
+    {
+      "bytes": 239,
+      "path": "code-source/toolkits/main_memory-bandwidth/kunlunxin/P800/main.sh",
+      "sha256": "cf29199854f48445861e3844e1195bbeff1e9af48f9daf2463812e91ff347372"
+    },
+    {
+      "bytes": 238,
+      "path": "code-source/toolkits/main_memory-capacity/kunlunxin/P800/main.sh",
+      "sha256": "15b1df8bd530668b906c47599564bce4eaabbfd908a5015836cb3f7e899706b7"
+    },
+    {
+      "bytes": 30426,
+      "path": "code-source/vendors/kunlunxin/computation_probe.py",
+      "sha256": "99d42c226b96190c849d0f72cf1ee890346c27b4951a5553927f7d97d3aecc75"
+    },
+    {
+      "bytes": 10497,
+      "path": "code-source/vendors/kunlunxin/container_probe.py",
+      "sha256": "bcae728d532956ab1070841be4b505bea36427a13e055ab5ac91ad1dea5911af"
+    },
+    {
+      "bytes": 1468,
+      "path": "code-source/vendors/kunlunxin/kunlunxin_analysis.py",
+      "sha256": "17a62e9f41582d4245bb7cd8b1314c2421b96a8aeee717063025aaf0b898b444"
+    },
+    {
+      "bytes": 8263,
+      "path": "code-source/vendors/kunlunxin/kunlunxin_monitor.py",
+      "sha256": "9f324639ce1a62c1928bbb2e1367611f1a85d35c77d331383791142d31d4a1f3"
+    },
+    {
+      "bytes": 9878,
+      "path": "code-source/vendors/kunlunxin/preflight.py",
+      "sha256": "89cb9d64407f0901f57913b53bf61986f1d69abdeabb6a3addc9f83bdbcf51ff"
+    },
+    {
+      "bytes": 10943,
+      "path": "code-source/vendors/kunlunxin/provider.py",
+      "sha256": "7f61cae39d7450020c13c5763f52a10e4777b260ef13584498d534814f9ce923"
+    },
+    {
+      "bytes": 891,
+      "path": "code-source/vendors/kunlunxin/pytorch_2.0/pytorch_2.0_install.sh",
+      "sha256": "5bbe49c04faae4211f6362a5c01fd7f1e88777efe7e946e7e825624a5a01a198"
+    },
+    {
+      "bytes": 480,
+      "path": "code-source/vendors/kunlunxin/reuse.py",
+      "sha256": "bc29a1145a520e8e121baeb378519ad5ebea5ef63ed6e94b9d6f7247ce57d668"
+    },
+    {
+      "bytes": 700,
+      "path": "code-source/vendors/kunlunxin/runtime_bootstrap.sh",
+      "sha256": "94d88bbbfb9fddc9c2d541300fc651c7484e8bc49a8d99623262d8184f68424e"
+    },
+    {
+      "bytes": 1081,
+      "path": "code-source/vendors/kunlunxin/xpytorch029/xpytorch029_install.sh",
+      "sha256": "e212e66754cb99ff05dad919bb1cc0a535b9d0dbf0923f25de6f869839b8f955"
+    },
+    {
+      "bytes": 905,
+      "path": "code-source/vendors/kunlunxin/xpytorch_2.9_p800_candidate/container_bootstrap.sh",
+      "sha256": "18a42f123af9ba2e2621a456a38efd7f480372823fa38da4c4b2970ec079fef8"
+    },
+    {
+      "bytes": 3892,
+      "path": "code-source/vendors/kunlunxin/xpytorch_2.9_p800_candidate/device_mapping.py",
+      "sha256": "1061af0143d62ff0e087df73d746a6ce48f03187edfa97c41c24e815cd1ba26e"
+    },
+    {
+      "bytes": 16381,
+      "path": "code-source/vendors/kunlunxin/xpytorch_2.9_p800_candidate/hardware_probe.py",
+      "sha256": "4c50a3062675951d6930c50e2b08a52b873b3f992fbdcc1563f48adb2dce9987"
+    },
+    {
+      "bytes": 679,
+      "path": "code-source/vendors/kunlunxin/xpytorch_2.9_p800_candidate/image-manifest.json",
+      "sha256": "ab59dc1cd14b65a28ffaef7b1b21b1d0b51f5334619301659d4123a5c681acbf"
+    },
+    {
+      "bytes": 12831,
+      "path": "code-source/vendors/kunlunxin/xpytorch_2.9_p800_candidate/launch_qualification.py",
+      "sha256": "40f2d8a791b7aa0702a03946ca77b417b20a0dd8df9736ebfc4d886e8555091d"
+    },
+    {
+      "bytes": 39603,
+      "path": "code-source/vendors/kunlunxin/xpytorch_2.9_p800_candidate/qualification-record.json",
+      "sha256": "8f19d7a8489765988d60faeb985b5a8fede445addc319bbd314c5f528dd1ec12"
+    },
+    {
+      "bytes": 1931,
+      "path": "code-source/vendors/kunlunxin/xpytorch_2.9_p800_candidate/stack.lock.yaml",
+      "sha256": "8f200d0b955b7e60881bc13ed75c8784c2c38fe2c755d018c618f1dc7b46cded"
+    },
+    {
+      "bytes": 4115,
+      "path": "code-source/vendors/kunlunxin/xpytorch_2.9_p800_candidate/test_device_mapping.py",
+      "sha256": "162e6c1b7571ef954187abde0f65db201dd8f71665579a836411622f3c80ad50"
+    },
+    {
+      "bytes": 7069,
+      "path": "code-source/vendors/kunlunxin/xpytorch_2.9_p800_candidate/test_qualification.py",
+      "sha256": "ae75a0f0ab7b17b0f650bf0703a0e64656836cbd0876afd8a624dfab838fadb1"
+    },
+    {
+      "bytes": 10085,
+      "path": "code-source/vendors/kunlunxin/xpytorch_2.9_p800_candidate/verify_runtime.py",
+      "sha256": "383349410441a43fca82d5c692d9d0f9d5cc17748103756ac7f0d64ed56ff055"
+    },
+    {
+      "bytes": 666,
+      "path": "code-source/vendors/registry.py",
+      "sha256": "c30dd139499212fd9508d133311a045a37b0f6071da636736822f5f889c05ff5"
+    },
+    {
+      "bytes": 1596,
+      "path": "container-create.json",
+      "sha256": "13740361beef93304e84e570136013b14a5bd09d866b82524138de0d4abe78cf"
+    },
+    {
+      "bytes": 7012,
+      "path": "container-inspect.json",
+      "sha256": "4396f73ee3309c4cbfe6f66341115bfb0cab8af0d92fa67f3ce00dec61b90932"
+    },
+    {
+      "bytes": 3738,
+      "path": "container-logs.json",
+      "sha256": "7a4b8b129bc5c512549540b9f73f44c3a527c58df1e1809171fc7be4c5b170f5"
+    },
+    {
+      "bytes": 2025,
+      "path": "container-plan.json",
+      "sha256": "52ecdc364dc8dd143a0396c929b26fb238c02696e555d24fc3bb1605d94390c7"
+    },
+    {
+      "bytes": 417,
+      "path": "container-start.json",
+      "sha256": "9ec49fefcccb1adcefc33953a53115ad39fcb06433e75e092180df46d475709f"
+    },
+    {
+      "bytes": 3138,
+      "path": "control/host-context.json",
+      "sha256": "9ef624b3ccd75050903af710cdb709cc8ab6fce64ef494297752e1708ec8e41a"
+    },
+    {
+      "bytes": 281,
+      "path": "host-postflight/handles-3.json",
+      "sha256": "b702c0638fc9d82e7efb07b70b27a05a28807a9fd993923673c1e7510804adb4"
+    },
+    {
+      "bytes": 1487,
+      "path": "host-postflight/machine.json",
+      "sha256": "94ecbc17fb42ef21118dd3919d743b78abac1700743aa0ac7a932844af150c72"
+    },
+    {
+      "bytes": 3837,
+      "path": "host-postflight/query-3.json",
+      "sha256": "4d0ac34a198fdf2cff026e540caa5ee206386586b6f6c17e6d3ce21d4b6ce71e"
+    },
+    {
+      "bytes": 958,
+      "path": "host-postflight/summary.json",
+      "sha256": "d272d7ae2c44f681d9d4e051986333677b03daaf64171ce8a459d6d0cc91e461"
+    },
+    {
+      "bytes": 282,
+      "path": "host-preflight/VM-0-2-ubuntu/handles-3.json",
+      "sha256": "4c6b75db70debbd18a1461246c3bdcff9f2d50f7ed34e9a595a877ea8cfd5733"
+    },
+    {
+      "bytes": 1488,
+      "path": "host-preflight/VM-0-2-ubuntu/machine.json",
+      "sha256": "bd9b5cdfb043bd25042bf10b4932eb36a928228004439c7583c0795058534c82"
+    },
+    {
+      "bytes": 3837,
+      "path": "host-preflight/VM-0-2-ubuntu/query-3.json",
+      "sha256": "f9d35aabe84d3dcdda15fbf30c0f90a2009b8a8bbb17345440fb1c53c73c8763"
+    },
+    {
+      "bytes": 958,
+      "path": "host-preflight/VM-0-2-ubuntu/summary.json",
+      "sha256": "82526034ad8321d3b3bb9b4a7c7c52f89ec952ab0cb8e9187e20592cbc8821a1"
+    },
+    {
+      "bytes": 318,
+      "path": "image-identity.json",
+      "sha256": "3f9c9f70378fa62b32fd4c66bbe50b3121f11812d8edbfcc425d33e36d59f08a"
+    },
+    {
+      "bytes": 4824,
+      "path": "image-inspect.json",
+      "sha256": "7ed0c2335b19c74fe9560cacb86501d5de38d5f630c95947f3f18dabc8807195"
+    },
+    {
+      "bytes": 376,
+      "path": "lease.json",
+      "sha256": "101f34af3733a2578e9e9ba35d5c1b3b1b9ae431360ca6fbc60cfa323d857aa3"
+    },
+    {
+      "bytes": 320,
+      "path": "locked-preflight/handles-3.json",
+      "sha256": "013f74b8123833f59867ec68e2f4bb43f83ab9891ae5f1ffc6c3c167f3f9b0cb"
+    },
+    {
+      "bytes": 1488,
+      "path": "locked-preflight/machine.json",
+      "sha256": "c0297cd72144c76fcb4b20f3ddb7d1c975568e94d6ae99459649a5a11eb1c1ef"
+    },
+    {
+      "bytes": 3837,
+      "path": "locked-preflight/query-3.json",
+      "sha256": "09c2c613d2efaf4efef4248a280d6c42e9f0ab54f29a666c48f0fb6e4eaea46e"
+    },
+    {
+      "bytes": 958,
+      "path": "locked-preflight/summary.json",
+      "sha256": "5867622d32c1365c3fbd462c91d76f694e17f7f2cb520c80308f01f4e639afb5"
+    },
+    {
+      "bytes": 512,
+      "path": "report-assets/computation-BF16-TFLOPS.svg",
+      "sha256": "ad2047a85d14068e784bedfa00d04f76f15043b109c2190489011caca7362ba2"
+    },
+    {
+      "bytes": 512,
+      "path": "report-assets/computation-FP16-TFLOPS.svg",
+      "sha256": "f6d0a922e64171c6d6a1737aaf0367919e1eb09caab6fbcd8c4f236453b93771"
+    },
+    {
+      "bytes": 512,
+      "path": "report-assets/computation-FP32-TFLOPS.svg",
+      "sha256": "ebe1d04859db96c62e99c16777f595bcb14892b7130ad88b4d47455f81ca7e18"
+    },
+    {
+      "bytes": 510,
+      "path": "report-assets/computation-INT8-TOPS.svg",
+      "sha256": "4d32827d3e6991e321bc3908f8a3006ebdb54631a728f3916df210fa35ad24f5"
+    },
+    {
+      "bytes": 1087,
+      "path": "report-assets/interconnect-d2h-GB-s.svg",
+      "sha256": "2da136885f6c0dfe70eee5fae0adcfd53bbcc8dcc96a6e78a710151c4c65190d"
+    },
+    {
+      "bytes": 3166,
+      "path": "report-assets/interconnect-d2h-latency-ns.svg",
+      "sha256": "3c59deb6fbc6695e3fbf3ebb3d0c4c3dbf4dd53533470ce0e1fd748ae0b86df9"
+    },
+    {
+      "bytes": 1086,
+      "path": "report-assets/interconnect-h2d-GB-s.svg",
+      "sha256": "9687eb630b47b3c826f039aa2ea6727763f01a4765073d7d283cc66926ddba38"
+    },
+    {
+      "bytes": 3163,
+      "path": "report-assets/interconnect-h2d-latency-ns.svg",
+      "sha256": "6451d8f68c4e630cb71e33d785049267413f973960d1b2ed7adf2e56805ec9b1"
+    },
+    {
+      "bytes": 529,
+      "path": "report-assets/main_memory-bandwidth-GB-s.svg",
+      "sha256": "13dcf847215252fda674b92d93eed7237acd5a8c144acff9968fbc73a88d210d"
+    },
+    {
+      "bytes": 4034,
+      "path": "report-assets/main_memory-bandwidth-physical-3-536870912B-repeat-1-samples.svg",
+      "sha256": "fa07df1160e489ad29304e22edfd165e5a5d6701faf146106918adf948346468"
+    },
+    {
+      "bytes": 857,
+      "path": "report-assets/main_memory-capacity-MiB.svg",
+      "sha256": "ba9265b96e886feb713df5a999931777ff0b4c40e474e75ee39ca1866c23ecb6"
+    },
+    {
+      "bytes": 6073,
+      "path": "report-assets/monitor-card-3-power_w-00000.svg",
+      "sha256": "01542e76b625fa0a5ce185208272f66e16922b2bef9e7c93abdb4bcc834b5875"
+    },
+    {
+      "bytes": 6050,
+      "path": "report-assets/monitor-card-3-power_w-00024.svg",
+      "sha256": "817136883367e7ec5c1d944350707ee8e823d0410172cd8fd7be713345dc8955"
+    },
+    {
+      "bytes": 6129,
+      "path": "report-assets/monitor-card-3-power_w-00048.svg",
+      "sha256": "0cbaf213252ec6aa1c0f78147d358c0571689429ac3c1b571dfd02f11d236108"
+    },
+    {
+      "bytes": 6098,
+      "path": "report-assets/monitor-card-3-power_w-00072.svg",
+      "sha256": "9911297e20bd915dd85dc3c275ca266f4d2d65b64253f0d01e89b83c775b3977"
+    },
+    {
+      "bytes": 6066,
+      "path": "report-assets/monitor-card-3-power_w-00096.svg",
+      "sha256": "f3a24088363f44c15be99b112d01c73bb8bad4af2b9c2fc3457d4ccc6f36d0e9"
+    },
+    {
+      "bytes": 6076,
+      "path": "report-assets/monitor-card-3-power_w-00120.svg",
+      "sha256": "2cff370db2b08c2863932bfe5547e71129f2d805531c11926d9a82e4b3666330"
+    },
+    {
+      "bytes": 6108,
+      "path": "report-assets/monitor-card-3-power_w-00144.svg",
+      "sha256": "4a16346942e55f730910d420ebd2901037ecf13a839ea1eee593f01fa141bdea"
+    },
+    {
+      "bytes": 6063,
+      "path": "report-assets/monitor-card-3-power_w-00168.svg",
+      "sha256": "82cfd2ebd726147b3d7e901eb56c119767ada00d41b50ed1bf253b70ef029daa"
+    },
+    {
+      "bytes": 6082,
+      "path": "report-assets/monitor-card-3-power_w-00192.svg",
+      "sha256": "070eace8f8bb7a28b1731129f6c3a6fe48c55d299dd6d9598e0e4b15873f5b49"
+    },
+    {
+      "bytes": 6070,
+      "path": "report-assets/monitor-card-3-power_w-00216.svg",
+      "sha256": "44e8e53324da7e15e8c61659178928944abb1f30b904509ef1f348c21bf30058"
+    },
+    {
+      "bytes": 6072,
+      "path": "report-assets/monitor-card-3-power_w-00240.svg",
+      "sha256": "1b29b4b6d8d26f37633f1e636bbd8f505c08e6338c12f31e2d01dd22841f4af3"
+    },
+    {
+      "bytes": 6102,
+      "path": "report-assets/monitor-card-3-power_w-00264.svg",
+      "sha256": "d53a64c738aa8e90ff31d680fff03cbfab64519f42750544e458bfa566927add"
+    },
+    {
+      "bytes": 6101,
+      "path": "report-assets/monitor-card-3-power_w-00288.svg",
+      "sha256": "c858726b5a2b3542229bebdea57710c0eb271132ba4044ae9aea1a424b0ebb49"
+    },
+    {
+      "bytes": 6069,
+      "path": "report-assets/monitor-card-3-power_w-00312.svg",
+      "sha256": "3cc952a560cdd41ec98b4ba43b2f6792f60273c4f524b85d2fd222021c3441a8"
+    },
+    {
+      "bytes": 6049,
+      "path": "report-assets/monitor-card-3-power_w-00336.svg",
+      "sha256": "8fb01e3c6da2049e8d3632f0c9229f03a3ac8d2f7ac7f33175a788f98a6314b4"
+    },
+    {
+      "bytes": 6097,
+      "path": "report-assets/monitor-card-3-power_w-00360.svg",
+      "sha256": "1ae139652eeaebbbe99d686228500ce24e2066fbcddab2905583e8c7ca637891"
+    },
+    {
+      "bytes": 6049,
+      "path": "report-assets/monitor-card-3-power_w-00384.svg",
+      "sha256": "3c3ce61ca2b335ac46880ca3a3eef85851a26f5a01b3bea621c589f899ec1441"
+    },
+    {
+      "bytes": 6065,
+      "path": "report-assets/monitor-card-3-power_w-00408.svg",
+      "sha256": "534467f0223335f961a0a9cbf738e9642918df5b7c5415a539fdbcf0bc2b514a"
+    },
+    {
+      "bytes": 6092,
+      "path": "report-assets/monitor-card-3-power_w-00432.svg",
+      "sha256": "d7267c0de24f29c8e03f0807c100631650e07976dd602ae044367ad021695b09"
+    },
+    {
+      "bytes": 6061,
+      "path": "report-assets/monitor-card-3-power_w-00456.svg",
+      "sha256": "03351dbaab3e846e3a013ce792cfa48b3379dbf25d3cebb36ee01f772f416bc8"
+    },
+    {
+      "bytes": 6059,
+      "path": "report-assets/monitor-card-3-power_w-00480.svg",
+      "sha256": "834ad5612591b729b36ba629a307d5bf99400036564917e62615df1ee2fd210b"
+    },
+    {
+      "bytes": 6081,
+      "path": "report-assets/monitor-card-3-power_w-00504.svg",
+      "sha256": "b521b88dbfc048b775e3b1508fade0b47c4866fa8bc7653edb533fdadd569c96"
+    },
+    {
+      "bytes": 6090,
+      "path": "report-assets/monitor-card-3-power_w-00528.svg",
+      "sha256": "5738c0a741519adbf5fe922d07fc559fa9ed38dc69d954072f2f6386b8aa0601"
+    },
+    {
+      "bytes": 6056,
+      "path": "report-assets/monitor-card-3-power_w-00552.svg",
+      "sha256": "01849fc4b28c6388808c94d0cf30d14551a8d1045638417d17a85ff7a16a045d"
+    },
+    {
+      "bytes": 6060,
+      "path": "report-assets/monitor-card-3-power_w-00576.svg",
+      "sha256": "828877c06f4bf27b81b9652616806c326a42f538a8c55dd3fda67476cdddc97c"
+    },
+    {
+      "bytes": 5569,
+      "path": "report-assets/monitor-card-3-power_w-00600.svg",
+      "sha256": "565b1a8b324f68bcb8dd542b0dd3be525cd8e17821fe2ff87da7cc96d72265be"
+    },
+    {
+      "bytes": 6028,
+      "path": "report-assets/monitor-card-3-temperature_c-00000.svg",
+      "sha256": "b06d35ad7eea56c351d4697341484b9d4b3a8d9809307d42b3185f737aafbe6b"
+    },
+    {
+      "bytes": 6029,
+      "path": "report-assets/monitor-card-3-temperature_c-00024.svg",
+      "sha256": "6dffd0c61818b06398386c3ccbe8cfe82994993491f8d6a1739308ec9d556b84"
+    },
+    {
+      "bytes": 6029,
+      "path": "report-assets/monitor-card-3-temperature_c-00048.svg",
+      "sha256": "19089411e9d84cd6fd3724d2c16f66702b3e18d61897e9ba19130e7d52bcf692"
+    },
+    {
+      "bytes": 6029,
+      "path": "report-assets/monitor-card-3-temperature_c-00072.svg",
+      "sha256": "56ae0512efd68530d9615f4464aba16678746982083281b605343a8174019a7d"
+    },
+    {
+      "bytes": 6030,
+      "path": "report-assets/monitor-card-3-temperature_c-00096.svg",
+      "sha256": "c6390e49c86296f6a7dff09c6e6e773922ac24efcaa0222e729b8de862d390d1"
+    },
+    {
+      "bytes": 6031,
+      "path": "report-assets/monitor-card-3-temperature_c-00120.svg",
+      "sha256": "4b312fdebbb8d3f5107041c7ef91bd086442808b59a4629fd839a57c2721343c"
+    },
+    {
+      "bytes": 6031,
+      "path": "report-assets/monitor-card-3-temperature_c-00144.svg",
+      "sha256": "e614549f8002ed7ea4483aa04b97fc395061041eeb71e9011402543ebe01a268"
+    },
+    {
+      "bytes": 6031,
+      "path": "report-assets/monitor-card-3-temperature_c-00168.svg",
+      "sha256": "7d707ba57ef832abc6bb1eef31785e3b1d78cd2a8bc44c23fa8478a3d7fd7e85"
+    },
+    {
+      "bytes": 6031,
+      "path": "report-assets/monitor-card-3-temperature_c-00192.svg",
+      "sha256": "968167633a29b33acb1a82b479585029f13fe95b0c0f9a3e47939f7b4138c6e7"
+    },
+    {
+      "bytes": 6031,
+      "path": "report-assets/monitor-card-3-temperature_c-00216.svg",
+      "sha256": "898d27d3768680cd65d173115ac484a5e562df46bedfc462ca5e6b121301e2fb"
+    },
+    {
+      "bytes": 6031,
+      "path": "report-assets/monitor-card-3-temperature_c-00240.svg",
+      "sha256": "5125412930d351f6670a7fd2712059fa7b490a236f649a1ad381c642c85059da"
+    },
+    {
+      "bytes": 6031,
+      "path": "report-assets/monitor-card-3-temperature_c-00264.svg",
+      "sha256": "47f26c3710f4b3d3becd007c96dd19a7903e475e24494199e3c16f19cc782298"
+    },
+    {
+      "bytes": 6031,
+      "path": "report-assets/monitor-card-3-temperature_c-00288.svg",
+      "sha256": "20cc41c0289a71b60ce2dd834c453a2e4332b2a28b8e4c5d715eb59a470e3796"
+    },
+    {
+      "bytes": 6031,
+      "path": "report-assets/monitor-card-3-temperature_c-00312.svg",
+      "sha256": "1b9581ac01e21ee4088e543611bcf52f9a30e92b35b6a843bb5da0b411cf3641"
+    },
+    {
+      "bytes": 6031,
+      "path": "report-assets/monitor-card-3-temperature_c-00336.svg",
+      "sha256": "71bfb89362e78e4fd9140e6405143452f2328c73d281f83c3860dd063922ea05"
+    },
+    {
+      "bytes": 6031,
+      "path": "report-assets/monitor-card-3-temperature_c-00360.svg",
+      "sha256": "59070ef258dc2cbcac918decb07955f1817fca90a017a4b05740f402174ed27a"
+    },
+    {
+      "bytes": 6031,
+      "path": "report-assets/monitor-card-3-temperature_c-00384.svg",
+      "sha256": "8d1ed2ec292ad928599cd113a0a2ca6a0c21d2fd04e1acaddbcb82b8d835eef5"
+    },
+    {
+      "bytes": 6031,
+      "path": "report-assets/monitor-card-3-temperature_c-00408.svg",
+      "sha256": "a1312045c8d82237020f4d24a4070b92497369710c4865ae84b81b8d5a07638a"
+    },
+    {
+      "bytes": 6031,
+      "path": "report-assets/monitor-card-3-temperature_c-00432.svg",
+      "sha256": "2a300c4475ef8aa486b3bdce8a653711a4584f9a0fc972b9c0584be74c1572c0"
+    },
+    {
+      "bytes": 6031,
+      "path": "report-assets/monitor-card-3-temperature_c-00456.svg",
+      "sha256": "76e92d9eaeb344d62c3f40f3210343fc111318ea5d1be5ed4547a20efa4bffa6"
+    },
+    {
+      "bytes": 6031,
+      "path": "report-assets/monitor-card-3-temperature_c-00480.svg",
+      "sha256": "78bc466c7053d6b6a3e5a3a5c174d4b7df0787e6c5316c9586c432bfedb86054"
+    },
+    {
+      "bytes": 6031,
+      "path": "report-assets/monitor-card-3-temperature_c-00504.svg",
+      "sha256": "b78a9637e7c777a787e3af5f61b8337dc6e2175620b0f63575f90eae0774e84b"
+    },
+    {
+      "bytes": 6031,
+      "path": "report-assets/monitor-card-3-temperature_c-00528.svg",
+      "sha256": "0e828ce9c5b4f0c4c2d65110fb57e9df49fdee340300dd698c90e02caf6a3d73"
+    },
+    {
+      "bytes": 6031,
+      "path": "report-assets/monitor-card-3-temperature_c-00552.svg",
+      "sha256": "0cfe318d891f4ad814b58621e26b166fac17fba0680107b2894bc1f9de734fd5"
+    },
+    {
+      "bytes": 6031,
+      "path": "report-assets/monitor-card-3-temperature_c-00576.svg",
+      "sha256": "0de45708483c4e361cd57260cdd1ba27cc763ad5bbb8c5221aeb8f439b115a5d"
+    },
+    {
+      "bytes": 5551,
+      "path": "report-assets/monitor-card-3-temperature_c-00600.svg",
+      "sha256": "555524d8f0591b51bd110d2343ae5be6e6d25362b3dc5d60a8b77226a5072d9e"
+    },
+    {
+      "bytes": 6104,
+      "path": "report-assets/monitor-card-3-used_memory_mib-00000.svg",
+      "sha256": "3a53d86eebe87e1e06f0faca4b93714ab39d1f8353cd2bd616eff8e79eb4337d"
+    },
+    {
+      "bytes": 6105,
+      "path": "report-assets/monitor-card-3-used_memory_mib-00024.svg",
+      "sha256": "61b8cda154d21fd905a59191a2626f50b02289e68dea95bd6ea7c7fe2c1bdaae"
+    },
+    {
+      "bytes": 6105,
+      "path": "report-assets/monitor-card-3-used_memory_mib-00048.svg",
+      "sha256": "58633f334ac109584953580c388b4ace11ec2d3361c6fcee3aa60797e33bc191"
+    },
+    {
+      "bytes": 6105,
+      "path": "report-assets/monitor-card-3-used_memory_mib-00072.svg",
+      "sha256": "a6a891a2aeaa894837ba51cf44bd5ba3216b3cdffd8b345699e34ab5aeb188bf"
+    },
+    {
+      "bytes": 6106,
+      "path": "report-assets/monitor-card-3-used_memory_mib-00096.svg",
+      "sha256": "db74f800267564df0493be9406bcbd38345b4b933e941a7236b25008c86d805c"
+    },
+    {
+      "bytes": 6107,
+      "path": "report-assets/monitor-card-3-used_memory_mib-00120.svg",
+      "sha256": "4fde70c41144e94f6ac567e0edb7d903c3c265b137574096e5d01f840ad56760"
+    },
+    {
+      "bytes": 6107,
+      "path": "report-assets/monitor-card-3-used_memory_mib-00144.svg",
+      "sha256": "3bc792856f6635939504d761a5b329d04991d8ad9ce0fe3df2f1baed46292156"
+    },
+    {
+      "bytes": 6107,
+      "path": "report-assets/monitor-card-3-used_memory_mib-00168.svg",
+      "sha256": "e9a27c1e0c932b25367967c17b643d5f93273ee56100b751f908a3002b8394f4"
+    },
+    {
+      "bytes": 6107,
+      "path": "report-assets/monitor-card-3-used_memory_mib-00192.svg",
+      "sha256": "29fc9544ec627415b375a4591eb90d4d5a04a58b2d9518bc6dd9b4ac619ab45b"
+    },
+    {
+      "bytes": 6107,
+      "path": "report-assets/monitor-card-3-used_memory_mib-00216.svg",
+      "sha256": "578bbaf34a517bede9db2ae0bd095ce2ef7f9898c8f756066e306335a87a2358"
+    },
+    {
+      "bytes": 6107,
+      "path": "report-assets/monitor-card-3-used_memory_mib-00240.svg",
+      "sha256": "6ee2648fa3bc01ba0d78f8af17e469b6c6efa6b52a1d64578ed85f0ba8b11f25"
+    },
+    {
+      "bytes": 6107,
+      "path": "report-assets/monitor-card-3-used_memory_mib-00264.svg",
+      "sha256": "d3183a7990e250b06ce7e8993b3d948eaeb85f8f6dc2b18db20a501e8cfadcfa"
+    },
+    {
+      "bytes": 6107,
+      "path": "report-assets/monitor-card-3-used_memory_mib-00288.svg",
+      "sha256": "4e6262a7545d481a36b2b7d1fc7149d8ec43fba5e1da8f0a0443bd3e8eeada42"
+    },
+    {
+      "bytes": 6107,
+      "path": "report-assets/monitor-card-3-used_memory_mib-00312.svg",
+      "sha256": "1529e5deda05fb0b7a436ed250a7aecbb1fef96af932c6f314233ae8b8dc244b"
+    },
+    {
+      "bytes": 6107,
+      "path": "report-assets/monitor-card-3-used_memory_mib-00336.svg",
+      "sha256": "cc5d7017e7ad7aff8d92ba2cba2f5da3f568d922428adbf57c2b4f45ec2adbe6"
+    },
+    {
+      "bytes": 6107,
+      "path": "report-assets/monitor-card-3-used_memory_mib-00360.svg",
+      "sha256": "a4057cfa6d7d82120a63698ad4d20a79dbee6f3a78e134f73298d0d1730c5e4b"
+    },
+    {
+      "bytes": 6107,
+      "path": "report-assets/monitor-card-3-used_memory_mib-00384.svg",
+      "sha256": "d8a1d31de11bd6dc7eac3e2a7c8d788bd83cfcfbec4560207bb9eaafb5f12d28"
+    },
+    {
+      "bytes": 6107,
+      "path": "report-assets/monitor-card-3-used_memory_mib-00408.svg",
+      "sha256": "ac0a955981c09266bb99944bdbe5e526f53103847b29963bae63defc1c92e000"
+    },
+    {
+      "bytes": 6107,
+      "path": "report-assets/monitor-card-3-used_memory_mib-00432.svg",
+      "sha256": "0c395da5c43378b043a5cb7671f0893344079c9fcdf6fe889b845c3325b716ec"
+    },
+    {
+      "bytes": 6107,
+      "path": "report-assets/monitor-card-3-used_memory_mib-00456.svg",
+      "sha256": "c89febb04585749d6126e150128c91980f51c3abf99ada9a5f750107cd516dd6"
+    },
+    {
+      "bytes": 6107,
+      "path": "report-assets/monitor-card-3-used_memory_mib-00480.svg",
+      "sha256": "ed725f417a616d5a070754a045c29d6eabdde032d6675f7a5e9abed0c681fd93"
+    },
+    {
+      "bytes": 6107,
+      "path": "report-assets/monitor-card-3-used_memory_mib-00504.svg",
+      "sha256": "8850c0be05f2e0c69183edc57e9ad7552d9041f63e13b4c27a7657315b466989"
+    },
+    {
+      "bytes": 6107,
+      "path": "report-assets/monitor-card-3-used_memory_mib-00528.svg",
+      "sha256": "54ec198b1e64db5ec59754f21c7c791f336e1006894877e7baad1a6427263ebe"
+    },
+    {
+      "bytes": 6107,
+      "path": "report-assets/monitor-card-3-used_memory_mib-00552.svg",
+      "sha256": "8d2abd82bf05fbb52f8db51218d74914c72a7c7e9b8cf50c5eee20f26b70a99d"
+    },
+    {
+      "bytes": 6107,
+      "path": "report-assets/monitor-card-3-used_memory_mib-00576.svg",
+      "sha256": "35fe19971069547a701e9412f53e75e648e25eb26dd399f8cacf23085d89737a"
+    },
+    {
+      "bytes": 5621,
+      "path": "report-assets/monitor-card-3-used_memory_mib-00600.svg",
+      "sha256": "95a143d42ec173158e24341ee96fe7b1736867a953c52d1ec03a86f09141663e"
+    },
+    {
+      "bytes": 6062,
+      "path": "report-assets/monitor-card-3-utilization_percent-00000.svg",
+      "sha256": "8051e7ad3e59f27457f7c0a37e35dce3c8d0e73716c5e3436197ee3461d93ebb"
+    },
+    {
+      "bytes": 6046,
+      "path": "report-assets/monitor-card-3-utilization_percent-00024.svg",
+      "sha256": "f135354bdeb7b4aee31413476b1a32b0386efdaeb54c8bb75ded95b50b3a94b5"
+    },
+    {
+      "bytes": 6046,
+      "path": "report-assets/monitor-card-3-utilization_percent-00048.svg",
+      "sha256": "298eca02649b04ba2d09b0d8cae8f4784c68acda3aa2e9bba46e634e2197ae98"
+    },
+    {
+      "bytes": 6066,
+      "path": "report-assets/monitor-card-3-utilization_percent-00072.svg",
+      "sha256": "8cf9bf9da32055edef8f9bd257cb16afbe286be09b3d84a83ba5b064f38bc1e0"
+    },
+    {
+      "bytes": 6058,
+      "path": "report-assets/monitor-card-3-utilization_percent-00096.svg",
+      "sha256": "836765b6fc6ff4642d3a89724238809cf4449d6c44530a6d6cdcdc16bcaa81e7"
+    },
+    {
+      "bytes": 6047,
+      "path": "report-assets/monitor-card-3-utilization_percent-00120.svg",
+      "sha256": "acf214b1aac1603292c13c5f97a0b0f6737c12a977c0ebd4ec06e2fd89c448c1"
+    },
+    {
+      "bytes": 6058,
+      "path": "report-assets/monitor-card-3-utilization_percent-00144.svg",
+      "sha256": "1bc784a3e8813b0bd340c5606055edb16bc41e49c17e4b3a6b3d09dc06b0b468"
+    },
+    {
+      "bytes": 6057,
+      "path": "report-assets/monitor-card-3-utilization_percent-00168.svg",
+      "sha256": "35fda9f87251ada235aa192a17474d488542352772becefac1bbcdcbbc0b4eaf"
+    },
+    {
+      "bytes": 6063,
+      "path": "report-assets/monitor-card-3-utilization_percent-00192.svg",
+      "sha256": "ac96129ce7f6d717cce83d88614eff685e70ca35133e1ec497130038d5eb850f"
+    },
+    {
+      "bytes": 6052,
+      "path": "report-assets/monitor-card-3-utilization_percent-00216.svg",
+      "sha256": "0c5cbb8b7dcb37b8301c9f9d84f878273e17b4767befa3f78f96c6ccb6201ffe"
+    },
+    {
+      "bytes": 6065,
+      "path": "report-assets/monitor-card-3-utilization_percent-00240.svg",
+      "sha256": "aecd4fc631b8caaf3cc8cacf0489b4d4fdf53b1bbd0f45a9815796a6a8c9d933"
+    },
+    {
+      "bytes": 6049,
+      "path": "report-assets/monitor-card-3-utilization_percent-00264.svg",
+      "sha256": "71ee2ad6cd65ea15396bf040601eace100c13619c36943bcc7ee496f8bc37297"
+    },
+    {
+      "bytes": 6067,
+      "path": "report-assets/monitor-card-3-utilization_percent-00288.svg",
+      "sha256": "bb42e3163877fd48ee104135461e4f3b4a9e5bc8bebab5e65e83101191f48411"
+    },
+    {
+      "bytes": 6071,
+      "path": "report-assets/monitor-card-3-utilization_percent-00312.svg",
+      "sha256": "9d458bef0fc67eafef661cd1f7d60f782894143f7d92d8f19e0ac13b99276615"
+    },
+    {
+      "bytes": 6050,
+      "path": "report-assets/monitor-card-3-utilization_percent-00336.svg",
+      "sha256": "9da77b756bb4442a6c6fd11c33b2dd55a7eebb7d34a9f6c7827028e40b2ce886"
+    },
+    {
+      "bytes": 6051,
+      "path": "report-assets/monitor-card-3-utilization_percent-00360.svg",
+      "sha256": "93c41b977f530a9f2b988b28301f7cb1731275125829ebb277867a0e07da07ea"
+    },
+    {
+      "bytes": 6055,
+      "path": "report-assets/monitor-card-3-utilization_percent-00384.svg",
+      "sha256": "33b0fe866dd1e7160fec15beeef277dfbdaf95bde8417a6f424f96e3dec81982"
+    },
+    {
+      "bytes": 6054,
+      "path": "report-assets/monitor-card-3-utilization_percent-00408.svg",
+      "sha256": "6501f61dd231cabb851f566743fd32cffeb48e8f994e86d624a37dc341230eb9"
+    },
+    {
+      "bytes": 6057,
+      "path": "report-assets/monitor-card-3-utilization_percent-00432.svg",
+      "sha256": "d74eae50f34f7b625484deb6963f9771da5ed0a2cea7a049978f55a182b2a8aa"
+    },
+    {
+      "bytes": 6056,
+      "path": "report-assets/monitor-card-3-utilization_percent-00456.svg",
+      "sha256": "cb5744b368a05aa12fbd6b6e54573aedcd0199f5b6f281dfdb842975ac6ff19f"
+    },
+    {
+      "bytes": 6062,
+      "path": "report-assets/monitor-card-3-utilization_percent-00480.svg",
+      "sha256": "9d0307f7437c761d45246049e94a450b65accd62b22b7744154703a2a002e0b8"
+    },
+    {
+      "bytes": 6054,
+      "path": "report-assets/monitor-card-3-utilization_percent-00504.svg",
+      "sha256": "b8f892672bee8daf1d935f5dc74c147d20231e1714faeb57b656baef4d5fa3c8"
+    },
+    {
+      "bytes": 6066,
+      "path": "report-assets/monitor-card-3-utilization_percent-00528.svg",
+      "sha256": "e3f1a4b8c592b92881e39a802badcb3767cede16faf9f43d8255eb051bd6bcf8"
+    },
+    {
+      "bytes": 6071,
+      "path": "report-assets/monitor-card-3-utilization_percent-00552.svg",
+      "sha256": "211426297f06d1895bb5cb6fdffe82fbe356633c210b340dfe0314a4536d6836"
+    },
+    {
+      "bytes": 6058,
+      "path": "report-assets/monitor-card-3-utilization_percent-00576.svg",
+      "sha256": "031e9cb0ac6989a840959924d8aa996688d4faa1a3c27602fe7383aa80c9484d"
+    },
+    {
+      "bytes": 5576,
+      "path": "report-assets/monitor-card-3-utilization_percent-00600.svg",
+      "sha256": "d46f64403dab6aceceee644d9bdef7566ffc17806c8b9466cc459721912b8ef7"
+    },
+    {
+      "bytes": 24516,
+      "path": "report.md",
+      "sha256": "ee3e8aba779466109232a3b93acdee9dfdead77c132b3da912f6e06f64e026e8"
+    },
+    {
+      "bytes": 60266,
+      "path": "report_monitor.md",
+      "sha256": "bccda18b4941961776e1ab150e2d9cbaca490c3d33f5c761200eb19d1b1c1c24"
+    },
+    {
+      "bytes": 3210,
+      "path": "resolved-plan.json",
+      "sha256": "00ebf8ce24ab8bfaa89b9e24f4995a00f0b419bf17d9b7cc6ddbd1fef751fed5"
+    },
+    {
+      "bytes": 28376,
+      "path": "summary.json",
+      "sha256": "4d37820683d1eddbbbf3e4a9ac47d7c55df584147a5072d59849608f628a1dfd"
+    },
+    {
+      "bytes": 1337,
+      "path": "toolkit-evidence/build/compile.command.json",
+      "sha256": "2896d157c20608d11330c437519ebeb2e24aa6f7f611eef616293dd4d8be0b90"
+    },
+    {
+      "bytes": 0,
+      "path": "toolkit-evidence/build/compile.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 0,
+      "path": "toolkit-evidence/build/compile.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 684,
+      "path": "toolkit-evidence/build/ldd.command.json",
+      "sha256": "504c9dbf5e1682d005a9d310ab7372b4507b8f38876b2756a5635f8166ebc05a"
+    },
+    {
+      "bytes": 0,
+      "path": "toolkit-evidence/build/ldd.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 1449,
+      "path": "toolkit-evidence/build/ldd.stdout",
+      "sha256": "ea9bc32a204afcb794ed5051a81b1b0411d58b6f5191f4449b21552b089194f0"
+    },
+    {
+      "bytes": 96824,
+      "path": "toolkit-evidence/build/native_bench",
+      "sha256": "5249dc9fbc7091d0d3232e7362fb7a0ae341234f80711d39a8afd42a9afc94cb"
+    },
+    {
+      "bytes": 6655,
+      "path": "toolkit-evidence/cases/computation-BF16/metrics.json",
+      "sha256": "829e2bd19a0436fed0bf9888fbb56d1624b563e003a8fe3bfabe1cbc3118d8ac"
+    },
+    {
+      "bytes": 3626,
+      "path": "toolkit-evidence/cases/computation-BF16/physical-3/repeat-1/metrics.json",
+      "sha256": "b358e0dcb270b5b240ceb299534e1631c46fd8df80371c44fb688ac74f43cb24"
+    },
+    {
+      "bytes": 1008,
+      "path": "toolkit-evidence/cases/computation-BF16/physical-3/repeat-1/microbenchmark.command.json",
+      "sha256": "2e97eb4f73bc29633aad636271027d9fd33b3fee93c1a7fc63f1334bf197a304"
+    },
+    {
+      "bytes": 4425,
+      "path": "toolkit-evidence/cases/computation-BF16/physical-3/repeat-1/microbenchmark.stderr",
+      "sha256": "931d7696f5d5efdf4c1d4a0bce5eb8f36cd6a8591afb8933306d2a0193af4bad"
+    },
+    {
+      "bytes": 36220,
+      "path": "toolkit-evidence/cases/computation-BF16/physical-3/repeat-1/microbenchmark.stdout",
+      "sha256": "716c0eba26d4e628ca89e2f078df22eab3584fe25e8b6b6a8287cb0664acff91"
+    },
+    {
+      "bytes": 61477,
+      "path": "toolkit-evidence/cases/computation-BF16/physical-3/repeat-1/samples.json",
+      "sha256": "f11f803e13ecb749d532514a089e44e728df318e97cd3518089914902e8a779e"
+    },
+    {
+      "bytes": 6661,
+      "path": "toolkit-evidence/cases/computation-FP16/metrics.json",
+      "sha256": "0288d8e5470ce8cf44c76aaf2a73b629795f672ff21f249ff852c65dfd8def74"
+    },
+    {
+      "bytes": 3629,
+      "path": "toolkit-evidence/cases/computation-FP16/physical-3/repeat-1/metrics.json",
+      "sha256": "08fa72815a4c6eed71c05306e80b29d707c994ac3bdbd3c9ce44c54c7f00392e"
+    },
+    {
+      "bytes": 1007,
+      "path": "toolkit-evidence/cases/computation-FP16/physical-3/repeat-1/microbenchmark.command.json",
+      "sha256": "6d8b29d47bcd6288b18be62c2b9993de8563b283325e076703414997d250252a"
+    },
+    {
+      "bytes": 4425,
+      "path": "toolkit-evidence/cases/computation-FP16/physical-3/repeat-1/microbenchmark.stderr",
+      "sha256": "12d43762ca855f1abc796f833108d3e23fedf5b3d8bb2fc85a7484a3e68134ab"
+    },
+    {
+      "bytes": 66906,
+      "path": "toolkit-evidence/cases/computation-FP16/physical-3/repeat-1/microbenchmark.stdout",
+      "sha256": "1a7dc81694391acae278068d2422fbe9bdfd8edd18c6df34ee0c0ae26f0bee38"
+    },
+    {
+      "bytes": 118958,
+      "path": "toolkit-evidence/cases/computation-FP16/physical-3/repeat-1/samples.json",
+      "sha256": "344bf851f72d7d00b75333eda422ddab99e7ee9190ffcee84a806bec7fc45cb4"
+    },
+    {
+      "bytes": 6657,
+      "path": "toolkit-evidence/cases/computation-FP32/metrics.json",
+      "sha256": "72f09d0be8212b9d13b3b51c8c48994b952b1bdccc68f45c4ed14ff17a522f02"
+    },
+    {
+      "bytes": 3627,
+      "path": "toolkit-evidence/cases/computation-FP32/physical-3/repeat-1/metrics.json",
+      "sha256": "f9fafc866a62085c3f55a56c975a9bf29fb3b781e23e35f1b70ebda8aa485577"
+    },
+    {
+      "bytes": 1008,
+      "path": "toolkit-evidence/cases/computation-FP32/physical-3/repeat-1/microbenchmark.command.json",
+      "sha256": "1d959cd784cc09fd047784274df4d277bdf87ee1efd410499512fae99f6429b4"
+    },
+    {
+      "bytes": 4425,
+      "path": "toolkit-evidence/cases/computation-FP32/physical-3/repeat-1/microbenchmark.stderr",
+      "sha256": "2ae0f3d454e9bb55f5e2b0044885c84289426a7abb76acf31230473e00873a9d"
+    },
+    {
+      "bytes": 64652,
+      "path": "toolkit-evidence/cases/computation-FP32/physical-3/repeat-1/microbenchmark.stdout",
+      "sha256": "9caac1a020257346080dee1d1141437595bb12768871624e6fdcf456e13613ff"
+    },
+    {
+      "bytes": 110329,
+      "path": "toolkit-evidence/cases/computation-FP32/physical-3/repeat-1/samples.json",
+      "sha256": "ca72c41a39374fe2e0da449fd03365dc3921aa883d926db52f65378e39a03cf1"
+    },
+    {
+      "bytes": 6769,
+      "path": "toolkit-evidence/cases/computation-INT8/metrics.json",
+      "sha256": "de275ded1be8d5269fc97ad0d2a6c4c3117841fdbcfefe65caa43f0442970fc5"
+    },
+    {
+      "bytes": 3683,
+      "path": "toolkit-evidence/cases/computation-INT8/physical-3/repeat-1/metrics.json",
+      "sha256": "3a7c77ce290b41fb705ad95cf3caa379e8350d4ffa5521d9e6a157d4525d6d32"
+    },
+    {
+      "bytes": 1007,
+      "path": "toolkit-evidence/cases/computation-INT8/physical-3/repeat-1/microbenchmark.command.json",
+      "sha256": "81a886f1329fad116dd7f51d8fa6e33d0689fa29886d9d4b666dd23acaa523ee"
+    },
+    {
+      "bytes": 4506,
+      "path": "toolkit-evidence/cases/computation-INT8/physical-3/repeat-1/microbenchmark.stderr",
+      "sha256": "9e5c84c891ce1a9ae2cfe6e951bc8b7a626ee6f91a75ebfff75deccc85c7e5ff"
+    },
+    {
+      "bytes": 69126,
+      "path": "toolkit-evidence/cases/computation-INT8/physical-3/repeat-1/microbenchmark.stdout",
+      "sha256": "4942720bc5c7ba7321e3aa797496b284b65f4ffdd2143a6577819e6cfa75d984"
+    },
+    {
+      "bytes": 124283,
+      "path": "toolkit-evidence/cases/computation-INT8/physical-3/repeat-1/samples.json",
+      "sha256": "00238545994a3171ff1d96d52658443c8856784f220ed678284e1e319643c09a"
+    },
+    {
+      "bytes": 28699,
+      "path": "toolkit-evidence/cases/interconnect-d2h/metrics.json",
+      "sha256": "ec9c682d4ad77118a313efe0c6ad17082167e0842e925a544cf5f95819bbaae5"
+    },
+    {
+      "bytes": 3995,
+      "path": "toolkit-evidence/cases/interconnect-d2h/physical-3-536870912B-pageable-blocking/repeat-1/metrics.json",
+      "sha256": "e08d051710212128f65121f16e7e628e864e561af433d1b00d5b6f786fea59b0"
+    },
+    {
+      "bytes": 1195,
+      "path": "toolkit-evidence/cases/interconnect-d2h/physical-3-536870912B-pageable-blocking/repeat-1/microbenchmark.command.json",
+      "sha256": "7109c6327d2723eeeaa3532d4b53c2c8f5a46f9d60586f3f02cd41376f15e700"
+    },
+    {
+      "bytes": 4258,
+      "path": "toolkit-evidence/cases/interconnect-d2h/physical-3-536870912B-pageable-blocking/repeat-1/microbenchmark.stderr",
+      "sha256": "ca03dbdfcafe382f728d684d282a3b71741ad2ef08c32a1d1be933afa20b1c1c"
+    },
+    {
+      "bytes": 1371,
+      "path": "toolkit-evidence/cases/interconnect-d2h/physical-3-536870912B-pageable-blocking/repeat-1/microbenchmark.stdout",
+      "sha256": "b63d501190bb626045f5f4122593326fa37eb5750e973fa7899f2f7bc8a9a336"
+    },
+    {
+      "bytes": 1958,
+      "path": "toolkit-evidence/cases/interconnect-d2h/physical-3-536870912B-pageable-blocking/repeat-1/samples.json",
+      "sha256": "b8ea1cda9c088a01ec0e52382bf353514b5787ddf8d91173544ea562561723cf"
+    },
+    {
+      "bytes": 4005,
+      "path": "toolkit-evidence/cases/interconnect-d2h/physical-3-536870912B-pageable-nonblocking/repeat-1/metrics.json",
+      "sha256": "8a7ba25cc655f966322aae0c7b522e317b766d895ecaa13a733fa9103017510d"
+    },
+    {
+      "bytes": 1201,
+      "path": "toolkit-evidence/cases/interconnect-d2h/physical-3-536870912B-pageable-nonblocking/repeat-1/microbenchmark.command.json",
+      "sha256": "6b04c8c5e917ba74eac398b830b99cf5d01af84f34d132ed059efd1516bd76b7"
+    },
+    {
+      "bytes": 4258,
+      "path": "toolkit-evidence/cases/interconnect-d2h/physical-3-536870912B-pageable-nonblocking/repeat-1/microbenchmark.stderr",
+      "sha256": "8a0e8f3b0a9c9bbdf3ff52932f53a0c8e1547d20695eb102226d96f0e1d8acab"
+    },
+    {
+      "bytes": 2114,
+      "path": "toolkit-evidence/cases/interconnect-d2h/physical-3-536870912B-pageable-nonblocking/repeat-1/microbenchmark.stdout",
+      "sha256": "3a3eb146e4c08111fb9bebf34ec2261b74842ca031f292186d8ae0c4306df661"
+    },
+    {
+      "bytes": 3116,
+      "path": "toolkit-evidence/cases/interconnect-d2h/physical-3-536870912B-pageable-nonblocking/repeat-1/samples.json",
+      "sha256": "2c9506abc3bebe07b3d56bf5542c375bd74670714d226ee34b1dc5ce94a212e4"
+    },
+    {
+      "bytes": 4021,
+      "path": "toolkit-evidence/cases/interconnect-d2h/physical-3-536870912B-pinned-blocking/repeat-1/metrics.json",
+      "sha256": "ebbbed3a35b3ea7d136ad13dee3023ed889f8e372c125eaf729c60b9185bbc01"
+    },
+    {
+      "bytes": 1191,
+      "path": "toolkit-evidence/cases/interconnect-d2h/physical-3-536870912B-pinned-blocking/repeat-1/microbenchmark.command.json",
+      "sha256": "09c17754c8a362526bdfe7c7721fa3885b474ac3ce0e133596938123f0de73c6"
+    },
+    {
+      "bytes": 4284,
+      "path": "toolkit-evidence/cases/interconnect-d2h/physical-3-536870912B-pinned-blocking/repeat-1/microbenchmark.stderr",
+      "sha256": "70f046059b1a2cc6f843baad66f860f90af6c42708fc081299564005e38e1071"
+    },
+    {
+      "bytes": 1529,
+      "path": "toolkit-evidence/cases/interconnect-d2h/physical-3-536870912B-pinned-blocking/repeat-1/microbenchmark.stdout",
+      "sha256": "ac276d88fd81f8a5f745daf7ca04f7decd785f22bf550e609226253b789ea8d0"
+    },
+    {
+      "bytes": 2206,
+      "path": "toolkit-evidence/cases/interconnect-d2h/physical-3-536870912B-pinned-blocking/repeat-1/samples.json",
+      "sha256": "4284625ecea9a8ad8a3f534d155a07bfe68953052a0f586c7a0be35cf85d3a85"
+    },
+    {
+      "bytes": 4051,
+      "path": "toolkit-evidence/cases/interconnect-d2h/physical-3-536870912B-pinned-nonblocking/repeat-1/metrics.json",
+      "sha256": "4fb8824d423de055ccfa7986ab7735a0c4347aa9a7235cc3f3e8e09822567774"
+    },
+    {
+      "bytes": 1196,
+      "path": "toolkit-evidence/cases/interconnect-d2h/physical-3-536870912B-pinned-nonblocking/repeat-1/microbenchmark.command.json",
+      "sha256": "a8d9a9a598a34e4602cabf63b9a9d0320ec208ef8347f0c1580b6b244668a488"
+    },
+    {
+      "bytes": 4284,
+      "path": "toolkit-evidence/cases/interconnect-d2h/physical-3-536870912B-pinned-nonblocking/repeat-1/microbenchmark.stderr",
+      "sha256": "b7b975dc993f3b4097551951c9b9d8cd53bc4aa8bc955d94791a62769f8425f5"
+    },
+    {
+      "bytes": 1366,
+      "path": "toolkit-evidence/cases/interconnect-d2h/physical-3-536870912B-pinned-nonblocking/repeat-1/microbenchmark.stdout",
+      "sha256": "44e9ec30f035b3577133d07d53c861ad1d1d622aebf26951b1a281538cdd0022"
+    },
+    {
+      "bytes": 1948,
+      "path": "toolkit-evidence/cases/interconnect-d2h/physical-3-536870912B-pinned-nonblocking/repeat-1/samples.json",
+      "sha256": "1a386a74d70641c76686a1a50e97f271597ec909905d3d72fd776e71b5f65cf6"
+    },
+    {
+      "bytes": 112889,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/metrics.json",
+      "sha256": "5d6faf936d40217b8444501d696eff9741e7ee3c0ff1f201ee021b3d0d211959"
+    },
+    {
+      "bytes": 3984,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-1048576B-pageable-blocking/repeat-1/metrics.json",
+      "sha256": "8d63dcc12ac997e6f88a58dd252b7d6e37572fe56df7e6acae20bbf914e83f41"
+    },
+    {
+      "bytes": 1207,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-1048576B-pageable-blocking/repeat-1/microbenchmark.command.json",
+      "sha256": "74f8ac57c34e5b8022d03e7b0ba732b9ddc54efd5ea9ee656514984810f53c47"
+    },
+    {
+      "bytes": 4258,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-1048576B-pageable-blocking/repeat-1/microbenchmark.stderr",
+      "sha256": "8d290a63b3f9c984cd8fdb4d3fb6e2adb58f0c13c7a9c81bc46eda5848699c8a"
+    },
+    {
+      "bytes": 351651,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-1048576B-pageable-blocking/repeat-1/microbenchmark.stdout",
+      "sha256": "3133e44f347dd2e357331746cecf919787e3e1254da507677f8f094f48729858"
+    },
+    {
+      "bytes": 617208,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-1048576B-pageable-blocking/repeat-1/samples.json",
+      "sha256": "a749e8eb884685b8ad4dc28ebb5546f4d4dd3e460bee621812e516e5a57c9acc"
+    },
+    {
+      "bytes": 3991,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-1048576B-pageable-nonblocking/repeat-1/metrics.json",
+      "sha256": "8a76b57352f94db65b40f94565b8aca44477703e84e697f2f84667ca7f29032b"
+    },
+    {
+      "bytes": 1212,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-1048576B-pageable-nonblocking/repeat-1/microbenchmark.command.json",
+      "sha256": "41e0b13190f51f1b32977cf45f4a8e4b8051f09395de306225e68ee54fab0faa"
+    },
+    {
+      "bytes": 4258,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-1048576B-pageable-nonblocking/repeat-1/microbenchmark.stderr",
+      "sha256": "df06268f43af39d8acaf476eed41b1433cd130e1d13947d507f7aeaa306868e1"
+    },
+    {
+      "bytes": 341663,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-1048576B-pageable-nonblocking/repeat-1/microbenchmark.stdout",
+      "sha256": "2fb0f585eaed91368bd348db09ca4fdcc066b569f90ed44b8461d6868ffa1160"
+    },
+    {
+      "bytes": 599540,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-1048576B-pageable-nonblocking/repeat-1/samples.json",
+      "sha256": "bf2f59aca8fb3e4fdbe861edd9248c912b2ca3e0324802cf0b5cb5c2176049a5"
+    },
+    {
+      "bytes": 4007,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-1048576B-pinned-blocking/repeat-1/metrics.json",
+      "sha256": "d0009e4bcb2539fa18765de093a4d0b12b12c2efa074baa8c612304f47053107"
+    },
+    {
+      "bytes": 1202,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-1048576B-pinned-blocking/repeat-1/microbenchmark.command.json",
+      "sha256": "188d13b0dddd7d1e154abb7d4638b0cf3a42b8a32a099d9816469276bdf2bfde"
+    },
+    {
+      "bytes": 4284,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-1048576B-pinned-blocking/repeat-1/microbenchmark.stderr",
+      "sha256": "f47119a6e0a10caaf4f1e93a42a3190ae54d3b7462f7c47d2abd1f0603e8d8e9"
+    },
+    {
+      "bytes": 408063,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-1048576B-pinned-blocking/repeat-1/microbenchmark.stdout",
+      "sha256": "a43b6317f7ea4ace2f9302676d3d0f14854fe41ad6d76c18fa64f6d70481459f"
+    },
+    {
+      "bytes": 740530,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-1048576B-pinned-blocking/repeat-1/samples.json",
+      "sha256": "db05d7bf90ad767244132302ab501c7c977b62d86e537e8d3dcdc8fcc0470e17"
+    },
+    {
+      "bytes": 4021,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-1048576B-pinned-nonblocking/repeat-1/metrics.json",
+      "sha256": "c55a39a1fd6fe2151aa11fbd6f55b6a3df5acca34763a81901e97b3b1fe4ec11"
+    },
+    {
+      "bytes": 1209,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-1048576B-pinned-nonblocking/repeat-1/microbenchmark.command.json",
+      "sha256": "df98dd4a06ac2a069cd4530879e893defb891c5a0bd4a426f8246426dd88b87c"
+    },
+    {
+      "bytes": 4284,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-1048576B-pinned-nonblocking/repeat-1/microbenchmark.stderr",
+      "sha256": "e18bcdf851fa1326fe308aa5d812db9e41be3def581a147af3d00e77ea15a8b2"
+    },
+    {
+      "bytes": 271591,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-1048576B-pinned-nonblocking/repeat-1/microbenchmark.stdout",
+      "sha256": "3f7ddd6734cb02e4e3905a60f7f9a7090ee84ba3e385e83f521b4a947cfaecad"
+    },
+    {
+      "bytes": 465348,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-1048576B-pinned-nonblocking/repeat-1/samples.json",
+      "sha256": "6c4377fff234d9a8aaa152b0dc2027f88c1d95afcf072c41c8c8dbaeb9d42a3e"
+    },
+    {
+      "bytes": 3959,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-4096B-pageable-blocking/repeat-1/metrics.json",
+      "sha256": "0464cbf4d2c8a0568d73a7c3d7cd8cc2b894441d7f40dd32d7e8515c38c0efa5"
+    },
+    {
+      "bytes": 1200,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-4096B-pageable-blocking/repeat-1/microbenchmark.command.json",
+      "sha256": "bedd6e0169dcefb6fd67bd2c7114527dff177ef05e46cba4accc628f25fe7941"
+    },
+    {
+      "bytes": 4258,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-4096B-pageable-blocking/repeat-1/microbenchmark.stderr",
+      "sha256": "e5345b5a10daed41b8a928ae5ed9924552d214265e16bcfe9831eef5e527f812"
+    },
+    {
+      "bytes": 1680021,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-4096B-pageable-blocking/repeat-1/microbenchmark.stdout",
+      "sha256": "f7bd90af995b3a3254fb997dcc0f8ebbc2d4a0f5ad13817185314de42b3388d9"
+    },
+    {
+      "bytes": 3077958,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-4096B-pageable-blocking/repeat-1/samples.json",
+      "sha256": "40cd07d5f7babd1b468b7c8bbc83b9e6653b665d9f4f839f5843f0a6a19d60af"
+    },
+    {
+      "bytes": 3973,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-4096B-pageable-nonblocking/repeat-1/metrics.json",
+      "sha256": "6b02659adf918e27987c23ab21d8f2f71acc26848efa38cb3fc422954dc69fed"
+    },
+    {
+      "bytes": 1205,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-4096B-pageable-nonblocking/repeat-1/microbenchmark.command.json",
+      "sha256": "88beeeb1bff73ac62ca0a66970574f90040c858409b67fb11e4238bf8b34f7e2"
+    },
+    {
+      "bytes": 4258,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-4096B-pageable-nonblocking/repeat-1/microbenchmark.stderr",
+      "sha256": "599d79ca7184e8c141666adbe3a29687f4f33a98009a62009a5d0e57f83e83f1"
+    },
+    {
+      "bytes": 1508338,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-4096B-pageable-nonblocking/repeat-1/microbenchmark.stdout",
+      "sha256": "19aaaaf8d2fed9538dab6a7db5a1398faa58aa0b8d32e00b3d30248853040123"
+    },
+    {
+      "bytes": 2763180,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-4096B-pageable-nonblocking/repeat-1/samples.json",
+      "sha256": "415c3c00840446d5f3b16e381a23e56e61dc81611690e147bc0503d0c36fcb8b"
+    },
+    {
+      "bytes": 3986,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-4096B-pinned-blocking/repeat-1/metrics.json",
+      "sha256": "f15d54a86eafb89b9468d7df3ac50f0e2084e2e538d752757efc93975d34ec03"
+    },
+    {
+      "bytes": 1195,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-4096B-pinned-blocking/repeat-1/microbenchmark.command.json",
+      "sha256": "9904fc8c81bcf7af19e167d53643a0cc917abad28d1d40eefe8d1c767336c001"
+    },
+    {
+      "bytes": 4284,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-4096B-pinned-blocking/repeat-1/microbenchmark.stderr",
+      "sha256": "cdd6e8e8640595b9260aa940bbfcf9017064dbdc407936d4de8a8710269138f6"
+    },
+    {
+      "bytes": 1783813,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-4096B-pinned-blocking/repeat-1/microbenchmark.stdout",
+      "sha256": "a0f55e8388b4eea89c0fda987860f7abf4c5b33f085d6a5dc705b65d916c39e5"
+    },
+    {
+      "bytes": 3267690,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-4096B-pinned-blocking/repeat-1/samples.json",
+      "sha256": "b0c0acdc8da280bf502d50b219bc891f80c36d6248bd043a62ddd95453ea5c35"
+    },
+    {
+      "bytes": 4000,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-4096B-pinned-nonblocking/repeat-1/metrics.json",
+      "sha256": "6c1342d58e1854634dcd854d295b0ebc2cbd1718708324531a790ac5edd0eb32"
+    },
+    {
+      "bytes": 1201,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-4096B-pinned-nonblocking/repeat-1/microbenchmark.command.json",
+      "sha256": "0ab3976f4c53d81645f5b651e09ed9afc3ccf73ae9c9c41ac4fadaf6685969af"
+    },
+    {
+      "bytes": 4284,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-4096B-pinned-nonblocking/repeat-1/microbenchmark.stderr",
+      "sha256": "dc3ec8296b97e4b6a2ea0566dfa9e982530a2a22edd4f145446a2d23e2d1efbe"
+    },
+    {
+      "bytes": 2041014,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-4096B-pinned-nonblocking/repeat-1/microbenchmark.stdout",
+      "sha256": "891e8625fb49c3dc8b6b1309d8f1f64645adadfcb3da087e80a394c96b0a73b1"
+    },
+    {
+      "bytes": 3739746,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-4096B-pinned-nonblocking/repeat-1/samples.json",
+      "sha256": "fbc2ef0dd9b12b5c9792dc095309b16771ef62b1235afcb648611f4bd8f8a4f4"
+    },
+    {
+      "bytes": 3954,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-512B-pageable-blocking/repeat-1/metrics.json",
+      "sha256": "552bd2de36b5e49605d180b5ba22134f4b2770a06967faf664ab75c593f5018d"
+    },
+    {
+      "bytes": 1196,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-512B-pageable-blocking/repeat-1/microbenchmark.command.json",
+      "sha256": "4629c279020231cf45f4f2d3ff697a420e1b8765fa4b6c90d058f1ef756ebbc7"
+    },
+    {
+      "bytes": 4258,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-512B-pageable-blocking/repeat-1/microbenchmark.stderr",
+      "sha256": "346f1b09c046194df02b351a3201735ffd0b6debf8ecd0084422d35a7991000e"
+    },
+    {
+      "bytes": 1281912,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-512B-pageable-blocking/repeat-1/microbenchmark.stdout",
+      "sha256": "49621b6d2f40eb1fd9046cd55f7d89081c6d78f598f2adbf5a2799b9b2e24cb2"
+    },
+    {
+      "bytes": 2347914,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-512B-pageable-blocking/repeat-1/samples.json",
+      "sha256": "5e890833ce43c82f1fcd253501115fe2e93c906feff397bad10d661fb3ff7d26"
+    },
+    {
+      "bytes": 3965,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-512B-pageable-nonblocking/repeat-1/metrics.json",
+      "sha256": "18b5cb8318cd98dbc6dedde3a977a15d36adbd05426485b06ba82b9ef6b09159"
+    },
+    {
+      "bytes": 1202,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-512B-pageable-nonblocking/repeat-1/microbenchmark.command.json",
+      "sha256": "78299fe0076f5f4f381d50e779ff4676ee1ee09a9aa45277c0be917134a8afd7"
+    },
+    {
+      "bytes": 4258,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-512B-pageable-nonblocking/repeat-1/microbenchmark.stderr",
+      "sha256": "a6d737b258a92dd32e4ec85db561d855299af60022946c92bab5b81a5996a15a"
+    },
+    {
+      "bytes": 1157716,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-512B-pageable-nonblocking/repeat-1/microbenchmark.stdout",
+      "sha256": "9c5f7c31f9c60f5b48497e656dd92bc7d18eed5e659c38eaaf4398bdc29cb1ae"
+    },
+    {
+      "bytes": 2120168,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-512B-pageable-nonblocking/repeat-1/samples.json",
+      "sha256": "cadc08a68c7dc9510c0a85e02848d141b9d347b1d7ca32cc76687f9e361553a0"
+    },
+    {
+      "bytes": 3978,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-512B-pinned-blocking/repeat-1/metrics.json",
+      "sha256": "20de83307d30d7a9eda619b475c4ec176388291ce846321285e43997d1fa1722"
+    },
+    {
+      "bytes": 1192,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-512B-pinned-blocking/repeat-1/microbenchmark.command.json",
+      "sha256": "5119c2d36d7fb57409d283f596a6a8e5e7e067ea484e65ba6bfb2c607ec9b98e"
+    },
+    {
+      "bytes": 4284,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-512B-pinned-blocking/repeat-1/microbenchmark.stderr",
+      "sha256": "f5631465d245e003a4748f7f12b28e4dd4f69e2e78ae50a6bfd8e82afbbb5093"
+    },
+    {
+      "bytes": 1625784,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-512B-pinned-blocking/repeat-1/microbenchmark.stdout",
+      "sha256": "9e2c286808ca6c79f02b46b5c2be7636dcba075f744d3644aa65733c8334103b"
+    },
+    {
+      "bytes": 2978631,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-512B-pinned-blocking/repeat-1/samples.json",
+      "sha256": "57421189604e20225d86b38c59291d6c5b6ae2ff4e7221dfb3c8de7edb064b48"
+    },
+    {
+      "bytes": 3986,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-512B-pinned-nonblocking/repeat-1/metrics.json",
+      "sha256": "d223fc6d28ec0782d1b766571ddfde45605f794462829cc812252a4a0baefe6b"
+    },
+    {
+      "bytes": 1198,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-512B-pinned-nonblocking/repeat-1/microbenchmark.command.json",
+      "sha256": "b49170b1f9cc1c3b998c76a101066767a86c91103950538de5e5cbb4447f4ddf"
+    },
+    {
+      "bytes": 4284,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-512B-pinned-nonblocking/repeat-1/microbenchmark.stderr",
+      "sha256": "57a545d1d5dd7c302b4a48b07c43ee7def1d743663ed93641c5587595a7ed7f8"
+    },
+    {
+      "bytes": 1467023,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-512B-pinned-nonblocking/repeat-1/microbenchmark.stdout",
+      "sha256": "e7898b8348a0861523bb83e97d33e8b3c73c8341a61f6f3f1a7877632968dc0b"
+    },
+    {
+      "bytes": 2687450,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-512B-pinned-nonblocking/repeat-1/samples.json",
+      "sha256": "832651dde4690b9e0c346765ea940ba921b9cb06b55c56a1b56fae5e28c8ede3"
+    },
+    {
+      "bytes": 3970,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-65536B-pageable-blocking/repeat-1/metrics.json",
+      "sha256": "2d0989a099ce0b237b14bb0a27bb2a25dfb02433a41557c22e494a817e3ed177"
+    },
+    {
+      "bytes": 1202,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-65536B-pageable-blocking/repeat-1/microbenchmark.command.json",
+      "sha256": "997187689f99e3ff750d5db4713feb5b9d28ee354f8e2e31b3f90b0fb3a17478"
+    },
+    {
+      "bytes": 4258,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-65536B-pageable-blocking/repeat-1/microbenchmark.stderr",
+      "sha256": "2b2234135ba386ea35b16c1412fc7e4c1e4d834901b2ccadfcc5806c7181c536"
+    },
+    {
+      "bytes": 1517899,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-65536B-pageable-blocking/repeat-1/microbenchmark.stdout",
+      "sha256": "8840b856574499da8dc7c4ae48efc5e693a6baeea5a5b9a390fd151bc3c1bc09"
+    },
+    {
+      "bytes": 2780671,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-65536B-pageable-blocking/repeat-1/samples.json",
+      "sha256": "dae12374158199fada6affa3f2ebd8bb287df2c3b70dc17b7aa2894047a60d9a"
+    },
+    {
+      "bytes": 3976,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-65536B-pageable-nonblocking/repeat-1/metrics.json",
+      "sha256": "71ed048e237e0497cd75b8766f50296d8ca2e8f1352f56804e8c1de963dc1cbb"
+    },
+    {
+      "bytes": 1208,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-65536B-pageable-nonblocking/repeat-1/microbenchmark.command.json",
+      "sha256": "7f83dad8a433a78f6db0d3e80958fb121197319c7669d70b95a4632238050e3f"
+    },
+    {
+      "bytes": 4258,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-65536B-pageable-nonblocking/repeat-1/microbenchmark.stderr",
+      "sha256": "2cfa152623fc9a3b0cf0d11784ce7633b76797d56b49360a0a727cf38597c312"
+    },
+    {
+      "bytes": 1437650,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-65536B-pageable-nonblocking/repeat-1/microbenchmark.stdout",
+      "sha256": "5ec4ede08822657ab3ab5cd656b4d4f3eab9d9692c745fb18c440e2f97a8ff45"
+    },
+    {
+      "bytes": 2633537,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-65536B-pageable-nonblocking/repeat-1/samples.json",
+      "sha256": "e4fa638de34e64c9c0ccb9b39d03a73d0c9a3182ca2c845969013256a716053f"
+    },
+    {
+      "bytes": 3994,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-65536B-pinned-blocking/repeat-1/metrics.json",
+      "sha256": "603e9fda9d718107f7b10828209ccaa3a73f261eabe58ff4dd6237941025f485"
+    },
+    {
+      "bytes": 1197,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-65536B-pinned-blocking/repeat-1/microbenchmark.command.json",
+      "sha256": "3b65a72d8b04667a6bdb72776fa36ab4eb40a5e751cd168b2e958f696da90e91"
+    },
+    {
+      "bytes": 4284,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-65536B-pinned-blocking/repeat-1/microbenchmark.stderr",
+      "sha256": "cf28f1bc55e1ff5686a49d02645d71e064eb89a5f3c7bdc99e9dc8a233558334"
+    },
+    {
+      "bytes": 1373085,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-65536B-pinned-blocking/repeat-1/microbenchmark.stdout",
+      "sha256": "b844bd27796773a97b8cafd311be458fc88cedf155baa611ccfcf6961e167d27"
+    },
+    {
+      "bytes": 2515177,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-65536B-pinned-blocking/repeat-1/samples.json",
+      "sha256": "ee8d81898b5814850464a7f1a8f1f5a54ff03dc58340fb62a254cea4c0e7b108"
+    },
+    {
+      "bytes": 4008,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-65536B-pinned-nonblocking/repeat-1/metrics.json",
+      "sha256": "17c544959a5ea992e4649500f596dc9d68fcbcc545a7cd16fdb88398a1ac9edc"
+    },
+    {
+      "bytes": 1204,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-65536B-pinned-nonblocking/repeat-1/microbenchmark.command.json",
+      "sha256": "2bd99f75a59efa48881c19a597689615982da06afedca65ba57df9e600a5e0e5"
+    },
+    {
+      "bytes": 4284,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-65536B-pinned-nonblocking/repeat-1/microbenchmark.stderr",
+      "sha256": "f837508b5c66aa0abd93d5631f9f193649af9cba23ff7904641a607ce4130fc3"
+    },
+    {
+      "bytes": 1310414,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-65536B-pinned-nonblocking/repeat-1/microbenchmark.stdout",
+      "sha256": "f0eb6767b8499cb3b74d396b07526204bf1eb617841aa3d92904b1f78e09d981"
+    },
+    {
+      "bytes": 2400206,
+      "path": "toolkit-evidence/cases/interconnect-d2h-latency/physical-3-65536B-pinned-nonblocking/repeat-1/samples.json",
+      "sha256": "9ab8a84fd3797b5098f03a009812f21984b5bfcb395daf64e238170e25ef0c65"
+    },
+    {
+      "bytes": 28707,
+      "path": "toolkit-evidence/cases/interconnect-h2d/metrics.json",
+      "sha256": "ceb549740a85965027386d4cc9ac35a7b293d343dca95626e7a5034c35ac2cfa"
+    },
+    {
+      "bytes": 3995,
+      "path": "toolkit-evidence/cases/interconnect-h2d/physical-3-536870912B-pageable-blocking/repeat-1/metrics.json",
+      "sha256": "04227d44a656aeee4208d3a737504259ec9914fd8eccfe58695fb75463bbf6c4"
+    },
+    {
+      "bytes": 1195,
+      "path": "toolkit-evidence/cases/interconnect-h2d/physical-3-536870912B-pageable-blocking/repeat-1/microbenchmark.command.json",
+      "sha256": "d15bfa5ca2882043f1af0b29a6bd86453e3b1774940badd05cda05d75ff352ca"
+    },
+    {
+      "bytes": 4258,
+      "path": "toolkit-evidence/cases/interconnect-h2d/physical-3-536870912B-pageable-blocking/repeat-1/microbenchmark.stderr",
+      "sha256": "3fe9d098ae2ec1681a6e9d20ccf4f799771141e15da6b954cebe0d72b74d6647"
+    },
+    {
+      "bytes": 1275,
+      "path": "toolkit-evidence/cases/interconnect-h2d/physical-3-536870912B-pageable-blocking/repeat-1/microbenchmark.stdout",
+      "sha256": "6cdbbc0ea2e62224ed76bacf4981a2bf57fc1743aecc4b7c5bf2b0a8120fca3b"
+    },
+    {
+      "bytes": 1807,
+      "path": "toolkit-evidence/cases/interconnect-h2d/physical-3-536870912B-pageable-blocking/repeat-1/samples.json",
+      "sha256": "0398501ae7d13d0df55167b579b69ea72c87651a000962684a85197e2cb74f9f"
+    },
+    {
+      "bytes": 4007,
+      "path": "toolkit-evidence/cases/interconnect-h2d/physical-3-536870912B-pageable-nonblocking/repeat-1/metrics.json",
+      "sha256": "62a8d06795810a948eae21accb350445d11e2cffdc0d91c2a432489daad43a2b"
+    },
+    {
+      "bytes": 1201,
+      "path": "toolkit-evidence/cases/interconnect-h2d/physical-3-536870912B-pageable-nonblocking/repeat-1/microbenchmark.command.json",
+      "sha256": "cebf7e82d97d1f8001a770d49edff1c3212c3c207d436e3712199e36dd3e1a0b"
+    },
+    {
+      "bytes": 4258,
+      "path": "toolkit-evidence/cases/interconnect-h2d/physical-3-536870912B-pageable-nonblocking/repeat-1/microbenchmark.stderr",
+      "sha256": "77bc49bc2e3af8887cfd376b461bc3da239d7f6bd14d5b74c18f1c7c2afd3d7f"
+    },
+    {
+      "bytes": 2063,
+      "path": "toolkit-evidence/cases/interconnect-h2d/physical-3-536870912B-pageable-nonblocking/repeat-1/microbenchmark.stdout",
+      "sha256": "5bc0f5c36fca585c24216f73ff6f9d65a75ac0cbac35644a6a25bd7317bd8471"
+    },
+    {
+      "bytes": 3035,
+      "path": "toolkit-evidence/cases/interconnect-h2d/physical-3-536870912B-pageable-nonblocking/repeat-1/samples.json",
+      "sha256": "6b86933e139b143df6fdc1c80e40d23f32b6df356d8e04bc600288042d8b7b85"
+    },
+    {
+      "bytes": 4022,
+      "path": "toolkit-evidence/cases/interconnect-h2d/physical-3-536870912B-pinned-blocking/repeat-1/metrics.json",
+      "sha256": "7a554f4fc4accc6f76f7704446050330222e0ea6b7e8e94f2f48cc6caadb7ff9"
+    },
+    {
+      "bytes": 1191,
+      "path": "toolkit-evidence/cases/interconnect-h2d/physical-3-536870912B-pinned-blocking/repeat-1/microbenchmark.command.json",
+      "sha256": "39e816b558e87255cd52b4a0bd50735b54eef0678c9c92c9d104842a086b6cb3"
+    },
+    {
+      "bytes": 4284,
+      "path": "toolkit-evidence/cases/interconnect-h2d/physical-3-536870912B-pinned-blocking/repeat-1/microbenchmark.stderr",
+      "sha256": "8b3e618ac0dd18b973c8360d9a51013571a7a594859edf242b783ef3de27d21e"
+    },
+    {
+      "bytes": 1370,
+      "path": "toolkit-evidence/cases/interconnect-h2d/physical-3-536870912B-pinned-blocking/repeat-1/microbenchmark.stdout",
+      "sha256": "7c7e47559877defa52258de4ea5c67e83346145c4f892cdbbbf12d557822d08a"
+    },
+    {
+      "bytes": 1957,
+      "path": "toolkit-evidence/cases/interconnect-h2d/physical-3-536870912B-pinned-blocking/repeat-1/samples.json",
+      "sha256": "c49c12fe148488f2180a4a94f1e9e2c1e1b15c13ff7306f9c9a86cd90cb02ff5"
+    },
+    {
+      "bytes": 4052,
+      "path": "toolkit-evidence/cases/interconnect-h2d/physical-3-536870912B-pinned-nonblocking/repeat-1/metrics.json",
+      "sha256": "222a089a137a5d0eb48c4d5418bcd01c84a578b8a2e844d4342204ad4de33923"
+    },
+    {
+      "bytes": 1197,
+      "path": "toolkit-evidence/cases/interconnect-h2d/physical-3-536870912B-pinned-nonblocking/repeat-1/microbenchmark.command.json",
+      "sha256": "71a17916b9358579231439c998a69e01aff6a7ba0dcabb2d34cecc5d09e7ec51"
+    },
+    {
+      "bytes": 4284,
+      "path": "toolkit-evidence/cases/interconnect-h2d/physical-3-536870912B-pinned-nonblocking/repeat-1/microbenchmark.stderr",
+      "sha256": "ce833e584ee48c2f768f225cda3054fc3a1e6b29016bd5221d595db73393e31d"
+    },
+    {
+      "bytes": 1465,
+      "path": "toolkit-evidence/cases/interconnect-h2d/physical-3-536870912B-pinned-nonblocking/repeat-1/microbenchmark.stdout",
+      "sha256": "137fc14a485d82590b20c7a20a7dfb4d47cf739e479c0383e6180da454b8eefa"
+    },
+    {
+      "bytes": 2102,
+      "path": "toolkit-evidence/cases/interconnect-h2d/physical-3-536870912B-pinned-nonblocking/repeat-1/samples.json",
+      "sha256": "449a36d251976ddae9a4b2a1f9b829947abc1967624b5b66eae7b4c3ae3f2ef4"
+    },
+    {
+      "bytes": 112913,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/metrics.json",
+      "sha256": "8e14ecccbe620975191d77e728e58f4afe3399d5d95383ddb7aa078e37c0175e"
+    },
+    {
+      "bytes": 3983,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-1048576B-pageable-blocking/repeat-1/metrics.json",
+      "sha256": "cd011c9cb5258718e3054ca0ae96e7e42d8d0995bffe8f6020e5f96ad80ed528"
+    },
+    {
+      "bytes": 1207,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-1048576B-pageable-blocking/repeat-1/microbenchmark.command.json",
+      "sha256": "1f757f32bd65b97622d48967ff12166350822da26eeaf02a8988a663b3ea1d1e"
+    },
+    {
+      "bytes": 4258,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-1048576B-pageable-blocking/repeat-1/microbenchmark.stderr",
+      "sha256": "9dd59263de6e45a44c674af20e3fe55c427652a117ce5afd88991bcacb8a9a64"
+    },
+    {
+      "bytes": 356311,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-1048576B-pageable-blocking/repeat-1/microbenchmark.stdout",
+      "sha256": "23251d925c845dcf56cd668bf48678a63d2c9716c5781d171073ced34836fe4b"
+    },
+    {
+      "bytes": 614008,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-1048576B-pageable-blocking/repeat-1/samples.json",
+      "sha256": "7064840391189e40e6c7dd64e5b4c2db5903927ce2a79a50749824a9c28656a3"
+    },
+    {
+      "bytes": 3998,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-1048576B-pageable-nonblocking/repeat-1/metrics.json",
+      "sha256": "05e50313908e3d2f2f932f5ee252775e8ad4e6db8bb8292394a64a22d489552d"
+    },
+    {
+      "bytes": 1213,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-1048576B-pageable-nonblocking/repeat-1/microbenchmark.command.json",
+      "sha256": "c12b833b47365939da2d12164226bfedb37e39fdd3e8d39a6f7dcb88fbe31755"
+    },
+    {
+      "bytes": 4258,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-1048576B-pageable-nonblocking/repeat-1/microbenchmark.stderr",
+      "sha256": "d3d1873da7f29c379401c34b3d1ce32601f353187a2266fbd64bc5b0fd735092"
+    },
+    {
+      "bytes": 338605,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-1048576B-pageable-nonblocking/repeat-1/microbenchmark.stdout",
+      "sha256": "a6723bd07f073b1261e40d52e6434d37e34d9a34d69353fd0cafeaf95450c5fa"
+    },
+    {
+      "bytes": 580227,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-1048576B-pageable-nonblocking/repeat-1/samples.json",
+      "sha256": "2c2862f6bb411c29b48c6c477a0c5ebe16918bb80544492cc81dace51b88cc47"
+    },
+    {
+      "bytes": 4011,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-1048576B-pinned-blocking/repeat-1/metrics.json",
+      "sha256": "5a650f2dc8be0ee5b4624c061af82a398907951bade2971e19592787608b9c95"
+    },
+    {
+      "bytes": 1203,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-1048576B-pinned-blocking/repeat-1/microbenchmark.command.json",
+      "sha256": "e8aa5f2e1d269aac5ce1b8ed21bbb51b1f1fd3013fc756a70d7d396942b2429c"
+    },
+    {
+      "bytes": 4284,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-1048576B-pinned-blocking/repeat-1/microbenchmark.stderr",
+      "sha256": "d74714fd0b0817e412b5f2b8e375c3f6aa086d757ca3cac65c29b6f153578292"
+    },
+    {
+      "bytes": 258758,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-1048576B-pinned-blocking/repeat-1/microbenchmark.stdout",
+      "sha256": "d7bc7c4023c073f30b6f15fc582b31823de19b3d927b623a16b0e5265814055a"
+    },
+    {
+      "bytes": 443345,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-1048576B-pinned-blocking/repeat-1/samples.json",
+      "sha256": "1c362c870060598f4b31d81d734e20a87b0dfe9bee2889f5aaa0a175f3c9fcd6"
+    },
+    {
+      "bytes": 4026,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-1048576B-pinned-nonblocking/repeat-1/metrics.json",
+      "sha256": "2ff76fdcc0520140bd60195053e9466be128bd0e5f9be22dea33a2ec8b938220"
+    },
+    {
+      "bytes": 1209,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-1048576B-pinned-nonblocking/repeat-1/microbenchmark.command.json",
+      "sha256": "715fcb201a683901ca86c836c3012e8fb576c2ddd0dbad547e0062bc9dc28b66"
+    },
+    {
+      "bytes": 4284,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-1048576B-pinned-nonblocking/repeat-1/microbenchmark.stderr",
+      "sha256": "1ebbecaa7cc306276b1cb3fbb3ea9c55493052145ca87c80cd13ecb8d4c57e51"
+    },
+    {
+      "bytes": 239089,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-1048576B-pinned-nonblocking/repeat-1/microbenchmark.stdout",
+      "sha256": "1cc0dbcd1ec69f8db38269ace4e757b5f5a38e928c7e77c3666b4afb7ae3663d"
+    },
+    {
+      "bytes": 409561,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-1048576B-pinned-nonblocking/repeat-1/samples.json",
+      "sha256": "bea04973aa4e0df9f8c1f70f813b29707dd55de31004526d6da8fd7c89bdea24"
+    },
+    {
+      "bytes": 3961,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-4096B-pageable-blocking/repeat-1/metrics.json",
+      "sha256": "8f9bf773f19abdb9cecd8d2cf26def84887b7023d0a13cfe0320f6b28d6cd79b"
+    },
+    {
+      "bytes": 1200,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-4096B-pageable-blocking/repeat-1/microbenchmark.command.json",
+      "sha256": "1c5e513f3dc239a503ea5f494f53e5e1293cf6e2b459604cf2d058de5808e3f7"
+    },
+    {
+      "bytes": 4258,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-4096B-pageable-blocking/repeat-1/microbenchmark.stderr",
+      "sha256": "dbe4fa1c7f56dedb19f6e02ac9e1b42f9194f017e62e5694cde214d044637b22"
+    },
+    {
+      "bytes": 1806286,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-4096B-pageable-blocking/repeat-1/microbenchmark.stdout",
+      "sha256": "28ad615ae84035aa990fb4be29a3913905e3ef50644ab5a290cb6db3b5c59c39"
+    },
+    {
+      "bytes": 3309363,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-4096B-pageable-blocking/repeat-1/samples.json",
+      "sha256": "16877c8b5fbfcc6de572a5f8c785cd35aa734cbde2bc8d7fe22f52bd447e40f5"
+    },
+    {
+      "bytes": 3973,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-4096B-pageable-nonblocking/repeat-1/metrics.json",
+      "sha256": "477b7b0e66f938f967ec115e9b720241c6f1ff4a8c33e9cfc52308e0ab3cc7ed"
+    },
+    {
+      "bytes": 1205,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-4096B-pageable-nonblocking/repeat-1/microbenchmark.command.json",
+      "sha256": "d80f496f7c4c639f3bfb19b52c17206dc217da6f6b26990d69e0bbe8e76700bf"
+    },
+    {
+      "bytes": 4258,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-4096B-pageable-nonblocking/repeat-1/microbenchmark.stderr",
+      "sha256": "cb1ce15fb3491864d7d3c01bafb80559be1fba195dc5a1bf9075de2566179ffa"
+    },
+    {
+      "bytes": 1335564,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-4096B-pageable-nonblocking/repeat-1/microbenchmark.stdout",
+      "sha256": "1b48b11707ec40290c786945dd36474de947b5731aaf446c80d9aacafef28e64"
+    },
+    {
+      "bytes": 2446266,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-4096B-pageable-nonblocking/repeat-1/samples.json",
+      "sha256": "e4d4efb68f7b49efa33d3407c9fc551d4e4c9a3291ebbec671655688c2419f07"
+    },
+    {
+      "bytes": 3989,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-4096B-pinned-blocking/repeat-1/metrics.json",
+      "sha256": "d69963e468983a909d104f261beefa33ba4f724db4e613c90f70dcfc764b4f2d"
+    },
+    {
+      "bytes": 1194,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-4096B-pinned-blocking/repeat-1/microbenchmark.command.json",
+      "sha256": "c325b64b2ea50610f6e20d75f9553fdff46c83cafb04d231e902566b3baaa366"
+    },
+    {
+      "bytes": 4284,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-4096B-pinned-blocking/repeat-1/microbenchmark.stderr",
+      "sha256": "827ac46b8292217c5183c6ef84ece041914e151fd2c2c4e24c86adfc328e0b52"
+    },
+    {
+      "bytes": 2102896,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-4096B-pinned-blocking/repeat-1/microbenchmark.stdout",
+      "sha256": "f61fa146a4715085070fe92717c421834ec7c2675cd925a8b47d6f197d8bf0f0"
+    },
+    {
+      "bytes": 3853298,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-4096B-pinned-blocking/repeat-1/samples.json",
+      "sha256": "2bdddf1380ebc8937770c61e2f00551b0570b46a48f88ffcb78b4e5785ef8a12"
+    },
+    {
+      "bytes": 3998,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-4096B-pinned-nonblocking/repeat-1/metrics.json",
+      "sha256": "ee1b76516c52b8415e140887d0f611c139304049a66d76f7b580bbe53f9e5245"
+    },
+    {
+      "bytes": 1200,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-4096B-pinned-nonblocking/repeat-1/microbenchmark.command.json",
+      "sha256": "cc5f20295a1e88a197166692731913477da80f0af0a964f6287c0dfd8eae27ea"
+    },
+    {
+      "bytes": 4284,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-4096B-pinned-nonblocking/repeat-1/microbenchmark.stderr",
+      "sha256": "cfaa8e84036a99e343048ad4817806e81400ce3183be46085fed769dadd018ba"
+    },
+    {
+      "bytes": 1720435,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-4096B-pinned-nonblocking/repeat-1/microbenchmark.stdout",
+      "sha256": "21b9e157c3240e6c5e3aa152278fcea18a8669dc92547e8e5530a6537f9c4955"
+    },
+    {
+      "bytes": 3151867,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-4096B-pinned-nonblocking/repeat-1/samples.json",
+      "sha256": "8c7dcd68d952eb8773b88240413460267915ac7db3d7846e1c48ff079ba62f1d"
+    },
+    {
+      "bytes": 3950,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-512B-pageable-blocking/repeat-1/metrics.json",
+      "sha256": "ba00bbbb2098af506fcf6e31b484540f039fbd194d936fcfc90725e8feb739c7"
+    },
+    {
+      "bytes": 1196,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-512B-pageable-blocking/repeat-1/microbenchmark.command.json",
+      "sha256": "83dcc6d5ae9550c15f75c57bc02ee1422bb93731d0f1da09858af51bd770c502"
+    },
+    {
+      "bytes": 4258,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-512B-pageable-blocking/repeat-1/microbenchmark.stderr",
+      "sha256": "b6fe1be2f98e7714ae7eaac4d4edbc828758302d7d65eb307c89e1be45a45bd8"
+    },
+    {
+      "bytes": 1195648,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-512B-pageable-blocking/repeat-1/microbenchmark.stdout",
+      "sha256": "1632301625700bbad5d1ac3ab7c01d86cd3ea575af4f001a6ba47637623dcfb7"
+    },
+    {
+      "bytes": 2189535,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-512B-pageable-blocking/repeat-1/samples.json",
+      "sha256": "06ed51800a3b439aa4c5793cb5158405c1b70ba797b00cdb989363c873bd5e0c"
+    },
+    {
+      "bytes": 3965,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-512B-pageable-nonblocking/repeat-1/metrics.json",
+      "sha256": "1b67d8cf6e9918f06b14156e0e811d12b4896aa034aecf18a334287bc1911797"
+    },
+    {
+      "bytes": 1202,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-512B-pageable-nonblocking/repeat-1/microbenchmark.command.json",
+      "sha256": "d6db473b5b4a97efeac90765da9a093c75126b3fb267ced3c89dc83c0fe04be6"
+    },
+    {
+      "bytes": 4258,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-512B-pageable-nonblocking/repeat-1/microbenchmark.stderr",
+      "sha256": "8cccf12ae9ee474f2289af44c282e0651141678b4fac071ab0d9a8e0aceae6a9"
+    },
+    {
+      "bytes": 1097343,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-512B-pageable-nonblocking/repeat-1/microbenchmark.stdout",
+      "sha256": "1827c242e4441070eb0a2e0542690e0eb6721a309791aa93b5c8c62acac2164d"
+    },
+    {
+      "bytes": 2009505,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-512B-pageable-nonblocking/repeat-1/samples.json",
+      "sha256": "39582ff47bf3734131a2d8df8ed47b302967c546a1014e495437bb5f3b1dbf30"
+    },
+    {
+      "bytes": 3976,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-512B-pinned-blocking/repeat-1/metrics.json",
+      "sha256": "3c795426a944afb376ddda8743ddf2a61e17126bc3999c36b461f6dcb0808879"
+    },
+    {
+      "bytes": 1191,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-512B-pinned-blocking/repeat-1/microbenchmark.command.json",
+      "sha256": "89c66950ef22b8f4e296b3a83bd6366e9dfa6b6366fbb5d75770bc6fe7054d8f"
+    },
+    {
+      "bytes": 4284,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-512B-pinned-blocking/repeat-1/microbenchmark.stderr",
+      "sha256": "ccd3b4e8ec9af155ea142ced772cf0ec2591b322ea1b8ede73eb2396f687d934"
+    },
+    {
+      "bytes": 1356878,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-512B-pinned-blocking/repeat-1/microbenchmark.stdout",
+      "sha256": "4081fd9da142ec467507be8fc4602e46682fa096d8e69e1944bd12e87639692a"
+    },
+    {
+      "bytes": 2485245,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-512B-pinned-blocking/repeat-1/samples.json",
+      "sha256": "6f89d5d7de74ab65d1606fc08268f51d71a60379f67742e62f09ae8e12f0489a"
+    },
+    {
+      "bytes": 3990,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-512B-pinned-nonblocking/repeat-1/metrics.json",
+      "sha256": "c8cebd9f63cb3f1096a87540dba422f32121cfc96265ddc73e49cf8f1b839cda"
+    },
+    {
+      "bytes": 1198,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-512B-pinned-nonblocking/repeat-1/microbenchmark.command.json",
+      "sha256": "15b6d3890626fea4055707745b9b47c6b7a477e664e392a07916ab35a3ef67ad"
+    },
+    {
+      "bytes": 4284,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-512B-pinned-nonblocking/repeat-1/microbenchmark.stderr",
+      "sha256": "46e6eaca67cfaeeb82e53ab9a3c3768d8b5ae54f7114df704d7f9b4b88827e75"
+    },
+    {
+      "bytes": 1436498,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-512B-pinned-nonblocking/repeat-1/microbenchmark.stdout",
+      "sha256": "9835b0ceea0bf305af21b8a1cd35da1d68fe05a9dc34172234c4764510b659c8"
+    },
+    {
+      "bytes": 2631280,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-512B-pinned-nonblocking/repeat-1/samples.json",
+      "sha256": "abdb85f6e6fbbe7b9528ef58d4a40a6e7fd82c057a8909d65c855b9053830c06"
+    },
+    {
+      "bytes": 3966,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-65536B-pageable-blocking/repeat-1/metrics.json",
+      "sha256": "633ff9ca42cf7428df634d058246a2d9ee205e0c38d1171aa9bd016e4e9561cf"
+    },
+    {
+      "bytes": 1202,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-65536B-pageable-blocking/repeat-1/microbenchmark.command.json",
+      "sha256": "c5849045057f5f158f4eb92eb652bf8de8c61e3d58ea3a4d0f86988c019637e1"
+    },
+    {
+      "bytes": 4258,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-65536B-pageable-blocking/repeat-1/microbenchmark.stderr",
+      "sha256": "96c2cc2220f385fb94d993805f0de84c209f73fd83e6bcf30a0d59d55d86aac0"
+    },
+    {
+      "bytes": 1577246,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-65536B-pageable-blocking/repeat-1/microbenchmark.stdout",
+      "sha256": "10882b9586a6e2360902cdcc7a9a49a610068b1734ba3b24c8804824741a38eb"
+    },
+    {
+      "bytes": 2889383,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-65536B-pageable-blocking/repeat-1/samples.json",
+      "sha256": "d0879024164bf9c0f6d9c4ebf59ae5500731205afd72d557d1d01b3cfb6c8f4a"
+    },
+    {
+      "bytes": 3975,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-65536B-pageable-nonblocking/repeat-1/metrics.json",
+      "sha256": "c36039c4469a31294fd5f0a1b93d90f8e4e4c05ace9e4c94e19a0b1d269bf430"
+    },
+    {
+      "bytes": 1206,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-65536B-pageable-nonblocking/repeat-1/microbenchmark.command.json",
+      "sha256": "1602c997c9d36c3b6d9b699c403ac916e9d7f3c9b9647dad99fcff877829b4e1"
+    },
+    {
+      "bytes": 4258,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-65536B-pageable-nonblocking/repeat-1/microbenchmark.stderr",
+      "sha256": "5f6bc5af16b94f1f379a48f7edefc6b99904a1d7fe5a771ee080d7559d9f67a5"
+    },
+    {
+      "bytes": 1373954,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-65536B-pageable-nonblocking/repeat-1/microbenchmark.stdout",
+      "sha256": "c93e9c90ee6fe894a7a17f3473abac0a8f94e5f3c5d927c7a7e276a98dfa2dc3"
+    },
+    {
+      "bytes": 2516751,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-65536B-pageable-nonblocking/repeat-1/samples.json",
+      "sha256": "9986b6a80e3301d06820ffdfe2965f53a3a6f5b2c054868a02fd5b26d9699580"
+    },
+    {
+      "bytes": 3995,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-65536B-pinned-blocking/repeat-1/metrics.json",
+      "sha256": "6e5b48e9f668c137123c2e8d96a084d27bf8346844c3d521299e85046d7e8055"
+    },
+    {
+      "bytes": 1197,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-65536B-pinned-blocking/repeat-1/microbenchmark.command.json",
+      "sha256": "9d199b32a3aa215dfe1ea6d5380ce5ad0c8128fb4563b6fcf1c63cdd5c8afe93"
+    },
+    {
+      "bytes": 4284,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-65536B-pinned-blocking/repeat-1/microbenchmark.stderr",
+      "sha256": "68078c7cb5d0d33f8ebb124832892f9ef1dc95f12b31b94aa177735dc3d21977"
+    },
+    {
+      "bytes": 1077271,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-65536B-pinned-blocking/repeat-1/microbenchmark.stdout",
+      "sha256": "b59e3f2fe15b70d4d86214bc840d07813ed08d59d55a3f480261526ebce57527"
+    },
+    {
+      "bytes": 1972683,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-65536B-pinned-blocking/repeat-1/samples.json",
+      "sha256": "d5b44fe89c6730188131f2e2b5aba7dba92b28e779479db47361fdbc8563d1a6"
+    },
+    {
+      "bytes": 4008,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-65536B-pinned-nonblocking/repeat-1/metrics.json",
+      "sha256": "5d64450938a9c620aab405952f4634aa0e48e98f0e4215c0d4517a6f5722ac5f"
+    },
+    {
+      "bytes": 1204,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-65536B-pinned-nonblocking/repeat-1/microbenchmark.command.json",
+      "sha256": "b821859bc8704f96d2695d4ffc6f436d1df893a8f44484277f76194c38597a36"
+    },
+    {
+      "bytes": 4284,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-65536B-pinned-nonblocking/repeat-1/microbenchmark.stderr",
+      "sha256": "2e9d7db93fbac56513ffb61134b72000820b10a6e58b2d87901de527033affb7"
+    },
+    {
+      "bytes": 1047696,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-65536B-pinned-nonblocking/repeat-1/microbenchmark.stdout",
+      "sha256": "67121831d3f8b15960200af8007bf0c65584117a85e5aec683d655af119c44af"
+    },
+    {
+      "bytes": 1918408,
+      "path": "toolkit-evidence/cases/interconnect-h2d-latency/physical-3-65536B-pinned-nonblocking/repeat-1/samples.json",
+      "sha256": "7ad6bce9ea29b73fba7f539d3daa20330704c64fa72a6d1cfb2ac6dceae5cb2b"
+    },
+    {
+      "bytes": 7265,
+      "path": "toolkit-evidence/cases/main_memory-bandwidth/metrics.json",
+      "sha256": "ce54b6392c65a95e6feab4cb6660fe39b07dc5ac2b2e86dc3d46f45d852ca777"
+    },
+    {
+      "bytes": 3934,
+      "path": "toolkit-evidence/cases/main_memory-bandwidth/physical-3-536870912B/repeat-1/metrics.json",
+      "sha256": "0ba3362e49e3356873b498d82f895fe40ae2fff36afee14a593bcac5d2b887fa"
+    },
+    {
+      "bytes": 1168,
+      "path": "toolkit-evidence/cases/main_memory-bandwidth/physical-3-536870912B/repeat-1/microbenchmark.command.json",
+      "sha256": "6efd9516518038d53e40d9160b892fc7f6cb916a7ea66039f80a868c03f6f0fd"
+    },
+    {
+      "bytes": 4258,
+      "path": "toolkit-evidence/cases/main_memory-bandwidth/physical-3-536870912B/repeat-1/microbenchmark.stderr",
+      "sha256": "cc1c50c71ea4781dcbb13ee0080428b16d433a8e0ca3b34fa8ccfa8047a521ea"
+    },
+    {
+      "bytes": 1385,
+      "path": "toolkit-evidence/cases/main_memory-bandwidth/physical-3-536870912B/repeat-1/microbenchmark.stdout",
+      "sha256": "43e3ee8005f8f4d90ff1aec7bbe19cc445ba222e62c94d676158802d67a2e6af"
+    },
+    {
+      "bytes": 1982,
+      "path": "toolkit-evidence/cases/main_memory-bandwidth/physical-3-536870912B/repeat-1/samples.json",
+      "sha256": "6d5c08154bd421de22ee85e4a35870fd322bbc2931cbedf079662cba3dcedb6e"
+    },
+    {
+      "bytes": 6475,
+      "path": "toolkit-evidence/cases/main_memory-capacity/metrics.json",
+      "sha256": "e8c29f7b4eeeefb099936a12bed7f6610258e7fb533485aa44f4a723a0296126"
+    },
+    {
+      "bytes": 3585,
+      "path": "toolkit-evidence/cases/main_memory-capacity/physical-3/repeat-1/metrics.json",
+      "sha256": "f15dd3fbebe42d03e6d06b1c4e23276fc674003498cf1d14909a98b1fb7b7007"
+    },
+    {
+      "bytes": 844,
+      "path": "toolkit-evidence/cases/main_memory-capacity/physical-3/repeat-1/microbenchmark.command.json",
+      "sha256": "7c93a811069c5478284b4a1e10f94b26978b84796366b4a23d94b57fb2d48d35"
+    },
+    {
+      "bytes": 0,
+      "path": "toolkit-evidence/cases/main_memory-capacity/physical-3/repeat-1/microbenchmark.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 2856,
+      "path": "toolkit-evidence/cases/main_memory-capacity/physical-3/repeat-1/microbenchmark.stdout",
+      "sha256": "417bb1e35e2d4981bdc88d38cbc706e137f890d54da3d1ae011eba6c1902cc70"
+    },
+    {
+      "bytes": 399,
+      "path": "toolkit-evidence/diagnostics/coverage.json",
+      "sha256": "1607adb92dbc7feb86c7c8ebb54cd1ec177741a50e04a21aa60b633397f242dc"
+    },
+    {
+      "bytes": 742,
+      "path": "toolkit-evidence/environment/native-inventory.command.json",
+      "sha256": "79a19b7386263b9e22c7141641a0e54fdb23c3fd9658b9d7dd0d5588738b18a6"
+    },
+    {
+      "bytes": 121,
+      "path": "toolkit-evidence/environment/native-inventory.stderr",
+      "sha256": "49899d503c2613734388787113399bf404e4e3dc370746e3c4ed91fb05a4acf9"
+    },
+    {
+      "bytes": 62,
+      "path": "toolkit-evidence/environment/native-inventory.stdout",
+      "sha256": "4c7bc2bf9b7b558edea6ec04791fbf4c0c68be8550867969b4ac635a6c2d113c"
+    },
+    {
+      "bytes": 756,
+      "path": "toolkit-evidence/environment/test_dma/help.command.json",
+      "sha256": "8adc433afb6e0c8f2f59b8ffdc9c650cba7a4fb3a4af956ddbfcb6692b5a1ea5"
+    },
+    {
+      "bytes": 2065,
+      "path": "toolkit-evidence/environment/test_dma/help.stderr",
+      "sha256": "650d8a610bb531c666566575ba9e208795b06c8a45b0ef526d3cb7cbe451e7b9"
+    },
+    {
+      "bytes": 0,
+      "path": "toolkit-evidence/environment/test_dma/help.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 780,
+      "path": "toolkit-evidence/environment/test_memcpy_peer/help.command.json",
+      "sha256": "fb999db2ac5d24c710ee467c2decafd75bcaff80bc924c5cee22deae07fd4ce3"
+    },
+    {
+      "bytes": 1088,
+      "path": "toolkit-evidence/environment/test_memcpy_peer/help.stderr",
+      "sha256": "88c43e3211443c7db5040c42c5938785fe4bbc5272a8aed2ef622be535a64a02"
+    },
+    {
+      "bytes": 0,
+      "path": "toolkit-evidence/environment/test_memcpy_peer/help.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 762,
+      "path": "toolkit-evidence/environment/xprofiler/help.command.json",
+      "sha256": "139ddd3f3b4b5e3683146cc958d262d052b3a3748dc3000b0541f077015b78cb"
+    },
+    {
+      "bytes": 0,
+      "path": "toolkit-evidence/environment/xprofiler/help.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 1581,
+      "path": "toolkit-evidence/environment/xprofiler/help.stdout",
+      "sha256": "6f07ab084acea24b61c288ef170c5f6d5f5200cce4b3ce8925dd78a9e7493928"
+    },
+    {
+      "bytes": 1834,
+      "path": "toolkit-evidence/environment.json",
+      "sha256": "55d3707bd31b4b719089385fe735396d5c6a0aeef54e919ed12abf6b474af199"
+    },
+    {
+      "bytes": 958,
+      "path": "toolkit-evidence/health/post.json",
+      "sha256": "d272d7ae2c44f681d9d4e051986333677b03daaf64171ce8a459d6d0cc91e461"
+    },
+    {
+      "bytes": 958,
+      "path": "toolkit-evidence/health/pre.json",
+      "sha256": "82526034ad8321d3b3bb9b4a7c7c52f89ec952ab0cb8e9187e20592cbc8821a1"
+    },
+    {
+      "bytes": 364851,
+      "path": "toolkit-evidence/manifest.json",
+      "sha256": "e32c69dad49ca18ab76f21e83de7585d0f331de40fa1201f55645469d64d8c7d"
+    },
+    {
+      "bytes": 209132,
+      "path": "toolkit-evidence/monitor/samples.jsonl",
+      "sha256": "4b34f9031443abef4b1bf0d24d80c10435bc40d4d04f80ab96ff7cb7f7efeaaf"
+    },
+    {
+      "bytes": 3477834,
+      "path": "toolkit-evidence/monitor/samples.raw.jsonl",
+      "sha256": "3a17ceaff05b76375d6d741079644699f9430fc5b5dc01514e78f1eea7c5e93e"
+    },
+    {
+      "bytes": 10442,
+      "path": "toolkit-evidence/monitor/summary.json",
+      "sha256": "aec89b2ee7b37cf91fcc5535f01c138bc9b11f6bedc1d124bc5e373bb19eeaf8"
+    },
+    {
+      "bytes": 6150,
+      "path": "toolkit-evidence/provenance.json",
+      "sha256": "1e12ba7a50c6cd24a7f7ccfa1f46599554e8304d315c237f6be68dd80276281b"
+    },
+    {
+      "bytes": 938,
+      "path": "toolkit-evidence/runtime-bindings.json",
+      "sha256": "c6385639e9cdbad3707833907a54e9387ffa51b09b5776357e53edb406eae6c9"
+    },
+    {
+      "bytes": 2225,
+      "path": "toolkit-evidence/toolkit-contract.json",
+      "sha256": "b1eaec29dc84b6824f7e79c54910ad580b49aca1492a5692d4b1e5e7c52cbec3"
+    },
+    {
+      "bytes": 2727,
+      "path": "toolkit-evidence/topology/host-topology.json",
+      "sha256": "afe0c57d55370170fe852d9c08c7da056573ae591ad53cee3a5d1d011aa54915"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "all regular files under run root except this index"
+}

@@ -1,0 +1,12 @@
+{
+  "command": [
+    "python3",
+    "/tmp/p800-finalize-toolkit-delivery.py",
+    "--p2p-run",
+    "20260929T043153Z-04c46ed7",
+    "--integration-run",
+    "20260929T043131Z-591f8f07"
+  ],
+  "returncode": 0,
+  "scope": "completed run audit and scoped archive creation"
+}

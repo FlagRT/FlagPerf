@@ -1,0 +1,125 @@
+{
+  "bindings": [
+    {
+      "container_node": "/dev/xpu1",
+      "device_major": 195,
+      "device_minor": 1,
+      "driver": "5.0.21.47",
+      "foreign_handles_authorized": true,
+      "foreign_occupancy_observed": true,
+      "free_memory_mib": 77876,
+      "host_device_node": "/dev/xpu1",
+      "host_physical_id": 3,
+      "native_id": 0,
+      "pci_bdf": "0000:2e:00.0",
+      "power_w": 130.0,
+      "processes_empty": false,
+      "serial": "02K15K0263D002L7",
+      "temperature_c": 48.0,
+      "total_memory_mib": 98304,
+      "uncorrectable_ecc_counts": [
+        0,
+        0
+      ],
+      "used_memory_mib": 20428,
+      "utilization_percent": 100,
+      "uuid": "9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "xpu_smi_runtime": "10.2"
+    }
+  ],
+  "commands": [
+    {
+      "command": [
+        "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+        "--mode",
+        "gemm",
+        "--src",
+        "0",
+        "--src-pci",
+        "00000000:2e:00.0",
+        "--samples",
+        "25",
+        "--warmup",
+        "2",
+        "--minimum-seconds",
+        "0.0",
+        "--dimension",
+        "128",
+        "--dtype",
+        "INT8"
+      ],
+      "duration_s": 1.4679130064323545,
+      "finished_at": "2026-09-29T04:31:44.919394Z",
+      "finished_monotonic_s": 4497441.839288998,
+      "returncode": 0,
+      "started_at": "2026-09-29T04:31:43.451506Z",
+      "started_monotonic_s": 4497440.371375992,
+      "stderr": {
+        "bytes": 4506,
+        "path": "cases/computation-INT8/physical-3/repeat-1/microbenchmark.stderr",
+        "sha256": "01d293e8b52b15a39dfbd94a4d3d1599152983cb13d37366c0e82a1cb8197f19"
+      },
+      "stdout": {
+        "bytes": 553,
+        "path": "cases/computation-INT8/physical-3/repeat-1/microbenchmark.stdout",
+        "sha256": "327dcf9bf6581ee74a2da281b00e5cf65148e497710aa16565ee8c2baed4029d"
+      },
+      "timed_out": false,
+      "timeout_s": 180
+    }
+  ],
+  "diagnosis_status": "not-supported",
+  "duration_s": 1.4679130064323545,
+  "invalid_monitor_samples": 0,
+  "measurement_status": "passed",
+  "measurement_window": {
+    "finished_monotonic_s": 4497441.778461494,
+    "role": "measurement",
+    "started_monotonic_s": 4497441.75956483
+  },
+  "metrics": [
+    {
+      "api_calls_per_sample": 1,
+      "async_chunk_bytes": 0,
+      "checked_values": 16384,
+      "compute_semantics": "INT8 inputs/TGEMM via XBLAS fc_fusion; maxima=127; alpha=1 beta=0; LINEAR; no bias; FP32 output",
+      "correctness": true,
+      "field": "P800_METRIC/samples_ns",
+      "formula": "2*M*N*K / median_elapsed_ns / 1000",
+      "max_ns": 12825941,
+      "median_ns": 12490,
+      "min_ns": 12309,
+      "physical_device_id": 3,
+      "point": {
+        "dtype": "INT8",
+        "mode": "gemm",
+        "source": 3
+      },
+      "repetition": 1,
+      "sample_count": 25,
+      "sample_cv": 3.4906399864375444,
+      "scope": "completed native API operation; not theoretical peak or device-only kernel time",
+      "source": "cases/computation-INT8/physical-3/repeat-1/microbenchmark.stdout",
+      "source_kind": "native-xblas",
+      "stability_status": "unstable",
+      "submission_scope": "single native operation",
+      "timer": "CLOCK_MONOTONIC completed API operation including synchronization",
+      "unit": "TOPS",
+      "value": 0.33581297037630103
+    }
+  ],
+  "monitor_sample_counts": {
+    "3": 0
+  },
+  "monitoring_status": "partial",
+  "point": {
+    "dtype": "INT8",
+    "mode": "gemm",
+    "source": 3
+  },
+  "repetition": 1,
+  "schema_version": 1,
+  "status": "partial",
+  "sweep_scope": "explicit physical cards/mode/payload; native operation",
+  "target": "physical-3/repeat-1"
+}

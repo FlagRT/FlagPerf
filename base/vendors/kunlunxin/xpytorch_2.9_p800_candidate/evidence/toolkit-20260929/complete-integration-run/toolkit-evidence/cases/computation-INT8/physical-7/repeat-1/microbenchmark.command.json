@@ -1,0 +1,39 @@
+{
+  "command": [
+    "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+    "--mode",
+    "gemm",
+    "--src",
+    "1",
+    "--src-pci",
+    "00000000:bb:00.0",
+    "--samples",
+    "25",
+    "--warmup",
+    "2",
+    "--minimum-seconds",
+    "0.0",
+    "--dimension",
+    "128",
+    "--dtype",
+    "INT8"
+  ],
+  "duration_s": 0.11566886492073536,
+  "finished_at": "2026-09-29T04:31:45.037487Z",
+  "finished_monotonic_s": 4497441.957380433,
+  "returncode": 0,
+  "started_at": "2026-09-29T04:31:44.921837Z",
+  "started_monotonic_s": 4497441.841711568,
+  "stderr": {
+    "bytes": 4506,
+    "path": "cases/computation-INT8/physical-7/repeat-1/microbenchmark.stderr",
+    "sha256": "b44e916f061957b300eb43accbc811a56a04488442809a6a7cfb1f066322fbcd"
+  },
+  "stdout": {
+    "bytes": 547,
+    "path": "cases/computation-INT8/physical-7/repeat-1/microbenchmark.stdout",
+    "sha256": "51e7fb4bc13b631e6a8da927d1c086792617688f3773ac4b297493b358eeb28f"
+  },
+  "timed_out": false,
+  "timeout_s": 180
+}

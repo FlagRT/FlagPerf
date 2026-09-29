@@ -1,0 +1,691 @@
+{
+  "case_coverage": {
+    "computation-BF16": [
+      {
+        "measurement": "passed",
+        "monitoring": "passed",
+        "run_id": "20260929T041155Z-e100eb5e",
+        "settings": {
+          "allow_busy_devices": true,
+          "allow_candidate_runtime": true,
+          "async_chunk_bytes": 1048576,
+          "command_timeout": 180,
+          "matrix_size": 2048,
+          "minimum_seconds": 6.0,
+          "payload_bytes": 536870912,
+          "pinned_api": "register",
+          "privilege_command": "",
+          "repeat": 1,
+          "samples": 50,
+          "smoke": false,
+          "warmup": 5
+        },
+        "target_count": 1
+      },
+      {
+        "measurement": "passed",
+        "monitoring": "passed",
+        "run_id": "20260929T042026Z-009e799d",
+        "settings": {
+          "allow_busy_devices": true,
+          "allow_candidate_runtime": true,
+          "async_chunk_bytes": 1048576,
+          "command_timeout": 180,
+          "matrix_size": 2048,
+          "minimum_seconds": 6.0,
+          "payload_bytes": 536870912,
+          "pinned_api": "register",
+          "privilege_command": "",
+          "repeat": 5,
+          "samples": 50,
+          "smoke": false,
+          "warmup": 5
+        },
+        "target_count": 5
+      },
+      {
+        "measurement": "passed",
+        "monitoring": "partial",
+        "run_id": "20260929T043131Z-591f8f07",
+        "settings": {
+          "allow_busy_devices": true,
+          "allow_candidate_runtime": true,
+          "async_chunk_bytes": 1048576,
+          "command_timeout": 180,
+          "matrix_size": 128,
+          "minimum_seconds": 0.0,
+          "payload_bytes": 1048576,
+          "pinned_api": "register",
+          "privilege_command": "",
+          "repeat": 1,
+          "samples": 25,
+          "smoke": true,
+          "warmup": 2
+        },
+        "target_count": 2
+      }
+    ],
+    "computation-FP16": [
+      {
+        "measurement": "passed",
+        "monitoring": "passed",
+        "run_id": "20260929T041155Z-e100eb5e",
+        "settings": {
+          "allow_busy_devices": true,
+          "allow_candidate_runtime": true,
+          "async_chunk_bytes": 1048576,
+          "command_timeout": 180,
+          "matrix_size": 2048,
+          "minimum_seconds": 6.0,
+          "payload_bytes": 536870912,
+          "pinned_api": "register",
+          "privilege_command": "",
+          "repeat": 1,
+          "samples": 50,
+          "smoke": false,
+          "warmup": 5
+        },
+        "target_count": 1
+      },
+      {
+        "measurement": "passed",
+        "monitoring": "passed",
+        "run_id": "20260929T042026Z-009e799d",
+        "settings": {
+          "allow_busy_devices": true,
+          "allow_candidate_runtime": true,
+          "async_chunk_bytes": 1048576,
+          "command_timeout": 180,
+          "matrix_size": 2048,
+          "minimum_seconds": 6.0,
+          "payload_bytes": 536870912,
+          "pinned_api": "register",
+          "privilege_command": "",
+          "repeat": 5,
+          "samples": 50,
+          "smoke": false,
+          "warmup": 5
+        },
+        "target_count": 5
+      },
+      {
+        "measurement": "passed",
+        "monitoring": "partial",
+        "run_id": "20260929T043131Z-591f8f07",
+        "settings": {
+          "allow_busy_devices": true,
+          "allow_candidate_runtime": true,
+          "async_chunk_bytes": 1048576,
+          "command_timeout": 180,
+          "matrix_size": 128,
+          "minimum_seconds": 0.0,
+          "payload_bytes": 1048576,
+          "pinned_api": "register",
+          "privilege_command": "",
+          "repeat": 1,
+          "samples": 25,
+          "smoke": true,
+          "warmup": 2
+        },
+        "target_count": 2
+      }
+    ],
+    "computation-FP32": [
+      {
+        "measurement": "passed",
+        "monitoring": "passed",
+        "run_id": "20260929T041155Z-e100eb5e",
+        "settings": {
+          "allow_busy_devices": true,
+          "allow_candidate_runtime": true,
+          "async_chunk_bytes": 1048576,
+          "command_timeout": 180,
+          "matrix_size": 2048,
+          "minimum_seconds": 6.0,
+          "payload_bytes": 536870912,
+          "pinned_api": "register",
+          "privilege_command": "",
+          "repeat": 1,
+          "samples": 50,
+          "smoke": false,
+          "warmup": 5
+        },
+        "target_count": 1
+      },
+      {
+        "measurement": "passed",
+        "monitoring": "passed",
+        "run_id": "20260929T042026Z-009e799d",
+        "settings": {
+          "allow_busy_devices": true,
+          "allow_candidate_runtime": true,
+          "async_chunk_bytes": 1048576,
+          "command_timeout": 180,
+          "matrix_size": 2048,
+          "minimum_seconds": 6.0,
+          "payload_bytes": 536870912,
+          "pinned_api": "register",
+          "privilege_command": "",
+          "repeat": 5,
+          "samples": 50,
+          "smoke": false,
+          "warmup": 5
+        },
+        "target_count": 5
+      },
+      {
+        "measurement": "passed",
+        "monitoring": "partial",
+        "run_id": "20260929T043131Z-591f8f07",
+        "settings": {
+          "allow_busy_devices": true,
+          "allow_candidate_runtime": true,
+          "async_chunk_bytes": 1048576,
+          "command_timeout": 180,
+          "matrix_size": 128,
+          "minimum_seconds": 0.0,
+          "payload_bytes": 1048576,
+          "pinned_api": "register",
+          "privilege_command": "",
+          "repeat": 1,
+          "samples": 25,
+          "smoke": true,
+          "warmup": 2
+        },
+        "target_count": 2
+      }
+    ],
+    "computation-INT8": [
+      {
+        "measurement": "passed",
+        "monitoring": "passed",
+        "run_id": "20260929T041155Z-e100eb5e",
+        "settings": {
+          "allow_busy_devices": true,
+          "allow_candidate_runtime": true,
+          "async_chunk_bytes": 1048576,
+          "command_timeout": 180,
+          "matrix_size": 2048,
+          "minimum_seconds": 6.0,
+          "payload_bytes": 536870912,
+          "pinned_api": "register",
+          "privilege_command": "",
+          "repeat": 1,
+          "samples": 50,
+          "smoke": false,
+          "warmup": 5
+        },
+        "target_count": 1
+      },
+      {
+        "measurement": "passed",
+        "monitoring": "passed",
+        "run_id": "20260929T042026Z-009e799d",
+        "settings": {
+          "allow_busy_devices": true,
+          "allow_candidate_runtime": true,
+          "async_chunk_bytes": 1048576,
+          "command_timeout": 180,
+          "matrix_size": 2048,
+          "minimum_seconds": 6.0,
+          "payload_bytes": 536870912,
+          "pinned_api": "register",
+          "privilege_command": "",
+          "repeat": 5,
+          "samples": 50,
+          "smoke": false,
+          "warmup": 5
+        },
+        "target_count": 5
+      },
+      {
+        "measurement": "passed",
+        "monitoring": "partial",
+        "run_id": "20260929T043131Z-591f8f07",
+        "settings": {
+          "allow_busy_devices": true,
+          "allow_candidate_runtime": true,
+          "async_chunk_bytes": 1048576,
+          "command_timeout": 180,
+          "matrix_size": 128,
+          "minimum_seconds": 0.0,
+          "payload_bytes": 1048576,
+          "pinned_api": "register",
+          "privilege_command": "",
+          "repeat": 1,
+          "samples": 25,
+          "smoke": true,
+          "warmup": 2
+        },
+        "target_count": 2
+      }
+    ],
+    "interconnect-P2P_intraserver": [
+      {
+        "measurement": "passed",
+        "monitoring": "passed",
+        "run_id": "20260929T043153Z-04c46ed7",
+        "settings": {
+          "allow_busy_devices": true,
+          "allow_candidate_runtime": true,
+          "async_chunk_bytes": 1048576,
+          "command_timeout": 180,
+          "matrix_size": 2048,
+          "minimum_seconds": 6.0,
+          "payload_bytes": 536870912,
+          "pinned_api": "register",
+          "privilege_command": "",
+          "repeat": 5,
+          "samples": 50,
+          "smoke": false,
+          "warmup": 5
+        },
+        "target_count": 60
+      },
+      {
+        "measurement": "passed",
+        "monitoring": "partial",
+        "run_id": "20260929T043131Z-591f8f07",
+        "settings": {
+          "allow_busy_devices": true,
+          "allow_candidate_runtime": true,
+          "async_chunk_bytes": 1048576,
+          "command_timeout": 180,
+          "matrix_size": 128,
+          "minimum_seconds": 0.0,
+          "payload_bytes": 1048576,
+          "pinned_api": "register",
+          "privilege_command": "",
+          "repeat": 1,
+          "samples": 25,
+          "smoke": true,
+          "warmup": 2
+        },
+        "target_count": 2
+      }
+    ],
+    "interconnect-P2P_intraserver-latency": [
+      {
+        "measurement": "passed",
+        "monitoring": "passed",
+        "run_id": "20260929T043153Z-04c46ed7",
+        "settings": {
+          "allow_busy_devices": true,
+          "allow_candidate_runtime": true,
+          "async_chunk_bytes": 1048576,
+          "command_timeout": 180,
+          "matrix_size": 2048,
+          "minimum_seconds": 6.0,
+          "payload_bytes": 536870912,
+          "pinned_api": "register",
+          "privilege_command": "",
+          "repeat": 5,
+          "samples": 50,
+          "smoke": false,
+          "warmup": 5
+        },
+        "target_count": 30
+      },
+      {
+        "measurement": "passed",
+        "monitoring": "partial",
+        "run_id": "20260929T043131Z-591f8f07",
+        "settings": {
+          "allow_busy_devices": true,
+          "allow_candidate_runtime": true,
+          "async_chunk_bytes": 1048576,
+          "command_timeout": 180,
+          "matrix_size": 128,
+          "minimum_seconds": 0.0,
+          "payload_bytes": 1048576,
+          "pinned_api": "register",
+          "privilege_command": "",
+          "repeat": 1,
+          "samples": 25,
+          "smoke": true,
+          "warmup": 2
+        },
+        "target_count": 1
+      }
+    ],
+    "interconnect-d2h": [
+      {
+        "measurement": "passed",
+        "monitoring": "passed",
+        "run_id": "20260929T041155Z-e100eb5e",
+        "settings": {
+          "allow_busy_devices": true,
+          "allow_candidate_runtime": true,
+          "async_chunk_bytes": 1048576,
+          "command_timeout": 180,
+          "matrix_size": 2048,
+          "minimum_seconds": 6.0,
+          "payload_bytes": 536870912,
+          "pinned_api": "register",
+          "privilege_command": "",
+          "repeat": 1,
+          "samples": 50,
+          "smoke": false,
+          "warmup": 5
+        },
+        "target_count": 4
+      },
+      {
+        "measurement": "passed",
+        "monitoring": "passed",
+        "run_id": "20260929T042026Z-009e799d",
+        "settings": {
+          "allow_busy_devices": true,
+          "allow_candidate_runtime": true,
+          "async_chunk_bytes": 1048576,
+          "command_timeout": 180,
+          "matrix_size": 2048,
+          "minimum_seconds": 6.0,
+          "payload_bytes": 536870912,
+          "pinned_api": "register",
+          "privilege_command": "",
+          "repeat": 5,
+          "samples": 50,
+          "smoke": false,
+          "warmup": 5
+        },
+        "target_count": 20
+      },
+      {
+        "measurement": "passed",
+        "monitoring": "partial",
+        "run_id": "20260929T043131Z-591f8f07",
+        "settings": {
+          "allow_busy_devices": true,
+          "allow_candidate_runtime": true,
+          "async_chunk_bytes": 1048576,
+          "command_timeout": 180,
+          "matrix_size": 128,
+          "minimum_seconds": 0.0,
+          "payload_bytes": 1048576,
+          "pinned_api": "register",
+          "privilege_command": "",
+          "repeat": 1,
+          "samples": 25,
+          "smoke": true,
+          "warmup": 2
+        },
+        "target_count": 8
+      }
+    ],
+    "interconnect-d2h-latency": [
+      {
+        "measurement": "passed",
+        "monitoring": "passed",
+        "run_id": "20260929T041155Z-e100eb5e",
+        "settings": {
+          "allow_busy_devices": true,
+          "allow_candidate_runtime": true,
+          "async_chunk_bytes": 1048576,
+          "command_timeout": 180,
+          "matrix_size": 2048,
+          "minimum_seconds": 6.0,
+          "payload_bytes": 536870912,
+          "pinned_api": "register",
+          "privilege_command": "",
+          "repeat": 1,
+          "samples": 50,
+          "smoke": false,
+          "warmup": 5
+        },
+        "target_count": 16
+      },
+      {
+        "measurement": "passed",
+        "monitoring": "partial",
+        "run_id": "20260929T043131Z-591f8f07",
+        "settings": {
+          "allow_busy_devices": true,
+          "allow_candidate_runtime": true,
+          "async_chunk_bytes": 1048576,
+          "command_timeout": 180,
+          "matrix_size": 128,
+          "minimum_seconds": 0.0,
+          "payload_bytes": 1048576,
+          "pinned_api": "register",
+          "privilege_command": "",
+          "repeat": 1,
+          "samples": 25,
+          "smoke": true,
+          "warmup": 2
+        },
+        "target_count": 32
+      }
+    ],
+    "interconnect-h2d": [
+      {
+        "measurement": "passed",
+        "monitoring": "passed",
+        "run_id": "20260929T041155Z-e100eb5e",
+        "settings": {
+          "allow_busy_devices": true,
+          "allow_candidate_runtime": true,
+          "async_chunk_bytes": 1048576,
+          "command_timeout": 180,
+          "matrix_size": 2048,
+          "minimum_seconds": 6.0,
+          "payload_bytes": 536870912,
+          "pinned_api": "register",
+          "privilege_command": "",
+          "repeat": 1,
+          "samples": 50,
+          "smoke": false,
+          "warmup": 5
+        },
+        "target_count": 4
+      },
+      {
+        "measurement": "passed",
+        "monitoring": "passed",
+        "run_id": "20260929T042026Z-009e799d",
+        "settings": {
+          "allow_busy_devices": true,
+          "allow_candidate_runtime": true,
+          "async_chunk_bytes": 1048576,
+          "command_timeout": 180,
+          "matrix_size": 2048,
+          "minimum_seconds": 6.0,
+          "payload_bytes": 536870912,
+          "pinned_api": "register",
+          "privilege_command": "",
+          "repeat": 5,
+          "samples": 50,
+          "smoke": false,
+          "warmup": 5
+        },
+        "target_count": 20
+      },
+      {
+        "measurement": "passed",
+        "monitoring": "partial",
+        "run_id": "20260929T043131Z-591f8f07",
+        "settings": {
+          "allow_busy_devices": true,
+          "allow_candidate_runtime": true,
+          "async_chunk_bytes": 1048576,
+          "command_timeout": 180,
+          "matrix_size": 128,
+          "minimum_seconds": 0.0,
+          "payload_bytes": 1048576,
+          "pinned_api": "register",
+          "privilege_command": "",
+          "repeat": 1,
+          "samples": 25,
+          "smoke": true,
+          "warmup": 2
+        },
+        "target_count": 8
+      }
+    ],
+    "interconnect-h2d-latency": [
+      {
+        "measurement": "passed",
+        "monitoring": "passed",
+        "run_id": "20260929T041155Z-e100eb5e",
+        "settings": {
+          "allow_busy_devices": true,
+          "allow_candidate_runtime": true,
+          "async_chunk_bytes": 1048576,
+          "command_timeout": 180,
+          "matrix_size": 2048,
+          "minimum_seconds": 6.0,
+          "payload_bytes": 536870912,
+          "pinned_api": "register",
+          "privilege_command": "",
+          "repeat": 1,
+          "samples": 50,
+          "smoke": false,
+          "warmup": 5
+        },
+        "target_count": 16
+      },
+      {
+        "measurement": "passed",
+        "monitoring": "partial",
+        "run_id": "20260929T043131Z-591f8f07",
+        "settings": {
+          "allow_busy_devices": true,
+          "allow_candidate_runtime": true,
+          "async_chunk_bytes": 1048576,
+          "command_timeout": 180,
+          "matrix_size": 128,
+          "minimum_seconds": 0.0,
+          "payload_bytes": 1048576,
+          "pinned_api": "register",
+          "privilege_command": "",
+          "repeat": 1,
+          "samples": 25,
+          "smoke": true,
+          "warmup": 2
+        },
+        "target_count": 32
+      }
+    ],
+    "main_memory-bandwidth": [
+      {
+        "measurement": "passed",
+        "monitoring": "passed",
+        "run_id": "20260929T041155Z-e100eb5e",
+        "settings": {
+          "allow_busy_devices": true,
+          "allow_candidate_runtime": true,
+          "async_chunk_bytes": 1048576,
+          "command_timeout": 180,
+          "matrix_size": 2048,
+          "minimum_seconds": 6.0,
+          "payload_bytes": 536870912,
+          "pinned_api": "register",
+          "privilege_command": "",
+          "repeat": 1,
+          "samples": 50,
+          "smoke": false,
+          "warmup": 5
+        },
+        "target_count": 1
+      },
+      {
+        "measurement": "passed",
+        "monitoring": "passed",
+        "run_id": "20260929T042026Z-009e799d",
+        "settings": {
+          "allow_busy_devices": true,
+          "allow_candidate_runtime": true,
+          "async_chunk_bytes": 1048576,
+          "command_timeout": 180,
+          "matrix_size": 2048,
+          "minimum_seconds": 6.0,
+          "payload_bytes": 536870912,
+          "pinned_api": "register",
+          "privilege_command": "",
+          "repeat": 5,
+          "samples": 50,
+          "smoke": false,
+          "warmup": 5
+        },
+        "target_count": 5
+      },
+      {
+        "measurement": "passed",
+        "monitoring": "partial",
+        "run_id": "20260929T043131Z-591f8f07",
+        "settings": {
+          "allow_busy_devices": true,
+          "allow_candidate_runtime": true,
+          "async_chunk_bytes": 1048576,
+          "command_timeout": 180,
+          "matrix_size": 128,
+          "minimum_seconds": 0.0,
+          "payload_bytes": 1048576,
+          "pinned_api": "register",
+          "privilege_command": "",
+          "repeat": 1,
+          "samples": 25,
+          "smoke": true,
+          "warmup": 2
+        },
+        "target_count": 2
+      }
+    ],
+    "main_memory-capacity": [
+      {
+        "measurement": "passed",
+        "monitoring": "passed",
+        "run_id": "20260929T041155Z-e100eb5e",
+        "settings": {
+          "allow_busy_devices": true,
+          "allow_candidate_runtime": true,
+          "async_chunk_bytes": 1048576,
+          "command_timeout": 180,
+          "matrix_size": 2048,
+          "minimum_seconds": 6.0,
+          "payload_bytes": 536870912,
+          "pinned_api": "register",
+          "privilege_command": "",
+          "repeat": 1,
+          "samples": 50,
+          "smoke": false,
+          "warmup": 5
+        },
+        "target_count": 1
+      },
+      {
+        "measurement": "passed",
+        "monitoring": "passed",
+        "run_id": "20260929T043131Z-591f8f07",
+        "settings": {
+          "allow_busy_devices": true,
+          "allow_candidate_runtime": true,
+          "async_chunk_bytes": 1048576,
+          "command_timeout": 180,
+          "matrix_size": 128,
+          "minimum_seconds": 0.0,
+          "payload_bytes": 1048576,
+          "pinned_api": "register",
+          "privilege_command": "",
+          "repeat": 1,
+          "samples": 25,
+          "smoke": true,
+          "warmup": 2
+        },
+        "target_count": 2
+      }
+    ]
+  },
+  "diagnosis_status": "not-supported",
+  "formal_qualification": false,
+  "limits": [
+    "shared-card exploratory data",
+    "host synchronized API timing",
+    "INT8 fc_fusion FP32 output",
+    "pinned async chunked payload",
+    "D2D workload differs from reference",
+    "Base two/eight-card gates unchanged"
+  ],
+  "schema_version": 1,
+  "status": "functionally-verified"
+}

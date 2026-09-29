@@ -1,0 +1,24 @@
+{
+  "command": [
+    "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/profiler/xprofiler",
+    "-h"
+  ],
+  "duration_s": 0.008677088655531406,
+  "finished_at": "2026-09-29T04:31:36.622873Z",
+  "finished_monotonic_s": 4497433.542739079,
+  "returncode": 0,
+  "started_at": "2026-09-29T04:31:36.614198Z",
+  "started_monotonic_s": 4497433.534061991,
+  "stderr": {
+    "bytes": 0,
+    "path": "environment/xprofiler/help.stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 1581,
+    "path": "environment/xprofiler/help.stdout",
+    "sha256": "6f07ab084acea24b61c288ef170c5f6d5f5200cce4b3ce8925dd78a9e7493928"
+  },
+  "timed_out": false,
+  "timeout_s": 15
+}

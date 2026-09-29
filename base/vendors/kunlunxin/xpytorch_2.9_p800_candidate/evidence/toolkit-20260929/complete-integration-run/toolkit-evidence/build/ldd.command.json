@@ -1,0 +1,24 @@
+{
+  "command": [
+    "ldd",
+    "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench"
+  ],
+  "duration_s": 0.017614210955798626,
+  "finished_at": "2026-09-29T04:31:38.460172Z",
+  "finished_monotonic_s": 4497435.380049851,
+  "returncode": 0,
+  "started_at": "2026-09-29T04:31:38.442564Z",
+  "started_monotonic_s": 4497435.36243564,
+  "stderr": {
+    "bytes": 0,
+    "path": "build/ldd.stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 1449,
+    "path": "build/ldd.stdout",
+    "sha256": "2742397de73fc2414feb2a5f3172d99cee614d81e72906be9f2da14a119ceed7"
+  },
+  "timed_out": false,
+  "timeout_s": 15
+}

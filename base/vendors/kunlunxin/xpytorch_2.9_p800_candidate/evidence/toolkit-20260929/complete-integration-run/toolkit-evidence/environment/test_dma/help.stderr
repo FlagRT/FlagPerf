@@ -1,0 +1,47 @@
+NAME
+    test_dma - Performance DMA test
+
+SYNOPSIS
+    test_dma [--hbm] [--l3] [--addr <address>] [--no-integrity-check]
+             [--loop <loop_count>] [-hv] <dev_id> <size>
+
+DESCRIPTION
+    Perform the DMA copy-in/copy-out test. The basic test process is DMA <size> bytes from
+    cpu memory A into XPU memory B and then back into cpu memory C. DMA speed will be
+    recored and integrity check is performed if --no-integrity-check option is not set.
+    This whole process will be executed in <loop_count> interations.
+
+OPTIONS
+    --addr <address>  Specify the address of XPU memory B, if this option is not provided,
+                      memory B will be malloced on given test memory type.
+
+    --hbm  Set test memory type to HBM. If --addr is provided, this is ignored. If neither 
+           --hbm nor --l3 is set, use HBM as the default type.
+
+    --l3  Set test memory type to L3. If --addr is provided, this is ignored.
+
+    --no-integrity-check  Do no integrity check and move to next test iteration quickly.
+
+    --loop <loop_count>  Do <loop_count> iteration of DMA test in total, 1 if not set.
+
+    --value <value>  Content value, 0xA or 0x5...
+
+    --transparent-hugepage <1|0>  Use transparent hugepage to allocate continuous chunks of
+                                  memory when possible, default is 1.
+
+    --host-register <1|0> Register host memory that is page-locked and accessible to the device,
+                                  default is 1.
+
+    --host-alloc <1|0> Malloc host memory that is page-locked and accessible to the device,
+                                  default is 0.
+                       Under this mode, host-register and transparent-hugepage is unavailable.
+
+    --kind <ALL|H2D|D2H> Specifies the direction of data copy,
+                                  default is ALL.
+                          ALL : Both host to device and device to host.
+                          H2D : Host to device only.
+                          D2H : Device to host only.
+
+    -v  Print verbose information.
+
+    -h  Print this message

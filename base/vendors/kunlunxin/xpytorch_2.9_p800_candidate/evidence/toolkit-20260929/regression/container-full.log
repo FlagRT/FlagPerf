@@ -1,0 +1,491 @@
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+test_bootstrap_does_not_touch_other_vendors (test_ascend_benchmark_adapter.AscendAdapterTest) ... ok
+test_bootstrap_imports_torch_fl_for_ascend (test_ascend_benchmark_adapter.AscendAdapterTest) ... ok
+test_device_is_explicit_flagos_local_rank (test_ascend_benchmark_adapter.AscendAdapterTest) ... ok
+test_host_device_sync_uses_flagos (test_ascend_benchmark_adapter.AscendAdapterTest) ... ok
+test_multi_device_sync_keeps_control_barrier (test_ascend_benchmark_adapter.AscendAdapterTest) ... ok
+test_ascend_contract_routes_flagos_through_communication_profile (test_ascend_p2p_flagcx.AscendP2PCaseTest) ... ok
+test_case_preserves_blocking_send_and_legacy_formula (test_ascend_p2p_flagcx.AscendP2PCaseTest) ... ok
+test_acl_event_gate_requires_timeline_failure_and_sync_success (test_ascend_p2p_flagcx.FlagCXQualificationRunnerTest) ... ok
+test_container_absence_rejects_daemon_failures (test_ascend_p2p_flagcx.FlagCXQualificationRunnerTest) ... ok
+test_fault_gate_commands_mount_the_snapshot (test_ascend_p2p_flagcx.FlagCXQualificationRunnerTest) ... ok
+test_hung_p2p_gate_requires_a_real_observation_interval (test_ascend_p2p_flagcx.FlagCXQualificationRunnerTest) ... ok
+test_hung_p2p_gate_requires_real_waiters_and_cleanup (test_ascend_p2p_flagcx.FlagCXQualificationRunnerTest) ... ok
+test_peer_failure_gate_requires_both_ranks_and_fail_fast (test_ascend_p2p_flagcx.FlagCXQualificationRunnerTest) ... ok
+test_rank_record_parser_ignores_diagnostics_and_validates_both_ranks (test_ascend_p2p_flagcx.FlagCXQualificationRunnerTest) ... ok
+test_rank_record_validation_rejects_non_flagcx_inner_backend (test_ascend_p2p_flagcx.FlagCXQualificationRunnerTest) ... ok
+test_timeout_cleanup_gate_is_deterministic_and_fail_closed (test_ascend_p2p_flagcx.FlagCXQualificationRunnerTest) ... ok
+test_build_contract_is_pinned_and_excludes_torch_npu (test_ascend_p2p_flagcx.FlagCXRuntimeControlTest) ... ok
+test_default_runtime_is_rejected_for_p2p (test_ascend_p2p_flagcx.FlagCXRuntimeControlTest) ... ok
+test_formal_environment_includes_hccl_initialization_control (test_ascend_p2p_flagcx.FlagCXRuntimeControlTest) ... ok
+test_formal_plan_records_validated_lock_without_candidate_permission (test_ascend_p2p_flagcx.FlagCXRuntimeControlTest) ... ok
+test_formal_plan_rejects_any_rank_count_other_than_two (test_ascend_p2p_flagcx.FlagCXRuntimeControlTest) ... ok
+test_formal_plan_rejects_modified_smoke_config (test_ascend_p2p_flagcx.FlagCXRuntimeControlTest) ... ok
+test_formal_plan_rejects_unbounded_default_case_config (test_ascend_p2p_flagcx.FlagCXRuntimeControlTest) ... ok
+test_formal_runtime_is_validated_without_candidate_permission (test_ascend_p2p_flagcx.FlagCXRuntimeControlTest) ... ok
+test_p2p_calibration_configs_are_pinned_but_not_formal_results (test_ascend_p2p_flagcx.FlagCXRuntimeControlTest) ... ok
+test_p2p_calibration_defaults_to_nonexecuting_plan (test_ascend_p2p_flagcx.FlagCXRuntimeControlTest) ... ok
+test_p2p_calibration_rejects_config_hash_drift (test_ascend_p2p_flagcx.FlagCXRuntimeControlTest) ... ok
+test_p2p_qualification_aggregate_enforces_variance_and_monitor_delta (test_ascend_p2p_flagcx.FlagCXRuntimeControlTest) ... ok
+test_p2p_qualification_plan_is_pinned_and_nonexecuting_by_default (test_ascend_p2p_flagcx.FlagCXRuntimeControlTest) ... ok
+test_p2p_qualification_preserves_matrix_and_pinned_window (test_ascend_p2p_flagcx.FlagCXRuntimeControlTest) ... ok
+test_p2p_qualification_rejects_missing_distributable_evidence (test_ascend_p2p_flagcx.FlagCXRuntimeControlTest) ... ok
+test_p2p_qualification_rejects_scope_and_threshold_changes (test_ascend_p2p_flagcx.FlagCXRuntimeControlTest) ... ok
+test_p2p_qualification_rejects_window_below_protocol_minimum (test_ascend_p2p_flagcx.FlagCXRuntimeControlTest) ... ok
+test_p2p_resume_preserves_failure_and_reaudits_completed_runs (test_ascend_p2p_flagcx.FlagCXRuntimeControlTest) ... ok
+test_p2p_topology_parser_uses_explicit_matrix_direction (test_ascend_p2p_flagcx.FlagCXRuntimeControlTest) ... ok
+test_ascend_configs_declare_blocking_pinned_copy_semantics (test_ascend_transfer_benchmarks.AscendTransferBenchmarkTest) ... ok
+test_capacity_wait_override_preserves_oom_search (test_ascend_transfer_benchmarks.AscendTransferBenchmarkTest) ... ok
+test_d2d_preserves_clone_workload_and_uses_adapter_device (test_ascend_transfer_benchmarks.AscendTransferBenchmarkTest) ... ok
+test_d2h_reuses_pinned_destination (test_ascend_transfer_benchmarks.AscendTransferBenchmarkTest) ... ok
+test_h2d_reuses_destination_and_pinned_source (test_ascend_transfer_benchmarks.AscendTransferBenchmarkTest) ... ok
+test_current_ascend_transfer_cases_use_generic_entrypoint (test_benchmark_entrypoint_routing.BenchmarkEntrypointRoutingTest) ... ok
+test_direct_vendor_config_can_use_generic_entrypoint (test_benchmark_entrypoint_routing.BenchmarkEntrypointRoutingTest) ... ok
+test_direct_vendor_entrypoint_is_preferred (test_benchmark_entrypoint_routing.BenchmarkEntrypointRoutingTest) ... ok
+test_generic_entrypoint_keeps_default_a100_layout (test_benchmark_entrypoint_routing.BenchmarkEntrypointRoutingTest) ... ok
+test_allreduce_checks_nonzero_sum_and_keeps_timed_values_finite (test_benchmark_failure_fixes.FailureFixTests) ... ok
+test_allreduce_rejects_operator_runtime_before_launch (test_benchmark_failure_fixes.FailureFixTests) ... ok
+test_allreduce_rejects_wrong_nonzero_sum (test_benchmark_failure_fixes.FailureFixTests) ... ok
+test_allreduce_requires_multiple_ranks_but_allows_four (test_benchmark_failure_fixes.FailureFixTests) ... ok
+test_capacity_does_not_swallow_device_errors_or_report_zero_as_success (test_benchmark_failure_fixes.FailureFixTests) ... ok
+test_capacity_hint_bounds_attempts_without_reporting_queried_capacity (test_benchmark_failure_fixes.FailureFixTests) ... finish initialization
+start warmup
+Init tensor size: 2 MiB...
+Allocated: 2 MiB
+Ascend allocation failed at 2 MiB; allocated=2 MiB; raw error: out of memory
+Reduce tensor size to 1 MiB
+Ascend allocation failed at 1 MiB; allocated=2 MiB; raw error: out of memory
+Reached the 1 MiB allocation granularity, finish test.
+Test Finished
+Init tensor size: 2 MiB...
+Allocated: 2 MiB
+Ascend allocation failed at 2 MiB; allocated=2 MiB; raw error: out of memory
+Reduce tensor size to 1 MiB
+Ascend allocation failed at 1 MiB; allocated=2 MiB; raw error: out of memory
+Reached the 1 MiB allocation granularity, finish test.
+Test Finished
+Ascend FP32 uses Torch-FL backend defaults; strict IEEE FP32 mode is not enforced
+finish initialization
+start warmup
+finish initialization
+start warmup
+D2H transfer semantics: host_memory=pinned, api=copy_, non_blocking=False
+Ascend FP32 uses Torch-FL backend defaults; strict IEEE FP32 mode is not enforced
+finish initialization
+start warmup
+H2D transfer semantics: host_memory=pinned, api=copy_, non_blocking=False
+Ascend FP32 uses Torch-FL backend defaults; strict IEEE FP32 mode is not enforced
+finish initialization
+Rank 0: AllReduce SUM correctness passed; expected=3
+start warmup
+Ascend FP32 uses Torch-FL backend defaults; strict IEEE FP32 mode is not enforced
+finish initialization
+Init tensor size: 1 MiB...
+Init tensor size: 1 MiB...
+Ascend allocation failed at 1 MiB; allocated=0 MiB; raw error: CachingDeviceAllocator: failed to allocate 4 bytes on device 0
+Init tensor size: 65536 MiB...
+Attempt allocation: 3 MiB; held=0 MiB
+Allocated: 3 MiB
+Attempt allocation: 1 MiB; held=3 MiB
+ok
+test_capacity_recovers_from_locked_allocator_error (test_benchmark_failure_fixes.FailureFixTests) ... ok
+test_hbm_query_failures_propagate_and_zero_free_still_attempts_one_mib (test_benchmark_failure_fixes.FailureFixTests) ... ok
+test_unsupported_cases_skip_before_docker_or_devices (test_benchmark_failure_fixes.FailureFixTests) ... ok
+test_finalization_permission_error_is_monitor_only (test_benchmark_monitor.MonitorContractTests) ... ok
+test_finalize_passes_only_with_exact_rank_window_and_ten_samples (test_benchmark_monitor.MonitorContractTests) ... ok
+test_missing_rank_event_is_partial_without_cross_device_substitution (test_benchmark_monitor.MonitorContractTests) ... ok
+test_monitor_off_summary_is_independent_and_not_run (test_benchmark_monitor.MonitorContractTests) ... ok
+test_monitor_targets_are_resolved_from_live_preflight_map (test_benchmark_monitor.MonitorContractTests) ... ok
+test_benchmark_parser_keeps_five_label_addressed_fields (test_benchmark_monitor.ParserAndEventTests) ... ok
+test_current_ascend_cases_emit_exact_measurement_windows (test_benchmark_monitor.ParserAndEventTests) ... ok
+test_host_prepares_one_sticky_per_run_event_exchange (test_benchmark_monitor.ParserAndEventTests) ... ok
+test_measurement_event_is_noop_when_monitoring_is_disabled (test_benchmark_monitor.ParserAndEventTests) ... ok
+test_measurement_event_writes_one_atomic_rank_window (test_benchmark_monitor.ParserAndEventTests) ... ok
+test_worker_event_writer_uses_host_readable_mode (test_benchmark_monitor.ParserAndEventTests) ... ok
+test_actual_worker_consumes_contract_and_sourced_environment (test_case_assets.CaseAssetsTests) ... ok
+test_all_layers_and_actual_case_consumer_agree (test_case_assets.CaseAssetsTests) ... ok
+test_entrypoint_falls_back_through_vendor_before_generic (test_case_assets.CaseAssetsTests) ... ok
+test_legacy_ascend_cases_now_have_explicit_contracts (test_case_assets.CaseAssetsTests) ... ok
+test_missing_and_malformed_contracts_fail_closed (test_case_assets.CaseAssetsTests) ... ok
+test_no_implicit_a100_for_new_vendor (test_case_assets.CaseAssetsTests) ... ok
+test_traversal_and_symlink_escape_are_rejected (test_case_assets.CaseAssetsTests) ... ok
+test_unsupported_is_a_contract_and_cannot_be_relaxed (test_case_assets.CaseAssetsTests) ... ok
+test_executor_snapshots_exact_case_configuration (test_generate_benchmark_report.BenchmarkReportTests) ... ok
+test_failed_report_is_still_generated_without_metric_assets (test_generate_benchmark_report.BenchmarkReportTests) ... ok
+test_missing_result_artifact_produces_honest_failure_report (test_generate_benchmark_report.BenchmarkReportTests) ... ok
+test_monitor_report_keeps_raw_values_windows_and_svg (test_generate_benchmark_report.BenchmarkReportTests) ... ok
+test_partial_report_explains_missing_rank_without_changing_status (test_generate_benchmark_report.BenchmarkReportTests) ... ok
+test_passed_report_is_human_readable_linked_and_deterministic (test_generate_benchmark_report.BenchmarkReportTests) ... ok
+test_unknown_future_monitor_schema_fails_closed (test_generate_benchmark_report.BenchmarkReportTests) ... ok
+test_unknown_future_result_schema_fails_closed_and_preserves_experiment (test_generate_benchmark_report.BenchmarkReportTests) ... ok
+test_fp32_bounds_are_not_relaxed (test_kunlunxin_computation_cases.ComputationContractTests) ... ok
+test_low_precision_metric_rejects_cross_case_and_incomplete_numerics (test_kunlunxin_computation_cases.ComputationContractTests) ... ok
+test_new_cases_dry_run_without_device_side_effects (test_kunlunxin_computation_cases.ComputationContractTests) ... ok
+test_precision_contract_rejects_dtype_operator_and_tolerance_drift (test_kunlunxin_computation_cases.ComputationContractTests) ... ok
+test_int8_device_path_requires_the_vendor_kernel (test_kunlunxin_computation_cases.ComputationNumericalTests) ... ok
+test_int8_exact_reference_detects_overflow_and_single_bit_error (test_kunlunxin_computation_cases.ComputationNumericalTests) ... ok
+test_int8_full_case_outputs_tops_and_device_bf16 (test_kunlunxin_computation_cases.ComputationNumericalTests)
+The device int8 kernel path: TOPS metric, bf16 output, quantized reference. ... ok
+test_low_precision_placement_rejects_cpu_and_promoted_output (test_kunlunxin_computation_cases.ComputationNumericalTests) ... ok
+test_new_cases_execute_full_correctness_with_synchronized_timer (test_kunlunxin_computation_cases.ComputationNumericalTests) ... ok
+test_reference_uses_quantized_inputs_and_budget_detects_corruption (test_kunlunxin_computation_cases.ComputationNumericalTests) ... ok
+test_complete_single_rank_evidence (test_kunlunxin_fp32.BoundedIntegrationTests) ... ok
+test_missing_duplicate_and_stale_evidence_never_pass (test_kunlunxin_fp32.BoundedIntegrationTests) ... ok
+test_missing_event_or_partial_monitor_is_partial (test_kunlunxin_fp32.BoundedIntegrationTests) ... ok
+test_timeout_interrupt_and_cleanup_uncertainty (test_kunlunxin_fp32.BoundedIntegrationTests) ... ok
+test_candidate_and_window_gate_before_commands (test_kunlunxin_fp32.ContractTests) ... ok
+test_dry_run_has_no_commands_runtime_import_or_result_directory (test_kunlunxin_fp32.ContractTests) ... ok
+test_invalid_config_and_selection_fail_closed (test_kunlunxin_fp32.ContractTests) ... ok
+test_snapshot_roundtrip_keeps_host_worker_contract (test_kunlunxin_fp32.ContractTests) ... ok
+test_binding_rechecked_and_initialization_idempotent (test_kunlunxin_fp32.DriverTests) ... ok
+test_dispatch_unknown_vendor_and_error_classification (test_kunlunxin_fp32.DriverTests) ... ok
+test_extension_missing_propagates (test_kunlunxin_fp32.DriverTests) ... ok
+test_logical_device_not_derived_from_rank (test_kunlunxin_fp32.DriverTests) ... ok
+test_rank_sync_and_memory_follow_verified_reordered_binding (test_kunlunxin_fp32.DriverTests) ... ok
+test_stale_binding_and_wrong_uuid_rejected (test_kunlunxin_fp32.DriverTests) ... ok
+test_rejects_tampered_rank_context_and_formula (test_kunlunxin_fp32.MetricTests) ... ok
+test_bad_clock_and_correctness_never_write_success_metric (test_kunlunxin_fp32.NumericalTests) ... ok
+test_device_and_dtype_gate (test_kunlunxin_fp32.NumericalTests) ... ok
+test_large_shape_sampling_and_full_output_finiteness (test_kunlunxin_fp32.NumericalTests) ... ok
+test_seed_reference_tolerance_and_nonfinite (test_kunlunxin_fp32.NumericalTests) ... ok
+test_timing_excludes_reference_and_includes_final_sync (test_kunlunxin_fp32.NumericalTests) ... ok
+test_all_five_values_and_sample_deviation_used (test_kunlunxin_fp32.QualificationStatisticsTests) ... ok
+test_incomplete_mixed_code_and_tampered_evidence_rejected (test_kunlunxin_fp32.QualificationStatisticsTests) ... ok
+test_unstable_runs_not_trimmed (test_kunlunxin_fp32.QualificationStatisticsTests) ... ok
+test_all_eight_modes_and_strict_boolean_contract (test_kunlunxin_transfer_benchmarks.TransferContractTests) ... ok
+test_copy_loop_only_reuses_destination (test_kunlunxin_transfer_benchmarks.TransferContractTests) ... ok
+test_invalid_elapsed_rejected (test_kunlunxin_transfer_benchmarks.TransferContractTests) ... ok
+test_metric_identity_semantics_content_and_formula (test_kunlunxin_transfer_benchmarks.TransferContractTests) ... ok
+test_semantics_are_explicit_and_bounded (test_kunlunxin_transfer_benchmarks.TransferContractTests) ... ok
+test_stdout_requires_exact_consistent_unit_pair (test_kunlunxin_transfer_benchmarks.TransferContractTests) ... ok
+test_units_are_derived_from_one_way_bytes (test_kunlunxin_transfer_benchmarks.TransferContractTests) ... ok
+test_capacity_requires_verified_release_and_granularity (test_p800_day6.Day6ArtifactValidation) ... ok
+test_each_case_validates_with_recomputed_numbers (test_p800_day6.Day6ArtifactValidation) ... ok
+test_rank_outside_world_size_rejected (test_p800_day6.Day6ArtifactValidation) ... ok
+test_stdout_pairs_cover_every_published_number (test_p800_day6.Day6ArtifactValidation) ... ok
+test_tampered_values_are_rejected (test_p800_day6.Day6ArtifactValidation) ... ok
+test_two_rank_cases_validate_both_ranks (test_p800_day6.Day6ArtifactValidation) ... ok
+test_capacity_is_the_only_high_risk_case (test_p800_day6.Day6ConfigValidation) ... ok
+test_capacity_must_bound_requests_and_skip_wait (test_p800_day6.Day6ConfigValidation) ... ok
+test_rejects_out_of_range_fields (test_p800_day6.Day6ConfigValidation) ... ok
+test_rejects_wrong_dtype_backend_and_implementation (test_p800_day6.Day6ConfigValidation) ... ok
+test_valid_configs_accepted (test_p800_day6.Day6ConfigValidation) ... ok
+test_allreduce_busbw_factor_never_doubles (test_p800_day6.Day6Formulas) ... ok
+test_expected_ranks_split_memory_and_communication (test_p800_day6.Day6Formulas) ... ok
+test_memory_bandwidth_counts_read_and_write (test_p800_day6.Day6Formulas) ... ok
+test_p2p_is_one_way_only (test_p800_day6.Day6Formulas) ... ok
+test_payload_bytes_counts_mebielements (test_p800_day6.Day6Formulas) ... ok
+test_interserver_cases_marked_unsupported_before_docker (test_p800_day6.Day6Interserver) ... ok
+test_report_regenerates_from_archived_smoke_artifacts (test_p800_day6.Day6ReportRegeneration) ... ok
+test_conflicting_output_paths_rejected_before_side_effects (test_p800_day7.BoundedEarlySkipTests) ... ok
+test_every_unsupported_case_skips_without_commands_and_preserves_reason (test_p800_day7.BoundedEarlySkipTests) ... ok
+test_existing_evidence_is_not_overwritten (test_p800_day7.BoundedEarlySkipTests) ... ok
+test_aliases_multiple_and_invalid_selections_rejected (test_p800_preflight.ContractTests) ... ok
+test_candidate_and_reservation_gate_before_files_or_commands (test_p800_preflight.ContractTests) ... ok
+test_container_context_rejects_nodes_environment_and_expired_window (test_p800_preflight.ContractTests) ... ok
+test_p800_day6_communication_case_requires_two_ranks (test_p800_preflight.ContractTests) ... ERROR: Benchmark Case interconnect-MPI_intraserver:P800 requires at least 2 local ranks
+ok
+test_p800_day6_memory_case_dry_run_resolves_without_device_access (test_p800_preflight.ContractTests) ... ok
+test_p800_unimplemented_precision_rejected_without_device_access (test_p800_preflight.ContractTests) ... ERROR: Benchmark Case does not exist: training-bert
+ok
+test_registered_provider_and_deferred_dry_run_without_side_effects (test_p800_preflight.ContractTests) ... ok
+test_resolved_binding_rejects_stale_hash_and_tampering (test_p800_preflight.ContractTests) ... ok
+test_supervisor_spawns_gated_no_site_child_and_propagates_failure (test_p800_preflight.ContractTests) ... ok
+test_uuid_join_preserves_requested_rank_not_logical_order (test_p800_preflight.ContractTests) ... ok
+test_cleanup_unknown_or_exception_releases_lock_but_requires_recovery (test_p800_preflight.ExecutionTests) ... ok
+test_create_and_start_failure_cleanup (test_p800_preflight.ExecutionTests) ... ok
+test_lock_identity_change_blocks_container_start (test_p800_preflight.ExecutionTests) ... ok
+test_normal_postflight_before_release_and_deterministic_report (test_p800_preflight.ExecutionTests) ... ok
+test_partial_monitor_is_not_pass (test_p800_preflight.ExecutionTests) ... ok
+test_timeout_and_interrupt_cleanup_and_release (test_p800_preflight.ExecutionTests) ... ok
+test_pr0_flock_interlocks_both_directions_and_keeps_inode (test_p800_preflight.LeaseTests) ... ok
+test_symlink_hardlink_permission_and_partial_failure_release (test_p800_preflight.LeaseTests) ... ok
+test_cleanup_daemon_errors_are_not_success (test_p800_preflight.LifecycleTests) ... ok
+test_cleanup_ownership_mismatch_never_deletes (test_p800_preflight.LifecycleTests) ... ok
+test_cleanup_timedout_create_recovers_only_owned_container (test_p800_preflight.LifecycleTests) ... ok
+test_create_inspects_immutable_identity_and_permissions (test_p800_preflight.LifecycleTests) ... ok
+test_host_timeout_and_prefix_are_recorded (test_p800_preflight.LifecycleTests) ... ok
+test_wait_uses_remaining_probe_deadline (test_p800_preflight.LifecycleTests) ... ok
+test_active_process_table_is_valid_telemetry_but_not_idle (test_p800_preflight.MonitorTests) ... ok
+test_failed_or_wrong_identity_samples_are_invalid_not_zero (test_p800_preflight.MonitorTests) ... ok
+test_telemetry_uuid_and_units (test_p800_preflight.MonitorTests) ... ok
+test_window_counts_partial_missing_wrong_role_and_invalid (test_p800_preflight.MonitorTests) ... ok
+test_disappearing_observer_requires_fresh_handle_check (test_p800_preflight.ParserTests) ... ok
+test_exited_process_is_recorded_not_misclassified_as_observer (test_p800_preflight.ParserTests) ... ok
+test_host_busy_handles_driver_inventory_fail_closed (test_p800_preflight.ParserTests) ... ok
+test_host_idle_accepted (test_p800_preflight.ParserTests) ... ok
+test_inventory_variable_count_and_quoted_model (test_p800_preflight.ParserTests) ... ok
+test_lock_recheck_identity_drift (test_p800_preflight.ParserTests) ... ok
+test_machine_rejects_schema_ranges_model_and_duplicates (test_p800_preflight.ParserTests) ... ok
+test_nodes_reject_symlink_wrong_minor_and_regular_file (test_p800_preflight.ParserTests) ... ok
+test_only_verified_readonly_observers_are_allowed (test_p800_preflight.ParserTests) ... ok
+test_query_rejects_missing_ambiguous_units_and_identity (test_p800_preflight.ParserTests) ... ok
+test_query_units_identity_versions_and_two_digit_minor (test_p800_preflight.ParserTests) ... ok
+test_bidirectional_uses_joint_time_and_checks_both_payloads (test_p800_toolkit.ContractTests) ... ok
+test_chunk_protocol_requires_matching_mode_payload_and_count (test_p800_toolkit.ContractTests) ... ok
+test_computation_dtype_shape_and_sampled_correctness (test_p800_toolkit.ContractTests) ... ok
+test_excluded_card_and_invalid_selection (test_p800_toolkit.ContractTests) ... ok
+test_failure_propagates (test_p800_toolkit.ContractTests) ... ok
+test_identity_join_uses_pci_not_ordinal (test_p800_toolkit.ContractTests) ... ok
+test_native_json_missing_or_ambiguous (test_p800_toolkit.ContractTests) ... ok
+test_pairs_are_unordered_and_never_infer_reverse (test_p800_toolkit.ContractTests) ... ok
+test_reject_exit_zero_without_correct_data (test_p800_toolkit.ContractTests) ... ok
+test_sweep_cardinality_and_modes (test_p800_toolkit.ContractTests) ... ok
+test_twelve_cases (test_p800_toolkit.ContractTests) ... ok
+test_unit_formula_and_no_factor_of_two (test_p800_toolkit.ContractTests) ... ok
+test_hash_index_detects_mutation (test_p800_toolkit.EvidenceTests) ... ok
+test_monitor_only_counts_complete_samples_inside_measurement_window (test_p800_toolkit.EvidenceTests) ... ok
+test_report_regeneration_preserves_status_and_is_deterministic (test_p800_toolkit.EvidenceTests) ... ok
+test_setup_failure_is_failed_and_keeps_each_requested_case (test_p800_toolkit.EvidenceTests) ... ok
+test_timeout_keeps_output (test_p800_toolkit.EvidenceTests) ... ok
+test_aliases_and_vendor_flags_rejected (test_p800_toolkit.FacadeTests) ... ok
+test_range_excludes_card_one_before_execution (test_p800_toolkit.FacadeTests) ... ok
+test_smoke_scope_and_busy_authorization_are_explicit (test_p800_toolkit.FacadeTests) ... ok
+test_static_plan_never_calls_subprocess (test_p800_toolkit.FacadeTests) ... ok
+test_exception_propagates_and_stops_thread (test_progress.ProgressTests) ... ok
+test_ordered_cases_and_partial_line (test_progress.ProgressTests) ... ok
+test_runner_publishes_actual_case_sequence (test_progress.ProgressTests) ... Ascend allocation failed at 1 MiB; allocated=3 MiB; raw error: CachingDeviceAllocator: failed to allocate 1048576 bytes on device 0
+Reached the 1 MiB allocation granularity, finish test.
+Test Finished
+Init tensor size: 2 MiB...
+Ascend allocation failed at 2 MiB; allocated=0 MiB; raw error: CachingDeviceAllocator: failed to allocate 2097152 bytes on device 0
+Reduce tensor size to 1 MiB
+Allocated: 1 MiB
+Ascend allocation failed at 1 MiB; allocated=1 MiB; raw error: CachingDeviceAllocator: failed to allocate 2097152 bytes on device 0
+Reached the 1 MiB allocation granularity, finish test.
+Test Finished
+{
+  "applicability": {
+    "reason": null,
+    "status": "applicable"
+  },
+  "case": "main_memory-bandwidth:P800",
+  "case_assets": {
+    "case": "main_memory-bandwidth:P800",
+    "case_name": "main_memory-bandwidth",
+    "chip": "P800",
+    "configurations": {
+      "chip": {
+        "bytes": 238,
+        "relative_path": "benchmarks/main_memory-bandwidth/kunlunxin/P800/case_config.yaml",
+        "sha256": "088b4db94c36f9fea751cf7e8d700149635e79ad4e3ab8d4574e6190d564da1b"
+      },
+      "generic": {
+        "bytes": 646,
+        "relative_path": "benchmarks/main_memory-bandwidth/case_config.yaml",
+        "sha256": "10f598c059e893845851f892d1cd332a14d6c31b3a005ffb950f614fd66c3726"
+      }
+    },
+    "entrypoint": {
+      "bytes": 1248,
+      "relative_path": "benchmarks/main_memory-bandwidth/kunlunxin/P800/main.py",
+      "sha256": "30935a4a93d533d6aa6db5d98c3594b5831f3f0f507582df7c5448b581ea119a"
+    },
+    "environments": [],
+    "merged_config": {
+      "DIST_BACKEND": "gloo",
+      "DTYPE": "float32",
+      "FAULT_MODE": "none",
+      "IMPLEMENTATION": "native-xpytorch",
+      "ITERS": 4200,
+      "MODE": "qualification",
+      "Melements": 1024,
+      "SEED": 519,
+      "WARMUP": 2
+    },
+    "requirement_files": [
+      {
+        "bytes": 239,
+        "relative_path": "benchmarks/main_memory-bandwidth/kunlunxin/P800/runtime_requirements.json",
+        "sha256": "fd96d385d0c7c5f369a87b354f2b2206c18777ef91016b022d65dc855a536588"
+      }
+    ],
+    "requirements": {
+      "correctness_required": true,
+      "implementation": "native-xpytorch",
+      "process_scope": {
+        "nnodes": 1,
+        "nproc_per_node": 1
+      },
+      "runtime_profile": "xpytorch_2.9_p800_candidate",
+      "runtime_role": "operator",
+      "schema_version": 1,
+      "supported": true
+    },
+    "schema_version": 1,
+    "selector": "kunlunxin/P800",
+    "vendor": "kunlunxin"
+  },
+  "case_config": {
+    "chip": {
+      "bytes": 238,
+      "path": "/workspace/FlagPerf/base/benchmarks/main_memory-bandwidth/kunlunxin/P800/case_config.yaml",
+      "relative_path": "benchmarks/main_memory-bandwidth/kunlunxin/P800/case_config.yaml",
+      "sha256": "088b4db94c36f9fea751cf7e8d700149635e79ad4e3ab8d4574e6190d564da1b"
+    },
+    "generic": {
+      "bytes": 646,
+      "path": "/workspace/FlagPerf/base/benchmarks/main_memory-bandwidth/case_config.yaml",
+      "relative_path": "benchmarks/main_memory-bandwidth/case_config.yaml",
+      "sha256": "10f598c059e893845851f892d1cd332a14d6c31b3a005ffb950f614fd66c3726"
+    }
+  },
+  "context": {
+    "config": "/workspace/FlagPerf/base/configs/kunlunxin_p800_xpytorch29.yaml",
+    "device_ids": null,
+    "dry_run": true,
+    "npu_ids": null,
+    "physical_device_ids": "1",
+    "result_root": null,
+    "timeout": 300
+  },
+  "host_config": "/workspace/FlagPerf/base/configs/kunlunxin_p800_xpytorch29.yaml",
+  "image": "flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev:202608",
+  "kind": "benchmark",
+  "mode": "static-dry-run",
+  "monitoring": {
+    "automatic_workload_extension": false,
+    "collector": "xpu-smi -m and selected -q",
+    "enabled": true,
+    "metric_fields": [
+      {
+        "key": "utilization_percent",
+        "label": "Device utilization",
+        "unit": "%"
+      },
+      {
+        "key": "used_memory_mib",
+        "label": "Allocated device memory",
+        "unit": "MiB"
+      }
+    ],
+    "required_samples_per_target": 10,
+    "target_interval_s": 1.0,
+    "target_resource": "p800-device",
+    "vendor": "kunlunxin"
+  },
+  "nproc_per_node": "derive-from-resolved-logical-devices",
+  "permissions": {
+    "active_dmi": false,
+    "candidate_runtime": true,
+    "cap_drop": [
+      "ALL"
+    ],
+    "ipc_namespace": "private",
+    "network": "flagperf-p800-internal",
+    "pid_namespace": "private",
+    "privileged_root": false,
+    "read_only_root": true
+  },
+  "runtime_identity": {
+    "image_id": "deferred-until-image-inspection"
+  },
+  "runtime_lock": {
+    "image_manifest": {
+      "image": "flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev:202608",
+      "image_id": "sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975",
+      "path": "/workspace/FlagPerf/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/image-manifest.json",
+      "release_stage": "candidate",
+      "schema_version": 1,
+      "sha256": "ab59dc1cd14b65a28ffaef7b1b21b1d0b51f5334619301659d4123a5c681acbf",
+      "validated": false,
+      "validation_scope": [],
+      "validation_status": null
+    },
+    "runtime_profile": "xpytorch_2.9_p800_candidate",
+    "stack_lock": {
+      "path": "/workspace/FlagPerf/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/stack.lock.yaml",
+      "sha256": "8f200d0b955b7e60881bc13ed75c8784c2c38fe2c755d018c618f1dc7b46cded"
+    },
+    "vendor": "kunlunxin"
+  },
+  "runtime_requirements": {
+    "bytes": 239,
+    "path": "/workspace/FlagPerf/base/benchmarks/main_memory-bandwidth/kunlunxin/P800/runtime_requirements.json",
+    "relative_path": "benchmarks/main_memory-bandwidth/kunlunxin/P800/runtime_requirements.json",
+    "requirements": {
+      "correctness_required": true,
+      "implementation": "native-xpytorch",
+      "process_scope": {
+        "nnodes": 1,
+        "nproc_per_node": 1
+      },
+      "runtime_profile": "xpytorch_2.9_p800_candidate",
+      "runtime_role": "operator",
+      "schema_version": 1,
+      "supported": true
+    },
+    "sha256": "fd96d385d0c7c5f369a87b354f2b2206c18777ef91016b022d65dc855a536588",
+    "sources": [
+      {
+        "bytes": 239,
+        "path": "/workspace/FlagPerf/base/benchmarks/main_memory-bandwidth/kunlunxin/P800/runtime_requirements.json",
+        "relative_path": "benchmarks/main_memory-bandwidth/kunlunxin/P800/runtime_requirements.json",
+        "sha256": "fd96d385d0c7c5f369a87b354f2b2206c18777ef91016b022d65dc855a536588"
+      }
+    ]
+  },
+  "schema_version": 1,
+  "selection_note": "physical-to-logical mapping and idle state are resolved only by the side-effecting host preflight",
+  "selection_request": {
+    "expression": "1",
+    "requested_ids": [
+      1
+    ],
+    "resolution_status": "deferred-until-host-preflight",
+    "source": "physical-device-ids"
+  },
+  "vendor": "kunlunxin",
+  "vendor_display_name": "Kunlunxin P800",
+  "worker": "benchmark_worker.py"
+}
+{
+  "status": "partial",
+  "manifest": "/tmp/tmpondmssgm/evidence/manifest.json"
+}
+ok
+test_silent_benchmark_heartbeat_and_cleanup (test_progress.ProgressTests) ... ok
+test_minimum_and_newer_versions (test_toolkit_version.ToolBoxVersionTests) ... ok
+test_old_prerelease_and_unknown_versions (test_toolkit_version.ToolBoxVersionTests) ... ok
+test_rejection_stops_before_preflight_or_container (test_toolkit_version.ToolBoxVersionTests) ... ok
+test_benchmark_worker_builds_argv_without_shell_string (test_unified_base_entrypoint.ResourceAndWorkerTests) ... ok
+test_device_lease_is_exclusive_and_recoverable (test_unified_base_entrypoint.ResourceAndWorkerTests) ... ok
+test_runtime_identity_fails_closed_on_image_id_drift (test_unified_base_entrypoint.ResourceAndWorkerTests) ... ok
+test_benchmark_result_parser_requires_every_rank (test_unified_base_entrypoint.ResultContractTests) ... ok
+test_report_generation_does_not_change_experiment_status (test_unified_base_entrypoint.ResultContractTests) ... ok
+test_requested_monitor_gap_is_partial_but_measurement_failure_is_fatal (test_unified_base_entrypoint.ResultContractTests) ... ok
+test_benchmark_monitor_can_be_explicitly_disabled (test_unified_base_entrypoint.UnifiedFacadeTests) ... ok
+test_benchmark_static_dry_run_has_no_runtime_side_effect (test_unified_base_entrypoint.UnifiedFacadeTests) ... ok
+test_benchmark_static_dry_run_requires_explicit_selection (test_unified_base_entrypoint.UnifiedFacadeTests) ... ok
+test_high_risk_benchmark_requires_separate_authorization (test_unified_base_entrypoint.UnifiedFacadeTests) ... ok
+test_no_argument_entry_is_safe_and_does_not_run_legacy_cluster (test_unified_base_entrypoint.UnifiedFacadeTests) ... ok
+test_toolkit_static_dry_run_uses_separate_permissions (test_unified_base_entrypoint.UnifiedFacadeTests) ... ok
+test_dry_run_has_no_runtime_or_file_side_effect (test_vendor_execution.VendorExecutionTests) ... ok
+test_fixture_execution_uses_provider_and_records_bindings (test_vendor_execution.VendorExecutionTests) ... [Benchmark] running | case 1/1: example:Chip | case elapsed=0.0s | completed=0/1 | elapsed=0.0s
+[Benchmark] container-exited (code=0) | case 1/1: example:Chip | case elapsed=0.0s | completed=1/1 | elapsed=0.0s
+ok
+test_missing_contract_is_not_a_successful_skip (test_vendor_execution.VendorExecutionTests) ... ok
+test_missing_lock_and_candidate_identity_remain_closed (test_vendor_execution.VendorExecutionTests) ... ok
+test_runtime_imports_are_forbidden_during_real_cli_dry_run (test_vendor_execution.VendorExecutionTests) ... ok
+test_unknown_vendor_cannot_read_another_vendors_runtime (test_vendor_execution.VendorExecutionTests) ... ok
+test_unsupported_contract_skips_before_preflight_and_lease (test_vendor_execution.VendorExecutionTests) ... ok
+test_duplicate_rank_binding_is_rejected (test_vendor_monitor_report.VendorMonitorReportTests) ... ok
+test_monitor_uses_explicit_binding_for_reordered_framework_devices (test_vendor_monitor_report.VendorMonitorReportTests) ... ok
+test_new_report_uses_metric_units_and_measurement_windows (test_vendor_monitor_report.VendorMonitorReportTests) ... ok
+test_reports_cover_all_statuses_without_hardware_or_provider_lookup (test_vendor_monitor_report.VendorMonitorReportTests) ... ok
+test_bindings_separate_physical_logical_and_rank (test_vendor_registry.VendorTests) ... ok
+test_new_lease_interlocks_with_legacy_and_releases_partial_acquisition (test_vendor_registry.VendorTests) ... ok
+test_physical_preflight_expands_in_request_order_without_rewriting_raw (test_vendor_registry.VendorTests) ... ok
+test_physical_selection_preserves_request_order_and_rejects_aliases (test_vendor_registry.VendorTests) ... ok
+test_registry_does_not_guess_unknown_vendor (test_vendor_registry.VendorTests) ... ok
+test_resource_identity_conflicts_across_aliases_but_not_vendors (test_vendor_registry.VendorTests) ... ok
+test_runtime_path_is_contained_even_for_symlinks (test_vendor_registry.VendorTests) ... ok
+test_shared_helpers_do_not_import_another_domains_vendor_package (test_vendor_registry.VendorTests) ... ok
+test_unknown_driver_vendor_never_calls_cuda (test_vendor_registry.VendorTests) ... ok
+test_unknown_environment_rejected (test_vendor_registry.VendorTests) ... ok
+
+----------------------------------------------------------------------
+Ran 241 tests in 4.309s
+
+OK

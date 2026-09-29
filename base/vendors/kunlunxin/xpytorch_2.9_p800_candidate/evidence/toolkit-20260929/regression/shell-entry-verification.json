@@ -1,0 +1,70 @@
+[
+  {
+    "path": "base/toolkits/_common/kunlunxin/P800/bootstrap.sh",
+    "mode": "0o755",
+    "syntax": 0
+  },
+  {
+    "path": "base/toolkits/computation-BF16/kunlunxin/P800/main.sh",
+    "mode": "0o755",
+    "syntax": 0
+  },
+  {
+    "path": "base/toolkits/computation-FP16/kunlunxin/P800/main.sh",
+    "mode": "0o755",
+    "syntax": 0
+  },
+  {
+    "path": "base/toolkits/computation-FP32/kunlunxin/P800/main.sh",
+    "mode": "0o755",
+    "syntax": 0
+  },
+  {
+    "path": "base/toolkits/computation-INT8/kunlunxin/P800/main.sh",
+    "mode": "0o755",
+    "syntax": 0
+  },
+  {
+    "path": "base/toolkits/interconnect-P2P_intraserver-latency/kunlunxin/P800/main.sh",
+    "mode": "0o755",
+    "syntax": 0
+  },
+  {
+    "path": "base/toolkits/interconnect-P2P_intraserver/kunlunxin/P800/main.sh",
+    "mode": "0o755",
+    "syntax": 0
+  },
+  {
+    "path": "base/toolkits/interconnect-d2h-latency/kunlunxin/P800/main.sh",
+    "mode": "0o755",
+    "syntax": 0
+  },
+  {
+    "path": "base/toolkits/interconnect-d2h/kunlunxin/P800/main.sh",
+    "mode": "0o755",
+    "syntax": 0
+  },
+  {
+    "path": "base/toolkits/interconnect-h2d-latency/kunlunxin/P800/main.sh",
+    "mode": "0o755",
+    "syntax": 0
+  },
+  {
+    "path": "base/toolkits/interconnect-h2d/kunlunxin/P800/main.sh",
+    "mode": "0o755",
+    "syntax": 0
+  },
+  {
+    "path": "base/toolkits/main_memory-bandwidth/kunlunxin/P800/main.sh",
+    "mode": "0o755",
+    "syntax": 0
+  },
+  {
+    "path": "base/toolkits/main_memory-capacity/kunlunxin/P800/main.sh",
+    "mode": "0o755",
+    "syntax": 0
+  },
+  {
+    "direct_wrapper_returncode": 0
+  }
+]

@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "vendor": "kunlunxin",
+  "chip": "P800",
+  "runtime_profile": "xpytorch_2.9_p800_candidate",
+  "image": "flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev:202608",
+  "image_id": "sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975",
+  "repo_digests": ["flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev@sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975"],
+  "created": "2026-08-12T21:47:16.130386935+08:00",
+  "platform": "linux/amd64",
+  "release_stage": "candidate",
+  "validated": false,
+  "validation_scope": [],
+  "registry_pull_verified": false,
+  "qualification_record": "qualification-record.json"
+}

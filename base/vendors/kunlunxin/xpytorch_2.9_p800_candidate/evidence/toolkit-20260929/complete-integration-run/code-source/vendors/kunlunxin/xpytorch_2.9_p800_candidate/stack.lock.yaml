@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "release_stage": "candidate",
+  "validated": false,
+  "image_manifest": "image-manifest.json",
+  "conda_prefix": "/root/miniconda/envs/python310_torch29_cuda",
+  "python": "3.10.18",
+  "source_observations": {
+    "triton_literal_version": "3.6.0",
+    "flagcx_git_head": "3b43bdb237fc93736eddf3e118edf32f664b7861",
+    "flagcx_worktree_dirty": false,
+    "flagcx_binary_build_identity_verified": false
+  },
+  "packages": {
+    "torch": "2.9.0+cu129",
+    "torch-xray": "2.0.4",
+    "xmlir": "1.0.0.1",
+    "xtorch-ops": "0.1.2640+9bc36a18",
+    "torch-plugin": "0.1.0",
+    "flag-gems": "5.3.4.post1.dev12+g4fa5805b8",
+    "flagtree": "0.6.1+xpu3.6",
+    "flagcx": "0.10.0",
+    "vllm": "0.13.0",
+    "vllm-plugin-fl": "0.1.0"
+  },
+  "vendor_metadata": {
+    "XPYTORCH": "XMLIR--bc1b1dc6f-dev+2026032411",
+    "XTDK": "3.6.0.1",
+    "XRE": "5.13.0.0",
+    "XCCL": "20260209_9",
+    "xhpc_declared_dependency": {"XTDK": "3.6.27.1", "XRE": "5.18.0.0", "XCCL": "3.0.7.4"}
+  },
+  "host_observed": {
+    "os": "Ubuntu 24.04.2 LTS",
+    "kernel": "6.8.0-87-generic",
+    "driver": "5.0.21.47",
+    "xpu_smi_runtime": "10.2",
+    "header_runtime": "5.0.21"
+  },
+  "observed_single_card_api": {
+    "device": "cuda:0",
+    "cuda_visible_devices": "0",
+    "unset_environment": ["XPU_EVENT_KL3_ENABLE", "XPU_VISIBLE_DEVICES"],
+    "USE_FLAGGEMS": "0",
+    "mapping": "xpu-smi indices -> queried PCI/UUID/minor -> exact nodes -> observed framework UUID join; single-device logical zero",
+    "framework_identity": "UUID; name is GPU and PCI properties are zero",
+    "event_timing_usable": false,
+    "timer": "perf_counter bracketed by torch.cuda.synchronize(device)",
+    "loaded_library_evidence": "evidence/day1/fp32.json",
+    "scope": "single-card native FP32 32x32 smoke; selected two-device identity and tiny FP32; not formal benchmark qualification"
+  },
+  "qualification": "qualification-record.json"
+}

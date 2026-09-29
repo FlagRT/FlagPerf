@@ -1,0 +1,137 @@
+{
+  "bindings": [
+    {
+      "container_node": "/dev/xpu1",
+      "device_major": 195,
+      "device_minor": 1,
+      "driver": "5.0.21.47",
+      "foreign_handles_authorized": true,
+      "foreign_occupancy_observed": true,
+      "free_memory_mib": 77876,
+      "host_device_node": "/dev/xpu1",
+      "host_physical_id": 3,
+      "native_id": 0,
+      "pci_bdf": "0000:2e:00.0",
+      "power_w": 130.0,
+      "processes_empty": false,
+      "serial": "02K15K0263D002L7",
+      "temperature_c": 48.0,
+      "total_memory_mib": 98304,
+      "uncorrectable_ecc_counts": [
+        0,
+        0
+      ],
+      "used_memory_mib": 20428,
+      "utilization_percent": 100,
+      "uuid": "9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "xpu_smi_runtime": "10.2"
+    }
+  ],
+  "commands": [
+    {
+      "command": [
+        "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+        "--mode",
+        "d2h",
+        "--src",
+        "0",
+        "--src-pci",
+        "00000000:2e:00.0",
+        "--samples",
+        "25",
+        "--warmup",
+        "2",
+        "--minimum-seconds",
+        "0.0",
+        "--dimension",
+        "128",
+        "--bytes",
+        "65536",
+        "--pinned",
+        "0",
+        "--async",
+        "0",
+        "--pinned-api",
+        "register",
+        "--async-chunk-bytes",
+        "1048576"
+      ],
+      "duration_s": 0.06535178981721401,
+      "finished_at": "2026-09-29T04:31:50.397549Z",
+      "finished_monotonic_s": 4497447.317437664,
+      "returncode": 0,
+      "started_at": "2026-09-29T04:31:50.332213Z",
+      "started_monotonic_s": 4497447.252085874,
+      "stderr": {
+        "bytes": 4258,
+        "path": "cases/interconnect-d2h-latency/physical-3-65536B-pageable-blocking/repeat-1/microbenchmark.stderr",
+        "sha256": "10c69d85d5e644e39d2086381b5dd1ee66ccaa6800b99d1e134b0e80888ba1e6"
+      },
+      "stdout": {
+        "bytes": 545,
+        "path": "cases/interconnect-d2h-latency/physical-3-65536B-pageable-blocking/repeat-1/microbenchmark.stdout",
+        "sha256": "3a055776ee030a8010de3f70b1edded75d35f17b168a2ce57fd53ba4c32b6632"
+      },
+      "timed_out": false,
+      "timeout_s": 180
+    }
+  ],
+  "diagnosis_status": "not-supported",
+  "duration_s": 0.06535178981721401,
+  "invalid_monitor_samples": 0,
+  "measurement_status": "passed",
+  "measurement_window": {
+    "finished_monotonic_s": 4497447.306204089,
+    "role": "measurement",
+    "started_monotonic_s": 4497447.305649181
+  },
+  "metrics": [
+    {
+      "api_calls_per_sample": 1,
+      "async_chunk_bytes": 0,
+      "checked_values": 65536,
+      "compute_semantics": null,
+      "correctness": true,
+      "field": "P800_METRIC/samples_ns",
+      "formula": "median(completed API copy + synchronization nanoseconds)",
+      "max_ns": 48459,
+      "median_ns": 19619,
+      "min_ns": 18450,
+      "physical_device_id": 3,
+      "point": {
+        "async": false,
+        "bytes": 65536,
+        "mode": "d2h",
+        "pinned": false,
+        "source": 3
+      },
+      "repetition": 1,
+      "sample_count": 25,
+      "sample_cv": 0.3158085733823421,
+      "scope": "completed native API operation; not theoretical peak or device-only kernel time",
+      "source": "cases/interconnect-d2h-latency/physical-3-65536B-pageable-blocking/repeat-1/microbenchmark.stdout",
+      "source_kind": "native-xre",
+      "stability_status": "unstable",
+      "submission_scope": "single native operation",
+      "timer": "CLOCK_MONOTONIC completed API operation including synchronization",
+      "unit": "ns",
+      "value": 19619
+    }
+  ],
+  "monitor_sample_counts": {
+    "3": 0
+  },
+  "monitoring_status": "partial",
+  "point": {
+    "async": false,
+    "bytes": 65536,
+    "mode": "d2h",
+    "pinned": false,
+    "source": 3
+  },
+  "repetition": 1,
+  "schema_version": 1,
+  "status": "partial",
+  "sweep_scope": "explicit physical cards/mode/payload; native operation",
+  "target": "physical-3-65536B-pageable-blocking/repeat-1"
+}

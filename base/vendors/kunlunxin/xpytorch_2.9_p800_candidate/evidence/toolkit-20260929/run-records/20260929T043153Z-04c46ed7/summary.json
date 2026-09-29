@@ -1,0 +1,4188 @@
+{
+  "chip": "P800",
+  "cleanup_status": "passed",
+  "container_exit_code": 2,
+  "diagnosis_status": "not-supported",
+  "finished_at": "2026-09-29T04:41:40.988444Z",
+  "kind": "toolkit",
+  "lease_released": true,
+  "measurement_status": "passed",
+  "monitoring_status": "passed",
+  "postflight_status": "passed",
+  "qualification_status": "exploratory",
+  "release_stage": "candidate",
+  "report_generation": {
+    "assets": [
+      {
+        "bytes": 11468,
+        "path": "report-assets/interconnect-P2P_intraserver-GB-s.svg",
+        "sha256": "cc29edb758ee2f3ff925a210c0a33ce5eb7f4aaa320ecc8455d211e3ed1acced"
+      },
+      {
+        "bytes": 5781,
+        "path": "report-assets/interconnect-P2P_intraserver-latency-ns.svg",
+        "sha256": "36d37902dc10623335f10640cea8334eecf8133128f03a9f9327441ac869bf2d"
+      },
+      {
+        "bytes": 6104,
+        "path": "report-assets/monitor-card-0-utilization_percent-00000.svg",
+        "sha256": "83caaa430ca2bc47e3bea9aab25df5d7b7d4c403abeba1a2b612059c27750249"
+      },
+      {
+        "bytes": 6056,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00000.svg",
+        "sha256": "5fd78057545347a4c0c69559c41d0a110b7486cc31753bdd138ef49cde512409"
+      },
+      {
+        "bytes": 6028,
+        "path": "report-assets/monitor-card-0-temperature_c-00000.svg",
+        "sha256": "b1c1473c624e2148baf68372eaf20a4210a4305b4674da41249413337f7174b0"
+      },
+      {
+        "bytes": 6022,
+        "path": "report-assets/monitor-card-0-power_w-00000.svg",
+        "sha256": "dd5e039a62364e04f73b97fff30b54acd91aec95c4b5da7e4897d48be364a60a"
+      },
+      {
+        "bytes": 6105,
+        "path": "report-assets/monitor-card-0-utilization_percent-00024.svg",
+        "sha256": "d0ea99dfe7abca6ece08cd044060974b2629c5a99f5cf5f9d7d61616d65c8a9f"
+      },
+      {
+        "bytes": 6057,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00024.svg",
+        "sha256": "f16e6d47ae7537665ec2a90930c3533d873c1f67f4d7f15b96660ec3405d758d"
+      },
+      {
+        "bytes": 6029,
+        "path": "report-assets/monitor-card-0-temperature_c-00024.svg",
+        "sha256": "58963cd576f13d61f4e4a64fe7003b438193c0d1c895b06a3f944086799b7abe"
+      },
+      {
+        "bytes": 6023,
+        "path": "report-assets/monitor-card-0-power_w-00024.svg",
+        "sha256": "6600e324228bb6a0c98e6e69265e04a7c53bc1cbade098b68fbf169376bda964"
+      },
+      {
+        "bytes": 6105,
+        "path": "report-assets/monitor-card-0-utilization_percent-00048.svg",
+        "sha256": "dcaeb7dcd0c5379fde2db0b4c7de36fd998bbe8797717124408c2bd0b43ef935"
+      },
+      {
+        "bytes": 6057,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00048.svg",
+        "sha256": "1bbf373970f94bfa6d76bc101d9878941045606ad15becc72aaf448b2578e525"
+      },
+      {
+        "bytes": 6029,
+        "path": "report-assets/monitor-card-0-temperature_c-00048.svg",
+        "sha256": "04a177d30b6edfb642e2495fcb96c338afb1dd577e2172953dd540a6e64ffa77"
+      },
+      {
+        "bytes": 6023,
+        "path": "report-assets/monitor-card-0-power_w-00048.svg",
+        "sha256": "cf3f23801a5d1f0223db9b7364d8af9a9fd9df659f6f43a94ce038f810945c92"
+      },
+      {
+        "bytes": 6105,
+        "path": "report-assets/monitor-card-0-utilization_percent-00072.svg",
+        "sha256": "310e5e8f235c69fade1066f5e97f9375e91d8205fac4966c61cf2ce799e6af5f"
+      },
+      {
+        "bytes": 6057,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00072.svg",
+        "sha256": "f1f5e851bf50e3153c660538d3e7e2333ee98603ea56b3d00cc732641686afbf"
+      },
+      {
+        "bytes": 6029,
+        "path": "report-assets/monitor-card-0-temperature_c-00072.svg",
+        "sha256": "c06cf62f4142fa3d57a382e743df8b539b31b228635714cb71131d0d4f65d99f"
+      },
+      {
+        "bytes": 6023,
+        "path": "report-assets/monitor-card-0-power_w-00072.svg",
+        "sha256": "37a48cd57e08237a2f3a918e24e72f285459675bcf8d394e8c777bce4827aaec"
+      },
+      {
+        "bytes": 6106,
+        "path": "report-assets/monitor-card-0-utilization_percent-00096.svg",
+        "sha256": "fabf1aaa0f047090ce8553f76ef155bd4de14f4e7e27e6b91625cad3a087a403"
+      },
+      {
+        "bytes": 6058,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00096.svg",
+        "sha256": "5c1842e1628c4cbf1bb2fd96cf9688c40109d08b44f5d085871a7dc67358d722"
+      },
+      {
+        "bytes": 6030,
+        "path": "report-assets/monitor-card-0-temperature_c-00096.svg",
+        "sha256": "75b7bd625bb6fa8a1ae6c0d5b0a54eb8f3ffe51bbb7dd24543c909db5ff3ec4b"
+      },
+      {
+        "bytes": 6024,
+        "path": "report-assets/monitor-card-0-power_w-00096.svg",
+        "sha256": "b5db6e4d75af03822f1b73d080556ad5a8bc5d5d074f75f56f42c23bf0e68772"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-0-utilization_percent-00120.svg",
+        "sha256": "ae805e3d62d114af129b1e3db7dfe62362b0c1907dc422942e1090cbc5e67282"
+      },
+      {
+        "bytes": 6059,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00120.svg",
+        "sha256": "62e956c4980c8d045f1f6b8c3b4a9b597194907f324be5d165e3f4ba20f9aad4"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-0-temperature_c-00120.svg",
+        "sha256": "df3fe6513495e07fda9bfe2f5d38309a6572f6e7567ac1f39d46639c8488a65e"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-0-power_w-00120.svg",
+        "sha256": "973373851346c2395e0b7371d5a6bf0b28894490282072afa39273788a60e2c6"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-0-utilization_percent-00144.svg",
+        "sha256": "04f78f10ec9e72833cacee5713b2974d9ec68d27122faec2319cdf0deaeb8308"
+      },
+      {
+        "bytes": 6059,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00144.svg",
+        "sha256": "15eaf4cec5275b4cbcacc9934669ab4535fad9cafd1b1bd4f34d6840ff6fbeb8"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-0-temperature_c-00144.svg",
+        "sha256": "5084cc2cdf068ee0d4e7e97f883dcb00ad633b3ba833840f9a4d17e1ee563b73"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-0-power_w-00144.svg",
+        "sha256": "cade7a181e7641780f587684d4489b955cde59de539cbaf16ab885ebb1338946"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-0-utilization_percent-00168.svg",
+        "sha256": "66fcdb399589db92c337dbf5b23eda236f7420def804025f657c5e263360b475"
+      },
+      {
+        "bytes": 6059,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00168.svg",
+        "sha256": "2d8fb04df967df32bf509ae323efd14b9a66d5f0b7f72e068710dc0310a3513f"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-0-temperature_c-00168.svg",
+        "sha256": "a2f5141abe12d319f0f4f05ab9796c3fafeaf84ae2d56625f4712e1c6b475eeb"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-0-power_w-00168.svg",
+        "sha256": "e52c271925c7eded2b2279ff2b9cba43179baf25dbff8f2d15ce0253e9138e04"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-0-utilization_percent-00192.svg",
+        "sha256": "c07d4c7e3d51ca060dc2d871bf7569599d704644e06bff8447d060d48b80707c"
+      },
+      {
+        "bytes": 6059,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00192.svg",
+        "sha256": "3aef165bd5fefe7e36bb397a875b297a889b4b5c0407ae0a7b1ff6cec1a1e76b"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-0-temperature_c-00192.svg",
+        "sha256": "eacf1a80169fca2f3fe3da2897d0b7e3c4c0c6a8b6f124d1860b9db0562131dc"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-0-power_w-00192.svg",
+        "sha256": "95bcc33dd6f2b92f120b5a303937dabea95f36c95a751ad6809c3c1896c6359e"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-0-utilization_percent-00216.svg",
+        "sha256": "fb8379a987a4ea8a113cf6ea7da2769253eca5e463a23563278cd3fa62fc2007"
+      },
+      {
+        "bytes": 6059,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00216.svg",
+        "sha256": "4072f76ddbaaa073077e2674a6f1e45db4a4e19264191aaed546ec83adfeac1f"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-0-temperature_c-00216.svg",
+        "sha256": "920dde05931496f9295e42d4c988198c6fd9858c2da9c8c1d98db8880b878183"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-0-power_w-00216.svg",
+        "sha256": "4a43a7b9d6cbba91134bb09ba1237902ab01a6789653510f49e728ffd9826b14"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-0-utilization_percent-00240.svg",
+        "sha256": "9d295eea38fd662669619ae4a6dd644b2065765dab0f81b0ceba11a52825bde2"
+      },
+      {
+        "bytes": 6059,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00240.svg",
+        "sha256": "24ad97248014f05561a391fd266b11947be7e1ca9ca34b85741f17f96f6ac473"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-0-temperature_c-00240.svg",
+        "sha256": "5f89c9d1879b0d57aa8dcbdd8cf11c1a604cc9b1bb0b77450603364ea5dbf862"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-0-power_w-00240.svg",
+        "sha256": "c3469db1d7b4b21cb3f3ce013545f5a0c12083e9c583a5fd9cce15d84fe027ba"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-0-utilization_percent-00264.svg",
+        "sha256": "74487d7549395ffcaf2528a9d35af320d42abe2e62f1905f63fab91bb3fa657a"
+      },
+      {
+        "bytes": 6059,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00264.svg",
+        "sha256": "3a416418d9d6a9816b7d46f346b2dce183a61b1d73e3acc1f3a1fa9c35c34ca6"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-0-temperature_c-00264.svg",
+        "sha256": "43e8bc340dea48d23b8074e5102e569b4c90617ba59a9e4f1bb84c8b6bdd5708"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-0-power_w-00264.svg",
+        "sha256": "e4d5a3570194260a917d8fe950dbb811aad0f721120bc0bb285093643167c7df"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-0-utilization_percent-00288.svg",
+        "sha256": "7a43894fc0d89172d5cfc5b31986c348aa1dffa0568528daa724472c50cd622f"
+      },
+      {
+        "bytes": 6059,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00288.svg",
+        "sha256": "fc84d196a3a6975792b08bc6aa5c88d25e3649109cd0f2216326e4eb02db5e7a"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-0-temperature_c-00288.svg",
+        "sha256": "268dc29e67b8abc99c0ef21db96910962e93fb8a8c2968d2df001285e10acb9e"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-0-power_w-00288.svg",
+        "sha256": "5cff82685d0ac74a9c55e8f3f3410c05cbb0e56c372b04882d743b9454808812"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-0-utilization_percent-00312.svg",
+        "sha256": "f1c955ce01778409c7877b02df91512922f0663988946c0f2f7405e343925e6a"
+      },
+      {
+        "bytes": 6059,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00312.svg",
+        "sha256": "6cdec9c383e0ed2916273129d7895809f48ab62255ed08311e54611d0d4c24bc"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-0-temperature_c-00312.svg",
+        "sha256": "6929bc9a999a6d0c062ac7d7900fdccc632b5a9ac1fbc7f804e279f2027e6d26"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-0-power_w-00312.svg",
+        "sha256": "3bed81e3104965b8a23d64f0cbf53c2fc1d3e4a13f2dddf14a269be2b5985175"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-0-utilization_percent-00336.svg",
+        "sha256": "337be9cfd0aacbf78c4f14e17f85d208889b16b3f86dfbb6e6f3b54e7097b876"
+      },
+      {
+        "bytes": 6059,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00336.svg",
+        "sha256": "d65193e59eed55f3a54439fb96006ceb7e41a7271cdb3700fefe404b9602d401"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-0-temperature_c-00336.svg",
+        "sha256": "f7fb4fadcf2a2af7df22f8e741071bba618987dcdb069a1b4d6570caee2f822c"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-0-power_w-00336.svg",
+        "sha256": "f620c93f923f44a9ae1b433415da9b6b3dff85f1add5a6efb685a3ddaa59d668"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-0-utilization_percent-00360.svg",
+        "sha256": "19b90e886df717cca6011afadc53c9dc7d94a657549275aa218cbd0336e74c61"
+      },
+      {
+        "bytes": 6059,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00360.svg",
+        "sha256": "b6c80d2c5ddb785d4303d3c10104986f91107f62f47008c843ea50a0ed033400"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-0-temperature_c-00360.svg",
+        "sha256": "3c2c813825ddf420c5a193d64ccb59c901e4b673245ae3c75044c631f9626afc"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-0-power_w-00360.svg",
+        "sha256": "ce82a20b76bfdc7546551b7dfaac624d3a7ca0ea7e28578441715ad05561ac87"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-0-utilization_percent-00384.svg",
+        "sha256": "d74b2067982b7a03f90e1f5e19e909761a343cd56332630dcb96a4fccbb8b4dd"
+      },
+      {
+        "bytes": 6059,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00384.svg",
+        "sha256": "a62fe5aecdec536b4a67624584d10090cfaf2577411618c854ddabcb279bc286"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-0-temperature_c-00384.svg",
+        "sha256": "bbbfbeb1c887d7cb216a21a8de580613d60ac5a3b363544518ec61d1a644f431"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-0-power_w-00384.svg",
+        "sha256": "763f4289a1880e96c5bed5a7e9d556475073e997880f276099f3802f9dab7319"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-0-utilization_percent-00408.svg",
+        "sha256": "8763195331d82e3fbb3519a110d8e8638d43467d41b80b8c5c160ceb71a9cb88"
+      },
+      {
+        "bytes": 6059,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00408.svg",
+        "sha256": "17e7a35d238edf34703ee8464c5cbcd5914b6affa38db3d1edc8dc66b3a31151"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-0-temperature_c-00408.svg",
+        "sha256": "7a6c100ac0ff11f6360926c2a2e1756d5913abb00af7c0bc5b470265339bda4e"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-0-power_w-00408.svg",
+        "sha256": "d924d66de09be0c7ad4abaffcc2a3d520590cda32a2bb9ade9b300a60c6c6c4d"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-0-utilization_percent-00432.svg",
+        "sha256": "6b0df4f40276632772eed8772569f9ab7cc65a843d2588bda4d90953176e45f2"
+      },
+      {
+        "bytes": 6059,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00432.svg",
+        "sha256": "8b79c109d35a23743610bb51f1953d75a0f53909fc021165809acab90fa1e8a4"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-0-temperature_c-00432.svg",
+        "sha256": "b3057f3593b24e542bdb084b1fd2cc3830691989f63996330a689ff7d2956f4e"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-0-power_w-00432.svg",
+        "sha256": "5ead25de7cb2f00284e7519982aa826191aa5f30c45d0f014e624a34520ca350"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-0-utilization_percent-00456.svg",
+        "sha256": "3d7eb6cf2d2395a2c7a690d741b57ddc1a6060b716787345bb7d094cbc7d7ff0"
+      },
+      {
+        "bytes": 6059,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00456.svg",
+        "sha256": "2af20084dd511169a83e80f3a32990d42b80b55f9c17f9619872dc2c0a061e1e"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-0-temperature_c-00456.svg",
+        "sha256": "06a90278feeb7f3477a60d10b2f475a4fb70602a72102717b0506b946283121a"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-0-power_w-00456.svg",
+        "sha256": "b04d86c1cdf96330f4f5f6a6e68782b435d86ddf2561b4f5f23b7c30ae4491d1"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-0-utilization_percent-00480.svg",
+        "sha256": "953b467cbf2959827e69c2816a216c3b22aa5244c08af2efaf8bfd28186e063a"
+      },
+      {
+        "bytes": 6059,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00480.svg",
+        "sha256": "6b806fcca84e6dad4025b1231f61a4cac8b2a347a81e0108353684c74bf7ba3a"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-0-temperature_c-00480.svg",
+        "sha256": "2b07d7fb21968f8ee918689774a4c749a6209057c053a5e9574a4877335257bd"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-0-power_w-00480.svg",
+        "sha256": "b98aef2935a2abd25f0d22d587a5a164a49d0f5722fb758ec4061e1cd102b0ef"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-0-utilization_percent-00504.svg",
+        "sha256": "be393e7b1265f722bb291a30f6e3e99017f5bfaedcdde903c71e048d181ab734"
+      },
+      {
+        "bytes": 6059,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00504.svg",
+        "sha256": "cf4a9ca78a2cac12bab219b8a2fe94de843d565d7e28157e0f28d82b99cbaeca"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-0-temperature_c-00504.svg",
+        "sha256": "624b1ff609a2071aa4755886ec95ad4dd4f54ded34434c09a46ad02c63eec677"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-0-power_w-00504.svg",
+        "sha256": "10499b097535c249fb7d4188e4098b4b6f18bb1451073cbe01c37ea4829def1e"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-0-utilization_percent-00528.svg",
+        "sha256": "a18ca5637943fad001e3451cf5b59b872f75ed24977c1f9bae2327a5a24c9b8e"
+      },
+      {
+        "bytes": 6059,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00528.svg",
+        "sha256": "2c5194cf9ccc6c07950b74ed2d78ebf07234723b3f4fc8a49e33d93146b5d220"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-0-temperature_c-00528.svg",
+        "sha256": "1f65f2f3b45a18aab7f86800d31249bef929c1d17e7823a25a2bf2c65f2babf3"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-0-power_w-00528.svg",
+        "sha256": "dc67d7caa73ae1832691e8d9fb67dc9101a942d7f9e369a85229bf664b728016"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-0-utilization_percent-00552.svg",
+        "sha256": "2eb04fafac893806e70cea6af74496829a18c5a13490b19258cbefab5e4156d8"
+      },
+      {
+        "bytes": 6059,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00552.svg",
+        "sha256": "7fac827ba0cafd6eb335328f469f29af421fad71c18fb69a717a687a80a43ac1"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-0-temperature_c-00552.svg",
+        "sha256": "9afe7c1bac11a07e7ff852249ca4a62f8293b2695d4038032ca4d43e6304f5eb"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-0-power_w-00552.svg",
+        "sha256": "4e18e4de9491e446a42b183d3877b49e645bd66ab326ab556eb6deca8d51d8cc"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-0-utilization_percent-00576.svg",
+        "sha256": "fb71d45048b4e7f0c9bfa204da58d41910d0cd4577c390ae8b1514b7a2f73371"
+      },
+      {
+        "bytes": 6059,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00576.svg",
+        "sha256": "bf2952c3fa8ec57b918576f6d89f4dc2ca3b9b170493e96aa15cf8bc89870c54"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-0-temperature_c-00576.svg",
+        "sha256": "3a75404c952c974bb1c3d709e268d4d3cbd201a29ffe1545ab264b2c04525c76"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-0-power_w-00576.svg",
+        "sha256": "e028099189f3bf219fa8425b7e98b5d155f1bf8debabbe474aa4c86dac6bc28b"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-0-utilization_percent-00600.svg",
+        "sha256": "8b95eaa8c5af5f401e2cc3de9606a83efe4ad31e8610e156f5b6716c1293a6a8"
+      },
+      {
+        "bytes": 6059,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00600.svg",
+        "sha256": "407cd34983fc0ba082225ab5c9b6ed60001e987bb1b1b7419f088167e7a3f2b9"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-0-temperature_c-00600.svg",
+        "sha256": "76158e9f229ef96c1517d9aa05bc52ddce25fe458c01911a78b70e971f187c4e"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-0-power_w-00600.svg",
+        "sha256": "c324c19ea00db069fce35731763c91fec70dba104015beced861529236a9936e"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-0-utilization_percent-00624.svg",
+        "sha256": "75c76c6c8b8f19eccfbb9b1d1cf74c21a322dc4f397322230a2e08f5269a475b"
+      },
+      {
+        "bytes": 6059,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00624.svg",
+        "sha256": "35b6e7719da907c17edf51c870ecd48b9d3d0d994985092402dbfb66c763117b"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-0-temperature_c-00624.svg",
+        "sha256": "4fe8316e0d362e1acf6eb956ede23b76e29feff141553d6df2bd2239afbd3c6c"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-0-power_w-00624.svg",
+        "sha256": "0f246601c17d29a79c52b05f70c10ae5eb08ef79f95753e03079a6701fe596bb"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-0-utilization_percent-00648.svg",
+        "sha256": "d776016ca261049b1b4b3ee7ec34b59f42095c7eef06d07669261c686f74062f"
+      },
+      {
+        "bytes": 6059,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00648.svg",
+        "sha256": "e69d2ae86e4ddd2067b4c7e5b617d5452725ecfa195112321339e71d4a7bc169"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-0-temperature_c-00648.svg",
+        "sha256": "9b9956f13415884e37e89a407277f75eb6996f10fcf5862db9fda95a23668346"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-0-power_w-00648.svg",
+        "sha256": "26dcda97d46a964c1620e54286841d197a243425b71e3133c60665c7ee1bf073"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-0-utilization_percent-00672.svg",
+        "sha256": "026f00ebee5017056ce2fa7aa3e940aed55923b66de3d2d44c8ff2159401a450"
+      },
+      {
+        "bytes": 6059,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00672.svg",
+        "sha256": "51a212c10d070544203b13c29d657673a31ab665d0568bad2601af5d41ed4842"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-0-temperature_c-00672.svg",
+        "sha256": "5e160d5ed6f96a1b49c1d0a542054b0e273d53234587aa7c56f180ce8f87fc32"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-0-power_w-00672.svg",
+        "sha256": "a2e70d7ca8dceb293d5f8799cf44449d51f730d20df51088ff758c42834d6195"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-0-utilization_percent-00696.svg",
+        "sha256": "40df81ba0e5b8f4660fec4c9cead7ec97d5300ff8451304fb9c574012ff469c9"
+      },
+      {
+        "bytes": 6059,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00696.svg",
+        "sha256": "7b732b03cb860327d6f760a2e6ce5c0490377ea59e93c4ede91b0e34eed436d0"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-0-temperature_c-00696.svg",
+        "sha256": "c9a17e9125db5bbc64589bff8ea6d9d20aa1d15552971bb7b1c2da19efaf75d9"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-0-power_w-00696.svg",
+        "sha256": "2cfae06421751b833ac7409786c5639c90db9a806c0b0b9c4ee0315626488af0"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-0-utilization_percent-00720.svg",
+        "sha256": "680ff41d32b1ebd07b38a894fefca25c75cedfbc4d3e6b758f62c5edd72c7ec0"
+      },
+      {
+        "bytes": 6059,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00720.svg",
+        "sha256": "b7cbf2bacd058cc04eefef35690cc90335a2509d0ce0c861695c15b736468055"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-0-temperature_c-00720.svg",
+        "sha256": "170f59c33c72ae334411d2913002d09af163d35fee71c2f71e9e2889abed4fe2"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-0-power_w-00720.svg",
+        "sha256": "148b42a47479142279fad9a65258ec0c5f7c492d7cbb084f5ffeed2dc64a1818"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-0-utilization_percent-00744.svg",
+        "sha256": "f3107f2f801de9428b1abbd103bcd1aadc9c4b858b4d7c915c8399d7b449759f"
+      },
+      {
+        "bytes": 6059,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00744.svg",
+        "sha256": "016b9cf3ea846e5aaec6c38f07950e4607e0b484a7cfbe468302f1a4ced1441b"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-0-temperature_c-00744.svg",
+        "sha256": "2d49db7431a29e97a9a7c4231f25d404d2c6acf5bf7fdb0f0f9f34b858107ba3"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-0-power_w-00744.svg",
+        "sha256": "2baec5b8cfdb95afd7ab8ebfafb5cd8b2bbf89014cb7ec61a5f73f1aba378b86"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-0-utilization_percent-00768.svg",
+        "sha256": "584f36958ae1b4ef83c8105d3e0f88ba6f2cd35213fe6b0ee888d7dc05b6ce8c"
+      },
+      {
+        "bytes": 6059,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00768.svg",
+        "sha256": "61f350862008f3cff6e96e37454be56bc95a177516d5ea2976fde561ebb29183"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-0-temperature_c-00768.svg",
+        "sha256": "5a272ac08f59d9aa99fa50243e4c12acf2f9e759e0577ff6fe8073c20c4c8ac8"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-0-power_w-00768.svg",
+        "sha256": "b2a1ef965771d8e6abe94cb4243d1075b374010d1c68d6a09e783e84abc9c28f"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-0-utilization_percent-00792.svg",
+        "sha256": "c76f5a1893ae9d7370fe36c0fbe6158e232c7ce4d3068eed07c2d68bfa90349c"
+      },
+      {
+        "bytes": 6059,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00792.svg",
+        "sha256": "a09f091d3930da99e6a6368917107d0ba3ce33c5250fde713445adbe526ce5ed"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-0-temperature_c-00792.svg",
+        "sha256": "83557bd8e3726336fdef399d3124b33f173b1a8887d81d2f1213f42b9aa32a4b"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-0-power_w-00792.svg",
+        "sha256": "d1cf8bf488498f41167a3061437efd7151661dc86f08da8b0898e0815df8f85a"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-0-utilization_percent-00816.svg",
+        "sha256": "f6039e0ae31398d1366cdd24578528876fe35d18f1f0dde0b7cca1810eba5a03"
+      },
+      {
+        "bytes": 6059,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00816.svg",
+        "sha256": "1750735b01c1bab4751653c0e72867ab8d01a6debc53d862bdd574f26b22917a"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-0-temperature_c-00816.svg",
+        "sha256": "3263b71dbf5082e8860188ccc7e8500b816a353ae67dc32dab0131425ba47a55"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-0-power_w-00816.svg",
+        "sha256": "376bb389e2580d7a26e2c787f3134b621e9224f3bb7650e847c2c6f7dd893deb"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-0-utilization_percent-00840.svg",
+        "sha256": "8bf0a514e86d34b801bed17bd7211d50aa262e7ce2353bc018e9ed81dbf5aff0"
+      },
+      {
+        "bytes": 6059,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00840.svg",
+        "sha256": "282bb55399b68174565990a88b3a814b2f08f0eb7a4be110d3210601364a2775"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-0-temperature_c-00840.svg",
+        "sha256": "09219bb4842ba193fd7828268ef087462ee38f72efaf8ff1637c00de0cb988db"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-0-power_w-00840.svg",
+        "sha256": "1552cfd1a968d26d1968c46a5a4d9a396e4b9ac61e9c755b621a86435e38d6ed"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-0-utilization_percent-00864.svg",
+        "sha256": "b4b1be9a5257e8c136afc5e03838972a4e59eb539317468cb18a830270ea409a"
+      },
+      {
+        "bytes": 6059,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00864.svg",
+        "sha256": "132568cd1e176422247b3bd2c1c6d57132cee8345bf4b9dc6f9b7e13b05d7b54"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-0-temperature_c-00864.svg",
+        "sha256": "2435c65e046362bd1e85c8d793ef2635d776e4771d90e8e809c8301f71b9a116"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-0-power_w-00864.svg",
+        "sha256": "3598ece7b3860d57e1a28ef5640ba7467bcbbb88396d9eb3aba3c213befb0823"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-0-utilization_percent-00888.svg",
+        "sha256": "a6311fc97ca2caa7e1d9af37e8eec1193c7990cb3d9411f6ae7d9df863a9c7cd"
+      },
+      {
+        "bytes": 6059,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00888.svg",
+        "sha256": "f987035a391df19c9d352bbbb17d9539f71a1b69558827a0cf1db4ae338f4a41"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-0-temperature_c-00888.svg",
+        "sha256": "c088e3045fef95cd4a541e4a94b4aaf27ef0e04f4c1a45547d84823c6ae29f50"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-0-power_w-00888.svg",
+        "sha256": "1045b6cd1b9358d77431c9a46989b1fb7df5392048480e7c7f9363e8acdb668e"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-0-utilization_percent-00912.svg",
+        "sha256": "5e085d65b9fbe4a3b56a19f62f4c122fa8e93fcc2b4be968ee623f41d39461a4"
+      },
+      {
+        "bytes": 6059,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00912.svg",
+        "sha256": "3cecec17563672858fc14256fec8f4e4316de87b2a3a1c54cd4fdf6da3e197e8"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-0-temperature_c-00912.svg",
+        "sha256": "4dd0593bbd737e3e63cae8cfb6c6215a8e3911825dd03a300cc8f559a0819578"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-0-power_w-00912.svg",
+        "sha256": "a2df1a3713f25318e9824f7b56b250c50d874bd4b65d2029897960de3506f276"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-0-utilization_percent-00936.svg",
+        "sha256": "52e3d5263cb7647cb00040b19c1f0b0d4433e9331ba934192262ea2631f183b5"
+      },
+      {
+        "bytes": 6059,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00936.svg",
+        "sha256": "c6bcaa8328c095e68f2b9d65168c658330ea89fb216f5eaee9f30215ebd073cc"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-0-temperature_c-00936.svg",
+        "sha256": "1b3ea5ccfeb28e8a12582a3c71ca01780e032e21bddbba4b58c5321f0f1c228c"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-0-power_w-00936.svg",
+        "sha256": "60b2e9386eac42396e18e8ba8e383591d6d6bae277eecc46f36e418d0fdbc93a"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-0-utilization_percent-00960.svg",
+        "sha256": "d809f4451b4c922eab88e38d62025c703bd76c7ee3f91ea3b65ce7eb2f21aa46"
+      },
+      {
+        "bytes": 6059,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00960.svg",
+        "sha256": "04fb2cdb33c7e62cd0fd58bafc542d0a1a2d7893f53945366e612efc4d2ad86d"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-0-temperature_c-00960.svg",
+        "sha256": "5a396b16ce190eb61cb789d5acd115a43960e8586091974a3c9b0f5b462a5cae"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-0-power_w-00960.svg",
+        "sha256": "d141fc38e43ef5118b96844c17511b98ed8e9dd56e6ec77f73196a9207a0422d"
+      },
+      {
+        "bytes": 6108,
+        "path": "report-assets/monitor-card-0-utilization_percent-00984.svg",
+        "sha256": "b3f1115d58d6c12368b1fb5b8e7ea92d893032431d2baaa09b8a870c39d901de"
+      },
+      {
+        "bytes": 6060,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00984.svg",
+        "sha256": "7ef1013b0b573019763e444d1c820e2be518d220b820c91d6b1cf5d4aa23accf"
+      },
+      {
+        "bytes": 6032,
+        "path": "report-assets/monitor-card-0-temperature_c-00984.svg",
+        "sha256": "69515da7e1621708a519589e11c7a715be1c10c5ec2f2ec64e936630a2217241"
+      },
+      {
+        "bytes": 6026,
+        "path": "report-assets/monitor-card-0-power_w-00984.svg",
+        "sha256": "c84eebeb40673389e0dd30b213cca2715123f2a18d6a99477537233d6ce6b9ac"
+      },
+      {
+        "bytes": 6109,
+        "path": "report-assets/monitor-card-0-utilization_percent-01008.svg",
+        "sha256": "d31706a96040fe80e69fd2bc484224e3fa29081119e5e1b2137f67828d537762"
+      },
+      {
+        "bytes": 6061,
+        "path": "report-assets/monitor-card-0-used_memory_mib-01008.svg",
+        "sha256": "d32df3ae01946a2679279d23f02102c8b2732b4c981373973cb024ff929b7576"
+      },
+      {
+        "bytes": 6033,
+        "path": "report-assets/monitor-card-0-temperature_c-01008.svg",
+        "sha256": "3d552cb84ac919b38300cd184f2651d8060c869a6ce22c19089b0781c3b233b7"
+      },
+      {
+        "bytes": 6027,
+        "path": "report-assets/monitor-card-0-power_w-01008.svg",
+        "sha256": "14d3da99f9a870a5e970ef9c627aca67a26dbbb086c662e8da3a10fde200a72f"
+      },
+      {
+        "bytes": 6109,
+        "path": "report-assets/monitor-card-0-utilization_percent-01032.svg",
+        "sha256": "855fcd74c8b7d14a7fae7372c4a8055dd672746d21b4df417b2ec3199c837bab"
+      },
+      {
+        "bytes": 6061,
+        "path": "report-assets/monitor-card-0-used_memory_mib-01032.svg",
+        "sha256": "1914d26a7d1bd1abf6183334813726c1918f6da9c676e5725e6efd41d178e1f6"
+      },
+      {
+        "bytes": 6033,
+        "path": "report-assets/monitor-card-0-temperature_c-01032.svg",
+        "sha256": "b55ffd4d176f5e55eba0ea45d5db907e448a6a345fbca36c95aa57a41fb3e42e"
+      },
+      {
+        "bytes": 6027,
+        "path": "report-assets/monitor-card-0-power_w-01032.svg",
+        "sha256": "46d0fc4b2e084f1e1a8d1757ecf974f666ba878429c79771b86c9e7344071d1f"
+      },
+      {
+        "bytes": 6109,
+        "path": "report-assets/monitor-card-0-utilization_percent-01056.svg",
+        "sha256": "4c3b9ce32cda6f0f58302cfa0fd4d735e55a604908c887b5eda666518a042db2"
+      },
+      {
+        "bytes": 6061,
+        "path": "report-assets/monitor-card-0-used_memory_mib-01056.svg",
+        "sha256": "0fcd7f60f0e83286a9739140ec3542d1731aa92288f7db21b3a27dda94eca47e"
+      },
+      {
+        "bytes": 6033,
+        "path": "report-assets/monitor-card-0-temperature_c-01056.svg",
+        "sha256": "ad4f12055ace42afcc2daa4d317ecbaa3ba68d4a5d4e2153626d12c6ab88e9ce"
+      },
+      {
+        "bytes": 6027,
+        "path": "report-assets/monitor-card-0-power_w-01056.svg",
+        "sha256": "e8df989ab4f8e3eb4cf10a38349f6e03a4fd16d2c68ad92191dac31968f6893a"
+      },
+      {
+        "bytes": 6109,
+        "path": "report-assets/monitor-card-0-utilization_percent-01080.svg",
+        "sha256": "e6747e3e92ba8067d1fa13d0718d5be0f6a0fd9d6e7ed5cedb7fdade015b7c5f"
+      },
+      {
+        "bytes": 6061,
+        "path": "report-assets/monitor-card-0-used_memory_mib-01080.svg",
+        "sha256": "f193224bf6a1e29ba4a493b197c2c37d7c449e88af148ea5671cafc798852e12"
+      },
+      {
+        "bytes": 6033,
+        "path": "report-assets/monitor-card-0-temperature_c-01080.svg",
+        "sha256": "4e3e6df6b9b85f6416274f7a0925b44a9dfd4f75928332508a25c064be6f3385"
+      },
+      {
+        "bytes": 6027,
+        "path": "report-assets/monitor-card-0-power_w-01080.svg",
+        "sha256": "475209be2a3aafd90b3533381dfa6ff9cb7ac6c5c86d2d62881f5aa28b25a3be"
+      },
+      {
+        "bytes": 6109,
+        "path": "report-assets/monitor-card-0-utilization_percent-01104.svg",
+        "sha256": "7352e8b861e4b2d98b2a2337d9abffec47fcdfe065dd065a2c889053867f380c"
+      },
+      {
+        "bytes": 6061,
+        "path": "report-assets/monitor-card-0-used_memory_mib-01104.svg",
+        "sha256": "52aa22c0b8d6b31d55bd1b511528f703570145b4c9e81b50e4707bd308b63b23"
+      },
+      {
+        "bytes": 6033,
+        "path": "report-assets/monitor-card-0-temperature_c-01104.svg",
+        "sha256": "d3e3bcccce86c04656faa6ab5c9ac40b6de539caee96a74951548ded28d618a0"
+      },
+      {
+        "bytes": 6027,
+        "path": "report-assets/monitor-card-0-power_w-01104.svg",
+        "sha256": "ddd359b6cc004991b563162e69350eabc5e6bb6d1354a08fbc18afde62e801b0"
+      },
+      {
+        "bytes": 6109,
+        "path": "report-assets/monitor-card-0-utilization_percent-01128.svg",
+        "sha256": "536cfc9c191de61aba6185f5adeb14f7d1c247257456e57ad347f72f994270ed"
+      },
+      {
+        "bytes": 6061,
+        "path": "report-assets/monitor-card-0-used_memory_mib-01128.svg",
+        "sha256": "564ef4650e6e88d48da52e37a82a333241d2c51ac2b9ea130ee5126037437d97"
+      },
+      {
+        "bytes": 6033,
+        "path": "report-assets/monitor-card-0-temperature_c-01128.svg",
+        "sha256": "1a49c39bf3ff43957ac89766cf591a61e7284986afa63869abf311fe73159513"
+      },
+      {
+        "bytes": 6027,
+        "path": "report-assets/monitor-card-0-power_w-01128.svg",
+        "sha256": "0ad3b95c29676813bf072470cf21f86927039f512e9a7c9678e3ec1237ca4acc"
+      },
+      {
+        "bytes": 512,
+        "path": "report-assets/monitor-card-0-utilization_percent-01152.svg",
+        "sha256": "2b3e37231166f614246db8a60cbf5ed6de88943c6d4f67cddc5b4aebe8ddc4e9"
+      },
+      {
+        "bytes": 510,
+        "path": "report-assets/monitor-card-0-used_memory_mib-01152.svg",
+        "sha256": "2f9f49e7262e71e28d89da530c7432ef8448fdb6a6b6c2ba20580c508b8fa7cc"
+      },
+      {
+        "bytes": 505,
+        "path": "report-assets/monitor-card-0-temperature_c-01152.svg",
+        "sha256": "093cecb03214d6e639fd30df3b7865b0635ccd215f091c0a6baff6191ae6b3b3"
+      },
+      {
+        "bytes": 499,
+        "path": "report-assets/monitor-card-0-power_w-01152.svg",
+        "sha256": "e7287199fc1ef5df915d376b62bad76b686f27b771f9b4393d66c2cbd0c9bea5"
+      },
+      {
+        "bytes": 6100,
+        "path": "report-assets/monitor-card-4-utilization_percent-00000.svg",
+        "sha256": "a2ef3a03c4a43fd107545fa7d05d9016d38949ff982f157b5174f3a776f1a35c"
+      },
+      {
+        "bytes": 6104,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00000.svg",
+        "sha256": "f21bbe3e590b31a9e442059ee48a60fbbd2791ae6f2109de7ac1ba16d1729839"
+      },
+      {
+        "bytes": 6028,
+        "path": "report-assets/monitor-card-4-temperature_c-00000.svg",
+        "sha256": "36e422d1eb70ad5e3bf7cf1088ce025d767d6530293007708034c0c2a194ee87"
+      },
+      {
+        "bytes": 6024,
+        "path": "report-assets/monitor-card-4-power_w-00000.svg",
+        "sha256": "7d7763e244ec992d4b4fd2ba5b2755579466e51069e9342747fcbd4713d8f0e8"
+      },
+      {
+        "bytes": 6101,
+        "path": "report-assets/monitor-card-4-utilization_percent-00024.svg",
+        "sha256": "9cdb130f80bf70e08f51e228574a46701aa89fecea4b222b8ae5c60f9a17cc63"
+      },
+      {
+        "bytes": 6105,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00024.svg",
+        "sha256": "952561c3739eee2318547220a651a716936895f54601466026fc937d2a894d59"
+      },
+      {
+        "bytes": 6029,
+        "path": "report-assets/monitor-card-4-temperature_c-00024.svg",
+        "sha256": "f221f605e0b1c345253298f853abb3deaf10ad746d198dcdaa0699c703b13fae"
+      },
+      {
+        "bytes": 6023,
+        "path": "report-assets/monitor-card-4-power_w-00024.svg",
+        "sha256": "f555e85119c26ec6e63b7c5bef3f7944801235767aea2ca3cf32c385d41864d9"
+      },
+      {
+        "bytes": 6105,
+        "path": "report-assets/monitor-card-4-utilization_percent-00048.svg",
+        "sha256": "134bd6d05b8b963f5eed487587938c13af1985c2e675c08ee7ace5c1080f9f85"
+      },
+      {
+        "bytes": 6105,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00048.svg",
+        "sha256": "47b42c9b615c00776ac07d8940e738c1bc06cfeb383f9b194ebb6d7f275b2300"
+      },
+      {
+        "bytes": 6029,
+        "path": "report-assets/monitor-card-4-temperature_c-00048.svg",
+        "sha256": "2695c12af6e2eaf68bdcafe43b0c4988dc05632315c46ccae2184c4cf335c763"
+      },
+      {
+        "bytes": 6023,
+        "path": "report-assets/monitor-card-4-power_w-00048.svg",
+        "sha256": "74476c22e018aa7ff79fc5b52d47561b034eeca47fedb3c0e58dcf7fd2a922c6"
+      },
+      {
+        "bytes": 6105,
+        "path": "report-assets/monitor-card-4-utilization_percent-00072.svg",
+        "sha256": "c02f3e2b4d0f5344c817e79eb3fcdc3f7ae1b6c4af63991a90d306d41c0d6c9a"
+      },
+      {
+        "bytes": 6105,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00072.svg",
+        "sha256": "2a4a2b15db463967ac62291126f5d5d5c6a6d4df79b1ca724719fec1226790bb"
+      },
+      {
+        "bytes": 6029,
+        "path": "report-assets/monitor-card-4-temperature_c-00072.svg",
+        "sha256": "1061a752db82eb50d0fa1cf07d142ee77e970efecc181e88a6d0ff2b3ea3e319"
+      },
+      {
+        "bytes": 6023,
+        "path": "report-assets/monitor-card-4-power_w-00072.svg",
+        "sha256": "2f66333b103426919765977eaa9a7ae637d5813ce22351c277ccb9119be3bfec"
+      },
+      {
+        "bytes": 6106,
+        "path": "report-assets/monitor-card-4-utilization_percent-00096.svg",
+        "sha256": "c562f028b892b48afda39cb6516806a2387531b8a1046381b00a7b79c18e42ff"
+      },
+      {
+        "bytes": 6128,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00096.svg",
+        "sha256": "b28d37bd06f175c2164c167f08237a0e8d8572b6e512cb68c34400209013cf49"
+      },
+      {
+        "bytes": 6030,
+        "path": "report-assets/monitor-card-4-temperature_c-00096.svg",
+        "sha256": "1c46f6173ae7e3cc2ff3ec9b6663d7b97826bbfee9a228972297d58585409a6f"
+      },
+      {
+        "bytes": 6024,
+        "path": "report-assets/monitor-card-4-power_w-00096.svg",
+        "sha256": "bc127eaed0706818c84aee9847874b679f9c9c6c32eea7f3fe5f500a6da2db12"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-4-utilization_percent-00120.svg",
+        "sha256": "e49d64c8d1fd19ef3a30596ca502e4e47de9a92bf8655a17518ec60548ab824a"
+      },
+      {
+        "bytes": 6070,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00120.svg",
+        "sha256": "2f6a5a755dada3bc3f414834b5ffe33968e7e656d7bdea051ae07ca57d53741b"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-4-temperature_c-00120.svg",
+        "sha256": "27aa0be538245fc49d7f4dcce996db80a5f0e768117d504c015925123f64b07d"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-4-power_w-00120.svg",
+        "sha256": "d6e4931a869e13947748fa7f931033f2e2e0b24ba88805d3615053cbda8ae8fc"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-4-utilization_percent-00144.svg",
+        "sha256": "bba9ba55c7220edadba48a11e8a7a46686a4f5b718819acb308c3c927a118eea"
+      },
+      {
+        "bytes": 6105,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00144.svg",
+        "sha256": "bf215c19afdce16bbff77d3cbad032b8f4dcae9ad238fe510f732396ee67b0cd"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-4-temperature_c-00144.svg",
+        "sha256": "b9a52c0eba49e6bc1b8cfa34cb420944fd40e215e3f5647824c2e37d85011b8e"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-4-power_w-00144.svg",
+        "sha256": "34b3a267275e17559f5ef9deeb3cddb1489b6d49d813436240b5840ca89973ac"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-4-utilization_percent-00168.svg",
+        "sha256": "cdec42978f1e3af164da512efaa5362ff3cba14a003d28aeb3a3d1851ae91e39"
+      },
+      {
+        "bytes": 6105,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00168.svg",
+        "sha256": "9c16a8299699de1a3deeb2d3b26e97cd658151121c8824d9a8b83fc6e6c15b60"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-4-temperature_c-00168.svg",
+        "sha256": "286c4d6bea5e45ae25917b397b18a478e630e6e31675258b975f791c05fec80a"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-4-power_w-00168.svg",
+        "sha256": "8b9842cba32c1a0d50496d85d6a4fe29dc157752c84e6ecd7a93618e4f19dd2f"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-4-utilization_percent-00192.svg",
+        "sha256": "c930081c7abe1e9217c536b9bc9addf6d4cacfeaffce2a83e0566bf763044224"
+      },
+      {
+        "bytes": 6105,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00192.svg",
+        "sha256": "6bc1407c0551731beee089da5f63e5612d6c3149d30d66bfead2156084795d42"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-4-temperature_c-00192.svg",
+        "sha256": "662949e5ca9e17a7c24d9a29ddb493b5195440cdf5e9c40160ed23427fb3a5f6"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-4-power_w-00192.svg",
+        "sha256": "41e0f29cfe2c594cd1aadca7110b483cfc8fcb97afbc58843a9a75de25839cea"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-4-utilization_percent-00216.svg",
+        "sha256": "fd52b58b7c0cbd981f13d4ef95623281d43aa39c1763bb38b1d6a05270e4b732"
+      },
+      {
+        "bytes": 6105,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00216.svg",
+        "sha256": "d0a72eac6a44a811a640c8f12dd8c6b21878a724a6db3237680545e5021cf4df"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-4-temperature_c-00216.svg",
+        "sha256": "2c119800055518c75277aa27c7a31d9bbc34a00deaa7e7a5038f00c23df33f36"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-4-power_w-00216.svg",
+        "sha256": "3f0aa540ce08228fe93e550352748b1481bba9bf73bb172a8c3503e0ea7bfe82"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-4-utilization_percent-00240.svg",
+        "sha256": "1f2ec5f20575c5711a4ad2581d623b8c03247b9c0b448ab7d3f27fc8cb3d3a1f"
+      },
+      {
+        "bytes": 6105,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00240.svg",
+        "sha256": "8243cb21d6e908f5b616210f4686f81b562a09cb37b63e64ec52f6745dffac6f"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-4-temperature_c-00240.svg",
+        "sha256": "e57fc0f889bb78e8a9685d55bbac656850471fd5c101dde287b23dce1a614f38"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-4-power_w-00240.svg",
+        "sha256": "11e2a62efb4255186ca52d4d7389fdf3cf92dd5266cea7641166e90eb4ef7e1e"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-4-utilization_percent-00264.svg",
+        "sha256": "a9716a27e7e725fc35e7abb5b7476787db88d652b62aa003c3219176d5a9000a"
+      },
+      {
+        "bytes": 6094,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00264.svg",
+        "sha256": "fd0960b42251970224de8b5cd5a59fc92d72fb9fef4a1d0a1cbac70e954d3f5a"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-4-temperature_c-00264.svg",
+        "sha256": "128d7c985ef01a22b7875a2135b9c21325104ab3634659eb20f4b9af65a57da6"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-4-power_w-00264.svg",
+        "sha256": "67ddf3ae8c005d3f5e30768f414f766e837313f30798ce46ba70c108d847bf3e"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-4-utilization_percent-00288.svg",
+        "sha256": "45c68901786e5f63cfcc90c0836f6dd1c2fc2f2d20a33b7f1dce97a6f7db4ebf"
+      },
+      {
+        "bytes": 6175,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00288.svg",
+        "sha256": "b02720d92d6d5d93a4c3426df00e32ddaa00f776631ae4daa72ba1643139efed"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-4-temperature_c-00288.svg",
+        "sha256": "dae73db47aa9562d66ea27e0c4cadeeb802f9a6d39d7f04be03f4025a8c34824"
+      },
+      {
+        "bytes": 6027,
+        "path": "report-assets/monitor-card-4-power_w-00288.svg",
+        "sha256": "a13a5f845533c49dd2843b5a60bc5ed04c0b5367fd4828cee2622cf7442781a9"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-4-utilization_percent-00312.svg",
+        "sha256": "fc014374877d244de52483448a5df92eb7cdda3b01db79d4ced4e04e7e515a17"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00312.svg",
+        "sha256": "ed4bf6a0d399c15212306722a9c42e1e412836f48dee5c244c19593804cad958"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-4-temperature_c-00312.svg",
+        "sha256": "e2e55e0ae373d1a6d71ec1ac2637166503980e31a7efc509636a07b353e75843"
+      },
+      {
+        "bytes": 6091,
+        "path": "report-assets/monitor-card-4-power_w-00312.svg",
+        "sha256": "376066346004ddd47c04a0e1c898097312779a105eaaca0b56d91b6222ad5bbf"
+      },
+      {
+        "bytes": 6102,
+        "path": "report-assets/monitor-card-4-utilization_percent-00336.svg",
+        "sha256": "3a784ee28f61c77cf5e739c7821dd327daa668b271a243f5a1830b17e19ab92b"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00336.svg",
+        "sha256": "9ce9d128f2239bfc410630941be24511422b935d698ef677abbf330bfed8c31a"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-4-temperature_c-00336.svg",
+        "sha256": "b54eac1fa3cd4bcad7a2b9f8861f5bcdaf39dc95220d37087f73c7dba4589cd0"
+      },
+      {
+        "bytes": 6125,
+        "path": "report-assets/monitor-card-4-power_w-00336.svg",
+        "sha256": "9aef2a7c22f344fc59188768dd33dc29b83ed288f87a1ad4b616240346691121"
+      },
+      {
+        "bytes": 6108,
+        "path": "report-assets/monitor-card-4-utilization_percent-00360.svg",
+        "sha256": "0ebff3cab3ed9893346e3241deca4666f98ac579e17c7cdea41167b07fb64fad"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00360.svg",
+        "sha256": "e44f8963faf61d3cfe89fede6964b797174e1528144e1557cdae2bca00ce4f7c"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-4-temperature_c-00360.svg",
+        "sha256": "0b331dde35486c91a062ef33c1e4f0a3e36203df00cc1a764585c834ebd5dcbd"
+      },
+      {
+        "bytes": 6111,
+        "path": "report-assets/monitor-card-4-power_w-00360.svg",
+        "sha256": "0ad06d157e747caed5b4d614eca424b73c55e553b3cbd9558f6e15fb5c8936d9"
+      },
+      {
+        "bytes": 6102,
+        "path": "report-assets/monitor-card-4-utilization_percent-00384.svg",
+        "sha256": "16db3cab25cb2b31db7d7946e457a9daf972c441231c52bfcf99a08bae0f649b"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00384.svg",
+        "sha256": "b87eb60e934e29220e95453024a9836b2cec054b47e65d4498891fbc404a2a9d"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-4-temperature_c-00384.svg",
+        "sha256": "a85f6020a4886636400bbb39e907db900dd4e5cc12e690b5c2bbeea3dd2a7c2a"
+      },
+      {
+        "bytes": 6076,
+        "path": "report-assets/monitor-card-4-power_w-00384.svg",
+        "sha256": "9324186dfb6efc5cd864ecaef172615032556f3f642cf7e7123143552caacb76"
+      },
+      {
+        "bytes": 6096,
+        "path": "report-assets/monitor-card-4-utilization_percent-00408.svg",
+        "sha256": "5c9cd9a154667e36d1378282811555047174ce02de0d118b5341cf62c44d0df4"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00408.svg",
+        "sha256": "2a132d31ae339bcbd8106288262d374c03ab058cd9d075453f57aedf3cc25b66"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-4-temperature_c-00408.svg",
+        "sha256": "30f6a419ad03c3ef85adbcc6a8235bf0b83d43b7e6941c221868059ef4e7a1f0"
+      },
+      {
+        "bytes": 6041,
+        "path": "report-assets/monitor-card-4-power_w-00408.svg",
+        "sha256": "4ac11d85e444e7d868bd508fe99896eb8672a82849f62e294ee3f66e85223c3a"
+      },
+      {
+        "bytes": 6100,
+        "path": "report-assets/monitor-card-4-utilization_percent-00432.svg",
+        "sha256": "c49a16513463ef0849ccf0e954aa2990e2441a284f6105280d43c406787ad8ac"
+      },
+      {
+        "bytes": 6110,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00432.svg",
+        "sha256": "c9ba990f715814d778e24c951cbf091bd5ed1a8ac0da3cfd390ab19ff1d9f6d4"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-4-temperature_c-00432.svg",
+        "sha256": "9d1ae1d907ee98320e65f4804fa059273ed12f9b2f1189d4f52982ff79a82d37"
+      },
+      {
+        "bytes": 6037,
+        "path": "report-assets/monitor-card-4-power_w-00432.svg",
+        "sha256": "291e9428a07b726a6799cda3fa28ac0a18f797a4f63c82826a979fe0e6e06395"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-4-utilization_percent-00456.svg",
+        "sha256": "edfcfe69a32ae11891dd003df97980e1ccbe175c0bfb88e1f2160b829662b97c"
+      },
+      {
+        "bytes": 6035,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00456.svg",
+        "sha256": "e846ac591cab04b03380049efe7faa15915ad25aa90edceab37bda44ce4b1fbe"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-4-temperature_c-00456.svg",
+        "sha256": "79a5d2ec8dacf7b45dd1bbcc7fe0eb5d2843bda4046282887d2efec4d14373e6"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-4-power_w-00456.svg",
+        "sha256": "6569a36e29f955460ec9e6f360b0f4194ec5ed28bd8110e26d2b366aee960d45"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-4-utilization_percent-00480.svg",
+        "sha256": "0123e60ae3cf234db79310b5c80643885ee6f763b09b54629e12cf847069ce0f"
+      },
+      {
+        "bytes": 6039,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00480.svg",
+        "sha256": "7aa8f55164d946bea99b8d57e6fd84d3e2f73d37c83c870325497244c900808b"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-4-temperature_c-00480.svg",
+        "sha256": "8c81341d0c2392a618a29a2d98e875d731e3089148219fd6fbf239626745453b"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-4-power_w-00480.svg",
+        "sha256": "ebb363d8f3af19275318bd215682315df5db383a461ffff469701b51cb8d801a"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-4-utilization_percent-00504.svg",
+        "sha256": "99838077c89556f1843d3d00217101a749e5e031ef341f387d9cfc954f9dda7f"
+      },
+      {
+        "bytes": 6110,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00504.svg",
+        "sha256": "ba727f9d5358f39b7d863ee62aa831d713260849a96af1072e7c63966125c5d9"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-4-temperature_c-00504.svg",
+        "sha256": "37893fdc6290a38aa360d0a646219cbe2ed9f471cc7fbd36cb61510000affc93"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-4-power_w-00504.svg",
+        "sha256": "8a25511dde7d307cda7cc5ad2c781fdce8178cd8b32ca50bd3882b565e1f874c"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-4-utilization_percent-00528.svg",
+        "sha256": "98ca1146c226766a158ce8b1046ede273cbcdae2b911c657d9a315f21ce1c081"
+      },
+      {
+        "bytes": 6039,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00528.svg",
+        "sha256": "bac593eec497b2501dccae3ce9a5903615878daa2c4fe1a641afaa2599af18e2"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-4-temperature_c-00528.svg",
+        "sha256": "e7655b76d97b78f32f3e1f573a51134cc21bc3b1b25da0b20175b65e7385dc87"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-4-power_w-00528.svg",
+        "sha256": "aa770137191953634daada69db1897c5c9738f789858954814e65f2075e6d95d"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-4-utilization_percent-00552.svg",
+        "sha256": "be9b6e08050f0b29ccf8f191d9ec01a39148b7db6cedea5745666da63e912f56"
+      },
+      {
+        "bytes": 6090,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00552.svg",
+        "sha256": "83a6aabe9cd26449f8ba677dcaf5fe0698bb234a77d1cd511c8a1a9333c2280e"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-4-temperature_c-00552.svg",
+        "sha256": "de69a7046cd0643b03e7e8a7433086cf2e9a975ed64c3bd810f0bf1288e901b5"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-4-power_w-00552.svg",
+        "sha256": "3aeca56ed1283d6e44606d8fe52e552dae9cd7dc2839c4aec5850bb5fe01f83a"
+      },
+      {
+        "bytes": 6104,
+        "path": "report-assets/monitor-card-4-utilization_percent-00576.svg",
+        "sha256": "1a7c9b168249380c1c16592f6a556aa98cb9adcdf6ab89023d975a1696bf0fb2"
+      },
+      {
+        "bytes": 6151,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00576.svg",
+        "sha256": "ceeb0200f0816da87f2ed4834c0a575f8b9e53662bcaeae24cecf0ae0a559c93"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-4-temperature_c-00576.svg",
+        "sha256": "da5440facdb2f3b276796b76f171937e1cd45721dff1d52cb0372a21df1f64e5"
+      },
+      {
+        "bytes": 6116,
+        "path": "report-assets/monitor-card-4-power_w-00576.svg",
+        "sha256": "f5c878e0abac42cf875f36b692c2c8c3aed9871387f245631ab11dc1e3d49371"
+      },
+      {
+        "bytes": 6078,
+        "path": "report-assets/monitor-card-4-utilization_percent-00600.svg",
+        "sha256": "fa7c42bd75d77ee47a4838b8cc71c6d8a709c73033937248ea4edaa64b0728c1"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00600.svg",
+        "sha256": "e8a4f4d3476b2fbf3f1c8e8cb3738ad816ee85f58fd6f108bf350aa768c3419b"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-4-temperature_c-00600.svg",
+        "sha256": "c267e1d2799de95da546859770ca10702434eded304fd81a67f3961c0382f432"
+      },
+      {
+        "bytes": 6084,
+        "path": "report-assets/monitor-card-4-power_w-00600.svg",
+        "sha256": "64e97bd2a7c7950a07d55c3471807afbe2b615f3d6c05fc200f4e8869102d74b"
+      },
+      {
+        "bytes": 6097,
+        "path": "report-assets/monitor-card-4-utilization_percent-00624.svg",
+        "sha256": "2219ee033176d97db0e9b3749ab5bab0e66fdc332a47334b2aab6820ccbd21f0"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00624.svg",
+        "sha256": "ac4a34e3b2e32e338cfa979a4b2df4eff3c775f7562ac89b574c1393ef8b0b7d"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-4-temperature_c-00624.svg",
+        "sha256": "25d4a484895a55f0bda6021cd94503e0a999fa7baf8aa7b9f28b2ad533ecedc2"
+      },
+      {
+        "bytes": 6086,
+        "path": "report-assets/monitor-card-4-power_w-00624.svg",
+        "sha256": "47b1c212dbfd825a7fdbbbd56a62a59ec33c441cae1200f89393f95c55e092e3"
+      },
+      {
+        "bytes": 6095,
+        "path": "report-assets/monitor-card-4-utilization_percent-00648.svg",
+        "sha256": "f0728ee7761ca27b1c3a88bcb76a4eb2498176ecd9ead041ce4a4531ff5d750f"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00648.svg",
+        "sha256": "964742a2b016fc595867769e4f5b7d057058d8e70013fc1bb39dda13ce4270f4"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-4-temperature_c-00648.svg",
+        "sha256": "babe85e1a068ff9178ebbbd7cd33f92148e6d602095ead74944e9e95881d30c5"
+      },
+      {
+        "bytes": 6036,
+        "path": "report-assets/monitor-card-4-power_w-00648.svg",
+        "sha256": "9df00646ba8fdcd6e6b362cd4156b2c305668eca1bded6530defd235881f9613"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-4-utilization_percent-00672.svg",
+        "sha256": "27babd811d04a28ce669e59455db0ad14750067f8dfebbb0b29c75af33e6e087"
+      },
+      {
+        "bytes": 6106,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00672.svg",
+        "sha256": "205413c304b5a0419790fd94c3a55239db6ecb945bf8e308af3ca488270f1423"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-4-temperature_c-00672.svg",
+        "sha256": "4d366ddbe44d9de7250b40e845ef3cc800fca640447f7cd2578dd90dc2c741e0"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-4-power_w-00672.svg",
+        "sha256": "6fda2090bb9b7a34da99d1e2632520e93cc0b421a14ad6bf9a81c97d4196740f"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-4-utilization_percent-00696.svg",
+        "sha256": "1707ac3f762bb0c83f9acc84c958f1dff5931778175f49295d579e7c05bf1cd5"
+      },
+      {
+        "bytes": 6105,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00696.svg",
+        "sha256": "fa1ad8d99e77e22e3f442251c5b1d7b827b1b30b05a1039b6cb48f2f553c9fce"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-4-temperature_c-00696.svg",
+        "sha256": "0eb30f7d190c9d2034eb333897c619e5cffa3c330124e796fd1f03256b83fcdd"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-4-power_w-00696.svg",
+        "sha256": "091d4fad680b53a3691578a8dc83e930721f963ee952926af52e6dc9c1ad1be6"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-4-utilization_percent-00720.svg",
+        "sha256": "5e1fbc5e392b227844e33779f4807d4d9d70b9b9d80f8661ad62d87e7b5aef67"
+      },
+      {
+        "bytes": 6105,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00720.svg",
+        "sha256": "456f3cc14c2da2b44843abcaf45322bd27a432af4c61101ed900e8f3b3222c76"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-4-temperature_c-00720.svg",
+        "sha256": "77331d208c6d163ef767bef9b0778b6866e22f17e65ea2b7aa80b2e6f1d02003"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-4-power_w-00720.svg",
+        "sha256": "6baef801cabf0625dbe2609d429a0f6e609c62ed78db8a118e06598ff437e219"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-4-utilization_percent-00744.svg",
+        "sha256": "45c4a4d8f7e13d942829cbfc727e939454699192d05bdc2ebe3075c8424d9fae"
+      },
+      {
+        "bytes": 6085,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00744.svg",
+        "sha256": "dded6a0cdb99523b4bb25162fe2d8a2555df4b785e31816460cea9eea342e248"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-4-temperature_c-00744.svg",
+        "sha256": "680c09b4b1f32612b36967b88369d8d747da9021396348ed4294bb558d81863b"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-4-power_w-00744.svg",
+        "sha256": "5ebe86f5e4a0dca3a03ecf052a8cc9c3c561574b3888a5015bf6aa10cceb0d00"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-4-utilization_percent-00768.svg",
+        "sha256": "1c80afa32b8668c16e05390f3f4843d2f56b5c47a84e813781e6dcacf0acfaea"
+      },
+      {
+        "bytes": 6041,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00768.svg",
+        "sha256": "48e83501d171dfe78478018ea5157dfaf8f95f84b24084905e472873b19094ca"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-4-temperature_c-00768.svg",
+        "sha256": "62129f8bc4c1f36c46bdc742a771c50da034d4db79cec3cb5bda1eae45f086fe"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-4-power_w-00768.svg",
+        "sha256": "3af4ff7fa17d1f13ea3d4d18b3f7caf0ad695231aa8723db724ab74d4d311bc7"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-4-utilization_percent-00792.svg",
+        "sha256": "4a79369bc44a2ed824738260fb70a130337c065f6613b3f506c5ee1dd1888281"
+      },
+      {
+        "bytes": 6041,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00792.svg",
+        "sha256": "70c3f73e1a43cafbf6e13cad037fd3d9c6f9bf87b81a502e9a2694070e9b1049"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-4-temperature_c-00792.svg",
+        "sha256": "f643c46a0c3def986db6dd056a45b7fc7f70417933a012f512e2cca2a75d9004"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-4-power_w-00792.svg",
+        "sha256": "c2271e8efd7368b248ab6aab9062676053e7589c8f4bb8ec81206cc615be7d5c"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-4-utilization_percent-00816.svg",
+        "sha256": "3e7b6b45c422d2be75a39c6e2d597513d76c2a0a8fed0071251501996f6ca543"
+      },
+      {
+        "bytes": 6076,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00816.svg",
+        "sha256": "df55be3c1561bd7aaaad4436f76f6332ac610309863388e89df6aa9992a5340f"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-4-temperature_c-00816.svg",
+        "sha256": "587a14cf29db82c6cc96545fa9a94a877e5973ee425d270ea363502f713450b4"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-4-power_w-00816.svg",
+        "sha256": "5248f17ee41bcb980fc20da5b62e5405920258fd70e36cb09b732a61257fef0c"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-4-utilization_percent-00840.svg",
+        "sha256": "ded3b46f152d05e185dfb8a3b9749848d9c7e0ecaf394ffae0c444d0c949c2be"
+      },
+      {
+        "bytes": 6105,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00840.svg",
+        "sha256": "b076e94b92673a672b92a58d71abd6d11a8a8f178d7e93b4eb9f003f0fdf7437"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-4-temperature_c-00840.svg",
+        "sha256": "e561dd8f6022952c194cc7d279c2ad0721d4e3d0437d24f80186a174656ecd9e"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-4-power_w-00840.svg",
+        "sha256": "e6af6882d3d3ac91cc8723a5771c43da95d0fcf1b7648e442b756b684991684d"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-4-utilization_percent-00864.svg",
+        "sha256": "6d45a60c8f313ffbc004fcb3f187b7b52d97126a92574c6a4f52bcb3fd2e5c6d"
+      },
+      {
+        "bytes": 6105,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00864.svg",
+        "sha256": "63da741dcbdaf84ab19380e91f443b18c4ef374cc1e99aec29207df5a09d73a7"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-4-temperature_c-00864.svg",
+        "sha256": "dc4794592d0460f087f03d9c27e56c54d8e4969d2b7b7a38bc03f1430ac7af96"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-4-power_w-00864.svg",
+        "sha256": "630be76e3f54f07a8f48a542401d4b70ce12211318bd24b35bb927dfced4fde4"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-4-utilization_percent-00888.svg",
+        "sha256": "0063dabfb5ff074dedb61f98c1df46bde3bf937ed9dcbbd428a8b9f71a0b8a0d"
+      },
+      {
+        "bytes": 6105,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00888.svg",
+        "sha256": "6eb7a0134db64258889d9336f0dc5d729b1aedc278924df818586f85f95f866e"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-4-temperature_c-00888.svg",
+        "sha256": "aa7c884feff1f0398bc2909b057f07a26b881d136ee88856933e05a8bb007766"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-4-power_w-00888.svg",
+        "sha256": "a82ffe19591b62186aef6ec7c64288b22fb62dc7dd217fc73d95f1a0fa5df57c"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-4-utilization_percent-00912.svg",
+        "sha256": "70c3f8e3192eda19de5d66222009774ad9405d680b8b08c4b1c6fd696868917a"
+      },
+      {
+        "bytes": 6105,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00912.svg",
+        "sha256": "ffab6afb38265bbd720af264f43ed0fab39e68c44ae31c4368dc1f6d56477d5d"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-4-temperature_c-00912.svg",
+        "sha256": "67f867d301172785a8e99b9ec01c204a3ee4247a8361fd7620995a5fb3564921"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-4-power_w-00912.svg",
+        "sha256": "c52ae858d35a1bfb75100b68208c8c6bbcaef8afb460cde44303910998480fe7"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-4-utilization_percent-00936.svg",
+        "sha256": "2edba80b91b722820554f9b4f086f2a54187b96562f7b78b40d5399b911291d2"
+      },
+      {
+        "bytes": 6097,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00936.svg",
+        "sha256": "bee90d958199efea20279dcd9ed349ff59070e68491706063403dd6f7e46ed22"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-4-temperature_c-00936.svg",
+        "sha256": "753994ec8bc6fe195b97fc34912f66985c3d2784000eb2c0d887a5050728b1c1"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-4-power_w-00936.svg",
+        "sha256": "605a3bfe72835431e67f3faab985ef8065478363735d127044e09653901b12c5"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-4-utilization_percent-00960.svg",
+        "sha256": "483d143be6a1f5755c05630ab3a9e78b5e1c33df4bb75aa04ffe91fdd3a04b6d"
+      },
+      {
+        "bytes": 6041,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00960.svg",
+        "sha256": "efa3c7b8e23d3928179b8d2de45286fd4387cc76efbca4b5b5a090f4eed90ad2"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-4-temperature_c-00960.svg",
+        "sha256": "eff6a870d81019cd6e7376a16e4f1bfc8c46532131317f4db8b136be09718eac"
+      },
+      {
+        "bytes": 6025,
+        "path": "report-assets/monitor-card-4-power_w-00960.svg",
+        "sha256": "fee313c57318f4ab641429d450c88988ec9ee4bfabe9b63dc2a908916c883a33"
+      },
+      {
+        "bytes": 6108,
+        "path": "report-assets/monitor-card-4-utilization_percent-00984.svg",
+        "sha256": "0f8813172805a67c5866f90f5553946cd6aafc6e7236acb664c93f68507e5e12"
+      },
+      {
+        "bytes": 6039,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00984.svg",
+        "sha256": "7623b554ec467fe9f714b5fc1a7c3dab0afa4f3d97a40df0941a12352bcae413"
+      },
+      {
+        "bytes": 6032,
+        "path": "report-assets/monitor-card-4-temperature_c-00984.svg",
+        "sha256": "7db74e2fbf780a53e0046d3c6ed4edcb5bd84a8994270e3387b9a2df26600700"
+      },
+      {
+        "bytes": 6026,
+        "path": "report-assets/monitor-card-4-power_w-00984.svg",
+        "sha256": "6ee403668e000c342c37a7434f4995eb86df9bd54a7de5b16c9c85265ca3913d"
+      },
+      {
+        "bytes": 6109,
+        "path": "report-assets/monitor-card-4-utilization_percent-01008.svg",
+        "sha256": "960b04f020bf3e4c6af497837bc5aa45942d675b8d1ab889ffb575fe42e7ec6f"
+      },
+      {
+        "bytes": 6042,
+        "path": "report-assets/monitor-card-4-used_memory_mib-01008.svg",
+        "sha256": "75f91e08052c988e9aa09e1fd92a77d97da7fc9ca2bd66afd04ed5fb6387cac4"
+      },
+      {
+        "bytes": 6033,
+        "path": "report-assets/monitor-card-4-temperature_c-01008.svg",
+        "sha256": "7e41cbaefd06fc17d71f0a1da3c481e44a697cfdb97eff1e046c2a310805fd2c"
+      },
+      {
+        "bytes": 6027,
+        "path": "report-assets/monitor-card-4-power_w-01008.svg",
+        "sha256": "6aa0bff35958b6e5e3dab17095284912515e42ad585efa958324b378a3eb3f72"
+      },
+      {
+        "bytes": 6109,
+        "path": "report-assets/monitor-card-4-utilization_percent-01032.svg",
+        "sha256": "fd2cccf4e81dc7a739ea48688f7133e1de80981e1e06290c4e8038d6e1167cbe"
+      },
+      {
+        "bytes": 6043,
+        "path": "report-assets/monitor-card-4-used_memory_mib-01032.svg",
+        "sha256": "64fa7c7eaecf81daad0fe97b665a51a0c4c7bca2e3b9decc21aefed37aad0eec"
+      },
+      {
+        "bytes": 6033,
+        "path": "report-assets/monitor-card-4-temperature_c-01032.svg",
+        "sha256": "77e27d69496fe561db95f04d9aff739811ba68d8d9194705550ada0233a849c7"
+      },
+      {
+        "bytes": 6027,
+        "path": "report-assets/monitor-card-4-power_w-01032.svg",
+        "sha256": "5ee381c29ff4170500c182fac9a58a6660623038b0b87771b20afb824a680cd0"
+      },
+      {
+        "bytes": 6109,
+        "path": "report-assets/monitor-card-4-utilization_percent-01056.svg",
+        "sha256": "ce167453e01365c61b1fa21502cd7ce43a05d49f245fe1e2016182e327721407"
+      },
+      {
+        "bytes": 6043,
+        "path": "report-assets/monitor-card-4-used_memory_mib-01056.svg",
+        "sha256": "69791a39deb76f1fa3f15614c412c2c83d70c96c89bb872aedcd1539eb694b3c"
+      },
+      {
+        "bytes": 6033,
+        "path": "report-assets/monitor-card-4-temperature_c-01056.svg",
+        "sha256": "31e55e407e5904e06ff3b721b59e3ebf8dcafd5640e27d76d101449866925e26"
+      },
+      {
+        "bytes": 6027,
+        "path": "report-assets/monitor-card-4-power_w-01056.svg",
+        "sha256": "5c09d4d338ee3103763a07c284b2521db4c08f0be7a1004582e4b92e19ebf070"
+      },
+      {
+        "bytes": 6109,
+        "path": "report-assets/monitor-card-4-utilization_percent-01080.svg",
+        "sha256": "d3363d86d3685051027d095f6e863a68139b700b07c68ec57e1a3444e60bf983"
+      },
+      {
+        "bytes": 6090,
+        "path": "report-assets/monitor-card-4-used_memory_mib-01080.svg",
+        "sha256": "3e22438679e17672c1a32b7559ed84c6b3cff6b41fd516adcde928fa6e02ae9b"
+      },
+      {
+        "bytes": 6033,
+        "path": "report-assets/monitor-card-4-temperature_c-01080.svg",
+        "sha256": "d67920a9aa6a59f80773526a850942802c61750e1b2d03731967967283d999a2"
+      },
+      {
+        "bytes": 6027,
+        "path": "report-assets/monitor-card-4-power_w-01080.svg",
+        "sha256": "90d37c70a947365aee2aeaa194abc27b7e3de1431838e6fb0d1afacec23a70d2"
+      },
+      {
+        "bytes": 6109,
+        "path": "report-assets/monitor-card-4-utilization_percent-01104.svg",
+        "sha256": "09c2bae37afa6ed315b07fcaf8b9374d31c30dc920be8ddffaabe46e42f97d2a"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-4-used_memory_mib-01104.svg",
+        "sha256": "7624c4648a998edb05b37e87e9f01345e7435445eaa2ee45b63915580fb165ab"
+      },
+      {
+        "bytes": 6033,
+        "path": "report-assets/monitor-card-4-temperature_c-01104.svg",
+        "sha256": "a1a4b0c87d7c9d56169cda5c41851dd55f08054e24adb2b3120d306d5594d82c"
+      },
+      {
+        "bytes": 6027,
+        "path": "report-assets/monitor-card-4-power_w-01104.svg",
+        "sha256": "a242409ff4a15a48a901478ed7b19834f047298a0bf630fe974136f45f605ac9"
+      },
+      {
+        "bytes": 6109,
+        "path": "report-assets/monitor-card-4-utilization_percent-01128.svg",
+        "sha256": "1e9b536bbab84efa4f1479ec540ff0608736823c4d65d7a0e1ae030af139a151"
+      },
+      {
+        "bytes": 6107,
+        "path": "report-assets/monitor-card-4-used_memory_mib-01128.svg",
+        "sha256": "cc4cc4ba36a9e344576ef34d4cc104f225c4e91f6afad24e1d6f6eb142b8a6c0"
+      },
+      {
+        "bytes": 6033,
+        "path": "report-assets/monitor-card-4-temperature_c-01128.svg",
+        "sha256": "8ee4568462ffaa5e06adc90fc3ca47e6d895a3e2ca64945d2f8bee79abf78056"
+      },
+      {
+        "bytes": 6027,
+        "path": "report-assets/monitor-card-4-power_w-01128.svg",
+        "sha256": "33b66ac27f8f595b9c40f11ab7080361311f353609281f2995caac28ad6c7b14"
+      },
+      {
+        "bytes": 512,
+        "path": "report-assets/monitor-card-4-utilization_percent-01152.svg",
+        "sha256": "69d8869df861b60f68573ccf55b98804076c931e097727b8608fdd3789390ffd"
+      },
+      {
+        "bytes": 510,
+        "path": "report-assets/monitor-card-4-used_memory_mib-01152.svg",
+        "sha256": "a2761866ee946f78b04b62abdfe0f41b76b187dd4e0979dd9339d419eb6e106b"
+      },
+      {
+        "bytes": 505,
+        "path": "report-assets/monitor-card-4-temperature_c-01152.svg",
+        "sha256": "c9f75d0222757fa557f35dd093711bf057e0c1f47dad9ecc0165091996330c88"
+      },
+      {
+        "bytes": 499,
+        "path": "report-assets/monitor-card-4-power_w-01152.svg",
+        "sha256": "e879226af932c85870d0a14ba1ac39a04811da30d8df639c423cbeae0ead56e6"
+      },
+      {
+        "bytes": 6038,
+        "path": "report-assets/monitor-card-5-utilization_percent-00000.svg",
+        "sha256": "bcbaaf44ff5188718fbf9ca1b3d89f40cdb9fd12aaf6fbcb21a29e7c46043cd0"
+      },
+      {
+        "bytes": 6080,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00000.svg",
+        "sha256": "747d9faba49c831293bf5440acb74703d63358b200d1a892aa832af5b3631fcb"
+      },
+      {
+        "bytes": 6028,
+        "path": "report-assets/monitor-card-5-temperature_c-00000.svg",
+        "sha256": "1a4530c80c935786785546dcd3af3f554ee1235329cc9d041eab8b735f097c8b"
+      },
+      {
+        "bytes": 6046,
+        "path": "report-assets/monitor-card-5-power_w-00000.svg",
+        "sha256": "df5efa21f65887da61a4e54029c1503ea55496bab454409fc4c0726db7fb8011"
+      },
+      {
+        "bytes": 6044,
+        "path": "report-assets/monitor-card-5-utilization_percent-00024.svg",
+        "sha256": "3d25986584a31a7eecfa949aaba7c522ba488025ec878804d42b7697ffa29050"
+      },
+      {
+        "bytes": 6081,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00024.svg",
+        "sha256": "14f37c464413561238f99f865454a8a881537bb93703ff4fe59a37410967749c"
+      },
+      {
+        "bytes": 6029,
+        "path": "report-assets/monitor-card-5-temperature_c-00024.svg",
+        "sha256": "7927c55fcb29db3c574dabb45eaaaa33b7f1f01452692ba342062323722c4233"
+      },
+      {
+        "bytes": 6047,
+        "path": "report-assets/monitor-card-5-power_w-00024.svg",
+        "sha256": "69af8bef5b403ea1c9b528499eae61e929920d9f4b9de37a6c152c6568291eb2"
+      },
+      {
+        "bytes": 6038,
+        "path": "report-assets/monitor-card-5-utilization_percent-00048.svg",
+        "sha256": "1f99c0290f0aa425171ad15453d23b0dfccecb776bc90a3d4492416e650d8053"
+      },
+      {
+        "bytes": 6081,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00048.svg",
+        "sha256": "e5349e436657385c360c4ea4c409da47112627141d7a686fa06e2d4ad7f2336a"
+      },
+      {
+        "bytes": 6029,
+        "path": "report-assets/monitor-card-5-temperature_c-00048.svg",
+        "sha256": "bc824c2b6df8b7412610a2a136d8e76379e6889444bf1c15726ea6ecc2b1b5a1"
+      },
+      {
+        "bytes": 6047,
+        "path": "report-assets/monitor-card-5-power_w-00048.svg",
+        "sha256": "d7010747907167f2735ac5bd5e1256275694ff248a01623908fa3dbb7fec58ad"
+      },
+      {
+        "bytes": 6040,
+        "path": "report-assets/monitor-card-5-utilization_percent-00072.svg",
+        "sha256": "ac660d1c446d92db693502e8765c264a961b8854c7b69e6335b95a63fd207587"
+      },
+      {
+        "bytes": 6081,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00072.svg",
+        "sha256": "3f67bdab970b776acd839998b2476ea6a0c814b58d3c4e48fb08349ac40cfaae"
+      },
+      {
+        "bytes": 6029,
+        "path": "report-assets/monitor-card-5-temperature_c-00072.svg",
+        "sha256": "4e67ed06eb7c1152bf196c600ddeac9d14babca1234fdf6404172688d674677e"
+      },
+      {
+        "bytes": 6047,
+        "path": "report-assets/monitor-card-5-power_w-00072.svg",
+        "sha256": "da62f59820e1b03649d8ae289411a25b377ce19774d794253b9eb63ed5e19a30"
+      },
+      {
+        "bytes": 6043,
+        "path": "report-assets/monitor-card-5-utilization_percent-00096.svg",
+        "sha256": "9e7201f22e660cc91ed51dd394d4d20e3f135cd3ff5c7e205831ed9603923aa8"
+      },
+      {
+        "bytes": 6082,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00096.svg",
+        "sha256": "ea4c01f62ab929457258704238a3f4735f1e45c61e3e7b1ff0820537c63a1af7"
+      },
+      {
+        "bytes": 6030,
+        "path": "report-assets/monitor-card-5-temperature_c-00096.svg",
+        "sha256": "e2ba331c56b491a536c12bdf3d8f68febc4e05f3e695b3ef5a4d2e6dccf12150"
+      },
+      {
+        "bytes": 6048,
+        "path": "report-assets/monitor-card-5-power_w-00096.svg",
+        "sha256": "d753e75c8d9366d260a705e8d1b8f0a326a55cd6453710e98e20f51177ac874a"
+      },
+      {
+        "bytes": 6044,
+        "path": "report-assets/monitor-card-5-utilization_percent-00120.svg",
+        "sha256": "9c9d19afd976e0369aa2081b6ca40348f09fd03da8bc463cc5588399ccce7000"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00120.svg",
+        "sha256": "c0321430a7801e2079d2c953a219ddc748d2fa9d7fb12ada1f5898b35297714a"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-5-temperature_c-00120.svg",
+        "sha256": "32e9cf131976af700a302dfea2ac1055412faeb37c35e72edea2de58237e4652"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-5-power_w-00120.svg",
+        "sha256": "401d55ad8e24bfa7acf1d23eeba974c8cb3d9bc6de555d378358e5fa0e0f028f"
+      },
+      {
+        "bytes": 6043,
+        "path": "report-assets/monitor-card-5-utilization_percent-00144.svg",
+        "sha256": "3f1b177f8092050336a5aa5e81c5757c37a8e546bfeda811d873cdf3bc87b375"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00144.svg",
+        "sha256": "c21ded18ac8da42030fcfa3faf0e354ccf2aa02ee1729ef99bbffb7435f06201"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-5-temperature_c-00144.svg",
+        "sha256": "f00aabcc0978306f647024789d5934fcb2f7b5c930cce60558da2b50d99ee618"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-5-power_w-00144.svg",
+        "sha256": "8d56f797cb74f65b25a3b50af04a8f9cee12335e4abc6d6080211cb3df3dcb47"
+      },
+      {
+        "bytes": 6042,
+        "path": "report-assets/monitor-card-5-utilization_percent-00168.svg",
+        "sha256": "0c2572313ae839064f6ad05a42b245fe8d509a6edf628955039fa3bf593f7018"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00168.svg",
+        "sha256": "0454fea908e17f8f1990268a364b5f3900f87ba1781740c911f71d6f56ee93b6"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-5-temperature_c-00168.svg",
+        "sha256": "46b68c035c25bff9ae396ec62337e156658ab074392c69f985477ae14a9a9dfd"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-5-power_w-00168.svg",
+        "sha256": "6038217aebc3b152f6726175c3c3e4a674418e19935ef1617d3926d8839eb627"
+      },
+      {
+        "bytes": 6043,
+        "path": "report-assets/monitor-card-5-utilization_percent-00192.svg",
+        "sha256": "8b982d03b0c1863073d7ade35f2c0e3b499492ae87166d4f7ef60468381752e5"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00192.svg",
+        "sha256": "ef789c7baf6da982a7093cc3d8f7c4d5009091364f869af8a6997c516d885ea6"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-5-temperature_c-00192.svg",
+        "sha256": "f7d991985cabfdb21ff5969415d33d27955dcc1303336a78bf0eebc903b49d86"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-5-power_w-00192.svg",
+        "sha256": "89356c7e12800a859c42b25429363b81a2f89dd8a43d66ebcf8d2d8378e5d53f"
+      },
+      {
+        "bytes": 6046,
+        "path": "report-assets/monitor-card-5-utilization_percent-00216.svg",
+        "sha256": "5d51340657c363e37d92c72f9ebc2a2337d535fe58bb7ddc0b93fb0f2696e1fc"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00216.svg",
+        "sha256": "b57e872802ae71c80b697bea8ddf00be9e05e4aab029d0f0425244a4038c44d8"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-5-temperature_c-00216.svg",
+        "sha256": "3eaedea283582093a6ae3f525000f5d41d98147f57f6f90378d54c4872b780eb"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-5-power_w-00216.svg",
+        "sha256": "79dfef83a788b793a0fd9723b092feac7cb4d3cb7dd45de8eddf37cdf9b32c4c"
+      },
+      {
+        "bytes": 6040,
+        "path": "report-assets/monitor-card-5-utilization_percent-00240.svg",
+        "sha256": "99ac232ab9cd6e5a50184e644a9e620dcb7c22b714e0fb957575c5bd83d7fdcb"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00240.svg",
+        "sha256": "831a2a0474f5516c96dbdf6d59fc2785508028387156340e9655616e1b332bdc"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-5-temperature_c-00240.svg",
+        "sha256": "e1fb861268bdfaad90f2522abdc3606a2ee7bb8d325961bfd84ce1df1c81d7e9"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-5-power_w-00240.svg",
+        "sha256": "a53ecee9468b656bdd916706492359765e4ead6ddc6726efbce6ad66e76ae972"
+      },
+      {
+        "bytes": 6040,
+        "path": "report-assets/monitor-card-5-utilization_percent-00264.svg",
+        "sha256": "502d8b268bab53a9787b9a35c3f31dc35527f083ef177cb30dabe48129ec064b"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00264.svg",
+        "sha256": "b8944f318d38f3b4dfcb821b69192492a6273d50d5e946bbbc611f26a97a5389"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-5-temperature_c-00264.svg",
+        "sha256": "861ba5372a5cc21de2cee7f219f4c4ad24e22f2f53accc2a3669a8d37a92554e"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-5-power_w-00264.svg",
+        "sha256": "6ea5a6be6b49e975d8e54882f0d9ef2ac15d94c83fe3d10f3b8dc93ea167082a"
+      },
+      {
+        "bytes": 6043,
+        "path": "report-assets/monitor-card-5-utilization_percent-00288.svg",
+        "sha256": "b26288734ad6684afc31c283d785c3dacfcfc916f1c7e30167f59ec7fa051be1"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00288.svg",
+        "sha256": "54850787136275ea02dea38a9ee930e018c8242b3a2ea4d1d2b3bd0633b1c9b5"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-5-temperature_c-00288.svg",
+        "sha256": "949e5fa78310226dad3aa9ba4d1c9c860c78a450b3034e7551721b3ba09563a6"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-5-power_w-00288.svg",
+        "sha256": "de33fcda235aa81b3df3663f5d1bcaeb2fd5fca483df5431fa3c5b7b6077738b"
+      },
+      {
+        "bytes": 6041,
+        "path": "report-assets/monitor-card-5-utilization_percent-00312.svg",
+        "sha256": "4884d552280c3821681858cbe109bfa7b15b87d946f4e56e37fb34a3cd2d35ea"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00312.svg",
+        "sha256": "d586ff57bf1d261aa417d18206da4ff45006416a0d6fa9f5ff7585ddebe5a938"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-5-temperature_c-00312.svg",
+        "sha256": "5e53e249087fb0a594400eee34753038ef257e1ba913a6a7f10d9e99987b0879"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-5-power_w-00312.svg",
+        "sha256": "3bca11d6aa129892470a8d8448d1128bc415208a0e7387fc01031ee984e5cc92"
+      },
+      {
+        "bytes": 6040,
+        "path": "report-assets/monitor-card-5-utilization_percent-00336.svg",
+        "sha256": "9f93edabe84f4b1958af6af25982ade8fa12ca5f04b7b1e96cd8eeb76aca7121"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00336.svg",
+        "sha256": "b90a9bbce345afa48d86eae7087cd9c1607c80266e1bdbf7ee91e2e8988fabe8"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-5-temperature_c-00336.svg",
+        "sha256": "fef9b625f813a4950a7e0817c926cfd70f449b5b51eb6ddf2927144b64eb4212"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-5-power_w-00336.svg",
+        "sha256": "21d688c213ccb409d5f2d677dbf4cb47932d761892fc34ec90c85f1c210f4546"
+      },
+      {
+        "bytes": 6043,
+        "path": "report-assets/monitor-card-5-utilization_percent-00360.svg",
+        "sha256": "ad7b909688132c004c7564dd10447aef9501f5a93b8a2cd2ca2b58ba6b6884e9"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00360.svg",
+        "sha256": "2d6aa9bd5a2dbbad69afb65076d3b6f9614651243549ef97df39ca3befe1083a"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-5-temperature_c-00360.svg",
+        "sha256": "c6e31e70dbb32292e4bd80188ecef4656c9894cd0c320e16f0459c6ba1b6c033"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-5-power_w-00360.svg",
+        "sha256": "82e35cf76245cc8490732d90de65fa1e7dc2e4bc1a8e2723df2aa3990781a537"
+      },
+      {
+        "bytes": 6042,
+        "path": "report-assets/monitor-card-5-utilization_percent-00384.svg",
+        "sha256": "a29d9c73a362ce923fea4221d141e33ca3ed4ec22404f12f58216a5546b21aa0"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00384.svg",
+        "sha256": "7b82892d66c5b4ea1a260b995c8dc47abbed6aa43bbee0418b449399480d0a31"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-5-temperature_c-00384.svg",
+        "sha256": "c621451dd8c480f27c294fc4238cbf72da01b74a37b162efb6dbd2919b8193c6"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-5-power_w-00384.svg",
+        "sha256": "61b6913006afde997a99ba6e682abbc8c0bdb562d9ee45365b17b9d7d426055a"
+      },
+      {
+        "bytes": 6039,
+        "path": "report-assets/monitor-card-5-utilization_percent-00408.svg",
+        "sha256": "29ad396208513c13f043ca3fd9f1915947d171b7e315511742404e633041281e"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00408.svg",
+        "sha256": "723ebdb77a8dd7d18ec00ea8af9e3687121a0d434ce4ddca1b0f43961c2bf43f"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-5-temperature_c-00408.svg",
+        "sha256": "02d4097f067ef7a1db3595372ca4f035f7adc4ef64373a3ba28af42c4ee9a4bd"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-5-power_w-00408.svg",
+        "sha256": "afa601bbb6b63cce7b70f4708246769a2225c50abe04e9625c864bf83f545e2f"
+      },
+      {
+        "bytes": 6044,
+        "path": "report-assets/monitor-card-5-utilization_percent-00432.svg",
+        "sha256": "956e4ff5a339ebbe2eb79d8388eb2d13591d43b1c70b669410ecf9d12c7559e3"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00432.svg",
+        "sha256": "f64c0e27f5037639d9ddac41c07ce5e2b7e53c069fb12615e790b70879545cb4"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-5-temperature_c-00432.svg",
+        "sha256": "8763031a84b6383951fc53398bc96645d51b8f77af29d3a89add1270f7dd5d8c"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-5-power_w-00432.svg",
+        "sha256": "1ac5a07dedd18e92e98bb00926d9d6e4b00b4c04feb572f6745f43fb284cd851"
+      },
+      {
+        "bytes": 6045,
+        "path": "report-assets/monitor-card-5-utilization_percent-00456.svg",
+        "sha256": "9e572ce45d10187b2b58b6835cf1a633a40c1e8cfb679ec0c191be4aad13030a"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00456.svg",
+        "sha256": "9381ed1b81ec8f543fffd34bd7b2f6d76d567cd9ea819cc8004515c0c4c75a5b"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-5-temperature_c-00456.svg",
+        "sha256": "075d1331b50f69c38ca744cd741f33849b2105890378cead58389db88eaa6531"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-5-power_w-00456.svg",
+        "sha256": "2913df98d2bb02960cd40192a7ba2caf55790cda360d240f9402d3bf8e3391f8"
+      },
+      {
+        "bytes": 6046,
+        "path": "report-assets/monitor-card-5-utilization_percent-00480.svg",
+        "sha256": "a3007bc2afc5eb9fb38e94ae5b4c25c7f2d239c52b1536d1a11a81cb4c2c7bbc"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00480.svg",
+        "sha256": "824c3c2a64cc8a01c7e66236b89409b70d4c7a1a8304bf4d0a1d409905b70f06"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-5-temperature_c-00480.svg",
+        "sha256": "ca5511c13bc9781c8e740b14db981c32b6d8394556c48279bd2653b4abde0178"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-5-power_w-00480.svg",
+        "sha256": "d163f9acbbcf5e533e7a51c3a9e9a939c854905c5711252569d07d4794c08213"
+      },
+      {
+        "bytes": 6040,
+        "path": "report-assets/monitor-card-5-utilization_percent-00504.svg",
+        "sha256": "62270b799ece4b8285760e7247c8d5408fbf26a01567bb219036a06f5e4a283e"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00504.svg",
+        "sha256": "9d0cb1ebcd7fd323400e264daf239db388d1cabe74e17dd208fd493be2058f59"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-5-temperature_c-00504.svg",
+        "sha256": "12fa4f985f875d406ce74305792284b6132ebdf41d1dea1f36d79044af3aedf6"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-5-power_w-00504.svg",
+        "sha256": "b95a0daa1cead2bc9abfae205e51e0ce57e210bc0d44672de4ea94b0923554c4"
+      },
+      {
+        "bytes": 6041,
+        "path": "report-assets/monitor-card-5-utilization_percent-00528.svg",
+        "sha256": "39477150bdcfc8656be76b2db8d97d07d7910f50f502b097be8776085cff1728"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00528.svg",
+        "sha256": "846eb48b79f1ae654a1594d07bfda643281f02dbd2022fa06398afafc9985dcc"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-5-temperature_c-00528.svg",
+        "sha256": "4fc15d5eadad5f6849496d77cfa627e0da6fb1803fb9df50281e6b7904faaab2"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-5-power_w-00528.svg",
+        "sha256": "d3e1c2b728c4e27122ad13a3261b55ede96887c0a69989ca4eb3538d33d38acb"
+      },
+      {
+        "bytes": 6042,
+        "path": "report-assets/monitor-card-5-utilization_percent-00552.svg",
+        "sha256": "c67b9253b5008e31eaf1be35f4242fcd7e4bad17121678177e3a930e3606104f"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00552.svg",
+        "sha256": "e7fd3a48538d65c95b8967852d4fcc601c1f61d578ece414fc4f2f389f06dd1d"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-5-temperature_c-00552.svg",
+        "sha256": "cf222a704fba0845ad429b1aacfbb3bfb06de01729c5645f7108295110819281"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-5-power_w-00552.svg",
+        "sha256": "1a104c5f778dc10842f34daefd2a62a00fa19bd8d29cda4430a160c60fa53fb5"
+      },
+      {
+        "bytes": 6042,
+        "path": "report-assets/monitor-card-5-utilization_percent-00576.svg",
+        "sha256": "1c080b7088e5588563bfb2bc7be4e1b064beb71506fbb2539a2a2e698c1deded"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00576.svg",
+        "sha256": "b413861177bb43fff53ed797d4e7961606d6d9c6b6fb25c6726049016a33a448"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-5-temperature_c-00576.svg",
+        "sha256": "41cef67cb5f199a4f6e2ba676e19b7cb341e1c6dc72007caae505d11287ac5c2"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-5-power_w-00576.svg",
+        "sha256": "7360f0e94b735d659efda9093d376252d3887671a818b73d2f12e8723a7a1b43"
+      },
+      {
+        "bytes": 6043,
+        "path": "report-assets/monitor-card-5-utilization_percent-00600.svg",
+        "sha256": "093cbcc468d160c0a4e99aa76437dc3c9e60df3b5f7d264a8c9b7667ca528f20"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00600.svg",
+        "sha256": "2a375eff164d97ee66b2bfac8d19075e28d2521d970aa374a72767025ab7143d"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-5-temperature_c-00600.svg",
+        "sha256": "45c3a25c6cb6b3814e0a526f0f1849cd83d6d1346fc922105a4bdab624896294"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-5-power_w-00600.svg",
+        "sha256": "38f72ce9ba412f9aa2d32eb64815c8047dfa1fd5ab5a11540491dfb68021f130"
+      },
+      {
+        "bytes": 6041,
+        "path": "report-assets/monitor-card-5-utilization_percent-00624.svg",
+        "sha256": "9dae4c43e06553228091697cf084e458fc954a97dd6b8d71ca591e2999c83f5d"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00624.svg",
+        "sha256": "b50e4c2fd994a1642791668431b928fdbe619630581e0491c21965228dce8d94"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-5-temperature_c-00624.svg",
+        "sha256": "84778e4e2d5f4a8587dbbaa6f59907b6ebbfe977f28682af2c7045b07f72c6e7"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-5-power_w-00624.svg",
+        "sha256": "6e5df2eef91893bd9b434d9a08542865345b911ae875e749829c73eb0c31f265"
+      },
+      {
+        "bytes": 6044,
+        "path": "report-assets/monitor-card-5-utilization_percent-00648.svg",
+        "sha256": "fadd9e48f4d0345534ae2dc22fbca29900b66251b1ac702aeb80c67837970f81"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00648.svg",
+        "sha256": "d5c765e7b83edd6445f416bcfa73799dd481e2338b1ff3c00ea1fdaf52f01936"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-5-temperature_c-00648.svg",
+        "sha256": "44ea9a7a141a777ba33cb82e759dabf73b9bbaba7f6287944a0d27900e44f229"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-5-power_w-00648.svg",
+        "sha256": "ca98400d1d0ae871ef6e946d6298c78973b3137a0b380ab7980e07eb2f455e63"
+      },
+      {
+        "bytes": 6043,
+        "path": "report-assets/monitor-card-5-utilization_percent-00672.svg",
+        "sha256": "a40c50cd124b9629db3ad59a101666e19415f6b23d4d69742775964b7ce7c471"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00672.svg",
+        "sha256": "66bc2b1cf106c59d29de39943fe7caf1f313243ebe30c757e581e8707c3f6178"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-5-temperature_c-00672.svg",
+        "sha256": "89a03d3f8695b850a6c7b724d478ec810e42f7276c68d7faa59003e28be8e2e3"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-5-power_w-00672.svg",
+        "sha256": "b0ec8b7afb9333165088d28a16b5e70adcd22bc239308163ae6dfa34890b73fd"
+      },
+      {
+        "bytes": 6040,
+        "path": "report-assets/monitor-card-5-utilization_percent-00696.svg",
+        "sha256": "4bc093a2657f0c9601544e7dbca19d48a5ad04ea4028896c63a99b7c050ee332"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00696.svg",
+        "sha256": "a0927f4a76e8bd07deca5a60708d0df3a09b2af3d00d7eb88d5c15a471e958b8"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-5-temperature_c-00696.svg",
+        "sha256": "8dffe91d7b1b04a0b22d5c79dbcd0fcd297c4c360f84ec94324e1c57c66001f7"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-5-power_w-00696.svg",
+        "sha256": "c9c5a2c307a7f42d14848b8dc8b04d21acc1f794ae3218dbbc16047ea7e504c6"
+      },
+      {
+        "bytes": 6045,
+        "path": "report-assets/monitor-card-5-utilization_percent-00720.svg",
+        "sha256": "f1f420febe6d4ecf5703abd47d496a5c8328d6d0c47ac1bf3e27fd8a62dace73"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00720.svg",
+        "sha256": "6115a96c9d4854308f26b418eb99fa92c9a1321d168deee334d20eee31737172"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-5-temperature_c-00720.svg",
+        "sha256": "751433e52eaa6fc628dba947c9bc44eef786738e7517ce5f27b3cc4d91435a22"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-5-power_w-00720.svg",
+        "sha256": "0aed5ab1f38c72fcdbaa4a839e0b86a6da2b655a0c609e058e05e27222b92505"
+      },
+      {
+        "bytes": 6039,
+        "path": "report-assets/monitor-card-5-utilization_percent-00744.svg",
+        "sha256": "7ab028311cb58dd129a264881c575e4c781b344ddfa76a8cb30759c19e9989d5"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00744.svg",
+        "sha256": "437622d7b7f3585d2c24b4f1f1aa21aa0a2bb54c27de1e6f5277d4fe6d4b8b8e"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-5-temperature_c-00744.svg",
+        "sha256": "067ed8d909333e739ff1470461405fa2b0ca5c2f3b4d24ef9ae98b9997ab1ceb"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-5-power_w-00744.svg",
+        "sha256": "d89e4a8cd5df9ca326460d7c13c83adc481d9ef2295012e64793dbfd7388046f"
+      },
+      {
+        "bytes": 6042,
+        "path": "report-assets/monitor-card-5-utilization_percent-00768.svg",
+        "sha256": "bb0211f60dbfd6ac74dff84f0e4b8a1a893392599a695099060f5a291597c04a"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00768.svg",
+        "sha256": "1e8f12acdc8baf30a2ad93b133114e38ceba348047c3345d3225aa32ba6b8d1b"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-5-temperature_c-00768.svg",
+        "sha256": "8ca305d6201b2ef351f8fb34a605605920a1d70464861cba4d37eb50e766997c"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-5-power_w-00768.svg",
+        "sha256": "6d9a037038ae12848e7200a57b421c4935191e6735a22e6f4e8fb2b68df61d58"
+      },
+      {
+        "bytes": 6041,
+        "path": "report-assets/monitor-card-5-utilization_percent-00792.svg",
+        "sha256": "086d8c14fa73350504fb209c94e0dee4b7fba33d1091468e7d19e70d65848e0a"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00792.svg",
+        "sha256": "797879a1da3b3b9fb17545107bdf53d7cc500775dc8bc05db3be8aa9aa3f8905"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-5-temperature_c-00792.svg",
+        "sha256": "7644bfc1cb0b511455414692b97d1df469c5898453f66d23a9e45ba6bb8e8747"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-5-power_w-00792.svg",
+        "sha256": "744c0e30f41f08b42022d76dabef1758a064ab68bd27a94b8058d6fdc103c302"
+      },
+      {
+        "bytes": 6043,
+        "path": "report-assets/monitor-card-5-utilization_percent-00816.svg",
+        "sha256": "cb0997779ab347adff4b05e8cfa5cafd12ff7c5b051f7535bdcbc11dbdca16a0"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00816.svg",
+        "sha256": "b50a1c840038e78e555e7b2d960823559ed4173c5418a8c35c85c30eae5e875b"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-5-temperature_c-00816.svg",
+        "sha256": "b57f7ad2deab8820a30a5c789ffe333af267d92a5227ce02cd0d9fa4b1f096d1"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-5-power_w-00816.svg",
+        "sha256": "1f7785185e9cf80b248eeda2016f7867028a239d6af9c6bdcef6f23ab8b77432"
+      },
+      {
+        "bytes": 6041,
+        "path": "report-assets/monitor-card-5-utilization_percent-00840.svg",
+        "sha256": "718e09b3ffe8cf4b1f2eef62400fc13888b8f1b639bb4de7da5ed8708c27e9a4"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00840.svg",
+        "sha256": "74de14c367422b363cb5857b91a00ed3a68ec36c49a751fd3f7dd80cded136ad"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-5-temperature_c-00840.svg",
+        "sha256": "807800a31d01173ec5d7d0f373389b40326e17e12114e7be4d47491b096b3366"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-5-power_w-00840.svg",
+        "sha256": "b56923bff9ab76562ecd9ca1f70564277ceee693a8f0f8a88d4724b180df220d"
+      },
+      {
+        "bytes": 6043,
+        "path": "report-assets/monitor-card-5-utilization_percent-00864.svg",
+        "sha256": "ea1dd1493915394ece0032f4596c197d8940a7343f48068b2ef6cc06648a2ce3"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00864.svg",
+        "sha256": "d65d7fea13c089438dd9f6834dc10b6e32a65115793e40f651b9351184a919d4"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-5-temperature_c-00864.svg",
+        "sha256": "7760bf3108e5d482bedbea51f9f15b6b7fd9921aa23f4005e010527455f210c8"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-5-power_w-00864.svg",
+        "sha256": "cf9bb51b18e0afede206712d8c419c9fb601e1df5afb5a85fdb809193cc52c62"
+      },
+      {
+        "bytes": 6042,
+        "path": "report-assets/monitor-card-5-utilization_percent-00888.svg",
+        "sha256": "16c6812438d3584e38f41a2c056994575fc94a22cf4600ef643cd9a72c81cdce"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00888.svg",
+        "sha256": "a329e1a5691130794cfdcf2ec9b234d90bae61a6c61033e33113ef4a4b78c3d9"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-5-temperature_c-00888.svg",
+        "sha256": "29ea95fb8bb85b8becd1924c332483244751485e0fb57d8c1a06a656fa99fd19"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-5-power_w-00888.svg",
+        "sha256": "c4b5f336dc105f5d8a8eb6476312cb0c8109c683e0e7eadc0dd78ac70f256c8f"
+      },
+      {
+        "bytes": 6042,
+        "path": "report-assets/monitor-card-5-utilization_percent-00912.svg",
+        "sha256": "69cef70699e33ccda3765460e71c9b26c54eeb4a050a978dd8c2dc5c2092fc93"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00912.svg",
+        "sha256": "d40f23fa984acbb17663fbc2b954bc5059d44066b491d9c8406689d10e79b1e3"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-5-temperature_c-00912.svg",
+        "sha256": "a5869e31aab15d97611ac0534d5de7b534ad788a80c269b5bc1ef65d78276c4c"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-5-power_w-00912.svg",
+        "sha256": "a350d694e94496bdfa8c6b88135c7d26c5394aa1fb1d1f672c1517bf0add7885"
+      },
+      {
+        "bytes": 6042,
+        "path": "report-assets/monitor-card-5-utilization_percent-00936.svg",
+        "sha256": "9693b97ea35d65890381c9c981ccd39b0e7abfde4a62380452e5af872a64f10c"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00936.svg",
+        "sha256": "a1f9b6f1bcc110439983d4a4be6668db4a2090c3e0c8512097d5321df1ea3111"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-5-temperature_c-00936.svg",
+        "sha256": "627e08e5a4eff8674e52caab603ef6406c42585c0fa609ccefad69545039b89e"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-5-power_w-00936.svg",
+        "sha256": "793b1af800bb74aae8fddb88d1562c4515ad65e9b2c66bc6e881684af30e0c1d"
+      },
+      {
+        "bytes": 6043,
+        "path": "report-assets/monitor-card-5-utilization_percent-00960.svg",
+        "sha256": "b7e7d4017b9d483d2c3411cc8ebe1a00187faf3b0208bde2caa8492a22e7713a"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00960.svg",
+        "sha256": "0117f110a0c10fa13113d9dfd650cfa61e11059fcf280f858221c4d66dfab7e2"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-5-temperature_c-00960.svg",
+        "sha256": "d8ac993b91513a0b59e63822155676df02ac966561468910ebafc520dd80b9c0"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-5-power_w-00960.svg",
+        "sha256": "b3aa60d14daf53d3d3eaa5797fb330de3015d08b61ed1bd3da1964657641e748"
+      },
+      {
+        "bytes": 6042,
+        "path": "report-assets/monitor-card-5-utilization_percent-00984.svg",
+        "sha256": "113c2f06bec48cf9db74d439077a9f672b28080bea33e2d2ca95845502056767"
+      },
+      {
+        "bytes": 6084,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00984.svg",
+        "sha256": "5c0d5488d8943d4fbe6a7054125820320c2ffee8132e8779e19f705f389256e4"
+      },
+      {
+        "bytes": 6032,
+        "path": "report-assets/monitor-card-5-temperature_c-00984.svg",
+        "sha256": "15e37ca76663920101d96a49bb4d4a0a5e79906a51d7b3156eea45b8028b4cbe"
+      },
+      {
+        "bytes": 6050,
+        "path": "report-assets/monitor-card-5-power_w-00984.svg",
+        "sha256": "cb74351b573d8ce84dacbd249304146f467fa09d71cf8c05bf041108dca9e4e8"
+      },
+      {
+        "bytes": 6046,
+        "path": "report-assets/monitor-card-5-utilization_percent-01008.svg",
+        "sha256": "b8c4c551aea92d3f43de51721a0d1135cd996fa8814a5cc92fe10f011406efb9"
+      },
+      {
+        "bytes": 6085,
+        "path": "report-assets/monitor-card-5-used_memory_mib-01008.svg",
+        "sha256": "4c9021bbdb060b8d759162d1f9775dd972c6d52acd7e0de9489691850b07d0f1"
+      },
+      {
+        "bytes": 6033,
+        "path": "report-assets/monitor-card-5-temperature_c-01008.svg",
+        "sha256": "ca1cacdd42beb1e5c97ee3e1f604e6db6436bdb22a0a915802e807d1b4ff25f4"
+      },
+      {
+        "bytes": 6051,
+        "path": "report-assets/monitor-card-5-power_w-01008.svg",
+        "sha256": "a345a38b0b64eeff881de74e435107ab5396a9d1d400e163a68c84d45e675fcb"
+      },
+      {
+        "bytes": 6044,
+        "path": "report-assets/monitor-card-5-utilization_percent-01032.svg",
+        "sha256": "2531f49df80c967dc6d29d2b983e431f56069d80414c22ee7c1f7f8d20e80eda"
+      },
+      {
+        "bytes": 6085,
+        "path": "report-assets/monitor-card-5-used_memory_mib-01032.svg",
+        "sha256": "29d91194adcbc55234c9c788b4e7cb78cd647587ad19d86d529b505a6ac2b952"
+      },
+      {
+        "bytes": 6033,
+        "path": "report-assets/monitor-card-5-temperature_c-01032.svg",
+        "sha256": "a3e6980b43d940cd180ada7a6ac11b91564626a0737432e08f4d1426ba0f05e4"
+      },
+      {
+        "bytes": 6051,
+        "path": "report-assets/monitor-card-5-power_w-01032.svg",
+        "sha256": "67bf2575e800ba25bfb091efdfeb2c278d5b409eb3be64f19dcd0666df5101a4"
+      },
+      {
+        "bytes": 6048,
+        "path": "report-assets/monitor-card-5-utilization_percent-01056.svg",
+        "sha256": "0d5ff52b7d23e17a45af352db9c0c36423d22673b6a0b14bec2623436c5f8686"
+      },
+      {
+        "bytes": 6085,
+        "path": "report-assets/monitor-card-5-used_memory_mib-01056.svg",
+        "sha256": "db23b244e27f77c151ff18bc77fc8d60bbf6007a5b06eef723f08505aebdf74f"
+      },
+      {
+        "bytes": 6033,
+        "path": "report-assets/monitor-card-5-temperature_c-01056.svg",
+        "sha256": "ce3bcf07038b5e792c479ed41e4dd060abcade20d6b4fec4457d35f00ef429a9"
+      },
+      {
+        "bytes": 6051,
+        "path": "report-assets/monitor-card-5-power_w-01056.svg",
+        "sha256": "7b829cdbc9c6dfa4a77752c452248b26b7279a84c0b10966381c72b0cf51125e"
+      },
+      {
+        "bytes": 6045,
+        "path": "report-assets/monitor-card-5-utilization_percent-01080.svg",
+        "sha256": "4ff98da800a5470f97b44f31cf0cfaa0834832fb8c67f059d7d3239a171f44a3"
+      },
+      {
+        "bytes": 6085,
+        "path": "report-assets/monitor-card-5-used_memory_mib-01080.svg",
+        "sha256": "27439dbceb1636d2f200179c560f887210956f8f83f67c7eccef045f4fbbb4f8"
+      },
+      {
+        "bytes": 6033,
+        "path": "report-assets/monitor-card-5-temperature_c-01080.svg",
+        "sha256": "a53056d8348529eaa8f9bb3c6859bf1f071f0c9e27c1025b81d2459ac2f6bb72"
+      },
+      {
+        "bytes": 6051,
+        "path": "report-assets/monitor-card-5-power_w-01080.svg",
+        "sha256": "ee150a4aa9219094d51ccf01cf3d8e671b9012d7d8109de9c51c77047eadac18"
+      },
+      {
+        "bytes": 6043,
+        "path": "report-assets/monitor-card-5-utilization_percent-01104.svg",
+        "sha256": "349d324f1d8a946d29428496e5ba124a0bc8f71f06550771cfa0cb9ae24036bd"
+      },
+      {
+        "bytes": 6085,
+        "path": "report-assets/monitor-card-5-used_memory_mib-01104.svg",
+        "sha256": "e74292c7c12eca3ffc92e06a5b182e7d363abb9f865148a95888ce5eb2ea5c89"
+      },
+      {
+        "bytes": 6033,
+        "path": "report-assets/monitor-card-5-temperature_c-01104.svg",
+        "sha256": "6c1e251b162256aebc52ac83da3f573eee7a440e8f39611cbf7bcadf447831e0"
+      },
+      {
+        "bytes": 6051,
+        "path": "report-assets/monitor-card-5-power_w-01104.svg",
+        "sha256": "a1ebe1e802a482210906857ee8592bfde80572c9d2d451360eb410e9ef06a1eb"
+      },
+      {
+        "bytes": 6045,
+        "path": "report-assets/monitor-card-5-utilization_percent-01128.svg",
+        "sha256": "ebe54b9db915a46fadd3b171273591cccb95bf7a90692e614d6fa1460fd7d95a"
+      },
+      {
+        "bytes": 6085,
+        "path": "report-assets/monitor-card-5-used_memory_mib-01128.svg",
+        "sha256": "2ad800d21f3743de657719ba3cbce72172910992d4961182f1fcb2829725e333"
+      },
+      {
+        "bytes": 6033,
+        "path": "report-assets/monitor-card-5-temperature_c-01128.svg",
+        "sha256": "52db616b345d1e0f05adc8c0d55faa01ce823a727aaca88525fed6ea83a53632"
+      },
+      {
+        "bytes": 6051,
+        "path": "report-assets/monitor-card-5-power_w-01128.svg",
+        "sha256": "515e7cf5ba1eab658e602f2098043b902c34b17eec484fcc29f4655488477606"
+      },
+      {
+        "bytes": 511,
+        "path": "report-assets/monitor-card-5-utilization_percent-01152.svg",
+        "sha256": "fde147ae8da91b7da30b8fc67c79ffd0be73d9eb0dd31dc9dcdbca6ce3711e19"
+      },
+      {
+        "bytes": 511,
+        "path": "report-assets/monitor-card-5-used_memory_mib-01152.svg",
+        "sha256": "17b45918f5c3800ef7e3fec12dd3295fa366b0073ed6409eba16be0d03d24863"
+      },
+      {
+        "bytes": 505,
+        "path": "report-assets/monitor-card-5-temperature_c-01152.svg",
+        "sha256": "0f674962bea8d7001be781f289bcb25cb4d5fc07598506a16318ba3f99a9055d"
+      },
+      {
+        "bytes": 500,
+        "path": "report-assets/monitor-card-5-power_w-01152.svg",
+        "sha256": "8d9cfb29172f51417d92e4b5aa75304e6a3880822ac3b2a75265da2a79639e38"
+      },
+      {
+        "bytes": 6034,
+        "path": "report-assets/monitor-card-6-utilization_percent-00000.svg",
+        "sha256": "7ce6e21ca5fb52b0682b3fc2725376b4285ebd6110f15bc6e262960e173a47eb"
+      },
+      {
+        "bytes": 6080,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00000.svg",
+        "sha256": "5af5475b01f638d75361f0dc8de197c98f0c8f9ff5e355de06a7afea3c8db3f8"
+      },
+      {
+        "bytes": 6028,
+        "path": "report-assets/monitor-card-6-temperature_c-00000.svg",
+        "sha256": "eccb9c6d86b20771f794cdcc31b0aec66b280eaa7c8654de90b63ccf951177b5"
+      },
+      {
+        "bytes": 6046,
+        "path": "report-assets/monitor-card-6-power_w-00000.svg",
+        "sha256": "af990e8237244b0cb45436551dfd0a62a8edcbc9c180d5b73986f65ef1fe68f8"
+      },
+      {
+        "bytes": 6037,
+        "path": "report-assets/monitor-card-6-utilization_percent-00024.svg",
+        "sha256": "b7f580926c714fe88093b7b71e367ab5ba8b89a3ac4f69de23630e40a80040d8"
+      },
+      {
+        "bytes": 6081,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00024.svg",
+        "sha256": "ffa2977a971419385b9e32053b56ed8227ade8a39ca734433d14c30ea7506485"
+      },
+      {
+        "bytes": 6029,
+        "path": "report-assets/monitor-card-6-temperature_c-00024.svg",
+        "sha256": "72e9d7ab0aec91d6c2dd35bf40f3d925067cfe5139cbe849337ce463c92498a0"
+      },
+      {
+        "bytes": 6047,
+        "path": "report-assets/monitor-card-6-power_w-00024.svg",
+        "sha256": "ac771fb989d2361686009a6a451e3727721404e103b2dd8e66042e6452218f04"
+      },
+      {
+        "bytes": 6036,
+        "path": "report-assets/monitor-card-6-utilization_percent-00048.svg",
+        "sha256": "a6f6e996c1ee436b30b24b0cd3f5744834d93829a705caa77aae0cd23c9483fd"
+      },
+      {
+        "bytes": 6081,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00048.svg",
+        "sha256": "93351a341d36c2933e2e7daa33ffb4f1b45879a5b084166052a34dde34ca4d70"
+      },
+      {
+        "bytes": 6029,
+        "path": "report-assets/monitor-card-6-temperature_c-00048.svg",
+        "sha256": "23fcf47114133da28a970c7308bfbf69138ca68b2f706726b53b0cc5861b0e10"
+      },
+      {
+        "bytes": 6047,
+        "path": "report-assets/monitor-card-6-power_w-00048.svg",
+        "sha256": "6d1cc036fe40bc7a864168ebf0b5805505f491a1a5e662c22d732aae4883f424"
+      },
+      {
+        "bytes": 6036,
+        "path": "report-assets/monitor-card-6-utilization_percent-00072.svg",
+        "sha256": "3e1cf4c906b5f7a81343947809c437c3a6e4c6498a366789fa362786bb9d13c2"
+      },
+      {
+        "bytes": 6081,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00072.svg",
+        "sha256": "fad6e498c3fbe8a6c7017be62595b932bbb216c70bb59f3111f7a165be7a27a2"
+      },
+      {
+        "bytes": 6029,
+        "path": "report-assets/monitor-card-6-temperature_c-00072.svg",
+        "sha256": "bd695219e8efd17e97fb0a19ce5faa7c7d1d740800ffca732dfd5419149072a8"
+      },
+      {
+        "bytes": 6047,
+        "path": "report-assets/monitor-card-6-power_w-00072.svg",
+        "sha256": "755517fd2a86d7c05ef23d31e6c06d211673fbad660985fbe34fe20a09e3aefb"
+      },
+      {
+        "bytes": 6038,
+        "path": "report-assets/monitor-card-6-utilization_percent-00096.svg",
+        "sha256": "4b519aaeafadcbec3bbb2d40753722cde0da0f9709296919e5da6305b2441aaf"
+      },
+      {
+        "bytes": 6082,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00096.svg",
+        "sha256": "01b1b76e75ab91e7752c2d19ed7b3ef672c13c05e73cf907ff6f7bb888d44f50"
+      },
+      {
+        "bytes": 6030,
+        "path": "report-assets/monitor-card-6-temperature_c-00096.svg",
+        "sha256": "4f23b39c4e074cb67caf0cb6e040c4050cf8b1a92b69fb3ed8107b6fe5805559"
+      },
+      {
+        "bytes": 6048,
+        "path": "report-assets/monitor-card-6-power_w-00096.svg",
+        "sha256": "3b29241d22bf57d6fe39992cc3e8021e3e2596e1cc643acb3c1f2545cf00ab59"
+      },
+      {
+        "bytes": 6039,
+        "path": "report-assets/monitor-card-6-utilization_percent-00120.svg",
+        "sha256": "43f98a6aac73e4393bab2a599d9046f28de7c93f7b01abb62a46e549ff5885b8"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00120.svg",
+        "sha256": "10964d8d579bd07e307bf09aa9f5f4e532a8f728bcbfd470f54a2bbd12f5713a"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-6-temperature_c-00120.svg",
+        "sha256": "3faad6a584a17bacf00b64b68ed632cbbe76fedf43007b7b9520f85d534bbbd0"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-6-power_w-00120.svg",
+        "sha256": "32f81ac7cb6a4b8d7ea25e2ac50bec437bd2b2ff7104f08e13110466a495a3e5"
+      },
+      {
+        "bytes": 6041,
+        "path": "report-assets/monitor-card-6-utilization_percent-00144.svg",
+        "sha256": "bd8bcb7d75570025df4f95bd068c585d3fef401b381bf6f1d492a6644e07e57a"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00144.svg",
+        "sha256": "92b458e2359234605721872f298be16b4ca8a5440b632e93a313454aa62cf187"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-6-temperature_c-00144.svg",
+        "sha256": "2721bdef00a53fa58aa0a918f1249468ba978ef1cc1fd3b6e27d24afdd374908"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-6-power_w-00144.svg",
+        "sha256": "9445261e90c7657b4c85d928925f3bcdd4457cebb53993b64ff8ffc4db945e72"
+      },
+      {
+        "bytes": 6037,
+        "path": "report-assets/monitor-card-6-utilization_percent-00168.svg",
+        "sha256": "39f7099759bda984c9fbab9e40b681572add07a65dbaa89b8a5f5768f73b8c1a"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00168.svg",
+        "sha256": "2812e86f940f8a420edbe02f7ae6d7d1a641202a0d5ed5bf996ba3abce21781d"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-6-temperature_c-00168.svg",
+        "sha256": "00936e850cd83187777762cca95d41bbe7eef809bf286f839df3d6772cc4d20e"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-6-power_w-00168.svg",
+        "sha256": "1b3d831fb19e7ed9bca661d04236ddbdd7c6cd07f6e610044363a639702eb2c7"
+      },
+      {
+        "bytes": 6042,
+        "path": "report-assets/monitor-card-6-utilization_percent-00192.svg",
+        "sha256": "b711f8ad2ecaab448622f3c7a767e904af22862fda7562604a7c5a8f510419f1"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00192.svg",
+        "sha256": "a792ce076a1c85c7229f6ad35c1ffa2128741bbc4f16f0941a51610f8486df84"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-6-temperature_c-00192.svg",
+        "sha256": "f1d91ec005d13e41228fc921a5517636ef98007bf48b59c99804c0488169c250"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-6-power_w-00192.svg",
+        "sha256": "767f890eda29bd758a3c9865578aaa96224aa89b4f0d565c7dafabb4af8b0bde"
+      },
+      {
+        "bytes": 6037,
+        "path": "report-assets/monitor-card-6-utilization_percent-00216.svg",
+        "sha256": "60c3a521aec08fe02bfedf4d612aba62813c42424bc3a3f8b965ca724150e6d2"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00216.svg",
+        "sha256": "96cfe4612c770885a75983078067a4e6a39e279fa23b41e6248b696b22527de1"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-6-temperature_c-00216.svg",
+        "sha256": "2249fb3750e763022a597765d3914f02a2f3bd70b812a8f7a6e9ec15e54729f8"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-6-power_w-00216.svg",
+        "sha256": "ea87a9d385575a9bea89ffca72c72e63097a0f52ffea4f78e26155fef82ab054"
+      },
+      {
+        "bytes": 6039,
+        "path": "report-assets/monitor-card-6-utilization_percent-00240.svg",
+        "sha256": "06bce394127d678ee1994d59c77a9c828166e71c0e4bab6af9171471cdc85a69"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00240.svg",
+        "sha256": "3c01da8611cd2a5f9d3b474d1c7a41d2c023a5861679018def2f3570f3ad10d7"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-6-temperature_c-00240.svg",
+        "sha256": "71718c08b9f60fcc50a0845909d9957f6324bcf6192f9d3b4c43c14ba73718e0"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-6-power_w-00240.svg",
+        "sha256": "8dd1488516419acf593a5127181aaa240bc3adc7d721e76bd458e86f2fb038b8"
+      },
+      {
+        "bytes": 6038,
+        "path": "report-assets/monitor-card-6-utilization_percent-00264.svg",
+        "sha256": "92845b959ac4ce8668c46cef8d113ebb2fb12ea2f99ee6113ff0929dd3e28e3e"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00264.svg",
+        "sha256": "9df418510ed5f593ddc977790c68fd5958b78ff518a391d024444b844bf1fddb"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-6-temperature_c-00264.svg",
+        "sha256": "873d850f4290bf65b77b9f4e949ee403e734d9d2d0cb7c5d3d921e3197a1498b"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-6-power_w-00264.svg",
+        "sha256": "f81929baaf243a14b9b689687cbf903985768d805966cbd89c91ed460dc8d05d"
+      },
+      {
+        "bytes": 6037,
+        "path": "report-assets/monitor-card-6-utilization_percent-00288.svg",
+        "sha256": "d5449b8151afe270aff14398cf6749bae2ea63f00a33771588e22ee89d91dcbb"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00288.svg",
+        "sha256": "d9745d7d4469d8c2747726f774f924161a619d47d979d33a2e11f4b3f2979c8d"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-6-temperature_c-00288.svg",
+        "sha256": "7b5800289b46e8705706ec93e52548e9b889126e8716b115c901fb0ffb58d34d"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-6-power_w-00288.svg",
+        "sha256": "6ae921c14108e812a4cd0ab24ff25e23a5e5a8d08c755440ff8c5c40148a47b0"
+      },
+      {
+        "bytes": 6040,
+        "path": "report-assets/monitor-card-6-utilization_percent-00312.svg",
+        "sha256": "62c7ee639184d9fdabc9d905bcd09a17cd71a40476e60f2c0cb6b21c28d7d5f4"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00312.svg",
+        "sha256": "ec1c132a0ad9c80e841c693a3711b63196db0383be3dfd6ca62d5b353a639331"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-6-temperature_c-00312.svg",
+        "sha256": "04baf6bf56739a8adf029fd45a6015f3eefdf22266acd876156d4aa8347f4fa9"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-6-power_w-00312.svg",
+        "sha256": "ef5eeec09a1ba967435cd328bbae81009f52f8c03d1383eb04344e918f1a01d0"
+      },
+      {
+        "bytes": 6041,
+        "path": "report-assets/monitor-card-6-utilization_percent-00336.svg",
+        "sha256": "9f331cc35556bb6beab9e75dd2dd34ef6bd877b34351083d8080c30955c68dea"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00336.svg",
+        "sha256": "c689b6572c09fe48fdf2f9b40d02f741944f0a9ed2ca9c20804389fca1541073"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-6-temperature_c-00336.svg",
+        "sha256": "eecbd6d024b0b946341d1bcbd0cc7b270c93f7c843e661385e841786b73b15aa"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-6-power_w-00336.svg",
+        "sha256": "9a368290305cfb73d7fefb2dfbf994e8098ba1906ac5b46fd94c44626dabe043"
+      },
+      {
+        "bytes": 6037,
+        "path": "report-assets/monitor-card-6-utilization_percent-00360.svg",
+        "sha256": "7ac1c13d227f5c0667a530deed69537d0d3ddfef7b350530a7c8d72763bfa82e"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00360.svg",
+        "sha256": "09fbd96b4bc2a61097e96273c77ec55fda06450059552d47bdbd13a6c05eeedd"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-6-temperature_c-00360.svg",
+        "sha256": "08e509475315005eac3067b536707af7e99ba9d77a3581d598ae93bf203517b9"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-6-power_w-00360.svg",
+        "sha256": "987b667d4f613030d3ff5f26c7009f838862bc226fc1f51703166ede4d6fae31"
+      },
+      {
+        "bytes": 6038,
+        "path": "report-assets/monitor-card-6-utilization_percent-00384.svg",
+        "sha256": "72ef724fed67b11378526f0af9f1df18594c503e3fe1e6cdfa38b83344e9f9a5"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00384.svg",
+        "sha256": "a96eab35c7a6eb9b5436d8472259a2337bd589f04a1c60bb8849b5cd10586126"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-6-temperature_c-00384.svg",
+        "sha256": "523afd17b930b30af619f032ae92f0444ee0adaea7c0e677747be41fd897f73a"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-6-power_w-00384.svg",
+        "sha256": "b4957009f1e189413e32c21d4bdc425d5d7b53b6a34c875082f9b2c544c99ff5"
+      },
+      {
+        "bytes": 6037,
+        "path": "report-assets/monitor-card-6-utilization_percent-00408.svg",
+        "sha256": "5b128926f3c2a5d22745069fa2313c3c0a49a2e0f16e446d6e5a44e687302cd0"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00408.svg",
+        "sha256": "9476fef75f4fb177407a04d95d08b6d06ae7b2b61591e69f68384e85c5279be9"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-6-temperature_c-00408.svg",
+        "sha256": "0796466e6cb3d58730f99408f628c49d413340d3a5b1794971fdb65ee0314d35"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-6-power_w-00408.svg",
+        "sha256": "664b5d6a9adeae9246355721579effaf48c710e2dd2dc347853e6ad174c191df"
+      },
+      {
+        "bytes": 6039,
+        "path": "report-assets/monitor-card-6-utilization_percent-00432.svg",
+        "sha256": "42bc9069e79dcd71bd4ba3c8c905a225ae9e98ee485f01df9962419b2f3ff3b2"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00432.svg",
+        "sha256": "9cf4273c694d7be81acf467ed94426aaad4b8442135f4e54d63f1ee5235d2cd4"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-6-temperature_c-00432.svg",
+        "sha256": "acf2057c33ec5356aa9989a214d736432e2346d8919ce9cae35a4bbce3567a4f"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-6-power_w-00432.svg",
+        "sha256": "ff4dd646bcb0b042e2f8db3c5db04291e16b50ce4a846c1385b37e5333601e94"
+      },
+      {
+        "bytes": 6037,
+        "path": "report-assets/monitor-card-6-utilization_percent-00456.svg",
+        "sha256": "ff5967826b0a72002ccdded005a4adfbef457cc27d8c2b1fa12f45bf23843480"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00456.svg",
+        "sha256": "a0c37a290672b10144b594c34d67c044dd486ca5ee0f2cc9d4940f18c7e56b63"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-6-temperature_c-00456.svg",
+        "sha256": "f984082c3f5fe9b1617a675f4526b1308603899c628e5c914cc42c71bb33bb5e"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-6-power_w-00456.svg",
+        "sha256": "38333ab3a04a09e129b8ed6e1b7e6e51aab7195657bbd64b104f32c638f60cc2"
+      },
+      {
+        "bytes": 6037,
+        "path": "report-assets/monitor-card-6-utilization_percent-00480.svg",
+        "sha256": "7f287cbb1847c4dcb3b2b46a9331ee221241560ccebc5d461e1e764fdae3e93d"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00480.svg",
+        "sha256": "e0f0a96c6bc164ae5f2c0f644ae339fed1f532b4dae32970a654343daf2178ac"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-6-temperature_c-00480.svg",
+        "sha256": "58689fdfc6771a7fa31545371fee800e71349b078348c7a802a4f564097a1b63"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-6-power_w-00480.svg",
+        "sha256": "3f161ab8a4a15ddeb9e12b7a072d496d80ac15cb11d32a341facb8a4deb53ede"
+      },
+      {
+        "bytes": 6039,
+        "path": "report-assets/monitor-card-6-utilization_percent-00504.svg",
+        "sha256": "ba658ad3e0746d52b3655a5ec72b0cf3cb05e7e07f442e8a281a281c6316008f"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00504.svg",
+        "sha256": "4b88bbc6f021bdf3abe231dce9cdb9e7d2b6847314c2fbb341b862006e73ce9a"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-6-temperature_c-00504.svg",
+        "sha256": "e3f7e57ce6655a3ed0b28b6b964f15d04c99ef825c02720abafd117d770c9d08"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-6-power_w-00504.svg",
+        "sha256": "c7b61de21221c020863d7d51e61eb712ad261c7d5261a304dbd2b560bd6b9e22"
+      },
+      {
+        "bytes": 6037,
+        "path": "report-assets/monitor-card-6-utilization_percent-00528.svg",
+        "sha256": "01d99a90be322d8e0595424eaf9b8b0715f740a3c7bae7ef42490e5d42cfeacf"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00528.svg",
+        "sha256": "95e00715be597e0e1bc97ae8a7ede4da9aa1f6dcf8823dfe70f3684ed05e444f"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-6-temperature_c-00528.svg",
+        "sha256": "d0a6edf4f0964695e770958225bcfa4b3d380b914e1f12114b25d4b2f55cd31a"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-6-power_w-00528.svg",
+        "sha256": "8d274a5626202312de2c5b704c73f918f727917c57eb3b2b4347c8dc0c800feb"
+      },
+      {
+        "bytes": 6039,
+        "path": "report-assets/monitor-card-6-utilization_percent-00552.svg",
+        "sha256": "f3edbbd11d4e5300b9469f642f76d3a1205c4d791e253da504d6598eab93dee2"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00552.svg",
+        "sha256": "096e288ef0e29edec7c7d5108a7c21b3665d106bd2c853b234b0104e9eab90bf"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-6-temperature_c-00552.svg",
+        "sha256": "58cd8e05e485b1c8669e4f19c919bb80efe6232c06033428246e3740f8def45b"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-6-power_w-00552.svg",
+        "sha256": "176605a2ee6d5b44e42666db12680711ba065d06aa003ae19ab72f836beba32c"
+      },
+      {
+        "bytes": 6040,
+        "path": "report-assets/monitor-card-6-utilization_percent-00576.svg",
+        "sha256": "da041b07eddb01935310a83cb2bdbb89c2aab0429d95d091d4826f34aab00108"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00576.svg",
+        "sha256": "45a21de9f9c9fd9b5dafb631ecdba9044649560177a0504d9fd012845fd3bb34"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-6-temperature_c-00576.svg",
+        "sha256": "5283c6122cfe3bd871d66e892d1a3e5733a494d6229c734dfbbf9f3ebbd59bda"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-6-power_w-00576.svg",
+        "sha256": "f124dc500516845d1c1cd52cb3e149dd242ef8dd51c5b381e5641c167ee36eb5"
+      },
+      {
+        "bytes": 6037,
+        "path": "report-assets/monitor-card-6-utilization_percent-00600.svg",
+        "sha256": "474b8a0784c1b7c67c7d54c09b6463ae2b97e6a71bde0bffa52213a9765974b4"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00600.svg",
+        "sha256": "37f66796547ff17d4a3a47becb171ac70febf4aa21e5c9eada4bb4fb188fc5c4"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-6-temperature_c-00600.svg",
+        "sha256": "915689946f9a2d203946ea1d501effa2f9eab4d8598dc5ff8eb8247b257ab7cd"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-6-power_w-00600.svg",
+        "sha256": "7875dc96b0355169eb00da8ce27d557a392849ec7a3fffe096a96f43e033433b"
+      },
+      {
+        "bytes": 6037,
+        "path": "report-assets/monitor-card-6-utilization_percent-00624.svg",
+        "sha256": "e6e92f7ad42bf3fd7a55674863a30b92c1b565c2acd93e07d425477175c9af99"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00624.svg",
+        "sha256": "97603a46b5700c6e50db748c73cd277a858cae0fe77916002ff1119d9d6afb5a"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-6-temperature_c-00624.svg",
+        "sha256": "0569d2fece26655b6fd95c80e26a39be0a7219b3058e5771728cac1c0d53ac1b"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-6-power_w-00624.svg",
+        "sha256": "2f5a842cb732739c4cfd34ae9f2435a6dd530acd97174487b726e27546d8ecd0"
+      },
+      {
+        "bytes": 6039,
+        "path": "report-assets/monitor-card-6-utilization_percent-00648.svg",
+        "sha256": "edce13f22ac1f476b6a1c2e8ae1be06f037f3a3755b2e0fb3584539ff6577956"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00648.svg",
+        "sha256": "27d7132d5fcda939646cf47770e2d00d1c10db21b0fba19b96d1d75f7522bc82"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-6-temperature_c-00648.svg",
+        "sha256": "c7c23e6528d4e9c70a85c8b874803824ff5c2434c6681fafa221f98e7a1dcdc8"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-6-power_w-00648.svg",
+        "sha256": "4c18d043e18c13226164de75dc1ad853b0fb965a6caf2242518cf9a784591952"
+      },
+      {
+        "bytes": 6037,
+        "path": "report-assets/monitor-card-6-utilization_percent-00672.svg",
+        "sha256": "765327086b950ec7b1f6c001ad93bbbd7aedfe5489fb81f27dcacdc0b729c67f"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00672.svg",
+        "sha256": "86bca7e1fdd7744284939892be8c91a3a85d1f588e223862c74f9a8cfbfa6d1a"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-6-temperature_c-00672.svg",
+        "sha256": "2e603bfaa2dfa74b8b95b82398aaf7719da91cc7165e2ddc973ac2c85270f1f2"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-6-power_w-00672.svg",
+        "sha256": "9194d828e5802c8d76581aad001457e71ec396c7827ca3b8fb0d1365b822be4c"
+      },
+      {
+        "bytes": 6040,
+        "path": "report-assets/monitor-card-6-utilization_percent-00696.svg",
+        "sha256": "a0ccfb9963473603dc9dc9f94359ea2ebe72b6a9a28ddf5bb98115e4d5a89d8a"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00696.svg",
+        "sha256": "cf120b6465b3137973d566e3fcf09b499cf6fb1325d3267ab8b95d4172c4fa2b"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-6-temperature_c-00696.svg",
+        "sha256": "ec81b3c38a50d0696462510bf1c8e09659a74a826a2a71e52e0fc4e603a0212d"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-6-power_w-00696.svg",
+        "sha256": "d15dda29f6b5ef055b5d1ae2382ad40a90b4fd8f48f8579f0d94943a8daf7e3d"
+      },
+      {
+        "bytes": 6038,
+        "path": "report-assets/monitor-card-6-utilization_percent-00720.svg",
+        "sha256": "39a44acc17e18042f2d659204205ffd9a163288280799a8345308fadf3e220eb"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00720.svg",
+        "sha256": "81d0330cf762f7f4b56184c70d6fc03475fdc7ca5c76518611642c6e9c6b0903"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-6-temperature_c-00720.svg",
+        "sha256": "4eea3af3aeb30670f45213560b7dc868b84e38dd7dc408bf7b46b25f8a50cf7f"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-6-power_w-00720.svg",
+        "sha256": "524bfece63e34ffa9c616f8c48972a82c48d2ce19387f39a6fbe71453daf1f99"
+      },
+      {
+        "bytes": 6038,
+        "path": "report-assets/monitor-card-6-utilization_percent-00744.svg",
+        "sha256": "cd897d9fd5158d0d8e320b2698ff2c74baeadbe94c30de955e3f52136c57bcd0"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00744.svg",
+        "sha256": "4261f02f8c481d419dfd4b530abcffc4dca7950fd50cb6686f2e0dcb36a9c8cd"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-6-temperature_c-00744.svg",
+        "sha256": "3e06d0329ed5fe4389132047b550cc7dff7e2cce926733e6fcbe0e1bbfc2797b"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-6-power_w-00744.svg",
+        "sha256": "8c5c15880ea8bc1668356e07d8613d9dd609f73ab9f9ed66b985058a99f6d8de"
+      },
+      {
+        "bytes": 6038,
+        "path": "report-assets/monitor-card-6-utilization_percent-00768.svg",
+        "sha256": "0b9b68ed407baa1f7eb82edd52a941dec617445539049046acf7dd676e3dd4eb"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00768.svg",
+        "sha256": "002e3f730669ca95595dd9e683edddded3cc8d2636f68214f358a5cd9cd6ba28"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-6-temperature_c-00768.svg",
+        "sha256": "0e3f117afd2985a3711e7acc217652d338d7c629669d12431b799f1451e9240e"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-6-power_w-00768.svg",
+        "sha256": "4c61731c331838b8f27d7e0395c2cf873133ef3a756a006fc77f6bd0ae37cba6"
+      },
+      {
+        "bytes": 6037,
+        "path": "report-assets/monitor-card-6-utilization_percent-00792.svg",
+        "sha256": "1443fe40193b90c5853f2460e5fa60b25a0649325df74e316777338e2609958d"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00792.svg",
+        "sha256": "c1eea653930ed31c29cd593fb19795b7298968cd13fbdf837fab75ad7e405f84"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-6-temperature_c-00792.svg",
+        "sha256": "ac252c546f21ade98d7af3ff43d132ddc7841141ce00d102c1a784bb667b4bd4"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-6-power_w-00792.svg",
+        "sha256": "91c1a5645cef9c36a288de13bcdbde446e6a294af61a7493a4fd3e4779f5b4f3"
+      },
+      {
+        "bytes": 6038,
+        "path": "report-assets/monitor-card-6-utilization_percent-00816.svg",
+        "sha256": "30b676f9f8d8cc947d4be2ceaa69bf7f169f529fb91626a7062d4928f1082b63"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00816.svg",
+        "sha256": "27ae4e1b93367b37d030809b0ae5de11838c899ccaebe388590c07d1e5199c31"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-6-temperature_c-00816.svg",
+        "sha256": "5bef4089b2b1242da0cd8de993c2f8043955077cd9f9ef536850b1f657ec1bbc"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-6-power_w-00816.svg",
+        "sha256": "e41585a9e81e90e45adecc94a6bd62418f61de4f1055f1286de042c974dd96be"
+      },
+      {
+        "bytes": 6037,
+        "path": "report-assets/monitor-card-6-utilization_percent-00840.svg",
+        "sha256": "575e72e7fc73d6631e0910111129869b0b8e624487cb41df9e0c6ea63f306993"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00840.svg",
+        "sha256": "dfaed095f8d22acc75f291cf853e5508a5615d1fc69978aa4870e6c5971f770f"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-6-temperature_c-00840.svg",
+        "sha256": "57d727d11330d815b60462e24f566d0ab7f15762ca141f991b653aa2763e9327"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-6-power_w-00840.svg",
+        "sha256": "0ae797c8f23c2ecb57678d4b2f72588aa9319d38acc1028bc388beb038df4fe6"
+      },
+      {
+        "bytes": 6041,
+        "path": "report-assets/monitor-card-6-utilization_percent-00864.svg",
+        "sha256": "c4c0fefc203ed6c7b5a02aa697ee563823fe809ca134f68d9b1606cced20ca4b"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00864.svg",
+        "sha256": "41a66de271dab5ecaa4745dde3da6016f90d45ba5a4622b103872e317fdcec10"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-6-temperature_c-00864.svg",
+        "sha256": "013ae68c347228be4f1fe7ff345fe5e761f7f701dbe52352cc5de571a17f3572"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-6-power_w-00864.svg",
+        "sha256": "7768124613ee6a2987557d9b4854201e13cc6429da686bf69d1856b8da4d3021"
+      },
+      {
+        "bytes": 6039,
+        "path": "report-assets/monitor-card-6-utilization_percent-00888.svg",
+        "sha256": "95964645cfd3fd53faa5175d3359c888b19ce7596e19776cbb7ba83682bc3ce9"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00888.svg",
+        "sha256": "2c25fd6de645b1ff6dcbc499301e3be0c9685801f5435061d05564c0b3b4368d"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-6-temperature_c-00888.svg",
+        "sha256": "d25264e6f54b91fbf1b63521f3bbd011d8395e21779647a3fab95bcf1855c6b7"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-6-power_w-00888.svg",
+        "sha256": "edf87579ca454abd85848e7d84ef41f1e0d248051b84ef770919c96da69e7c81"
+      },
+      {
+        "bytes": 6038,
+        "path": "report-assets/monitor-card-6-utilization_percent-00912.svg",
+        "sha256": "1b585a2390d573eefd8ff318fb8a2340871ac25400d6e26bb5fffcc091d46d28"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00912.svg",
+        "sha256": "eddae9f00a30a51310c77fb9c75287326978b6c6ed3d80c30eb694e95c1fe4f9"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-6-temperature_c-00912.svg",
+        "sha256": "2b1324f8df223b3d331e0043854f068153ad5baa63b6fca3ee0a2ca86083323a"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-6-power_w-00912.svg",
+        "sha256": "1e3f504b6da0a1b0be36d0ef8e22243fc415ef1533d7a22cb80a9beafcd99072"
+      },
+      {
+        "bytes": 6038,
+        "path": "report-assets/monitor-card-6-utilization_percent-00936.svg",
+        "sha256": "090ccfb03d55f64eca8457cb0aa318b847f109166e7b12e9f4caf346aec5e008"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00936.svg",
+        "sha256": "5af64ebac02c7e28d30a2d578facd4669cbd4dcebd3c0dc5c3f992afd6c01aa9"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-6-temperature_c-00936.svg",
+        "sha256": "7102da125629cb1ae9c2a7b4e32044a1e4846d02d64c16386b856dbb64b97ae8"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-6-power_w-00936.svg",
+        "sha256": "92b4f2f8a9b9f5f5dd7bc8b340c9734354001ccb36d6945110f069e1878672c7"
+      },
+      {
+        "bytes": 6039,
+        "path": "report-assets/monitor-card-6-utilization_percent-00960.svg",
+        "sha256": "63a4e7497a49d934af78c165f7ec225c8812fb94101c4d2e1d9aab79d55ef1fb"
+      },
+      {
+        "bytes": 6083,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00960.svg",
+        "sha256": "3b9588314858963beb56203abb5da6d04628fe162026c2a4981dbe54eb8ef8b6"
+      },
+      {
+        "bytes": 6031,
+        "path": "report-assets/monitor-card-6-temperature_c-00960.svg",
+        "sha256": "de2e3b12addbd95cbd52a41a18169a99b210539cf089c0846ba6af204cb03fb8"
+      },
+      {
+        "bytes": 6049,
+        "path": "report-assets/monitor-card-6-power_w-00960.svg",
+        "sha256": "87c6c2b3c682bb43aaaacef59ecacb58ad454ca02db3b1841fe28598e45efe7b"
+      },
+      {
+        "bytes": 6038,
+        "path": "report-assets/monitor-card-6-utilization_percent-00984.svg",
+        "sha256": "9850c5be389943712671e66a1085be9ba01ff1a5e49c3b156c6af4d3002f7861"
+      },
+      {
+        "bytes": 6084,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00984.svg",
+        "sha256": "6d722c9cc84bca17ff059b11911193f25981b9b1f9950271e9d4392001e3473e"
+      },
+      {
+        "bytes": 6032,
+        "path": "report-assets/monitor-card-6-temperature_c-00984.svg",
+        "sha256": "274d20b02235f5193ce147b7555463fe72f03c87cc561cbea713551786817d0d"
+      },
+      {
+        "bytes": 6050,
+        "path": "report-assets/monitor-card-6-power_w-00984.svg",
+        "sha256": "3e6fbb4688ab19485c9a57c0c228d15c3619084acb7cb0e0ea2e2e701b8906bd"
+      },
+      {
+        "bytes": 6041,
+        "path": "report-assets/monitor-card-6-utilization_percent-01008.svg",
+        "sha256": "0b1495d482d1b072a71234727c05fc5ccb52955241df5ffb9ce8769c3e0e0570"
+      },
+      {
+        "bytes": 6085,
+        "path": "report-assets/monitor-card-6-used_memory_mib-01008.svg",
+        "sha256": "a8777f89ed2a02e21f2b5247eae213d57b8d20384c5752468165aa38d8fa2f89"
+      },
+      {
+        "bytes": 6033,
+        "path": "report-assets/monitor-card-6-temperature_c-01008.svg",
+        "sha256": "10bfb14f8bc5f9b3617feb5f3e2d5afdf02dc9b131ee4cdd7a443ec8e7eeeb9d"
+      },
+      {
+        "bytes": 6051,
+        "path": "report-assets/monitor-card-6-power_w-01008.svg",
+        "sha256": "8bc7e9b25cc2370d166a26158ac58692abd0e41959be2f6ba26cceaae52f1fef"
+      },
+      {
+        "bytes": 6040,
+        "path": "report-assets/monitor-card-6-utilization_percent-01032.svg",
+        "sha256": "2cd9dc2474f9fdac5b4fde3f33c79308547659a57a85d0e716d7566b24146ce7"
+      },
+      {
+        "bytes": 6085,
+        "path": "report-assets/monitor-card-6-used_memory_mib-01032.svg",
+        "sha256": "670261d4c1ee87f079026b5c164cf90455f91c8ec0c262af649dd9c35088a443"
+      },
+      {
+        "bytes": 6033,
+        "path": "report-assets/monitor-card-6-temperature_c-01032.svg",
+        "sha256": "ad9969aa41b2922b484e186e8e528feef9612dfaf4f529b0301312ff335f5ee0"
+      },
+      {
+        "bytes": 6051,
+        "path": "report-assets/monitor-card-6-power_w-01032.svg",
+        "sha256": "8c03f39df37d0952e2cb88bc5c0fec85f8dae6519b2e5f83110fd91fe9b9d8d0"
+      },
+      {
+        "bytes": 6040,
+        "path": "report-assets/monitor-card-6-utilization_percent-01056.svg",
+        "sha256": "6aaa903e65f4c36f1b7bb2a76c747817d8c134b8205b78da680cba603ce69867"
+      },
+      {
+        "bytes": 6085,
+        "path": "report-assets/monitor-card-6-used_memory_mib-01056.svg",
+        "sha256": "e94d5d3864f1e9ef3e238e850ff5fbbec30c815fb6395b37b2b51930207e7ad2"
+      },
+      {
+        "bytes": 6033,
+        "path": "report-assets/monitor-card-6-temperature_c-01056.svg",
+        "sha256": "766770fc8bfac480b380d20177f0ee915e78f423e96b76d08c9ee46a36860370"
+      },
+      {
+        "bytes": 6051,
+        "path": "report-assets/monitor-card-6-power_w-01056.svg",
+        "sha256": "83e79dc6274c0f337b48520fe8c7d364100e124d2d3c03ebf796deb983827f88"
+      },
+      {
+        "bytes": 6039,
+        "path": "report-assets/monitor-card-6-utilization_percent-01080.svg",
+        "sha256": "fed4ea7b32c9a318e6b08d98ba3906d6fd901d3315a03de99af0ac8fcfa4e40a"
+      },
+      {
+        "bytes": 6085,
+        "path": "report-assets/monitor-card-6-used_memory_mib-01080.svg",
+        "sha256": "b3efd1c28cd5debac820adaa7361571163650685167138e6b4bd69dbdcadcb84"
+      },
+      {
+        "bytes": 6033,
+        "path": "report-assets/monitor-card-6-temperature_c-01080.svg",
+        "sha256": "90af59153c382b621e37576105262ff454c0e168f3414473f630127c917d56c4"
+      },
+      {
+        "bytes": 6051,
+        "path": "report-assets/monitor-card-6-power_w-01080.svg",
+        "sha256": "87fb9a63d835f5e939d33b978d2ab61c5212a1e4fdad400e5c77b140995508b7"
+      },
+      {
+        "bytes": 6041,
+        "path": "report-assets/monitor-card-6-utilization_percent-01104.svg",
+        "sha256": "5878e5fe6b0ed29ecf373f4819b514ac721b2ab593e45625aff4fce1386df996"
+      },
+      {
+        "bytes": 6085,
+        "path": "report-assets/monitor-card-6-used_memory_mib-01104.svg",
+        "sha256": "8ddca4031495419ceb2c108780d9a51daf4e04c97437c73899d53ae64603da57"
+      },
+      {
+        "bytes": 6033,
+        "path": "report-assets/monitor-card-6-temperature_c-01104.svg",
+        "sha256": "f4459023ea92629c523cccfd91957ac78182a98c98395f118a29dad05feed972"
+      },
+      {
+        "bytes": 6051,
+        "path": "report-assets/monitor-card-6-power_w-01104.svg",
+        "sha256": "75876b5fa46f600d45b23be168d8af627cdb4e3d5b10c74bbad29bd04f774546"
+      },
+      {
+        "bytes": 6039,
+        "path": "report-assets/monitor-card-6-utilization_percent-01128.svg",
+        "sha256": "4bdbb961896cbf557fe7b7fe6a549da4e1798e9e5db184d784a8d39a281968c9"
+      },
+      {
+        "bytes": 6085,
+        "path": "report-assets/monitor-card-6-used_memory_mib-01128.svg",
+        "sha256": "7cc7da637e5641e632239240459fe712b8f162e1108a24d16f67c69e3681ae75"
+      },
+      {
+        "bytes": 6033,
+        "path": "report-assets/monitor-card-6-temperature_c-01128.svg",
+        "sha256": "47e6abf367e90fb8b0bab95aa4a75fa476adb9402446147f6bfeaaa39c027e32"
+      },
+      {
+        "bytes": 6051,
+        "path": "report-assets/monitor-card-6-power_w-01128.svg",
+        "sha256": "e51424f757f4673477d16915c71b4234d716ccae7b56d25f510a80dd13d43ac7"
+      },
+      {
+        "bytes": 511,
+        "path": "report-assets/monitor-card-6-utilization_percent-01152.svg",
+        "sha256": "7a14ae795fa88ee3e4eb5f5d8096deff879a4aeb32c04b8e135af5d9984a2b00"
+      },
+      {
+        "bytes": 511,
+        "path": "report-assets/monitor-card-6-used_memory_mib-01152.svg",
+        "sha256": "928489a032f5449c35a3f14badca5b3c8d4b9343dd4d5d7fcced67d8a1fa35cb"
+      },
+      {
+        "bytes": 505,
+        "path": "report-assets/monitor-card-6-temperature_c-01152.svg",
+        "sha256": "2e8b6e2ed504d3f96a26ab5f2339ce714a888574dfb701603c9ced61ab2a0b57"
+      },
+      {
+        "bytes": 500,
+        "path": "report-assets/monitor-card-6-power_w-01152.svg",
+        "sha256": "6914a76faffb17743c971d1eea9ca0b4df7979ec83c4603205f8f42495d4e77b"
+      }
+    ],
+    "generator_sha256": "d36af90bb88aa00195b1b9fd46cf312c5223627f1e52fb4363d443f6110d7aef",
+    "outputs": {
+      "main": {
+        "bytes": 28286,
+        "path": "report.md",
+        "sha256": "b3f4d9e0a43800bf527df187b1f22991bb4f06c075139e98570604b700e210c9"
+      },
+      "monitor": {
+        "bytes": 394769,
+        "path": "report_monitor.md",
+        "sha256": "ee63e3ead6a2672bef3760772d057c2842d3dfba6b63233457d52103749c36a9"
+      }
+    },
+    "schema_version": 1,
+    "status": "passed"
+  },
+  "resolved_plan": {
+    "cases": [
+      "interconnect-P2P_intraserver",
+      "interconnect-P2P_intraserver-latency"
+    ],
+    "chip": "P800",
+    "excluded_physical_ids": [
+      1
+    ],
+    "host_config": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/configs/kunlunxin_p800_xpytorch29.yaml",
+    "identity_gate": "host UUID/PCI/minor -> selected nodes -> native XRE PCI join before allocating",
+    "kind": "toolkit",
+    "mode": "execution",
+    "monitoring": {
+      "compute": "on",
+      "data_movement": "on",
+      "required_samples": 10
+    },
+    "permissions": {
+      "allow_busy_devices": true,
+      "cap_drop": [
+        "ALL"
+      ],
+      "ipc_namespace": "private",
+      "network": "none",
+      "pid_namespace": "private",
+      "privileged_root": false,
+      "read_only_root": true
+    },
+    "point_counts": {
+      "interconnect-P2P_intraserver": 60,
+      "interconnect-P2P_intraserver-latency": 30
+    },
+    "runtime_lock": {
+      "image_manifest": {
+        "image": "flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev:202608",
+        "image_id": "sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975",
+        "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/image-manifest.json",
+        "release_stage": "candidate",
+        "schema_version": 1,
+        "sha256": "ab59dc1cd14b65a28ffaef7b1b21b1d0b51f5334619301659d4123a5c681acbf",
+        "validated": false,
+        "validation_scope": [],
+        "validation_status": null
+      },
+      "runtime_profile": "xpytorch_2.9_p800_candidate",
+      "stack_lock": {
+        "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/stack.lock.yaml",
+        "sha256": "8f200d0b955b7e60881bc13ed75c8784c2c38fe2c755d018c618f1dc7b46cded"
+      },
+      "vendor": "kunlunxin"
+    },
+    "schema_version": 1,
+    "selection_request": {
+      "expression": "0,4-6",
+      "requested_ids": [
+        0,
+        4,
+        5,
+        6
+      ],
+      "resolution_status": "deferred-until-host-preflight",
+      "source": "physical-device-ids"
+    },
+    "settings": {
+      "allow_busy_devices": true,
+      "allow_candidate_runtime": true,
+      "async_chunk_bytes": 1048576,
+      "command_timeout": 180,
+      "matrix_size": 2048,
+      "minimum_seconds": 6.0,
+      "payload_bytes": 536870912,
+      "pinned_api": "register",
+      "privilege_command": "",
+      "repeat": 5,
+      "samples": 50,
+      "smoke": false,
+      "warmup": 5
+    },
+    "source": "independent native XRE/XBLAS Toolkit microbenchmark; no Base workload reuse",
+    "stages": [
+      "image-identity",
+      "preflight",
+      "lease",
+      "locked-preflight",
+      "container-inspect",
+      "native-run",
+      "monitor-finalize",
+      "cleanup",
+      "postflight",
+      "lease-release",
+      "report",
+      "hash-index"
+    ],
+    "suite": "kunlunxin-p800-toolkit",
+    "vendor": "kunlunxin"
+  },
+  "run_id": "20260929T043153Z-04c46ed7",
+  "schema_version": 1,
+  "selection": {
+    "devices": [
+      {
+        "container_node": "/dev/xpu0",
+        "device_major": 195,
+        "device_minor": 0,
+        "driver": "5.0.21.47",
+        "foreign_handles_authorized": true,
+        "foreign_occupancy_observed": true,
+        "free_memory_mib": 97434,
+        "host_device_node": "/dev/xpu0",
+        "host_physical_id": 0,
+        "pci_bdf": "0000:03:00.0",
+        "power_w": 91.0,
+        "processes_empty": false,
+        "serial": "02K15K0263D0001X",
+        "temperature_c": 38.0,
+        "total_memory_mib": 98304,
+        "uncorrectable_ecc_counts": [
+          0,
+          0
+        ],
+        "used_memory_mib": 870,
+        "utilization_percent": 0,
+        "uuid": "ed733bb8-c4a8-5bb5-9431-14512597fc12",
+        "xpu_smi_runtime": "10.2"
+      },
+      {
+        "container_node": "/dev/xpu4",
+        "device_major": 195,
+        "device_minor": 4,
+        "driver": "5.0.21.47",
+        "foreign_handles_authorized": true,
+        "foreign_occupancy_observed": true,
+        "free_memory_mib": 76920,
+        "host_device_node": "/dev/xpu4",
+        "host_physical_id": 4,
+        "pci_bdf": "0000:84:00.0",
+        "power_w": 94.0,
+        "processes_empty": false,
+        "serial": "02K15K0263D002KG",
+        "temperature_c": 39.0,
+        "total_memory_mib": 98304,
+        "uncorrectable_ecc_counts": [
+          0,
+          0
+        ],
+        "used_memory_mib": 21384,
+        "utilization_percent": 0,
+        "uuid": "b7942319-362e-5a53-a8eb-a2d06fbe84f6",
+        "xpu_smi_runtime": "10.2"
+      },
+      {
+        "container_node": "/dev/xpu7",
+        "device_major": 195,
+        "device_minor": 7,
+        "driver": "5.0.21.47",
+        "foreign_handles_authorized": true,
+        "foreign_occupancy_observed": true,
+        "free_memory_mib": 93890,
+        "host_device_node": "/dev/xpu7",
+        "host_physical_id": 5,
+        "pci_bdf": "0000:9c:00.0",
+        "power_w": 148.0,
+        "processes_empty": false,
+        "serial": "02K15K0263D001ZZ",
+        "temperature_c": 46.0,
+        "total_memory_mib": 98304,
+        "uncorrectable_ecc_counts": [
+          0,
+          0
+        ],
+        "used_memory_mib": 4414,
+        "utilization_percent": 98,
+        "uuid": "f396486d-9850-50e4-81c4-50f2e9f6ca87",
+        "xpu_smi_runtime": "10.2"
+      },
+      {
+        "container_node": "/dev/xpu5",
+        "device_major": 195,
+        "device_minor": 5,
+        "driver": "5.0.21.47",
+        "foreign_handles_authorized": true,
+        "foreign_occupancy_observed": true,
+        "free_memory_mib": 93962,
+        "host_device_node": "/dev/xpu5",
+        "host_physical_id": 6,
+        "pci_bdf": "0000:b6:00.0",
+        "power_w": 148.0,
+        "processes_empty": false,
+        "serial": "02K15K0263D002N9",
+        "temperature_c": 48.0,
+        "total_memory_mib": 98304,
+        "uncorrectable_ecc_counts": [
+          0,
+          0
+        ],
+        "used_memory_mib": 4342,
+        "utilization_percent": 100,
+        "uuid": "9e24d168-db57-5cd9-8cfb-aea4ae898897",
+        "xpu_smi_runtime": "10.2"
+      }
+    ],
+    "foreign_handles_authorized": true,
+    "foreign_occupancy_observed": true,
+    "schema_version": 1,
+    "selection": {
+      "requested_ids": [
+        0,
+        4,
+        5,
+        6
+      ],
+      "source": "physical-device-ids"
+    },
+    "status": "passed"
+  },
+  "started_at": "2026-09-29T04:31:53.213381Z",
+  "status": "partial",
+  "suite": "kunlunxin-p800-toolkit",
+  "toolkit_evidence": {
+    "path": "toolkit-evidence/manifest.json",
+    "status": "partial"
+  },
+  "validated": false,
+  "vendor": "kunlunxin"
+}

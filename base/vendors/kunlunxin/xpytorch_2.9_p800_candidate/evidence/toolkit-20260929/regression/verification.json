@@ -1,0 +1,78 @@
+[
+  {
+    "case": "computation-BF16",
+    "returncode": 0,
+    "shell_syntax_returncode": 0
+  },
+  {
+    "case": "computation-FP16",
+    "returncode": 0,
+    "shell_syntax_returncode": 0
+  },
+  {
+    "case": "computation-FP32",
+    "returncode": 0,
+    "shell_syntax_returncode": 0
+  },
+  {
+    "case": "computation-INT8",
+    "returncode": 0,
+    "shell_syntax_returncode": 0
+  },
+  {
+    "case": "main_memory-bandwidth",
+    "returncode": 0,
+    "shell_syntax_returncode": 0
+  },
+  {
+    "case": "main_memory-capacity",
+    "returncode": 0,
+    "shell_syntax_returncode": 0
+  },
+  {
+    "case": "interconnect-h2d",
+    "returncode": 0,
+    "shell_syntax_returncode": 0
+  },
+  {
+    "case": "interconnect-d2h",
+    "returncode": 0,
+    "shell_syntax_returncode": 0
+  },
+  {
+    "case": "interconnect-h2d-latency",
+    "returncode": 0,
+    "shell_syntax_returncode": 0
+  },
+  {
+    "case": "interconnect-d2h-latency",
+    "returncode": 0,
+    "shell_syntax_returncode": 0
+  },
+  {
+    "case": "interconnect-P2P_intraserver",
+    "returncode": 0,
+    "shell_syntax_returncode": 0
+  },
+  {
+    "case": "interconnect-P2P_intraserver-latency",
+    "returncode": 0,
+    "shell_syntax_returncode": 0
+  },
+  {
+    "check": "ascend",
+    "returncode": 0,
+    "tail": "ts_each_selector_and_default_all) ... ok\n\n----------------------------------------------------------------------\nRan 80 tests in 0.190s\n\nOK\n"
+  },
+  {
+    "check": "p800",
+    "returncode": 0,
+    "tail": "atic_plan_never_calls_subprocess) ... ok\n\n----------------------------------------------------------------------\nRan 21 tests in 0.142s\n\nOK\n"
+  },
+  {
+    "check": "compile",
+    "returncode": 0,
+    "tail": "",
+    "pycache_prefix": "/tmp/p800-toolkit-final-pycache"
+  }
+]

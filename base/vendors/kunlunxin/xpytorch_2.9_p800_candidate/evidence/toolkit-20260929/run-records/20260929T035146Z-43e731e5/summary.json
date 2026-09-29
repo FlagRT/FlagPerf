@@ -1,0 +1,295 @@
+{
+  "chip": "P800",
+  "cleanup_status": "passed",
+  "container_exit_code": 2,
+  "diagnosis_status": "not-supported",
+  "finished_at": "2026-09-29T03:52:00.920212Z",
+  "kind": "toolkit",
+  "lease_released": true,
+  "measurement_status": "not-run",
+  "monitoring_status": "not-run",
+  "postflight_status": "passed",
+  "qualification_status": "exploratory",
+  "release_stage": "candidate",
+  "report_generation": {
+    "assets": [
+      {
+        "bytes": 1955,
+        "path": "report-assets/monitor-card-0-utilization_percent-00000.svg",
+        "sha256": "19c199bd3b0bb5b6800f74171d220b3daf2d29c2da6cba80d25dc9afd38a4ffd"
+      },
+      {
+        "bytes": 1960,
+        "path": "report-assets/monitor-card-0-used_memory_mib-00000.svg",
+        "sha256": "49a0d1f4fa331fa62576b6b60ffa0d445416390f53619b8a92b55740a21af1f2"
+      },
+      {
+        "bytes": 1967,
+        "path": "report-assets/monitor-card-4-utilization_percent-00000.svg",
+        "sha256": "a4c763c34e3ecbf11ac7e718030915aca470c68198939a77d9273ab9be311f89"
+      },
+      {
+        "bytes": 1967,
+        "path": "report-assets/monitor-card-4-used_memory_mib-00000.svg",
+        "sha256": "34247b3e4714fc0cb2a0f787cbc47772b6f9663d8b97c8895664b327b590e341"
+      },
+      {
+        "bytes": 1948,
+        "path": "report-assets/monitor-card-5-utilization_percent-00000.svg",
+        "sha256": "24ea5c2ee2d23ef0cec67f1235a0f597dd3747017d7e563bdb7223c58df98bd4"
+      },
+      {
+        "bytes": 1960,
+        "path": "report-assets/monitor-card-5-used_memory_mib-00000.svg",
+        "sha256": "39a21774f33e06568007ed3fa358d4e1366364805d4b21ff457e2d9c84292704"
+      },
+      {
+        "bytes": 1949,
+        "path": "report-assets/monitor-card-6-utilization_percent-00000.svg",
+        "sha256": "8883e7e567a03c7247e50f0e6f0b4beb8b49405eda723912d9757cff00e8573d"
+      },
+      {
+        "bytes": 1960,
+        "path": "report-assets/monitor-card-6-used_memory_mib-00000.svg",
+        "sha256": "623fd930ccb49bb7b234baeef2e49c32060803103739c5ed7c5b1a0cba683ee8"
+      }
+    ],
+    "outputs": {
+      "main": {
+        "bytes": 2818,
+        "path": "report.md",
+        "sha256": "8a14ee84d7cf8c2b196d55991a9a5a1a8931c1d16bf13b43146e54a1e5493049"
+      },
+      "monitor": {
+        "bytes": 3875,
+        "path": "report_monitor.md",
+        "sha256": "a8ee77c2273f4959e3aa78696c32836b63567e246e2502a95d540399ecb9a5fd"
+      }
+    },
+    "schema_version": 1,
+    "status": "passed"
+  },
+  "resolved_plan": {
+    "cases": [
+      "interconnect-P2P_intraserver",
+      "interconnect-P2P_intraserver-latency"
+    ],
+    "chip": "P800",
+    "excluded_physical_ids": [
+      1
+    ],
+    "host_config": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/configs/kunlunxin_p800_xpytorch29.yaml",
+    "identity_gate": "host UUID/PCI/minor -> selected nodes -> native XRE PCI join before allocating",
+    "kind": "toolkit",
+    "mode": "execution",
+    "monitoring": {
+      "compute": "on",
+      "data_movement": "on",
+      "required_samples": 10
+    },
+    "permissions": {
+      "allow_busy_devices": true,
+      "cap_drop": [
+        "ALL"
+      ],
+      "ipc_namespace": "private",
+      "network": "none",
+      "pid_namespace": "private",
+      "privileged_root": false,
+      "read_only_root": true
+    },
+    "point_counts": {
+      "interconnect-P2P_intraserver": 12,
+      "interconnect-P2P_intraserver-latency": 6
+    },
+    "runtime_lock": {
+      "image_manifest": {
+        "image": "flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev:202608",
+        "image_id": "sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975",
+        "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/image-manifest.json",
+        "release_stage": "candidate",
+        "schema_version": 1,
+        "sha256": "ab59dc1cd14b65a28ffaef7b1b21b1d0b51f5334619301659d4123a5c681acbf",
+        "validated": false,
+        "validation_scope": [],
+        "validation_status": null
+      },
+      "runtime_profile": "xpytorch_2.9_p800_candidate",
+      "stack_lock": {
+        "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/stack.lock.yaml",
+        "sha256": "8f200d0b955b7e60881bc13ed75c8784c2c38fe2c755d018c618f1dc7b46cded"
+      },
+      "vendor": "kunlunxin"
+    },
+    "schema_version": 1,
+    "selection_request": {
+      "expression": "0,4-6",
+      "requested_ids": [
+        0,
+        4,
+        5,
+        6
+      ],
+      "resolution_status": "deferred-until-host-preflight",
+      "source": "physical-device-ids"
+    },
+    "settings": {
+      "allow_busy_devices": true,
+      "allow_candidate_runtime": true,
+      "command_timeout": 30,
+      "matrix_size": 128,
+      "minimum_seconds": 0.0,
+      "payload_bytes": 1048576,
+      "privilege_command": "",
+      "repeat": 1,
+      "samples": 25,
+      "smoke": true,
+      "warmup": 2
+    },
+    "source": "independent native XRE/XBLAS Toolkit microbenchmark; no Base workload reuse",
+    "stages": [
+      "image-identity",
+      "preflight",
+      "lease",
+      "locked-preflight",
+      "container-inspect",
+      "native-run",
+      "monitor-finalize",
+      "cleanup",
+      "postflight",
+      "lease-release",
+      "report",
+      "hash-index"
+    ],
+    "suite": "kunlunxin-p800-toolkit",
+    "vendor": "kunlunxin"
+  },
+  "run_id": "20260929T035146Z-43e731e5",
+  "schema_version": 1,
+  "selection": {
+    "devices": [
+      {
+        "container_node": "/dev/xpu0",
+        "device_major": 195,
+        "device_minor": 0,
+        "driver": "5.0.21.47",
+        "foreign_handles_authorized": true,
+        "foreign_occupancy_observed": true,
+        "free_memory_mib": 96366,
+        "host_device_node": "/dev/xpu0",
+        "host_physical_id": 0,
+        "pci_bdf": "0000:03:00.0",
+        "power_w": 94.0,
+        "processes_empty": false,
+        "serial": "02K15K0263D0001X",
+        "temperature_c": 38.0,
+        "total_memory_mib": 98304,
+        "uncorrectable_ecc_counts": [
+          0,
+          0
+        ],
+        "used_memory_mib": 1938,
+        "utilization_percent": 100,
+        "uuid": "ed733bb8-c4a8-5bb5-9431-14512597fc12",
+        "xpu_smi_runtime": "10.2"
+      },
+      {
+        "container_node": "/dev/xpu4",
+        "device_major": 195,
+        "device_minor": 4,
+        "driver": "5.0.21.47",
+        "foreign_handles_authorized": true,
+        "foreign_occupancy_observed": true,
+        "free_memory_mib": 76948,
+        "host_device_node": "/dev/xpu4",
+        "host_physical_id": 4,
+        "pci_bdf": "0000:84:00.0",
+        "power_w": 94.0,
+        "processes_empty": false,
+        "serial": "02K15K0263D002KG",
+        "temperature_c": 39.0,
+        "total_memory_mib": 98304,
+        "uncorrectable_ecc_counts": [
+          0,
+          0
+        ],
+        "used_memory_mib": 21356,
+        "utilization_percent": 0,
+        "uuid": "b7942319-362e-5a53-a8eb-a2d06fbe84f6",
+        "xpu_smi_runtime": "10.2"
+      },
+      {
+        "container_node": "/dev/xpu7",
+        "device_major": 195,
+        "device_minor": 7,
+        "driver": "5.0.21.47",
+        "foreign_handles_authorized": true,
+        "foreign_occupancy_observed": true,
+        "free_memory_mib": 93890,
+        "host_device_node": "/dev/xpu7",
+        "host_physical_id": 5,
+        "pci_bdf": "0000:9c:00.0",
+        "power_w": 145.0,
+        "processes_empty": false,
+        "serial": "02K15K0263D001ZZ",
+        "temperature_c": 46.0,
+        "total_memory_mib": 98304,
+        "uncorrectable_ecc_counts": [
+          0,
+          0
+        ],
+        "used_memory_mib": 4414,
+        "utilization_percent": 99,
+        "uuid": "f396486d-9850-50e4-81c4-50f2e9f6ca87",
+        "xpu_smi_runtime": "10.2"
+      },
+      {
+        "container_node": "/dev/xpu5",
+        "device_major": 195,
+        "device_minor": 5,
+        "driver": "5.0.21.47",
+        "foreign_handles_authorized": true,
+        "foreign_occupancy_observed": true,
+        "free_memory_mib": 93962,
+        "host_device_node": "/dev/xpu5",
+        "host_physical_id": 6,
+        "pci_bdf": "0000:b6:00.0",
+        "power_w": 146.0,
+        "processes_empty": false,
+        "serial": "02K15K0263D002N9",
+        "temperature_c": 48.0,
+        "total_memory_mib": 98304,
+        "uncorrectable_ecc_counts": [
+          0,
+          0
+        ],
+        "used_memory_mib": 4342,
+        "utilization_percent": 100,
+        "uuid": "9e24d168-db57-5cd9-8cfb-aea4ae898897",
+        "xpu_smi_runtime": "10.2"
+      }
+    ],
+    "foreign_handles_authorized": true,
+    "foreign_occupancy_observed": true,
+    "schema_version": 1,
+    "selection": {
+      "requested_ids": [
+        0,
+        4,
+        5,
+        6
+      ],
+      "source": "physical-device-ids"
+    },
+    "status": "passed"
+  },
+  "started_at": "2026-09-29T03:51:46.489360Z",
+  "status": "partial",
+  "suite": "kunlunxin-p800-toolkit",
+  "toolkit_evidence": {
+    "path": "toolkit-evidence/manifest.json",
+    "status": "partial"
+  },
+  "validated": false,
+  "vendor": "kunlunxin"
+}

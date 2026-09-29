@@ -1,0 +1,150 @@
+{
+  "cases": {
+    "main_memory-capacity": {
+      "commands": [
+        {
+          "command": [
+            "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/bin/xpu-smi",
+            "-i",
+            "4",
+            "-q"
+          ],
+          "duration_s": 0.06500373780727386,
+          "finished_at": "2026-09-29T03:41:22.407513Z",
+          "finished_monotonic_s": 4494419.327397197,
+          "returncode": 255,
+          "started_at": "2026-09-29T03:41:22.342522Z",
+          "started_monotonic_s": 4494419.262393459,
+          "stderr": {
+            "bytes": 0,
+            "path": "cases/main_memory-capacity/physical-4/repeat-1/microbenchmark.stderr",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 45,
+            "path": "cases/main_memory-capacity/physical-4/repeat-1/microbenchmark.stdout",
+            "sha256": "11c9cff9fbbcd11d5f30f25bfe1a4c5ac98f18b147bbfdd72453c2ca1d8f0013"
+          },
+          "timed_out": false,
+          "timeout_s": 180
+        }
+      ],
+      "diagnosis_status": "not-supported",
+      "duration_s": 0.06500373780727386,
+      "measurement_status": "failed",
+      "metrics": [],
+      "monitoring_status": "not-run",
+      "status": "failed",
+      "sweep_scope": {
+        "physical_ids": [
+          4
+        ],
+        "point_count": 1,
+        "repeat": 1
+      },
+      "targets": [
+        {
+          "bindings": [
+            {
+              "container_node": "/dev/xpu4",
+              "device_major": 195,
+              "device_minor": 4,
+              "driver": "5.0.21.47",
+              "foreign_handles_authorized": false,
+              "foreign_occupancy_observed": false,
+              "free_memory_mib": 98304,
+              "host_device_node": "/dev/xpu4",
+              "host_physical_id": 4,
+              "native_id": 0,
+              "pci_bdf": "0000:84:00.0",
+              "power_w": 94.0,
+              "processes_empty": true,
+              "serial": "02K15K0263D002KG",
+              "temperature_c": 39.0,
+              "total_memory_mib": 98304,
+              "uncorrectable_ecc_counts": [
+                0,
+                0
+              ],
+              "used_memory_mib": 0,
+              "utilization_percent": 0,
+              "uuid": "b7942319-362e-5a53-a8eb-a2d06fbe84f6",
+              "xpu_smi_runtime": "10.2"
+            }
+          ],
+          "commands": [
+            {
+              "command": [
+                "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/bin/xpu-smi",
+                "-i",
+                "4",
+                "-q"
+              ],
+              "duration_s": 0.06500373780727386,
+              "finished_at": "2026-09-29T03:41:22.407513Z",
+              "finished_monotonic_s": 4494419.327397197,
+              "returncode": 255,
+              "started_at": "2026-09-29T03:41:22.342522Z",
+              "started_monotonic_s": 4494419.262393459,
+              "stderr": {
+                "bytes": 0,
+                "path": "cases/main_memory-capacity/physical-4/repeat-1/microbenchmark.stderr",
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "stdout": {
+                "bytes": 45,
+                "path": "cases/main_memory-capacity/physical-4/repeat-1/microbenchmark.stdout",
+                "sha256": "11c9cff9fbbcd11d5f30f25bfe1a4c5ac98f18b147bbfdd72453c2ca1d8f0013"
+              },
+              "timed_out": false,
+              "timeout_s": 180
+            }
+          ],
+          "diagnosis_status": "not-supported",
+          "duration_s": 0.06500373780727386,
+          "error": "native command exited 255",
+          "measurement_status": "failed",
+          "metrics": [],
+          "monitoring_status": "not-run",
+          "point": {
+            "mode": "capacity-query",
+            "source": 4
+          },
+          "repetition": 1,
+          "schema_version": 1,
+          "status": "failed",
+          "sweep_scope": "explicit physical cards/mode/payload; native operation",
+          "target": "physical-4/repeat-1"
+        }
+      ]
+    }
+  },
+  "context_sha256": "0cbd7e0c718fa7c61a2c8507f3d11b5c128d990c59905d295116dee4aff89c51",
+  "diagnosis_status": "not-supported",
+  "finished_at": "2026-09-29T03:41:22.409718Z",
+  "kind": "toolkit",
+  "measurement_status": "failed",
+  "monitoring_status": "not-run",
+  "run_id": "20260929T034116Z-f2fbfc5f",
+  "schema_version": 1,
+  "selected_physical_device_ids": [
+    4
+  ],
+  "settings": {
+    "allow_busy_devices": false,
+    "allow_candidate_runtime": true,
+    "command_timeout": 180,
+    "matrix_size": 128,
+    "minimum_seconds": 0.0,
+    "payload_bytes": 1048576,
+    "privilege_command": "",
+    "repeat": 1,
+    "samples": 25,
+    "smoke": true,
+    "warmup": 2
+  },
+  "started_at": "2026-09-29T03:41:19.895249Z",
+  "status": "failed",
+  "suite": "kunlunxin-p800-toolkit",
+  "vendor": "kunlunxin"
+}

@@ -1,0 +1,21 @@
+{
+  "cases": {
+    "main_memory-capacity": {
+      "commands": [],
+      "diagnosis_status": "not-supported",
+      "error": "[Errno 13] Permission denied: '/tmp/flagperf-p800-b7942319-362e-5a53-a8eb-a2d06fbe84f6.lock'",
+      "measurement_status": "not-run",
+      "metrics": [],
+      "monitoring_status": "not-run",
+      "status": "not-run",
+      "targets": []
+    }
+  },
+  "diagnosis_status": "not-supported",
+  "measurement_status": "not-run",
+  "monitoring_status": "not-run",
+  "run_id": "20260929T034024Z-feab6096",
+  "schema_version": 1,
+  "status": "failed",
+  "suite": "kunlunxin-p800-toolkit"
+}

@@ -1,0 +1,331 @@
+{
+  "files": [
+    {
+      "bytes": 1723,
+      "path": "cleanup.json",
+      "sha256": "79b71025006c482fa2c351be5ad5abbc5bae1b16d5e6c1e03c415d05e86b70d9"
+    },
+    {
+      "bytes": 7376,
+      "path": "code-identity.json",
+      "sha256": "79d6a96997da383a0d64b15cf84f71387781e8c6d14bf4cff008fb1c3ae7543a"
+    },
+    {
+      "bytes": 1572,
+      "path": "container-create.json",
+      "sha256": "2b0d1203d60cae1661663a38e282353d96b835d681a01f13eaa6fbb71ab894b9"
+    },
+    {
+      "bytes": 6965,
+      "path": "container-inspect.json",
+      "sha256": "b0d09254938625852358459fe94d503c7014871dcebc8899ea4fd1f51e90b318"
+    },
+    {
+      "bytes": 394,
+      "path": "container-logs.json",
+      "sha256": "778b8e4c4f81d5677c7a30da5c287b0b1b4c07da4fdd88418c8c06925984aa24"
+    },
+    {
+      "bytes": 1977,
+      "path": "container-plan.json",
+      "sha256": "b395435860725d56b5e99018e40f365359c04618b0efaff174c22ebac8e1b6a5"
+    },
+    {
+      "bytes": 416,
+      "path": "container-start.json",
+      "sha256": "5ceb62234eefb581c67f179a27681d370bb370f8c03977eb92991e07b4824d84"
+    },
+    {
+      "bytes": 2779,
+      "path": "control/host-context.json",
+      "sha256": "89e8bc284956d0eb4b7fc9c9c9cb72ad5a7d19462bef1891d56b000e2a1a83bd"
+    },
+    {
+      "bytes": 282,
+      "path": "host-postflight/handles-4.json",
+      "sha256": "1b949ff80d7ab0daa135467f7a054966160cffd8eda5718189df05634669b598"
+    },
+    {
+      "bytes": 1486,
+      "path": "host-postflight/machine.json",
+      "sha256": "7e6257bee4440e5d9ec9076143349854d2f1ec2e61080f705f521d25450a6912"
+    },
+    {
+      "bytes": 3480,
+      "path": "host-postflight/query-4.json",
+      "sha256": "6e621cee2ccc14b52b35a71b587d69bda8c1e314b0eac386ba77d71396917579"
+    },
+    {
+      "bytes": 955,
+      "path": "host-postflight/summary.json",
+      "sha256": "985a7d1325ec77d73daa4987e68d67936b6bbb1dd5e40fc4bb05a1f906bf66b8"
+    },
+    {
+      "bytes": 282,
+      "path": "host-preflight/VM-0-2-ubuntu/handles-4.json",
+      "sha256": "2cd03f028611a026e07705d55c0bc468b0fa2de2b06aeb1e0137d0407013e720"
+    },
+    {
+      "bytes": 1487,
+      "path": "host-preflight/VM-0-2-ubuntu/machine.json",
+      "sha256": "8d82d8f526216421a0114b2d5193061b2b3b7cd9ed53a9166c0f408c2500c2ca"
+    },
+    {
+      "bytes": 3480,
+      "path": "host-preflight/VM-0-2-ubuntu/query-4.json",
+      "sha256": "cc45b0d7f078c5707413bffc4e57b4848cf4ad529a2f6c7aec3e93380b029249"
+    },
+    {
+      "bytes": 955,
+      "path": "host-preflight/VM-0-2-ubuntu/summary.json",
+      "sha256": "985a7d1325ec77d73daa4987e68d67936b6bbb1dd5e40fc4bb05a1f906bf66b8"
+    },
+    {
+      "bytes": 318,
+      "path": "image-identity.json",
+      "sha256": "3f9c9f70378fa62b32fd4c66bbe50b3121f11812d8edbfcc425d33e36d59f08a"
+    },
+    {
+      "bytes": 4825,
+      "path": "image-inspect.json",
+      "sha256": "5b7faee41814cd98189502ff7085566a0d3905191c65dac72ab77abe8ae51f1b"
+    },
+    {
+      "bytes": 376,
+      "path": "lease.json",
+      "sha256": "6e81901a69f8edae370951bf0d62ff74a9bb99fc148d23580f8b6fc3af2bf99b"
+    },
+    {
+      "bytes": 282,
+      "path": "locked-preflight/handles-4.json",
+      "sha256": "120a27ef6ede7dbbf851043870682aa3527a879930323a809b1c374e95fe59dd"
+    },
+    {
+      "bytes": 1486,
+      "path": "locked-preflight/machine.json",
+      "sha256": "a9315ad3ea4d2c72e27b62b4482cf2f2b0538924d8addbaa0fc61fa7315626ab"
+    },
+    {
+      "bytes": 3480,
+      "path": "locked-preflight/query-4.json",
+      "sha256": "b02af0fd89f66bcc05926e83a709934dfb2b9d94abd954322c81d2333f77531e"
+    },
+    {
+      "bytes": 955,
+      "path": "locked-preflight/summary.json",
+      "sha256": "985a7d1325ec77d73daa4987e68d67936b6bbb1dd5e40fc4bb05a1f906bf66b8"
+    },
+    {
+      "bytes": 1965,
+      "path": "report-assets/monitor-card-4-used_memory_mib-00000.svg",
+      "sha256": "8edb423eb1d5e177b8899bfb84133a074f8e334e42f86c3acec4b8ad87aed22e"
+    },
+    {
+      "bytes": 1967,
+      "path": "report-assets/monitor-card-4-utilization_percent-00000.svg",
+      "sha256": "a4c763c34e3ecbf11ac7e718030915aca470c68198939a77d9273ab9be311f89"
+    },
+    {
+      "bytes": 2109,
+      "path": "report.md",
+      "sha256": "b27fb087442fcbfbb0de00bfb0ecc39a08076130fa35df9b8ca0a84ab7af0f29"
+    },
+    {
+      "bytes": 1297,
+      "path": "report_monitor.md",
+      "sha256": "2844bd1377e89cc2207458231ead3099c4a11f1dd43d766f2062ead2aecf10d8"
+    },
+    {
+      "bytes": 2561,
+      "path": "resolved-plan.json",
+      "sha256": "6f65bdabe2fda3a49b25053e815dd310561c8be4e4a2d8ceced0fb704beb296e"
+    },
+    {
+      "bytes": 5370,
+      "path": "summary.json",
+      "sha256": "05be0d5363c2c6454612a050924050bd8f1f4d58dac2bace5aa249c9df500193"
+    },
+    {
+      "bytes": 1336,
+      "path": "toolkit-evidence/build/compile.command.json",
+      "sha256": "c188e3341e30b33a0b15dd024b91ed9ff7dd6ae0cb8439ed2f2701061f23d9bb"
+    },
+    {
+      "bytes": 0,
+      "path": "toolkit-evidence/build/compile.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 0,
+      "path": "toolkit-evidence/build/compile.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 685,
+      "path": "toolkit-evidence/build/ldd.command.json",
+      "sha256": "5db55ac8c01892f8eaf7f637b1f104de496e2d635cebc7a27739f6ab5a539d4a"
+    },
+    {
+      "bytes": 0,
+      "path": "toolkit-evidence/build/ldd.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 1449,
+      "path": "toolkit-evidence/build/ldd.stdout",
+      "sha256": "2aea99c7e2ff2b1b39c11efb058674d9506ccbb54de410aaf42b269a7f19088d"
+    },
+    {
+      "bytes": 75512,
+      "path": "toolkit-evidence/build/native_bench",
+      "sha256": "2433c1213e110990f8880ec46f0a523f3ae820160c4d087ccef756bfa7d136c7"
+    },
+    {
+      "bytes": 4220,
+      "path": "toolkit-evidence/cases/computation-INT8/metrics.json",
+      "sha256": "a9ae244b991c233244d7e23b4655b247eb18b616e53c28314adf401b57669020"
+    },
+    {
+      "bytes": 2387,
+      "path": "toolkit-evidence/cases/computation-INT8/physical-4/repeat-1/metrics.json",
+      "sha256": "db8833770626ced12029f6e724ba468c6e9a91c48a1206ba16dfe996365097a8"
+    },
+    {
+      "bytes": 1003,
+      "path": "toolkit-evidence/cases/computation-INT8/physical-4/repeat-1/microbenchmark.command.json",
+      "sha256": "65f693d10c758d8cb9db96cdd606f05acbf4b602115688400c5afdd861838eac"
+    },
+    {
+      "bytes": 399,
+      "path": "toolkit-evidence/cases/computation-INT8/physical-4/repeat-1/microbenchmark.stderr",
+      "sha256": "f40f8013035e03d07dc38aed8a4755ee750572395fda96d8e63b37d706cd6212"
+    },
+    {
+      "bytes": 0,
+      "path": "toolkit-evidence/cases/computation-INT8/physical-4/repeat-1/microbenchmark.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 399,
+      "path": "toolkit-evidence/diagnostics/coverage.json",
+      "sha256": "1607adb92dbc7feb86c7c8ebb54cd1ec177741a50e04a21aa60b633397f242dc"
+    },
+    {
+      "bytes": 742,
+      "path": "toolkit-evidence/environment/native-inventory.command.json",
+      "sha256": "c56f8f6ab4aae392bfd737a7694bf5314365d5c95090eaed47f32103fc4f2821"
+    },
+    {
+      "bytes": 121,
+      "path": "toolkit-evidence/environment/native-inventory.stderr",
+      "sha256": "49899d503c2613734388787113399bf404e4e3dc370746e3c4ed91fb05a4acf9"
+    },
+    {
+      "bytes": 62,
+      "path": "toolkit-evidence/environment/native-inventory.stdout",
+      "sha256": "da2879f1c183c0f25f7201d7dec9b4d5ffb337096af05ce9dea74d7ee2102e58"
+    },
+    {
+      "bytes": 755,
+      "path": "toolkit-evidence/environment/test_dma/help.command.json",
+      "sha256": "2b3ae9e763a182ca0a4c4e7ccd5f4f51770e5605a66ed655c75235a52558512f"
+    },
+    {
+      "bytes": 2065,
+      "path": "toolkit-evidence/environment/test_dma/help.stderr",
+      "sha256": "650d8a610bb531c666566575ba9e208795b06c8a45b0ef526d3cb7cbe451e7b9"
+    },
+    {
+      "bytes": 0,
+      "path": "toolkit-evidence/environment/test_dma/help.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 780,
+      "path": "toolkit-evidence/environment/test_memcpy_peer/help.command.json",
+      "sha256": "39e272a63c5cda1fec022c85890488be011afbe3c920cc8cb5f2da2748b2c4a9"
+    },
+    {
+      "bytes": 1088,
+      "path": "toolkit-evidence/environment/test_memcpy_peer/help.stderr",
+      "sha256": "88c43e3211443c7db5040c42c5938785fe4bbc5272a8aed2ef622be535a64a02"
+    },
+    {
+      "bytes": 0,
+      "path": "toolkit-evidence/environment/test_memcpy_peer/help.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 762,
+      "path": "toolkit-evidence/environment/xprofiler/help.command.json",
+      "sha256": "071f6f3bd4c459068856b5293a8ed5e1b028886d29b5eb39124ddbcc0c1eeecb"
+    },
+    {
+      "bytes": 0,
+      "path": "toolkit-evidence/environment/xprofiler/help.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 1581,
+      "path": "toolkit-evidence/environment/xprofiler/help.stdout",
+      "sha256": "6f07ab084acea24b61c288ef170c5f6d5f5200cce4b3ce8925dd78a9e7493928"
+    },
+    {
+      "bytes": 1764,
+      "path": "toolkit-evidence/environment.json",
+      "sha256": "148426ce5ea94f970bce1e8edb05a4d941dd2f9c09800fdbb2ad1f89dd0e47d9"
+    },
+    {
+      "bytes": 955,
+      "path": "toolkit-evidence/health/post.json",
+      "sha256": "985a7d1325ec77d73daa4987e68d67936b6bbb1dd5e40fc4bb05a1f906bf66b8"
+    },
+    {
+      "bytes": 955,
+      "path": "toolkit-evidence/health/pre.json",
+      "sha256": "985a7d1325ec77d73daa4987e68d67936b6bbb1dd5e40fc4bb05a1f906bf66b8"
+    },
+    {
+      "bytes": 5648,
+      "path": "toolkit-evidence/manifest.json",
+      "sha256": "4afa15603db87a0c32cb980eb3201e68efbd1ae946eaf0b9ea9e41b619c2f14e"
+    },
+    {
+      "bytes": 2314,
+      "path": "toolkit-evidence/monitor/samples.jsonl",
+      "sha256": "454bdd19de067fe29a4f2818fde89dc9948ea9fb9f046e45a92575edef71c37b"
+    },
+    {
+      "bytes": 34242,
+      "path": "toolkit-evidence/monitor/samples.raw.jsonl",
+      "sha256": "fe1d4348dc24809666322f8553ecc2248cf7474aecb24c7cbf4cad8fbfeeee48"
+    },
+    {
+      "bytes": 1217,
+      "path": "toolkit-evidence/monitor/summary.json",
+      "sha256": "159806d4b8d7eeed0a6b67522cb22e859e57397aafcd2ced715c7f495af5464d"
+    },
+    {
+      "bytes": 6102,
+      "path": "toolkit-evidence/provenance.json",
+      "sha256": "208a5c45a33f5da66b38a647645f0c28d0422df603f18c446d4c5e5198d7eb5e"
+    },
+    {
+      "bytes": 933,
+      "path": "toolkit-evidence/runtime-bindings.json",
+      "sha256": "01315f6edcc21f8fbb3502d1a28ee5f31d751c8a7b5211ac14e600d48dcc04c5"
+    },
+    {
+      "bytes": 1668,
+      "path": "toolkit-evidence/toolkit-contract.json",
+      "sha256": "4549ea4cc7ba3c46ab3a8ba6c8ecebef2d4137f5f52eae222793965b5cabeae1"
+    },
+    {
+      "bytes": 2726,
+      "path": "toolkit-evidence/topology/host-topology.json",
+      "sha256": "959f1e8b9585efceabd0db28cc0bf8fbcf3c29fde11e094e2b269b67beb6ca7a"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "all regular files under run root except this index"
+}

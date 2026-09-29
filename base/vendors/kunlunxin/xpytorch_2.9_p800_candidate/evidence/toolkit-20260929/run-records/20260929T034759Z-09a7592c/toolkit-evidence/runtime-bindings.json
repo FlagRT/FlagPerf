@@ -1,0 +1,33 @@
+{
+  "context_sha256": "89e8bc284956d0eb4b7fc9c9c9cb72ad5a7d19462bef1891d56b000e2a1a83bd",
+  "devices": [
+    {
+      "container_node": "/dev/xpu4",
+      "device_major": 195,
+      "device_minor": 4,
+      "driver": "5.0.21.47",
+      "foreign_handles_authorized": false,
+      "foreign_occupancy_observed": false,
+      "free_memory_mib": 98304,
+      "host_device_node": "/dev/xpu4",
+      "host_physical_id": 4,
+      "native_id": 0,
+      "pci_bdf": "0000:84:00.0",
+      "power_w": 94.0,
+      "processes_empty": true,
+      "serial": "02K15K0263D002KG",
+      "temperature_c": 39.0,
+      "total_memory_mib": 98304,
+      "uncorrectable_ecc_counts": [
+        0,
+        0
+      ],
+      "used_memory_mib": 0,
+      "utilization_percent": 0,
+      "uuid": "b7942319-362e-5a53-a8eb-a2d06fbe84f6",
+      "xpu_smi_runtime": "10.2"
+    }
+  ],
+  "method": "host query UUID+PCI+minor to native XRE PCI join",
+  "schema_version": 1
+}

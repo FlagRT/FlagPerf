@@ -1,0 +1,138 @@
+{
+  "bindings": [
+    {
+      "container_node": "/dev/xpu1",
+      "device_major": 195,
+      "device_minor": 1,
+      "driver": "5.0.21.47",
+      "foreign_handles_authorized": true,
+      "foreign_occupancy_observed": true,
+      "free_memory_mib": 77876,
+      "host_device_node": "/dev/xpu1",
+      "host_physical_id": 3,
+      "native_id": 0,
+      "pci_bdf": "0000:2e:00.0",
+      "power_w": 130.0,
+      "processes_empty": false,
+      "serial": "02K15K0263D002L7",
+      "temperature_c": 48.0,
+      "total_memory_mib": 98304,
+      "uncorrectable_ecc_counts": [
+        0,
+        0
+      ],
+      "used_memory_mib": 20428,
+      "utilization_percent": 100,
+      "uuid": "9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "xpu_smi_runtime": "10.2"
+    }
+  ],
+  "commands": [
+    {
+      "command": [
+        "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+        "--mode",
+        "h2d",
+        "--src",
+        "0",
+        "--src-pci",
+        "00000000:2e:00.0",
+        "--samples",
+        "25",
+        "--warmup",
+        "2",
+        "--minimum-seconds",
+        "0.0",
+        "--dimension",
+        "128",
+        "--bytes",
+        "512",
+        "--pinned",
+        "1",
+        "--async",
+        "1",
+        "--pinned-api",
+        "register",
+        "--async-chunk-bytes",
+        "1048576"
+      ],
+      "duration_s": 0.06525799166411161,
+      "finished_at": "2026-09-29T04:31:47.257724Z",
+      "finished_monotonic_s": 4497444.177609608,
+      "returncode": 0,
+      "started_at": "2026-09-29T04:31:47.192479Z",
+      "started_monotonic_s": 4497444.112351616,
+      "stderr": {
+        "bytes": 4284,
+        "path": "cases/interconnect-h2d-latency/physical-3-512B-pinned-nonblocking/repeat-1/microbenchmark.stderr",
+        "sha256": "d868c569929ff8fec29b6bb4d58d42ec8354c3ee612129666e5bff08a44efdab"
+      },
+      "stdout": {
+        "bytes": 541,
+        "path": "cases/interconnect-h2d-latency/physical-3-512B-pinned-nonblocking/repeat-1/microbenchmark.stdout",
+        "sha256": "34b40c08dd22bf8e20f871b36eea7536cdf5ffc7095ebfb26bb11418f0090e47"
+      },
+      "timed_out": false,
+      "timeout_s": 180
+    }
+  ],
+  "diagnosis_status": "not-supported",
+  "duration_s": 0.06525799166411161,
+  "invalid_monitor_samples": 0,
+  "measurement_status": "passed",
+  "measurement_window": {
+    "finished_monotonic_s": 4497444.165523001,
+    "role": "measurement",
+    "started_monotonic_s": 4497444.165203608
+  },
+  "metrics": [
+    {
+      "api_calls_per_sample": 1,
+      "async_chunk_bytes": 0,
+      "checked_values": 512,
+      "compute_semantics": null,
+      "correctness": true,
+      "field": "P800_METRIC/samples_ns",
+      "formula": "median(completed API copy + synchronization nanoseconds)",
+      "host_pinned_api": "register",
+      "max_ns": 13019,
+      "median_ns": 12619,
+      "min_ns": 11840,
+      "physical_device_id": 3,
+      "point": {
+        "async": true,
+        "bytes": 512,
+        "mode": "h2d",
+        "pinned": true,
+        "source": 3
+      },
+      "repetition": 1,
+      "sample_count": 25,
+      "sample_cv": 0.023038206598825727,
+      "scope": "completed native API operation; not theoretical peak or device-only kernel time",
+      "source": "cases/interconnect-h2d-latency/physical-3-512B-pinned-nonblocking/repeat-1/microbenchmark.stdout",
+      "source_kind": "native-xre",
+      "stability_status": "observed",
+      "submission_scope": "single native operation",
+      "timer": "CLOCK_MONOTONIC completed API operation including synchronization",
+      "unit": "ns",
+      "value": 12619
+    }
+  ],
+  "monitor_sample_counts": {
+    "3": 0
+  },
+  "monitoring_status": "partial",
+  "point": {
+    "async": true,
+    "bytes": 512,
+    "mode": "h2d",
+    "pinned": true,
+    "source": 3
+  },
+  "repetition": 1,
+  "schema_version": 1,
+  "status": "partial",
+  "sweep_scope": "explicit physical cards/mode/payload; native operation",
+  "target": "physical-3-512B-pinned-nonblocking/repeat-1"
+}

@@ -1,0 +1,170 @@
+{
+  "assets": [
+    {
+      "bytes": 661,
+      "path": "report-assets/computation-BF16-TFLOPS.svg",
+      "sha256": "f42e1f46218624f05e7460d442f4528a991b75d17221b87f68dd284dc6d66eef"
+    },
+    {
+      "bytes": 661,
+      "path": "report-assets/computation-FP16-TFLOPS.svg",
+      "sha256": "856b607765f1ceec6a68347451b224878ff1f4b63c07c451bb3fa837bdc6528c"
+    },
+    {
+      "bytes": 660,
+      "path": "report-assets/computation-FP32-TFLOPS.svg",
+      "sha256": "e7bdf751ae4d5c32337277520d361ef236407214210d21d5f5c5669b5e9b200d"
+    },
+    {
+      "bytes": 655,
+      "path": "report-assets/computation-INT8-TOPS.svg",
+      "sha256": "823edfaa90d25b89b8c8756d7a17e63d78730b84a2bb8e54b8c286eb012a6fa0"
+    },
+    {
+      "bytes": 686,
+      "path": "report-assets/main_memory-bandwidth-GB-s.svg",
+      "sha256": "24913bf890b349a5ca60bb3500a3caab8b9de41d5bc1c4dd29e0fed281be30a6"
+    },
+    {
+      "bytes": 4033,
+      "path": "report-assets/main_memory-bandwidth-physical-3-1048576B-repeat-1-samples.svg",
+      "sha256": "06b4102abbf2d4153e00bc7ee818e873a19cbefaee1d45eafea5fde36a41dd53"
+    },
+    {
+      "bytes": 4033,
+      "path": "report-assets/main_memory-bandwidth-physical-7-1048576B-repeat-1-samples.svg",
+      "sha256": "8603ab899447c2555a8c33d05c5d0a945b12abd3d75780174ec4f084d30aecce"
+    },
+    {
+      "bytes": 1350,
+      "path": "report-assets/main_memory-capacity-MiB.svg",
+      "sha256": "10cfe77404f55d7a8996e269445c79f87a86d2e7e3746ac216c45c656fe2d0da"
+    },
+    {
+      "bytes": 1794,
+      "path": "report-assets/interconnect-h2d-GB-s.svg",
+      "sha256": "0a618ecb65f7828ebb571dd24c1564d8af38611086cd0cd659f80cf04fbfd1b2"
+    },
+    {
+      "bytes": 1796,
+      "path": "report-assets/interconnect-d2h-GB-s.svg",
+      "sha256": "28207b90c17c8642d965c80c9e21503abdd24704c0d3e39e7a9090cafef9398e"
+    },
+    {
+      "bytes": 5966,
+      "path": "report-assets/interconnect-h2d-latency-ns.svg",
+      "sha256": "70737998d47e548b3470b7f880633ff6732795feb2cbe3615e58464b8d1ace9a"
+    },
+    {
+      "bytes": 5964,
+      "path": "report-assets/interconnect-d2h-latency-ns.svg",
+      "sha256": "331d9a62e3d3a792ea9479ee9ff15d7f0d07279ebe3722deaed0100444388f36"
+    },
+    {
+      "bytes": 738,
+      "path": "report-assets/interconnect-P2P_intraserver-GB-s.svg",
+      "sha256": "7d6ec4f32966a05a929f3c0be28b9551cc7559512ff7f2d9db5a594590425b00"
+    },
+    {
+      "bytes": 560,
+      "path": "report-assets/interconnect-P2P_intraserver-latency-ns.svg",
+      "sha256": "88d0469336a81b21c9d4beae93f4d141e18e3695b364e4e985ec583c3c8485e4"
+    },
+    {
+      "bytes": 6061,
+      "path": "report-assets/monitor-card-3-utilization_percent-00000.svg",
+      "sha256": "0e8a29f9e815ebd552954f786b2345fd48aa08f36c57b64e6acb7aae63c572c4"
+    },
+    {
+      "bytes": 6104,
+      "path": "report-assets/monitor-card-3-used_memory_mib-00000.svg",
+      "sha256": "d3a2b929c1c8b033dea8fa05517599a4394104cb6b274fb1d1434017dbae00ce"
+    },
+    {
+      "bytes": 6028,
+      "path": "report-assets/monitor-card-3-temperature_c-00000.svg",
+      "sha256": "ef1997f1185846c227c56f68f842bde2abd6c3b4170a0dfca0d167594d2eac19"
+    },
+    {
+      "bytes": 6059,
+      "path": "report-assets/monitor-card-3-power_w-00000.svg",
+      "sha256": "d963239fed2a389a9b41684fe2af39f4b58876f7f72750b12ad8f8188b8cd074"
+    },
+    {
+      "bytes": 3405,
+      "path": "report-assets/monitor-card-3-utilization_percent-00024.svg",
+      "sha256": "2094c13e5219541f77fa8d662180da8fb09bf983874b55fee6a85823e8ad2939"
+    },
+    {
+      "bytes": 3427,
+      "path": "report-assets/monitor-card-3-used_memory_mib-00024.svg",
+      "sha256": "bec6d5344c747182e3def9e6bfacd1b28fa3489b0abb5a24ac783585e3467b21"
+    },
+    {
+      "bytes": 3384,
+      "path": "report-assets/monitor-card-3-temperature_c-00024.svg",
+      "sha256": "69c55688b34385ba1c47552b678c0fe8f8e2934961439daf7cba729bc916c3b6"
+    },
+    {
+      "bytes": 3399,
+      "path": "report-assets/monitor-card-3-power_w-00024.svg",
+      "sha256": "7311d43112e733be044967d29b8c5c512fb4e0fa023517e005b8e24694eb9812"
+    },
+    {
+      "bytes": 6052,
+      "path": "report-assets/monitor-card-7-utilization_percent-00000.svg",
+      "sha256": "6a0e2070ea8c0225f0171f367afdbdc0f11a7d3608da09562a820e5b8e91eb31"
+    },
+    {
+      "bytes": 6104,
+      "path": "report-assets/monitor-card-7-used_memory_mib-00000.svg",
+      "sha256": "885c2b6477a61de49aecb6aed4329b294db07ae1629f7d300e890f315fe70f43"
+    },
+    {
+      "bytes": 6028,
+      "path": "report-assets/monitor-card-7-temperature_c-00000.svg",
+      "sha256": "a611f7dbe851371e3b938b5b60d1d07c93dd4ace48af4dd92ffcf791cc102e1f"
+    },
+    {
+      "bytes": 6046,
+      "path": "report-assets/monitor-card-7-power_w-00000.svg",
+      "sha256": "a245e6ace43986a54bb9be31a4f9f3ee02a69bb4f49d55a8d0527803a04ee909"
+    },
+    {
+      "bytes": 3394,
+      "path": "report-assets/monitor-card-7-utilization_percent-00024.svg",
+      "sha256": "2a9af6d6e1d9fd87a36a9449720d3522a55da6e1ef3f0f4c2908d755ab7e304a"
+    },
+    {
+      "bytes": 3427,
+      "path": "report-assets/monitor-card-7-used_memory_mib-00024.svg",
+      "sha256": "daf09589637e063ee615179802701f56200c7f3f771ef140721be137e9d81ec9"
+    },
+    {
+      "bytes": 3384,
+      "path": "report-assets/monitor-card-7-temperature_c-00024.svg",
+      "sha256": "429853d7a4caa98423b33beadd9d6b3fbcc602e6dd3f082cd433a5f2813e081f"
+    },
+    {
+      "bytes": 3391,
+      "path": "report-assets/monitor-card-7-power_w-00024.svg",
+      "sha256": "e9c2640c8c5c0c6c82a908ee747778299621f93756a8c5e276918a3573078f30"
+    }
+  ],
+  "generator_sha256": "d36af90bb88aa00195b1b9fd46cf312c5223627f1e52fb4363d443f6110d7aef",
+  "outputs": {
+    "main": {
+      "bytes": 42718,
+      "path": "report.md",
+      "sha256": "bb3810d8db471da9c7deedf51966c2371f914bde407e179ea18ea63c1444de53"
+    },
+    "monitor": {
+      "bytes": 22885,
+      "path": "report_monitor.md",
+      "sha256": "27e9b2d3f68a523de28ff4e16ae3f919f7fb407c69b688bbcabb8a6f4e7b8ff9"
+    }
+  },
+  "schema_version": 1,
+  "status": "passed"
+}
+Report directory: /home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/result/p800-toolkit-20260929/20260929T043131Z-591f8f07

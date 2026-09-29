@@ -1,0 +1,126 @@
+{
+  "cases": [
+    "computation-BF16",
+    "computation-FP16",
+    "computation-FP32",
+    "computation-INT8",
+    "main_memory-bandwidth",
+    "main_memory-capacity",
+    "interconnect-h2d",
+    "interconnect-d2h",
+    "interconnect-h2d-latency",
+    "interconnect-d2h-latency",
+    "interconnect-P2P_intraserver",
+    "interconnect-P2P_intraserver-latency"
+  ],
+  "conda_prefix": "/root/miniconda/envs/python310_torch29_cuda",
+  "host": {
+    "devices": [
+      {
+        "container_node": "/dev/xpu1",
+        "device_major": 195,
+        "device_minor": 1,
+        "driver": "5.0.21.47",
+        "foreign_handles_authorized": true,
+        "foreign_occupancy_observed": true,
+        "free_memory_mib": 77876,
+        "host_device_node": "/dev/xpu1",
+        "host_physical_id": 3,
+        "pci_bdf": "0000:2e:00.0",
+        "power_w": 130.0,
+        "processes_empty": false,
+        "serial": "02K15K0263D002L7",
+        "temperature_c": 48.0,
+        "total_memory_mib": 98304,
+        "uncorrectable_ecc_counts": [
+          0,
+          0
+        ],
+        "used_memory_mib": 20428,
+        "utilization_percent": 100,
+        "uuid": "9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+        "xpu_smi_runtime": "10.2"
+      },
+      {
+        "container_node": "/dev/xpu6",
+        "device_major": 195,
+        "device_minor": 6,
+        "driver": "5.0.21.47",
+        "foreign_handles_authorized": true,
+        "foreign_occupancy_observed": true,
+        "free_memory_mib": 22714,
+        "host_device_node": "/dev/xpu6",
+        "host_physical_id": 7,
+        "pci_bdf": "0000:bb:00.0",
+        "power_w": 220.0,
+        "processes_empty": false,
+        "serial": "02K15K0263D002GM",
+        "temperature_c": 57.0,
+        "total_memory_mib": 98304,
+        "uncorrectable_ecc_counts": [
+          0,
+          0
+        ],
+        "used_memory_mib": 75590,
+        "utilization_percent": 79,
+        "uuid": "4922595e-feb9-5762-9082-d8fd7f11abf5",
+        "xpu_smi_runtime": "10.2"
+      }
+    ],
+    "foreign_handles_authorized": true,
+    "foreign_occupancy_observed": true,
+    "schema_version": 1,
+    "selection": {
+      "requested_ids": [
+        3,
+        7
+      ],
+      "source": "physical-device-ids"
+    },
+    "status": "passed"
+  },
+  "image_identity": {
+    "Architecture": "amd64",
+    "Created": "2026-08-12T21:47:16.130386935+08:00",
+    "Id": "sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975",
+    "RepoDigests": [
+      "flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev@sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975"
+    ]
+  },
+  "run_id": "20260929T043131Z-591f8f07",
+  "runtime_lock": {
+    "image_manifest": {
+      "image": "flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev:202608",
+      "image_id": "sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975",
+      "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf-toolkit-validation-0929/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/image-manifest.json",
+      "release_stage": "candidate",
+      "schema_version": 1,
+      "sha256": "ab59dc1cd14b65a28ffaef7b1b21b1d0b51f5334619301659d4123a5c681acbf",
+      "validated": false,
+      "validation_scope": [],
+      "validation_status": null
+    },
+    "runtime_profile": "xpytorch_2.9_p800_candidate",
+    "stack_lock": {
+      "path": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf-toolkit-validation-0929/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/stack.lock.yaml",
+      "sha256": "8f200d0b955b7e60881bc13ed75c8784c2c38fe2c755d018c618f1dc7b46cded"
+    },
+    "vendor": "kunlunxin"
+  },
+  "schema_version": 1,
+  "settings": {
+    "allow_busy_devices": true,
+    "allow_candidate_runtime": true,
+    "async_chunk_bytes": 1048576,
+    "command_timeout": 180,
+    "matrix_size": 128,
+    "minimum_seconds": 0.0,
+    "payload_bytes": 1048576,
+    "pinned_api": "register",
+    "privilege_command": "",
+    "repeat": 1,
+    "samples": 25,
+    "smoke": true,
+    "warmup": 2
+  }
+}

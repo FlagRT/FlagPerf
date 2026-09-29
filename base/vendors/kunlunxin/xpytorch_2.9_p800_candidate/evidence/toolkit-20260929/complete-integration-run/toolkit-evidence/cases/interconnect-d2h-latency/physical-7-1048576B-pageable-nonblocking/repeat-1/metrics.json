@@ -1,0 +1,137 @@
+{
+  "bindings": [
+    {
+      "container_node": "/dev/xpu6",
+      "device_major": 195,
+      "device_minor": 6,
+      "driver": "5.0.21.47",
+      "foreign_handles_authorized": true,
+      "foreign_occupancy_observed": true,
+      "free_memory_mib": 22714,
+      "host_device_node": "/dev/xpu6",
+      "host_physical_id": 7,
+      "native_id": 1,
+      "pci_bdf": "0000:bb:00.0",
+      "power_w": 220.0,
+      "processes_empty": false,
+      "serial": "02K15K0263D002GM",
+      "temperature_c": 57.0,
+      "total_memory_mib": 98304,
+      "uncorrectable_ecc_counts": [
+        0,
+        0
+      ],
+      "used_memory_mib": 75590,
+      "utilization_percent": 79,
+      "uuid": "4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "xpu_smi_runtime": "10.2"
+    }
+  ],
+  "commands": [
+    {
+      "command": [
+        "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+        "--mode",
+        "d2h",
+        "--src",
+        "1",
+        "--src-pci",
+        "00000000:bb:00.0",
+        "--samples",
+        "25",
+        "--warmup",
+        "2",
+        "--minimum-seconds",
+        "0.0",
+        "--dimension",
+        "128",
+        "--bytes",
+        "1048576",
+        "--pinned",
+        "0",
+        "--async",
+        "1",
+        "--pinned-api",
+        "register",
+        "--async-chunk-bytes",
+        "1048576"
+      ],
+      "duration_s": 0.11550400778651237,
+      "finished_at": "2026-09-29T04:31:52.313066Z",
+      "finished_monotonic_s": 4497449.232956516,
+      "returncode": 0,
+      "started_at": "2026-09-29T04:31:52.197580Z",
+      "started_monotonic_s": 4497449.117452508,
+      "stderr": {
+        "bytes": 4258,
+        "path": "cases/interconnect-d2h-latency/physical-7-1048576B-pageable-nonblocking/repeat-1/microbenchmark.stderr",
+        "sha256": "ccd96768bd6932c62f47d6f64c0250ae8bdc5d06774b2e383baf91b104465ef5"
+      },
+      "stdout": {
+        "bytes": 565,
+        "path": "cases/interconnect-d2h-latency/physical-7-1048576B-pageable-nonblocking/repeat-1/microbenchmark.stdout",
+        "sha256": "b97037a8989c7be896d5f6e8863236ef72d4f0dad7d820da32951769ce3273be"
+      },
+      "timed_out": false,
+      "timeout_s": 180
+    }
+  ],
+  "diagnosis_status": "not-supported",
+  "duration_s": 0.11550400778651237,
+  "invalid_monitor_samples": 0,
+  "measurement_status": "passed",
+  "measurement_window": {
+    "finished_monotonic_s": 4497449.175122109,
+    "role": "measurement",
+    "started_monotonic_s": 4497449.172137992
+  },
+  "metrics": [
+    {
+      "api_calls_per_sample": 1,
+      "async_chunk_bytes": 0,
+      "checked_values": 1048576,
+      "compute_semantics": null,
+      "correctness": true,
+      "field": "P800_METRIC/samples_ns",
+      "formula": "median(completed API copy + synchronization nanoseconds)",
+      "max_ns": 241645,
+      "median_ns": 107987,
+      "min_ns": 91658,
+      "physical_device_id": 7,
+      "point": {
+        "async": true,
+        "bytes": 1048576,
+        "mode": "d2h",
+        "pinned": false,
+        "source": 7
+      },
+      "repetition": 1,
+      "sample_count": 25,
+      "sample_cv": 0.3099857542338149,
+      "scope": "completed native API operation; not theoretical peak or device-only kernel time",
+      "source": "cases/interconnect-d2h-latency/physical-7-1048576B-pageable-nonblocking/repeat-1/microbenchmark.stdout",
+      "source_kind": "native-xre",
+      "stability_status": "unstable",
+      "submission_scope": "single native operation",
+      "timer": "CLOCK_MONOTONIC completed API operation including synchronization",
+      "unit": "ns",
+      "value": 107987
+    }
+  ],
+  "monitor_sample_counts": {
+    "7": 0
+  },
+  "monitoring_status": "partial",
+  "point": {
+    "async": true,
+    "bytes": 1048576,
+    "mode": "d2h",
+    "pinned": false,
+    "source": 7
+  },
+  "repetition": 1,
+  "schema_version": 1,
+  "status": "partial",
+  "sweep_scope": "explicit physical cards/mode/payload; native operation",
+  "target": "physical-7-1048576B-pageable-nonblocking/repeat-1"
+}

@@ -1,0 +1,26 @@
+{
+  "command": [
+    "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/bin/xpu-smi",
+    "-i",
+    "1",
+    "-q"
+  ],
+  "duration_s": 0.06573179177939892,
+  "finished_at": "2026-09-29T04:31:45.320291Z",
+  "finished_monotonic_s": 4497442.240178234,
+  "returncode": 0,
+  "started_at": "2026-09-29T04:31:45.254574Z",
+  "started_monotonic_s": 4497442.174446442,
+  "stderr": {
+    "bytes": 0,
+    "path": "cases/main_memory-capacity/physical-7/repeat-1/microbenchmark.stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 2856,
+    "path": "cases/main_memory-capacity/physical-7/repeat-1/microbenchmark.stdout",
+    "sha256": "4e71dacc74fca68852b811629c8e6f021962ea7a6fcf829cda5ec16732878f4a"
+  },
+  "timed_out": false,
+  "timeout_s": 180
+}

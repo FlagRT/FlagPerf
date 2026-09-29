@@ -1,0 +1,25 @@
+{
+  "command": [
+    "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+    "--mode",
+    "inventory"
+  ],
+  "duration_s": 0.11542712058871984,
+  "finished_at": "2026-09-29T04:31:38.577509Z",
+  "finished_monotonic_s": 4497435.497401951,
+  "returncode": 0,
+  "started_at": "2026-09-29T04:31:38.462102Z",
+  "started_monotonic_s": 4497435.38197483,
+  "stderr": {
+    "bytes": 121,
+    "path": "environment/native-inventory.stderr",
+    "sha256": "49899d503c2613734388787113399bf404e4e3dc370746e3c4ed91fb05a4acf9"
+  },
+  "stdout": {
+    "bytes": 107,
+    "path": "environment/native-inventory.stdout",
+    "sha256": "90b3bede42205a59fed8ad04de40eecd7482f8848f4c8a4d0187220fa3d164d0"
+  },
+  "timed_out": false,
+  "timeout_s": 30
+}

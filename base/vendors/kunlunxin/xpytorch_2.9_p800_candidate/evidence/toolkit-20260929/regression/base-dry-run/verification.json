@@ -1,0 +1,62 @@
+[
+  {
+    "case": "computation-BF16:P800",
+    "physical_ids": "3",
+    "returncode": 0,
+    "error": ""
+  },
+  {
+    "case": "computation-FP16:P800",
+    "physical_ids": "3",
+    "returncode": 0,
+    "error": ""
+  },
+  {
+    "case": "computation-FP32:P800",
+    "physical_ids": "3",
+    "returncode": 0,
+    "error": ""
+  },
+  {
+    "case": "computation-INT8:P800",
+    "physical_ids": "3",
+    "returncode": 0,
+    "error": ""
+  },
+  {
+    "case": "interconnect-MPI_intraserver:P800",
+    "physical_ids": "3,4",
+    "returncode": 0,
+    "error": ""
+  },
+  {
+    "case": "interconnect-P2P_intraserver:P800",
+    "physical_ids": "3,4",
+    "returncode": 0,
+    "error": ""
+  },
+  {
+    "case": "interconnect-d2h:P800",
+    "physical_ids": "3",
+    "returncode": 0,
+    "error": ""
+  },
+  {
+    "case": "interconnect-h2d:P800",
+    "physical_ids": "3",
+    "returncode": 0,
+    "error": ""
+  },
+  {
+    "case": "main_memory-bandwidth:P800",
+    "physical_ids": "3",
+    "returncode": 0,
+    "error": ""
+  },
+  {
+    "case": "main_memory-capacity:P800",
+    "physical_ids": "3",
+    "returncode": 0,
+    "error": ""
+  }
+]

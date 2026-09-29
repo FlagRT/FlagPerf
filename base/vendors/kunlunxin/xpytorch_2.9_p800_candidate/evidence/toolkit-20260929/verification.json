@@ -1,0 +1,57 @@
+{
+  "candidate_validated": false,
+  "case_coverage": 12,
+  "formal_qualification": false,
+  "physical_card_1_excluded": true,
+  "runs": [
+    {
+      "experiment_status_preserved": true,
+      "index_sha256": "9001454074b15137786b9ef91d4bde81c5384f1215cab2eff19146f2d14a23a8",
+      "monitoring_status": "passed",
+      "raw_evidence_unchanged": true,
+      "report_regeneration": "byte-identical",
+      "run_id": "20260929T041155Z-e100eb5e",
+      "sha256_index": "passed",
+      "summary_sha256": "4d37820683d1eddbbbf3e4a9ac47d7c55df584147a5072d59849608f628a1dfd",
+      "svg_xml_valid": 115,
+      "targets_verified": 46
+    },
+    {
+      "experiment_status_preserved": true,
+      "index_sha256": "a0edb452b86f886a801f0c327bcf1bfff8de2f14a0657bc67f014c841d5e2f18",
+      "monitoring_status": "passed",
+      "raw_evidence_unchanged": true,
+      "report_regeneration": "byte-identical",
+      "run_id": "20260929T042026Z-009e799d",
+      "sha256_index": "passed",
+      "summary_sha256": "1eca5cf76793bcfb907693b6c385485040db4a639739a6ebd53d2def57dcd586",
+      "svg_xml_valid": 172,
+      "targets_verified": 65
+    },
+    {
+      "experiment_status_preserved": true,
+      "index_sha256": "07b18a1539b7fcba35277ddfa53789b0bf0fe3b448690d5beddf8c6f4c44c64d",
+      "monitoring_status": "passed",
+      "raw_evidence_unchanged": true,
+      "report_regeneration": "byte-identical",
+      "run_id": "20260929T043153Z-04c46ed7",
+      "sha256_index": "passed",
+      "summary_sha256": "2db5d108550e4b76b6b17b24cef7a7307e1eb5d791e515c955b61a26387d1b57",
+      "svg_xml_valid": 786,
+      "targets_verified": 90
+    },
+    {
+      "experiment_status_preserved": true,
+      "index_sha256": "3543653015eb2bc3dbb20d55f931c856dc24379c40fbbb34a919b6b532aa7900",
+      "monitoring_status": "partial",
+      "raw_evidence_unchanged": true,
+      "report_regeneration": "byte-identical",
+      "run_id": "20260929T043131Z-591f8f07",
+      "sha256_index": "passed",
+      "summary_sha256": "3d1995acf1147be38c55eb7f41b72ec8230aa042cb1ed20d2aaf82546cef169f",
+      "svg_xml_valid": 30,
+      "targets_verified": 95
+    }
+  ],
+  "schema_version": 1
+}

@@ -1,0 +1,39 @@
+{
+  "command": [
+    "/usr/bin/g++",
+    "-std=c++17",
+    "-O2",
+    "-Wall",
+    "-Wextra",
+    "/workspace/FlagPerf/base/toolkits/_common/kunlunxin/P800/native_bench.cpp",
+    "-I/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xhpc/xblas/include",
+    "-I/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/include",
+    "-L/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir",
+    "-lxpu_blas",
+    "-L/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/so",
+    "-lxpurt",
+    "-lcudart",
+    "-ldl",
+    "-pthread",
+    "-o",
+    "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench"
+  ],
+  "duration_s": 1.8180365655571222,
+  "finished_at": "2026-09-29T04:31:38.441520Z",
+  "finished_monotonic_s": 4497435.361414061,
+  "returncode": 0,
+  "started_at": "2026-09-29T04:31:36.623513Z",
+  "started_monotonic_s": 4497433.543377495,
+  "stderr": {
+    "bytes": 0,
+    "path": "build/compile.stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 0,
+    "path": "build/compile.stdout",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "timed_out": false,
+  "timeout_s": 120
+}

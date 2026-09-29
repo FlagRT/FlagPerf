@@ -1,0 +1,138 @@
+{
+  "bindings": [
+    {
+      "container_node": "/dev/xpu1",
+      "device_major": 195,
+      "device_minor": 1,
+      "driver": "5.0.21.47",
+      "foreign_handles_authorized": true,
+      "foreign_occupancy_observed": true,
+      "free_memory_mib": 77876,
+      "host_device_node": "/dev/xpu1",
+      "host_physical_id": 3,
+      "native_id": 0,
+      "pci_bdf": "0000:2e:00.0",
+      "power_w": 130.0,
+      "processes_empty": false,
+      "serial": "02K15K0263D002L7",
+      "temperature_c": 48.0,
+      "total_memory_mib": 98304,
+      "uncorrectable_ecc_counts": [
+        0,
+        0
+      ],
+      "used_memory_mib": 20428,
+      "utilization_percent": 100,
+      "uuid": "9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "xpu_smi_runtime": "10.2"
+    }
+  ],
+  "commands": [
+    {
+      "command": [
+        "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+        "--mode",
+        "h2d",
+        "--src",
+        "0",
+        "--src-pci",
+        "00000000:2e:00.0",
+        "--samples",
+        "25",
+        "--warmup",
+        "2",
+        "--minimum-seconds",
+        "0.0",
+        "--dimension",
+        "128",
+        "--bytes",
+        "1048576",
+        "--pinned",
+        "1",
+        "--async",
+        "0",
+        "--pinned-api",
+        "register",
+        "--async-chunk-bytes",
+        "1048576"
+      ],
+      "duration_s": 0.11551508866250515,
+      "finished_at": "2026-09-29T04:31:45.630079Z",
+      "finished_monotonic_s": 4497442.54997262,
+      "returncode": 0,
+      "started_at": "2026-09-29T04:31:45.514585Z",
+      "started_monotonic_s": 4497442.434457531,
+      "stderr": {
+        "bytes": 4284,
+        "path": "cases/interconnect-h2d/physical-3-1048576B-pinned-blocking/repeat-1/microbenchmark.stderr",
+        "sha256": "a145146d96eeebfb3026ab18a98051fec85d3c24e5eb79d5a255a5418119e66e"
+      },
+      "stdout": {
+        "bytes": 574,
+        "path": "cases/interconnect-h2d/physical-3-1048576B-pinned-blocking/repeat-1/microbenchmark.stdout",
+        "sha256": "58f1c038dec81d389e0fce98150c14a3142af0d85bc5db7a2d53a7184e793308"
+      },
+      "timed_out": false,
+      "timeout_s": 180
+    }
+  ],
+  "diagnosis_status": "not-supported",
+  "duration_s": 0.11551508866250515,
+  "invalid_monitor_samples": 0,
+  "measurement_status": "passed",
+  "measurement_window": {
+    "finished_monotonic_s": 4497442.492585173,
+    "role": "measurement",
+    "started_monotonic_s": 4497442.487584767
+  },
+  "metrics": [
+    {
+      "api_calls_per_sample": 1,
+      "async_chunk_bytes": 0,
+      "checked_values": 1048576,
+      "compute_semantics": null,
+      "correctness": true,
+      "field": "P800_METRIC/samples_ns",
+      "formula": "completed payload bytes / median_elapsed_ns (decimal GB/s)",
+      "host_pinned_api": "register",
+      "max_ns": 460780,
+      "median_ns": 169506,
+      "min_ns": 145197,
+      "physical_device_id": 3,
+      "point": {
+        "async": false,
+        "bytes": 1048576,
+        "mode": "h2d",
+        "pinned": true,
+        "source": 3
+      },
+      "repetition": 1,
+      "sample_count": 25,
+      "sample_cv": 0.3337922341294548,
+      "scope": "completed native API operation; not theoretical peak or device-only kernel time",
+      "source": "cases/interconnect-h2d/physical-3-1048576B-pinned-blocking/repeat-1/microbenchmark.stdout",
+      "source_kind": "native-xre",
+      "stability_status": "unstable",
+      "submission_scope": "single native operation",
+      "timer": "CLOCK_MONOTONIC completed API operation including synchronization",
+      "unit": "GB/s",
+      "value": 6.186070109612639
+    }
+  ],
+  "monitor_sample_counts": {
+    "3": 0
+  },
+  "monitoring_status": "partial",
+  "point": {
+    "async": false,
+    "bytes": 1048576,
+    "mode": "h2d",
+    "pinned": true,
+    "source": 3
+  },
+  "repetition": 1,
+  "schema_version": 1,
+  "status": "partial",
+  "sweep_scope": "explicit physical cards/mode/payload; native operation",
+  "target": "physical-3-1048576B-pinned-blocking/repeat-1"
+}

@@ -1,0 +1,407 @@
+{
+  "commands": [
+    {
+      "command": [
+        "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+        "--mode",
+        "gemm",
+        "--src",
+        "0",
+        "--src-pci",
+        "00000000:2e:00.0",
+        "--samples",
+        "25",
+        "--warmup",
+        "2",
+        "--minimum-seconds",
+        "0.0",
+        "--dimension",
+        "128",
+        "--dtype",
+        "FP32"
+      ],
+      "duration_s": 1.5178848784416914,
+      "finished_at": "2026-09-29T04:31:43.328777Z",
+      "finished_monotonic_s": 4497440.248665265,
+      "returncode": 0,
+      "started_at": "2026-09-29T04:31:41.810906Z",
+      "started_monotonic_s": 4497438.730780386,
+      "stderr": {
+        "bytes": 4425,
+        "path": "cases/computation-FP32/physical-3/repeat-1/microbenchmark.stderr",
+        "sha256": "21e40414436ac751ae208399b2677ff35c22fb1c3fb7fcf6444602b5e105a0b5"
+      },
+      "stdout": {
+        "bytes": 553,
+        "path": "cases/computation-FP32/physical-3/repeat-1/microbenchmark.stdout",
+        "sha256": "6d62c7c3840ae181a69ec3816af61108b06ff8f9e15290e9fca093ee893a6bf0"
+      },
+      "timed_out": false,
+      "timeout_s": 180
+    },
+    {
+      "command": [
+        "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+        "--mode",
+        "gemm",
+        "--src",
+        "1",
+        "--src-pci",
+        "00000000:bb:00.0",
+        "--samples",
+        "25",
+        "--warmup",
+        "2",
+        "--minimum-seconds",
+        "0.0",
+        "--dimension",
+        "128",
+        "--dtype",
+        "FP32"
+      ],
+      "duration_s": 0.11630797199904919,
+      "finished_at": "2026-09-29T04:31:43.446856Z",
+      "finished_monotonic_s": 4497440.366744279,
+      "returncode": 0,
+      "started_at": "2026-09-29T04:31:43.330567Z",
+      "started_monotonic_s": 4497440.250436307,
+      "stderr": {
+        "bytes": 4425,
+        "path": "cases/computation-FP32/physical-7/repeat-1/microbenchmark.stderr",
+        "sha256": "4ae043bdf2c7c92f7d67eaa1edcbbcb0991b105307c2b84d884377860a7274ad"
+      },
+      "stdout": {
+        "bytes": 547,
+        "path": "cases/computation-FP32/physical-7/repeat-1/microbenchmark.stdout",
+        "sha256": "90bb9cedadb95502bef8cd0830961d175b63887a183000a5063e80bfa1329f01"
+      },
+      "timed_out": false,
+      "timeout_s": 180
+    }
+  ],
+  "diagnosis_status": "not-supported",
+  "duration_s": 1.6341928504407406,
+  "measurement_status": "passed",
+  "metrics": [
+    {
+      "api_calls_per_sample": 1,
+      "async_chunk_bytes": 0,
+      "checked_values": 16384,
+      "compute_semantics": "XBLAS GemmEx FP32 accumulation/output",
+      "correctness": true,
+      "field": "P800_METRIC/samples_ns",
+      "formula": "2*M*N*K / median_elapsed_ns / 1000",
+      "max_ns": 39602649,
+      "median_ns": 11850,
+      "min_ns": 11640,
+      "physical_device_id": 3,
+      "point": {
+        "dtype": "FP32",
+        "mode": "gemm",
+        "source": 3
+      },
+      "repetition": 1,
+      "sample_count": 25,
+      "sample_cv": 4.281049897948719,
+      "scope": "completed native API operation; not theoretical peak or device-only kernel time",
+      "source": "cases/computation-FP32/physical-3/repeat-1/microbenchmark.stdout",
+      "source_kind": "native-xblas",
+      "stability_status": "unstable",
+      "submission_scope": "single native operation",
+      "timer": "CLOCK_MONOTONIC completed API operation including synchronization",
+      "unit": "TFLOPS",
+      "value": 0.35394970464135017
+    },
+    {
+      "api_calls_per_sample": 1,
+      "async_chunk_bytes": 0,
+      "checked_values": 16384,
+      "compute_semantics": "XBLAS GemmEx FP32 accumulation/output",
+      "correctness": true,
+      "field": "P800_METRIC/samples_ns",
+      "formula": "2*M*N*K / median_elapsed_ns / 1000",
+      "max_ns": 549629,
+      "median_ns": 12080,
+      "min_ns": 11799,
+      "physical_device_id": 7,
+      "point": {
+        "dtype": "FP32",
+        "mode": "gemm",
+        "source": 7
+      },
+      "repetition": 1,
+      "sample_count": 25,
+      "sample_cv": 2.6616280807416945,
+      "scope": "completed native API operation; not theoretical peak or device-only kernel time",
+      "source": "cases/computation-FP32/physical-7/repeat-1/microbenchmark.stdout",
+      "source_kind": "native-xblas",
+      "stability_status": "unstable",
+      "submission_scope": "single native operation",
+      "timer": "CLOCK_MONOTONIC completed API operation including synchronization",
+      "unit": "TFLOPS",
+      "value": 0.34721059602649007
+    }
+  ],
+  "monitoring_status": "partial",
+  "status": "partial",
+  "sweep_scope": {
+    "physical_ids": [
+      3,
+      7
+    ],
+    "point_count": 2,
+    "repeat": 1
+  },
+  "targets": [
+    {
+      "bindings": [
+        {
+          "container_node": "/dev/xpu1",
+          "device_major": 195,
+          "device_minor": 1,
+          "driver": "5.0.21.47",
+          "foreign_handles_authorized": true,
+          "foreign_occupancy_observed": true,
+          "free_memory_mib": 77876,
+          "host_device_node": "/dev/xpu1",
+          "host_physical_id": 3,
+          "native_id": 0,
+          "pci_bdf": "0000:2e:00.0",
+          "power_w": 130.0,
+          "processes_empty": false,
+          "serial": "02K15K0263D002L7",
+          "temperature_c": 48.0,
+          "total_memory_mib": 98304,
+          "uncorrectable_ecc_counts": [
+            0,
+            0
+          ],
+          "used_memory_mib": 20428,
+          "utilization_percent": 100,
+          "uuid": "9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+          "xpu_smi_runtime": "10.2"
+        }
+      ],
+      "commands": [
+        {
+          "command": [
+            "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+            "--mode",
+            "gemm",
+            "--src",
+            "0",
+            "--src-pci",
+            "00000000:2e:00.0",
+            "--samples",
+            "25",
+            "--warmup",
+            "2",
+            "--minimum-seconds",
+            "0.0",
+            "--dimension",
+            "128",
+            "--dtype",
+            "FP32"
+          ],
+          "duration_s": 1.5178848784416914,
+          "finished_at": "2026-09-29T04:31:43.328777Z",
+          "finished_monotonic_s": 4497440.248665265,
+          "returncode": 0,
+          "started_at": "2026-09-29T04:31:41.810906Z",
+          "started_monotonic_s": 4497438.730780386,
+          "stderr": {
+            "bytes": 4425,
+            "path": "cases/computation-FP32/physical-3/repeat-1/microbenchmark.stderr",
+            "sha256": "21e40414436ac751ae208399b2677ff35c22fb1c3fb7fcf6444602b5e105a0b5"
+          },
+          "stdout": {
+            "bytes": 553,
+            "path": "cases/computation-FP32/physical-3/repeat-1/microbenchmark.stdout",
+            "sha256": "6d62c7c3840ae181a69ec3816af61108b06ff8f9e15290e9fca093ee893a6bf0"
+          },
+          "timed_out": false,
+          "timeout_s": 180
+        }
+      ],
+      "diagnosis_status": "not-supported",
+      "duration_s": 1.5178848784416914,
+      "invalid_monitor_samples": 0,
+      "measurement_status": "passed",
+      "measurement_window": {
+        "finished_monotonic_s": 4497440.182491292,
+        "role": "measurement",
+        "started_monotonic_s": 4497440.137151602
+      },
+      "metrics": [
+        {
+          "api_calls_per_sample": 1,
+          "async_chunk_bytes": 0,
+          "checked_values": 16384,
+          "compute_semantics": "XBLAS GemmEx FP32 accumulation/output",
+          "correctness": true,
+          "field": "P800_METRIC/samples_ns",
+          "formula": "2*M*N*K / median_elapsed_ns / 1000",
+          "max_ns": 39602649,
+          "median_ns": 11850,
+          "min_ns": 11640,
+          "physical_device_id": 3,
+          "point": {
+            "dtype": "FP32",
+            "mode": "gemm",
+            "source": 3
+          },
+          "repetition": 1,
+          "sample_count": 25,
+          "sample_cv": 4.281049897948719,
+          "scope": "completed native API operation; not theoretical peak or device-only kernel time",
+          "source": "cases/computation-FP32/physical-3/repeat-1/microbenchmark.stdout",
+          "source_kind": "native-xblas",
+          "stability_status": "unstable",
+          "submission_scope": "single native operation",
+          "timer": "CLOCK_MONOTONIC completed API operation including synchronization",
+          "unit": "TFLOPS",
+          "value": 0.35394970464135017
+        }
+      ],
+      "monitor_sample_counts": {
+        "3": 0
+      },
+      "monitoring_status": "partial",
+      "point": {
+        "dtype": "FP32",
+        "mode": "gemm",
+        "source": 3
+      },
+      "repetition": 1,
+      "schema_version": 1,
+      "status": "partial",
+      "sweep_scope": "explicit physical cards/mode/payload; native operation",
+      "target": "physical-3/repeat-1"
+    },
+    {
+      "bindings": [
+        {
+          "container_node": "/dev/xpu6",
+          "device_major": 195,
+          "device_minor": 6,
+          "driver": "5.0.21.47",
+          "foreign_handles_authorized": true,
+          "foreign_occupancy_observed": true,
+          "free_memory_mib": 22714,
+          "host_device_node": "/dev/xpu6",
+          "host_physical_id": 7,
+          "native_id": 1,
+          "pci_bdf": "0000:bb:00.0",
+          "power_w": 220.0,
+          "processes_empty": false,
+          "serial": "02K15K0263D002GM",
+          "temperature_c": 57.0,
+          "total_memory_mib": 98304,
+          "uncorrectable_ecc_counts": [
+            0,
+            0
+          ],
+          "used_memory_mib": 75590,
+          "utilization_percent": 79,
+          "uuid": "4922595e-feb9-5762-9082-d8fd7f11abf5",
+          "xpu_smi_runtime": "10.2"
+        }
+      ],
+      "commands": [
+        {
+          "command": [
+            "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+            "--mode",
+            "gemm",
+            "--src",
+            "1",
+            "--src-pci",
+            "00000000:bb:00.0",
+            "--samples",
+            "25",
+            "--warmup",
+            "2",
+            "--minimum-seconds",
+            "0.0",
+            "--dimension",
+            "128",
+            "--dtype",
+            "FP32"
+          ],
+          "duration_s": 0.11630797199904919,
+          "finished_at": "2026-09-29T04:31:43.446856Z",
+          "finished_monotonic_s": 4497440.366744279,
+          "returncode": 0,
+          "started_at": "2026-09-29T04:31:43.330567Z",
+          "started_monotonic_s": 4497440.250436307,
+          "stderr": {
+            "bytes": 4425,
+            "path": "cases/computation-FP32/physical-7/repeat-1/microbenchmark.stderr",
+            "sha256": "4ae043bdf2c7c92f7d67eaa1edcbbcb0991b105307c2b84d884377860a7274ad"
+          },
+          "stdout": {
+            "bytes": 547,
+            "path": "cases/computation-FP32/physical-7/repeat-1/microbenchmark.stdout",
+            "sha256": "90bb9cedadb95502bef8cd0830961d175b63887a183000a5063e80bfa1329f01"
+          },
+          "timed_out": false,
+          "timeout_s": 180
+        }
+      ],
+      "diagnosis_status": "not-supported",
+      "duration_s": 0.11630797199904919,
+      "invalid_monitor_samples": 0,
+      "measurement_status": "passed",
+      "measurement_window": {
+        "finished_monotonic_s": 4497440.322860449,
+        "role": "measurement",
+        "started_monotonic_s": 4497440.32186961
+      },
+      "metrics": [
+        {
+          "api_calls_per_sample": 1,
+          "async_chunk_bytes": 0,
+          "checked_values": 16384,
+          "compute_semantics": "XBLAS GemmEx FP32 accumulation/output",
+          "correctness": true,
+          "field": "P800_METRIC/samples_ns",
+          "formula": "2*M*N*K / median_elapsed_ns / 1000",
+          "max_ns": 549629,
+          "median_ns": 12080,
+          "min_ns": 11799,
+          "physical_device_id": 7,
+          "point": {
+            "dtype": "FP32",
+            "mode": "gemm",
+            "source": 7
+          },
+          "repetition": 1,
+          "sample_count": 25,
+          "sample_cv": 2.6616280807416945,
+          "scope": "completed native API operation; not theoretical peak or device-only kernel time",
+          "source": "cases/computation-FP32/physical-7/repeat-1/microbenchmark.stdout",
+          "source_kind": "native-xblas",
+          "stability_status": "unstable",
+          "submission_scope": "single native operation",
+          "timer": "CLOCK_MONOTONIC completed API operation including synchronization",
+          "unit": "TFLOPS",
+          "value": 0.34721059602649007
+        }
+      ],
+      "monitor_sample_counts": {
+        "7": 0
+      },
+      "monitoring_status": "partial",
+      "point": {
+        "dtype": "FP32",
+        "mode": "gemm",
+        "source": 7
+      },
+      "repetition": 1,
+      "schema_version": 1,
+      "status": "partial",
+      "sweep_scope": "explicit physical cards/mode/payload; native operation",
+      "target": "physical-7/repeat-1"
+    }
+  ]
+}

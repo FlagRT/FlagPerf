@@ -1,0 +1,26 @@
+native_library=/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/so/libxpurt.so.2
+native_library=/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxpu_blas.so
+cublas_math_mode=0
+compute_api=XBLAS fc_fusion<int8_t,int8_t,float,int8_t,float,float>; FP32 output; maxima=127; alpha=1 beta=0; no bias; LINEAR activation
+loaded_map=7940d5e00000-7940d5fb1000 r-xp 00000000 00:101 10834817653               /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/so/libxpucuda.so.1
+loaded_map=7940d5fb1000-7940d61b1000 ---p 001b1000 00:101 10834817653               /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/so/libxpucuda.so.1
+loaded_map=7940d61b1000-7940d61bc000 r--p 001b1000 00:101 10834817653               /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/so/libxpucuda.so.1
+loaded_map=7940d61bc000-7940d61bf000 rw-p 001bc000 00:101 10834817653               /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/so/libxpucuda.so.1
+loaded_map=7940d61d5000-7940d63d4000 ---p 003d5000 00:101 10834817653               /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/so/libxpucuda.so.1
+loaded_map=7940d63d4000-7940d63d6000 rw-p 001d4000 00:101 10834817653               /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/so/libxpucuda.so.1
+loaded_map=7940e1746000-7940e1751000 r--p 00000000 00:101 37754548                  /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxpujitc.so
+loaded_map=7940e1751000-7940e1773000 r-xp 0000b000 00:101 37754548                  /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxpujitc.so
+loaded_map=7940e1773000-7940e1778000 r--p 0002d000 00:101 37754548                  /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxpujitc.so
+loaded_map=7940e1778000-7940e1779000 ---p 00032000 00:101 37754548                  /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxpujitc.so
+loaded_map=7940e1779000-7940e177a000 r--p 00032000 00:101 37754548                  /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxpujitc.so
+loaded_map=7940e177a000-7940e1800000 rw-p 00033000 00:101 37754548                  /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxpujitc.so
+loaded_map=7940e1800000-7940e183e000 r-xp 00000000 00:101 10834817728               /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/so/libxpurt.so.2
+loaded_map=7940e183e000-7940e1a3d000 ---p 0003e000 00:101 10834817728               /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/so/libxpurt.so.2
+loaded_map=7940e1a3d000-7940e1a3e000 r--p 0003d000 00:101 10834817728               /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/so/libxpurt.so.2
+loaded_map=7940e1a3e000-7940e1a3f000 rw-p 0003e000 00:101 10834817728               /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/so/libxpurt.so.2
+loaded_map=7940e1b1c000-7940e24a0000 r--p 00000000 00:101 37754544                  /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxpu_blas.so
+loaded_map=7940e24a0000-7940e601c000 r-xp 00984000 00:101 37754544                  /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxpu_blas.so
+loaded_map=7940e601c000-7940e72e1000 r--p 04500000 00:101 37754544                  /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxpu_blas.so
+loaded_map=7940e72e1000-7940e7355000 r--p 057c4000 00:101 37754544                  /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxpu_blas.so
+loaded_map=7940e7355000-7940ead57000 rw-p 05838000 00:101 37754544                  /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxpu_blas.so
+loaded_map=7940ead80000-794121627000 rw-p 0923a000 00:101 37754544                  /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxpu_blas.so

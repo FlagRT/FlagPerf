@@ -1,0 +1,24 @@
+{
+  "command": [
+    "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xre/tools/test_memcpy_peer",
+    "-h"
+  ],
+  "duration_s": 0.004187162034213543,
+  "finished_at": "2026-09-29T04:31:36.613874Z",
+  "finished_monotonic_s": 4497433.533738667,
+  "returncode": 1,
+  "started_at": "2026-09-29T04:31:36.609688Z",
+  "started_monotonic_s": 4497433.529551505,
+  "stderr": {
+    "bytes": 1088,
+    "path": "environment/test_memcpy_peer/help.stderr",
+    "sha256": "88c43e3211443c7db5040c42c5938785fe4bbc5272a8aed2ef622be535a64a02"
+  },
+  "stdout": {
+    "bytes": 0,
+    "path": "environment/test_memcpy_peer/help.stdout",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "timed_out": false,
+  "timeout_s": 15
+}

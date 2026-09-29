@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="850" viewBox="0 0 1100 850">
+<rect width="100%" height="100%" fill="white"/>
+<g font-family="sans-serif" font-size="13" fill="#263247">
+<text x="20" y="28" font-size="18">D2D first 25 measured samples / card 7 / 1048576 B (GB/s)</text>
+<line x1="420" y1="50" x2="420" y2="820" stroke="#b7c0ca"/>
+<text x="420" y="840">0</text>
+<text x="16" y="75">sample 1</text>
+<rect x="420" y="60" width="153.919" height="20" fill="#3873a5"/>
+<text x="581.919" y="75">2.90246</text>
+<text x="16" y="105">sample 2</text>
+<rect x="420" y="90" width="89.204" height="20" fill="#3873a5"/>
+<text x="517.204" y="105">1.68212</text>
+<text x="16" y="135">sample 3</text>
+<rect x="420" y="120" width="330.879" height="20" fill="#3873a5"/>
+<text x="758.879" y="135">6.23941</text>
+<text x="16" y="165">sample 4</text>
+<rect x="420" y="150" width="261.512" height="20" fill="#3873a5"/>
+<text x="689.512" y="165">4.93134</text>
+<text x="16" y="195">sample 5</text>
+<rect x="420" y="180" width="387.834" height="20" fill="#3873a5"/>
+<text x="815.834" y="195">7.31342</text>
+<text x="16" y="225">sample 6</text>
+<rect x="420" y="210" width="355.184" height="20" fill="#3873a5"/>
+<text x="783.184" y="225">6.69773</text>
+<text x="16" y="255">sample 7</text>
+<rect x="420" y="240" width="441.157" height="20" fill="#3873a5"/>
+<text x="869.157" y="255">8.31893</text>
+<text x="16" y="285">sample 8</text>
+<rect x="420" y="270" width="530.000" height="20" fill="#3873a5"/>
+<text x="958.000" y="285">9.99424</text>
+<text x="16" y="315">sample 9</text>
+<rect x="420" y="300" width="527.937" height="20" fill="#3873a5"/>
+<text x="955.937" y="315">9.95534</text>
+<text x="16" y="345">sample 10</text>
+<rect x="420" y="330" width="489.077" height="20" fill="#3873a5"/>
+<text x="917.077" y="345">9.22255</text>
+<text x="16" y="375">sample 11</text>
+<rect x="420" y="360" width="463.859" height="20" fill="#3873a5"/>
+<text x="891.859" y="375">8.74703</text>
+<text x="16" y="405">sample 12</text>
+<rect x="420" y="390" width="529.243" height="20" fill="#3873a5"/>
+<text x="957.243" y="405">9.97997</text>
+<text x="16" y="435">sample 13</text>
+<rect x="420" y="420" width="492.848" height="20" fill="#3873a5"/>
+<text x="920.848" y="435">9.29366</text>
+<text x="16" y="465">sample 14</text>
+<rect x="420" y="450" width="443.193" height="20" fill="#3873a5"/>
+<text x="871.193" y="465">8.35732</text>
+<text x="16" y="495">sample 15</text>
+<rect x="420" y="480" width="465.455" height="20" fill="#3873a5"/>
+<text x="893.455" y="495">8.77712</text>
+<text x="16" y="525">sample 16</text>
+<rect x="420" y="510" width="476.336" height="20" fill="#3873a5"/>
+<text x="904.336" y="525">8.9823</text>
+<text x="16" y="555">sample 17</text>
+<rect x="420" y="540" width="305.907" height="20" fill="#3873a5"/>
+<text x="733.907" y="555">5.76851</text>
+<text x="16" y="585">sample 18</text>
+<rect x="420" y="570" width="427.227" height="20" fill="#3873a5"/>
+<text x="855.227" y="585">8.05624</text>
+<text x="16" y="615">sample 19</text>
+<rect x="420" y="600" width="453.420" height="20" fill="#3873a5"/>
+<text x="881.420" y="615">8.55017</text>
+<text x="16" y="645">sample 20</text>
+<rect x="420" y="630" width="345.026" height="20" fill="#3873a5"/>
+<text x="773.026" y="645">6.50619</text>
+<text x="16" y="675">sample 21</text>
+<rect x="420" y="660" width="391.493" height="20" fill="#3873a5"/>
+<text x="819.493" y="675">7.38241</text>
+<text x="16" y="705">sample 22</text>
+<rect x="420" y="690" width="509.740" height="20" fill="#3873a5"/>
+<text x="937.740" y="705">9.6122</text>
+<text x="16" y="735">sample 23</text>
+<rect x="420" y="720" width="492.146" height="20" fill="#3873a5"/>
+<text x="920.146" y="735">9.28042</text>
+<text x="16" y="765">sample 24</text>
+<rect x="420" y="750" width="525.845" height="20" fill="#3873a5"/>
+<text x="953.845" y="765">9.91589</text>
+<text x="16" y="795">sample 25</text>
+<rect x="420" y="780" width="499.663" height="20" fill="#3873a5"/>
+<text x="927.663" y="795">9.42218</text>
+</g></svg>

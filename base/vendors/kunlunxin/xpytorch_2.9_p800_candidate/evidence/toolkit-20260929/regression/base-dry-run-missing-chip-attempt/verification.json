@@ -1,0 +1,62 @@
+[
+  {
+    "case": "computation-BF16",
+    "physical_ids": "3",
+    "returncode": 2,
+    "error": "ERROR: runtime requirements missing for kunlunxin/computation-BF16\n"
+  },
+  {
+    "case": "computation-FP16",
+    "physical_ids": "3",
+    "returncode": 2,
+    "error": "ERROR: runtime requirements missing for kunlunxin/computation-FP16\n"
+  },
+  {
+    "case": "computation-FP32",
+    "physical_ids": "3",
+    "returncode": 2,
+    "error": "ERROR: runtime requirements missing for kunlunxin/computation-FP32\n"
+  },
+  {
+    "case": "computation-INT8",
+    "physical_ids": "3",
+    "returncode": 2,
+    "error": "ERROR: runtime requirements missing for kunlunxin/computation-INT8\n"
+  },
+  {
+    "case": "interconnect-MPI_intraserver",
+    "physical_ids": "3,4",
+    "returncode": 2,
+    "error": "ERROR: runtime requirements missing for kunlunxin/interconnect-MPI_intraserver\n"
+  },
+  {
+    "case": "interconnect-P2P_intraserver",
+    "physical_ids": "3,4",
+    "returncode": 2,
+    "error": "ERROR: runtime requirements missing for kunlunxin/interconnect-P2P_intraserver\n"
+  },
+  {
+    "case": "interconnect-d2h",
+    "physical_ids": "3",
+    "returncode": 2,
+    "error": "ERROR: runtime requirements missing for kunlunxin/interconnect-d2h\n"
+  },
+  {
+    "case": "interconnect-h2d",
+    "physical_ids": "3",
+    "returncode": 2,
+    "error": "ERROR: runtime requirements missing for kunlunxin/interconnect-h2d\n"
+  },
+  {
+    "case": "main_memory-bandwidth",
+    "physical_ids": "3",
+    "returncode": 2,
+    "error": "ERROR: runtime requirements missing for kunlunxin/main_memory-bandwidth\n"
+  },
+  {
+    "case": "main_memory-capacity",
+    "physical_ids": "3",
+    "returncode": 2,
+    "error": "ERROR: runtime requirements missing for kunlunxin/main_memory-capacity\n"
+  }
+]

@@ -1,0 +1,137 @@
+{
+  "bindings": [
+    {
+      "container_node": "/dev/xpu1",
+      "device_major": 195,
+      "device_minor": 1,
+      "driver": "5.0.21.47",
+      "foreign_handles_authorized": true,
+      "foreign_occupancy_observed": true,
+      "free_memory_mib": 77876,
+      "host_device_node": "/dev/xpu1",
+      "host_physical_id": 3,
+      "native_id": 0,
+      "pci_bdf": "0000:2e:00.0",
+      "power_w": 130.0,
+      "processes_empty": false,
+      "serial": "02K15K0263D002L7",
+      "temperature_c": 48.0,
+      "total_memory_mib": 98304,
+      "uncorrectable_ecc_counts": [
+        0,
+        0
+      ],
+      "used_memory_mib": 20428,
+      "utilization_percent": 100,
+      "uuid": "9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "xpu_smi_runtime": "10.2"
+    }
+  ],
+  "commands": [
+    {
+      "command": [
+        "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+        "--mode",
+        "d2h",
+        "--src",
+        "0",
+        "--src-pci",
+        "00000000:2e:00.0",
+        "--samples",
+        "25",
+        "--warmup",
+        "2",
+        "--minimum-seconds",
+        "0.0",
+        "--dimension",
+        "128",
+        "--bytes",
+        "4096",
+        "--pinned",
+        "0",
+        "--async",
+        "1",
+        "--pinned-api",
+        "register",
+        "--async-chunk-bytes",
+        "1048576"
+      ],
+      "duration_s": 0.06498836725950241,
+      "finished_at": "2026-09-29T04:31:50.195173Z",
+      "finished_monotonic_s": 4497447.115060426,
+      "returncode": 0,
+      "started_at": "2026-09-29T04:31:50.130197Z",
+      "started_monotonic_s": 4497447.050072059,
+      "stderr": {
+        "bytes": 4258,
+        "path": "cases/interconnect-d2h-latency/physical-3-4096B-pageable-nonblocking/repeat-1/microbenchmark.stderr",
+        "sha256": "0be0514f5d46de98e5f1e9851825ede134637f563df66e692a385afa4320ae48"
+      },
+      "stdout": {
+        "bytes": 543,
+        "path": "cases/interconnect-d2h-latency/physical-3-4096B-pageable-nonblocking/repeat-1/microbenchmark.stdout",
+        "sha256": "efb8fb93e38495f21418d2d84e4655a8530ed0508cb19ff30eb2ba153f5bcf27"
+      },
+      "timed_out": false,
+      "timeout_s": 180
+    }
+  ],
+  "diagnosis_status": "not-supported",
+  "duration_s": 0.06498836725950241,
+  "invalid_monitor_samples": 0,
+  "measurement_status": "passed",
+  "measurement_window": {
+    "finished_monotonic_s": 4497447.092278934,
+    "role": "measurement",
+    "started_monotonic_s": 4497447.091660777
+  },
+  "metrics": [
+    {
+      "api_calls_per_sample": 1,
+      "async_chunk_bytes": 0,
+      "checked_values": 4096,
+      "compute_semantics": null,
+      "correctness": true,
+      "field": "P800_METRIC/samples_ns",
+      "formula": "median(completed API copy + synchronization nanoseconds)",
+      "max_ns": 36089,
+      "median_ns": 23340,
+      "min_ns": 15920,
+      "physical_device_id": 3,
+      "point": {
+        "async": true,
+        "bytes": 4096,
+        "mode": "d2h",
+        "pinned": false,
+        "source": 3
+      },
+      "repetition": 1,
+      "sample_count": 25,
+      "sample_cv": 0.21652705470430256,
+      "scope": "completed native API operation; not theoretical peak or device-only kernel time",
+      "source": "cases/interconnect-d2h-latency/physical-3-4096B-pageable-nonblocking/repeat-1/microbenchmark.stdout",
+      "source_kind": "native-xre",
+      "stability_status": "unstable",
+      "submission_scope": "single native operation",
+      "timer": "CLOCK_MONOTONIC completed API operation including synchronization",
+      "unit": "ns",
+      "value": 23340
+    }
+  ],
+  "monitor_sample_counts": {
+    "3": 0
+  },
+  "monitoring_status": "partial",
+  "point": {
+    "async": true,
+    "bytes": 4096,
+    "mode": "d2h",
+    "pinned": false,
+    "source": 3
+  },
+  "repetition": 1,
+  "schema_version": 1,
+  "status": "partial",
+  "sweep_scope": "explicit physical cards/mode/payload; native operation",
+  "target": "physical-3-4096B-pageable-nonblocking/repeat-1"
+}

@@ -1,0 +1,172 @@
+{
+  "bindings": [
+    {
+      "container_node": "/dev/xpu1",
+      "device_major": 195,
+      "device_minor": 1,
+      "driver": "5.0.21.47",
+      "foreign_handles_authorized": true,
+      "foreign_occupancy_observed": true,
+      "free_memory_mib": 77876,
+      "host_device_node": "/dev/xpu1",
+      "host_physical_id": 3,
+      "native_id": 0,
+      "pci_bdf": "0000:2e:00.0",
+      "power_w": 130.0,
+      "processes_empty": false,
+      "serial": "02K15K0263D002L7",
+      "temperature_c": 48.0,
+      "total_memory_mib": 98304,
+      "uncorrectable_ecc_counts": [
+        0,
+        0
+      ],
+      "used_memory_mib": 20428,
+      "utilization_percent": 100,
+      "uuid": "9429f5bd-7d13-5cc5-b1b4-c05ddc572f57",
+      "xpu_smi_runtime": "10.2"
+    },
+    {
+      "container_node": "/dev/xpu6",
+      "device_major": 195,
+      "device_minor": 6,
+      "driver": "5.0.21.47",
+      "foreign_handles_authorized": true,
+      "foreign_occupancy_observed": true,
+      "free_memory_mib": 22714,
+      "host_device_node": "/dev/xpu6",
+      "host_physical_id": 7,
+      "native_id": 1,
+      "pci_bdf": "0000:bb:00.0",
+      "power_w": 220.0,
+      "processes_empty": false,
+      "serial": "02K15K0263D002GM",
+      "temperature_c": 57.0,
+      "total_memory_mib": 98304,
+      "uncorrectable_ecc_counts": [
+        0,
+        0
+      ],
+      "used_memory_mib": 75590,
+      "utilization_percent": 79,
+      "uuid": "4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "xpu_smi_runtime": "10.2"
+    }
+  ],
+  "commands": [
+    {
+      "command": [
+        "/workspace/FlagPerf/results/toolkit-evidence/build/native_bench",
+        "--mode",
+        "p2p",
+        "--src",
+        "0",
+        "--src-pci",
+        "00000000:2e:00.0",
+        "--samples",
+        "25",
+        "--warmup",
+        "2",
+        "--minimum-seconds",
+        "0.0",
+        "--dimension",
+        "128",
+        "--dst",
+        "1",
+        "--dst-pci",
+        "00000000:bb:00.0",
+        "--bytes",
+        "1048576",
+        "--pinned",
+        "0",
+        "--async",
+        "0",
+        "--pinned-api",
+        "register",
+        "--async-chunk-bytes",
+        "1048576"
+      ],
+      "duration_s": 0.11542924027889967,
+      "finished_at": "2026-09-29T04:31:52.675658Z",
+      "finished_monotonic_s": 4497449.595553195,
+      "returncode": 0,
+      "started_at": "2026-09-29T04:31:52.560239Z",
+      "started_monotonic_s": 4497449.480123955,
+      "stderr": {
+        "bytes": 4258,
+        "path": "cases/interconnect-P2P_intraserver/physical-3-to-7-single-direction-1048576B/repeat-1/microbenchmark.stderr",
+        "sha256": "91bb2a6b877b5a3ffd1f05676d975fc0dad72fd19ead072f0f09fdcb1759b14b"
+      },
+      "stdout": {
+        "bytes": 574,
+        "path": "cases/interconnect-P2P_intraserver/physical-3-to-7-single-direction-1048576B/repeat-1/microbenchmark.stdout",
+        "sha256": "8a83ace90cbeb646bd0274cc1720816cb35be4fb6aac182b9bde2a35a0bf74c6"
+      },
+      "timed_out": false,
+      "timeout_s": 180
+    }
+  ],
+  "diagnosis_status": "not-supported",
+  "duration_s": 0.11542924027889967,
+  "invalid_monitor_samples": 0,
+  "measurement_status": "passed",
+  "measurement_window": {
+    "finished_monotonic_s": 4497449.555638222,
+    "role": "measurement",
+    "started_monotonic_s": 4497449.552539617
+  },
+  "metrics": [
+    {
+      "api_calls_per_sample": 1,
+      "async_chunk_bytes": 0,
+      "checked_values": 1048576,
+      "compute_semantics": null,
+      "correctness": true,
+      "field": "P800_METRIC/samples_ns",
+      "formula": "completed payload bytes / median_elapsed_ns (decimal GB/s)",
+      "max_ns": 264655,
+      "median_ns": 116687,
+      "min_ns": 103848,
+      "physical_device_id": 3,
+      "point": {
+        "async": false,
+        "bytes": 1048576,
+        "destination": 7,
+        "direction": "single-direction",
+        "mode": "p2p",
+        "pinned": false,
+        "source": 3
+      },
+      "repetition": 1,
+      "sample_count": 25,
+      "sample_cv": 0.2537662106184019,
+      "scope": "completed native API operation; not theoretical peak or device-only kernel time",
+      "source": "cases/interconnect-P2P_intraserver/physical-3-to-7-single-direction-1048576B/repeat-1/microbenchmark.stdout",
+      "source_kind": "native-xre",
+      "stability_status": "unstable",
+      "submission_scope": "single native operation",
+      "timer": "CLOCK_MONOTONIC completed API operation including synchronization",
+      "unit": "GB/s",
+      "value": 8.986228114528611
+    }
+  ],
+  "monitor_sample_counts": {
+    "3": 0,
+    "7": 0
+  },
+  "monitoring_status": "partial",
+  "point": {
+    "async": false,
+    "bytes": 1048576,
+    "destination": 7,
+    "direction": "single-direction",
+    "mode": "p2p",
+    "pinned": false,
+    "source": 3
+  },
+  "repetition": 1,
+  "schema_version": 1,
+  "status": "partial",
+  "sweep_scope": "explicit physical cards/mode/payload; native operation",
+  "target": "physical-3-to-7-single-direction-1048576B/repeat-1"
+}
