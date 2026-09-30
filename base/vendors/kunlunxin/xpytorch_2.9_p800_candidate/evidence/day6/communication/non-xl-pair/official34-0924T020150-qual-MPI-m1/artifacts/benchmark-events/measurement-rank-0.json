@@ -1,0 +1,14 @@
+{
+  "case": "interconnect-MPI_intraserver:P800",
+  "duration_s": 18.899002208,
+  "finished_at": "2026-09-24T02:02:53.446897Z",
+  "finished_monotonic_ns": 4056510366725447,
+  "kind": "measurement-window",
+  "local_rank": 0,
+  "pid": 233,
+  "rank": 0,
+  "schema_version": 1,
+  "started_at": "2026-09-24T02:02:34.547843Z",
+  "started_monotonic_ns": 4056491467723239,
+  "world_size": 2
+}

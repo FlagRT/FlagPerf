@@ -1,0 +1,79 @@
+{
+  "allow_candidate_runtime": true,
+  "case": "interconnect-P2P_intraserver:P800",
+  "case_assets_sha256": "a4f13aca543575e08e954c73a108e3c2b5bd0ad54cc1cfb7dba25ddd1345f08d",
+  "host": {
+    "devices": [
+      {
+        "container_node": "/dev/xpu4",
+        "device_major": 195,
+        "device_minor": 4,
+        "driver": "5.0.21.47",
+        "free_memory_mib": 98304,
+        "host_device_node": "/dev/xpu4",
+        "host_physical_id": 4,
+        "pci_bdf": "0000:84:00.0",
+        "power_w": 94.0,
+        "processes_empty": true,
+        "serial": "02K15K0263D002KG",
+        "temperature_c": 40.0,
+        "total_memory_mib": 98304,
+        "used_memory_mib": 0,
+        "utilization_percent": 0,
+        "uuid": "b7942319-362e-5a53-a8eb-a2d06fbe84f6",
+        "xpu_smi_runtime": "10.2"
+      },
+      {
+        "container_node": "/dev/xpu6",
+        "device_major": 195,
+        "device_minor": 6,
+        "driver": "5.0.21.47",
+        "free_memory_mib": 98304,
+        "host_device_node": "/dev/xpu6",
+        "host_physical_id": 7,
+        "pci_bdf": "0000:bb:00.0",
+        "power_w": 93.0,
+        "processes_empty": true,
+        "serial": "02K15K0263D002GM",
+        "temperature_c": 43.0,
+        "total_memory_mib": 98304,
+        "used_memory_mib": 0,
+        "utilization_percent": 0,
+        "uuid": "4922595e-feb9-5762-9082-d8fd7f11abf5",
+        "xpu_smi_runtime": "10.2"
+      }
+    ],
+    "machine_memory_unit": "numerically-cross-checked-with-query-MiB",
+    "readonly_observers": {
+      "4": [],
+      "7": []
+    },
+    "schema_version": 1,
+    "selection": {
+      "requested_ids": [
+        4,
+        7
+      ],
+      "source": "physical-device-ids"
+    },
+    "status": "passed"
+  },
+  "image_identity": {
+    "Architecture": "amd64",
+    "Created": "2026-08-12T21:47:16.130386935+08:00",
+    "Id": "sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975",
+    "RepoDigests": [
+      "flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev@sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975"
+    ]
+  },
+  "kind": "benchmark",
+  "master_port": 29721,
+  "nproc_per_node": 2,
+  "probe_mode": "performance",
+  "reservation_end": "2026-09-24T09:36:51.655885+00:00",
+  "reservation_reference": "user-20260924-rerun-day6-unfinished-two-card-official-gate",
+  "reservation_start": "2026-09-24T01:46:59.544684Z",
+  "run_id": "benchmark-802f212287c24c17b1796db3761f7045",
+  "schema_version": 1,
+  "timeout": 300
+}

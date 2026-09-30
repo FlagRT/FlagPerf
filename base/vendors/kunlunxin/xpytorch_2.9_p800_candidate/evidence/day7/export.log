@@ -1,0 +1,31 @@
+{
+  "archives": [
+    {
+      "file": "remote-delivery.tar.gz",
+      "description": "Day7 complete sanitized evidence archive",
+      "sha256": "748e59b18f87da2bd861420d17f6fadfa140eaaebbe92905e574d31913bd33b1",
+      "bytes": 4179472
+    },
+    {
+      "file": "remote-delta.tar.gz",
+      "description": "Source and document delta from ca9967d9; excludes evidence",
+      "sha256": "4b016483ea1f7d8653b087d4393de7a3a0e4315e0a0dd92275663274f306a716",
+      "bytes": 55035
+    }
+  ],
+  "commits": [
+    {
+      "hash": "c1d900d8d89eadba48540b34ec7873fb26da4671",
+      "subject": "fix(kunlunxin): synchronize the selected rank device"
+    },
+    {
+      "hash": "e373664aa5324a21c04196d1971f9ea013ab9f3c",
+      "subject": "fix(benchmark): preserve bounded early skips"
+    },
+    {
+      "hash": "871750fc07958dc180e03f645fe9942002c356d2",
+      "subject": "docs(kunlunxin): record day seven scoped delivery"
+    }
+  ],
+  "delta_files": 10
+}

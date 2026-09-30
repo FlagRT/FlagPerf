@@ -31,8 +31,7 @@ python3 base/run.py toolkit run \
 python3 base/run.py report --result-root base/result/p800-toolkit --run-id RUN_ID
 ```
 
-Card **1 is excluded** by operator instruction, including ranges such as `0-7`.
-There is no default-all device selector. Check the host inventory first and prefer
+Card **1 is reserved for the authorized eight-card Base run only**. It remains excluded from normal Toolkit runs and all Toolkit ranges such as `0-7`; the eight-card authorization does not qualify a shared or unhealthy card. There is no default-all device selector. Check the host inventory first and prefer
 idle eligible cards. Busy-card permission does not override health, identity or
 lease checks, kill other processes, reset cards, or qualify a shared run as idle.
 The twelve `main.sh` entries forward their arguments to the same host facade;
@@ -69,7 +68,7 @@ All paths below are relative to the locked image's
 | FP32/FP16/BF16 computation | `xhpc/xblas/include/cublas_v2.h`, `libxpu_blas.so`; API pattern in vendor `samples/cublas/cublas_ex/sample_GemmEx.cpp` | Independently written `native_bench.cpp` calls `cublasGemmEx`, FP32 accumulation/output, no epilogue. Throughput is `2*M*N*K / time`; CPU reference checks run outside the timer. |
 | INT8 computation | `xhpc/xblas/include/xblas_legacy_deprecated_api.h`, `libxpu_blas.so`; vendor `samples/cublas_legacy/deprecated/sample_fc_fusion.cpp` | Native `fc_fusion<int8_t,int8_t,float,int8_t,float,float>`: INT8 inputs/TGEMM, FP32 output, maxima 127, alpha 1, beta 0, no bias, LINEAR activation. It is explicitly not INT8→INT32 GemmEx; the latter and Lt route failed in this candidate. |
 | H2D/D2H bandwidth/latency | `xre/include/xpu/runtime.h`, `xre/so/libxpurt.so.2` | `xpu_memcpy` or `xpu_memcpy_async` followed by stream wait. Pageable/pinned and blocking/nonblocking are independent variants. Host allocation and full-buffer verification are outside the measured interval. |
-| D2D bandwidth | Same XRE API | Single-device `XPU_DEVICE_TO_DEVICE`. Metric counts payload once. Raw per-copy timings remain in `samples.json`; no conversion to aggregate read+write HBM traffic. |
+| D2D bandwidth | Same XRE API | Runtime memcpy metric counts payload once (~10 GB/s). Independent XBLAS Scopy kernel mode reports read+write (about 2.09 TB/s) and is labeled separately; the two values must not be combined. |
 | P2P bandwidth | Same XRE `xpu_memcpy_peer` API | Six unordered pairs for four cards; ascending single direction and a separately measured concurrent two-direction protocol. The bidirectional denominator waits for both workers and includes their synchronization overhead. |
 | P2P latency | Same XRE API | 64 KiB single-direction copy + completion waits. No inferred reverse result. |
 | Capacity | `xre/bin/xpu-smi` | Per-card Memory Usage Total/Used/Free in MiB, PCI/UUID checked. This is not held-allocation or OOM stress. |

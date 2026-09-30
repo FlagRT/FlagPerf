@@ -198,6 +198,15 @@ class BenchmarkWorkload:
 
     def finalize(self, root, summary):
         try:
+            context_path = root / 'control/host-context.json'
+            if context_path.is_file():
+                host = read(context_path)['host']
+                shared = bool(host.get('foreign_occupancy_observed'))
+                degraded = any(any(d.get('uncorrectable_ecc_counts', [])) for d in host['devices'])
+                summary['resource_scope'] = 'shared' if shared else 'selected-card-idle-at-preflight'
+                summary['health_status'] = 'degraded' if degraded else 'observed-clean' if all(
+                    d.get('health_status') == 'observed-clean' for d in host['devices']) else 'unknown'
+                summary['performance_qualification'] = 'not-qualified' if shared or degraded else 'requires-five-run-audit'
             logs = read(root / 'container-logs.json') if (root / 'container-logs.json').is_file() else {}
             text = logs.get('stdout', '') + logs.get('stderr', '')
             (root / 'runner.log').write_text(text)

@@ -1,0 +1,286 @@
+{
+  "AppArmorProfile": "",
+  "Args": [
+    "/workspace/FlagPerf/base/vendors/kunlunxin/runtime_bootstrap.sh",
+    "--context",
+    "/run/flagperf/host-context.json",
+    "--output",
+    "/workspace/FlagPerf/results"
+  ],
+  "Config": {
+    "AttachStderr": true,
+    "AttachStdin": false,
+    "AttachStdout": true,
+    "Cmd": [
+      "/workspace/FlagPerf/base/vendors/kunlunxin/runtime_bootstrap.sh",
+      "--context",
+      "/run/flagperf/host-context.json",
+      "--output",
+      "/workspace/FlagPerf/results"
+    ],
+    "Domainname": "",
+    "Entrypoint": [
+      "/bin/bash"
+    ],
+    "Env": [
+      "CUDA_VISIBLE_DEVICES=0,1",
+      "USE_FLAGGEMS=0",
+      "PYTHONDONTWRITEBYTECODE=1",
+      "PYTHONNOUSERSITE=1",
+      "XDG_CACHE_HOME=/tmp/cache",
+      "TRITON_CACHE_DIR=/tmp/triton",
+      "PATH=/root/.cargo/bin:/usr/local/go/bin:/usr/local/cuda-12.8/bin:/root/miniconda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      "TZ=Asia/Shanghai",
+      "LANG=zh_CN.UTF-8",
+      "CONDA_DEFAULT_ENV=python310_torch29_cuda"
+    ],
+    "Hostname": "a671c7e61f6f",
+    "Image": "sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975",
+    "Labels": {
+      "description": "xvllm_ubuntu2204_torch29 \u73af\u5883",
+      "flagperf.run_id": "benchmark-bef186f86a364631a3026e48e2463aae",
+      "maintainer": "huangyun <huangyun07@kunlunxin.com>",
+      "org.opencontainers.image.ref.name": "ubuntu",
+      "org.opencontainers.image.version": "22.04",
+      "version": "xvllm_ubuntu2204_torch29:dev_0.1"
+    },
+    "OpenStdin": false,
+    "StdinOnce": false,
+    "Tty": false,
+    "User": "",
+    "Volumes": null,
+    "WorkingDir": "/work"
+  },
+  "Created": "2026-09-24T01:40:54.992545279Z",
+  "Driver": "overlayfs",
+  "ExecIDs": null,
+  "HostConfig": {
+    "AutoRemove": false,
+    "Binds": null,
+    "BlkioDeviceReadBps": [],
+    "BlkioDeviceReadIOps": [],
+    "BlkioDeviceWriteBps": [],
+    "BlkioDeviceWriteIOps": [],
+    "BlkioWeight": 0,
+    "BlkioWeightDevice": [],
+    "CapAdd": null,
+    "CapDrop": [
+      "ALL"
+    ],
+    "Cgroup": "",
+    "CgroupParent": "",
+    "CgroupnsMode": "private",
+    "ConsoleSize": [
+      0,
+      0
+    ],
+    "ContainerIDFile": "",
+    "CpuCount": 0,
+    "CpuPercent": 0,
+    "CpuPeriod": 0,
+    "CpuQuota": 0,
+    "CpuRealtimePeriod": 0,
+    "CpuRealtimeRuntime": 0,
+    "CpuShares": 0,
+    "CpusetCpus": "",
+    "CpusetMems": "",
+    "DeviceCgroupRules": null,
+    "DeviceRequests": null,
+    "Devices": [
+      {
+        "CgroupPermissions": "rwm",
+        "PathInContainer": "/dev/xpu4",
+        "PathOnHost": "/dev/xpu4"
+      },
+      {
+        "CgroupPermissions": "rwm",
+        "PathInContainer": "/dev/xpu6",
+        "PathOnHost": "/dev/xpu6"
+      },
+      {
+        "CgroupPermissions": "rwm",
+        "PathInContainer": "/dev/xpuctrl",
+        "PathOnHost": "/dev/xpuctrl"
+      }
+    ],
+    "Dns": null,
+    "DnsOptions": [],
+    "DnsSearch": [],
+    "ExtraHosts": null,
+    "GroupAdd": [
+      "1013"
+    ],
+    "IOMaximumBandwidth": 0,
+    "IOMaximumIOps": 0,
+    "IpcMode": "private",
+    "Isolation": "",
+    "Links": null,
+    "LogConfig": {
+      "Config": {},
+      "Type": "json-file"
+    },
+    "MaskedPaths": [
+      "/proc/acpi",
+      "/proc/asound",
+      "/proc/interrupts",
+      "/proc/kcore",
+      "/proc/keys",
+      "/proc/latency_stats",
+      "/proc/sched_debug",
+      "/proc/scsi",
+      "/proc/timer_list",
+      "/proc/timer_stats",
+      "/sys/devices/virtual/powercap",
+      "/sys/firmware"
+    ],
+    "Memory": 0,
+    "MemoryReservation": 0,
+    "MemorySwap": 0,
+    "MemorySwappiness": null,
+    "Mounts": [
+      {
+        "ReadOnly": true,
+        "Source": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base",
+        "Target": "/workspace/FlagPerf/base",
+        "Type": "bind"
+      },
+      {
+        "ReadOnly": true,
+        "Source": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day6/official-0924T013943-qual-MPI-m1/control",
+        "Target": "/run/flagperf",
+        "Type": "bind"
+      },
+      {
+        "Source": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day6/official-0924T013943-qual-MPI-m1/artifacts",
+        "Target": "/workspace/FlagPerf/results",
+        "Type": "bind"
+      }
+    ],
+    "NanoCpus": 0,
+    "NetworkMode": "flagperf-p800-internal",
+    "OomKillDisable": false,
+    "OomScoreAdj": 0,
+    "PidMode": "",
+    "PidsLimit": 512,
+    "PortBindings": {},
+    "Privileged": false,
+    "PublishAllPorts": false,
+    "ReadonlyPaths": [
+      "/proc/bus",
+      "/proc/fs",
+      "/proc/irq",
+      "/proc/sys",
+      "/proc/sysrq-trigger"
+    ],
+    "ReadonlyRootfs": true,
+    "RestartPolicy": {
+      "MaximumRetryCount": 0,
+      "Name": "no"
+    },
+    "Runtime": "runc",
+    "SecurityOpt": [
+      "no-new-privileges"
+    ],
+    "ShmSize": 536870912,
+    "Tmpfs": {
+      "/root/.cache": "rw,nosuid,size=512m",
+      "/tmp": "rw,nosuid,size=512m"
+    },
+    "UTSMode": "",
+    "Ulimits": [],
+    "UsernsMode": "",
+    "VolumeDriver": "",
+    "VolumesFrom": null
+  },
+  "HostnamePath": "",
+  "HostsPath": "",
+  "Id": "a671c7e61f6fedb88bb88ca76ca8f6856ec88a8ac3c92a8cf3761bbe8a708d31",
+  "Image": "sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975",
+  "ImageManifestDescriptor": {
+    "digest": "sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975",
+    "mediaType": "application/vnd.oci.image.manifest.v1+json",
+    "platform": {
+      "architecture": "amd64",
+      "os": "linux"
+    },
+    "size": 6138
+  },
+  "LogPath": "",
+  "MountLabel": "",
+  "Mounts": [
+    {
+      "Destination": "/workspace/FlagPerf/base",
+      "Mode": "",
+      "Propagation": "rprivate",
+      "RW": false,
+      "Source": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base",
+      "Type": "bind"
+    },
+    {
+      "Destination": "/run/flagperf",
+      "Mode": "",
+      "Propagation": "rprivate",
+      "RW": false,
+      "Source": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day6/official-0924T013943-qual-MPI-m1/control",
+      "Type": "bind"
+    },
+    {
+      "Destination": "/workspace/FlagPerf/results",
+      "Mode": "",
+      "Propagation": "rprivate",
+      "RW": true,
+      "Source": "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day6/official-0924T013943-qual-MPI-m1/artifacts",
+      "Type": "bind"
+    }
+  ],
+  "Name": "/flagperf-benchmark-bef186f86a364631a3026e48e2463aae",
+  "NetworkSettings": {
+    "Networks": {
+      "flagperf-p800-internal": {
+        "Aliases": null,
+        "DNSNames": null,
+        "DriverOpts": null,
+        "EndpointID": "",
+        "Gateway": "",
+        "GlobalIPv6Address": "",
+        "GlobalIPv6PrefixLen": 0,
+        "GwPriority": 0,
+        "IPAMConfig": null,
+        "IPAddress": "",
+        "IPPrefixLen": 0,
+        "IPv6Gateway": "",
+        "Links": null,
+        "MacAddress": "",
+        "NetworkID": ""
+      }
+    },
+    "Ports": {},
+    "SandboxID": "",
+    "SandboxKey": ""
+  },
+  "Path": "/bin/bash",
+  "Platform": "linux",
+  "ProcessLabel": "",
+  "ResolvConfPath": "",
+  "RestartCount": 0,
+  "State": {
+    "Dead": false,
+    "Error": "",
+    "ExitCode": 0,
+    "FinishedAt": "0001-01-01T00:00:00Z",
+    "OOMKilled": false,
+    "Paused": false,
+    "Pid": 0,
+    "Restarting": false,
+    "Running": false,
+    "StartedAt": "0001-01-01T00:00:00Z",
+    "Status": "created"
+  },
+  "Storage": {
+    "RootFS": {
+      "Snapshot": {
+        "Name": "overlayfs"
+      }
+    }
+  }
+}

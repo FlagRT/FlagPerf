@@ -74,7 +74,19 @@ def correctness_record(case, rank=0):
     record = {'schema_version': 1, 'status': 'passed', 'run_id': CONTEXT['run_id'],
               'context_sha256': CONTEXT_HASH, 'rank': rank, 'binding': BINDING}
     if case == 'main_memory-capacity:P800':
-        record.update(released=True, release_verified=True)
+        record.update(released=True, release_verified=True,free_before_mib=8192,free_after_mib=8192,held_mib=4096,
+                      trail=[{'stage':'held','request_mib':4096,'held_total_mib':4096}])
+    else:
+        config=VALID[case]
+        phases=(['sentinel','clone-equivalence','changed-input','after'] if case=='main_memory-bandwidth:P800'
+                else ['cold','second','post-loop'] if case=='interconnect-MPI_intraserver:P800'
+                else ['sent-verified-repeats'] if rank==0
+                else [f'recv-{i}' for i in range(config['WARMUP'])]+['post-loop'])
+        record['checks']=[dict(phase=phase,passed=True,elements=contract.payload_bytes(config['Melements'])//4,
+                               mismatch_count=0,first_mismatch=None) for phase in phases]
+        if case=='main_memory-bandwidth:P800':record.update(source_reused=True,destination_reused=True)
+        if case=='interconnect-P2P_intraserver:P800' and rank==0:
+            record['checks'][0].update(repeats=config['WARMUP'],sequence_range=[0,config['WARMUP']-1])
     return record
 
 
@@ -194,6 +206,14 @@ class Day6ArtifactValidation(unittest.TestCase):
                                      CONTEXT, CONTEXT_HASH, BINDING,
                                      VALID['interconnect-P2P_intraserver:P800'],
                                      'interconnect-P2P_intraserver:P800')
+
+    def test_passed_label_without_correctness_evidence_is_rejected(self):
+        for case in contract.CASES:
+            proof=correctness_record(case)
+            if case=='main_memory-capacity:P800':proof['free_after_mib']=1
+            else:proof['checks']=[]
+            with self.subTest(case=case),self.assertRaises(RuntimeError):
+                contract.validate_metric(metric_record(case),proof,CONTEXT,CONTEXT_HASH,BINDING,VALID[case],case)
 
     def test_capacity_requires_verified_release_and_granularity(self):
         case = 'main_memory-capacity:P800'

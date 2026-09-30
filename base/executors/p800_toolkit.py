@@ -20,9 +20,9 @@ from toolkits._common.kunlunxin.P800.contract import CASES, case_points, layer_s
 from toolkits._common.kunlunxin.P800.evidence import index, now, sha256, write_json
 
 DEFAULTS = {"allow_candidate_runtime": False, "allow_busy_devices": False,
-            "privilege_command": "", "samples": 50, "warmup": 5, "repeat": 1,
-            "payload_bytes": 536870912, "matrix_size": 2048, "minimum_seconds": 0.0,
-            "command_timeout": 180, "smoke": False, "pinned_api": "register", "async_chunk_bytes": 1048576}
+            "privilege_command": "", "samples": 50, "warmup": 5, "repeat": 5,
+            "payload_bytes": 536870912, "p2p_payload_bytes": 33554432, "matrix_size": 8192, "minimum_seconds": 0.0,
+            "command_timeout": 600, "smoke": False, "pinned_api": "register", "async_chunk_bytes": 1048576}
 
 
 def add_cli_arguments(parser):
@@ -31,11 +31,13 @@ def add_cli_arguments(parser):
     parser.add_argument("--privilege-command", default="", help="P800 host Docker/fuser prefix: empty or 'sudo -n'")
     parser.add_argument("--samples", type=int, default=50, help="P800 native timing samples per point (D2D has at least 25)")
     parser.add_argument("--warmup", type=int, default=5)
-    parser.add_argument("--repeat", type=int, default=1, help="P800 independent processes per point; use 5 for repeat groups")
+    parser.add_argument("--repeat", type=int, default=5, help="P800 independent processes per point; 5 is the adopted repeat-group standard")
     parser.add_argument("--payload-bytes", type=int, default=536870912)
-    parser.add_argument("--matrix-size", type=int, default=2048)
+    parser.add_argument("--p2p-payload-bytes", type=int, default=33554432,
+                        help="P800 P2P bandwidth payload; default 32 MiB for historical compatibility, up to 1 GiB")
+    parser.add_argument("--matrix-size", type=int, default=8192)
     parser.add_argument("--minimum-seconds", type=float, default=0.0, help="P800 explicit timed workload duration, recorded as changed scope")
-    parser.add_argument("--command-timeout", type=int, default=180)
+    parser.add_argument("--command-timeout", type=int, default=600)
     parser.add_argument("--smoke", action="store_true", help="P800 bounded correctness smoke: 1 MiB bandwidth and GEMM 128; no formal qualification")
     parser.add_argument("--pinned-api", choices=("register", "alloc"), default="register", help="P800 pinned host memory API; recorded, never changed implicitly")
     parser.add_argument("--async-chunk-bytes", type=int, default=1048576, help="P800 pinned async copy submission chunk; 0 requests one whole-payload API call")
@@ -44,7 +46,7 @@ def add_cli_arguments(parser):
 def settings_for(request):
     options = {**DEFAULTS, **(request.p800_options or {})}
     if options["smoke"]:
-        options.update(payload_bytes=1048576, matrix_size=128, samples=25, warmup=2, minimum_seconds=0.0)
+        options.update(payload_bytes=1048576, p2p_payload_bytes=1048576, matrix_size=128, samples=25, warmup=2, minimum_seconds=0.0)
     return options
 
 
@@ -71,7 +73,8 @@ def plan(request, config_path, config):
     if not 0 <= options["async_chunk_bytes"] <= 1073741824:
         raise ConfigurationError("P800 async chunk size must be 0..1 GiB")
     if not (1 <= options["repeat"] <= 20 and 25 <= options["samples"] <= 100000 and 0 <= options["warmup"] <= 100
-            and 1 <= options["payload_bytes"] <= 1073741824 and 8 <= options["matrix_size"] <= 8192
+            and 1 <= options["payload_bytes"] <= 1073741824 and 1 <= options["p2p_payload_bytes"] <= 1073741824
+            and 8 <= options["matrix_size"] <= 8192
             and options["matrix_size"] % 8 == 0 and 0 <= options["minimum_seconds"] <= 120
             and 5 <= options["command_timeout"] <= 600 and options["command_timeout"] > options["minimum_seconds"]):
         raise ConfigurationError("invalid or unbounded P800 workload settings")
@@ -86,7 +89,9 @@ def plan(request, config_path, config):
             "permissions": {"network": "none", "privileged_root": False, "ipc_namespace": "private", "pid_namespace": "private",
                             "read_only_root": True, "cap_drop": ["ALL"], "allow_busy_devices": options["allow_busy_devices"]},
             "monitoring": {"compute": request.compute_monitor, "data_movement": request.data_movement_monitor, "required_samples": 10},
-            "point_counts": {c: len(case_points(c, ids, options["payload_bytes"])) * options["repeat"] for c in cases},
+            "logical_point_counts": {c: len(case_points(c, ids, options["payload_bytes"], options["p2p_payload_bytes"])) for c in cases},
+            "repeat_count": options["repeat"],
+            "point_counts": {c: len(case_points(c, ids, options["payload_bytes"], options["p2p_payload_bytes"])) * options["repeat"] for c in cases},
             "source": "independent native XRE/XBLAS Toolkit microbenchmark; no Base workload reuse",
             "identity_gate": "host UUID/PCI/minor -> selected nodes -> native XRE PCI join before allocating",
             "stages": ["image-identity", "preflight", "lease", "locked-preflight", "container-inspect", "native-run", "monitor-finalize", "cleanup", "postflight", "lease-release", "report", "hash-index"]}

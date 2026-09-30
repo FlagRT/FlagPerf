@@ -27,6 +27,8 @@ def label(point):
     if "destination" in point:
         s += " to " + str(point["destination"])
         s += " / " + point.get("direction", "single-direction")
+    if point.get("mode") in ("d2d", "d2d-kernel"):
+        s += " / " + point["mode"] + (" (read+write)" if point["mode"] == "d2d-kernel" else " (payload)")
     if "bytes" in point:
         s += " / " + str(point["bytes"]) + " B"
     if point.get("mode") in ("h2d", "d2h"):
@@ -100,7 +102,7 @@ def generate(root):
     lines = ["# Kunlunxin P800 Toolkit 测试报告", "", f"运行：{md(summary.get('run_id'))}", "",
              f"总体状态：**{md(summary.get('status'))}**；测量：**{md(summary.get('measurement_status'))}**；监控：**{md(summary.get('monitoring_status'))}**；厂商阈值诊断：**not-supported**。", "",
              "计算使用独立 Toolkit C++ 程序调用 XBLAS；传输调用 XRE。没有导入 PyTorch/Base workload，也没有将官方 fc_effciency 的存在或 help 输出当作测量通过。", "",
-             "计时为 CLOCK_MONOTONIC 的原生 API 调用到同步完成，不包含进程启动、分配、预热及正确性回读；它不是纯 kernel 时间。容量为每卡 HBM 查询值。D2D/单向 P2P 不乘二；双向 P2P 单独运行两个并发方向，以实际两份 payload/两方向完成时间计算，含线程协调开销。", "",
+             "计时为 CLOCK_MONOTONIC 的原生 API 调用到同步完成，不包含进程启动、分配、预热及正确性回读；它不是纯 kernel 时间。容量为每卡 HBM 查询值。runtime memcpy D2D/单向 P2P 使用一份 payload；D2D kernel 使用读+写两份 payload；双向 P2P 单独运行两个并发方向，以实际两份 payload/两方向完成时间计算，含线程协调开销。", "",
              "INT8 使用 XBLAS fc_fusion（INT8 输入和 TGEMM、FP32 输出、maxima=127、alpha=1、beta=0、无 bias、LINEAR 激活）。它不是 INT8→INT32 GemmEx；后者在当前镜像的实测返回参数错误。", "",
              "Pinned 异步模式可能按配置将逻辑 payload 分为多次原生提交，最后统一等待。实际分块大小和 API 次数记录在 metrics 的 async_chunk_bytes / api_calls_per_sample；这是分块端到端带宽，不能与单次整块 API 调用混称。", "",
              "卡 1 已排除。占用卡数据属于 exploratory；本报告不晋级 candidate，也不替代 Base 双卡/八卡 qualification。", "",
@@ -139,7 +141,8 @@ def generate(root):
                 times = raw.get("samples_ns", [])
                 if times:
                     point = target["point"]
-                    rows = [(f"sample {i+1}", point["bytes"]/ns) for i, ns in enumerate(times[:25])]
+                    byte_factor = 2 if point.get("mode") == "d2d-kernel" else 1
+                    rows = [(f"sample {i+1}", byte_factor*point["bytes"]/ns) for i, ns in enumerate(times[:25])]
                     name = case+"-"+target["target"].replace("/", "-")+"-samples.svg"
                     chart = asset(name, bars("D2D first 25 measured samples / "+label(point), rows, "GB/s"))
                     lines += ["", "前 25 个实测 D2D 样本（仅图表截取，完整样本仍保留；载荷和参考厂商工具的固定工作集不同）：", "",
@@ -147,11 +150,11 @@ def generate(root):
         for m in metrics:
             groups[(label(m.get("point", {})), m["field"], m["unit"])].append(m["value"])
         if groups:
-            lines += ["", "重复组（统计各独立进程的结果；单次内部样本不代替五次重复）：", ""]
+            lines += ["", "重复组（统计各独立进程的结果；CV 使用样本标准差 ddof=1；单次内部样本不代替五次重复）：", ""]
             group_rows = []
             for (name, field, unit), values in sorted(groups.items()):
                 avg = statistics.mean(values)
-                cv = statistics.pstdev(values)/abs(avg) if len(values)>1 and avg else None
+                cv = statistics.stdev(values)/abs(avg) if len(values)>1 and avg else None
                 group_rows.append([name, field, len(values), f"{statistics.median(values):.8g}", unit,
                                    f"{cv:.4%}" if cv is not None else "N/A",
                                    "insufficient-repeats" if len(values)<5 else "unstable" if cv is not None and cv>.05 else "stable-observed"])

@@ -1,0 +1,23 @@
+# Topology addendum for the 2026-09-24 non-XL comparison pair smi3 + smi4
+# generated 2026-09-24T02:12:14Z on VM-0-2-ubuntu
+
+## XPULink state (xpu-smi xpulink -i 3 -s)
+XPU 3: P800 OAM (UUID: GPU-9429f5bd-7d13-5cc5-b1b4-c05ddc572f57)
+	 Link 0: <active> <high speed>
+	 Link 1: <active> <high speed>
+	 Link 2: <active> <high speed>
+	 Link 3: <active> <high speed>
+
+## XPULink state (xpu-smi xpulink -i 4 -s)
+XPU 4: P800 OAM (UUID: GPU-b7942319-362e-5a53-a8eb-a2d06fbe84f6)
+	 Link 0: <active> <high speed>
+	 Link 1: <active> <high speed>
+	 Link 2: <active> <high speed>
+	 Link 3: <active> <high speed>
+
+## Pair classification
+smi3 (00000000:2E:00.0, /dev/xpu1, NUMA0) and smi4 (00000000:84:00.0, /dev/xpu4, NUMA1):
+  topo -m cell XPU3 x XPU4 = SYS; smi3 peer set {1C,03,16,BB} does not contain 84;
+  smi4 peer set {9C,B6,BB,16} does not contain 2E -> NOT an XPULink pair.
+  Path class per topo -p: cross-NUMA (SMP over PCIe host bridges).
+  Full machine matrix + the (4,7) XPULink pair: ../official-idle-pair/topology-capture.txt

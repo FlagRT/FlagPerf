@@ -1,0 +1,39 @@
+{
+  "bindings": [
+    {
+      "container_device_node": "/dev/xpu4",
+      "framework_device_name": "cuda:0",
+      "framework_local_rank": 0,
+      "framework_logical_id": 0,
+      "host_device_node": "/dev/xpu4",
+      "host_physical_id": 4,
+      "legacy_logical_id": null,
+      "pci_bdf": "0000:84:00.0",
+      "request_index": 0,
+      "resource_key": "kunlunxin/b7942319-362e-5a53-a8eb-a2d06fbe84f6",
+      "serial_or_uuid": "b7942319-362e-5a53-a8eb-a2d06fbe84f6",
+      "vendor": "kunlunxin"
+    },
+    {
+      "container_device_node": "/dev/xpu6",
+      "framework_device_name": "cuda:1",
+      "framework_local_rank": 1,
+      "framework_logical_id": 1,
+      "host_device_node": "/dev/xpu6",
+      "host_physical_id": 7,
+      "legacy_logical_id": null,
+      "pci_bdf": "0000:bb:00.0",
+      "request_index": 1,
+      "resource_key": "kunlunxin/4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "serial_or_uuid": "4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "vendor": "kunlunxin"
+    }
+  ],
+  "context_sha256": "cb99966bc84d6853cde7bd8762f62a619fad222345f53acfd622d21aea70b80a",
+  "observed_uuids": [
+    "b7942319-362e-5a53-a8eb-a2d06fbe84f6",
+    "4922595e-feb9-5762-9082-d8fd7f11abf5"
+  ],
+  "run_id": "benchmark-aed7d535f76c44ae99ddd4d77fa5877a",
+  "schema_version": 1
+}

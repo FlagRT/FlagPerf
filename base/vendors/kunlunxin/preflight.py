@@ -60,6 +60,11 @@ def query_record(raw, bdf):
     values['processes_empty'] = process_sections[0] == 'None'
     if not values['processes_empty'] and not re.search(r'^        Process ID[ \t]*:[ \t]*[0-9]+[ \t]*$', raw, re.M):
         raise ValueError('unrecognized nonempty process table')
+    # Historical counters are observations, not newly detected errors. Preserve
+    # them so acceptance cannot silently promote a degraded/shared run.
+    ecc = [int(v) for v in re.findall(r'DRAM Uncorrectable\s*:\s*(\d+)', raw)]
+    values['uncorrectable_ecc_counts'] = ecc
+    values['health_status'] = 'degraded' if any(ecc) else 'observed-clean' if len(ecc) == 2 else 'unknown'
     for field, pattern in [('temperature_c', r"^\s+XPU Current Temp\s*:\s*([0-9.]+) C\s*$"),
                            ('power_w', r"^\s+Power Draw\s*:\s*([0-9.]+) W\s*$")]:
         found = re.findall(pattern, raw, re.M)

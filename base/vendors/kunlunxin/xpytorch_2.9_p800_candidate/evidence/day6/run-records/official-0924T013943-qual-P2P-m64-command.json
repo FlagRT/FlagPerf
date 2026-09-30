@@ -1,0 +1,33 @@
+{
+  "command": [
+    "python3",
+    "-B",
+    "base/run.py",
+    "benchmark",
+    "run",
+    "--case",
+    "interconnect-P2P_intraserver:P800",
+    "--nproc-per-node",
+    "2",
+    "--config",
+    "base/configs/kunlunxin_p800_xpytorch29.yaml",
+    "--physical-device-ids",
+    "4,7",
+    "--allow-candidate-runtime",
+    "--privilege-command",
+    "sudo -n",
+    "--reservation-end",
+    "2026-09-24T09:36:51.655885+00:00",
+    "--reservation-reference",
+    "user-20260924-rerun-day6-unfinished-two-card-official-gate",
+    "--monitor",
+    "on",
+    "--timeout",
+    "300",
+    "--result-dir",
+    "/home/kzhang519/Zhiyu/runtime-team/FlagPerf/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day6/official-0924T013943-qual-P2P-m64"
+  ],
+  "started_at": "2026-09-24T01:46:57.578865+00:00",
+  "exit_code": 0,
+  "finished_at": "2026-09-24T01:47:33.448039+00:00"
+}

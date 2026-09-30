@@ -1,7 +1,6 @@
 {
-  "schema_version": 1,
-  "vendor": "kunlunxin",
-  "chip": "P800",
+  "bandwidth_payload_bytes": 536870912,
+  "capacity_scope": "per-card xpu-smi reported HBM capacity, not allocatable capacity/OOM stress",
   "cases": [
     "computation-BF16",
     "computation-FP16",
@@ -16,41 +15,44 @@
     "interconnect-P2P_intraserver",
     "interconnect-P2P_intraserver-latency"
   ],
+  "chip": "P800",
+  "computation": {
+    "backend": "independent Toolkit C++ XBLAS cublasGemmEx (floating point) and fc_fusion (INT8); no Base or PyTorch workload",
+    "int8_scope": "fc_fusion INT8 input and TGEMM=int8_t, maxima=127, alpha=1, beta=0, no bias, LINEAR activation; FP32 output; not INT8-to-INT32 GemmEx",
+    "official_fc_effciency": "separate tool; requires vendor unittest and profiling artifacts; never claimed as run by native adapter",
+    "output": {
+      "BF16": "FP32",
+      "FP16": "FP32",
+      "FP32": "FP32",
+      "INT8": "FP32"
+    }
+  },
+  "d2d_scope": "separate runtime memcpy (1*payload) and independent XBLAS device-kernel copy (2*payload read+write); never pool these modes",
+  "diagnosis_scope": "xpu-smi ECC/temperature/power and pre/post identity; vendor threshold diagnostics not-supported",
   "excluded_physical_ids": [
     1
   ],
-  "bandwidth_payload_bytes": 536870912,
+  "formal_gate": "idle resources, five independent repetitions, sufficient concurrent monitor, correctness and cleanup; shared-card runs stay exploratory",
   "latency_payload_bytes": [
     512,
     4096,
     65536,
     1048576
   ],
-  "p2p_latency_payload_bytes": 65536,
   "p2p_bandwidth_payload_bytes": 33554432,
+  "p2p_bandwidth_payload_max_bytes": 1073741824,
+  "p2p_latency_payload_bytes": 65536,
+  "p2p_payload_cli": "--p2p-payload-bytes",
+  "p2p_scope": "all unordered pairs: ascending unidirectional plus separately timed concurrent bidirectional; no reverse inference",
+  "pinned_api": "posix_memalign + xpu_host_register; optional xpu_host_alloc",
+  "pinned_async_default_chunk_bytes": 1048576,
+  "pinned_async_scope": "logical payload split into explicit native submissions with one completion wait; --async-chunk-bytes 0 preserves failed whole-payload reproduction",
+  "schema_version": 1,
   "transfer_variants": [
     "pageable-blocking",
     "pageable-nonblocking",
     "pinned-blocking",
     "pinned-nonblocking"
   ],
-  "pinned_api": "posix_memalign + xpu_host_register; optional xpu_host_alloc",
-  "pinned_async_default_chunk_bytes": 1048576,
-  "pinned_async_scope": "logical payload split into explicit native submissions with one completion wait; --async-chunk-bytes 0 preserves failed whole-payload reproduction",
-  "p2p_scope": "all unordered pairs: ascending unidirectional plus separately timed concurrent bidirectional; no reverse inference",
-  "capacity_scope": "per-card xpu-smi reported HBM capacity, not allocatable capacity/OOM stress",
-  "d2d_scope": "copy payload bytes, no read+write factor of two",
-  "computation": {
-    "backend": "independent Toolkit C++ XBLAS cublasGemmEx (floating point) and fc_fusion (INT8); no Base or PyTorch workload",
-    "output": {
-      "FP32": "FP32",
-      "FP16": "FP32",
-      "BF16": "FP32",
-      "INT8": "FP32"
-    },
-    "int8_scope": "fc_fusion INT8 input and TGEMM=int8_t, maxima=127, alpha=1, beta=0, no bias, LINEAR activation; FP32 output; not INT8-to-INT32 GemmEx",
-    "official_fc_effciency": "separate tool; requires vendor unittest and profiling artifacts; never claimed as run by native adapter"
-  },
-  "diagnosis_scope": "xpu-smi ECC/temperature/power and pre/post identity; vendor threshold diagnostics not-supported",
-  "formal_gate": "idle resources, five independent repetitions, sufficient concurrent monitor, correctness and cleanup; shared-card runs stay exploratory"
+  "vendor": "kunlunxin"
 }

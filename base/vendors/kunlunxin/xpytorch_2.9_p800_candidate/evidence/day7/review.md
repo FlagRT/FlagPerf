@@ -6,7 +6,7 @@
 
 ## Scope and provenance
 
-- User-authorized Day 7 execution uses healthy idle card 5 for single-card work and a freshly preflighted 5+6 pair for two-rank work. No foreign-handle override, tenant termination, driver/firmware change or eight-card run.
+- User-authorized Day 7 execution completed single-card work on healthy card 5. The corrected two-rank regression was attempted after the batch, but card 5 was occupied again and the original reservation window had expired; preflight failed closed before Docker or lease acquisition. No foreign-handle override, tenant termination, driver/firmware change or eight-card run.
 - Historical Day 6 formal 4+7 and 3+4 runs were already completed by the user. Their 5811 indexed files and 16 curve summaries were rechecked without modification. Day 7 results do not replace those records.
 - Measurement code: c1d900d8d89eadba48540b34ec7873fb26da4671. Release code: e373664aa5324a21c04196d1971f9ea013ab9f3c. Source/config/image/UUID identity is recorded per run; measurement-source/ retains the frozen measurement snapshot.
 - Eight-card work remains blocked by health/resources and the existing exactly-two-rank implementation. Both implementation and hardware qualification are still required.
@@ -55,10 +55,10 @@ No slow samples were removed and no configuration/UUID groups were pooled. A run
 | P2P | 64 | not-qualified | — |  |
 | P2P | 256 | not-qualified | — |  |
 
-At world size 2, AllReduce busbw equals algbw (2*(N-1)/N = 1). P2P is one-way rank 0 to rank 1. The first three curve sizes are one qualified run each, not five-run stability claims; the 256 MiB point has a separate five-run group.
+At world size 2, AllReduce busbw equals algbw (2*(N-1)/N = 1). P2P is one-way rank 0 to rank 1. No corrected two-rank curve run was admitted: all eight points are recorded as not-qualified because the post-batch pair preflight did not pass. The user-completed Day 6 idle-pair results remain in the separate historical audit and are not rewritten here.
 The XPULink bandwidth discrepancy remains open. New card-pair results do not establish a causal XPULink-vs-PCIe comparison. Ring counts alone do not prove an interconnect maximum.
 
-Timeout evidence:
+Two-rank timeout drills were not started because the pair preflight failed closed. The prior Day 6 timeout evidence remains historical and is referenced separately.
 
 
 ## Capacity and monitoring

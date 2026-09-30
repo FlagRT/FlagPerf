@@ -1,0 +1,14 @@
+{
+  "case": "interconnect-P2P_intraserver:P800",
+  "duration_s": 0.604186872,
+  "finished_at": "2026-09-24T01:45:04.257505Z",
+  "finished_monotonic_ns": 4055441177351812,
+  "kind": "measurement-window",
+  "local_rank": 1,
+  "pid": 234,
+  "rank": 1,
+  "schema_version": 1,
+  "started_at": "2026-09-24T01:45:03.653281Z",
+  "started_monotonic_ns": 4055440573164940,
+  "world_size": 2
+}

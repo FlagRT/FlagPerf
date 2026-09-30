@@ -197,6 +197,25 @@ static size_t copy_bench(const std::string& mode, int src, int dst, size_t bytes
     X(xpu_set_device(src));
     return bytes;
 }
+// Independent device-side copy. Keep the runtime memcpy comparator separately:
+// it is not a valid proxy for HBM kernel read+write bandwidth on this stack.
+static size_t kernel_copy(int device, size_t bytes, Samples& samples, int warmup, int count, double seconds) {
+    if (bytes % sizeof(float)) throw std::runtime_error("kernel copy requires a multiple of four bytes");
+    library(reinterpret_cast<const void*>(&cublasScopy));
+    std::vector<unsigned char> host(bytes), readback(bytes, 0);
+    for(size_t i=0;i<bytes;i++) host[i]=pattern(i);
+    Buffer a(device,bytes), b(device,bytes);
+    X(xpu_memcpy(a.p,host.data(),bytes,XPU_HOST_TO_DEVICE));
+    X(xpu_memcpy(b.p,readback.data(),bytes,XPU_HOST_TO_DEVICE)); X(xpu_wait());
+    cublasHandle_t handle=nullptr; X(cublasCreate(&handle));
+    struct Guard {cublasHandle_t h;~Guard(){cublasDestroy(h);}} guard{handle};
+    std::cerr << "copy_api=XBLAS cublasScopy; independent device kernel; read+write bytes=2*payload\n";
+    auto work=[&]{X(cublasScopy(handle,bytes/sizeof(float),static_cast<const float*>(a.p),1,static_cast<float*>(b.p),1));X(xpu_wait());};
+    samples.measure(work,warmup,count,seconds);
+    X(xpu_memcpy(readback.data(),b.p,bytes,XPU_DEVICE_TO_HOST));X(xpu_wait());
+    if(readback!=host)throw std::runtime_error("kernel copy full-payload correctness failure");
+    return bytes;
+}
 static int aval(int r,int k) { return ((r*3+k*5)%7)-3; }
 static int bval(int k,int c) { return ((k*2+c*3)%5)-2; }
 static float afloat(int r,int k) {return float(aval(r,k))*.1234567f + float((r*11+k*7)%13)*.0000137f;}
@@ -312,6 +331,8 @@ int main(int argc,char** argv) {
             auto dtype=opt.at("--dtype");
             if(dtype!="FP32" && dtype!="FP16" && dtype!="BF16" && dtype!="INT8") throw std::runtime_error("unsupported dtype");
             checked=gemm(dtype,src,n,samples,warmup,count,seconds);
+        } else if(mode=="d2d-kernel") {
+            checked=kernel_copy(src,bytes,samples,warmup,count,seconds);
         } else if(mode=="p2p-bidir") {
             checked=bidirectional(src,dst,bytes,samples,warmup,count,seconds);
         } else if(mode=="h2d" || mode=="d2h" || mode=="d2d" || mode=="p2p") {

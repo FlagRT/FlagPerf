@@ -101,6 +101,8 @@ def prepare(root, context):
 
 def target_name(point, repetition):
     label = "physical-" + str(point["source"])
+    if point["mode"] == "d2d-kernel":
+        label += "-d2d-kernel"
     if "destination" in point:
         label += "-to-" + str(point["destination"])
         label += "-" + point["direction"]
@@ -206,7 +208,7 @@ def main(argv=None):
         manifest["setup_error"] = str(exc)
         prepared = None
     for case in cases:
-        points = case_points(case, ids, settings["payload_bytes"])
+        points = case_points(case, ids, settings["payload_bytes"], settings.get("p2p_payload_bytes", 33554432))
         targets = []
         if not points or prepared is None:
             reason = manifest.get("setup_error", "P2P requires at least two selected physical cards")

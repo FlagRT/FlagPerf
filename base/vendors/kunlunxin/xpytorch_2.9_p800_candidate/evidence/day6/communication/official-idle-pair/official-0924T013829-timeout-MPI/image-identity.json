@@ -1,0 +1,8 @@
+{
+  "Architecture": "amd64",
+  "Created": "2026-08-12T21:47:16.130386935+08:00",
+  "Id": "sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975",
+  "RepoDigests": [
+    "flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev@sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975"
+  ]
+}

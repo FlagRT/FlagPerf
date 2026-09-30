@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "devices": [
+    {
+      "host_device_node": "/dev/xpu4",
+      "device_minor": 4,
+      "uuid": "b7942319-362e-5a53-a8eb-a2d06fbe84f6",
+      "driver": "5.0.21.47",
+      "xpu_smi_runtime": "10.2",
+      "total_memory_mib": 98304,
+      "used_memory_mib": 0,
+      "free_memory_mib": 98304,
+      "utilization_percent": 0,
+      "processes_empty": true,
+      "temperature_c": 39.0,
+      "power_w": 94.0,
+      "host_physical_id": 4,
+      "pci_bdf": "0000:84:00.0",
+      "serial": "02K15K0263D002KG",
+      "container_node": "/dev/xpu4",
+      "device_major": 195
+    },
+    {
+      "host_device_node": "/dev/xpu6",
+      "device_minor": 6,
+      "uuid": "4922595e-feb9-5762-9082-d8fd7f11abf5",
+      "driver": "5.0.21.47",
+      "xpu_smi_runtime": "10.2",
+      "total_memory_mib": 98304,
+      "used_memory_mib": 0,
+      "free_memory_mib": 98304,
+      "utilization_percent": 0,
+      "processes_empty": true,
+      "temperature_c": 43.0,
+      "power_w": 93.0,
+      "host_physical_id": 7,
+      "pci_bdf": "0000:bb:00.0",
+      "serial": "02K15K0263D002GM",
+      "container_node": "/dev/xpu6",
+      "device_major": 195
+    }
+  ],
+  "readonly_observers": {
+    "4": [
+      {
+        "pid": 912862,
+        "classification": "exited-before-inspection"
+      }
+    ],
+    "7": []
+  },
+  "selection": {
+    "source": "physical-device-ids",
+    "requested_ids": [
+      4,
+      7
+    ]
+  },
+  "machine_memory_unit": "numerically-cross-checked-with-query-MiB"
+}

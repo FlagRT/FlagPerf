@@ -532,6 +532,426 @@
    "command_record": "run-records/contended-smoke-allreduce-fix-a06-command.json"
   },
   {
+   "name": "official34-0924T020150-probe-MPI-m1",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/non-xl-pair/official34-0924T020150-probe-MPI-m1",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-6f768a6f8fd84f82972bca272cefe72f",
+   "command_record": "run-records/official34-0924T020150-probe-MPI-m1-command.json"
+  },
+  {
+   "name": "official34-0924T020150-probe-MPI-m16",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/non-xl-pair/official34-0924T020150-probe-MPI-m16",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-b052808dbff8482c84e416f08144579a",
+   "command_record": "run-records/official34-0924T020150-probe-MPI-m16-command.json"
+  },
+  {
+   "name": "official34-0924T020150-probe-MPI-m4",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/non-xl-pair/official34-0924T020150-probe-MPI-m4",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-cf51557e5f19481882ef684efe7c06ff",
+   "command_record": "run-records/official34-0924T020150-probe-MPI-m4-command.json"
+  },
+  {
+   "name": "official34-0924T020150-probe-MPI-m64",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/non-xl-pair/official34-0924T020150-probe-MPI-m64",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-fefc27a1f5a7487995eda3c085de06f9",
+   "command_record": "run-records/official34-0924T020150-probe-MPI-m64-command.json"
+  },
+  {
+   "name": "official34-0924T020150-probe-P2P-m1",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/non-xl-pair/official34-0924T020150-probe-P2P-m1",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-cbbd35d4b5f14edc98099388518ff24c",
+   "command_record": "run-records/official34-0924T020150-probe-P2P-m1-command.json"
+  },
+  {
+   "name": "official34-0924T020150-probe-P2P-m16",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/non-xl-pair/official34-0924T020150-probe-P2P-m16",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-74cd935cee564552831053ce0abdc3db",
+   "command_record": "run-records/official34-0924T020150-probe-P2P-m16-command.json"
+  },
+  {
+   "name": "official34-0924T020150-probe-P2P-m4",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/non-xl-pair/official34-0924T020150-probe-P2P-m4",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-bc9df92c088b4e97986da66ed7efe1ae",
+   "command_record": "run-records/official34-0924T020150-probe-P2P-m4-command.json"
+  },
+  {
+   "name": "official34-0924T020150-probe-P2P-m64",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/non-xl-pair/official34-0924T020150-probe-P2P-m64",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-43a0074fc54c42ed9481fe209e78ca74",
+   "command_record": "run-records/official34-0924T020150-probe-P2P-m64-command.json"
+  },
+  {
+   "name": "official34-0924T020150-qual-MPI-m1",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/non-xl-pair/official34-0924T020150-qual-MPI-m1",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-eccc0ce7e13f4ec5894c3726916e8aa8",
+   "command_record": "run-records/official34-0924T020150-qual-MPI-m1-command.json"
+  },
+  {
+   "name": "official34-0924T020150-qual-MPI-m16",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/non-xl-pair/official34-0924T020150-qual-MPI-m16",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-0d7aae2b931e446a9b4dfea3c1b76277",
+   "command_record": "run-records/official34-0924T020150-qual-MPI-m16-command.json"
+  },
+  {
+   "name": "official34-0924T020150-qual-MPI-m4",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/non-xl-pair/official34-0924T020150-qual-MPI-m4",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-a631a3ef5cae4c79831bc524cc5ebc2a",
+   "command_record": "run-records/official34-0924T020150-qual-MPI-m4-command.json"
+  },
+  {
+   "name": "official34-0924T020150-qual-MPI-m64",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/non-xl-pair/official34-0924T020150-qual-MPI-m64",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-bbad7200f29b40b3816093749506b9c8",
+   "command_record": "run-records/official34-0924T020150-qual-MPI-m64-command.json"
+  },
+  {
+   "name": "official34-0924T020150-qual-P2P-m1",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/non-xl-pair/official34-0924T020150-qual-P2P-m1",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-63cf969764fb41d08b9c2e909e8db85d",
+   "command_record": "run-records/official34-0924T020150-qual-P2P-m1-command.json"
+  },
+  {
+   "name": "official34-0924T020150-qual-P2P-m16",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/non-xl-pair/official34-0924T020150-qual-P2P-m16",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-31efaedf090844f687cf70479aed1b62",
+   "command_record": "run-records/official34-0924T020150-qual-P2P-m16-command.json"
+  },
+  {
+   "name": "official34-0924T020150-qual-P2P-m4",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/non-xl-pair/official34-0924T020150-qual-P2P-m4",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-60897669b1cc45d7a6fb029f86a1db7c",
+   "command_record": "run-records/official34-0924T020150-qual-P2P-m4-command.json"
+  },
+  {
+   "name": "official34-0924T020150-qual-P2P-m64",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/non-xl-pair/official34-0924T020150-qual-P2P-m64",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-864c0b2a67454864b9cd80cd8f9bd057",
+   "command_record": "run-records/official34-0924T020150-qual-P2P-m64-command.json"
+  },
+  {
+   "name": "official34-0924T020150-smoke-allreduce",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/non-xl-pair/official34-0924T020150-smoke-allreduce",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-9b606b4facde4aa39f811f80fe5be6ad",
+   "command_record": "run-records/official34-0924T020150-smoke-allreduce-command.json"
+  },
+  {
+   "name": "official34-0924T020150-timeout-MPI",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/non-xl-pair/official34-0924T020150-timeout-MPI",
+   "status": "failed",
+   "failure_stage": "container-probe",
+   "run_id": "benchmark-aef2906d8abb4db199bfcca4a3da6f32",
+   "command_record": "run-records/official34-0924T020150-timeout-MPI-command.json"
+  },
+  {
+   "name": "official34-0924T020150-timeout-P2P",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/non-xl-pair/official34-0924T020150-timeout-P2P",
+   "status": "failed",
+   "failure_stage": "container-probe",
+   "run_id": "benchmark-72a465b215e74fd8b5b612eb252ed897",
+   "command_record": "run-records/official34-0924T020150-timeout-P2P-command.json"
+  },
+  {
+   "name": "official-0924T013829-probe-MPI-m1",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/official-idle-pair/official-0924T013829-probe-MPI-m1",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-8054cc1848954e57a0ec86aa96d95e75",
+   "command_record": "run-records/official-0924T013829-probe-MPI-m1-command.json"
+  },
+  {
+   "name": "official-0924T013829-probe-P2P-m1",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/official-idle-pair/official-0924T013829-probe-P2P-m1",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-334b7a60871a41b4a3d367c5973854eb",
+   "command_record": "run-records/official-0924T013829-probe-P2P-m1-command.json"
+  },
+  {
+   "name": "official-0924T013829-smoke-allreduce",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/official-idle-pair/official-0924T013829-smoke-allreduce",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-29aa35cf240b4593b8ce329f65cdd2bf",
+   "command_record": "run-records/official-0924T013829-smoke-allreduce-command.json"
+  },
+  {
+   "name": "official-0924T013829-timeout-MPI",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/official-idle-pair/official-0924T013829-timeout-MPI",
+   "status": "running",
+   "failure_stage": null,
+   "run_id": "benchmark-4f4cc07de945416fb09f75bab53536b4",
+   "command_record": "run-records/official-0924T013829-timeout-MPI-command.json"
+  },
+  {
+   "name": "official-0924T013943-probe-MPI-m1",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/official-idle-pair/official-0924T013943-probe-MPI-m1",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-f15dd1af16ee4409af42ba64de546fc1",
+   "command_record": "run-records/official-0924T013943-probe-MPI-m1-command.json"
+  },
+  {
+   "name": "official-0924T013943-probe-MPI-m16",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/official-idle-pair/official-0924T013943-probe-MPI-m16",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-5c44c1a48b7e4824bdfa31dc5a5eeefc",
+   "command_record": "run-records/official-0924T013943-probe-MPI-m16-command.json"
+  },
+  {
+   "name": "official-0924T013943-probe-MPI-m4",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/official-idle-pair/official-0924T013943-probe-MPI-m4",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-4b5c305d19784cb7b9ce1289f6d2acc4",
+   "command_record": "run-records/official-0924T013943-probe-MPI-m4-command.json"
+  },
+  {
+   "name": "official-0924T013943-probe-MPI-m64",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/official-idle-pair/official-0924T013943-probe-MPI-m64",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-2c2ac9acd9c24c37b14f618dc3445049",
+   "command_record": "run-records/official-0924T013943-probe-MPI-m64-command.json"
+  },
+  {
+   "name": "official-0924T013943-probe-P2P-m1",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/official-idle-pair/official-0924T013943-probe-P2P-m1",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-599c58907fd5457ea64c423dc535400a",
+   "command_record": "run-records/official-0924T013943-probe-P2P-m1-command.json"
+  },
+  {
+   "name": "official-0924T013943-probe-P2P-m16",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/official-idle-pair/official-0924T013943-probe-P2P-m16",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-aed7d535f76c44ae99ddd4d77fa5877a",
+   "command_record": "run-records/official-0924T013943-probe-P2P-m16-command.json"
+  },
+  {
+   "name": "official-0924T013943-probe-P2P-m4",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/official-idle-pair/official-0924T013943-probe-P2P-m4",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-632012426eb64eb1b4c96c8bceecbe9f",
+   "command_record": "run-records/official-0924T013943-probe-P2P-m4-command.json"
+  },
+  {
+   "name": "official-0924T013943-probe-P2P-m64",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/official-idle-pair/official-0924T013943-probe-P2P-m64",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-48b24781b133447e9dd9d211d78d4671",
+   "command_record": "run-records/official-0924T013943-probe-P2P-m64-command.json"
+  },
+  {
+   "name": "official-0924T013943-qual-MPI-m1",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/official-idle-pair/official-0924T013943-qual-MPI-m1",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-bef186f86a364631a3026e48e2463aae",
+   "command_record": "run-records/official-0924T013943-qual-MPI-m1-command.json"
+  },
+  {
+   "name": "official-0924T013943-qual-MPI-m16",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/official-idle-pair/official-0924T013943-qual-MPI-m16",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-c712828adcf74ca4ac428c4d1e1cb7ce",
+   "command_record": "run-records/official-0924T013943-qual-MPI-m16-command.json"
+  },
+  {
+   "name": "official-0924T013943-qual-MPI-m4",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/official-idle-pair/official-0924T013943-qual-MPI-m4",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-190e1403cb6c4857914b549120d76b8e",
+   "command_record": "run-records/official-0924T013943-qual-MPI-m4-command.json"
+  },
+  {
+   "name": "official-0924T013943-qual-MPI-m64",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/official-idle-pair/official-0924T013943-qual-MPI-m64",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-0b4967ff095343ef9093cc89b1d1df64",
+   "command_record": "run-records/official-0924T013943-qual-MPI-m64-command.json"
+  },
+  {
+   "name": "official-0924T013943-qual-P2P-m1",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/official-idle-pair/official-0924T013943-qual-P2P-m1",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-4a70db984d6545e5a0a765dc47cdd451",
+   "command_record": "run-records/official-0924T013943-qual-P2P-m1-command.json"
+  },
+  {
+   "name": "official-0924T013943-qual-P2P-m16",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/official-idle-pair/official-0924T013943-qual-P2P-m16",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-80bb93d2852847c6acc6155e57981a54",
+   "command_record": "run-records/official-0924T013943-qual-P2P-m16-command.json"
+  },
+  {
+   "name": "official-0924T013943-qual-P2P-m4",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/official-idle-pair/official-0924T013943-qual-P2P-m4",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-e243ad31daaf4e8199519d7c6549d722",
+   "command_record": "run-records/official-0924T013943-qual-P2P-m4-command.json"
+  },
+  {
+   "name": "official-0924T013943-qual-P2P-m64",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/official-idle-pair/official-0924T013943-qual-P2P-m64",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-802f212287c24c17b1796db3761f7045",
+   "command_record": "run-records/official-0924T013943-qual-P2P-m64-command.json"
+  },
+  {
+   "name": "official-0924T013943-smoke-allreduce",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/official-idle-pair/official-0924T013943-smoke-allreduce",
+   "status": "passed",
+   "failure_stage": null,
+   "run_id": "benchmark-0727366a43cf4428a91ca16a6ac455f4",
+   "command_record": "run-records/official-0924T013943-smoke-allreduce-command.json"
+  },
+  {
+   "name": "official-0924T013943-timeout-MPI",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/official-idle-pair/official-0924T013943-timeout-MPI",
+   "status": "failed",
+   "failure_stage": "container-probe",
+   "run_id": "benchmark-aca6c4aae0504db0aa67436b22fd8a56",
+   "command_record": "run-records/official-0924T013943-timeout-MPI-command.json"
+  },
+  {
+   "name": "official-0924T013943-timeout-P2P",
+   "category": "communication",
+   "kind": "unified-entry-direct-write",
+   "relative_directory": "communication/official-idle-pair/official-0924T013943-timeout-P2P",
+   "status": "failed",
+   "failure_stage": "container-probe",
+   "run_id": "benchmark-fdc2f4e8d1f74bc9a280c62fd034279a",
+   "command_record": "run-records/official-0924T013943-timeout-P2P-command.json"
+  },
+  {
    "name": "failed-01-sudo-ticket",
    "category": "memory-bandwidth",
    "kind": "unified-entry-direct-write",
@@ -635,8 +1055,8 @@
   {
    "source": "base/result/p800-day6-20260923/authorization-day6.json",
    "destination": "run-records/authorization-day6.json",
-   "source_sha256": "0b2d045ef4d4ad9d0f0c9be5e0c87844f653e9b5c5e6feb86b77c19724cc403e",
-   "archive_sha256": "0b2d045ef4d4ad9d0f0c9be5e0c87844f653e9b5c5e6feb86b77c19724cc403e",
+   "source_sha256": "4c0cb0aeb75b4ea457ffb56d87c8a495a6dc1a7f13571c301e3dc3b97919ecfd",
+   "archive_sha256": "4c0cb0aeb75b4ea457ffb56d87c8a495a6dc1a7f13571c301e3dc3b97919ecfd",
    "byte_identical": true
   },
   {
@@ -1519,6 +1939,601 @@
    "destination": "run-records/memory-timeout-a01-card5-command.json",
    "source_sha256": "43d6e6f3fa99d1c5b88c69ab987929f6b60d1a492d7f4b33363f8c6b9baf19f0",
    "archive_sha256": "43d6e6f3fa99d1c5b88c69ab987929f6b60d1a492d7f4b33363f8c6b9baf19f0",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T0137-smoke-allreduce-command.json",
+   "destination": "run-records/official-0924T0137-smoke-allreduce-command.json",
+   "source_sha256": "76580783ea6f4055aaf41fd681f88390030f847e166a0e3f6119fe747fb9d2d5",
+   "archive_sha256": "76580783ea6f4055aaf41fd681f88390030f847e166a0e3f6119fe747fb9d2d5",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013829-probe-MPI-m1-cli.log",
+   "destination": "run-records/official-0924T013829-probe-MPI-m1-cli.log",
+   "source_sha256": "11ffc5efb3720d4fb83e626214c371000b1308dfc6df6f174b5060ac56068c48",
+   "archive_sha256": "11ffc5efb3720d4fb83e626214c371000b1308dfc6df6f174b5060ac56068c48",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013829-probe-MPI-m1-command.json",
+   "destination": "run-records/official-0924T013829-probe-MPI-m1-command.json",
+   "source_sha256": "616aa5783cd0cbb63529ef3ecaa89a74efee2d61915223508f30a9510cc243e0",
+   "archive_sha256": "616aa5783cd0cbb63529ef3ecaa89a74efee2d61915223508f30a9510cc243e0",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013829-probe-P2P-m1-cli.log",
+   "destination": "run-records/official-0924T013829-probe-P2P-m1-cli.log",
+   "source_sha256": "13af0fdb0816656a773a88ccc71c408b69dc7fabab44a98abe2c937087eb5cc0",
+   "archive_sha256": "13af0fdb0816656a773a88ccc71c408b69dc7fabab44a98abe2c937087eb5cc0",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013829-probe-P2P-m1-command.json",
+   "destination": "run-records/official-0924T013829-probe-P2P-m1-command.json",
+   "source_sha256": "ff1b800795e1915a9adae1324cb76d81a02a2bfcb90ee2be144c1c701dbf881e",
+   "archive_sha256": "ff1b800795e1915a9adae1324cb76d81a02a2bfcb90ee2be144c1c701dbf881e",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013829-smoke-allreduce-cli.log",
+   "destination": "run-records/official-0924T013829-smoke-allreduce-cli.log",
+   "source_sha256": "ae2c8936435f523a49dcc62fb82222318e57155179d97eee17600d926d29ac1f",
+   "archive_sha256": "ae2c8936435f523a49dcc62fb82222318e57155179d97eee17600d926d29ac1f",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013829-smoke-allreduce-command.json",
+   "destination": "run-records/official-0924T013829-smoke-allreduce-command.json",
+   "source_sha256": "4f28511c581f81bdd3725b5449de6ab5a7a10214de97d66c0042ac1764de2291",
+   "archive_sha256": "4f28511c581f81bdd3725b5449de6ab5a7a10214de97d66c0042ac1764de2291",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013829-timeout-MPI-cli.log",
+   "destination": "run-records/official-0924T013829-timeout-MPI-cli.log",
+   "source_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "archive_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013829-timeout-MPI-command.json",
+   "destination": "run-records/official-0924T013829-timeout-MPI-command.json",
+   "source_sha256": "41e0f52edb221d41dfc582bbc17603bd27b8567cea7a69c73d90776138c0c339",
+   "archive_sha256": "41e0f52edb221d41dfc582bbc17603bd27b8567cea7a69c73d90776138c0c339",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-probe-MPI-m1-cli.log",
+   "destination": "run-records/official-0924T013943-probe-MPI-m1-cli.log",
+   "source_sha256": "7e0c5845980a1a784789d6e91ef18415e829ca0c878fa0883b26f7149bff2909",
+   "archive_sha256": "7e0c5845980a1a784789d6e91ef18415e829ca0c878fa0883b26f7149bff2909",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-probe-MPI-m1-command.json",
+   "destination": "run-records/official-0924T013943-probe-MPI-m1-command.json",
+   "source_sha256": "0962fe67e51e567e3d5062f7c98f509459efcae3601046efb35d524d1475ed4e",
+   "archive_sha256": "0962fe67e51e567e3d5062f7c98f509459efcae3601046efb35d524d1475ed4e",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-probe-MPI-m16-cli.log",
+   "destination": "run-records/official-0924T013943-probe-MPI-m16-cli.log",
+   "source_sha256": "ef7deae81e55f1b91a3dcf9075be46495688ac622a95f167564365fc869138eb",
+   "archive_sha256": "ef7deae81e55f1b91a3dcf9075be46495688ac622a95f167564365fc869138eb",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-probe-MPI-m16-command.json",
+   "destination": "run-records/official-0924T013943-probe-MPI-m16-command.json",
+   "source_sha256": "e52b2ce4af3a75eeafdb63b3d740ae1a3919723da77a7e4af4f4224cf8a0e7a0",
+   "archive_sha256": "e52b2ce4af3a75eeafdb63b3d740ae1a3919723da77a7e4af4f4224cf8a0e7a0",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-probe-MPI-m4-cli.log",
+   "destination": "run-records/official-0924T013943-probe-MPI-m4-cli.log",
+   "source_sha256": "37166dc09be4496627a4da93f3b10c07872c5bd1bc5523e4e64a0ff7eed364ed",
+   "archive_sha256": "37166dc09be4496627a4da93f3b10c07872c5bd1bc5523e4e64a0ff7eed364ed",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-probe-MPI-m4-command.json",
+   "destination": "run-records/official-0924T013943-probe-MPI-m4-command.json",
+   "source_sha256": "d541c58bd1583461caea3b4025352caef28d7f39741944e1515dcdab75bcaa97",
+   "archive_sha256": "d541c58bd1583461caea3b4025352caef28d7f39741944e1515dcdab75bcaa97",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-probe-MPI-m64-cli.log",
+   "destination": "run-records/official-0924T013943-probe-MPI-m64-cli.log",
+   "source_sha256": "fdca4f636889ea23164a5873b59319eb471cf45f4570006876e3f0ab6e980776",
+   "archive_sha256": "fdca4f636889ea23164a5873b59319eb471cf45f4570006876e3f0ab6e980776",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-probe-MPI-m64-command.json",
+   "destination": "run-records/official-0924T013943-probe-MPI-m64-command.json",
+   "source_sha256": "2e7745d8625b477a3cea7d895464113246f09616457c798067b9bfb41fcadc5b",
+   "archive_sha256": "2e7745d8625b477a3cea7d895464113246f09616457c798067b9bfb41fcadc5b",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-probe-P2P-m1-cli.log",
+   "destination": "run-records/official-0924T013943-probe-P2P-m1-cli.log",
+   "source_sha256": "79ddf5ce2f1c78504ca35b4d5c47951b839b6eb4af94ff18bcef2307381e81b4",
+   "archive_sha256": "79ddf5ce2f1c78504ca35b4d5c47951b839b6eb4af94ff18bcef2307381e81b4",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-probe-P2P-m1-command.json",
+   "destination": "run-records/official-0924T013943-probe-P2P-m1-command.json",
+   "source_sha256": "16f1888d713263a3b466014a49cf657f073672258c0e534fc0a25251de603f57",
+   "archive_sha256": "16f1888d713263a3b466014a49cf657f073672258c0e534fc0a25251de603f57",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-probe-P2P-m16-cli.log",
+   "destination": "run-records/official-0924T013943-probe-P2P-m16-cli.log",
+   "source_sha256": "571c2a7d536f8341de2fa9833730405ce0aa57f2a4375ef7b8dc4eff4699c8e8",
+   "archive_sha256": "571c2a7d536f8341de2fa9833730405ce0aa57f2a4375ef7b8dc4eff4699c8e8",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-probe-P2P-m16-command.json",
+   "destination": "run-records/official-0924T013943-probe-P2P-m16-command.json",
+   "source_sha256": "03fb5af0ecddcca4ebc57e6f6d42e712cfdf850bc6daddec9a38ad823dc75141",
+   "archive_sha256": "03fb5af0ecddcca4ebc57e6f6d42e712cfdf850bc6daddec9a38ad823dc75141",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-probe-P2P-m4-cli.log",
+   "destination": "run-records/official-0924T013943-probe-P2P-m4-cli.log",
+   "source_sha256": "b67f9f2854bf4df4854a65832d709c516a97972084b8e22a1ae9fa67a86b963a",
+   "archive_sha256": "b67f9f2854bf4df4854a65832d709c516a97972084b8e22a1ae9fa67a86b963a",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-probe-P2P-m4-command.json",
+   "destination": "run-records/official-0924T013943-probe-P2P-m4-command.json",
+   "source_sha256": "d27410ca629bdd685b5f3d7d2cad95737b59c9548621fd028a1bdbda930ffd64",
+   "archive_sha256": "d27410ca629bdd685b5f3d7d2cad95737b59c9548621fd028a1bdbda930ffd64",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-probe-P2P-m64-cli.log",
+   "destination": "run-records/official-0924T013943-probe-P2P-m64-cli.log",
+   "source_sha256": "a8f3c464c7f67e9e1d54a3ce5cc33fe89267a47850525ad92f1e8f1cc34838f1",
+   "archive_sha256": "a8f3c464c7f67e9e1d54a3ce5cc33fe89267a47850525ad92f1e8f1cc34838f1",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-probe-P2P-m64-command.json",
+   "destination": "run-records/official-0924T013943-probe-P2P-m64-command.json",
+   "source_sha256": "ba3366d02009044c952710ce1e257621dd9d462a6e4b6e56403bc29a04c9cf86",
+   "archive_sha256": "ba3366d02009044c952710ce1e257621dd9d462a6e4b6e56403bc29a04c9cf86",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-qual-MPI-m1-cli.log",
+   "destination": "run-records/official-0924T013943-qual-MPI-m1-cli.log",
+   "source_sha256": "c87d3841292de6dc9274914a6e2eca083edbf18871344b0613de34574b3d82f1",
+   "archive_sha256": "c87d3841292de6dc9274914a6e2eca083edbf18871344b0613de34574b3d82f1",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-qual-MPI-m1-command.json",
+   "destination": "run-records/official-0924T013943-qual-MPI-m1-command.json",
+   "source_sha256": "c5b4fe7b324cc31fdf63d111e163b4c09cbb644a7f4edb45d49dc2d6fca34426",
+   "archive_sha256": "c5b4fe7b324cc31fdf63d111e163b4c09cbb644a7f4edb45d49dc2d6fca34426",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-qual-MPI-m16-cli.log",
+   "destination": "run-records/official-0924T013943-qual-MPI-m16-cli.log",
+   "source_sha256": "a46a03e62cc5ae47d16c7dcf8951e92b7e1ba0d671de00dac334eba2ae878d8e",
+   "archive_sha256": "a46a03e62cc5ae47d16c7dcf8951e92b7e1ba0d671de00dac334eba2ae878d8e",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-qual-MPI-m16-command.json",
+   "destination": "run-records/official-0924T013943-qual-MPI-m16-command.json",
+   "source_sha256": "d3c99118e7ebd66685a10a4bd9df84077604379253655d8ef7a092e116234843",
+   "archive_sha256": "d3c99118e7ebd66685a10a4bd9df84077604379253655d8ef7a092e116234843",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-qual-MPI-m4-cli.log",
+   "destination": "run-records/official-0924T013943-qual-MPI-m4-cli.log",
+   "source_sha256": "99a27ed27796b6195f09e44fe02c97ecd6a54270c9928693b8627c0abb2baa77",
+   "archive_sha256": "99a27ed27796b6195f09e44fe02c97ecd6a54270c9928693b8627c0abb2baa77",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-qual-MPI-m4-command.json",
+   "destination": "run-records/official-0924T013943-qual-MPI-m4-command.json",
+   "source_sha256": "2be1f0337122eaa03b4ce1c850e393835927402616a44ba2da54217c5092f23b",
+   "archive_sha256": "2be1f0337122eaa03b4ce1c850e393835927402616a44ba2da54217c5092f23b",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-qual-MPI-m64-cli.log",
+   "destination": "run-records/official-0924T013943-qual-MPI-m64-cli.log",
+   "source_sha256": "8cb18f59ef807179c6349483eb2a22f487f4f004a75878aea0c01898132754a3",
+   "archive_sha256": "8cb18f59ef807179c6349483eb2a22f487f4f004a75878aea0c01898132754a3",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-qual-MPI-m64-command.json",
+   "destination": "run-records/official-0924T013943-qual-MPI-m64-command.json",
+   "source_sha256": "af934e658fa9f90628982966a1703856539a899276577e55b14d6eac9598d6fd",
+   "archive_sha256": "af934e658fa9f90628982966a1703856539a899276577e55b14d6eac9598d6fd",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-qual-P2P-m1-cli.log",
+   "destination": "run-records/official-0924T013943-qual-P2P-m1-cli.log",
+   "source_sha256": "87c64972ea8718ea6573daa8a7c9bfc57e52c88efe00615a0fc670db61b9ac08",
+   "archive_sha256": "87c64972ea8718ea6573daa8a7c9bfc57e52c88efe00615a0fc670db61b9ac08",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-qual-P2P-m1-command.json",
+   "destination": "run-records/official-0924T013943-qual-P2P-m1-command.json",
+   "source_sha256": "afb25cdea4a11607b46ff96c94892836bb03e584169fcd50226b736eaa675bd9",
+   "archive_sha256": "afb25cdea4a11607b46ff96c94892836bb03e584169fcd50226b736eaa675bd9",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-qual-P2P-m16-cli.log",
+   "destination": "run-records/official-0924T013943-qual-P2P-m16-cli.log",
+   "source_sha256": "0292e1b798bbf384774ae1ad177a618243068be6ba4b8664a1bb28f1f822f6a3",
+   "archive_sha256": "0292e1b798bbf384774ae1ad177a618243068be6ba4b8664a1bb28f1f822f6a3",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-qual-P2P-m16-command.json",
+   "destination": "run-records/official-0924T013943-qual-P2P-m16-command.json",
+   "source_sha256": "4368926090bc8f2f1190b750e63af70c807154a213416d46f5d5fd6bc4f7e6ec",
+   "archive_sha256": "4368926090bc8f2f1190b750e63af70c807154a213416d46f5d5fd6bc4f7e6ec",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-qual-P2P-m4-cli.log",
+   "destination": "run-records/official-0924T013943-qual-P2P-m4-cli.log",
+   "source_sha256": "a37e123ab8db3b17e85bfabbaeab90669518db13dcbf2751b7b47e332c029483",
+   "archive_sha256": "a37e123ab8db3b17e85bfabbaeab90669518db13dcbf2751b7b47e332c029483",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-qual-P2P-m4-command.json",
+   "destination": "run-records/official-0924T013943-qual-P2P-m4-command.json",
+   "source_sha256": "62ee254adeae71e66a184553ed78468b320e10001ef7b0cf17c174b8f35b1bed",
+   "archive_sha256": "62ee254adeae71e66a184553ed78468b320e10001ef7b0cf17c174b8f35b1bed",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-qual-P2P-m64-cli.log",
+   "destination": "run-records/official-0924T013943-qual-P2P-m64-cli.log",
+   "source_sha256": "35cce1f4aad0164a2a6e75664b4f99b29e48ca6c2ad77bec7f77c37e22eb3152",
+   "archive_sha256": "35cce1f4aad0164a2a6e75664b4f99b29e48ca6c2ad77bec7f77c37e22eb3152",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-qual-P2P-m64-command.json",
+   "destination": "run-records/official-0924T013943-qual-P2P-m64-command.json",
+   "source_sha256": "9cfd07463d32729aa035b9528d857e80d8f3ece0b9f6fe75fa2efc37eda65c02",
+   "archive_sha256": "9cfd07463d32729aa035b9528d857e80d8f3ece0b9f6fe75fa2efc37eda65c02",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-smoke-allreduce-cli.log",
+   "destination": "run-records/official-0924T013943-smoke-allreduce-cli.log",
+   "source_sha256": "43a2da38f2323636ace7fa5f4b803df324491f5e90ba4f610dbee74721f7b0c4",
+   "archive_sha256": "43a2da38f2323636ace7fa5f4b803df324491f5e90ba4f610dbee74721f7b0c4",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-smoke-allreduce-command.json",
+   "destination": "run-records/official-0924T013943-smoke-allreduce-command.json",
+   "source_sha256": "75eaadbff6932d598863f4d60de938ca43994eb751531bb9cce4591e1984daac",
+   "archive_sha256": "75eaadbff6932d598863f4d60de938ca43994eb751531bb9cce4591e1984daac",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-timeout-MPI-cli.log",
+   "destination": "run-records/official-0924T013943-timeout-MPI-cli.log",
+   "source_sha256": "6999e92256e73b7c8608b1c34326602ff6fffbb0540e846ad10fdcf7b61a1b22",
+   "archive_sha256": "6999e92256e73b7c8608b1c34326602ff6fffbb0540e846ad10fdcf7b61a1b22",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-timeout-MPI-command.json",
+   "destination": "run-records/official-0924T013943-timeout-MPI-command.json",
+   "source_sha256": "8b5c7e1b607af339550445022192cd9cae66d961ba86aff5035d4fe37b1ec9e6",
+   "archive_sha256": "8b5c7e1b607af339550445022192cd9cae66d961ba86aff5035d4fe37b1ec9e6",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-timeout-P2P-cli.log",
+   "destination": "run-records/official-0924T013943-timeout-P2P-cli.log",
+   "source_sha256": "e80c5ec69602a20eb4cd4c2cac73b02bcc8a1a1d2f8e7d2d2168e351b32fd476",
+   "archive_sha256": "e80c5ec69602a20eb4cd4c2cac73b02bcc8a1a1d2f8e7d2d2168e351b32fd476",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official-0924T013943-timeout-P2P-command.json",
+   "destination": "run-records/official-0924T013943-timeout-P2P-command.json",
+   "source_sha256": "08f644054ef7fdbf566323644dcf02ed7adcd0cc94a1dae72136a14e674c71cb",
+   "archive_sha256": "08f644054ef7fdbf566323644dcf02ed7adcd0cc94a1dae72136a14e674c71cb",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-probe-MPI-m1-cli.log",
+   "destination": "run-records/official34-0924T020150-probe-MPI-m1-cli.log",
+   "source_sha256": "762d4b59c94e82e353fbdcf88d45ab2d3a32cc7fbf3b9509487b1c950cbd2185",
+   "archive_sha256": "762d4b59c94e82e353fbdcf88d45ab2d3a32cc7fbf3b9509487b1c950cbd2185",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-probe-MPI-m1-command.json",
+   "destination": "run-records/official34-0924T020150-probe-MPI-m1-command.json",
+   "source_sha256": "ea6c0f9877e165fa897b58c1d4dd1ccb14800fcb36a738b3e9eac1fad9266983",
+   "archive_sha256": "ea6c0f9877e165fa897b58c1d4dd1ccb14800fcb36a738b3e9eac1fad9266983",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-probe-MPI-m16-cli.log",
+   "destination": "run-records/official34-0924T020150-probe-MPI-m16-cli.log",
+   "source_sha256": "cbf9efddfa9d631f7160ca8bdb48ad532460977a8d97fa2c0fb4fe415904b62d",
+   "archive_sha256": "cbf9efddfa9d631f7160ca8bdb48ad532460977a8d97fa2c0fb4fe415904b62d",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-probe-MPI-m16-command.json",
+   "destination": "run-records/official34-0924T020150-probe-MPI-m16-command.json",
+   "source_sha256": "f2c51f5d0547d647fb94ce2f542c693bf82123ac0fc7fbeef5bdc2115636b3d3",
+   "archive_sha256": "f2c51f5d0547d647fb94ce2f542c693bf82123ac0fc7fbeef5bdc2115636b3d3",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-probe-MPI-m4-cli.log",
+   "destination": "run-records/official34-0924T020150-probe-MPI-m4-cli.log",
+   "source_sha256": "fb5b899ff8c584d843850153cf00ed65b28c7374c289efd15432f6e4f040c8e6",
+   "archive_sha256": "fb5b899ff8c584d843850153cf00ed65b28c7374c289efd15432f6e4f040c8e6",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-probe-MPI-m4-command.json",
+   "destination": "run-records/official34-0924T020150-probe-MPI-m4-command.json",
+   "source_sha256": "f995e8d5b078511cd944118072f6812f80ce53b284bf39cbf9b772b3e829e37f",
+   "archive_sha256": "f995e8d5b078511cd944118072f6812f80ce53b284bf39cbf9b772b3e829e37f",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-probe-MPI-m64-cli.log",
+   "destination": "run-records/official34-0924T020150-probe-MPI-m64-cli.log",
+   "source_sha256": "a2a047c1658860fa273bd6ae5aa2e36e70518ee6173326b4a18d005c84b732e6",
+   "archive_sha256": "a2a047c1658860fa273bd6ae5aa2e36e70518ee6173326b4a18d005c84b732e6",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-probe-MPI-m64-command.json",
+   "destination": "run-records/official34-0924T020150-probe-MPI-m64-command.json",
+   "source_sha256": "2d9a6ac6557292ca5ef3dc49ae7dce2d8c2e1ea8ec2b4528ebc65a58cdc72bc6",
+   "archive_sha256": "2d9a6ac6557292ca5ef3dc49ae7dce2d8c2e1ea8ec2b4528ebc65a58cdc72bc6",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-probe-P2P-m1-cli.log",
+   "destination": "run-records/official34-0924T020150-probe-P2P-m1-cli.log",
+   "source_sha256": "2859f76aaaf425e709576fee05ed092196b1995e381ef2e9f4a982d4ad7acf11",
+   "archive_sha256": "2859f76aaaf425e709576fee05ed092196b1995e381ef2e9f4a982d4ad7acf11",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-probe-P2P-m1-command.json",
+   "destination": "run-records/official34-0924T020150-probe-P2P-m1-command.json",
+   "source_sha256": "13e38670787fb4711539222f2592df75f9bcd411cc52bfefcd0b8768f0a9bcb6",
+   "archive_sha256": "13e38670787fb4711539222f2592df75f9bcd411cc52bfefcd0b8768f0a9bcb6",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-probe-P2P-m16-cli.log",
+   "destination": "run-records/official34-0924T020150-probe-P2P-m16-cli.log",
+   "source_sha256": "d3f0eeab34a7eb71fcb5f5ca011478d0e3476bc2f1baf85ff518e131cc6804c2",
+   "archive_sha256": "d3f0eeab34a7eb71fcb5f5ca011478d0e3476bc2f1baf85ff518e131cc6804c2",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-probe-P2P-m16-command.json",
+   "destination": "run-records/official34-0924T020150-probe-P2P-m16-command.json",
+   "source_sha256": "6fb7ac35b7a2a4d3badf6efc2cacc014ce0d38526f4d0d9d6f04d556cd4c08c1",
+   "archive_sha256": "6fb7ac35b7a2a4d3badf6efc2cacc014ce0d38526f4d0d9d6f04d556cd4c08c1",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-probe-P2P-m4-cli.log",
+   "destination": "run-records/official34-0924T020150-probe-P2P-m4-cli.log",
+   "source_sha256": "eebeb89311bb8bfa8deb51ec036e91cf804d08369a320c04cd008a52bc23e8ff",
+   "archive_sha256": "eebeb89311bb8bfa8deb51ec036e91cf804d08369a320c04cd008a52bc23e8ff",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-probe-P2P-m4-command.json",
+   "destination": "run-records/official34-0924T020150-probe-P2P-m4-command.json",
+   "source_sha256": "5da791d620bfb23cff27165c79ad9306bd6488984bd65ce176fa20a4c639a2a8",
+   "archive_sha256": "5da791d620bfb23cff27165c79ad9306bd6488984bd65ce176fa20a4c639a2a8",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-probe-P2P-m64-cli.log",
+   "destination": "run-records/official34-0924T020150-probe-P2P-m64-cli.log",
+   "source_sha256": "16895da63e3662b6586bfe1cca2f1a5f488bb09ea48fc2ba798ba14d4a20f9ea",
+   "archive_sha256": "16895da63e3662b6586bfe1cca2f1a5f488bb09ea48fc2ba798ba14d4a20f9ea",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-probe-P2P-m64-command.json",
+   "destination": "run-records/official34-0924T020150-probe-P2P-m64-command.json",
+   "source_sha256": "87e835d47639e0189fdb5970177dc73d6718d0aff5870cace8c1ee0499ea0769",
+   "archive_sha256": "87e835d47639e0189fdb5970177dc73d6718d0aff5870cace8c1ee0499ea0769",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-qual-MPI-m1-cli.log",
+   "destination": "run-records/official34-0924T020150-qual-MPI-m1-cli.log",
+   "source_sha256": "de328332f5a4aee115652ddabe55dd5e2063e5596ce6faf524e44a1441a89515",
+   "archive_sha256": "de328332f5a4aee115652ddabe55dd5e2063e5596ce6faf524e44a1441a89515",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-qual-MPI-m1-command.json",
+   "destination": "run-records/official34-0924T020150-qual-MPI-m1-command.json",
+   "source_sha256": "28a1b7c9799d1bede68af233b439562ee37af1d00e0df9b2a474567e4b4e73ed",
+   "archive_sha256": "28a1b7c9799d1bede68af233b439562ee37af1d00e0df9b2a474567e4b4e73ed",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-qual-MPI-m16-cli.log",
+   "destination": "run-records/official34-0924T020150-qual-MPI-m16-cli.log",
+   "source_sha256": "4b86504bc780e39764e52dc22ffe84f0734a057188cdf825db7e2eade958e642",
+   "archive_sha256": "4b86504bc780e39764e52dc22ffe84f0734a057188cdf825db7e2eade958e642",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-qual-MPI-m16-command.json",
+   "destination": "run-records/official34-0924T020150-qual-MPI-m16-command.json",
+   "source_sha256": "7c3065dfe04a2c1616a1cbb3893724ac1ea6634aaef13b6a93a9b7dd1c4fd2a4",
+   "archive_sha256": "7c3065dfe04a2c1616a1cbb3893724ac1ea6634aaef13b6a93a9b7dd1c4fd2a4",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-qual-MPI-m4-cli.log",
+   "destination": "run-records/official34-0924T020150-qual-MPI-m4-cli.log",
+   "source_sha256": "df7f769c76a85f013117d046f7ff85527928e6bf4367c0cdf3e1ab948941984f",
+   "archive_sha256": "df7f769c76a85f013117d046f7ff85527928e6bf4367c0cdf3e1ab948941984f",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-qual-MPI-m4-command.json",
+   "destination": "run-records/official34-0924T020150-qual-MPI-m4-command.json",
+   "source_sha256": "a666acd80f4db02e244336e8c8718947880331d18c6028cdfbcd8bbb05a18c69",
+   "archive_sha256": "a666acd80f4db02e244336e8c8718947880331d18c6028cdfbcd8bbb05a18c69",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-qual-MPI-m64-cli.log",
+   "destination": "run-records/official34-0924T020150-qual-MPI-m64-cli.log",
+   "source_sha256": "d9d7a69995b91d188a40bce134763b5a85b1d9c07bdd52313e6a5bb5f113742b",
+   "archive_sha256": "d9d7a69995b91d188a40bce134763b5a85b1d9c07bdd52313e6a5bb5f113742b",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-qual-MPI-m64-command.json",
+   "destination": "run-records/official34-0924T020150-qual-MPI-m64-command.json",
+   "source_sha256": "9edde96a2a721d4fd7944c4ddd54d9811365e51a6565b5808c8b11fa9ba60196",
+   "archive_sha256": "9edde96a2a721d4fd7944c4ddd54d9811365e51a6565b5808c8b11fa9ba60196",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-qual-P2P-m1-cli.log",
+   "destination": "run-records/official34-0924T020150-qual-P2P-m1-cli.log",
+   "source_sha256": "442d9023e9273c23ee9f4aaeacbe23e46e4b8c855cc22daed6826e7ce64abc15",
+   "archive_sha256": "442d9023e9273c23ee9f4aaeacbe23e46e4b8c855cc22daed6826e7ce64abc15",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-qual-P2P-m1-command.json",
+   "destination": "run-records/official34-0924T020150-qual-P2P-m1-command.json",
+   "source_sha256": "f3fe95039d5bbd564fe43554fcd8ab8d67e9c46e1e036f96bb5dd7620d6a78d1",
+   "archive_sha256": "f3fe95039d5bbd564fe43554fcd8ab8d67e9c46e1e036f96bb5dd7620d6a78d1",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-qual-P2P-m16-cli.log",
+   "destination": "run-records/official34-0924T020150-qual-P2P-m16-cli.log",
+   "source_sha256": "3e932221d8e5d5b38f7760cabc8bec27fe091d50c6f56d72813d8de808a76808",
+   "archive_sha256": "3e932221d8e5d5b38f7760cabc8bec27fe091d50c6f56d72813d8de808a76808",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-qual-P2P-m16-command.json",
+   "destination": "run-records/official34-0924T020150-qual-P2P-m16-command.json",
+   "source_sha256": "b9782e8bb54dca25eb649386d9e856aa07baf8568552cef15e3ca20c9e77de0b",
+   "archive_sha256": "b9782e8bb54dca25eb649386d9e856aa07baf8568552cef15e3ca20c9e77de0b",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-qual-P2P-m4-cli.log",
+   "destination": "run-records/official34-0924T020150-qual-P2P-m4-cli.log",
+   "source_sha256": "7bb57de0aa734a2acd38b4081ff80adb1d5f4ced933751a3793d6223a4760f86",
+   "archive_sha256": "7bb57de0aa734a2acd38b4081ff80adb1d5f4ced933751a3793d6223a4760f86",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-qual-P2P-m4-command.json",
+   "destination": "run-records/official34-0924T020150-qual-P2P-m4-command.json",
+   "source_sha256": "f791395525ed0e6bd7b0f618056151bff3aa9646e1dc99850866a002cc181872",
+   "archive_sha256": "f791395525ed0e6bd7b0f618056151bff3aa9646e1dc99850866a002cc181872",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-qual-P2P-m64-cli.log",
+   "destination": "run-records/official34-0924T020150-qual-P2P-m64-cli.log",
+   "source_sha256": "2a7de9be453a6412d14b59726a850fd2d778af20f3497dddf03afc632634470c",
+   "archive_sha256": "2a7de9be453a6412d14b59726a850fd2d778af20f3497dddf03afc632634470c",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-qual-P2P-m64-command.json",
+   "destination": "run-records/official34-0924T020150-qual-P2P-m64-command.json",
+   "source_sha256": "705bd07624a70955d4c117ffe8f0c66774a5600767a55ed19541428b85382f97",
+   "archive_sha256": "705bd07624a70955d4c117ffe8f0c66774a5600767a55ed19541428b85382f97",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-smoke-allreduce-cli.log",
+   "destination": "run-records/official34-0924T020150-smoke-allreduce-cli.log",
+   "source_sha256": "3f1078ca3787b9fc872d69f50563951938b8ebf7053e4a0fd5bf692047c4f7d5",
+   "archive_sha256": "3f1078ca3787b9fc872d69f50563951938b8ebf7053e4a0fd5bf692047c4f7d5",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-smoke-allreduce-command.json",
+   "destination": "run-records/official34-0924T020150-smoke-allreduce-command.json",
+   "source_sha256": "260bbd51d24e0839f80b0c2ba4c4f322d80b4c91f2a9f32a8b032ab83460bf4e",
+   "archive_sha256": "260bbd51d24e0839f80b0c2ba4c4f322d80b4c91f2a9f32a8b032ab83460bf4e",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-timeout-MPI-cli.log",
+   "destination": "run-records/official34-0924T020150-timeout-MPI-cli.log",
+   "source_sha256": "702773aec14475d19dfe4a4e1769511332d780329bb0d06b332434df6bbc3bff",
+   "archive_sha256": "702773aec14475d19dfe4a4e1769511332d780329bb0d06b332434df6bbc3bff",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-timeout-MPI-command.json",
+   "destination": "run-records/official34-0924T020150-timeout-MPI-command.json",
+   "source_sha256": "5e0e94c0e2eaed3590533b02ab99983fc1977790ee0d2fa0c59e7620b25b4683",
+   "archive_sha256": "5e0e94c0e2eaed3590533b02ab99983fc1977790ee0d2fa0c59e7620b25b4683",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-timeout-P2P-cli.log",
+   "destination": "run-records/official34-0924T020150-timeout-P2P-cli.log",
+   "source_sha256": "7301deac682deaae433a4cb7539a396e6fdf77c08dabb35eabae9dd37f8ea1d9",
+   "archive_sha256": "7301deac682deaae433a4cb7539a396e6fdf77c08dabb35eabae9dd37f8ea1d9",
+   "byte_identical": true
+  },
+  {
+   "source": "base/result/p800-day6-20260923/official34-0924T020150-timeout-P2P-command.json",
+   "destination": "run-records/official34-0924T020150-timeout-P2P-command.json",
+   "source_sha256": "8bde39b1cd14cc3316c6d42ba26b19a584cf0abbcbd89ac032e76e14a52bac34",
+   "archive_sha256": "8bde39b1cd14cc3316c6d42ba26b19a584cf0abbcbd89ac032e76e14a52bac34",
    "byte_identical": true
   },
   {

@@ -392,7 +392,8 @@ class QualificationStatisticsTests(unittest.TestCase):
             (root / 'control').mkdir()
             (root / 'benchmark-monitor').mkdir()
             run_id = 'run-' + str(index)
-            context = {'run_id': run_id, 'case_assets_sha256': hashlib.sha256(contract).hexdigest()}
+            context = {'run_id': run_id, 'case_assets_sha256': hashlib.sha256(contract).hexdigest(),
+                       'host': {'devices': [DEVICE], 'foreign_occupancy_observed': False}, 'nproc_per_node': 1}
             raw_context = json.dumps(context).encode()
             metric, correct = rank_records(context, hashlib.sha256(raw_context).hexdigest(), binding, config)
             elapsed = metric['operations'] / value / 1e12
@@ -404,7 +405,8 @@ class QualificationStatisticsTests(unittest.TestCase):
                 'measurement_evidence_status', 'monitoring_status', 'postflight_status', 'cleanup_status')}
             summary.update(run_id=run_id, lease_released=True, qualification={'mode': 'qualification'},
                            runtime={'image_id': 'fixed-image'}, device_bindings=[binding])
-            documents = {'summary.json': summary, 'benchmark-result.json': {'status': 'passed', 'metrics': [metric]},
+            documents = {'summary.json': summary, 'benchmark-result.json': {'status': 'passed', 'metrics': [metric],
+                'expected_ranks': [0], 'observed_ranks': [0], 'missing_ranks': []},
                 'benchmark-monitor/summary.json': {'status': 'passed', 'primary_sample_counts_by_target': {binding['resource_key']: 20}},
                 'code-identity.json': {'source_sha256': {'code': 'fixed'}}, 'artifacts/metric-rank-0.json': metric,
                 'artifacts/correctness-rank-0.json': correct}

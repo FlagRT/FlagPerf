@@ -38,6 +38,22 @@ class ContractTests(unittest.TestCase):
         self.assertTrue(all(p['source'] < p['destination'] for p in points))
         self.assertEqual(c.case_points('interconnect-P2P_intraserver', [4]), [])
 
+    def test_payload_modes_and_smoke_scope(self):
+        from executors.p800_toolkit import settings_for
+        options=settings_for(SimpleNamespace(p800_options={"smoke":True,"p2p_payload_bytes":268435456}))
+        self.assertEqual(options["p2p_payload_bytes"],1048576)
+        points=c.case_points('interconnect-P2P_intraserver',[0,5],p2p_payload_bytes=268435456)
+        self.assertEqual({p['bytes'] for p in points},{268435456})
+        self.assertEqual({p['bytes'] for p in c.case_points('interconnect-P2P_intraserver',[0,5])},{33554432})
+        points=c.case_points('main_memory-bandwidth',[5],1000)
+        self.assertEqual([p['mode'] for p in points],['d2d','d2d-kernel'])
+        record={**self.sample(),'mode':'d2d-kernel'}
+        metric=c.metric_from_native(record,points[1],'main_memory-bandwidth','stdout',128,3)
+        self.assertEqual(metric['value'],10.0)
+        self.assertEqual(metric['source_kind'],'native-xblas')
+        from toolkits._common.kunlunxin.P800.evidence_runner import target_name
+        self.assertNotEqual(target_name(points[0],1),target_name(points[1],1))
+
     def test_excluded_card_and_invalid_selection(self):
         for ids in ([1], [0,1,2], [4,4], [], [-1], [8]):
             with self.assertRaises(ValueError): c.validate_selection(ids)
@@ -115,7 +131,12 @@ class FacadeTests(unittest.TestCase):
             plan=ToolkitExecutor().plan(self.request('--physical-device-ids','0,4-6','--dry-run'))
         self.assertEqual(plan['suite'],'kunlunxin-p800-toolkit')
         self.assertEqual(plan['permissions']['network'],'none')
-        self.assertEqual(plan['point_counts']['interconnect-P2P_intraserver'],12)
+        self.assertEqual(plan['logical_point_counts']['interconnect-P2P_intraserver'],12)
+        self.assertEqual(plan['repeat_count'],5)
+        self.assertEqual(plan['settings']['p2p_payload_bytes'],33554432)
+        expanded=ToolkitExecutor().plan(self.request('--physical-device-ids','0,4-6','--p2p-payload-bytes','268435456','--dry-run'))
+        self.assertEqual(expanded['settings']['p2p_payload_bytes'],268435456)
+        self.assertEqual(expanded['point_counts']['interconnect-P2P_intraserver'],60)
 
     def test_range_excludes_card_one_before_execution(self):
         for value in ('1','0-7','0,1,4'):
@@ -184,6 +205,21 @@ class EvidenceTests(unittest.TestCase):
             self.assertEqual(e.validate_index(root),[])
             (root/'test').write_text('changed')
             self.assertEqual(e.validate_index(root),['test'])
+
+    def test_kernel_chart_uses_read_write_and_group_cv_uses_sample_sd(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d)
+            point={'source':4,'mode':'d2d-kernel','bytes':1000}
+            metrics=[{'point':point,'field':'bandwidth','unit':'GB/s','value':v,'repetition':i,'source':'raw.log'} for i,v in enumerate([10,10,10,10,11],1)]
+            case={'metrics':metrics,'targets':[{'target':'kernel','point':point}]}
+            e.write_json(root/'summary.json',{'suite':'kunlunxin-p800-toolkit','status':'partial','run_id':'fixture'})
+            e.write_json(root/'toolkit-evidence/manifest.json',{'schema_version':1,'cases':{'main_memory-bandwidth':case},'settings':{}})
+            e.write_json(root/'toolkit-evidence/cases/main_memory-bandwidth/kernel/samples.json',{'samples_ns':[4]})
+            generate_and_record(root)
+            chart=(root/'report-assets/main_memory-bandwidth-kernel-samples.svg').read_text()
+            self.assertIn('>500</text>',chart)
+            self.assertIn('4.3844%',(root/'report.md').read_text())
+            self.assertEqual(json.loads((root/'summary.json').read_text())['status'],'partial')
 
     def test_report_regeneration_preserves_status_and_is_deterministic(self):
         with tempfile.TemporaryDirectory() as d:

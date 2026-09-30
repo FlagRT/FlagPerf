@@ -6,7 +6,7 @@ from pathlib import Path
 from base.vendors.protocol import ConfigurationError, DeviceBinding, runtime_root
 from base.vendors.kunlunxin import preflight
 from base.vendors.kunlunxin.reuse import mapping, runtime
-from benchmarks.day6_contract import COMMUNICATION_CASES
+from base.benchmarks.day6_contract import COMMUNICATION_CASES
 
 
 class KunlunxinProvider:
@@ -39,7 +39,7 @@ class KunlunxinProvider:
         if config.get('runtime_environment') != {'USE_FLAGGEMS': '0'}:
             raise ConfigurationError('P800 runtime_environment must be exactly USE_FLAGGEMS=0')
         if config.get('shm_size') != '128m':
-            raise ConfigurationError('P800 bounded probe requires shm_size=512m')
+            raise ConfigurationError('P800 bounded probe requires shm_size=128m')
 
     def validate_selection(self, context):
         context.validate(require_selection=True)

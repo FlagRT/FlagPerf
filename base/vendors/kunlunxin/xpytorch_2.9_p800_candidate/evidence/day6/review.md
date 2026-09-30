@@ -14,8 +14,8 @@
 | B 带宽 | 4 GiB payload qualification 通过：**2236.82 GB/s = 2083.20 GiB/s**（2×payload 公式，16.129 s 窗口，monitor 全绿） | `memory-bandwidth/memory-qualification-a02-card5` |
 | C 容量 | 实测持有 **98132 MiB = 102.90 GB = 95.83 GiB**（98304 MiB 的 99.8%），32 次分配、1 MiB 粒度收敛、OOM 原样分类、释放经 free-memory 验证恢复 | `memory-capacity/capacity-full-a01-card5` |
 | D FlagCX 探测 | XCCL 运行时加载；根因定位为 `--network none` 使 BKCL socket bootstrap 无网卡可用；改用 `--internal` bridge 后双 rank collective 成功 | `communication/flagcx-probe/`、`communication/contended/` |
-| E 两卡正确性 | 通过：AllReduce 四点与 P2P 四点逐元素校验、逐 rank 绑定、公式重算全过；五个真实缺陷修复见 §5.1 | `communication/contended/` |
-| F 曲线与收尾 | 见 §5.3；离线回归与 HEAD 基线一致（新增 18 项 day6 测试全过，182 项全量无新增失败） | `../../../../tests/test_p800_day6.py` |
+| E 两卡正确性 | 通过：AllReduce 四点与 P2P 四点逐元素校验、逐 rank 绑定、公式重算全过；五个真实缺陷修复见 §5.1。**2026-09-24 已在空闲卡对上正式复跑（§5.4）** | `communication/official-idle-pair/` |
+| F 曲线与收尾 | 见 §5.3（受扰，仅作 qualification）、§5.4（空闲 XPULink 对正式复跑）与 §5.5（非 XPULink 对照）；离线回归与 HEAD 基线一致（新增 18 项 day6 测试全过，182 项全量无新增失败） | `communication/official-idle-pair/`、`communication/non-xl-pair/` |
 
 失败与部分状态全部保留（§6），无一删除。原始 `xpu-smi -q` 捕获中出现的第三方进程名（占用卡的其他租户）已按 Day 5 校验器的 needle 规则脱敏为 `[third-party-redacted]`，显存占用量、利用率与状态原样保留；verification 现在同时执行凭据扫描与第三方标识扫描。
 
@@ -57,7 +57,7 @@
 
 计划建议 1/4/16/64 MiB 四点；`Melements` 单位是 2^20 个 float32（= 4 MiB），契约最小值 `Melements=1`，因此 **1 MiB 点无法表示**。实际曲线为 **4/16/64/256 MiB**（Melements 1/4/16/64）。
 
-### 5.3 曲线与门禁结果
+### 5.3 曲线与门禁结果（2026-09-23，受扰卡上；仅作 qualification）
 
 AllReduce（algbw = 窗口内总流量/窗口；busbw = algbw×2(ws−1)/ws，ws=2 时两者相等）：
 
@@ -89,7 +89,121 @@ P2P 单向（rank0→rank1，卡对 (3,4) PCIe，带宽不乘 2）：
 
 观察（不构成结论）：4 MiB 点在 (3,7) XL 对取得 25.73 GB/s，64–256 MiB 点在 (3,4) PCIe 对取得 37–38 GB/s。跨卡对比较受租户负载与链路差异影响，**不据此判断 XPULink 与 PCIe 的优劣**；正式复跑需在同一对卡上完成整条曲线。
 
-## 6. 失败与部分状态一览（63 个运行中 28 个 failed/partial，全部保留）
+### 5.4 正式复跑（2026-09-24，空闲卡对 smi4 + smi7）
+
+§5.3 的曲线跑在其他租户占用的卡上、且混用了两个卡对，只作 qualification。以下为**空闲卡对上的正式门禁复跑**。
+
+- 卡对：smi4（`0000:84:00.0` / `/dev/xpu4` / UUID `b7942319-362e-5a53-a8eb-a2d06fbe84f6`）与
+  smi7（`0000:bb:00.0` / `/dev/xpu6` / UUID `4922595e-feb9-5762-9082-d8fd7f11abf5`）；
+- 执行期间两卡均为 `0 MiB / 0%` 且无外来句柄；smi4 与 smi7 为 **XPULink 直连对**
+  （`topo -m` 单元 XPU4×XPU7 = XL，`xpu-smi xpulink -i 4 -s` 4 条链路均 `<active> <high speed>`，
+  两卡对端集合互相包含；拓扑证据 `official-idle-pair/topology-capture.txt`）；
+- 标签 `official-0924T013943`，证据在 `communication/official-idle-pair/`。
+
+AllReduce（algbw = 消息 × 迭代数 / 窗口；busbw = algbw×2(ws−1)/ws，ws=2 时两者相等）：
+
+| Melements | 消息 | iters | rank0 algbw (GB/s) | rank1 algbw (GB/s) | rank0 窗口 (s) | rank1 窗口 (s) | 正确性 | 状态 |
+|---|---|---|---|---|---|---|---|---|
+| 1 | 4 MiB | 119856 | 26.31 | 26.34 | 19.11 | 19.08 | r0/r1 逐元素通过 | passed |
+| 4 | 16 MiB | 31860 | 28.15 | 28.30 | 18.99 | 18.89 | 通过 | passed |
+| 16 | 64 MiB | 8132 | 28.72 | 29.32 | 19.00 | 18.61 | 通过 | passed |
+| 64 | 256 MiB | 2044 | 28.86 | 31.44 | 19.01 | 17.45 | 通过 | passed |
+
+P2P 单向（rank0→rank1，带宽不乘 2）：
+
+| Melements | 消息 | iters | rank0 (GB/s) | rank1 (GB/s) | rank0 GiB/s | 窗口 (s) | 正确性 | 状态 |
+|---|---|---|---|---|---|---|---|---|
+| 1 | 4 MiB | 94631 | 24.15 | 24.15 | 22.49 | 16.44 | 通过 | passed |
+| 4 | 16 MiB | 31457 | 29.61 | 29.61 | 27.58 | 17.82 | 通过 | passed |
+| 16 | 64 MiB | 8642 | 30.71 | 30.71 | 28.60 | 18.89 | 通过 | passed |
+| 64 | 256 MiB | 2203 | 31.22 | 31.23 | 29.08 | 18.94 | 通过 | passed |
+
+- 每 rank 独立记录并校验自己的绑定：rank0 → `/dev/xpu4` / `0000:84:00.0` / logical 0，
+  rank1 → `/dev/xpu6` / `0000:bb:00.0` / logical 1，与 `--physical-device-ids 4,7` 的请求顺序一致；
+- 全部 qualification 运行窗口 ≥15 s，monitor passed；正确性 cold/second/post-loop 逐元素通过；
+- 两 rank 差值：AllReduce ≤8.9%（最大在 256 MiB），P2P ≤0.1%。
+
+超时演练（同一空闲卡对上各一次 cpu-wait 注入）：
+
+| 演练 | 结果 | 证据 |
+|---|---|---|
+| interconnect-MPI_intraserver | container-probe 超时终止；postflight/cleanup/lease 全过 | `official-idle-pair/official-0924T013943-timeout-MPI` |
+| interconnect-P2P_intraserver | 同上 | `official-idle-pair/official-0924T013943-timeout-P2P` |
+
+**§5.3 与 §5.4 的数字不可互比**：两者是不同的卡对，且 §5.3 受外来负载影响。§5.4 描述的是
+XPULink 对（smi4 + smi7）；同日非 XPULink 对照（smi3 + smi4）见 §5.5。
+
+**被中断的一次链路调用**（标签 `official-0924T013829`）一并保留在 `official-idle-pair/`：该次调用
+因链路脚本 `rank0_elapsed` 取旧目录名（`comm-probe-*` 而非 `official-*`）而取不到 elapsed，
+probe 后即停止曲线；其中 `official-0924T013829-timeout-MPI` 因链路被终止而停在 `running`，
+其残留容器在收尾核对中手工清理。该缺陷已修正，修正后 `official-0924T013943` 一次跑通。
+
+### 5.5 非 XPULink 对照（2026-09-24，空闲卡对 smi3 + smi4）
+
+§5.4 的卡对 smi4 + smi7 是 **XPULink 直连对**（判定依据见 `official-idle-pair/topology-capture.txt`）。
+同日在**非 XPULink 对** smi3 + smi4 上以同一 HEAD、同一锁定镜像、同一链路脚本做了同条件对照复跑：
+`topo -m` 单元 XPU3×XPU4 = SYS；smi3 对端 {smi2, smi1, card1, smi7}、smi4 对端 {smi5, smi6, smi7, card1}
+互不包含对方；路径为跨 NUMA0/NUMA1 的 host-bridge 级（`non-xl-pair/topology-capture.txt`，
+两卡各自的 XPULink 链路均为 active，排除"挂在死链路上"的解释）。标签 `official34-0924T020150`，
+证据在 `communication/non-xl-pair/`。
+
+AllReduce（公式同 §5.4）：
+
+| Melements | 消息 | iters | rank0 algbw (GB/s) | rank1 algbw (GB/s) | rank0 窗口 (s) | rank1 窗口 (s) | 正确性 | 状态 |
+|---|---|---|---|---|---|---|---|---|
+| 1 | 4 MiB | 148070 | 32.86 | 32.90 | 18.90 | 18.88 | r0/r1 逐元素通过 | passed |
+| 4 | 16 MiB | 41186 | 36.40 | 36.54 | 18.98 | 18.91 | 通过 | passed |
+| 16 | 64 MiB | 10621 | 37.56 | 38.17 | 18.97 | 18.68 | 通过 | passed |
+| 64 | 256 MiB | 2687 | 37.91 | 40.43 | 19.03 | 17.84 | 通过 | passed |
+
+P2P 单向（rank0→rank1，不乘 2）：
+
+| Melements | 消息 | iters | rank0 (GB/s) | rank1 (GB/s) | rank0 GiB/s | 窗口 (s) | 正确性 | 状态 |
+|---|---|---|---|---|---|---|---|---|
+| 1 | 4 MiB | 101369 | 26.38 | 26.38 | 24.57 | 16.11 | 通过 | passed |
+| 4 | 16 MiB | 34681 | 31.11 | 31.11 | 28.97 | 18.70 | 通过 | passed |
+| 16 | 64 MiB | 9315 | 33.14 | 33.14 | 30.86 | 18.86 | 通过 | passed |
+| 64 | 256 MiB | 2390 | 33.77 | 33.78 | 31.45 | 19.00 | 通过 | passed |
+
+- 每 rank 绑定：rank0 → `0000:2e:00.0`（smi3），rank1 → `0000:84:00.0`（smi4），与
+  `--physical-device-ids 3,4` 一致；全部窗口 ≥15 s，monitor passed；
+- 超时演练各一次：interconnect-MPI_intraserver 与 interconnect-P2P_intraserver 均 container-probe
+  超时终止、postflight/cleanup/lease 全过（`non-xl-pair/official34-0924T020150-timeout-*`）。
+
+**观察（不构成结论）**：同为空闲卡对、同代码同镜像，本机非 XL 对（跨 NUMA host-bridge 路径）在
+4–256 MiB 消息上反而快于 XL 对（§5.4）约 8–31%——AllReduce 256 MiB 点 37.9 vs 28.9 GB/s（+31%），
+P2P 256 MiB 点 33.8 vs 31.2 GB/s（+8%）。这与 9 月 23 日受扰数据观察到的方向一致（37–38 vs
+25.7–28 GB/s）。**两组卡对各仅一次测量、消息范围有限，不据此断言 XPULink 与 PCIe 路径的优劣**；
+该反差值得向厂商确认（例如 BKCL 双卡 AllReduce/P2P 是否实际启用 XPULink 传输、XL 对该消息区间的
+预期带宽）。§5.4（XL 对）仍是正式门禁结论，本节只作带宽特性记录。
+
+
+**BKCL 传输层甄别（2026-09-24 追记，`bkcl-transport-debug/`）**：为回答"XL 对为何慢于
+PCIe 对、是否未启用 XPULink"，用 `BKCL_DEBUG=1` 采集两对卡的 BKCL 初始化日志
+（FlagCX 同构路径全部委托 BKCL，日志即底层传输判据）：
+
+| 对 | XL ring | PCIe ring | 通道 | 256 MiB AllReduce |
+|---|---|---|---|---|
+| smi4 + smi7 | **6** | 0 | 6 × 4 MiB | 28.85 GB/s（每 ring ≈4.8） |
+| smi3 + smi4 | **0** | **12** | 12 × 4 MiB | 37.88 GB/s（每 ring ≈3.2） |
+
+- 4↔7 对 BKCL 探测到 **6 条 XL 硬件 ring 并实际使用**——XPULink 已正确启用；
+  3↔4 对即使 `BKCL_P2P_FORCE_XLINK=1` 强制探测仍 0 ring，回退 12 条 PCIe ring，
+  与 `topo -m` 的 SYS 分类一致（硬件上无 XL 链路）；
+- 两对运行同一 ring 算法（`xlink_ring_all_reduce_single_node`，KL3 单节点算法名，
+  不区分物理传输）；每 ring 带宽 XL（≈4.8 GB/s）反而高于 PCIe（≈3.2 GB/s），
+  反差来自 ring 数（6 vs 12）：XL ring 数不受 `BKCL_CLUSTERS_PER_RING=1`、
+  `BKCL_MAX_CLUSTERS=24` 影响，判定为硬件资源上限；
+- 结论：带宽反差是真实的物理层特性，不是测试方法或配置错误；向厂商的问题相应
+  收窄为"XL 路径单方向仅 6 条 ring、聚合带宽低于 PCIe 回退路径是否符合设计预期"；
+- 附带发现厂商缺陷：`BKCL_DEBUG=INFO/TRACE` 使首次 AllReduce 崩溃
+  （`std::stoi` 未捕获异常，Python 侧报 `ValueError`），该变量只接受数值。
+
+原始日志（8 份）与说明见 `communication/non-xl-pair/bkcl-transport-debug/`。
+
+
+
+## 6. 失败与部分状态一览（86 个运行中 31 个 failed/partial，全部保留）
 
 | 运行 | 状态 | 阶段/原因与处理 |
 |---|---|---|
@@ -101,6 +215,9 @@ P2P 单向（rank0→rank1，卡对 (3,4) PCIe，带宽不乘 2）：
 | memory-capacity/capacity-{bounded,full}-a01-card5 | partial | monitoring partial（0.11 s 搜索窗口，见 §3） |
 | memory-capacity/capacity-timeout-a02-card5 | failed（预期） | cpu-wait 演练，同上看门狗链路 |
 | communication/attempts/comm-smoke-allreduce-a01-cards56、a02/a03-cards57 | failed | host-preflight：卡 6/7 被其他租户占用（fail-closed，未建 lease） |
+| official-idle-pair/official-0924T013943-timeout-MPI、-timeout-P2P | failed（预期） | 空闲卡对 smi4+smi7 上的 cpu-wait 看门狗演练，60 s 终止；postflight/cleanup/lease 全过（§5.4） |
+| （无证据目录）official-0924T0137-smoke-allreduce | 未启动 | 当日首次链路调用的第一次尝试：无 tty 会话下 `sudo -n` 票据不可用，`run_day6.py` 在 `sudo -n -v` 处退出，仅留下 `run-records/official-0924T0137-smoke-allreduce-command.json`（`exit_code=1`），未创建证据目录、未访问设备。改用 tmux 提供 tty 后解决 |
+| official-idle-pair/official-0924T013829-*（4 个） | 3 passed、1 running（中断） | 链路脚本 `rank0_elapsed` 取旧目录名导致 probe 后取不到 elapsed 而停止曲线；timeout-MPI 因链路被终止停在 `running`，其残留容器（`flagperf-benchmark-4f4cc07d…`）在收尾核对中手工清理。缺陷修正后 `official-0924T013943` 一次跑通（§5.4） |
 | communication/attempts/comm-smoke-allreduce-a01-cards57、auto042727-56、a05 | failed | container-probe：前两者为 torchrun PYTHONPATH 与 BKCL socket 问题；见 §4/§5.1 |
 | communication/contended/contended-smoke-allreduce-34-a0{1,2}、fix-a0{2,3,4,5}、fix-a01 | failed | 修复过程中的中间尝试：socket（网络修复前）、kernel check（设备选择修复前）、binding mismatch、stdout 合并、container-inspect 网络策略（逐项修复后通过） |
 | communication/contended/contended-0923T0824-qual-MPI-m1-34-a0{1,2} | failed | 公式缺陷期的产物（数值明显不合理，驱动修复） |
@@ -124,22 +241,28 @@ P2P 单向（rank0→rank1，卡对 (3,4) PCIe，带宽不乘 2）：
 
 ## 9. 第三道 go/no-go：两卡门禁
 
-**结论：GO（qualification 级证据；正式复跑待空闲卡窗口）。**
+**结论：GO —— 两卡通信已在空闲卡对上完成正式门禁复跑（2026-09-24，§5.4）。**
 
-- **正确性**：AllReduce 与 P2P 四点全部逐元素通过（cold/second/post-loop）。
-- **映射**：每 rank 记录并验证自己的绑定（framework_local_rank、设备节点、PCI BDF、UUID），与官方单卡证据同一校验路径。
+- **身份与映射**：smi4（`0000:84:00.0` / `/dev/xpu4` / UUID `b7942319-…`）与 smi7（`0000:bb:00.0` / `/dev/xpu6` / UUID `4922595e-…`）唯一且锁后一致；每 rank 记录并验证自己的绑定。运行前后两卡 `0 MiB / 0%`、无外来句柄。
+- **正确性**：AllReduce 与 P2P 各四点全部逐元素通过（cold/second/post-loop）。
 - **公式**：algbw/busbw 与 P2P 单向公式可重算；ws=2 时 busbw==algbw；修正前的漏乘迭代数缺陷见 §5.1。
-- **monitor**：qualification 级运行窗口 ≥15 s、每 rank 样本数满足策略下限，monitoring passed。
-- **超时与清理**：两卡各一次看门狗演练通过。
+- **monitor**：全部 qualification 窗口 ≥15 s，monitoring passed。
+- **超时与清理**：空闲卡对上两卡各一次看门狗演练通过。
 
-**限制（必须随结论一起引用）**：所有通信运行在**其他租户正在使用的卡**上完成（当日用户明确授权，临时门禁覆盖见 `communication/temporary-contended-override.patch`），带宽数字受外来负载影响，只作 qualification；**正式门禁需在空出的一对卡上复跑**。在正式复跑完成之前，第七天不得依据本结论执行 8 卡 AllReduce。
+**限制（必须随结论一起引用）**：
+
+- 本结论只覆盖 **smi4 + smi7 这一对卡**、`cpu:gloo,cuda:flagcx` backend、float32、4–256 MiB 消息与锁定镜像；链路为 XPULink 直连（smi4↔smi7，`topology-capture.txt`）。**两卡通过不代表 8 卡通过**；
+  非 XPULink 对照与带宽差异观察见 §5.5。
+- §5.3 的受扰数据只作 qualification，不得与 §5.4 的数字互比。
+- 第七天执行 8 卡 AllReduce 前必须预约整机窗口，并在 8 张卡上重新执行身份、映射、正确性、超时与清理门禁。
 
 ## 10. 遗留与建议
 
-1. **正式两卡复跑**（第七天第一任务）：同一 HEAD 代码、空闲卡对、monitor on、≥15 s 窗口，重跑 AllReduce 与 P2P 曲线。
+1. ~~正式两卡复跑~~：已于 2026-09-24 在空闲卡对 smi4 + smi7 上完成，见 §5.4。
 2. **容器网络前置条件**：`flagperf-p800-internal` 需在宿主机预先创建；建议后续把网络存在性纳入 host preflight。
 3. **消息尺寸**：`Melements` 粒度 4 MiB，1 MiB 点不可表示；如需需扩展契约。
-4. **卡健康排除**：卡 1（内核异常同步超时）与卡 2（8/8 不可纠正 ECC + pending remap）全程排除；今日覆盖的卡对为 (3,4)、(3,7)、(0,3)。
+4. **卡健康排除**：卡 1（内核异常同步超时）与卡 2（8/8 不可纠正 ECC + pending remap）全程排除；9 月 23 日覆盖的卡对为 (3,4)、(3,7)、(0,3)，9 月 24 日正式门禁覆盖 (4,7)、对照覆盖 (3,4)。
 5. **临时门禁补丁**：`base/vendors/kunlunxin/preflight.py` 的 contended 覆盖（`P800_ALLOW_FOREIGN_HANDLES`，默认关闭）仅用于当日授权运行，当日结束时以 `git checkout` 还原。
 6. **内存/容量证据的容器网络差异**：产生于 `--network none` 时代；两类用例不使用网络（无 collective），如需完全同构可择机重跑。
-7. **曲线卡对混合**：AllReduce 前两点在 (3,7)、后两点在 (3,4)（当日租户占用动态所致），正式复跑应在同一对卡上完成整条曲线。
+7. ~~曲线卡对混合~~：正式复跑已于 9 月 24 日在单一卡对 (4,7) 上完成整条曲线（§5.4）。
+8. **XPULink 与 host-bridge 路径带宽反差**：空闲状态下非 XL 对 (3,4)（跨 NUMA）在 4–256 MiB 消息上快于 XL 对 (4,7) 约 8–31%（§5.5）。BKCL 日志甄别已排除配置问题：XL 对实际使用 6 条 XPULink 硬件 ring（每 ring ≈4.8 GB/s），非 XL 对回退 12 条 PCIe ring（每 ring ≈3.2 GB/s），ring 数差异（6 vs 12）导致聚合带宽反向；XL ring 数不受 BKCL 环境变量调节，判定为硬件上限。建议向厂商确认 XL 路径 ring 数与聚合带宽是否符合设计预期。

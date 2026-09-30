@@ -1,0 +1,10 @@
+{
+  "context_sha256": "a45933bd5f25f05291de33cce7ae571e31b9441ffd67545b39a35e2f140ba99c",
+  "error": "Command '['/root/miniconda/envs/python310_torch29_cuda/bin/python', '-S', '/workspace/FlagPerf/base/vendors/kunlunxin/container_probe.py', '--context', '/run/flagperf/host-context.json', '--output', '/workspace/FlagPerf/results', '--worker']' timed out after 64.99998749000952 seconds",
+  "error_type": "TimeoutExpired",
+  "finished_monotonic_ns": 4055157845087219,
+  "run_id": "benchmark-4f4cc07de945416fb09f75bab53536b4",
+  "schema_version": 1,
+  "started_monotonic_ns": 4055092209101876,
+  "status": "failed"
+}

@@ -20,14 +20,14 @@ def validate_selection(ids):
         raise ValueError("physical card 1 is excluded by the operator; ranges containing 1 are also rejected")
 
 
-def case_points(case, devices, payload_bytes=536870912):
+def case_points(case, devices, payload_bytes=536870912, p2p_payload_bytes=33554432):
     """Generate every requested physical card, mode, size and unordered pair."""
     validate_selection(devices)
     if case not in CASES:
         raise ValueError("unregistered P800 Toolkit case: " + case)
     if "P2P" in case:
         directions = ("single-direction",) if case.endswith("latency") else ("single-direction", "bidirectional")
-        return [{"source": a, "destination": b, "bytes": 65536 if case.endswith("latency") else min(payload_bytes, 33554432),
+        return [{"source": a, "destination": b, "bytes": 65536 if case.endswith("latency") else p2p_payload_bytes,
                  "mode": "p2p" if direction == "single-direction" else "p2p-bidir", "direction": direction, "pinned": False, "async": False}
                 for (a, b), direction in product(combinations(sorted(devices), 2), directions)]
     if case.startswith("computation-"):
@@ -35,7 +35,8 @@ def case_points(case, devices, payload_bytes=536870912):
     if case == "main_memory-capacity":
         return [{"source": i, "mode": "capacity-query"} for i in devices]
     if case == "main_memory-bandwidth":
-        return [{"source": i, "mode": "d2d", "bytes": payload_bytes, "pinned": False, "async": False} for i in devices]
+        return [{"source": i, "mode": mode, "bytes": payload_bytes, "pinned": False, "async": False}
+                for i, mode in product(devices, ("d2d", "d2d-kernel"))]
     direction = "h2d" if "h2d" in case else "d2h"
     sizes = LATENCY_BYTES if case.endswith("latency") else (payload_bytes,)
     return [{"source": i, "mode": direction, "bytes": size, "pinned": pin, "async": asynchronous}
@@ -89,18 +90,21 @@ def metric_from_native(record, point, case, source, dimension, samples):
     elif case.endswith("latency"):
         value, unit, formula = median_ns, "ns", "median(completed API copy + synchronization nanoseconds)"
     else:
-        multiplier = 2 if point["mode"] == "p2p-bidir" else 1
+        multiplier = 2 if point["mode"] in ("p2p-bidir", "d2d-kernel") else 1
         value, unit, formula = multiplier * point["bytes"] / median_ns, "GB/s", "completed payload bytes / median_elapsed_ns (decimal GB/s)"
-        if multiplier == 2:
+        if point["mode"] == "d2d-kernel":
+            formula = "2*payload_bytes / median_elapsed_ns (device-kernel read+write, decimal GB/s)"
+        elif point["mode"] == "p2p-bidir":
             formula = "2*payload_bytes / independently measured concurrent two-direction completion time; not twice the unidirectional result"
     cv = statistics.pstdev(values) / statistics.mean(values) if len(values) > 1 else None
-    return {"field": "P800_METRIC/samples_ns", "source": source, "source_kind": "native-xblas" if point["mode"] == "gemm" else "native-xre",
+    return {"field": "P800_METRIC/samples_ns", "source": source, "source_kind": "native-xblas" if point["mode"] in ("gemm", "d2d-kernel") else "native-xre",
             "value": value, "unit": unit, "formula": formula, "sample_count": len(values),
             "median_ns": median_ns, "min_ns": min(values), "max_ns": max(values), "sample_cv": cv,
             "stability_status": "unstable" if cv is not None and cv > .05 else "observed",
             "timer": record["timer"], "correctness": True, "checked_values": record["checked_values"],
             "point": point, "physical_device_id": point["source"],
-            "scope": "completed native API operation; not theoretical peak or device-only kernel time",
+            "scope": ("XBLAS device-kernel copy, aggregate HBM read+write traffic; includes completion synchronization"
+                      if point["mode"] == "d2d-kernel" else "completed native API operation; not theoretical peak or device-only kernel time"),
             "compute_semantics": ("INT8 inputs/TGEMM via XBLAS fc_fusion; maxima=127; alpha=1 beta=0; LINEAR; no bias; FP32 output"
                                   if point.get("dtype") == "INT8" else "XBLAS GemmEx FP32 accumulation/output" if point["mode"] == "gemm" else None),
             "api_calls_per_sample": record.get("api_calls_per_sample", 1), "async_chunk_bytes": record.get("async_chunk_bytes", 0),
@@ -123,14 +127,16 @@ def layer_status(statuses):
 def contract_record():
     return {"schema_version": 1, "vendor": "kunlunxin", "chip": "P800", "cases": list(CASES),
             "excluded_physical_ids": list(EXCLUDED_PHYSICAL_IDS), "bandwidth_payload_bytes": 536870912,
-            "latency_payload_bytes": list(LATENCY_BYTES), "p2p_latency_payload_bytes": 65536, "p2p_bandwidth_payload_bytes": 33554432,
+            "latency_payload_bytes": list(LATENCY_BYTES), "p2p_latency_payload_bytes": 65536,
+            "p2p_bandwidth_payload_bytes": 33554432, "p2p_bandwidth_payload_max_bytes": 1073741824,
+            "p2p_payload_cli": "--p2p-payload-bytes",
             "transfer_variants": ["pageable-blocking", "pageable-nonblocking", "pinned-blocking", "pinned-nonblocking"],
             "pinned_api": "posix_memalign + xpu_host_register; optional xpu_host_alloc",
             "pinned_async_default_chunk_bytes": 1048576,
             "pinned_async_scope": "logical payload split into explicit native submissions with one completion wait; --async-chunk-bytes 0 preserves failed whole-payload reproduction",
             "p2p_scope": "all unordered pairs: ascending unidirectional plus separately timed concurrent bidirectional; no reverse inference",
             "capacity_scope": "per-card xpu-smi reported HBM capacity, not allocatable capacity/OOM stress",
-            "d2d_scope": "copy payload bytes, no read+write factor of two",
+            "d2d_scope": "separate runtime memcpy (1*payload) and independent XBLAS device-kernel copy (2*payload read+write); never pool these modes",
             "computation": {"backend": "independent Toolkit C++ XBLAS cublasGemmEx (floating point) and fc_fusion (INT8); no Base or PyTorch workload",
                             "output": {"FP32": "FP32", "FP16": "FP32", "BF16": "FP32", "INT8": "FP32"},
                             "int8_scope": "fc_fusion INT8 input and TGEMM=int8_t, maxima=127, alpha=1, beta=0, no bias, LINEAR activation; FP32 output; not INT8-to-INT32 GemmEx",

@@ -18,13 +18,17 @@
 
 本目录提供 FlagPerf 的基础规格评测能力。当前推荐入口是统一宿主命令
 `python3 base/run.py`，但 Benchmark 与 Toolkit 仍使用独立执行器、权限和结果语义：
+P800 Toolkit uses an independent native XRE/XBLAS contract. Its default plan is GEMM
+8192, five repeats and a 600-second timeout; P2P keeps a historical 32 MiB default and
+accepts `--p2p-payload-bytes 268435456` for an explicit 256 MiB comparison plan. The
+option is statically tested only; it does not promote candidate results to qualification.
 
 - **Benchmark**：使用各 profile 锁定的框架和原始 Base Case；Ascend 为 PyTorch 2.10/Torch-FL，P800 为 PyTorch 2.9/XPYTORCH；
 - **Toolkit**：通过 MindCluster ToolBox、`ascend-dmi`、`npu-smi` 或 HCCL Test
   执行厂商测量和诊断；
 - **report**：从已有证据确定性重建 Markdown/SVG 报告，不重跑硬件。
 
-当前统一入口支持 **Ascend 单宿主**，并接入 **P800 candidate 单卡计算/传输/内存及严格两 rank 同机通信**。八 rank 尚未实现和验收。原多机入口保存在
+当前统一入口支持 **Ascend 单宿主**，并接入 **P800 candidate 单卡计算/传输/内存及同机通信**。P800 MPI 代码入口接受 2–8 rank；当前仅两 rank 有历史硬件证据，八 rank 仍未 qualification。原多机入口保存在
 [`legacy/cluster_run.py`](legacy/cluster_run.py)，仅用于迁移兼容。
 Benchmark 控制面通过静态 Vendor Provider 接入厂商策略；生产 registry 已注册
 Ascend 性能执行与 Kunlunxin 有界预检查、单卡性能和双 rank 通信执行。
@@ -32,7 +36,7 @@ P800 的启动命令、正确性和计时合同见 [P800 FP32](benchmarks/comput
 实际资格结果见 [Day 4 审查](vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day4/review.md)；
 FP16/BF16/INT8（8192³ 设备内核）与传输合同的资格范围、能力矩阵和已知限制见
 [Day 5 审查](vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day5/review.md)。
-预检查与性能验收分别记录；FP64/FP8/TF32 按锁定栈证据跳过。内存、容量和两卡证据见 Day 6/7 审查；FlagGems、八卡与跨机不在已验证范围。当前范围与复现命令见 [P800 交付手册](docs/p800-day7.md)。
+预检查与性能验收分别记录；FP64/FP8/TF32 按锁定栈证据跳过。内存、容量和两卡证据见 Day 6/7 审查；FlagGems、八卡正式 qualification 与跨机不在已验证范围。当前范围与复现命令见 [P800 交付手册](docs/p800-day7.md)。
 接口、配置兼容变化与后续接入步骤见 [控制面迁移说明](docs/vendor-control-plane.md)。
 
 
@@ -549,3 +553,6 @@ device access. This command does not produce TFLOPS or promote runtime validatio
 2026-09-20 追加复验：优先在重新通过预检查的卡 6/7 上推进；卡 1 同步超时
 复现并有 PCI 对应内核异常，卡 2 有既存 ECC/重映射告警。详见
 [逐卡结果与恢复记录](vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day3-recheck/review.md)。
+
+
+[P800 closeout audit](docs/p800-closeout-20260930.md)

@@ -19,6 +19,8 @@ from benchmarks.day6_contract import (
     payload_bytes,
     p2p_one_way_bandwidth,
     validate_config,
+    allreduce_timed_coefficient,
+    capacity_release_verified,
 )
 from .events import benchmark_measurement_finish, benchmark_measurement_start
 from .fp32 import save
@@ -32,13 +34,22 @@ def _require_scope(case, rank, world_size, local_rank):
 
 def _identity(driver, config, case, rank, world_size, local_rank):
     _require_scope(case, rank, world_size, local_rank)
+    output = Path(os.environ['FLAGPERF_BENCHMARK_OUTPUT'])
+    _progress(output, rank, 'selecting-device')
     driver.set_device(local_rank)
+    _progress(output, rank, 'device-selected')
     target = driver.device(local_rank)
     identity = driver.evidence()
     # evidence() reports the first binding; every rank must record its own.
     identity['binding'] = driver.binding(local_rank)
     output = Path(os.environ['FLAGPERF_BENCHMARK_OUTPUT'])
     return target, identity, output
+
+
+def _progress(output, rank, stage):
+    """Durable checkpoints outside timed loops make watchdog failures auditable."""
+    save(output / f'progress-rank-{rank}.json', {'rank': rank, 'stage': stage, 'monotonic_ns': time.monotonic_ns()})
+    _emit(f'[P800 checkpoint] rank={rank} stage={stage}')
 
 
 def _context():
@@ -250,6 +261,7 @@ def run_memory_capacity(driver, config, rank, world_size, local_rank):
         record.update(status='failed', error=str(exc), error_type=type(exc).__name__)
         raise
     finally:
+        tensor = None  # Drop the loop's last local reference as well as held[].
         held.clear()
         for _ in range(3):
             import gc
@@ -258,7 +270,8 @@ def run_memory_capacity(driver, config, rank, world_size, local_rank):
         try:
             driver.synchronize()
             free_after, _t = driver.memory_info()
-            record.update(released=True, release_verified=free_after >= record.get('free_before_mib', 0) * 95 // 100,
+            record.update(released=True, release_verified=capacity_release_verified(record.get('free_before_mib'), int(free_after)),
+                          free_after_bytes=int(free_after),
                           free_after_mib=int(free_after // (1 << 20)))
         except Exception as exc:
             record.update(released=False, release_error=str(exc), error_type=type(exc).__name__)
@@ -266,7 +279,7 @@ def run_memory_capacity(driver, config, rank, world_size, local_rank):
 
 
 def run_allreduce(driver, config, rank, world_size, local_rank):
-    """Two-rank nonzero SUM over FlagCX; algbw=S/t, busbw=algbw*2*(n-1)/n."""
+    """Two to eight rank SUM; algbw=S/t, busbw=algbw*2*(n-1)/n."""
     case = 'interconnect-MPI_intraserver:P800'
     validate_config(config, case)
     target, identity, output = _identity(driver, config, case, rank, world_size, local_rank)
@@ -274,30 +287,33 @@ def run_allreduce(driver, config, rank, world_size, local_rank):
     record = {'schema_version': 1, **identity, 'case': case, 'rank': rank, 'status': 'failed',
               'checks': [], 'semantics': {'collective': 'all_reduce SUM', 'message_bytes': payload,
                                           'reference': 'sum of deterministic rank inputs computed on CPU for the configured world size',
-                                          'timed_loop': 'sign-paired inputs (+base and -base) keep repeated SUM at exactly zero; wire traffic is unchanged'}}
+                                          'timed_loop': 'rank0=(world_size-1)*base, other ranks=-base; repeated SUM stays exactly zero'}}
     try:
         if not dist.is_available() or not dist.is_initialized():
             raise RuntimeError('process group must be initialized before allreduce')
         base = torch.arange(payload // 4, dtype=torch.float32).remainder_(251).add_(config['SEED'] % 17)
         mine = base + rank
         reference = base * world_size + (world_size * (world_size - 1) // 2)
+        _progress(output, rank, 'copying-initial-tensor')
         device_tensor = mine.to(target)
+        _progress(output, rank, 'initial-tensor-copied')
         record.update(input=_placement(device_tensor), input_checksum=_checksum(device_tensor))
         for phase in ('cold', 'second'):
             device_tensor.copy_(mine.to(target))
+            _progress(output, rank, 'allreduce-' + phase + '-start')
             dist.all_reduce(device_tensor, op=dist.ReduceOp.SUM)
             driver.synchronize()
+            _progress(output, rank, 'allreduce-' + phase + '-complete')
             checked = _check_content(device_tensor, reference, phase)
             record['checks'].append(checked)
             record['output_checksum_' + phase] = _checksum(device_tensor)
             if not checked['passed']:
                 raise RuntimeError('allreduce content mismatch: ' + phase)
         _fault_point(config)
-        # Sign-paired inputs: rank0 holds +base and rank1 holds -base, so every
-        # repeated SUM collapses to exactly +0.0 and the buffer can never grow
-        # toward float32 overflow no matter how long the timed loop runs.  The
-        # collective still moves the identical payload over the interconnect.
-        device_tensor.copy_((base * (1.0 if rank == 0 else -1.0)).to(target))
+        # Coefficients sum to zero for 2..8 ranks, including odd world sizes.
+        coefficient = allreduce_timed_coefficient(rank, world_size)
+        device_tensor.copy_((base * coefficient).to(target))
+        record['timed_input_coefficient'] = coefficient
         driver.synchronize()
         record['timed_input_checksum'] = _checksum(device_tensor)
         zero = torch.zeros_like(base)
@@ -317,7 +333,7 @@ def run_allreduce(driver, config, rank, world_size, local_rank):
         algbw, algbw_gib, busbw, busbw_gib = allreduce_bandwidth(payload, config['ITERS'], elapsed, world_size)
         checked = _check_content(device_tensor, zero, 'post-loop')
         record['checks'].append({'phase': 'post-loop', **checked,
-                                 'note': 'sign-paired inputs keep the repeated SUM at exactly zero'})
+                                 'note': 'world-size-balanced inputs keep repeated SUM at exactly zero'})
         if not checked['passed']:
             raise RuntimeError('allreduce timed loop drifted from the exact zero state')
         record['status'] = 'passed'

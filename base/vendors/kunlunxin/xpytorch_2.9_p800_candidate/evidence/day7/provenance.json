@@ -1500,6 +1500,20 @@
       "projection": "byte-identical"
     },
     {
+      "path": "export.log",
+      "source": "base/result/p800-day7-20260924/export.log",
+      "source_sha256": "43323f5c80e7348b4d078ec19b14392aae8fb12ee30fd0232fd9ed4f1fe6e622",
+      "archive_sha256": "43323f5c80e7348b4d078ec19b14392aae8fb12ee30fd0232fd9ed4f1fe6e622",
+      "projection": "byte-identical"
+    },
+    {
+      "path": "export_day7.py",
+      "source": "base/result/p800-day7-20260924/export_day7.py",
+      "source_sha256": "c4bfca7730df1d8e436bbb92d96524f6c80613228b6a4944c979cff7f1220c5a",
+      "archive_sha256": "c4bfca7730df1d8e436bbb92d96524f6c80613228b6a4944c979cff7f1220c5a",
+      "projection": "byte-identical"
+    },
+    {
       "path": "final-host-check/machine.json",
       "source": "base/result/p800-day7-20260924/final-host-check/machine.json",
       "source_sha256": "0e4492b684e76da16487064445a4d1b7eb43379d53cd546b5f2dd94c75938492",
@@ -3665,8 +3679,8 @@
     {
       "path": "review.md",
       "source": "base/result/p800-day7-20260924/review.md",
-      "source_sha256": "c0b75e5bfb28c9a44e8ea540e8f60b6ac31aa5b30cb353c9a514cf80da16c823",
-      "archive_sha256": "c0b75e5bfb28c9a44e8ea540e8f60b6ac31aa5b30cb353c9a514cf80da16c823",
+      "source_sha256": "a3da5f209cb2da537911918efe7530b990614f494d9d4865f95faea93407fe75",
+      "archive_sha256": "a3da5f209cb2da537911918efe7530b990614f494d9d4865f95faea93407fe75",
       "projection": "byte-identical"
     },
     {

@@ -85,6 +85,20 @@ def p2p_one_way_bandwidth(payload, iterations, elapsed):
     return bandwidth(payload * iterations, elapsed)
 
 
+def allreduce_timed_coefficient(rank, world_size):
+    """Exact zero sum for every supported world size, including odd sizes."""
+    if type(world_size) is not int or not 2 <= world_size <= 8 or type(rank) is not int or rank not in range(world_size):
+        raise ValueError('invalid allreduce rank/world size')
+    return world_size - 1 if rank == 0 else -1
+
+
+def capacity_release_verified(free_before_mib, free_after_bytes):
+    """Preserve the 95% recovery gate while comparing the same byte unit."""
+    return (type(free_before_mib) is int and free_before_mib > 0
+            and type(free_after_bytes) is int and free_after_bytes >= 0
+            and free_after_bytes * 100 >= free_before_mib * (1 << 20) * 95)
+
+
 def _common_metric_checks(metric, correctness, context, context_hash, binding, config, case, world_size):
     for record in (metric, correctness):
         if not (record.get('schema_version') == 1 and record.get('status') == 'passed'):
@@ -128,6 +142,27 @@ def validate_metric(metric, correctness, context, context_hash, binding, config,
     if type(value) not in (float, int) or not math.isfinite(value) or value <= 0:
         raise RuntimeError('invalid rank metric value')
 
+    # A top-level "passed" cannot substitute for the actual content checks.
+    checks = correctness.get('checks', [])
+    if case != 'main_memory-capacity:P800':
+        phases = (['sentinel', 'clone-equivalence', 'changed-input', 'after'] if case == 'main_memory-bandwidth:P800'
+                  else ['cold', 'second', 'post-loop'] if case == 'interconnect-MPI_intraserver:P800'
+                  else ['sent-verified-repeats'] if rank == 0
+                  else [f'recv-{i}' for i in range(config['WARMUP'])] + ['post-loop'])
+        if [c.get('phase') for c in checks] != phases or any(c.get('passed') is not True for c in checks):
+            raise RuntimeError('missing or failed content correctness phases')
+        if case == 'interconnect-P2P_intraserver:P800' and rank == 0:
+            if checks[0].get('repeats') != config['WARMUP'] or checks[0].get('sequence_range') != [0, config['WARMUP'] - 1]:
+                raise RuntimeError('P2P sender sequence coverage mismatch')
+        elif any(c.get('elements') != payload_bytes(config['Melements']) // 4 or c.get('mismatch_count') != 0
+                 or c.get('first_mismatch') is not None for c in checks):
+            raise RuntimeError('content correctness coverage/mismatch evidence invalid')
+        if case == 'main_memory-bandwidth:P800' and (correctness.get('source_reused') is not True
+                or correctness.get('destination_reused') is not True):
+            raise RuntimeError('preallocated copy buffers were not reused')
+        if case == 'interconnect-MPI_intraserver:P800' and world_size > 2 and correctness.get('timed_input_coefficient') != allreduce_timed_coefficient(rank, world_size):
+            raise RuntimeError('multi-rank timed inputs do not use verified zero-sum coefficients')
+
     if case == 'main_memory-bandwidth:P800':
         payload = payload_bytes(config['Melements'])
         expected_gb, expected_gib = memory_bandwidth(payload, config['ITERS'], elapsed)
@@ -145,6 +180,12 @@ def validate_metric(metric, correctness, context, context_hash, binding, config,
             raise RuntimeError('capacity value cannot be recomputed from held MiB')
         if correctness.get('released') is not True or correctness.get('release_verified') is not True:
             raise RuntimeError('capacity tensors were not verifiably released')
+        after = correctness.get('free_after_bytes', correctness.get('free_after_mib', -1) * (1 << 20))
+        if not capacity_release_verified(correctness.get('free_before_mib'), after):
+            raise RuntimeError('capacity release bytes do not meet the recovery gate')
+        held_trail = [r for r in correctness.get('trail', []) if r.get('stage') == 'held']
+        if not held_trail or sum(r.get('request_mib', 0) for r in held_trail) != held or correctness.get('held_mib') != held:
+            raise RuntimeError('capacity result differs from held allocation trail')
     elif case == 'interconnect-MPI_intraserver:P800':
         payload = payload_bytes(config['Melements'])
         algbw, algbw_gib, busbw, busbw_gib = allreduce_bandwidth(payload, config['ITERS'], elapsed, world_size)
