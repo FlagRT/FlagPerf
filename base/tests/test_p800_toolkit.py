@@ -18,7 +18,7 @@ from toolkits._common.kunlunxin.P800 import contract as c
 from toolkits._common.kunlunxin.P800 import evidence as e
 from toolkits._common.kunlunxin.P800.evidence_runner import resolve_native, parse_record
 from toolkits._common.kunlunxin.P800.report import generate_and_record
-from executors.p800_toolkit import finalize_monitor
+from executors.p800_toolkit import finalize_monitor, compose_status
 from toolkits._common.kunlunxin.P800 import evidence_runner
 
 
@@ -198,6 +198,26 @@ class EvidenceTests(unittest.TestCase):
             self.assertTrue(result['timed_out'])
             self.assertIn('started',(root/result['stdout']['path']).read_text())
             with self.assertRaises(FileExistsError): e.command(['anything'],root/'case',root)
+
+    def test_final_status_composes_measurement_monitoring_diagnosis(self):
+        self.assertEqual(compose_status('passed','passed','passed'),'passed')
+        self.assertEqual(compose_status('failed','passed','passed'),'failed')
+        self.assertEqual(compose_status('passed','partial','passed'),'partial')
+        self.assertEqual(compose_status('not-run','not-run','not-run'),'partial')
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d)
+            target={'target':'point/repeat-1','measurement_status':'passed','diagnosis_status':'passed','monitoring_status':'pending-host-finalization',
+                    'bindings':[{'uuid':'test','host_physical_id':4}],
+                    'measurement_window':{'started_monotonic_s':101,'finished_monotonic_s':107,'role':'measurement'}}
+            case={'targets':[target],'measurement_status':'passed','diagnosis_status':'passed','status':'partial'}
+            manifest={'cases':{'interconnect-h2d':case},'measurement_status':'passed','monitoring_status':'not-run'}
+            monitor=SimpleNamespace(origin_monotonic_s=100,
+                                    samples=[{'device_id':'kunlunxin/test','valid':True,'started_offset_s':1+i*.5,'finished_offset_s':1.1+i*.5} for i in range(10)],
+                                    finish=lambda *a,**k:None)
+            finalize_monitor(root,manifest,monitor,SimpleNamespace(compute_monitor='on',data_movement_monitor='on'))
+            self.assertEqual(target['monitoring_status'],'passed')
+            self.assertEqual(case['status'],'passed')
+            self.assertEqual(manifest['status'],'passed')
 
     def test_hash_index_detects_mutation(self):
         with tempfile.TemporaryDirectory() as d:

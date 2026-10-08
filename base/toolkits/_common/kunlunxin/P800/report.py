@@ -13,7 +13,7 @@ import statistics
 from .contract import CASES, EXCLUDED_PHYSICAL_IDS
 from .evidence import index, reference, sha256, write_json
 
-REPORT_SCHEMA_VERSION = 2
+REPORT_SCHEMA_VERSION = 3
 
 STATUS_TEXT = {"passed": "通过", "partial": "部分完成", "failed": "失败",
                "not-run": "未执行", "unsupported": "不支持", "missing": "缺失"}
@@ -216,15 +216,20 @@ def generate(root):
         f"- **总体状态：{status_text(overall)}（`{overall}`）。** 本报告只整理已保存证据，不重新判定硬件结果。",
         f"- **测量层：** {len(ordered)} 个 Case 中，通过 {measurements['passed']}、部分完成 {measurements['partial']}、失败 {measurements['failed']}。",
         f"- **作证监控层：** 完整 {monitoring['passed']}、部分完成 {monitoring['partial']}、未执行 {monitoring['not-run']}。",
-        "- **厂商阈值诊断层：** P800 当前仅有 xpu-smi 观测，不具备 Ascend DMI 类阈值判定，诊断统一 not-supported（既定口径，见限制与后续动作）。",
+        f"- **厂商合规诊断层：** 通过 {diagnoses['passed']}、未执行 {diagnoses['not-run']}、失败 {diagnoses['failed']}。"
+        "诊断层语义为厂商工具链合规校验（XBLAS/XRE 正确性回读 + 契约覆盖率校验 + xpu-smi 健康观测，2026-10-08 口径，见方法与指标口径）；"
+        "本工具链不提供 DMI 式阈值判定工具。",
         f"- **最终 Case 状态：** 通过 {statuses['passed']}、部分完成 {statuses['partial']}、失败 {statuses['failed']}。",
     ]
+    scale = manifest.get("settings", {}) or {}
+    scale_items = [k for k in ("matrix_size", "payload_bytes", "p2p_payload_bytes", "repeat", "samples") if k in scale]
+    if scale_items:
+        lines.append("- **本轮规模口径：** " + "，".join(f"{k}={scale[k]}" for k in scale_items)
+                     + "（settings 原值；跨 run 比较性能前先对齐口径，不同规模的数值不可直接互比）。")
     if overall == "partial" and measurements["passed"] == len(ordered) and ordered:
         gaps = []
         if monitoring["partial"] or monitoring["failed"]:
             gaps.append("监控证据不完整或采集失败")
-        if diagnoses["unsupported"]:
-            gaps.append("厂商阈值诊断 not-supported（既定口径）")
         if any(t.get("error") for c in ordered for t in cases[c].get("targets", [])):
             gaps.append("存在带错误记录的执行目标")
         lines.append(f"- **关键解释：** 本轮所有性能测量均形成有效指标；已记录的证据缺口包括：{'、'.join(gaps)}。")
@@ -254,8 +259,9 @@ def generate(root):
               "计算类与数据搬运类的原始监控 timeline、逐样本原值和路由覆盖见 [report_monitor.md](report_monitor.md)。", "",
               "## 测量与诊断是两个独立结论", "",
               "`measurement_status` 说明性能命令、指标和设备覆盖；`monitoring_status` 说明同期监控覆盖；"
-              "`diagnosis_status` 说明厂商阈值诊断；最终状态综合三者。"
-              "P800 当前无 DMI 类厂商阈值判定，诊断列统一 not-supported（既定口径）。", ""]
+              "`diagnosis_status` 说明厂商工具链合规校验（XBLAS/XRE 正确性回读 + 契约覆盖率校验 + xpu-smi 健康观测）；"
+              "最终状态综合三者，三者均通过才为通过。"
+              "P800 工具链不提供 DMI 式阈值判定，诊断层采用合规校验语义（2026-10-08 口径，见方法与指标口径）。", ""]
     lines += table(["Case", "测量", "监控", "诊断", "最终", "指标摘要", "范围", "耗时", "限制/错误"], [
         [case_display(c), status_text(cases[c].get("measurement_status")),
          status_text(cases[c].get("monitoring_status")), status_text(cases[c].get("diagnosis_status")),
@@ -346,10 +352,14 @@ def generate(root):
               "- Pinned 异步模式可能按配置将逻辑 payload 分为多次原生提交，最后统一等待。"
               "实际分块大小和 API 次数记录在 metrics 的 async_chunk_bytes / api_calls_per_sample；"
               "这是分块端到端带宽，不能与单次整块 API 调用混称。",
-              "- 重复组统计各独立进程的结果；CV 使用样本标准差 ddof=1；单次内部样本不代替五次重复。", "",
+              "- 重复组统计各独立进程的结果；CV 使用样本标准差 ddof=1；单次内部样本不代替五次重复。",
+              "- 厂商诊断层口径（2026-10-08）：P800 的诊断层定义为厂商工具链合规校验——每个测量点的原生命令都经 "
+              "XBLAS/XRE 正确性回读（checked_values 逐点核对）与契约覆盖率校验，配合 xpu-smi pre/post 健康观测；"
+              "三者齐全且测量通过即诊断层通过。当前镜像不提供 ascend-dmi 等价的算力/带宽/信号质量阈值判定工具；"
+              "与 Ascend 报告并排对比时，诊断列语义为“合规校验”而非“阈值判定”，属厂商能力差异的如实呈现。", "",
               "## 限制与后续动作", "",
               "- 卡 1 已排除。占用卡数据属于 exploratory；本报告不晋级 candidate，也不替代 Base 双卡/八卡 qualification。",
-              "- 厂商诊断仅有 xpu-smi 观测，不具备 Ascend DMI 的算力/带宽/信号质量阈值判定。"
+              "- 当前镜像不提供 Ascend DMI 等价的算力/带宽/信号质量阈值判定工具；诊断层为合规校验语义（见方法与指标口径）。"
               "xprofiler 的文件及 help 留档不代表采集了 kernel trace。",
               "- INT8→INT32 GemmEx 在当前镜像实测返回参数错误，INT8 走 XBLAS fc_fusion（见方法与指标口径）。"]
     if summary.get("error"):

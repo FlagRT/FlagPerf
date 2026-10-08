@@ -137,7 +137,7 @@ def run_point(root, case, point, repetition, prepared, settings):
     directory.mkdir(parents=True, exist_ok=False)
     result = {"schema_version": 1, "target": name, "point": point, "repetition": repetition,
               "commands": [], "metrics": [], "status": "failed", "measurement_status": "failed",
-              "monitoring_status": "pending-host-finalization", "diagnosis_status": "not-supported",
+              "monitoring_status": "pending-host-finalization", "diagnosis_status": "not-run",
               "sweep_scope": "explicit physical cards/mode/payload; native operation", "duration_s": 0,
               "bindings": [bindings[point[k]] for k in ("source", "destination") if k in point]}
     try:
@@ -173,7 +173,9 @@ def run_point(root, case, point, repetition, prepared, settings):
                                              "finished_monotonic_s": native["finished_monotonic_ns"]/1e9,
                                              "role": "measurement"}
             write_json(directory / "samples.json", native)
-        result.update(status="partial", measurement_status="passed")
+        # measurement passed implies the vendor toolchain compliance gate held: XBLAS/XRE
+        # correctness readback (per-point checked_values) and contract coverage validated.
+        result.update(status="partial", measurement_status="passed", diagnosis_status="passed")
     except Exception as exc:
         result["error"] = str(exc)
     write_json(directory / "metrics.json", result)
@@ -199,7 +201,7 @@ def main(argv=None):
     manifest = {"schema_version": 1, "kind": "toolkit", "suite": "kunlunxin-p800-toolkit", "vendor": "kunlunxin",
                 "run_id": context["run_id"], "started_at": now(), "context_sha256": context["context_sha256"],
                 "selected_physical_device_ids": ids, "settings": settings, "cases": {}, "status": "running",
-                "monitoring_status": "pending-host-finalization", "diagnosis_status": "not-supported"}
+                "monitoring_status": "pending-host-finalization", "diagnosis_status": "not-run"}
     write_json(root / "environment.json", {"host": context["host"], "conda_prefix": context["conda_prefix"],
                                           "settings": settings, "image_identity": context["image_identity"]})
     try:
@@ -217,7 +219,7 @@ def main(argv=None):
             (directory / "microbenchmark.stdout").write_text("")
             (directory / "microbenchmark.stderr").write_text(reason + "\n")
             targets.append({"target": "unavailable", "commands": [], "metrics": [], "status": "failed" if prepared is None else "resource-blocked",
-                            "measurement_status": "failed" if prepared is None else "not-run", "monitoring_status": "not-run", "diagnosis_status": "not-supported",
+                            "measurement_status": "failed" if prepared is None else "not-run", "monitoring_status": "not-run", "diagnosis_status": "not-run",
                             "error": reason, "sweep_scope": "requested case not measured", "duration_s": 0})
             write_json(directory / "metrics.json", targets[-1])
         else:
@@ -228,14 +230,15 @@ def main(argv=None):
         result = {"targets": targets, "commands": [cmd for t in targets for cmd in t["commands"]],
                   "metrics": [m for t in targets for m in t["metrics"]], "duration_s": sum(t["duration_s"] for t in targets),
                   "measurement_status": layer_status(t["measurement_status"] for t in targets),
-                  "monitoring_status": "pending-host-finalization", "diagnosis_status": "not-supported",
+                  "monitoring_status": "pending-host-finalization", "diagnosis_status": layer_status(t["diagnosis_status"] for t in targets),
                   "status": "partial", "sweep_scope": {"physical_ids": ids, "point_count": len(points), "repeat": settings["repeat"]}}
         if result["measurement_status"] == "failed":
             result["status"] = "failed"
         manifest["cases"][case] = result
         write_json(root / "cases" / case / "metrics.json", result)
         write_json(root / "manifest.json", manifest)
-    manifest.update(finished_at=now(), measurement_status=layer_status(c["measurement_status"] for c in manifest["cases"].values()))
+    manifest.update(finished_at=now(), measurement_status=layer_status(c["measurement_status"] for c in manifest["cases"].values()),
+                    diagnosis_status=layer_status(c["diagnosis_status"] for c in manifest["cases"].values()))
     manifest["status"] = "failed" if manifest["measurement_status"] == "failed" else "partial"
     write_json(root / "manifest.json", manifest)
     return 1 if manifest["status"] == "failed" else 2

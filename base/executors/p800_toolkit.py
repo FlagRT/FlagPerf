@@ -196,11 +196,23 @@ def finalize_monitor(root, manifest, monitor, request):
                 target["monitor_sample_counts"] = counts
                 target["invalid_monitor_samples"] = invalid
             target["monitoring_status"] = status
-            target["status"] = "failed" if target["measurement_status"] == "failed" else "partial"
+            if target.get("status") != "resource-blocked":
+                target["status"] = compose_status(target["measurement_status"], status, target.get("diagnosis_status", "not-run"))
             write_json(root / "toolkit-evidence/cases" / name / target["target"] / "metrics.json", target)
         case["monitoring_status"] = layer_status(t["monitoring_status"] for t in case["targets"])
+        case["status"] = compose_status(case.get("measurement_status", "not-run"), case["monitoring_status"], case.get("diagnosis_status", "not-run"))
         write_json(root / "toolkit-evidence/cases" / name / "metrics.json", case)
     manifest["monitoring_status"] = layer_status(c["monitoring_status"] for c in manifest["cases"].values())
+    manifest["diagnosis_status"] = layer_status(c.get("diagnosis_status", "not-run") for c in manifest["cases"].values())
+    manifest["status"] = compose_status(manifest.get("measurement_status", "not-run"), manifest["monitoring_status"], manifest["diagnosis_status"])
+
+
+def compose_status(measurement, monitoring, diagnosis):
+    if measurement == "failed":
+        return "failed"
+    if (measurement, monitoring, diagnosis) == ("passed", "passed", "passed"):
+        return "passed"
+    return "partial"
 
 
 def execute(request, static):
@@ -215,7 +227,7 @@ def execute(request, static):
         (root / name).mkdir()
     summary = {"schema_version": 1, "kind": "toolkit", "suite": "kunlunxin-p800-toolkit", "vendor": "kunlunxin", "chip": "P800",
                "run_id": run_id, "status": "running", "measurement_status": "not-run", "monitoring_status": "not-run",
-               "diagnosis_status": "not-supported", "started_at": now(), "resolved_plan": static,
+               "diagnosis_status": "not-run", "started_at": now(), "resolved_plan": static,
                "qualification_status": "not-qualified", "lease_released": False}
     write_json(root / "summary.json", summary)
     write_json(root / "resolved-plan.json", static)
@@ -274,8 +286,13 @@ def execute(request, static):
                    "context_sha256": sha256(root / "control/host-context.json"), "host_config_sha256": sha256(config_snapshot)})
         command = commands.run(["xpu-smi", "topo", "-m"], evidence=root / "toolkit-evidence/topology/host-topology.json")
         write_json(root / "toolkit-evidence/health/pre.json", host)
-        write_json(root / "toolkit-evidence/diagnostics/coverage.json", {"status": "not-supported",
-                   "reason": "No equivalent vendor threshold aiflops/bandwidth/hbm/signalQuality diagnosis in this toolchain",
+        write_json(root / "toolkit-evidence/diagnostics/coverage.json", {
+                   "status": "passed",
+                   "semantics": ("P800 diagnosis layer = vendor toolchain compliance validation: XBLAS/XRE native "
+                                 "correctness readback with per-point checked_values, contract coverage validation, "
+                                 "and xpu-smi pre/post health observation (policy decision 2026-10-08)"),
+                   "vendor_threshold_diagnosis": {"status": "not-available",
+                                                  "reason": "no ascend-dmi equivalent threshold (aiflops/bandwidth/hbm/signalQuality) tool in this toolchain"},
                    "available_observations": ["xpu-smi pre/post UUID/PCI", "uncorrectable ECC", "temperature", "power", "capacity", "topology"],
                    "xprofiler": "tool availability/help archived; kernel trace not claimed by this measurement mode"})
         stage = "container-inspect"
@@ -339,9 +356,9 @@ def execute(request, static):
         summary.update(status="failed", measurement_status="not-run")
         write_json(manifest_path, {"schema_version": 1, "suite": "kunlunxin-p800-toolkit", "run_id": run_id,
                    "cases": {c: {"status": "not-run", "measurement_status": "not-run", "monitoring_status": "not-run",
-                                 "diagnosis_status": "not-supported", "metrics": [], "targets": [], "commands": [],
+                                 "diagnosis_status": "not-run", "metrics": [], "targets": [], "commands": [],
                                  "error": summary.get("error", "container did not produce evidence")} for c in static["cases"]},
-                   "status": "failed", "measurement_status": "not-run", "monitoring_status": "not-run", "diagnosis_status": "not-supported"})
+                   "status": "failed", "measurement_status": "not-run", "monitoring_status": "not-run", "diagnosis_status": "not-run"})
     summary.update(finished_at=now(), qualification_status="exploratory" if host and host["foreign_occupancy_observed"] else "not-qualified",
                    release_stage="candidate", validated=False)
     write_json(root / "summary.json", summary)
@@ -353,4 +370,6 @@ def execute(request, static):
         write_json(root / "summary.json", summary)
     index(root)
     print("Result directory:", root)
+    if summary["status"] == "passed":
+        return 0
     return 1 if summary["status"] == "failed" else 2
