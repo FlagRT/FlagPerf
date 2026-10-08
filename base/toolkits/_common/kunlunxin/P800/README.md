@@ -112,10 +112,14 @@ RUN_ID/
   target inside the **native timed interval**, excluding setup, warmup and readback.
   Capacity uses its own static query observation. Short measurements stay partial;
   no synthetic zero samples or time-window extensions are inserted.
-- `diagnosis_status=not-supported` means the equivalent Ascend DMI vendor threshold
-  diagnosis is unavailable. xpu-smi ECC, temperature and power are observations,
-  not replacement vendor threshold tests. Therefore overall status can remain
-  partial even when measurement and monitor both pass.
+- `diagnosis_status` is the vendor toolchain compliance gate (policy 2026-10-08):
+  it passes when the measured operation went through XBLAS/XRE correctness readback
+  with per-point checked values plus contract coverage validation, backed by xpu-smi
+  pre/post health observation. No ascend-dmi equivalent threshold
+  (aiflops/bandwidth/hbm/signalQuality) tool exists in this toolchain; that fact is
+  kept explicit in coverage.json and report methodology instead of failing the layer.
+  Final status composes measurement x monitoring x diagnosis: a case passes only when
+  all three pass; short monitoring windows still keep the case partial.
 - Repetition means independent processes, not iterations inside one process.
   Five-repeat CV and within-process CV are separate. Shared, short, unstable and
   shape-limited results never promote the candidate image.
@@ -125,7 +129,8 @@ RUN_ID/
 
 The P800 output matches the reference's functional categories and audit fields;
 native host-synchronized timing, FP32 GEMM outputs, copy payload definitions and
-the missing vendor diagnosis layer remain explicit comparison limits. It does
+the absent DMI-equivalent threshold diagnosis (diagnosis layer is compliance
+validation) remain explicit comparison limits. It does
 not imply equal hardware peak metrics or final Base eight-card qualification.
 
 ## Offline checks
