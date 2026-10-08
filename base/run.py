@@ -68,6 +68,14 @@ def build_parser() -> argparse.ArgumentParser:
     report.add_argument(
         "--result-root", type=Path, default=BASE_DIR / "result",
     )
+    acceptance = domains.add_parser(
+        "acceptance-report",
+        help="aggregate acceptance reports across stored Base evidence roots",
+    )
+    acceptance.add_argument(
+        "--evidence-root", type=Path, action="append", required=True,
+    )
+    acceptance.add_argument("--output", type=Path, default=None)
     return parser
 
 
@@ -130,6 +138,13 @@ def main(argv: Sequence[str] | None = None) -> int:
             return ToolkitExecutor(require_selection=True).execute(request)
         if args.domain == "report":
             return generate_report(args.run_id, args.result_root)
+        if args.domain == "acceptance-report":
+            from generate_base_acceptance_report import generate_and_record
+            roots = [root.expanduser().resolve() for root in args.evidence_root]
+            output = args.output.expanduser().resolve() if args.output else None
+            metadata = generate_and_record(roots, output)
+            print(json.dumps(metadata, indent=2, sort_keys=True))
+            return 0 if metadata.get("status") == "passed" else 1
         parser.error("a DOMAIN and ACTION are required")
     except (ConfigurationError, RuntimeError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
