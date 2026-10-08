@@ -133,6 +133,24 @@ class ParserTests(unittest.TestCase):
                     with self.assertRaises(RuntimeError):
                         host.inspect_handles(DEVICE, commands, Path(tmp), True)
 
+    def test_known_monitor_agent_gated_by_environment_and_identity(self):
+        argv = '\0'.join(['barad_agent']) + '\0'
+        exe = '/usr/local/qcloud/monitor/python26/bin/python'
+        expected = {'pid': 42, 'executable': exe, 'arguments': ['barad_agent'], 'agent': 'barad_agent',
+                    'classification': 'read-only-monitor-agent', 'authorized_by': 'P800_KNOWN_READONLY_MONITORS'}
+        for env, executable, allowed in (('barad_agent', exe, True), (' barad_agent;other ', exe, True),
+                                         ('', exe, False), ('other', exe, False),
+                                         ('barad_agent', '/tmp/barad_agent', False)):
+            with self.subTest(env=env, executable=executable), tempfile.TemporaryDirectory() as tmp, \
+                    patch.dict(os.environ, {'P800_KNOWN_READONLY_MONITORS': env}):
+                commands = Mock()
+                commands.run.side_effect = [result('42', stderr='/dev/xpu3:'), result(executable), result(argv)]
+                if allowed:
+                    self.assertEqual(host.inspect_handles(DEVICE, commands, Path(tmp), True)[0], expected)
+                else:
+                    with self.assertRaises(RuntimeError):
+                        host.inspect_handles(DEVICE, commands, Path(tmp), True)
+
     def test_disappearing_observer_requires_fresh_handle_check(self):
         commands = Mock()
         commands.run.side_effect = [result('42', stderr='/dev/xpu3:'), result(code=1), result(code=1), result(code=0), result(code=1)]

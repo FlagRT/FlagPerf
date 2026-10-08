@@ -8,6 +8,15 @@ import shlex
 import stat
 
 from base.vendors.kunlunxin.reuse import mapping, runtime
+# Idle-host monitoring agents that hold device nodes open to poll stats. A
+# name is honored only when listed in P800_KNOWN_READONLY_MONITORS; every
+# other holder still fails the run, and the classification is recorded.
+KNOWN_READONLY_MONITORS = {'barad_agent': '/usr/local/qcloud/monitor/python26/bin/python'}
+
+
+def authorized_monitors():
+    raw = os.environ.get('P800_KNOWN_READONLY_MONITORS', '')
+    return {name.strip() for name in raw.split(';') if name.strip()}
 
 
 def machine_inventory(raw):
@@ -118,11 +127,18 @@ def inspect_handles(device, commands, directory, allow_observers=False):
                 vanished = True
                 break
             arguments = command['stdout'].rstrip('\0').split('\0')
-            if (executable['stdout'].strip() != '/usr/local/bin/xpu-smi' or
-                    not arguments or not readonly_smi_arguments(arguments[1:])):
+            exe = executable['stdout'].strip()
+            name = next((n for n, path in KNOWN_READONLY_MONITORS.items()
+                         if exe == path and arguments == [n]), None)
+            if exe == '/usr/local/bin/xpu-smi' and arguments and readonly_smi_arguments(arguments[1:]):
+                observers.append({'pid': int(pid), 'executable': exe,
+                                  'arguments': arguments[1:], 'classification': 'read-only-observer'})
+            elif name and name in authorized_monitors():
+                observers.append({'pid': int(pid), 'executable': exe, 'arguments': arguments,
+                                  'agent': name, 'classification': 'read-only-monitor-agent',
+                                  'authorized_by': 'P800_KNOWN_READONLY_MONITORS'})
+            else:
                 raise RuntimeError('device handle is not a verified read-only xpu-smi observer')
-            observers.append({'pid': int(pid), 'executable': executable['stdout'].strip(),
-                              'arguments': arguments[1:], 'classification': 'read-only-observer'})
         if not vanished:
             return observers
     raise RuntimeError('device handle owners changed before they could be verified')
@@ -170,6 +186,7 @@ def inspect_host(config, requested, commands, directory):
               'foreign_handles_authorized': os.environ.get('P800_ALLOW_FOREIGN_HANDLES') == '1',
               'foreign_occupancy_observed': any(d.get('foreign_occupancy_observed') for d in devices),
               'readonly_observers': observers,
+              'authorized_monitors': sorted(authorized_monitors()),
               'selection': {'source': 'physical-device-ids', 'requested_ids': requested},
               'machine_memory_unit': 'numerically-cross-checked-with-query-MiB'}
     (directory / 'summary.json').write_text(json.dumps(result, indent=2) + '\n')
