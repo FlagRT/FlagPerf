@@ -1,4 +1,12 @@
-# P800 M1 candidate runtime (PR0)
+# P800 M1 candidate runtime
+
+## Current Base scope — 2026-10-08
+
+The Base implementation covers ten executable cases and five early skips. All 114 final runs pass measurement/correctness. MPI has 2/6/7/8-rank hardware evidence: 2/6-rank groups qualify strictly; seven ranks have three repeats; eight ranks are stable but include degraded card 2. Three D2H pageable/nonblocking groups have a user-accepted duration exception, recorded separately from strict qualification. Manifest candidate state is unchanged.
+
+Use the [current Base handoff](../../../docs/p800-base-handoff.md) and [acceptance audit](../../../docs/p800-base-acceptance-20261008.md). The PR0 launcher below remains a separate API probe, not the Base benchmark runner.
+
+## Historical PR0–Day 5 observations
 
 M1 passes the bounded single-card PR0 smoke checks and is retained for further
 Base development. The unified Base `benchmark preflight` entrypoint now connects
@@ -37,7 +45,7 @@ creation.
 
 `image-manifest.json` remains `validated: false`, with empty aggregate validation scope;
 the new per-case qualification is recorded separately. No strict internal IEEE
-arithmetic, hardware peak or FlagGems claim is made. Exactly-two-rank communication is separately scoped in Day 6/7; eight ranks are not implemented or qualified. See [current handoff](../../../docs/p800-day7.md).
+arithmetic, hardware peak or FlagGems claim is made. Day 6/7 communication evidence is historical. Current 2–8-rank implementation and health-scoped results are documented in the current handoff above.
 
 ## Targeted recheck before performance work (2026-09-20)
 

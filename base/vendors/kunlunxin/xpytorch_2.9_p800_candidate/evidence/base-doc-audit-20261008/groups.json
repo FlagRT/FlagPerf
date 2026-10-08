@@ -1,0 +1,374 @@
+[
+  {
+    "root": "p800-base-final-20261008",
+    "group": "BF16",
+    "runs": [
+      "BF16-q1",
+      "BF16-q2",
+      "BF16-q3",
+      "BF16-q4",
+      "BF16-q5"
+    ],
+    "n": 5,
+    "median": 118.9695809329365,
+    "cv_percent": 0.0010442361017816918,
+    "strict_status": "passed",
+    "qualification_status": "passed",
+    "project_delivery": "accepted"
+  },
+  {
+    "root": "p800-base-final-20261008",
+    "group": "FP16",
+    "runs": [
+      "FP16-q1",
+      "FP16-q2",
+      "FP16-q3",
+      "FP16-q4",
+      "FP16-q5"
+    ],
+    "n": 5,
+    "median": 259.16539593241606,
+    "cv_percent": 0.07419563379321494,
+    "strict_status": "passed",
+    "qualification_status": "passed",
+    "project_delivery": "accepted"
+  },
+  {
+    "root": "p800-base-final-20261008",
+    "group": "FP32",
+    "runs": [
+      "FP32-q1",
+      "FP32-q2",
+      "FP32-q3",
+      "FP32-q4",
+      "FP32-q5"
+    ],
+    "n": 5,
+    "median": 118.47286005538328,
+    "cv_percent": 0.3245493979355255,
+    "strict_status": "passed",
+    "qualification_status": "passed",
+    "project_delivery": "accepted"
+  },
+  {
+    "root": "p800-base-final-20261008",
+    "group": "INT8",
+    "runs": [
+      "INT8-q1",
+      "INT8-q2",
+      "INT8-q3",
+      "INT8-q4",
+      "INT8-q5"
+    ],
+    "n": 5,
+    "median": 504.5259620335961,
+    "cv_percent": 0.3761591578675383,
+    "strict_status": "passed",
+    "qualification_status": "passed",
+    "project_delivery": "accepted"
+  },
+  {
+    "root": "p800-base-final-20261008",
+    "group": "d2h-pageable-blocking",
+    "runs": [
+      "d2h-pageable-blocking-q1",
+      "d2h-pageable-blocking-q2",
+      "d2h-pageable-blocking-q3",
+      "d2h-pageable-blocking-q4",
+      "d2h-pageable-blocking-q5"
+    ],
+    "n": 5,
+    "median": 11.03598378363638,
+    "cv_percent": 1.5531080041724592,
+    "strict_status": "passed",
+    "qualification_status": "passed",
+    "project_delivery": "accepted"
+  },
+  {
+    "root": "p800-base-final-20261008",
+    "group": "d2h-pageable-nonblocking",
+    "runs": [
+      "d2h-pageable-nonblocking-q1",
+      "d2h-pageable-nonblocking-q2",
+      "d2h-pageable-nonblocking-q3",
+      "d2h-pageable-nonblocking-q4",
+      "d2h-pageable-nonblocking-q5"
+    ],
+    "n": 5,
+    "median": 18.59245990598398,
+    "cv_percent": 7.3162255980630695,
+    "strict_status": "rejected",
+    "reason": "wrong mode or short measurement window",
+    "project_delivery": "duration-exception; unstable-CV-retained"
+  },
+  {
+    "root": "p800-base-final-20261008",
+    "group": "d2h-pageable-nonblocking-r2",
+    "runs": [
+      "d2h-pageable-nonblocking-r2-q1",
+      "d2h-pageable-nonblocking-r2-q2",
+      "d2h-pageable-nonblocking-r2-q3",
+      "d2h-pageable-nonblocking-r2-q4",
+      "d2h-pageable-nonblocking-r2-q5"
+    ],
+    "n": 5,
+    "median": 18.294468266513515,
+    "cv_percent": 2.86419102440304,
+    "strict_status": "rejected",
+    "reason": "wrong mode or short measurement window",
+    "project_delivery": "accepted-duration-exception"
+  },
+  {
+    "root": "p800-base-final-20261008",
+    "group": "d2h-pinned-blocking",
+    "runs": [
+      "d2h-pinned-blocking-q1",
+      "d2h-pinned-blocking-q2",
+      "d2h-pinned-blocking-q3",
+      "d2h-pinned-blocking-q4",
+      "d2h-pinned-blocking-q5"
+    ],
+    "n": 5,
+    "median": 25.715705974502473,
+    "cv_percent": 10.372714965155168,
+    "strict_status": "unstable",
+    "qualification_status": "not-qualified",
+    "project_delivery": "retained-limitation"
+  },
+  {
+    "root": "p800-base-final-20261008",
+    "group": "d2h-pinned-blocking-r2",
+    "runs": [
+      "d2h-pinned-blocking-r2-q1",
+      "d2h-pinned-blocking-r2-q2",
+      "d2h-pinned-blocking-r2-q3",
+      "d2h-pinned-blocking-r2-q4",
+      "d2h-pinned-blocking-r2-q5"
+    ],
+    "n": 5,
+    "median": 26.740437027197842,
+    "cv_percent": 6.314477563525192,
+    "strict_status": "unstable",
+    "qualification_status": "not-qualified",
+    "project_delivery": "retained-limitation"
+  },
+  {
+    "root": "p800-base-final-20261008",
+    "group": "h2d-pageable-nonblocking",
+    "runs": [
+      "h2d-pageable-nonblocking-q1",
+      "h2d-pageable-nonblocking-q2",
+      "h2d-pageable-nonblocking-q3",
+      "h2d-pageable-nonblocking-q4",
+      "h2d-pageable-nonblocking-q5"
+    ],
+    "n": 5,
+    "median": 19.60534068056391,
+    "cv_percent": 2.2073724842137135,
+    "strict_status": "passed",
+    "qualification_status": "passed",
+    "project_delivery": "accepted"
+  },
+  {
+    "root": "p800-base-final-20261008",
+    "group": "h2d-pinned-blocking",
+    "runs": [
+      "h2d-pinned-blocking-q1",
+      "h2d-pinned-blocking-q2",
+      "h2d-pinned-blocking-q3",
+      "h2d-pinned-blocking-q4",
+      "h2d-pinned-blocking-q5"
+    ],
+    "n": 5,
+    "median": 19.87046288085032,
+    "cv_percent": 2.626026438510955,
+    "strict_status": "passed",
+    "qualification_status": "passed",
+    "project_delivery": "accepted"
+  },
+  {
+    "root": "p800-base-final-20261008",
+    "group": "memory-bandwidth",
+    "runs": [
+      "memory-bandwidth-q1",
+      "memory-bandwidth-q2",
+      "memory-bandwidth-q3",
+      "memory-bandwidth-q4",
+      "memory-bandwidth-q5"
+    ],
+    "n": 5,
+    "median": 2235.954914390828,
+    "cv_percent": 0.003969783424971693,
+    "strict_status": "passed",
+    "qualification_status": "passed",
+    "project_delivery": "accepted"
+  },
+  {
+    "root": "p800-idle-accept-20261008",
+    "group": "MPI-eight",
+    "runs": [
+      "MPI-eight-q1",
+      "MPI-eight-q2",
+      "MPI-eight-q3",
+      "MPI-eight-q4",
+      "MPI-eight-q5"
+    ],
+    "n": 5,
+    "median": 64.02837906685329,
+    "cv_percent": 0.9654534415297136,
+    "strict_status": "rejected",
+    "reason": "shared or degraded-health run is not isolated performance qualification",
+    "project_delivery": "measurement-and-stability-passed; health-degraded"
+  },
+  {
+    "root": "p800-idle-accept-20261008",
+    "group": "MPI-pair",
+    "runs": [
+      "MPI-pair-q1",
+      "MPI-pair-q2",
+      "MPI-pair-q3",
+      "MPI-pair-q4",
+      "MPI-pair-q5"
+    ],
+    "n": 5,
+    "median": 28.199634813956077,
+    "cv_percent": 0.12078892212754593,
+    "strict_status": "passed",
+    "qualification_status": "passed",
+    "project_delivery": "accepted"
+  },
+  {
+    "root": "p800-idle-accept-20261008",
+    "group": "MPI-seven",
+    "runs": [
+      "MPI-seven-q1",
+      "MPI-seven-q2",
+      "MPI-seven-q3"
+    ],
+    "n": 3,
+    "median": 32.299499467590515,
+    "cv_percent": 0.16198561486922672,
+    "strict_status": "rejected",
+    "reason": "qualification requires exactly five distinct result directories",
+    "project_delivery": "retained-limitation"
+  },
+  {
+    "root": "p800-idle-accept-20261008",
+    "group": "MPI-six",
+    "runs": [
+      "MPI-six-q1",
+      "MPI-six-q2",
+      "MPI-six-q3",
+      "MPI-six-q4",
+      "MPI-six-q5"
+    ],
+    "n": 5,
+    "median": 33.26432116242792,
+    "cv_percent": 0.2059596994325164,
+    "strict_status": "passed",
+    "qualification_status": "passed",
+    "project_delivery": "accepted"
+  },
+  {
+    "root": "p800-idle-accept-20261008",
+    "group": "P2P-pair",
+    "runs": [
+      "P2P-pair-q1",
+      "P2P-pair-q2",
+      "P2P-pair-q3",
+      "P2P-pair-q4",
+      "P2P-pair-q5"
+    ],
+    "n": 5,
+    "median": 31.15366524996678,
+    "cv_percent": 0.04917179135282265,
+    "strict_status": "passed",
+    "qualification_status": "passed",
+    "project_delivery": "accepted"
+  },
+  {
+    "root": "p800-idle-accept-20261008",
+    "group": "d2h-pageable-nonblocking-idle",
+    "runs": [
+      "d2h-pageable-nonblocking-idle-q1",
+      "d2h-pageable-nonblocking-idle-q2",
+      "d2h-pageable-nonblocking-idle-q3",
+      "d2h-pageable-nonblocking-idle-q4",
+      "d2h-pageable-nonblocking-idle-q5"
+    ],
+    "n": 5,
+    "median": 18.64218075676837,
+    "cv_percent": 1.5134056904132684,
+    "strict_status": "rejected",
+    "reason": "wrong mode or short measurement window",
+    "project_delivery": "accepted-duration-exception"
+  },
+  {
+    "root": "p800-idle-accept-20261008",
+    "group": "d2h-pinned-blocking-idle",
+    "runs": [
+      "d2h-pinned-blocking-idle-q1",
+      "d2h-pinned-blocking-idle-q2",
+      "d2h-pinned-blocking-idle-q3",
+      "d2h-pinned-blocking-idle-q4",
+      "d2h-pinned-blocking-idle-q5"
+    ],
+    "n": 5,
+    "median": 24.05095620463767,
+    "cv_percent": 4.9679052207784204,
+    "strict_status": "passed",
+    "qualification_status": "passed",
+    "project_delivery": "accepted"
+  },
+  {
+    "root": "p800-idle-accept-20261008",
+    "group": "d2h-pinned-nonblocking-idle",
+    "runs": [
+      "d2h-pinned-nonblocking-idle-q1",
+      "d2h-pinned-nonblocking-idle-q2",
+      "d2h-pinned-nonblocking-idle-q3",
+      "d2h-pinned-nonblocking-idle-q4",
+      "d2h-pinned-nonblocking-idle-q5"
+    ],
+    "n": 5,
+    "median": 25.114621465029686,
+    "cv_percent": 2.0107106033750597,
+    "strict_status": "passed",
+    "qualification_status": "passed",
+    "project_delivery": "accepted"
+  },
+  {
+    "root": "p800-idle-accept-20261008",
+    "group": "h2d-pageable-blocking-idle",
+    "runs": [
+      "h2d-pageable-blocking-idle-q1",
+      "h2d-pageable-blocking-idle-q2",
+      "h2d-pageable-blocking-idle-q3",
+      "h2d-pageable-blocking-idle-q4",
+      "h2d-pageable-blocking-idle-q5"
+    ],
+    "n": 5,
+    "median": 10.28525945156825,
+    "cv_percent": 2.4597668048375176,
+    "strict_status": "passed",
+    "qualification_status": "passed",
+    "project_delivery": "accepted"
+  },
+  {
+    "root": "p800-idle-accept-20261008",
+    "group": "h2d-pinned-nonblocking-idle",
+    "runs": [
+      "h2d-pinned-nonblocking-idle-q1",
+      "h2d-pinned-nonblocking-idle-q2",
+      "h2d-pinned-nonblocking-idle-q3",
+      "h2d-pinned-nonblocking-idle-q4",
+      "h2d-pinned-nonblocking-idle-q5"
+    ],
+    "n": 5,
+    "median": 19.792190244744354,
+    "cv_percent": 4.173243245259284,
+    "strict_status": "passed",
+    "qualification_status": "passed",
+    "project_delivery": "accepted"
+  }
+]

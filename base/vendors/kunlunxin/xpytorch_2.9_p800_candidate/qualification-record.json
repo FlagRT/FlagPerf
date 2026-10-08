@@ -1062,5 +1062,25 @@
       }
     },
     "historical_day6_formal_reruns": "Already completed by user on 4+7 and 3+4; current Day6 index 5811 verified; supersedes the older pending note without rewriting historical evidence"
+  },
+  "base_delivery_review_20261008": {
+    "source_commit": "be0f2ea575849a5fdadd8e3e5ab1db317b304bff",
+    "review": "../../../docs/p800-base-acceptance-20261008.md",
+    "audit": "evidence/base-doc-audit-20261008/audit-summary.json",
+    "measurement_runs_passed": 114,
+    "strict_groups_passed": 15,
+    "stable_groups_accepted_with_duration_exception": 2,
+    "duration_exception": {
+      "date": "2026-10-08",
+      "authority": "user: 三组都有不足 15 秒的样这个无所谓",
+      "scope": "Only the three d2h-pageable-nonblocking groups; short duration is accepted for Base delivery. Strict qualification.py results, CV failures, health restrictions and raw artifacts are unchanged."
+    },
+    "limits": [
+      "eight-rank measurements stable; degraded card 2 does not pass clean-health qualification",
+      "seven-rank group has only three repeats",
+      "unstable transfer groups retained",
+      "day5 verification.json historical index mismatch explicitly documented"
+    ],
+    "runtime_promoted": false
   }
 }

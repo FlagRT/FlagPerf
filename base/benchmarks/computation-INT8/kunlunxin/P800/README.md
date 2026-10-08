@@ -1,31 +1,21 @@
-# Kunlunxin P800 INT8
+# Kunlunxin P800 Base — computation-INT8
 
-The verified path is the vendor device kernel `xtorch_ops.gemm_I8_I8_bf16_nt`: a
-block-quantized signed-INT8 GEMM with INT32 accumulation and bfloat16 output.
+## 实现和范围
 
-`torch.mm` rejects int8 on this stack, and `torch._int_mm` — while it returns int32
-tensors on the device — executes on the host CPU. During the first qualification the
-process CPU time of the "device" loop equalled the container thread count times wall
-time, device telemetry stayed at idle (0% utilization, 39 C, 92 W) and the per-iteration
-cost matched a PCIe round trip plus the CPU product. Those numbers were retracted; see
-the [Day 5 review](../../../../vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day5/review.md).
+设备算子 xtorch_ops.gemm_I8_I8_bf16_nt；INT8 输入、缩放、BF16 输出。对外结果为 (A@B)*SCALE_A*SCALE_B 后转 BF16；driver 传入 127×scale 配合内核 /127 约定。不是 Toolkit 的 XBLAS fc_fusion。历史 torch._int_mm 主机回退数字已撤回。
 
-## Contract
+## 配置
 
-- Shape 8192x8192x8192 with seed 519, warmup 10 and 8000 iterations, matching the
-  Ascend case scale. The iteration count is set by the 15 s measurement floor.
-- `SCALE_A` and `SCALE_B` are dequantization scales in the symmetric int8 convention
-  (`value = q * max / 127`). The kernel divides by 127 internally, so the driver passes
-  `127 * SCALE_A` and `127 * SCALE_B` and the reported result is
-  `(A @ B) * SCALE_A * SCALE_B` cast to `OUTPUT_DTYPE`.
-- Correctness: five small shapes use full-output CPU float64 references over the
-  quantized operands; the measurement shape checks fixed rows/columns over the complete
-  reduction dimension before and after the timed window. Tolerances (atol 0.02,
-  rtol 8e-3) are the bfloat16 output budget, not a relaxation of an exact-integer claim.
-- Metric: TOPS, counting one multiply-add as two operations.
+8192³，warmup 10，ITERS 8000；TOPS 将乘加计作两次操作。
 
-## Result
+配置合并顺序为 generic < vendor < P800 < 显式 override；每次运行保存配置和源码哈希。选择 case 时使用 `computation-INT8:P800` 与 P800 host profile。共同的完整命令、权限/窗口/选卡、报告再生和故障处置见 [Base 使用手册](../../../../docs/p800-base-handoff.md)。
 
-Five qualification runs on physical card 5 give a median of **504.591 TOPS** with
-CV **0.3315%** and 17.37-17.52 s measurement windows. Device telemetry during the runs
-shows 100% utilization, 61 C and 400 W, consistent with the FP16 path at the same scale.
+## 指标和验收
+
+GEMM ops = 2×M×N×K×ITERS，除以 elapsed_seconds 和 1e12 得 TFLOPS/TOPS。
+
+2026-10-08 结果：504.5260 TOPS，CV 0.3756%，五次严格通过。 这些数字仅属于固定镜像、设备集合与配置，不能当作所有设备/尺寸的保证。详情和逐组状态见 [验收复核](../../../../docs/p800-base-acceptance-20261008.md)。
+
+每 run 保存 metric、correctness、设备 binding、配置/code identity、原始监控、cleanup/postflight/lease 和 report。原始失败不得覆盖。候选 manifest 不因本 case 通过自动晋级。
+
+正确性包括小矩阵完整 reference 与大矩阵固定行列采样/输出有限性，不能描述成大矩阵逐元素完整 CPU 对照。计时采用 perf_counter_ns 与目标设备完整同步；CUDA Event elapsed 为零的历史限制保留。

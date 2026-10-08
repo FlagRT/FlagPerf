@@ -1,0 +1,137 @@
+[
+  {
+    "case": "computation-BF16",
+    "returncode": 0,
+    "applicability": {
+      "reason": null,
+      "status": "applicable"
+    },
+    "error": ""
+  },
+  {
+    "case": "computation-FP16",
+    "returncode": 0,
+    "applicability": {
+      "reason": null,
+      "status": "applicable"
+    },
+    "error": ""
+  },
+  {
+    "case": "computation-FP32",
+    "returncode": 0,
+    "applicability": {
+      "reason": null,
+      "status": "applicable"
+    },
+    "error": ""
+  },
+  {
+    "case": "computation-FP64",
+    "returncode": 0,
+    "applicability": {
+      "reason": "capability probe returned float32 output for float64 input; native FP64 output is not proven",
+      "status": "skipped"
+    },
+    "error": ""
+  },
+  {
+    "case": "computation-FP8",
+    "returncode": 0,
+    "applicability": {
+      "reason": "FP8 mm and scaled-mm APIs returned NOT IMPLEMENTED on the locked stack",
+      "status": "skipped"
+    },
+    "error": ""
+  },
+  {
+    "case": "computation-INT8",
+    "returncode": 0,
+    "applicability": {
+      "reason": null,
+      "status": "applicable"
+    },
+    "error": ""
+  },
+  {
+    "case": "computation-TF32",
+    "returncode": 0,
+    "applicability": {
+      "reason": "blocked/unresolved: current stack TF32 route is not qualified; allow_tf32 A/B alone cannot establish support or hardware non-support",
+      "status": "skipped"
+    },
+    "error": ""
+  },
+  {
+    "case": "interconnect-MPI_interserver",
+    "returncode": 0,
+    "applicability": {
+      "reason": "the unified P800 entrypoint resolves nnodes=1 only; interserver cases are skipped before Docker and lease",
+      "status": "skipped"
+    },
+    "error": ""
+  },
+  {
+    "case": "interconnect-MPI_intraserver",
+    "returncode": 0,
+    "applicability": {
+      "reason": null,
+      "status": "applicable"
+    },
+    "error": ""
+  },
+  {
+    "case": "interconnect-P2P_interserver",
+    "returncode": 0,
+    "applicability": {
+      "reason": "the unified P800 entrypoint resolves nnodes=1 only; interserver cases are skipped before Docker and lease",
+      "status": "skipped"
+    },
+    "error": ""
+  },
+  {
+    "case": "interconnect-P2P_intraserver",
+    "returncode": 0,
+    "applicability": {
+      "reason": null,
+      "status": "applicable"
+    },
+    "error": ""
+  },
+  {
+    "case": "interconnect-d2h",
+    "returncode": 0,
+    "applicability": {
+      "reason": null,
+      "status": "applicable"
+    },
+    "error": ""
+  },
+  {
+    "case": "interconnect-h2d",
+    "returncode": 0,
+    "applicability": {
+      "reason": null,
+      "status": "applicable"
+    },
+    "error": ""
+  },
+  {
+    "case": "main_memory-bandwidth",
+    "returncode": 0,
+    "applicability": {
+      "reason": null,
+      "status": "applicable"
+    },
+    "error": ""
+  },
+  {
+    "case": "main_memory-capacity",
+    "returncode": 0,
+    "applicability": {
+      "reason": null,
+      "status": "applicable"
+    },
+    "error": ""
+  }
+]

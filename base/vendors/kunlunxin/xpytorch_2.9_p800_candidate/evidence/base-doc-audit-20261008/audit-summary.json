@@ -1,0 +1,41 @@
+{
+  "head": "be0f2ea575849a5fdadd8e3e5ab1db317b304bff",
+  "run_count": 114,
+  "measurement_counts": {
+    "passed": 114
+  },
+  "run_status_counts": {
+    "passed": 110,
+    "partial": 4
+  },
+  "health_degraded_count": 10,
+  "raw_metric_errors": [],
+  "group_status_counts": {
+    "passed": 15,
+    "rejected": 5,
+    "unstable": 2
+  },
+  "source_file_count": 7196,
+  "archive_indices": 7,
+  "archive_mismatches": 1,
+  "archive_entries": 26021,
+  "archive_scope": "Six Base indices plus one complete Toolkit integration snapshot; 16 metadata-only Toolkit run-record indices are not validated against subsets.",
+  "reports_checked": 114,
+  "reports_deterministic": 114,
+  "stored_reports_matching": 114,
+  "original_source_files_unchanged": 7196,
+  "offline_tests": {
+    "base": 252,
+    "ascend_toolkit": 80,
+    "pr0": 32
+  },
+  "dry_run": {
+    "applicable": 10,
+    "skipped": 5
+  },
+  "project_acceptance_exception": {
+    "date": "2026-10-08",
+    "authority": "user: 三组都有不足 15 秒的样这个无所谓",
+    "scope": "Only the three d2h-pageable-nonblocking groups; short duration is accepted for Base delivery. Strict qualification.py results, CV failures, health restrictions and raw artifacts are unchanged."
+  }
+}

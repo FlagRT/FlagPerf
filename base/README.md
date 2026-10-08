@@ -18,26 +18,20 @@
 
 本目录提供 FlagPerf 的基础规格评测能力。当前推荐入口是统一宿主命令
 `python3 base/run.py`，但 Benchmark 与 Toolkit 仍使用独立执行器、权限和结果语义：
-P800 Toolkit uses an independent native XRE/XBLAS contract. Its default plan is GEMM
-8192, five repeats and a 600-second timeout; P2P keeps a historical 32 MiB default and
-accepts `--p2p-payload-bytes 268435456` for an explicit 256 MiB comparison plan. The
-option is statically tested only; it does not promote candidate results to qualification.
+P800 Toolkit has an independent native XRE/XBLAS contract; see its
+[dedicated runbook](toolkits/_common/kunlunxin/P800/README.md) for workload and diagnosis semantics.
 
 - **Benchmark**：使用各 profile 锁定的框架和原始 Base Case；Ascend 为 PyTorch 2.10/Torch-FL，P800 为 PyTorch 2.9/XPYTORCH；
 - **Toolkit**：通过 MindCluster ToolBox、`ascend-dmi`、`npu-smi` 或 HCCL Test
   执行厂商测量和诊断；
 - **report**：从已有证据确定性重建 Markdown/SVG 报告，不重跑硬件。
 
-当前统一入口支持 **Ascend 单宿主**，并接入 **P800 candidate 单卡计算/传输/内存及同机通信**。P800 MPI 代码入口接受 2–8 rank；当前仅两 rank 有历史硬件证据，八 rank 仍未 qualification。原多机入口保存在
-[`legacy/cluster_run.py`](legacy/cluster_run.py)，仅用于迁移兼容。
-Benchmark 控制面通过静态 Vendor Provider 接入厂商策略；生产 registry 已注册
-Ascend 性能执行与 Kunlunxin 有界预检查、单卡性能和双 rank 通信执行。
-P800 的启动命令、正确性和计时合同见 [P800 FP32](benchmarks/computation-FP32/kunlunxin/P800/README.md)，
-实际资格结果见 [Day 4 审查](vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day4/review.md)；
-FP16/BF16/INT8（8192³ 设备内核）与传输合同的资格范围、能力矩阵和已知限制见
-[Day 5 审查](vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day5/review.md)。
-预检查与性能验收分别记录；FP64/FP8/TF32 按锁定栈证据跳过。内存、容量和两卡证据见 Day 6/7 审查；FlagGems、八卡正式 qualification 与跨机不在已验证范围。当前范围与复现命令见 [P800 交付手册](docs/p800-day7.md)。
-接口、配置兼容变化与后续接入步骤见 [控制面迁移说明](docs/vendor-control-plane.md)。
+当前统一入口支持 Ascend 单宿主与 P800 candidate Base。P800 共 15 个 case：10 个可执行、5 个启动前 skip；MPI 接受 2–8 rank，P2P 恰好 2 rank。
+2026-10-08 复核 114 个最终 run 测量/正确性通过；2/6 卡 MPI 和 2 卡 P2P 严格资格通过，8 卡测量及稳定性通过但含 ECC 卡 2 的健康限制。D2H pageable/nonblocking 三组的短窗口按用户决定接受，严格脚本判定保留。
+
+P800 用户从 [Base 使用与维护手册](docs/p800-base-handoff.md) 开始，验收结论见 [交付复核](docs/p800-base-acceptance-20261008.md)。下文快速上手与第 1–5 节以 Ascend 为主，不直接作为 P800 命令。
+接口与配置兼容变化见 [控制面说明](docs/vendor-control-plane.md)。历史 Day 1–9 证据保留；runtime manifest 继续 `candidate / validated:false`。
+
 
 
 ## 阅读导航
@@ -537,22 +531,8 @@ Host
 架构、适配规则和旧集群流程见
 [`../docs/base/base-case-doc.md`](../docs/base/base-case-doc.md)。
 
-## P800 standalone preflight
+## P800 入口
 
-`python3 base/run.py benchmark preflight` checks P800 identity, a four-element
-native tensor readback, observation telemetry and bounded cleanup without a
-performance case. Its preflight schema 1 is separate from Benchmark results.
-Real execution requires explicit single-card physical selection, candidate
-opt-in, a current reservation window and a new result directory.
-
-See the [runbook and Day 4 integration contract](docs/p800-preflight.md) and
-[Day 3 evidence review](vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day3/review.md).
-P800 FP32 case/driver integration is pending; missing contracts reject before
-device access. This command does not produce TFLOPS or promote runtime validation.
-
-2026-09-20 追加复验：优先在重新通过预检查的卡 6/7 上推进；卡 1 同步超时
-复现并有 PCI 对应内核异常，卡 2 有既存 ECC/重映射告警。详见
-[逐卡结果与恢复记录](vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day3-recheck/review.md)。
-
-
-[P800 closeout audit](docs/p800-closeout-20260930.md)
+`benchmark preflight` 是单卡身份探针，不运行性能 case；`benchmark run` 已接入单卡计算/传输/内存和同机通信。
+详见 [当前交接手册](docs/p800-base-handoff.md)、[预检查机制](docs/p800-preflight.md) 与 [2026-10-08 验收复核](docs/p800-base-acceptance-20261008.md)。
+2026-09-30 收尾和 Day 7 文档是历史记录。原 `acceptance-report` 命令已移除；Base 继续使用共享的每 run report 入口。

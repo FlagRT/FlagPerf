@@ -1,5 +1,7 @@
 # P800 bounded preflight
 
+Current operation and acceptance: [Base handoff](p800-base-handoff.md). Dated Day 3–5 sections below preserve historical observations; they are not the current support matrix.
+
 `benchmark preflight` checks a selected P800 through the unified Base facade.
 It has no performance case, TFLOPS result, or benchmark measurement window.
 The M1 profile remains candidate, `validated: false`, with empty validation scope.
@@ -18,7 +20,7 @@ python3 -B base/run.py benchmark preflight \
 ```
 
 The ID is an example, not a reservation. Runtime UUID, node/minor and framework
-logical ID remain deferred. The standalone preflight CLI accepts exactly one explicit physical ID. Two-rank communication uses benchmark run, which performs its joint host checks, leases and container UUID binding independently. Its `expected_device_ids` describes host inventory; requalify
+logical ID remain deferred. The standalone preflight CLI accepts exactly one explicit physical ID. Multi-rank communication uses benchmark run, which performs its joint host checks, leases and container UUID binding independently. Its `expected_device_ids` describes host inventory; requalify
 that configuration on a different machine.
 
 For an authorized, idle card, supply a fresh end time with timezone, an actual
