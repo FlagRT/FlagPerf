@@ -29,7 +29,7 @@ def add_cli_arguments(parser):
     parser.add_argument("--allow-candidate-runtime", action="store_true", help="P800: run the locked candidate without promoting it")
     parser.add_argument("--allow-busy-devices", action="store_true", help="P800: explicitly permit exploratory use of occupied selected cards")
     parser.add_argument("--privilege-command", default="", help="P800 host Docker/fuser prefix: empty or 'sudo -n'")
-    parser.add_argument("--samples", type=int, default=50, help="P800 native timing samples per point (D2D has at least 25)")
+    parser.add_argument("--samples", type=int, default=50, help="P800 native timing samples per point (minimum 25 for all cases)")
     parser.add_argument("--warmup", type=int, default=5)
     parser.add_argument("--repeat", type=int, default=5, help="P800 independent processes per point; 5 is the adopted repeat-group standard")
     parser.add_argument("--payload-bytes", type=int, default=536870912)
