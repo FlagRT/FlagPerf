@@ -23,7 +23,7 @@ bash base/toolkits/main_memory-capacity/kunlunxin/P800/main.sh \
 
 `main.sh` 将参数原样转发给宿主 facade `base/run.py toolkit run`。示例中的卡号仅为
 示意；物理卡号不是 `/dev/xpuN` 或容器序号，每轮运行前须核实空闲状态、ECC、UUID 与
-PCI 映射。监控默认开启并与计时同窗。
+PCI 映射。监控默认开启；容量按静态查询口径观察，不涉及计时窗口。
 
 判定沿用三层状态：测量层要求退出码为零、身份一致、正值有限样本与正确性回读；
 容量为静态查询，监控层使用静态查询观察，不套用计时负载的最短窗口，

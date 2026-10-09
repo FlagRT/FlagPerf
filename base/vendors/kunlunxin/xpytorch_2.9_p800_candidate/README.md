@@ -91,7 +91,7 @@ Maintainer questions remain as reference, not a prerequisite for development.
 | Actual device node | `/dev/xpu3` (major 195, minor 3), plus `/dev/xpuctrl` |
 | Container/runtime | Nonprivileged, capabilities dropped; `CUDA_VISIBLE_DEVICES=0`, device `cuda:0`, device count 1 |
 | Initialization | Explicit Conda activation, site hooks, `torch` and `torch_xmlir` imports |
-| FP32 | 32脳32, CPU FP64 reference, rtol/atol 1e-4, maximum absolute error `6.6186313503191485e-06` |
+| FP32 | 32×32, CPU FP64 reference, rtol/atol 1e-4, maximum absolute error `6.6186313503191485e-06` |
 | Seed | `torch.cuda.manual_seed_all(519)`, exact repeat |
 | Memory | `torch.cuda.mem_get_info(0)`: total 103079215104 bytes; OOM exception API exists, allocation failure NOT exercised |
 | Pinned copy | 1024-byte H2D/D2H round trip matches exactly with full synchronization |
