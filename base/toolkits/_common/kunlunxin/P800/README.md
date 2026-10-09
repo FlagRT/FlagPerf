@@ -12,13 +12,17 @@ python3 base/run.py toolkit run \
   --config base/configs/kunlunxin_p800_xpytorch29.yaml \
   --physical-device-ids 4 --case main_memory-capacity --dry-run
 
-# Hardware: root, or an authorized noninteractive sudo prefix for Docker/fuser.
-python3 base/run.py toolkit run \
+# Hardware: authenticate sudo interactively, then run the host runner as root.
+sudo -v
+sudo -n env GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=safe.directory \
+  GIT_CONFIG_VALUE_0=/home/kzhang519/Zhiyu/runtime-team/FlagPerf \
+  python3 base/run.py toolkit run \
   --config base/configs/kunlunxin_p800_xpytorch29.yaml \
   --physical-device-ids 4 --allow-candidate-runtime --smoke \
   --result-root base/result/p800-toolkit
 
 # Four selected cards give six unordered pairs. Occupied-card use is explicit.
+# Run this example from an authorized root host shell.
 python3 base/run.py toolkit run \
   --config base/configs/kunlunxin_p800_xpytorch29.yaml \
   --physical-device-ids 0,4-6 --allow-candidate-runtime --allow-busy-devices \
@@ -39,12 +43,36 @@ they require the same physical selection and candidate permission.
 
 `--smoke` fixes a small 128 GEMM and 1 MiB copy payload with 25 samples and two
 warmups. It never claims reference-size or peak performance. Normal runs default
-to GEMM 2048, H2D/D2H/D2D 512 MiB, at least 50 samples and five warmups. Matrix
+to GEMM 8192, H2D/D2H/D2D 512 MiB, at least 50 samples and five warmups. Matrix
 size, sample count, repeat count, per-command timeout and an explicit minimum
 timed duration can be changed and are retained in the evidence. Large shapes are
 separate measured scopes; a timeout remains a failed point, not an unsupported
 dtype or a silently smaller replacement. `--privilege-command 'sudo -n'` is
-available when the host user needs an existing authorized sudo configuration.
+available when the host user needs an existing authorized sudo configuration. It prefixes
+Docker/fuser commands only; it does not grant the host runner access to shared
+root-owned lease files or make a user-owned mode-755 evidence directory writable
+by a capability-dropped container root. The verified path on klx is to run the
+host runner as root; preserve shared lock ownership and permissions.
+
+No `--case` selects all twelve cases. For two cards and five repeats the complete
+suite has 485 targets: 40 compute, 20 D2D, 10 capacity, 40 H2D bandwidth,
+40 D2H bandwidth, 160 H2D latency, 160 D2H latency, 10 P2P bandwidth and 5 P2P
+latency. Enable both compute and data-movement monitoring and select
+`--minimum-seconds 15 --repeat 5` for the monitored scope. The 475 timed targets
+alone need about 119 minutes; setup, readback and archiving add time. Use an
+adequate `--timeout` (for example 14400 seconds), a new result root and several
+GiB of available storage because every raw timing sample is retained. Capacity
+remains a static query. `--p2p-payload-bytes 268435456` explicitly selects 256 MiB
+bandwidth payloads; P2P latency remains 64 KiB.
+
+If host preflight identifies a verified read-only cloud observer,
+`P800_KNOWN_READONLY_MONITORS=barad_agent` enables the existing exact observer
+allowlist. Check its executable and command line first. This does not authorize
+busy devices or bypass memory, utilization, health, identity or lease checks.
+H2D/D2H latency is one-direction API-to-completion host time, not round-trip time.
+
+Keep frozen runs unchanged. For an offline presentation rebuild, copy the run
+first and record the renderer version used on that copy.
 
 Pinned host memory defaults to `posix_memalign` + `xpu_host_register`;
 `--pinned-api alloc` selects `xpu_host_alloc` explicitly. In this runtime, a

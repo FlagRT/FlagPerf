@@ -22,8 +22,8 @@ P800 Toolkit has an independent native XRE/XBLAS contract; see its
 [dedicated runbook](toolkits/_common/kunlunxin/P800/README.md) for workload and diagnosis semantics.
 
 - **Benchmark**：使用各 profile 锁定的框架和原始 Base Case；Ascend 为 PyTorch 2.10/Torch-FL，P800 为 PyTorch 2.9/XPYTORCH；
-- **Toolkit**：通过 MindCluster ToolBox、`ascend-dmi`、`npu-smi` 或 HCCL Test
-  执行厂商测量和诊断；
+- **Toolkit**：Ascend 通过 MindCluster ToolBox、`ascend-dmi`、`npu-smi` 或 HCCL Test；
+  P800 通过独立 XBLAS/XRE runner 执行 12 项计算、内存和传输测量；诊断语义按各厂商契约解释；
 - **report**：从已有证据确定性重建 Markdown/SVG 报告，不重跑硬件。
 
 当前统一入口支持 Ascend 单宿主与 P800 candidate Base。P800 共 15 个 case：10 个可执行、5 个启动前 skip；MPI 接受 2–8 rank，P2P 恰好 2 rank。
