@@ -17,7 +17,7 @@
 ```bash
 bash base/toolkits/main_memory-capacity/kunlunxin/P800/main.sh \
   --physical-device-ids 4 --allow-candidate-runtime \
-  --repeat 5 --samples 50 --warmup 5 --minimum-seconds 15 \
+  --repeat 5 \
   --result-root base/result/p800-toolkit
 ```
 
@@ -25,10 +25,13 @@ bash base/toolkits/main_memory-capacity/kunlunxin/P800/main.sh \
 示意；物理卡号不是 `/dev/xpuN` 或容器序号，每轮运行前须核实空闲状态、ECC、UUID 与
 PCI 映射。监控默认开启；容量按静态查询口径观察，不涉及计时窗口。
 
-判定沿用三层状态：测量层要求退出码为零、身份一致、正值有限样本与正确性回读；
-容量为静态查询，监控层使用静态查询观察，不套用计时负载的最短窗口，
-也不生成伪造的利用率 timeline；诊断层为厂商工具链合规校验。三层全部通过 Case 才为 passed。重复指独立进程；
-五次重复组 CV 与进程内 CV 分开计算，报告以 CV > 5% 标记 unstable；稳定性结论不改变
-测量状态，也不晋级 candidate runtime。
+判定沿用三层状态：测量层要求查询退出码为零、Total/Used/Free 等字段按 MiB 成功解析，
+且 PCI 地址与 UUID 匹配所选设备；Used 为零是有效值。本 Case 不产生原生计时样本，
+不要求计时样本正值或设备数据回读。监控层使用静态查询观察，不套用计时负载的最短
+窗口，也不生成伪造的利用率 timeline；诊断层结合查询身份校验与宿主健康观测。
+三层全部通过 Case 才为 passed。重复指独立查询进程；报告按设备和字段分别统计五次
+查询值，CV > 5% 标记 unstable，均值为零时 CV 为 N/A。稳定性结论不改变测量状态，
+也不晋级 candidate runtime。`--samples`、`--warmup` 和 `--minimum-seconds` 不控制静态查询；
+Toolkit 容量查询不需要 Base 分配/OOM case 的 `--allow-high-risk-case`。
 
 完整契约、工具来源、证据目录与权限路径见 [Toolkit 总说明](../../../_common/kunlunxin/P800/README.md)。

@@ -84,11 +84,11 @@ def add_cli_arguments(
     )
     parser.add_argument(
         "--compute-monitor", choices=("on", "off"), default="on",
-        help="collect concurrent npu-smi evidence for Ascend computation Cases",
+        help="collect concurrent computation telemetry: Ascend npu-smi / P800 xpu-smi",
     )
     parser.add_argument(
         "--data-movement-monitor", choices=("on", "off"), default="on",
-        help="collect concurrent/static npu-smi evidence for data movement Cases",
+        help="collect concurrent/static data movement telemetry: Ascend npu-smi / P800 xpu-smi",
     )
     parser.add_argument(
         "--allow-disruptive-dmi", action="store_true",
@@ -97,7 +97,7 @@ def add_cli_arguments(
     )
     parser.add_argument(
         "--latency-sizes", default=None,
-        help="Override latency sizes; default P2P: 64K, H2D/D2H: 512,4K,64K,1M",
+        help="Ascend only: override latency sizes; default P2P: 64K, H2D/D2H: 512,4K,64K,1M; P800 uses a fixed sweep",
     )
     parser.add_argument("--hccl-min-bytes", default="8K")
     parser.add_argument("--hccl-max-bytes", default="1G")

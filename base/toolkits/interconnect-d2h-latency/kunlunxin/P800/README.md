@@ -11,7 +11,9 @@
 - 口径：单方向一次 API 调用自提交至完成同步的主机 monotonic 耗时，包含提交与同步
   开销；不是往返时间（RTT），也不是纯 kernel 或 DMA 时间。
 - blocking 计一次同步调用；nonblocking 为 `xpu_memcpy_async` 提交 + stream 等待。
-- 时延载荷均不大于分块阈值，pinned async 使用单次提交，不引入分块协议。
+- 默认 `--async-chunk-bytes 1048576` 下，四档时延载荷均不大于分块阈值，pinned async
+  使用单次提交。若显式调小阈值，超过阈值的 pinned async 载荷将分块提交、最后统一
+  等待；这会改变测量协议，须按实际 `async_chunk_bytes` 与 `api_calls_per_sample` 比较。
 - 未测组合与载荷不推导补齐；逐点独立归档原始样本。
 
 仅限单机，不含 H2D；时延数值不用于推导带宽。

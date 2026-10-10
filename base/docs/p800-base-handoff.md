@@ -181,7 +181,7 @@ klx 的既有 CPU venv 含 PyYAML、CPU PyTorch；系统 Python 缺 torch 时不
 | run passed 但组资格拒绝 | 检查时长、五次身份一致性、CV、监控、健康；项目例外须单独写明 |
 | cleanup 不确定 | 依据精确 CID 复核本轮容器与 lease，未确认前不扩大测试 |
 
-卡 1 历史挂死在 2026-10-08 八卡组未复现，不宣称已根治；卡 2 历史不可纠正 ECC=8 继续 degraded。XPULink 反差、BF16 吞吐限制和 INT8 算子语义保留。更换镜像/驱动、dtype、shape、卡数或拓扑后重新验证对应范围。
+当前无物理卡的操作员排除政策；全部选卡均执行身份、占用、健康和租约门禁。卡 2 历史不可纠正 ECC=8 继续 degraded。XPULink 反差、BF16 吞吐限制和 INT8 算子语义保留。更换镜像/驱动、dtype、shape、卡数或拓扑后重新验证对应范围。
 
 
 验收与审计见 [交付复核](p800-base-acceptance-20261008.md) 和 [可提交审计附件](../vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/base-doc-audit-20261008/README.md)。

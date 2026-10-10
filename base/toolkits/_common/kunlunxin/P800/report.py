@@ -10,7 +10,7 @@ import json
 from pathlib import Path
 import statistics
 
-from .contract import CASES, EXCLUDED_PHYSICAL_IDS
+from .contract import CASES
 from .evidence import index, reference, sha256, write_json
 
 REPORT_SCHEMA_VERSION = 3
@@ -31,7 +31,7 @@ CASE_DISPLAY = {
 # 正文分域章节；顺序对齐 Ascend 报告（算力 → 数据搬运 → 时延扫点 → P2P 覆盖 → 带宽与容量）。
 FAMILIES = (
     ("computation", "算力：XBLAS 原生 GEMM",
-     "算力回答单卡原生 GEMM 峰值；独立 Toolkit C++ 程序直接调用 XBLAS，不经过 PyTorch，正确性回读不计时。"),
+     "算力报告指定规模下的单卡原生 GEMM 实测吞吐；独立 Toolkit C++ 程序直接调用 XBLAS，不经过 PyTorch，正确性回读不计时。"),
     ("transfer", "H2D 与 D2H：主机与设备间两个方向",
      "H2D 与 D2H 回答主机与设备之间两个方向的数据搬运问题；pinned 与 pageable、blocking 与 async 逐组合覆盖。"),
     ("latency", "H2D / D2H / P2P 时延扫点",
@@ -98,12 +98,21 @@ def family_of(case):
 def metric_summary(metrics):
     if not metrics:
         return "无有效指标"
-    by_unit = defaultdict(list)
+    # Pool only repetitions of the same device/mode/payload/field contract.
+    groups = defaultdict(list)
     for entry in metrics:
-        by_unit[entry["unit"]].append(float(entry["value"]))
+        point = json.dumps(entry.get("point", {}), sort_keys=True)
+        groups[(point, entry["field"], entry["unit"])].append(float(entry["value"]))
     parts = []
-    for unit, values in sorted(by_unit.items()):
-        parts.append(f"n={len(values)}，{min(values):.3f}–{max(values):.3f} {unit}，"
+    for (encoded_point, field, unit), values in sorted(groups.items()):
+        point = json.loads(encoded_point)
+        scope = label(point)
+        if point.get("mode") not in (None, "d2d", "d2d-kernel"):
+            scope += " / " + point["mode"]
+        if point.get("dtype"):
+            scope += " / " + point["dtype"]
+        parts.append(f"{scope} / {field}：n={len(values)}，"
+                     f"{min(values):.3f}–{max(values):.3f} {unit}，"
                      f"中位数 {statistics.median(values):.3f}")
     return "；".join(parts)
 
@@ -191,6 +200,10 @@ def generate(root):
     if summary.get("suite") != "kunlunxin-p800-toolkit" or manifest.get("schema_version") != 1:
         raise ValueError("not a supported P800 Toolkit result")
     cases = manifest.get("cases", {})
+    recorded_plan = read(root / "resolved-plan.json", summary.get("resolved_plan", {})) or {}
+    recorded_contract = read(root / "toolkit-evidence/toolkit-contract.json", {}) or {}
+    excluded = recorded_plan.get("excluded_physical_ids", recorded_contract.get("excluded_physical_ids"))
+    excluded_text = json.dumps(excluded) if isinstance(excluded, list) else "未记录"
     assets = []
     (root / "report-assets").mkdir(exist_ok=True)
     def asset(name, svg):
@@ -241,7 +254,7 @@ def generate(root):
         ["套件", summary.get("suite", "未记录")],
         ["厂商 / 芯片", f"{summary.get('vendor', 'kunlunxin')} / {summary.get('chip', 'P800')}"],
         ["选中物理卡", json.dumps(manifest.get("selected_physical_device_ids", []))],
-        ["排除物理卡", json.dumps(list(EXCLUDED_PHYSICAL_IDS)) + "（操作员约定；含该卡的区间一律拒绝）"],
+        ["排除物理卡（本轮保存的策略）", excluded_text],
         ["上下文 SHA-256", manifest.get("context_sha256", "未记录")],
         ["运行窗口", human_ts(manifest.get("started_at")) + " ～ " + human_ts(manifest.get("finished_at"))],
         ["清理与租约", f"cleanup={summary.get('cleanup_status', 'not-run')}，"
@@ -334,7 +347,7 @@ def generate(root):
 
     lines += ["", "## 健康、拓扑与证据完整性", "",
               f"- 选中物理卡 {json.dumps(manifest.get('selected_physical_device_ids', []))}；"
-              f"排除物理卡 {json.dumps(list(EXCLUDED_PHYSICAL_IDS))}。",
+              f"本轮保存的排除物理卡策略：{excluded_text}。",
               "- 每个执行目标保留命令、stdout/stderr 与 SHA-256；指标与原始输出均可追溯到 toolkit-evidence/cases/。",
               "- 同期监控逐卡 timeline 与逐样本原值见 [report_monitor.md](report_monitor.md)；"
               "缺失样本记 N/A，不补零；曲线只连相邻有效样本。",
@@ -358,7 +371,7 @@ def generate(root):
               "三者齐全且测量通过即诊断层通过。当前镜像不提供 ascend-dmi 等价的算力/带宽/信号质量阈值判定工具；"
               "与 Ascend 报告并排对比时，诊断列语义为“合规校验”而非“阈值判定”，属厂商能力差异的如实呈现。", "",
               "## 限制与后续动作", "",
-              "- 卡 1 已排除。占用卡数据属于 exploratory；本报告不晋级 candidate，也不替代 Base 双卡/八卡 qualification。",
+              "- 占用卡数据属于 exploratory；本报告不晋级 candidate，也不替代 Base 双卡/八卡 qualification。",
               "- 当前镜像不提供 Ascend DMI 等价的算力/带宽/信号质量阈值判定工具；诊断层为合规校验语义（见方法与指标口径）。"
               "xprofiler 的文件及 help 留档不代表采集了 kernel trace。",
               "- INT8→INT32 GemmEx 在当前镜像实测返回参数错误，INT8 走 XBLAS fc_fusion（见方法与指标口径）。"]

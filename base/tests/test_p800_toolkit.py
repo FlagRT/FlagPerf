@@ -17,7 +17,7 @@ from executors.toolkit import ToolkitExecutor, ToolkitRunRequest, parse_args
 from toolkits._common.kunlunxin.P800 import contract as c
 from toolkits._common.kunlunxin.P800 import evidence as e
 from toolkits._common.kunlunxin.P800.evidence_runner import resolve_native, parse_record
-from toolkits._common.kunlunxin.P800.report import generate_and_record
+from toolkits._common.kunlunxin.P800.report import generate_and_record, metric_summary
 from executors.p800_toolkit import finalize_monitor, compose_status
 from toolkits._common.kunlunxin.P800 import evidence_runner
 
@@ -228,6 +228,58 @@ class EvidenceTests(unittest.TestCase):
             self.assertEqual(e.validate_index(root),[])
             (root/'test').write_text('changed')
             self.assertEqual(e.validate_index(root),['test'])
+
+    def test_summary_keeps_distinct_measurement_scopes_separate(self):
+        base = {'point': {'source': 4, 'mode': 'd2d', 'bytes': 1000},
+                'field': 'bandwidth', 'unit': 'GB/s', 'value': 10}
+        variants = [
+            {'point': {**base['point'], 'mode': 'd2d-kernel'}},
+            {'point': {**base['point'], 'bytes': 2000}},
+            {'point': {**base['point'], 'source': 7}},
+            {'field': 'other-field'},
+            {'unit': 'GiB/s'},
+        ]
+        for variant in variants:
+            with self.subTest(variant=variant):
+                text = metric_summary([base, {**base, **variant, 'value': 2090}])
+                self.assertEqual(text.count('n=1'), 2)
+                self.assertNotIn('1050.000', text)
+                self.assertIn('10.000', text)
+                self.assertIn('2090.000', text)
+        repeated = metric_summary([base, {**base, 'value': 12}])
+        self.assertIn('n=2', repeated)
+        self.assertIn('11.000', repeated)
+        pair = {**base, 'point': {'source': 4, 'destination': 7, 'mode': 'p2p',
+                                 'direction': 'single-direction', 'bytes': 1000}}
+        for change in ({'mode': 'p2p-bidir', 'direction': 'bidirectional'}, {'destination': 6}):
+            text = metric_summary([pair, {**pair, 'point': {**pair['point'], **change}, 'value': 2090}])
+            self.assertEqual(text.count('n=1'), 2)
+        for change in ({'pinned': True}, {'async': True}):
+            copy = {**base, 'point': {**base['point'], 'mode': 'h2d', 'pinned': False, 'async': False}}
+            self.assertEqual(metric_summary([copy, {**copy, 'point': {**copy['point'], **change}}]).count('n=1'), 2)
+
+    def test_report_uses_recorded_policy_and_does_not_infer_missing_policy(self):
+        for source, excluded in (('resolved-plan.json', []), ('resolved-plan.json', [1]),
+                                 ('summary', []), ('toolkit-evidence/toolkit-contract.json', [1]),
+                                 (None, None)):
+            with self.subTest(source=source, excluded=excluded), tempfile.TemporaryDirectory() as d:
+                root = Path(d)
+                summary = {'suite': 'kunlunxin-p800-toolkit', 'status': 'partial', 'run_id': 'fixture'}
+                policy = {'excluded_physical_ids': excluded}
+                if source == 'summary':
+                    summary['resolved_plan'] = policy
+                elif source:
+                    e.write_json(root / source, policy)
+                if source == 'resolved-plan.json':
+                    e.write_json(root / 'toolkit-evidence/toolkit-contract.json', {'excluded_physical_ids': [7]})
+                e.write_json(root / 'summary.json', summary)
+                e.write_json(root / 'toolkit-evidence/manifest.json', {'schema_version': 1, 'cases': {}, 'settings': {}})
+                generate_and_record(root)
+                text = (root / 'report.md').read_text()
+                expected = json.dumps(excluded) if source else '未记录'
+                self.assertIn('| 排除物理卡（本轮保存的策略） | ' + expected + ' |', text)
+                self.assertNotIn('卡 1 已排除', text)
+                self.assertEqual(json.loads((root / 'summary.json').read_text())['status'], 'partial')
 
     def test_kernel_chart_uses_read_write_and_group_cv_uses_sample_sd(self):
         with tempfile.TemporaryDirectory() as d:

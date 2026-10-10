@@ -18,7 +18,7 @@ sudo -n env GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=safe.directory \
   GIT_CONFIG_VALUE_0=/home/kzhang519/Zhiyu/runtime-team/FlagPerf \
   python3 base/run.py toolkit run \
   --config base/configs/kunlunxin_p800_xpytorch29.yaml \
-  --physical-device-ids 4 --allow-candidate-runtime --smoke \
+  --physical-device-ids 4,7 --allow-candidate-runtime --smoke \
   --result-root base/result/p800-toolkit
 
 # Four selected cards give six unordered pairs. Occupied-card use is explicit.
@@ -35,7 +35,7 @@ python3 base/run.py toolkit run \
 python3 base/run.py report --result-root base/result/p800-toolkit --run-id RUN_ID
 ```
 
-No physical card is excluded by operator policy; the former card-1 reservation ended on 2026-10-10. Every selected card still passes the same health, identity and lease gates. There is no default-all device selector. Check the host inventory first and prefer
+No physical card is excluded by operator policy. Every selected card still passes the same health, identity and lease gates. There is no default-all device selector. Check the host inventory first and prefer
 idle eligible cards. Busy-card permission does not override health, identity or
 lease checks, kill other processes, reset cards, or qualify a shared run as idle.
 The twelve `main.sh` entries forward their arguments to the same host facade;
@@ -83,7 +83,14 @@ measures the entire chunked transfer, including submission overhead. Metrics
 retain `async_chunk_bytes`, `api_calls_per_sample` and `submission_scope`.
 `--async-chunk-bytes 0` reproduces the whole-payload path; it is not silently
 replaced by blocking copies. Smaller payloads use a single async submission.
-Historical failed runs remain failed after the fix.
+Historical failed runs remain failed after the fix. With the default 1 MiB chunk,
+all four latency payloads use a single submission. Reducing the chunk can split
+larger pinned async latency payloads and changes the measured protocol.
+
+Report summaries group metrics by the complete device/mode/payload point, field
+and unit. Only repeated results within that group share a median; runtime D2D,
+kernel D2D and the two P2P directions never share an aggregate median. Reports
+display exclusions from the saved run plan or contract, not from current policy.
 
 ## Tools, origins and measured semantics
 
