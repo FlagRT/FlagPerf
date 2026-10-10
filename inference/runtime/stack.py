@@ -1,5 +1,3 @@
-# Copyright 2026 FlagOS Contributors
-# Licensed under the Apache License, Version 2.0.
 """Expand one comparison axis while sealing each compiler/communication identity."""
 from copy import deepcopy
 import time
@@ -97,7 +95,8 @@ def audits(root,contexts,invoke,progress):
     for side,ctx in contexts.items():
         progress.phase=f'performance/component-audit/{side}'
         folder=root/'audit'/side
-        value=invoke(ctx['cfg'],root,'forward',folder,ctx['prepared'],ctx['include'],True)
+        audit_cfg=dict(ctx['cfg'], _candidate_mapping=any(c['include'] is not None for c in contexts.values()))
+        value=invoke(audit_cfg,root,'forward',folder,ctx['prepared'],ctx['include'],True)
         result[side]=value
         if value.get('status')!='completed' or value.get('numerical_anomalies'):
             return result,summaries,f'{side} component audit failed'

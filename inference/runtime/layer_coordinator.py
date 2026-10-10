@@ -1,9 +1,7 @@
-# Copyright 2026 FlagOS Contributors
-# Licensed under the Apache License, Version 2.0.
 """Execute isolated layer sampling workers and preserve partial evidence."""
 import os
 from runtime.common import read_json, write_json
-from analysis.layer import ranks, summarize_layer, overhead
+from runtime.layer_analysis import ranks, summarize_layer, overhead
 
 def collect(cfg, root, result, contexts, prepared, policy, sides, progress, invoke):
     layer = {'schema_version': 1, 'selection': cfg['performance']['layers'], 'runs': {},
@@ -36,19 +34,27 @@ def collect(cfg, root, result, contexts, prepared, policy, sides, progress, invo
                     from runtime.stack import assert_observation
                     assert_observation(ctx, value)
                 if phase == 'layer_profile':
-                    from analysis.layer_trace import analyze, associate_collectives
+                    from runtime.layer_trace import analyze, associate_collectives, write_attribution
                     profile = {}
+                    communication_ranks = {}
+                    analysis_timeout = cfg['runtime'].get('analysis_timeout_seconds', 900)
                     for rank, state in ranks(value).items():
                         folder = destination/('rank-'+rank) if layer['world_size'] > 1 else destination
                         try:
-                            detail = analyze(folder, state)
+                            detail = analyze(folder, state, timeout=analysis_timeout,
+                                             rank=int(rank) if layer['world_size'] > 1 else None)
                             if layer['world_size'] > 1:
-                                from analysis.communication import analyze_rank
-                                detail['communication'] = analyze_rank(folder, int(rank))
+                                from runtime.communication_analysis import analyze_rank
+                                if 'communication' not in detail:
+                                    detail['communication'] = analyze_rank(folder, int(rank), timeout=analysis_timeout)
                                 associate_collectives(detail)
                         except Exception as error:
                             detail = {'status': 'partial', 'reason': str(error), 'rows': [], 'events': [], 'coverage': {}}
-                        write_json(folder/'attribution.json', detail)
+                        if layer['world_size'] > 1:
+                            communication_ranks[rank] = detail.get('communication', {
+                                'status': 'partial', 'rank': int(rank), 'events': [],
+                                'issues': [detail.get('reason', 'layer analysis incomplete')]})
+                        write_attribution(folder, detail)
                         # Event map remains in its own file; summary carries layer rows and coverage.
                         profile[rank] = {k: v for k, v in detail.items() if k not in ('events','auxiliary_events')}
                         profile[rank]['evidence'] = str((folder/'attribution.json').relative_to(root))
@@ -58,9 +64,16 @@ def collect(cfg, root, result, contexts, prepared, policy, sides, progress, invo
                     if layer['world_size'] > 1:
                         alias = root/'profiles'/side/label
                         alias.parent.mkdir(parents=True, exist_ok=True)
-                        alias.symlink_to(os.path.relpath(destination, alias.parent), target_is_directory=True)
-                        from analysis.communication import analyze as analyze_communication
-                        communication = analyze_communication(destination, layer['world_size'])
+                        if alias.is_symlink():
+                            if alias.resolve() != destination.resolve():
+                                raise ValueError('profile alias points to different evidence: '+str(alias))
+                        elif alias.exists():
+                            raise ValueError('profile alias is occupied: '+str(alias))
+                        else:
+                            alias.symlink_to(os.path.relpath(destination, alias.parent), target_is_directory=True)
+                        from runtime.communication_analysis import analyze as analyze_communication
+                        communication = analyze_communication(destination, layer['world_size'], rank_results=communication_ranks)
+                        if communication['status'] != 'completed': result['status'] = 'partial'
                         result.setdefault('profiles', {}).setdefault(side, {})[label] = {
                             'status': communication['status'], 'communication': communication}
     layer['timing'] = summarize_layer(layer)

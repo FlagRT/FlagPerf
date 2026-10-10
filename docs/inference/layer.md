@@ -27,7 +27,7 @@ python3 run.py performance --config config/local.yaml --device 0 \
   --level layer --layers all --output result/layer-native
 ```
 
-`all` 表示 Qwen3-Embedding-0.6B 的全部 28 个 Transformer block。也可以用真实模块名选择某几个模块，例如 `--layers layers.0 layers.0.self_attn layers.27`。父模块的统计包含子模块，父子耗时不能相加。
+`all` 表示模型适配器定义的默认模块；Qwen3-Embedding 为全部 28 个 block，其他模型见[模型指南](models.md)。也可以用真实模块名选择某几个模块，例如 `--layers layers.0 layers.0.self_attn layers.27`。父模块的统计包含子模块，父子耗时不能相加。
 
 快速确认运行链路时可追加 `--warmup-rounds 1 --measure-rounds 3 --repeats 2`。正式默认是 5/30/3；一轮遍历完整输入集。`--layer-profile-rounds` 控制每次独立诊断的输入轮数，默认 1。短采样用于确认功能，小样本分位数按描述值阅读。
 
@@ -87,3 +87,5 @@ python3 run.py report --source result/layer-compare --level layer \
 该命令隐含实体复制。已有 trace 在 CPU 上解析；trace 缺失但存在可识别的原始 Ascend 采集时，使用来源记录的镜像和驱动管理节点，在副本中尝试导出一次，上限 300 秒。普通报告视图不调用 Docker。
 
 查看 `reanalysis.json` 中的解析结果。重新解析保留原执行状态，无法补出未执行的计时、显存或缺失 rank；这类情况需要按报告提供的命令重新采集。运行记录可能包含输入和机器路径，分享前由操作者检查。
+
+OneRec 的视图另支持 `--phases prefill decode` 和 `--generation-steps 1 31`，对应已保存的生成阶段与零起始步骤。原始证据已精简时重解析明确拒绝；保留方法与恢复见[离线指南](offline.md)。

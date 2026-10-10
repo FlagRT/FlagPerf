@@ -3,17 +3,13 @@
   "models": [
     {
       "name": "qwen3_embedding_0.6b",
-      "engine": "pytorch_transformers_eager",
-      "weights": "user_supplied_local_directory",
+      "display_name": "Qwen3-Embedding-0.6B",
+      "adapter": "implemented",
       "dtypes": [
         "bfloat16",
         "float16",
         "float32"
-      ]
-    }
-  ],
-  "vendors": {
-    "ascend": {
+      ],
       "parallelism": [
         "single",
         "tp"
@@ -23,23 +19,113 @@
         4,
         8
       ],
-      "runtime": "torch_npu / CANN 9",
-      "hardware_scope": "Ascend 910C / A3; validation is specific to the selected runtime and workload"
+      "export": [
+        "fx",
+        "onnx"
+      ],
+      "reference_dtype": "bfloat16",
+      "throughput_unit": "samples/s and tokens/s",
+      "assets": "user_supplied_local_directory"
+    },
+    {
+      "name": "deepfm",
+      "display_name": "DeepFM",
+      "adapter": "implemented",
+      "dtypes": [
+        "float32"
+      ],
+      "parallelism": [
+        "single",
+        "tp"
+      ],
+      "tp_world_sizes": [
+        2
+      ],
+      "export": [
+        "fx"
+      ],
+      "reference_dtype": "float32",
+      "throughput_unit": "samples/s",
+      "assets": "user_generated_sealed_synthetic_weights_and_inputs"
+    },
+    {
+      "name": "dlrm",
+      "display_name": "DLRM",
+      "adapter": "implemented",
+      "dtypes": [
+        "float32"
+      ],
+      "parallelism": [
+        "single",
+        "tp"
+      ],
+      "tp_world_sizes": [
+        2
+      ],
+      "export": [
+        "fx"
+      ],
+      "reference_dtype": "float32",
+      "throughput_unit": "samples/s",
+      "assets": "user_generated_sealed_synthetic_weights_and_inputs"
+    },
+    {
+      "name": "onerec_8b",
+      "display_name": "OneRec-8B",
+      "adapter": "implemented",
+      "dtypes": [
+        "bfloat16"
+      ],
+      "parallelism": [
+        "single",
+        "tp"
+      ],
+      "tp_world_sizes": [
+        2
+      ],
+      "export": [],
+      "reference_dtype": "bfloat16",
+      "throughput_unit": "generated tokens/s",
+      "assets": "user_supplied_local_directory"
+    }
+  ],
+  "vendors": {
+    "ascend": {
+      "role": "candidate_execution",
+      "parallelism": [
+        "single",
+        "tp"
+      ],
+      "runtime": "torch_npu / CANN 9 / PyTorch 2.10",
+      "hardware_scope": "Ascend 910C / A3; runtime, model, input and component combinations determine validation scope"
     },
     "nvidia": {
-      "parallelism": [
+      "role": "A100_reference_capture",
+      "commands": [
+        "oracle",
+        "performance-baseline"
+      ],
+      "oracle_parallelism": [
         "single"
       ],
-      "hardware_validation": "not_performed"
+      "performance_parallelism": [
+        "single",
+        "tp2"
+      ],
+      "runtime": "PyTorch 2.10.0+cu126; model-specific reference dtype"
     }
   },
   "commands": {
-    "list": "capabilities without model or device execution",
-    "preview": "FlagGems selection and per-environment/rank verification",
-    "accuracy": "model and selected module outputs; no universal acceptance threshold",
-    "performance": "total model or selected layer latency, throughput and allocator memory; independent profiler sampling",
-    "export": "first fixed batch CPU native FX/ONNX graph; single-device preparation",
-    "report": "read-only performance views, layer/rank/shape filters, portable evidence and bounded profiler reanalysis"
+    "list": "capabilities without device initialization",
+    "accuracy": "model and selected module numeric comparisons; optional A100 oracle",
+    "performance": "total/layer latency, throughput, allocator memory, independent profiler and telemetry; optional A100 baseline",
+    "preview": "bounded grouped candidate search and current-identity joint policy validation",
+    "export": "CPU-only preparation and first fixed batch native graph for supported models; no accelerator initialization or device mounts",
+    "report": "read-only performance views, filters, portable copying and bounded profiler reanalysis",
+    "oracle": "native A100 single-device precision reference with independent repeat validation",
+    "performance-baseline": "native A100 single/TP2 independent performance reference",
+    "analyze": "CPU analysis and comparison recovery in a new directory; no device recapture",
+    "repack-reference": "read-only historical reference conversion to a new core and evidence attachment"
   },
   "component_controls": {
     "components": [
@@ -66,43 +152,68 @@
   "preview": {
     "resume": true,
     "execution_analysis_identity_split": true,
-    "verified_meaning": "complete execution, selected functions hit on every rank, finite checked output boundaries; not accuracy acceptance",
+    "verified_meaning": "selected functions executed, hit and passed finite boundary checks for the current identity; not business accuracy or hardware-kernel qualification",
     "checkpoint_schema_version": 2,
     "evidence_mode_default": "lightweight",
     "resume_cache_default": "auto",
     "search_strategy_default": "grouped",
     "budget_mode_default": "adaptive"
   },
+  "reference_packages": {
+    "write_schema": 4,
+    "read_schemas": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "core_independently_consumable": true,
+    "diagnostic_attachment_separate": true,
+    "accuracy_and_performance_references_mutually_exclusive": true
+  },
+  "monitor": {
+    "default": "on",
+    "interval_ms": 1000,
+    "device_provider": "ascend.dcmi.a3",
+    "scope": "independent device-management and worker CPU/RSS telemetry; capability and valid points reported per metric"
+  },
+  "result_retention": {
+    "ordinary_success": "compact when execution and analysis complete without numeric or measurement-review anomalies",
+    "keep_options": [
+      "--keep-tensors",
+      "--keep-evidence"
+    ],
+    "full": [
+      "explicit keep",
+      "failure",
+      "partial",
+      "numeric anomaly",
+      "measurement needs_review/invalid_evidence",
+      "reference producer"
+    ],
+    "historical_results": "read-only; no automatic cleanup"
+  },
   "limits": [
-    "only listed model adapter is implemented",
-    "single-device FlagCX comparison is not applicable",
+    "listed model adapters only; no task/business scoring",
+    "DeepFM/DLRM use synthetic weights and inputs; no CTR/AUC claim",
+    "TP parameter support is not qualification of every scale and component combination",
+    "OneRec comparison stops at the first selected-token divergence including that step; later trajectories retained",
+    "single-device FlagCX is not applicable",
     "eager execution may not call the Triton compiler",
     "FlagCX lifecycle is scoped to one-shot workers",
-    "2/4/8 TP parameter support does not imply hardware qualification at every scale",
-    "graph export does not verify ONNX Runtime or vendor engine numerics",
-    "call-level routing is not hardware kernel fallback coverage",
-    "execution changes require a new preview; historical reports remain readable",
-    "grouped preview verifies combinations, not independent function compatibility",
-    "layer device events include stream waits and host supply gaps"
+    "call-level routing does not prove hardware-kernel fallback coverage",
+    "execution changes require a new preview; historical reports and reference packages remain readable",
+    "layer parent/child inclusive windows and allocator peaks are not additive",
+    "cross-vendor NCCL kernel and CANN collective times are not directly ratio-comparable",
+    "compact results cannot recover discarded tensor or raw profiler evidence",
+    "polling interval does not define sensor refresh rate or short-batch attribution",
+    "short functional validation does not establish stable performance or business accuracy"
   ],
   "not_implemented": [
     "task_scoring",
-    "cross_device_reference_comparison",
+    "arbitrary_tp_shard_reference_reconstruction",
     "performance_request_operator_levels",
     "hardware_kernel_fallback_ratio",
     "operator_tensor_accuracy"
-  ],
-  "layer_performance": {
-    "default_selection": "all Transformer blocks",
-    "selection": "module names; nested modules supported",
-    "parallelism": [
-      "single",
-      "tp"
-    ],
-    "sampling": "independent uninstrumented baseline, layer timing, profiler and allocator passes",
-    "default_profile_rounds": 1,
-    "timing": "inclusive module windows; parent and child durations are not additive",
-    "memory": "process allocator window peaks; not exclusive module allocation",
-    "comparison": "paired module invocation, rank and workload"
-  }
+  ]
 }

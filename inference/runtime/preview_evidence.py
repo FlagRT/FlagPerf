@@ -1,5 +1,3 @@
-# Copyright 2026 FlagOS Contributors
-# Licensed under the Apache License, Version 2.0.
 """Small, sealed forward checks and crash-readable preview stage observations."""
 from contextlib import contextmanager
 from pathlib import Path
@@ -33,11 +31,11 @@ class Stages:
             write_json(self.root/'stages.json', self.rows)
 
 
-def input_batches(batches):
-    return [{'batch_index': i, 'sample_ids': b['ids'],
-             'input_shape': list(b['inputs']['input_ids'].shape),
-             'valid_tokens': b['inputs']['attention_mask'].sum(dim=1).tolist()}
-            for i, b in enumerate(batches)]
+def input_batches(batches, adapter=None):
+    if adapter is None:
+        from runtime.adapters import create
+        adapter = create('models', 'qwen3_embedding_0.6b')
+    return [adapter.batch_metadata(batch, i) for i, batch in enumerate(batches)]
 
 
 def seal_checks(root, mode, batches):
@@ -46,8 +44,11 @@ def seal_checks(root, mode, batches):
     return {'mode': mode, 'manifest': path.name, 'sha256': file_hash(path)}
 
 
-def validate_checks(root, result, expected):
+def validate_checks(root, result, expected, *, module_shapes=False):
     """A missing tensor file is allowed only with complete, verified compact evidence."""
+    if expected.get('execution_kind') == 'autoregressive':
+        from runtime.step_capture import validate_checks as validate_steps
+        return validate_steps(root,result,expected)
     descriptor = result.get('forward_evidence', {})
     path = (Path(root)/descriptor.get('manifest', '')).resolve()
     if not path.is_relative_to(Path(root).resolve()) or not path.is_file():
@@ -67,14 +68,31 @@ def validate_checks(root, result, expected):
             raise ValueError('preview batch/sample/input shape mismatch')
         wanted = {(sample, boundary) for sample in reference['sample_ids'] for boundary in expected['boundaries']}
         seen = set()
-        lengths = dict(zip(reference['sample_ids'], reference['valid_tokens']))
+        lengths = dict(zip(reference['sample_ids'], reference.get('valid_tokens', [None]*len(reference['sample_ids']))))
         for check in batch.get('checks', []):
             key = (check.get('sample_id'), check.get('boundary'))
             if key not in wanted or key in seen:
                 raise ValueError('unexpected or duplicate preview boundary check')
             seen.add(key)
-            shape = ([expected['hidden_size']] if key[1] in ['pooled', 'embedding']
-                     else [lengths[key[0]], expected['hidden_size']])
+            specs = expected.get('boundary_specs')
+            if specs:
+                spec = specs[key[1]]
+                shape = spec.get('sample_shape')
+            else:
+                from runtime.workload import legacy_specs
+                spec = legacy_specs([key[1]])[key[1]]
+                shape = ([expected['hidden_size']] if spec['level'] == 'model'
+                         else ['valid_tokens', None if module_shapes else expected['hidden_size']])
+            observed = check.get('shape')
+            if not isinstance(observed, list) or any(type(n) is not int or n < 1 for n in observed):
+                raise ValueError('invalid forward module shape')
+            if shape is None:
+                shape = observed
+            else:
+                shape = [lengths[key[0]] if n == 'valid_tokens' else n for n in shape]
+                if len(shape) != len(observed):
+                    raise ValueError('invalid preview boundary shape')
+                shape = [actual if wanted is None else wanted for wanted, actual in zip(shape, observed)]
             count = check.get('nonfinite_count')
             if (check.get('shape') != shape or check.get('checked_elements') != math.prod(shape)
                     or not isinstance(check.get('dtype'), str) or not check['dtype'].startswith('torch.')
@@ -96,6 +114,30 @@ def validate_checks(root, result, expected):
             if not p.is_relative_to(Path(root).resolve()) or not p.is_file():
                 raise ValueError('missing full preview tensor artifact')
     return value
+
+
+def validate_forward_checks(cfg, root, result, prepared, probe=False):
+    """Formal forward coverage; preview keeps its stricter complete-block contract."""
+    expected = dict(read_json(Path(prepared)/'forward-inputs.json'))
+    from runtime.adapters import model_adapter, create
+    if expected.get('model_adapter') or cfg.get('model'):
+        adapter = model_adapter({'model': {'name': expected.get('model_adapter') or cfg['model']['name']}})
+    elif expected.get('schema_version') == 1:
+        adapter = create('models', 'qwen3_embedding_0.6b')
+    else:
+        raise ValueError('missing workload adapter metadata')
+    names = ['all'] if probe else cfg['accuracy']['layers']
+    specs = adapter.prepared_specs(expected, names)
+    layers = not (probe and cfg.get('_layer_audit')) and (probe or 'layer' in cfg['accuracy']['levels'])
+    selected = [s for s in specs if s['level'] == 'model' or layers]
+    expected['boundaries'] = [s['name'] for s in selected]
+    expected['boundary_specs'] = {s['name']: s for s in selected}
+    if expected.get('execution_kind')=='autoregressive':
+        expected['execution_modes']=['performance'] if cfg.get('_layer_audit') else ['accuracy','performance'] if probe else ['accuracy']
+    try:
+        return validate_checks(root, result, expected, module_shapes=True)
+    except ValueError as error:
+        raise ValueError(str(error).replace('preview', 'formal forward')) from error
 
 
 def diagnostic_summary(root, result, parallel=False):

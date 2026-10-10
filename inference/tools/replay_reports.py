@@ -6,7 +6,7 @@ from pathlib import Path
 import sys
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from runtime.common import ROOT, read_json, write_json, file_hash
-from reporting.model import render
+from runtime.reporting import render
 
 
 def replay(source, destination):
@@ -19,7 +19,7 @@ def replay(source, destination):
     if result.get('command') == 'performance':
         # Share the generated-file exclusions and source protection with report.
         # In particular, layer-index.md must never be rendered through a source link.
-        from reporting.replay import replay as performance_view
+        from runtime.report_replay import replay as performance_view
         performance_view(source, destination, result.get('level', 'total'))
         record = {'source': str(source), 'report': str(destination/'report.md'),
                   'source_unchanged': True, 'new_device_execution': False}
@@ -39,8 +39,8 @@ def replay(source, destination):
     write_json(destination/'report-replay.json', {
         'source':str(source),'source_files_sha256':protected,
         'generator_sha256':{name:file_hash(ROOT/name) for name in
-                            ['reporting/model.py','reporting/parallel.py',
-                             'reporting/components.py','analysis/assessment.py']},
+                            ['runtime/reporting.py','runtime/tp_reporting.py',
+                             'runtime/stack_reporting.py','runtime/assessment.py']},
         'new_device_execution':False})
     return {'source':str(source),'report':str(destination/'report.md'),'source_unchanged':True}
 

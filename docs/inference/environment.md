@@ -1,76 +1,75 @@
-# Inference 环境准备
+# 环境准备与排错
 
-[返回入门指南](../../inference/README.md)
+宿主启动器只依赖 Python 3.10+ 和 PyYAML。设备侧需要用户准备好的镜像、驱动和模型；程序不会安装设备依赖或下载权重。
 
-宿主 Python 负责读取配置和启动 Docker；模型、PyTorch、编译器及通信库在所选镜像内执行。
-本仓接入已有兼容环境，不附带可直接拉取的完整 Inference 镜像，也不在运行时自动安装或升级设备依赖。
-镜像 tag 可自行命名：启动器解析它的真实 image ID，并在整次运行中固定使用该 ID。
-
-## 宿主与设备
-
-- Linux；宿主 Python 3.10+ 和 `inference/requirements.txt` 中的 PyYAML。
-- Docker 可访问本机守护进程；Ascend 主机有匹配 CANN 的驱动及 `npu-smi`；NVIDIA 主机有可用的容器 GPU 支持。
-- 选用空闲物理设备，保证模型目录可读、输出目录可写。单卡只挂载选中设备，容器内使用逻辑设备 0。
-- TP 需要单机 2、4 或 8 张不同设备及 HCCL 可用网络；支持参数数量不等于这些规模均已实机验证。入门从 TP=2 开始。
-
-## 设备侧镜像要求
-
-| 用途 | 镜像需要包含 |
+| 环境 | 依赖与用途 |
 |---|---|
-| Ascend 模型执行 | Python 3.11、CANN 9、兼容的 PyTorch 与 torch_npu、Transformers、Accelerate、NumPy、PyYAML、Triton、FlagGems |
-| FlagTree on | 提供 `triton` 模块的 FlagTree 分发包；与运行栈匹配 |
-| TP FlagCX on | 可导入并注册 `flagcx` 进程组的 Ascend FlagCX 构建 |
-| 图导出 | PyTorch export、ONNX、ONNXScript 及其依赖 |
-| NVIDIA 单卡 | CUDA 版 PyTorch、Transformers、Accelerate、Triton、FlagGems 等对应 CUDA 依赖 |
+| Ascend 被测端 | Linux、Docker、CANN 9、PyTorch 2.10、torch_npu；文本模型另需 Transformers、tokenizers、safetensors、NumPy |
+| FlagGems 对照 | 兼容 FlagGems 与 Triton 实现；按当前身份先 preview |
+| FlagTree 对照 | 兼容 FlagTree，固定其他组件并重新联合 preview |
+| FlagCX 对照 | TP 中的兼容 FlagCX；组生命周期限定为单次 worker |
+| A100 参考端 | 已准备 CUDA 环境，PyTorch 2.10.0+cu126、Transformers 5.5.3、NumPy 1.26.4；支持单卡 oracle 和 single/TP2 性能基线 |
+| 完整离线分析 | CPU PyTorch、NumPy、safetensors、PyYAML；无加速设备需求 |
+| CPU 图导出 | PyTorch、NumPy、PyYAML 和模型加载依赖；ONNX 另需 onnx、onnxscript；不初始化设备 |
 
-当前实现所用的参考组合为 PyTorch 2.10.0、torch_npu 2.10.0、Transformers 5.5.3、
-Accelerate 1.13.0、NumPy 1.26.4、PyYAML 6.0.3；三组件组合使用 FlagTree
-`0.6.0+ascend.git15ec1a6c`、FlagCX 0.13.0 和 cann-shmem 1.6.0。
-版本名本身不足以证明兼容：实际加载位置、包和源码摘要进入运行身份，新环境仍需自己的 preview 和精度检查。
-即使所有开关为 off，准备阶段也会记录 Triton 身份；Ascend 默认还要有下面的厂商编译器资产。
+Ascend 路径使用 torch_npu。Operation 的 Torch-FL 环境要求不能直接代替推理环境。vLLM 仅可作为镜像底座，不参与这里的模型执行。
+CANN profile 的约束为 `TASK_QUEUE_ENABLE=0`；容器运行前解析并记录镜像完整 SHA256 ID，组件和包身份在 worker 中核对。
 
-Inference 直接使用 torch_npu；不要向其镜像混装抢占同一设备注册槽的 Torch-FL。
-Base/Operation 的 Torch-FL 组合按 [Ascend 指南](../ascend/README.md) 管理。
+## 准备模型
 
-## 本地模型目录
+Qwen3-Embedding 和 OneRec 使用完整本地权重及 tokenizer。OneRec 要求标准 Qwen3 CausalLM 配置、BF16 权重分片和 generation_config，不执行模型目录内的自定义 Python。
+DeepFM/DLRM 通过[模型指南](models.md)中的 CPU 工具生成权重和合成输入，目录生成一次后封存。生成资产不随源码发布。
 
-从模型发布方获得完整 **Qwen3-Embedding-0.6B** 权重及 tokenizer 文件，保留原目录结构。
-当前适配读取 `config.json`、`tokenizer_config.json`、`model.safetensors`，还需模型随附的 tokenizer 词表等文件。
-在配置 `model.path` 或参数 `--model-path` 中填写目录，不填写单个权重文件路径。
-程序设置离线加载，不会在文件不全时自动联网补齐。该目录以只读方式挂载到容器。
-
-## 准备厂商编译器
-
-FlagTree 与厂商 Triton 都使用 `triton` 模块名。工具通过隔离进程和只读资产选择实际编译器，避免运行中替换已导入模块。
-需要一个本地镜像，其中原生 `triton-ascend` 及 `triton` 分发元数据完整，且实际导入的不是 FlagTree。
+宿主的 launcher 虚拟环境只有 PyYAML，不能直接执行模型资产生成或完整分析。若宿主已有 CPU PyTorch 和 safetensors，可直接运行模型指南中的准备命令；也可以复用含这些依赖的兼容镜像。
+例如，从 `inference/` 准备 DeepFM，仅挂载源码和资产输出，不挂载设备或驱动：
 
 ```bash
-# 在 inference 目录执行；替换为实际镜像。
-python3 tools/prepare_vendor_compiler.py --image your-vendor-image:tag
+mkdir -p runtime_assets
+docker run --rm --network none --read-only --tmpfs /tmp:rw,exec,size=1g \
+  --user "$(id -u):$(id -g)" -e HOME=/tmp -e USER=flagperf -e LOGNAME=flagperf \
+  -e TORCH_DEVICE_BACKEND_AUTOLOAD=0 -e PYTHONDONTWRITEBYTECODE=1 \
+  -v "$PWD:$PWD:ro" -v "$PWD/runtime_assets:$PWD/runtime_assets:rw" -w "$PWD" \
+  --entrypoint python3 your-compatible-image:tag \
+  -m benchmarks.deepfm.prepare_assets --output runtime_assets/deepfm-v1
 ```
 
-工具无需设备或联网，会自动查询 Python 包位置，提取编译器及元数据，保存来源 image ID、包版本和文件 SHA-256。
-默认目录为 `runtime_assets/ascend-triton`。每次运行检查清单与实际文件，策略还绑定资产摘要。
-需要另一份资产时用 `--output /absolute/new/bundle`，并同步设置 `vendors.ascend.vendor_compiler`。
-如果已在当前环境运行，模型、资产和策略也必须可读；使用 `run_inference.py` 替代 `run.py`，并在该环境重新 preview。
-手工设置镜像标识不能代替环境一致性核验。
+DLRM 将最后一行替换为 `-m benchmarks.dlrm.prepare_assets --output runtime_assets/dlrm-v1`。
+用于完整离线分析的环境还需 NumPy。图导出只需 CPU 依赖；文本模型另需 Transformers、tokenizers、safetensors 和本地 tokenizer/权重。
 
-Ascend 默认统一设置 `TASK_QUEUE_ENABLE=0`、`TRITON_ENABLE_TASKQUEUE=true`。
-这些值对比较双方相同；不要只在某一侧改变队列设置。FlagCX 的当前适配将原生组保留至一次性 worker 退出，
-不适用于长驻服务反复创建/销毁进程组的稳定性结论。
+## 准备原生编译器
+
+三个组件均 off 的原生 accuracy/performance 不需要编译器包。preview 或需要原生 Triton 一侧的组件比较，执行：
+
+```bash
+python3 tools/prepare_vendor_compiler.py --image your-native-triton-ascend-image:tag
+```
+
+工具根据镜像中实际安装位置提取包，不假定 Python 前缀；拒绝覆盖已有目录和将 FlagTree 当作原生编译器。
+`runtime_assets/ascend-triton/manifest.json` 记录来源镜像 ID 和逐文件摘要，运行前重新校验。可用 `--output` 选择新目录，并修改 `vendors.ascend.vendor_compiler`。
+
+## A100 环境工具
+
+在用户已有的 CUDA 容器内，使用 Python 3.12 创建隔离环境；两个脚本都会检查 Python 版本并联网安装锁定依赖：
+
+```bash
+bash tools/prepare_oracle_env.sh
+bash tools/prepare_performance_env.sh
+```
+
+环境默认位于 `runtime_assets/a100-venv` 和 `runtime_assets/a100-performance-venv`，已有目录会拒绝覆盖。可传第一个位置参数选择新环境目录。
+脚本不会激活当前 shell；后续分别使用对应的 `bin/python`，见[A100 指南](references.md)。离线机器需预先准备兼容独立环境，再使用该环境的 Python；这些脚本不提供离线安装流程。
 
 ## 常见问题
 
-| 现象 | 处理 |
+| 现象 | 检查方式 |
 |---|---|
-| `No module named yaml` | 激活宿主虚拟环境，安装 `inference/requirements.txt` |
-| 要求设置 model.path/image | 填写用户配置，或传入 `--model-path` / `--image` |
-| 模型文件缺失 | 核对完整模型目录、读权限和文件名；不要只下载配置文件 |
-| 找不到编译器清单 | 运行资产准备工具，并核对配置的目录 |
-| 编译器摘要不匹配 | 保留旧资产，重新导出到新目录；重新 preview |
-| Docker 无权限或设备不可见 | 核对当前账号权限、驱动和所选物理编号；程序不自动换卡 |
-| `npu-smi` 无进程，但容器设备不可用或返回 `EBUSY` | 检查普通容器能否访问选中设备；宿主可见不等于容器可用。保留失败记录，由操作者选择可用设备后重新 preview，勿用 CPU 回退掩盖问题 |
-| 设备忙、HCCL 初始化失败 | 检查当前占用、设备映射及网络配置；不是精度判定 |
-| 策略身份不匹配 | 查看 `policy-mismatch.json`，在当前源码、环境与输入下重新 preview |
-| preview 预算不足 | 查看报告及 `preview/budget.json`，按进阶指南在新目录续探 |
-| 运行失败 | 先读 `result.json` 的阶段与错误，再读对应 worker 的 `run.log` |
+| 未填写模型或镜像 | 设置 `model.path` / `container.image`，或传 `--model-path` / `--image` |
+| 模型加载失败或输出非有限 | 检查完整权重、分片、tokenizer、dtype；核对来源摘要，保留失败现场 |
+| 设备访问失败或资源忙 | 检查 Docker 权限、设备文件和当前占用，选择可用设备并重新生成身份 |
+| 编译器 manifest 不符 | 重新从兼容的原生编译器镜像提取到新目录，不编辑摘要绕过校验 |
+| 策略身份不符 | 按当前模型、输入、镜像、设备/rank 和组件组合重新 preview |
+| monitor 有缺失指标 | 查看 monitor 状态、有效点数、provider 能力及访问权限；缺失值不会填零 |
+| CUDA trace 分析超时 | 保留原始证据，在新目录用 `analyze` 或 `report --reanalyze` 恢复 |
+| 重分析缺少 tensor/trace | 原任务需保留完整证据；已经精简的数据无法凭报告恢复 |
+
+`--dry-run` 只估计阶段、输入与资源成本；它不验证实际设备和镜像可运行性。手工容器使用 `run_inference.py` 时应在自身环境重新 preview，环境身份必须与策略一致。

@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "id": "qwen3_embedding_0.6b",
+  "factory": "benchmarks.qwen3_embedding.adapter:Qwen3EmbeddingAdapter",
+  "capabilities": {"accuracy": true, "performance": true, "preview": true, "export": ["fx", "onnx"], "parallelism": ["single", "tp"], "tp_degrees": [2, 4, 8], "oracle": true, "performance-baseline": true},
+  "sources": ["benchmarks/__init__.py", "benchmarks/qwen3_embedding/__init__.py", "benchmarks/qwen3_embedding/adapter.py", "benchmarks/qwen3_embedding/model.py"],
+  "packages": ["transformers", "tokenizers", "safetensors", "huggingface-hub", "numpy"],
+  "legacy_contract": "qwen3-last-valid-token-fp32-l2-no-cache-eager-v1"
+}

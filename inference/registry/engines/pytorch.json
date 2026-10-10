@@ -1,0 +1,5 @@
+{
+  "schema_version": 1, "id": "pytorch", "factory": "inference_engine.pytorch:PyTorchEngine",
+  "capabilities": {"accuracy": true, "performance": true, "module_hooks": true},
+  "sources": ["inference_engine/__init__.py", "inference_engine/pytorch.py"], "packages": ["torch"]
+}

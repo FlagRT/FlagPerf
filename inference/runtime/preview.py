@@ -1,5 +1,3 @@
-# Copyright 2026 FlagOS Contributors
-# Licensed under the Apache License, Version 2.0.
 """Checkpointed, conservative cumulative discovery with a single run deadline."""
 from copy import deepcopy
 from pathlib import Path

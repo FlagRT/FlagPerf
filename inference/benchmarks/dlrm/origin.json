@@ -1,0 +1,8 @@
+{
+  "repository": "https://github.com/facebookresearch/dlrm",
+  "commit": "9bc1bc3602aea22afad3206910cec50f2dbe7364",
+  "source_file": "dlrm_s_pytorch.py",
+  "source_sha256": "9d430a06b378ee02266a623d219c14c642b96283648831d2f998f251c244f5d5",
+  "license": "MIT",
+  "adaptation": "inference-only configurable sum EmbeddingBag, dot/cat interaction and head-input capture; no training/runtime imports"
+}

@@ -1,0 +1,14 @@
+schema_version: 1
+model:
+  path: null
+  dtype: bfloat16
+runtime:
+  vendor: nvidia
+  device: 0
+  output_root: ../result/baselines
+performance:
+  level: layer
+  layers: [all]
+  warmup_rounds: 5
+  measure_rounds: 30
+  repeats: 3

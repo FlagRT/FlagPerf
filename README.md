@@ -20,7 +20,7 @@
 | 模型训练 | [Training 文档](training/README.md) |
 | 生成式服务评测 | [Generate 文档](docs/generate/generate-case-doc.md) |
 
-当前 Inference 面向 Qwen3-Embedding-0.6B；支持 Ascend 单卡/单机 TP，NVIDIA 单卡接口尚未实机验证。
+当前 Inference 提供 Qwen3-Embedding-0.6B、DeepFM、DLRM、OneRec-8B；被测端支持 Ascend 单卡/单机 TP，NVIDIA A100 用于精度与性能参考采集。具体组合和限制见 Inference 指南。
 Base、Operation、Inference 的当前单机入口不要求 SSH。先阅读所选模块的环境准备，再执行其最小示例。
 完整导航见 [docs](docs/README.md)。
 
@@ -255,6 +255,8 @@ Base、Operation、Inference 的当前单机入口不要求 SSH。先阅读所�
 | 模型 | 执行方式 | 主要能力 | 入口 |
 |---|---|---|---|
 | Qwen3-Embedding-0.6B | PyTorch/Transformers eager | 模型/模块精度、整体与逐层性能、TP 通信采样、组件比较、报告筛选与图导出 | [Inference](inference/README.md) |
+| DeepFM / DLRM | PyTorch eager、封存合成资产 | 模型/模块差分、single/TP2 性能、A100 比较、FX 图导出；不提供 CTR/AUC | [模型准备](docs/inference/models.md) |
+| OneRec-8B | PyTorch/Transformers eager | 生成前缀精度、prefill/decode/完整生成性能、single/TP2、A100 比较 | [模型准备](docs/inference/models.md) |
 
 支持与限制以 [能力清单](inference/support.json) 为准；旧模型和编译引擎不属于当前支持范围。
 

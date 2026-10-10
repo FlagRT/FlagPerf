@@ -1,71 +1,41 @@
-# Inference 配置参考
+# 配置与命令参考
 
-[返回入门指南](../../inference/README.md)
+配置优先级为 **config/default.yaml → --config 指定文件 → CLI**。场景文件仅覆盖差异；相对路径按所在 YAML 目录解析，CLI 路径按当前工作目录解析。
+复制为 `config/local*.yaml` 保存本机设置，文件已被 Git 忽略。模型和镜像默认为空，真实运行由用户填写。
+`--config` 选择一个场景文件，不提供多文件叠加；重复传入时只读取最后一个。使用模型或 TP 场景文件时，另通过 CLI 填写镜像/模型，或复制该场景为本机配置；其他本机配置不会自动叠加。
 
-配置读取顺序为：**默认配置 → `--config` 指定的覆盖文件 → 显式 CLI 参数**。
-默认配置是 `inference/config/default.yaml`，accuracy 和 performance 共用模型、输入和设备设置，分别保存自身选项。
-`config/tp.yaml` 是 TP 场景的轻量覆盖文件；不会为 TP 复制一份独立的精度/性能参数。
+| 区块 | 主要设置 |
+|---|---|
+| model | name、path、dtype、attention、模型 options |
+| inputs | path、batch_size、max_length、padding_side、模型 options |
+| accuracy | 组件开关、levels、layers、worst_samples、keep_tensors |
+| performance | 组件开关、level、layers、采样、monitor、keep_evidence、variability |
+| runtime | vendor、device 或 devices、parallelism、seed、worker 和分析超时、output_root |
+| container | image、shm_size |
+| vendors | 厂商 env、profile、编译器资产等适配配置 |
+| reference | path（精度）或 performance_path（性能），互斥 |
+| preview | budget_seconds、resume_from、evidence_mode、resume_cache、search_strategy、budget_mode |
+| policy / export | 策略路径 / 模型支持的导出格式 |
 
-配置中的相对路径按**定义该值的配置文件**所在目录解析；继承值保留其来源目录。
-CLI 相对路径按当前工作目录解析；输出中的 `effective.yaml` 保存最终绝对路径。
-未知字段、错误类型和不合法组合会报错，不会静默采用其他模式。
+## 常用 CLI
 
-| 配置区块 | 主要字段 | 说明 |
-|---|---|---|
-| `model` | `path`、`dtype`、`attention` | 用户模型目录；BF16/FP16/FP32；当前 attention 为 eager |
-| `inputs` | `path`、`batch_size`、`max_length`、`padding_side` | JSONL 文件；默认 4 条/批、最长 256 token、左 padding |
-| `accuracy` | 三组件开关、`levels`、`layers`、`worst_samples` | 默认仅记录原生模型输出；可比较模型与指定模块 |
-| `performance` | 三组件开关、`level`、`warmup_rounds`、`measure_rounds`、`repeats` | 支持 total/layer，默认 total；默认预热 5 轮、测量 30 轮、重复 3 次 |
-| `runtime` | `vendor`、`device`、`parallelism`、`devices`、`timeout_seconds` | 单卡用 device，TP 用 devices；超时作用于 worker 阶段 |
-| `container` | `image`、`shm_size` | 用户兼容镜像；默认共享内存 4g，TP 示例为 8g |
-| `vendors.ascend` | `vendor_compiler`、`env` | 只读编译器资产及统一环境变量 |
-| `policy` | `path` | 正式 FlagGems on/both 使用的 verified 策略 |
-| `preview` | 三组件开关、`budget_seconds`、`resume_from` | 默认探测预算 3600 秒；可选只读续探来源 |
-| `export` | `formats` | fx、onnx；单卡接口、CPU 原生图 |
+| 参数 | 使用规则 |
+|---|---|
+| `--image` / `--model-path` / `--input-path` | 覆盖本机资源；image 用于 Ascend 宿主 Docker 入口 |
+| `--device N` | single 的物理设备号 |
+| `--parallelism tp --devices N M` | 物理设备及 rank 顺序；不与 device 混用 |
+| `--levels model layer` | accuracy 的边界层级 |
+| `--level total\|layer --layers ...` | performance 的层级与模块选择 |
+| `--flaggems/--flagtree/--flagcx off\|on\|both` | 默认 off，一次最多一个 both |
+| `--oracle` / `--baseline` | 导入精度 / 性能参考，二者互斥 |
+| `--keep-tensors` / `--keep-evidence` | accuracy / performance 保留原始现场 |
+| `--monitor on\|off --monitor-interval-ms N` | performance 的独立监控，默认 on / 1000 ms |
+| `--warmup-rounds --measure-rounds --repeats` | 默认 5 / 30 / 3；修改需结合统计稳定性解读 |
+| `--budget-seconds --resume-from` | preview 的预算与只读续探来源 |
+| `--source --output` | report/analyze/repack-reference 的来源与新目录 |
+| `--dry-run` | 静态成本估计，不建立 verified 执行身份 |
 
-YAML 中的 `off`、`on`、`both` 请加引号，例如 `flaggems: 'off'`，避免被 YAML 当作布尔值。
-三组件开关在 accuracy、performance、preview 中分别配置；preview 会主动探测 FlagGems，开关默认 off 不表示跳过探测。
-一次最多一个组件为 `both`。
-
-## 常用参数
-
-```bash
-# 以下命令在 inference 目录执行，基于已准备的 config/local.yaml。
-# 单路径记录：不产生双路径差异。
-python3 run.py accuracy --config config/local.yaml --device 0 --flaggems off
-
-# 只比较指定模块，策略来自相同环境、模型和输入下的 preview。
-python3 run.py accuracy --config config/local.yaml --device 0 \
-  --flaggems both --policy result/preview/preview/policy.yaml \
-  --levels layer --layers layers.0 layers.13 layers.27
-
-# 缩短一次性能运行；短轮次用来确认运行链路。
-python3 run.py performance --config config/local.yaml --device 0 \
-  --flaggems off --warmup-rounds 1 --measure-rounds 3 --repeats 2
-```
-
-`--image` 覆盖 `container.image`；`--model-path` 和 `--input-path` 覆盖对应路径。
-`--device` 与 `--devices` 不混用。性能用 `--level total|layer`，精度用 `--levels model layer`。
-模型级输出包括 pooled vector 和最终 embedding；`--layers all` 表示所有 Transformer blocks。
-模块名字来自当前模型，不是通用硬件算子名称。
-
-`--task-score` / `--data-path` 是保留接口，任务评分尚未实现，指定后明确报错。
-不同命令只验证自身的专属选项，不会用另一模式的采样参数替代当前配置。
-
-## 新增性能与 Preview 选项
-
-| 配置字段 | CLI | 默认与范围 |
-|---|---|---|
-| `performance.layers` | `--layers` | `[all]`；仅在性能 layer 模式选择模块，不改 accuracy 的层选择 |
-| `performance.layer_profile_rounds` | `--layer-profile-rounds` | 1；正整数，控制独立诊断轮数 |
-| `preview.evidence_mode` | `--preview-evidence` | `lightweight`，可选 `full` |
-| `preview.resume_cache` | `--resume-cache` | `auto`，可选 `'off'` |
-| `preview.search_strategy` | `--preview-search` | `grouped`，可选 `sequential` |
-| `preview.budget_mode` | `--preview-budget` | `adaptive`，可选 `fixed` |
-
-layer 模式以 `--layer-profile-rounds` 控制层与通信诊断，不接受 `--communication-profile-rounds`。
-续探保持来源的搜索策略和预算模式。具体机制与例子见 [Preview](preview.md) 和 [逐层性能](layer.md)。
-
-`report` 独立读取 `--source`，要求 `--level total|layer` 和新 `--output`；不读取运行配置或模型。
-`--layers`、`--ranks`、`--shapes` 只筛选 layer 视图；`--portable` 携带实体证据；`--reanalyze` 在实体副本中重新分析 layer profiler。
-这些选项不用于重新执行模型。
+`runtime.timeout_seconds` 限制单个 worker；`runtime.analysis_timeout_seconds` 默认 900，限制独立 CUDA 后处理。
+`--analysis-timeout-seconds` 用于性能、report 重解析或 analyze；须为正整数。YAML 中组件和 monitor 的 `'on'` / `'off'` 要加引号，`keep_tensors` / `keep_evidence` 等布尔值使用不加引号的 `true` / `false`。
+DeepFM/DLRM 可选 `model.options.compare_probability`；OneRec 可选 `model.options.max_new_tokens`。其他未知配置会拒绝。
+模型 TP、dtype 和 export 支持由注册适配器校验；详情见[模型指南](models.md)。

@@ -27,7 +27,7 @@ python3 run.py preview --config config/local.yaml --device 0 \
 
 | CLI 参数 | 默认值 | 使用含义 |
 |---|---|---|
-| `--preview-evidence` | `lightweight` | 全量输入、全部 block、pooling 和 embedding 仍检查有限值；成功试验不保存完整输出张量 |
+| `--preview-evidence` | `lightweight` | 全量输入与模型声明的模块/输出边界仍检查有限值；成功试验不保存完整输出张量 |
 | `--resume-cache` | `auto` | 从指定续探来源复制身份与摘要匹配的 Triton 缓存组，改写副本路径 |
 | `--preview-search` | `grouped` | 成功组整体接受，失败组继续拆分；最终集合独立复验 |
 | `--preview-budget` | `adaptive` | 分开估计冷候选与暖复验成本，并为实际待复验集合预留时间 |
@@ -65,3 +65,5 @@ FlagTree/FlagCX 比较按[进阶指南](advanced.md)准备联合 preview：各�
 策略格式为 schema 3，当前检查点 envelope 为 schema 2。格式号相同也不意味着执行身份相同：升级执行源码后必须重新 preview，旧策略和检查点不能修改摘要后继续使用；旧结果仍可阅读。纯分析和报告源码单独记录分析身份。
 
 续探目录保留部分历史大张量/trace 的来源引用，不等于完整独立备份。`verified` 只确认当前输入下执行、函数命中和有限值检查，应用精度应另跑 accuracy 并结合业务阈值判断。
+
+四模型分别生成自己的策略。导入 A100 参考时，preview 与正式消费使用相同 `--oracle` 或 `--baseline`；模型 options、TP 或固定组件改变后重新探测。详见[模型指南](models.md)和[参考指南](references.md)。

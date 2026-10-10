@@ -1,31 +1,27 @@
 # Inference 目录与扩展边界
 
-用户从 [入门指南](../../inference/README.md) 开始；本文说明代码职责及修改边界。
-当前提供 Qwen3-Embedding-0.6B 的 PyTorch/Transformers eager 适配，能力清单由
-[support.json](../../inference/support.json) 和 `run.py list` 提供。
+从[入门指南](../../inference/README.md)开始。当前功能按模型语义、厂商能力、可选组件和通用流程分层。
 
 | 位置 | 职责 |
 |---|---|
-| `run.py` / `run_inference.py` | 宿主 Docker 入口 / 已准备环境内入口 |
-| `config/` / `inputs/` | 默认与场景配置 / 小型 JSONL 输入示例 |
-| `models/qwen3_embedding/` | 模型加载、tokenization、pooling 与模块选择 |
-| `engines/` | forward、输出捕获及候选调用清单 |
-| `runtime/` | 配置、任务目录、进程生命周期、preview、TP、性能、分组 preview、缓存导入及层/通信采集 |
-| `vendors/` | 设备 API、编译器选择及通信后端选择 |
-| `analysis/` | 数值差异、比较证据判断、离线层统计与设备/通信解析 |
-| `reporting/` | 单卡/TP/组件/层级报告、筛选视图及只读重建 |
-| `tools/` | 资产准备与离线报告重建 |
+| run.py / run_inference.py | Ascend 宿主 Docker 入口 / 已准备环境内入口 |
+| benchmarks/ | 四模型加载、输入、数值边界、TP 与资产准备；recommendation 提供共享推荐适配 |
+| inference_engine/ | PyTorch 执行与候选调用清单 |
+| vendors/ | 设备初始化、运行栈约束、profiler 解析、通信与遥测 provider |
+| components/ | FlagGems、编译器与 FlagCX 的可选参与和审计 |
+| registry/ | 仓库内适配器工厂、能力及执行/分析源码闭包 |
+| runtime/ | 配置、生命周期、测量、preview、参考协议、离线分析、报告与保存策略 |
+| config/ / inputs/ | 默认及模型/TP/参考配置 / 小型文本示例 |
+| tools/ | 编译器与 A100 环境准备、封存报告重绘 |
 
-一次运行的顺序是：解析配置 → 宿主解析镜像 ID 并只读挂载输入 → prepare 封存输入与身份 →
-独立 worker 执行各路径 → 分析结果 → 写入报告。正式性能与逐调用取证、通信 profiler 在不同执行阶段完成。
-每次运行保留独立目录，避免后续分析覆盖执行证据。
+一次运行：解析配置 → 宿主解析镜像 ID → 封存源码及固定输入 → 独立 worker 采集 → 分析与比较 → 报告 → 满足条件时精简现场。
+性能的主计时、路由取证、profiler、层计时和显存独立采样。管理面监控为独立采集进程，状态不覆盖执行或分析状态。
 
-执行源码扫描覆盖根入口、runtime、vendors、engines、models、analysis、reporting。
-`runtime/common.py` 的显式分析清单将纯分析/报告文件与执行身份分开；新文件默认归执行身份。
-新增源码根目录时必须扩展扫描边界，不能通过移出扫描目录规避策略失配。
+新增模型先明确输入、完整前向、数值边界、吞吐、计时与 TP 语义，再实现 ModelAdapter 并注册能力与源码闭包。
+新增厂商在 vendors 实现 VendorAdapter 及可选遥测 provider，声明依赖、配置、trace 格式与版本；通用流程按能力调用。
+新增组件声明参与条件与源码，不让原生路径隐式依赖可选包。registry 工厂只允许仓库内来源，描述读取不初始化设备。
 
-新增模型应先明确输入、输出、padding、模块边界和 TP 分片语义，再添加适配并更新配置校验与能力清单。
-新增厂商应在 vendors 实现设备和依赖边界，不将厂商特有调用散布到通用分析或报告中。
-目录整理不改变误差公式、总级计时窗口、工作量计数和策略复验规则。
+执行与分析身份分别记录，选定适配器及实际组件决定执行闭包；完整源码仍封存。新文件和描述变更必须纳入源码扫描与身份检查。
+不能通过移动文件绕过策略失配。纯分析更新按分析身份处理，执行变化必须重新 preview。
 
-旧模型案例、任务评分器、编译引擎及 SSH 入口已移出当前工作树，恢复方式见 [迁移说明](migration.md)。
+源码整理不改变误差公式、模型边界、固定输入、计时窗口和工作量计数。旧执行框架的历史恢复见[迁移说明](migration.md)。

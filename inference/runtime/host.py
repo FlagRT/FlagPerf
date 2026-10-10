@@ -1,5 +1,3 @@
-# Copyright 2026 FlagOS Contributors
-# Licensed under the Apache License, Version 2.0.
 """Single-host container launcher. No SSH, implicit installs, or device fallback."""
 import json
 import os
@@ -10,6 +8,7 @@ import uuid
 import yaml
 from runtime.common import ROOT, Progress, execute, write_json, seal_sources
 from runtime.config import parser, load
+from runtime.adapters import vendor_adapter, bind_scope
 from runtime.coordinator import output_directory
 
 
@@ -29,6 +28,9 @@ def prepare_account(root, image_id):
 
 
 def container_argv(cfg, root, name, image_id):
+    adapter = vendor_adapter(cfg)
+    cpu_export = cfg.get('_command') == 'export'
+    device_arguments = [] if cpu_export else adapter.container_arguments(cfg, root)
     tp = cfg['runtime'].get('parallelism') == 'tp'
     argv = ['docker','run','--rm','--name',name,'--network','host' if tp else 'none','--shm-size',cfg['container']['shm_size'],
             '--user',f'{os.getuid()}:{os.getgid()}', '-v',f'{ROOT}:{ROOT}:ro', '-v',f'{root}:{root}:rw',
@@ -40,9 +42,6 @@ def container_argv(cfg, root, name, image_id):
     if tp:
         argv += ['-v',f'{root}/cache/passwd:/etc/passwd:ro',
                  '-v',f'{root}/cache/group:/etc/group:ro']
-    if cfg['runtime']['vendor'] == 'ascend':
-        folder = cfg['vendors']['ascend']['vendor_compiler']
-        argv += ['-v',f'{folder}:{folder}:ro']
     for key in [('inputs','path'),('policy','path')]:
         path = cfg[key[0]][key[1]]
         if path and not Path(path).is_relative_to(ROOT) and not Path(path).is_relative_to(root):
@@ -50,56 +49,74 @@ def container_argv(cfg, root, name, image_id):
     source = cfg.get('preview',{}).get('resume_from')
     if source:
         argv += ['-v',f'{source}:{source}:ro']
+    reference = cfg.get('reference',{}).get('path') or cfg.get('reference',{}).get('performance_path')
+    if reference:
+        argv += ['-v',f'{reference}:{reference}:ro']
+    from runtime.verification import SESSION_ENV
+    if os.environ.get(SESSION_ENV):
+        argv += ['-e', f'{SESSION_ENV}={os.environ[SESSION_ENV]}']
+        argv += ['-e', f'FLAGPERF_TASK_WORKSPACE={root}/.work']
     vendor = cfg['runtime']['vendor']
-    physical = cfg['runtime']['device']
-    if vendor == 'ascend':
-        devices = cfg['runtime']['devices'] if tp else [physical]
-        # The runtime enumerates mounted devices in physical order.
-        for dev in [*[f'davinci{d}' for d in sorted(devices)],'davinci_manager','devmm_svm','hisi_hdc']:
-            if not Path('/dev',dev).exists(): raise ValueError(f'missing Ascend device /dev/{dev}')
-            argv += ['--device',f'/dev/{dev}:/dev/{dev}:rwm']
-        for path in ['/usr/local/Ascend/driver','/usr/local/Ascend/firmware','/usr/local/dcmi','/etc/ascend_install.info','/usr/local/bin/npu-smi']:
-            if Path(path).exists(): argv += ['-v',f'{path}:{path}:ro']
-        # Only one physical device is mounted; it is logical device zero here.
-        visible = ','.join(str(sorted(devices).index(d)) for d in devices)
-        argv += ['-e',f'ASCEND_RT_VISIBLE_DEVICES={visible}']
-    else:
-        argv += ['--gpus',f'device={physical}','-e','CUDA_VISIBLE_DEVICES=0']
+    argv += device_arguments
+    if os.environ.get('FLAGPERF_MONITOR_ROOT') == str(root):
+        argv += ['-e', f'FLAGPERF_MONITOR_ROOT={root}']
     for k,v in cfg['vendors'][vendor]['env'].items(): argv += ['-e',f'{k}={v}']
+    if cpu_export:
+        argv += ['-e', 'TORCH_DEVICE_BACKEND_AUTOLOAD=0', '-e', 'CUDA_VISIBLE_DEVICES=',
+                 '-e', 'ASCEND_RT_VISIBLE_DEVICES=']
     argv += ['--entrypoint','python3',image_id,'-u',str(ROOT/'run_inference.py')]
     return argv
 
 
 def main():
     args = parser().parse_args()
-    root, name = None, None
+    from runtime.verification import finish
+    finish()
+    root, name, monitor = None, None, None
     try:
+        if args.command in ('analyze', 'repack-reference'):
+            from runtime.offline import main as offline_main
+            return offline_main(args)
         if args.command == 'report':
-            from reporting.replay import run as run_report
+            from runtime.report_replay import run as run_report
             return run_report(args)
+        if args.command in ('oracle', 'performance-baseline') and not args.dry_run:
+            raise ValueError('A100 capture uses run_inference.py '+args.command+
+                             ' in the prepared CUDA environment; run.py does not launch NVIDIA containers')
         cfg = load(args)
+        if args.dry_run:
+            from runtime.preflight import dry_run
+            return dry_run(args, cfg)
         if args.command == 'list':
             print((ROOT/'support.json').read_text()); return 0
-        if not isinstance(cfg['container']['image'], str) or not cfg['container']['image'].strip():
-            raise ValueError('set container.image in your configuration or pass --image YOUR_LOCAL_IMAGE')
-        if cfg['runtime']['vendor'] == 'ascend':
-            from vendors.stack import validate_bundle
-            validate_bundle(cfg['vendors']['ascend']['vendor_compiler'])
+        if not isinstance(cfg['container'].get('image'), str) or not cfg['container']['image'].strip():
+            raise ValueError('set container.image or pass --image with a compatible local Docker image')
+        bind_scope(cfg, args.command)
+        adapter = vendor_adapter(cfg)
+        adapter.validate_launch_assets(cfg)
         root = output_directory(args,cfg)
-        seal_sources(root)
+        from runtime.preflight import check
+        write_json(root/'cost-preflight.json', check(cfg, args.command, root))
+        from runtime.verification import start
+        start(root)
+        seal_sources(root, cfg)
         for path in ['cache/home','cache/triton']: (root/path).mkdir(parents=True)
         image = json.loads(subprocess.check_output(['docker','image','inspect',cfg['container']['image']],text=True))
+        adapter.validate_image(cfg, image[0]['Id'])
         write_json(root/'image.json',image)
         if cfg['runtime'].get('parallelism') == 'tp': prepare_account(root,image[0]['Id'])
-        (root/'effective.yaml').write_text(yaml.safe_dump(cfg,allow_unicode=True,sort_keys=False))
+        (root/'effective.yaml').write_text(yaml.safe_dump({k:v for k,v in cfg.items() if not k.startswith('_')},allow_unicode=True,sort_keys=False))
         name = 'flagperf-inference-'+uuid.uuid4().hex[:12]
         write_json(root/'host-launch.json',{'container':name,'image_id':image[0]['Id'],'command':args.command})
-        if cfg['runtime']['vendor'] == 'ascend':
-            snapshot = subprocess.run(['npu-smi','info'],capture_output=True,text=True)
-            (root/'npu-before.txt').write_text(snapshot.stdout+snapshot.stderr)
+        snapshot = adapter.before_after_snapshot() if args.command != 'export' else None
+        if snapshot:
+            (root/(snapshot[0]+'-before.txt')).write_text(snapshot[1])
+        if args.command == 'performance':
+            from runtime.monitor import MonitorSession
+            monitor = MonitorSession(cfg, root).start()
         argv = container_argv(cfg,root,name,image[0]['Id'])
         argv += [args.command,'--config',str(root/'effective.yaml'),'--output',str(root),'--internal-existing-root']
-        if args.command == 'performance':
+        if args.command in ('performance','performance-baseline'):
             paths = 2 if any(cfg['performance'].get(k)=='both' for k in ['flaggems','flagtree','flagcx']) else 1
             audits = 2*paths
             phases = 2 if cfg['runtime'].get('parallelism') == 'tp' else 1
@@ -123,12 +140,23 @@ def main():
         print(f'Host error: {error}',file=sys.stderr)
         return 2
     finally:
-        if name:
-            # docker client termination alone does not stop its container.
-            subprocess.run(['docker','stop','--time','10',name],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
-            if root is not None and cfg['runtime']['vendor'] == 'ascend':
+        finish()
+        try:
+            if name:
+                # docker client termination alone does not stop its container.
+                subprocess.run(['docker','stop','--time','10',name],stdout=subprocess.DEVNULL,
+                               stderr=subprocess.DEVNULL,timeout=30)
+        except (OSError, subprocess.TimeoutExpired):
+            pass
+        finally:
+            if monitor is not None:
+                from runtime.monitor import finish_host
+                finish_host(monitor)
+        if name and args.command != 'export':
+            if root is not None:
                 try:
-                    snapshot = subprocess.run(['npu-smi','info'],capture_output=True,text=True)
-                    (root/'npu-after.txt').write_text(snapshot.stdout+snapshot.stderr)
+                    snapshot = adapter.before_after_snapshot()
+                    if snapshot:
+                        (root/(snapshot[0]+'-after.txt')).write_text(snapshot[1])
                 except OSError:
                     pass

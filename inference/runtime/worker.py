@@ -1,5 +1,3 @@
-# Copyright 2026 FlagOS Contributors
-# Licensed under the Apache License, Version 2.0.
 """Private subprocess protocol; every device worker has its own Python context."""
 from __future__ import annotations
 import argparse
@@ -11,21 +9,27 @@ import sys
 import traceback
 from contextlib import nullcontext
 import yaml
+from runtime.adapters import model_adapter, vendor_adapter, required_components, descriptor, SCHEME, create
 from runtime.common import ROOT, write_json, read_json, digest, file_hash, source_identity, source_snapshot, assert_source_snapshot
 
 
 def identity(cfg, backend):
-    model = Path(cfg['model']['path'])
-    files = {str(p.relative_to(model)):file_hash(p) for p in sorted(model.rglob('*'))
-             if p.is_file() and p.suffix in ['.json','.safetensors','.model','.txt']}
+    adapter = model_adapter(cfg)
+    files = adapter.asset_fingerprints(cfg)
     import torch
-    import triton
     from vendors.stack import compiler_identity, communication_backend
-    spec = importlib.util.find_spec('flag_gems')
-    gems = {}
-    if spec and spec.submodule_search_locations:
-        root = Path(next(iter(spec.submodule_search_locations)))
-        gems = {str(p.relative_to(root)):file_hash(p) for p in sorted(root.rglob('*.py'))}
+    required = required_components(cfg)
+    compiler = compiler_identity(cfg)
+    gems = create('components', 'flaggems').source_identity() if 'flaggems' in required else None
+    if 'flagcx' in required and importlib.util.find_spec('flagcx') is None:
+        raise ValueError('selected FlagCX component is not installed')
+    component_sources = ({'flagcx': create('components', 'flagcx').source_identity()}
+                         if 'flagcx' in required else {})
+    packages = {'torch', 'pyyaml'}
+    entries = [('models', cfg['model']['name']), ('vendors', cfg['runtime']['vendor'])]
+    entries += [('components', name) for name in required]
+    for kind, name in entries:
+        packages.update(descriptor(kind, name).get('packages', []))
     env = {k:v for k,v in sorted(os.environ.items()) if k.startswith(('ASCEND','CANN','HCCL_','GEMS_','TRITON_','TASK_QUEUE','TORCH_','CUDA_','HF_','OMP_'))
            and k not in {'TRITON_CACHE_DIR','TORCHINDUCTOR_CACHE_DIR','TORCH_NCCL_ASYNC_ERROR_HANDLING'}}
     result = {'model_files':files, 'model':{k:v for k,v in cfg['model'].items() if k!='path'},
@@ -36,29 +40,67 @@ def identity(cfg, backend):
             'device_properties':{'name':backend.get_device_name(0),
                                  'total_memory':backend.get_device_properties(0).total_memory},
             'image_id':os.environ.get('FLAGPERF_IMAGE_ID','unknown-container-image'),
-            'python':sys.version, 'packages':sorted([d.metadata['Name'],d.version] for d in importlib.metadata.distributions()),
-            'torch_import':torch.__version__, 'triton_import':triton.__version__,
-            'compiler':compiler_identity(cfg), 'communication_backend':communication_backend(cfg) if cfg['runtime'].get('parallelism')=='tp' else 'not_applicable',
-            'gems_source_hash':digest(gems), 'environment':env,'source_files':source_identity()}
+            'python':sys.version, 'packages':sorted([d.metadata['Name'],d.version] for d in importlib.metadata.distributions()
+                if d.metadata and d.metadata.get('Name') and d.metadata['Name'].lower().replace('_', '-') in packages),
+            'torch_import':torch.__version__, 'triton_import':compiler.get('import_version'),
+            'cpu_threads':{'intraop':torch.get_num_threads(),'interop':torch.get_num_interop_threads(),
+                           'affinity':sorted(os.sched_getaffinity(0)) if hasattr(os,'sched_getaffinity') else None},
+            'compiler':compiler, 'communication_backend':communication_backend(cfg) if cfg['runtime'].get('parallelism')=='tp' else 'not_applicable',
+            'gems_source_hash':gems,
+            'environment':env, 'identity_scheme':SCHEME, 'component_sources':component_sources,
+            'source_files':source_identity(cfg)}
     if cfg['runtime'].get('parallelism') == 'tp':
         result.pop('physical_device')
         result['parallelism'] = {'mode':'tp','devices':cfg['runtime']['devices'],
-                                'backend':communication_backend(cfg),'tp_plan':'transformers_qwen3_auto',
+                                'backend':communication_backend(cfg),'tp_plan':adapter.parallel_strategy,
                                 'world_size':len(cfg['runtime']['devices'])}
         result['devices'] = [{'rank':r,'physical_device':d,'logical_device':r,
                              'name':backend.get_device_name(r),
                              'total_memory':backend.get_device_properties(r).total_memory}
                             for r,d in enumerate(cfg['runtime']['devices'])]
+    if cfg.get('_performance_native'):
+        settings = vendor_adapter(cfg).numerical_settings()
+        if settings is not None:
+            result['performance_numerics'] = settings
     return result
 
 
-def prepare(cfg, root, shared=None):
-    from vendors.device import initialize
-    from models.qwen3_embedding.model import tokenize
+def export_identity(cfg):
+    """CPU graph preparation has no accelerator or component runtime identity."""
     import torch
-    _, backend = initialize(cfg)
+    adapter = model_adapter(cfg)
+    return {'execution': 'cpu-native-export', 'device_name': 'cpu',
+            'model_files': adapter.asset_fingerprints(cfg),
+            'model': {k: v for k, v in cfg['model'].items() if k != 'path'},
+            'inputs': {k: v for k, v in cfg['inputs'].items() if k != 'path'},
+            'input_file_sha256': file_hash(cfg['inputs']['path']),
+            'seed': cfg['runtime']['seed'], 'python': sys.version,
+            'torch_import': torch.__version__,
+            'image_id': os.environ.get('FLAGPERF_IMAGE_ID', 'unknown-container-image'),
+            'source_files': source_identity(cfg)}
+
+
+def prepare(cfg, root, shared=None):
+    if cfg.get('reference',{}).get('path'):
+        from runtime.oracle import validate_reference
+        manifest = validate_reference(cfg)
+        if shared is None:
+            shared = Path(cfg['reference']['path'])/'prepared'
+    if cfg.get('reference',{}).get('performance_path'):
+        from runtime.performance_baseline import validate_reference
+        manifest = validate_reference(cfg)
+        if shared is None:
+            shared = Path(cfg['reference']['performance_path'])/'prepared'
+    adapter = model_adapter(cfg)
+    import torch
+    cpu_export = cfg.get('_command') == 'export'
+    if cpu_export:
+        torch.manual_seed(cfg['runtime']['seed'])
+    else:
+        from runtime.context import initialize
+        _, backend = initialize(cfg)
     if shared is None:
-        batches, samples = tokenize(cfg)
+        batches, samples = adapter.prepare_inputs(cfg)
         torch.save(batches, root/'inputs.pt')
     else:
         import shutil
@@ -66,21 +108,29 @@ def prepare(cfg, root, shared=None):
         batches = torch.load(root/'inputs.pt',map_location='cpu',weights_only=True)
         samples = read_json(shared/'samples.json')
     write_json(root/'samples.json',samples)
-    from runtime.preview_evidence import input_batches
-    architecture = read_json(Path(cfg['model']['path'])/'config.json')
-    write_json(root/'forward-inputs.json', {'schema_version': 1, 'batches': input_batches(batches),
-        'hidden_size': architecture['hidden_size'],
-        'boundaries': [f'layers.{i}' for i in range(architecture['num_hidden_layers'])]+['pooled','embedding']})
-    ident = identity(cfg,backend)
+    if cfg.get('reference',{}).get('path'):
+        if file_hash(root/'inputs.pt') != manifest['files']['prepared/inputs.pt']['sha256']:
+            raise ValueError('prepared tokens differ from the selected oracle')
+    if cfg.get('reference',{}).get('performance_path'):
+        if file_hash(root/'inputs.pt') != manifest['files']['prepared/inputs.pt']['sha256']:
+            raise ValueError('prepared tokens differ from performance baseline')
+    adapter.validate_batches(batches, samples)
+    write_json(root/'workload.json', adapter.metadata(cfg))
+    write_json(root/'forward-inputs.json', adapter.forward_inputs(cfg, batches))
+    write_json(root/'environment-packages.json', sorted([d.metadata['Name'],d.version] for d in importlib.metadata.distributions()
+               if d.metadata and d.metadata.get('Name')))
+    ident = export_identity(cfg) if cpu_export else identity(cfg,backend)
+    if cfg.get('_oracle_capture'):
+        ident['oracle_numerics'] = vendor_adapter(cfg).numerical_settings()
     ident['tokenized_sha256'] = file_hash(root/'inputs.pt')
     write_json(root/'identity.json',ident)
     write_json(root/'presentation-source.json',
-               {'reporting/model.py':file_hash(ROOT/'reporting/model.py')})
+               {'runtime/reporting.py':file_hash(ROOT/'runtime/reporting.py')})
     write_json(root/'identity-key.json',{'key':digest(ident)})
-    snapshot = source_snapshot()
+    snapshot = source_snapshot(cfg)
     write_json(root/'analysis-identity.json', {'source_files':snapshot['analysis'], 'key':snapshot['analysis_key']})
     return {'status':'completed','identity_key':digest(ident),'samples':len(samples),
-            'batch_shapes':[list(b['inputs']['input_ids'].shape) for b in batches]}
+            'batch_shapes':[adapter.batch_metadata(b)['input_shape'] for b in batches]}
 
 
 def execute_forward(cfg, root, prepared, include, probe):
@@ -90,14 +140,17 @@ def execute_forward(cfg, root, prepared, include, probe):
     measure = stages.measure if stages else lambda name: nullcontext()
     with measure('initialization'):
         import torch
-        from vendors.device import initialize
-        from models.qwen3_embedding.model import load_model
-        from engines.pytorch import forward, candidates
+        from runtime.context import initialize
+        adapter = model_adapter(cfg)
+        from runtime.context import parallel_context
+        engine = create('engines', 'pytorch')
         device, backend = initialize(cfg)
     with measure('identity'):
         expected = read_json(prepared/'identity.json')
         # A complete content check still runs in every independent worker.
         current = identity(cfg,backend)
+        if cfg.get('_oracle_capture'):
+            current['oracle_numerics'] = vendor_adapter(cfg).numerical_settings()
         current['tokenized_sha256'] = file_hash(prepared/'inputs.pt')
         if current != expected:
             write_json(root/'observed-identity.json',current)
@@ -105,24 +158,25 @@ def execute_forward(cfg, root, prepared, include, probe):
             differences = identity_differences(expected,current)
             raise ValueError('worker identity differs from prepared inputs/environment: '+', '.join(sorted(differences)))
     with measure('model_load'):
-        model = load_model(cfg,device)
+        model = adapter.load_model(cfg, device, backend, parallel_context(cfg)).model
     with measure('input_load'):
         batches = torch.load(prepared/'inputs.pt',map_location='cpu',weights_only=True)
         if preview:
-            expected_checks = {'schema_version': 1, 'batches': input_batches(batches),
-                'hidden_size': model.config.hidden_size,
-                'boundaries': [f'layers.{i}' for i in range(len(model.layers))]+['pooled','embedding']}
+            expected_checks = adapter.forward_inputs(cfg, batches, model)
             if expected_checks != read_json(prepared/'forward-inputs.json'):
                 raise ValueError('prepared forward check workload differs from sealed inputs/model')
     from runtime.stack_audit import StackAudit
     with StackAudit(cfg,root,compiler=current['compiler'] if preview else None) as audit:
-        result = forward(model,batches,cfg,device,root,include,probe,
-                         evidence_mode=preview['evidence_mode'] if preview else None, stages=stages)
+        result = engine.forward(model,batches,cfg,device,root,include,probe,
+                         evidence_mode=preview['evidence_mode'] if preview else 'full', stages=stages)
         backend.synchronize()
     result["components"] = audit.result
+    if cfg.get('reference',{}).get('path') and cfg['runtime'].get('parallelism') == 'tp':
+        result['oracle_layout'] = {**adapter.oracle_layout(cfg, model),
+            'rank':int(os.environ['RANK']), 'world_size':len(cfg['runtime']['devices'])}
     backend.synchronize()
-    if probe and include is None and (not preview or preview['phase'] == 'baseline'):
-        result['candidates'] = candidates(result['inventory'])
+    if probe and include is None and cfg.get('_candidate_mapping',True) and (not preview or preview['phase'] == 'baseline'):
+        result['candidates'] = engine.candidates(result['inventory'])
     result['status'] = 'completed'
     result['identity_key'] = digest(expected)
     return result
@@ -130,11 +184,9 @@ def execute_forward(cfg, root, prepared, include, probe):
 
 def export_graphs(cfg, root, prepared):
     import torch
-    from models.qwen3_embedding.model import load_model, ExportModel
-    # Graph export is explicitly CPU/native with the requested weight dtype.
-    model = ExportModel(load_model(cfg,'cpu')).eval()
+    adapter = model_adapter(cfg)
     batch = torch.load(prepared/'inputs.pt',map_location='cpu',weights_only=True)[0]['inputs']
-    inputs = (batch['input_ids'],batch['attention_mask'])
+    model, inputs, input_names, output_names = adapter.export_spec(cfg, batch)
     results = {'status':'completed','device':'cpu','flaggems':'off','dtype':cfg['model']['dtype'],
                'scope':'fixed first prepared batch; structural export, not a FlagGems route trace',
                'input_shape':list(inputs[0].shape),'formats':{}}
@@ -147,7 +199,7 @@ def export_graphs(cfg, root, prepared):
                     torch.export.save(exported,root/'model.pt2')
                     loaded = torch.export.load(root/'model.pt2')
                     actual = loaded.module()(*inputs)
-                    from analysis.metrics import metrics
+                    from runtime.metrics import metrics
                     checks = [metrics(a.float().numpy(), b.float().numpy()) for a,b in zip(expected,actual)]
                     # Same native computation round-trip, exact equality is expected.
                     if not all(torch.equal(a,b) for a,b in zip(expected,actual)):
@@ -158,8 +210,8 @@ def export_graphs(cfg, root, prepared):
                 else:
                     import onnx
                     torch.onnx.export(exported,args=(),f=str(root/'model.onnx'),dynamo=True,
-                                      external_data=True,input_names=['input_ids','attention_mask'],
-                                      output_names=['pooled','embedding'],opset_version=18)
+                                      external_data=True,input_names=input_names,
+                                      output_names=output_names,opset_version=18)
                     onnx.checker.check_model(str(root/'model.onnx'))
                     graph = onnx.load(str(root/'model.onnx'),load_external_data=False)
                     write_json(root/'onnx-nodes.json',[{'name':n.name,'op_type':n.op_type,'domain':n.domain} for n in graph.graph.node])
@@ -187,6 +239,11 @@ def main():
     if distributed:
         root = root / ('rank-'+os.environ['RANK'])
     root.mkdir(parents=True,exist_ok=True)
+    from runtime.monitor_events import emit
+    selected = cfg.get('_stack', cfg.get('performance', {}))
+    emit(root, 'worker_start', action=args.action, repeat=args.repeat_index,
+         side=next((s for s in root.parts if s in ('off','on')), None),
+         components={k:selected.get(k, 'off') for k in ('flaggems','flagtree','flagcx')})
     result = {'status':'failed','stage':args.action}
     try:
         assert_source_snapshot(cfg.get('_source_snapshot'))
@@ -213,6 +270,7 @@ def main():
         if getattr(error, 'errno', None) is not None: result['errno'] = error.errno
         traceback.print_exc()
     finally:
+        emit(root, 'worker_end', status=result.get('status'))
         write_json(root/'result.json',result)
         if distributed:
             from runtime.tp import close_group

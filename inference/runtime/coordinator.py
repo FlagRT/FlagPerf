@@ -1,7 +1,6 @@
-# Copyright 2026 FlagOS Contributors
-# Licensed under the Apache License, Version 2.0.
 """Orchestrate sealed inputs and isolated workers, never device state in this process."""
 from __future__ import annotations
+from runtime.tensor_io import load_cpu, session as tensor_session
 import json
 import os
 from pathlib import Path
@@ -17,6 +16,9 @@ from vendors.device import environment
 def output_directory(args, cfg):
     root = Path(args.output).resolve() if args.output else Path(cfg['runtime']['output_root']) / (time.strftime('%Y%m%d-%H%M%S') + f'-{args.command}-{os.getpid()}')
     source = cfg.get('preview',{}).get('resume_from') if args.command == 'preview' else None
+    reference = cfg.get('reference',{}).get('path') or cfg.get('reference',{}).get('performance_path')
+    if reference and (root.is_relative_to(Path(reference).resolve()) or Path(reference).resolve().is_relative_to(root)):
+        raise ValueError('output and oracle package must not overlap')
     if source and (root.is_relative_to(Path(source).resolve()) or Path(source).resolve().is_relative_to(root)):
         raise ValueError('resume output and source directories must not overlap')
     if args.internal_existing_root:
@@ -32,6 +34,8 @@ def output_directory(args, cfg):
 def invoke_worker(cfg, root, action, destination, prepared=None, include=None, probe=False, timeout=None, repeat_index=None):
     orchestration_started = time.monotonic()
     assert_source_snapshot(cfg.get('_source_snapshot'))
+    if action == 'forward':
+        cfg = dict(cfg, _forward_probe=probe)
     if '_stack' in cfg and action not in ['prepare','export']:
         from copy import deepcopy
         cfg = deepcopy(cfg)
@@ -58,6 +62,9 @@ def invoke_worker(cfg, root, action, destination, prepared=None, include=None, p
                 '--nnodes=1',f'--nproc-per-node={len(cfg["runtime"]["devices"])}',
                 '--max-restarts=0','--module','runtime.worker'] + argv[4:]
     env['PYTHONPATH'] = str(ROOT) + os.pathsep + env.get('PYTHONPATH','')
+    if cfg.get('_command') == 'export':
+        env.update(TORCH_DEVICE_BACKEND_AUTOLOAD='0', CUDA_VISIBLE_DEVICES='',
+                   ASCEND_RT_VISIBLE_DEVICES='')
     launch_started = time.monotonic()
     process = execute(argv,destination,timeout or cfg['runtime']['timeout_seconds'],env)
     process_finished = time.monotonic()
@@ -90,6 +97,15 @@ def invoke_worker(cfg, root, action, destination, prepared=None, include=None, p
             'environment_and_assets_seconds':environment_seconds,
             'process_seconds':process_finished-launch_started,
             'postprocess_seconds':time.monotonic()-process_finished}
+    elif action == 'forward' and cfg.get('_forward_checks_required') and not tp and result['status'] == 'completed':
+        from runtime.preview_evidence import validate_forward_checks
+        try:
+            validate_forward_checks(cfg, destination, result, prepared, probe)
+            result['forward_evidence_validated'] = True
+        except (OSError, ValueError, KeyError, TypeError) as error:
+            result.update(status='failed', error=str(error), forward_evidence_validated=False)
+    from runtime.capture_index import register
+    register(root, destination, len(cfg['runtime']['devices']) if tp else 1)
     return result
 
 
@@ -98,14 +114,12 @@ def records(directory):
     state = read_json(directory/'result.json')
     output = {}
     for name in state['artifacts']:
-        batch = torch.load(directory/name,map_location='cpu',weights_only=True)
-        for i, sample in enumerate(batch['ids']):
-            if sample in output: raise ValueError('duplicate sample in outputs')
-            output[sample] = {}
-            for key, tensor in batch['outputs'].items():
-                value = tensor[i]
-                if key not in ['pooled','embedding']: value = value[batch['mask'][i].bool()]
-                output[sample][key] = value.float().numpy()
+        batch = load_cpu(directory/name)
+        from runtime.workload import artifact_records
+        rows = artifact_records(batch)
+        if set(rows) & set(output):
+            raise ValueError('duplicate sample in outputs')
+        output.update(rows)
     return output
 
 
@@ -132,10 +146,28 @@ def accuracy_diff(cfg, root, prepared, paths, contexts=None):
         for side in ['off','on']: assert_observation(contexts[side],paths[side])
     if not contexts and paths['off']['identity_key'] != paths['on']['identity_key']:
         raise ValueError('off/on identities differ')
-    from analysis.metrics import compare_records
+    from runtime.metrics import compare_records
+    boundary_levels = None
+    if (prepared/'workload.json').is_file():
+        boundary_levels = {s['name']:s['level'] for s in read_json(prepared/'workload.json')['boundaries']}
+        for name in cfg['accuracy'].get('layers', []):
+            if name != 'all': boundary_levels.setdefault(name, 'layer')
+    if (prepared/'workload.json').is_file() and read_json(prepared/'workload.json').get('execution_kind') == 'autoregressive':
+        from runtime.generation_analysis import records as generation_records, compare as generation_compare
+        def compare_folders(a,b):
+            from runtime.generation_analysis import trajectories, prefix_plan
+            horizons = prefix_plan(trajectories(a), trajectories(b))
+            return generation_compare(generation_records(a, horizons=horizons),generation_records(b, horizons=horizons),
+                cfg['accuracy']['levels'],cfg['accuracy']['worst_samples'],boundary_levels)
+        if cfg['runtime'].get('parallelism') != 'tp':
+            return compare_folders(root/'off',root/'on')
+        return {'parallelism':'tp','devices':cfg['runtime']['devices'],
+                'comparison_scope':'same_rank_off_on_free_generation_common_prefix',
+                'ranks':{str(rank):compare_folders(root/'off'/f'rank-{rank}',root/'on'/f'rank-{rank}')
+                         for rank in range(len(cfg['runtime']['devices']))}}
     if cfg['runtime'].get('parallelism') != 'tp':
         return compare_records(records(root/'off'),records(root/'on'),
-                               cfg['accuracy']['levels'],cfg['accuracy']['worst_samples'])
+                               cfg['accuracy']['levels'],cfg['accuracy']['worst_samples'], boundary_levels=boundary_levels)
     rank_diffs = {}
     expected_ids = {sample['id'] for sample in read_json(prepared/'samples.json')}
     for rank in range(len(cfg['runtime']['devices'])):
@@ -146,7 +178,7 @@ def accuracy_diff(cfg, root, prepared, paths, contexts=None):
         on = records(root/'on'/f'rank-{rank}')
         if set(off) != expected_ids or set(on) != expected_ids:
             raise ValueError(f'rank {rank} outputs do not cover all prepared sample IDs')
-        rank_diffs[key] = compare_records(off,on,cfg['accuracy']['levels'],cfg['accuracy']['worst_samples'])
+        rank_diffs[key] = compare_records(off,on,cfg['accuracy']['levels'],cfg['accuracy']['worst_samples'], boundary_levels=boundary_levels)
     return {'parallelism':'tp','devices':cfg['runtime']['devices'],
             'comparison_scope':'same_rank_off_on; each rank processes the same logical samples',
             'ranks':rank_diffs}
@@ -202,6 +234,8 @@ def accuracy(cfg, root, prepared, progress, contexts=None):
         write_json(root/'comparison.json',diff)
         result['comparison'] = 'comparison.json'
         result['numerical_anomalies'] = anomalies
+        result['metric_classification_version'] = 2
+        result['undefined_metric_records'] = sum(len(item.get('undefined_metrics', [])) for item in comparisons)
         result['pairing_status'] = 'invalid_shape' if invalid_shape else 'valid'
         if result['pairing_status'] != 'valid':
             result.update(status='failed',error='off/on output shapes differ; see comparison anomalies')
@@ -363,37 +397,90 @@ def run_export(cfg,root,progress):
 
 
 def run(args, cfg):
+    if args.command == 'performance-baseline':
+        args.command = 'performance'
+    if args.command in ('accuracy', 'performance', 'oracle'):
+        cfg['_forward_checks_required'] = True
+    from runtime.adapters import bind_scope
+    bind_scope(cfg, args.command)
     root = output_directory(args,cfg)
+    if cfg.get('_cost_preflight') is not None:
+        write_json(root/'cost-preflight.json', cfg['_cost_preflight'])
+    from runtime.verification import start, SESSION_ENV
+    if not getattr(args, 'internal_existing_root', False) or not os.environ.get(SESSION_ENV):
+        start(root)
     (root/'effective.yaml').write_text(yaml.safe_dump(cfg,allow_unicode=True,sort_keys=False))
-    cfg['_source_snapshot'] = seal_sources(root)
+    cfg['_source_snapshot'] = seal_sources(root, cfg)
     result = {'status':'failed','command':args.command}
+    monitor = None
+    if args.command == 'performance' and os.environ.get('FLAGPERF_MONITOR_ROOT') != str(root):
+        from runtime.monitor import MonitorSession
+        monitor = MonitorSession(cfg, root).start()
+    if cfg.get('_performance_capture'):
+        from runtime.performance_baseline import environment_snapshot
+        write_json(root/'performance-environment.json',{'before':environment_snapshot()})
     if cfg['runtime'].get('parallelism') == 'tp':
         result.update(parallelism='tp',devices=cfg['runtime']['devices'])
     try:
-        with Progress() as progress:
+        with Progress() as progress, tensor_session(root) as tensor_reads:
             from runtime.stack import run_stack
-            if args.command != 'export':
+            if args.command == 'oracle':
+                from runtime.oracle import generate
+                result = generate(cfg,root,progress,invoke_worker)
+            elif args.command != 'export':
                 result = run_stack(args.command,cfg,root,progress,invoke_worker)
             else:
                 result = run_export(cfg,root,progress)
+            if args.command == 'accuracy' and cfg.get('reference',{}).get('path'):
+                from runtime.oracle_analysis import compare_run
+                compare_run(cfg,root,result)
+            if args.command == 'performance' and cfg.get('reference',{}).get('performance_path'):
+                from runtime.performance_baseline import compare_run
+                compare_run(cfg,root,result)
+            result['analysis_io'] = {'tensor_source_reads': tensor_reads.reads,
+                                    'tensor_cache_hits': tensor_reads.hits,
+                                    'tensor_spilled_bytes': tensor_reads.spilled_bytes,
+                                    'verification': __import__('runtime.verification', fromlist=['statistics']).statistics()}
             # Execution is complete; common reporting remains below.
     except (Exception,KeyboardInterrupt) as error:
         result.update(status='failed',error=str(error),traceback=traceback.format_exc())
     finally:
         result['command'] = args.command
+        result['storage_version'] = 1
+        from runtime.capture_index import finish as finish_capture_index
+        finish_capture_index(root)
+        if args.command == 'performance':
+            result['monitoring'] = monitor.finish() if monitor else {
+                'status':'pending_host_finalization', 'summary':'monitor/summary.json'}
         result['execution_status'] = result.get('status')
         result['analysis_key'] = cfg['_source_snapshot']['analysis_key']
         try:
             assert_source_snapshot(cfg['_source_snapshot'])
-            from analysis.assessment import assess
+            from runtime.assessment import assess
             result['assessment'] = assess(root,result)
             result['analysis_status'] = 'completed'
             write_json(root/'result.json',result)
-            from reporting.model import render
+            from runtime.reporting import render
             render(root,result)
             assert_source_snapshot(cfg['_source_snapshot'])
-        except Exception as error:
+            if args.command in ('accuracy', 'performance', 'oracle'):
+                from runtime.retention import finalize_retention
+                finalize_retention(cfg,root,result)
+            if args.command == 'performance':
+                from runtime.performance_baseline import publish, environment_snapshot
+                if cfg.get('_performance_capture'):
+                    env = read_json(root/'performance-environment.json')
+                    env['after'] = environment_snapshot()
+                    write_json(root/'performance-environment.json',env)
+                    publish(cfg,root,result)
+        except (Exception, KeyboardInterrupt) as error:
             result.update(status='failed', analysis_status='failed', error=str(error))
+            if args.command in ('accuracy', 'performance', 'oracle') and not result.get('retention'):
+                from runtime.retention import finalize_retention
+                try:
+                    finalize_retention(cfg, root, result)
+                except (Exception, KeyboardInterrupt) as retention_error:
+                    result['retention_error'] = str(retention_error)
             policy_path = root/'preview/policy.yaml'
             if policy_path.is_file():
                 policy = yaml.safe_load(policy_path.read_text())
@@ -401,21 +488,40 @@ def run(args, cfg):
                 policy_path.write_text(yaml.safe_dump(policy,sort_keys=False,allow_unicode=True))
                 result['verified'] = False
         write_json(root/'result.json',result)
+        if (root/'report-source.json').is_file():
+            from runtime.common import file_hash
+            source = read_json(root/'report-source.json')
+            source['result_sha256'] = file_hash(root/'result.json')
+            write_json(root/'report-source.json',source)
         print(f'Results: {root}',flush=True)
+        from runtime.verification import finish
+        finish()
     return 0 if result['status']=='completed' else 1
 
 
 def main():
     args = parser().parse_args()
+    from runtime.verification import finish
+    if not args.internal_existing_root: finish()
     try:
+        if args.command in ('analyze', 'repack-reference'):
+            from runtime.offline import main as offline_main
+            return offline_main(args)
         if args.command == 'report':
-            from reporting.replay import run as run_report
+            from runtime.report_replay import run as run_report
             return run_report(args)
         cfg = load(args)
+        if args.dry_run:
+            from runtime.preflight import dry_run
+            return dry_run(args, cfg)
         if args.command == 'list':
             print((ROOT/'support.json').read_text())
             return 0
+        from runtime.preflight import check
+        cfg['_cost_preflight'] = check(cfg, args.command, args.output or cfg.get('runtime', {}).get('output_root', ROOT/'result'))
         return run(args,cfg)
     except (ValueError,OSError) as error:
         print(f'Configuration error: {error}',file=sys.stderr)
         return 2
+    finally:
+        finish()

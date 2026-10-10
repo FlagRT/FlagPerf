@@ -1,74 +1,46 @@
 # 如何阅读 Inference 结果
 
-[返回入门指南](../../inference/README.md)
+先核对模型、输入、组件、设备/rank、dtype、并行方式和比较对象，再看数值。终端的 `Results:` 指向独立结果目录。
 
-打开终端 `Results:` 指向目录中的 `report.md`。先确认模型、输入、设备和组件组合，再看执行状态、比较证据与指标。
-`completed` 只表示执行完成；比较是否适用、组件是否实际参与、精度是否符合你的应用要求，需要分别判断。
+## 状态与比较对象
 
-## 精度：明确谁与谁比较
+先检查 `result.json` 的执行和分析状态，失败或 partial 时阅读原因和日志；质量状态 needs_review/invalid_evidence 也需单独处理。
+completed 说明规定流程结束，不代表业务精度达标或性能稳定。监控状态和逐指标有效点数另见监控报告。
 
-FlagGems both 默认比较**同一设备配置、同一输入**的原生 PyTorch 输出（off）与选定 FlagGems 路径输出（on）。
-切换 FlagTree 或 FlagCX 时，其他组件保持固定。这不是 CPU FP64 真值检查，也不是 NVIDIA—Ascend 跨设备对照。
+同设备 `comparison.json` 比较固定条件下的 off→on。导入参考后，`oracle-comparison.json` 比较 A100→被测路径，保留同设备差分；
+`performance-comparison.json` 统一使用被测/A100 倍率。两种参考不能同时传入，参考 dtype 与数值设置由模型定义。
 
-模型级包括 pooling 后的向量与最终归一化 embedding；模块级按样本 ID、模块边界配对，排除 padding 位置。
-报告给出绝对误差、相对误差、MSE、余弦相似度等。相对误差以 `max(abs(off), 1e-12)` 为分母；参考值接近零时，
-应结合绝对误差阅读。工具不预设适用于所有应用的精度达标阈值。
+精度展示 MSE、MAE、最大绝对误差、cosine、相对/归一化误差、分位数及局部异常。零范数情况下某些指标未定义，不能当作零误差或通过。
+概率标量的 cosine 可能缺乏区分度。OneRec 只比较首次 token 分歧之前及分歧那一步，之后的完整轨迹用于另外检查。
 
-TP 中每个 rank 只与另一侧同 rank 的输出比较；分片模块不会跨 rank 拼成伪造的全量输出。
-只有 off 或 on 的运行保留该路径记录，不生成缺失另一侧的比值。
+## 性能口径
 
-## 性能：计时区间决定含义
+静态模型总体窗口从输入驻留设备开始，覆盖模型规定的完整前向和同步；加载、分词、搬运及独立取证分开。
+Qwen3 覆盖 forward、pooling 和归一化。DeepFM/DLRM 吞吐为 samples/s；Qwen3 另列固定文本工作量对应吞吐。
+OneRec 默认固定生成 32 个新 token，分别列出完整生成、prefill/首 token、decode 和新生成 token/s；实际步数以配置为准，首 token 不含服务排队。
 
-主时延从输入已经驻留设备开始，覆盖模型 forward、last-token pooling、FP32 L2 normalization，直到设备同步完成。
-预热、模型加载、输入 CPU→设备、输出设备→CPU 及路由/通信取证另列，不计入主时延。
-吞吐是固定输入批次的离线处理速度，不是在线服务的请求吞吐或生成 token 速度。
+层级时延为包含子模块的窗口，父子耗时不能相加。框架 allocator 的窗口峰值不是模块独占分配，也不是整张设备占用。
+KV 字节、allocator 峰值、设备 HBM 遥测来源不同，不能直接相加。主计时、层计时、显存、路由和 profiler 为独立采样。
 
-| 指标 | 可以说明 | 不能直接说明 |
-|---|---|---|
-| 时延及分位数 | 当前输入、采样次数下的整体执行分布 | 单个硬件 kernel 的耗时 |
-| 吞吐 | 同一计时区间内完成的样本或有效输入 token 数 | 在线并发能力、生成式服务吞吐 |
-| allocated / reserved | PyTorch 设备缓存分配器的占用 | 整块物理卡的全部显存占用 |
-| 权重 storage 字节数 | 去重后的权重逻辑存储量 | 实际总显存或总线传输量 |
-| 搬运时间与逻辑字节 | 报告注明对象、方向和 API 边界的搬运 | 未采集的物理链路类型、带宽计数器 |
-| 路由调用占比 | 策略排除、未知、无覆盖等调用级情况 | 硬件 kernel fallback 率或耗时占比 |
+独立重复波动与调用尖峰分别展示；少于三次独立重复不形成 repeat-CV 判断。查看比值时同时检查样本、计时、规模及缺失项。
+NCCL kernel 和 CANN collective 时间不直接计算跨厂商倍率。Python 路由命中不等于硬件 kernel 覆盖率。
 
-TP 的各 rank 共同处理同一批输入，按全局批次窗口报告时延，工作量只计一次。
-通信 trace 来自独立采样，不与正式计时混算；各 rank 的通信时间也不相加作为全局延迟。
-关联不充分时会标记 partial，不将缺失数据填零。
+## 保存与离线查看
 
-单卡 FlagCX 没有模型集合通信，比较“不适用”；eager 原生路径可能没有 Triton JIT 调用，FlagTree 则可能“未观测到参与”。
-此时即使算出了两侧耗时，也不能据此宣称相应组件带来优化。
+成功且分析完整、无数值异常或需复查测量的普通任务默认精简输出 tensor、原始 trace 与缓存。
+固定输入、数值、日志、配置、源码、派生归因与异常信息保留。keep 选项、失败、partial、异常和参考生产保留完整现场。
+精简后可以重绘和 portable 搬移；缺少原始 tensor/trace 时，不能重新计算相应指标或重解析。
 
-## 逐层性能与独立视图
-
-层级报告首页先呈现无插桩整模型变化，再给采样扰动和重点层。`layer-index.md` 按模块、rank、shape 下钻；`layer-details.md` 保留全表。层窗口包含子模块和设备流等待，窗口显存属于整个进程分配器。详见[逐层判读](layer.md)和[指标来源矩阵](metrics.md)。
-
-离线筛选保留整模型原始工作量；重新分析分别记录来源执行状态和本次分析状态。缺失证据仍显示 partial，不能用新报告抹去历史失败。
-
-## 策略与执行身份
-
-preview 的 `verified` 只证明本次输入下选定函数逐 rank 命中、执行完成且检查边界没有非有限输出。
-它不是应用精度认证。未知项与明确排除项分开；未被共同交集选中也不等于不支持。
-
-schema 3 策略绑定执行源码、镜像、依赖、模型与输入、设备/rank 顺序及编译器资产等身份。
-纯数值分析和报告源码另有分析身份；运行期间源码变化会被拒绝。
-换设备、输入、执行源码或依赖后应重新 preview；不能手工改策略中的摘要来绕过检查。
-
-## 文件导航
-
-| 文件或目录 | 用途 |
+| 文件或入口 | 用途 |
 |---|---|
-| `effective.yaml`、`image.json` | 最终配置与宿主入口解析的实际镜像身份 |
-| `result.json`、`report.md` | 结构化结果与阅读入口 |
-| `prepared/` | tokenized 输入、样本、执行身份 |
-| `comparison.json` | 精度配对与差异；仅相应比较产生 |
-| `off/`、`on/` | 各路径的 worker 日志、张量或逐批次数据；TP 再按 rank 分层 |
-| `audit/`、`profiles/` | 独立路由取证与 TP 通信采样 |
-| `layer/`、`layer-index.md`、`layer-view.json` | 独立层级采集、阅读索引与结构化视图 |
-| `package-manifest.json`、`reanalysis.json` | portable 文件哈希与重新分析记录，仅相应命令产生 |
-| `preview/` | 策略、预算、检查点、轻量决策证据 |
-| `source-snapshot.json`、`source-code/` | 源码摘要及当次可读源码副本 |
-| `policy-mismatch.json` | 策略失配时可展开的身份差异 |
+| result.json / report.md | 状态、条件、结论和明细导航 |
+| comparison.json | 同设备组件差分 |
+| oracle-comparison.json / performance-comparison.json | A100 精度 / 性能比较 |
+| layer-index.md | 逐层、shape、rank 及热点导航 |
+| monitor.html / monitor/ | 曲线、指标状态和监控原始记录 |
+| prepared/ | 固定输入及模型 workload |
+| artifacts/ | 分片明细，与引用 JSON 一起保存 |
+| package/ / package-evidence/ | 参考核心 / 诊断附件 |
 
-失败先读阶段、错误及 worker 日志。资源不足、执行失败、数值偏差与证据不完整是不同情况。
-输出目录中可能包含输入文本、模型路径及机器信息；这些是操作者自己的运行记录，工具不会自动上传。
+策略绑定执行身份。此次目录与执行代码更新后，历史策略需要重新 preview；历史报告和参考包按读协议继续使用。
+操作见[逐层指南](layer.md)、[A100 参考](references.md)和[离线恢复](offline.md)。

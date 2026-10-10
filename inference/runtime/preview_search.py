@@ -1,5 +1,3 @@
-# Copyright 2026 FlagOS Contributors
-# Licensed under the Apache License, Version 2.0.
 """Bounded grouped discovery; a failed set never qualifies its members as failures."""
 from runtime.common import digest
 from runtime.preview_evidence import resource_failure

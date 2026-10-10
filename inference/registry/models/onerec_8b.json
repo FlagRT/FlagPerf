@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "id": "onerec_8b",
+  "factory": "benchmarks.onerec.adapter:OneRecAdapter",
+  "capabilities": {"accuracy": true, "performance": true, "preview": true, "export": [], "parallelism": ["single", "tp"], "tp_degrees": [2], "oracle": true, "performance-baseline": true},
+  "sources": ["benchmarks/__init__.py", "benchmarks/onerec/__init__.py", "benchmarks/onerec/adapter.py", "benchmarks/onerec/model.py"],
+  "packages": ["transformers", "tokenizers", "safetensors", "huggingface-hub", "numpy"]
+}

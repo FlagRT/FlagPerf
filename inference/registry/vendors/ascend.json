@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "id": "ascend",
+  "factory": "vendors.ascend.adapter:AscendAdapter",
+  "capabilities": {
+    "accuracy": true,
+    "performance": true,
+    "preview": true,
+    "export": true,
+    "parallelism": [
+      "single",
+      "tp"
+    ],
+    "container": true,
+    "trace": [
+      "cann"
+    ],
+    "trace_versions": {
+      "cann": [
+        "9.0"
+      ]
+    },
+    "components": [
+      "flaggems",
+      "flagtree",
+      "flagcx"
+    ]
+  },
+  "sources": [
+    "vendors/__init__.py",
+    "vendors/base.py",
+    "vendors/ascend/__init__.py",
+    "vendors/ascend/adapter.py",
+    "vendors/ascend/telemetry.py",
+    "vendors/ascend/profiles/cann9_torch210.json"
+  ],
+  "analysis_sources": [
+    "vendors/ascend/trace.py",
+    "vendors/ascend/communication.py"
+  ],
+  "component_sources": {
+    "compiler": [
+      "vendors/ascend/compiler.py"
+    ]
+  },
+  "packages": [
+    "torch-npu"
+  ],
+  "config_defaults": {
+    "env": {},
+    "vendor_compiler": "../runtime_assets/ascend-triton",
+    "profile": "cann9_torch210"
+  },
+  "path_fields": [
+    "vendor_compiler"
+  ],
+  "decoder": "vendors.ascend.trace",
+  "capture_patterns": ["profiler/**/trace_view.json", "profiler/*_ascend_pt", "profiler-recovery/**/trace_view.json"]
+}

@@ -1,0 +1,5 @@
+{
+  "schema_version": 1, "id": "flaggems", "factory": "components.flaggems:FlagGemsAdapter",
+  "capabilities": {"registration": true, "discovery": true, "audit": true},
+  "sources": ["components/__init__.py", "components/flaggems.py"], "packages": ["flag-gems"]
+}

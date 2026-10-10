@@ -1,5 +1,3 @@
-# Copyright 2026 FlagOS Contributors
-# Licensed under the Apache License, Version 2.0.
 """Single-host TP worker and sealed rank aggregation; imports are device-lazy."""
 from __future__ import annotations
 from datetime import timedelta
@@ -13,23 +11,24 @@ from runtime.performance import summarize, tensor_storage_bytes
 CONTROL_GROUP = None
 # Locked FlagCX Ascend build borrows an NPU stream: retain its owner until worker exit.
 MODEL_GROUP = None
+COMPONENT_OWNER = None
 
 
 def initialize_group(cfg):
     import torch.distributed as dist
-    global CONTROL_GROUP, MODEL_GROUP
+    global CONTROL_GROUP, MODEL_GROUP, COMPONENT_OWNER
     if not dist.is_initialized():
         timeout = timedelta(seconds=cfg['runtime']['timeout_seconds'])
         from vendors.stack import communication_backend
         backend = communication_backend(cfg)
         if backend == 'flagcx':
-            previous = os.environ.get('TORCH_DEVICE_BACKEND_AUTOLOAD')
-            import flagcx
-            if previous is not None: os.environ['TORCH_DEVICE_BACKEND_AUTOLOAD'] = previous
+            from runtime.adapters import create
+            COMPONENT_OWNER = create('components', 'flagcx')
+            COMPONENT_OWNER.activate()
         dist.init_process_group(backend,timeout=timeout)
         if dist.get_backend() != backend: raise RuntimeError('unexpected model process-group backend')
         if backend == 'flagcx':
-            MODEL_GROUP = dist.distributed_c10d._get_default_group()
+            MODEL_GROUP = COMPONENT_OWNER.retain_owner(dist)
         CONTROL_GROUP = dist.new_group(backend='gloo',timeout=timeout)
 
 
@@ -69,10 +68,34 @@ def global_batches(ranks):
                     raise ValueError('rank batch metadata mismatch: '+key)
                 metadata[key] = rows[0][key]
         begin, end = min(r['start_ns'] for r in rows), max(r['end_ns'] for r in rows)
+        if 'generation_steps' in rows[0]:
+            if any(len(r['generation_steps'])!=len(rows[0]['generation_steps']) or
+                   r['generated_tokens']!=rows[0]['generated_tokens'] or r['input_tokens']!=rows[0]['input_tokens'] for r in rows):
+                raise ValueError('rank generation workload mismatch')
+            combined=[]
+            for calls in zip(*(r['generation_steps'] for r in rows)):
+                if any(any(s[k]!=calls[0][k] for k in ('phase','generation_step','active_samples','kv_length_before')) for s in calls):
+                    raise ValueError('rank execution-step context mismatch')
+                start,stop=min(s['start_ns'] for s in calls),max(s['end_ns'] for s in calls)
+                combined.append({**calls[0],'start_ns':start,'end_ns':stop,'latency_ns':stop-start})
+            metadata.update(generation_steps=combined,generated_tokens=rows[0]['generated_tokens'],input_tokens=rows[0]['input_tokens'])
         output.append({**{k:rows[0][k] for k in ['cycle','batch_index','samples','tokens']},
                        'start_ns':begin,'end_ns':end,'latency_ns':end-begin,
                        'rank_entry_skew_ns':max(r['start_ns'] for r in rows)-begin, **metadata})
     return output
+
+
+def check_execution_step(context, tokens):
+    """Untimed control validation prevents different EOS branches from hanging a TP replay."""
+    import torch.distributed as dist
+    if CONTROL_GROUP is None:
+        raise ValueError('TP generation requires an initialized control group')
+    value={k:context[k] for k in ('phase','generation_step','mode','active_samples','kv_length_before')}
+    value['tokens']=tokens
+    states=[None]*dist.get_world_size(CONTROL_GROUP)
+    dist.all_gather_object(states,value,group=CONTROL_GROUP)
+    if any(row!=states[0] for row in states):
+        raise ValueError('TP ranks differ in generation tokens or active/EOS state')
 
 
 def aggregate(cfg, destination, action, process, prepared=None):
@@ -102,6 +125,12 @@ def aggregate(cfg, destination, action, process, prepared=None):
                 raise ValueError('rank identities differ')
             result.update(status='completed',identity_key=values[0]['identity_key'],failure_count=0)
             if action == 'forward':
+                if values[0].get('execution_kind') == 'autoregressive':
+                    executions=[read_json(root/f'rank-{r}'/'execution.json') for r in ranks]
+                    trajectories=[[{'mode':q['mode'],'batch_index':q['batch_index'],'samples':q['samples']} for q in e['requests']] for e in executions]
+                    if any(t!=trajectories[0] for t in trajectories):
+                        raise ValueError('TP ranks generated different tokens or stopping states')
+                    result['execution_kind']='autoregressive'
                 inventory, candidates, calls = {}, {}, {}
                 for rank, value in ranks.items():
                     if cfg.get('_preview_trial'):
@@ -109,6 +138,11 @@ def aggregate(cfg, destination, action, process, prepared=None):
                         validate_checks(root/f'rank-{rank}',value,read_json(Path(prepared)/'forward-inputs.json'))
                         if value['forward_evidence']['mode'] != cfg['_preview_trial']['evidence_mode']:
                             raise ValueError('rank preview evidence mode differs from request')
+                    elif cfg.get('_forward_checks_required'):
+                        from runtime.preview_evidence import validate_forward_checks
+                        validate_forward_checks(cfg, root/f'rank-{rank}', value, prepared,
+                                                cfg.get('_forward_probe', False))
+                        value['forward_evidence_validated'] = True
                     elif not isinstance(value.get('artifacts'), list) or not value['artifacts']:
                         raise ValueError(f'rank {rank} has no sealed forward artifacts')
                     for key,row in value.get('inventory',{}).items():
@@ -138,8 +172,9 @@ def aggregate(cfg, destination, action, process, prepared=None):
                 if any(v['completed_batches'] != v['expected_batches'] for v in values):
                     raise ValueError('incomplete rank measurement')
             elif action == 'profile':
-                from analysis.communication import analyze
-                result['communication'] = analyze(root, len(ranks))
+                from runtime.communication_analysis import analyze
+                result['communication'] = analyze(root, len(ranks),
+                    timeout=cfg['runtime'].get('analysis_timeout_seconds', 900))
                 if result['communication']['status'] != 'completed':
                     result.update(status='partial',error='communication evidence is incomplete; see coverage and issues')
             elif action.startswith('layer_'):
@@ -161,11 +196,15 @@ def aggregate(cfg, destination, action, process, prepared=None):
 def run(cfg, root, prepared, include, repeat_index, profile=False, phase=None):
     import torch
     import torch.distributed as dist
-    from vendors.device import initialize
-    from models.qwen3_embedding.model import load_model, pool
+    from runtime.context import initialize, parallel_context
+    from runtime.adapters import model_adapter, create
+    from runtime.workload import tensors, tensor_tree
+    adapter = model_adapter(cfg)
     from runtime.worker import identity
     root = Path(root)
     device, backend = initialize(cfg)
+    if phase == 'layer_timing': backend.require('events','stream')
+    if phase == 'layer_memory': backend.require('memory','peak_memory')
     rank = dist.get_rank()
     expected = read_json(prepared/'identity.json')
     actual = identity(cfg,backend)
@@ -181,51 +220,50 @@ def run(cfg, root, prepared, include, repeat_index, profile=False, phase=None):
     before = memory()
     stage('model_load')
     begin = time.perf_counter_ns()
-    model = load_model(cfg,device)
+    model = adapter.load_model(cfg, device, backend, parallel_context(cfg)).model
     backend.synchronize()
     load_seconds = (time.perf_counter_ns()-begin)/1e9
     after = memory()
-    shards = {name:list(t.shape) for name,t in model.named_parameters() if name.startswith('layers.0.')}
-    write_json(root/'tp-plan.json',{'plan':model._tp_plan,'layer0_parameter_shapes':shards,
-                                  'rank':rank,'physical_device':cfg['runtime']['devices'][rank]})
+    write_json(root/'tp-plan.json', {**adapter.parallel_metadata(cfg, model),
+        'rank':rank, 'physical_device':cfg['runtime']['devices'][rank]})
     batches = torch.load(prepared/'inputs.pt',map_location='cpu',weights_only=True)
-    batch_metadata = [{'input_shape':list(b['inputs']['input_ids'].shape), 'sample_ids':b['ids']} for b in batches]
+    batch_metadata = [adapter.batch_metadata(b) for b in batches]
     data, copy_ns, copy_bytes = [], 0, 0
+    stage('input_transfer')
     for batch in batches:
         backend.synchronize(); begin = time.perf_counter_ns()
         inputs = {k:v.to(device) for k,v in batch['inputs'].items()}
         backend.synchronize(); copy_ns += time.perf_counter_ns()-begin
         copy_bytes += sum(v.numel()*v.element_size() for v in batch['inputs'].values())
-        data.append((inputs,len(batch['ids']),int(batch['inputs']['attention_mask'].sum())))
+        data.append((inputs, *adapter.sample_counts(batch)))
     lib, registered = None, []
     if include is not None:
-        import flag_gems
-        lib = torch.library.Library('aten','IMPL')
-        flag_gems.only_enable(include=include,lib=lib,record=False)
-        registrar = flag_gems.current_work_registrar
-        registered = list(zip(registrar.all_keys,registrar.all_ops))
-        if not set(include) <= {n for _,n in registered}: raise RuntimeError('incomplete FlagGems registration')
+        lib, registered = create('components', 'flaggems').enable_timing(include)
     def forward(inputs):
         with torch.inference_mode():
-            hidden = model(**inputs,use_cache=False,return_dict=True).last_hidden_state
-            return pool(hidden,inputs['attention_mask'])
+            return adapter.forward(model, inputs)
+    cache_evidence = None
+    if adapter.execution_kind != 'single_step':
+        from runtime.execution import performance_forward, inspect_execution
+        forward = performance_forward(adapter,model,backend)
+        cache_evidence = inspect_execution(adapter,model,data[0][0],backend,rank,parallel=True)
     try:
         stage('sanity')
         for inputs,_,_ in data:
-            pooled, embedding = forward(inputs)
+            output = forward(inputs)
             backend.synchronize()
-            if not bool(torch.isfinite(embedding).all().item() and torch.isfinite(pooled).all().item()):
+            if not bool(all(torch.isfinite(t).all().item() for t in tensors(output))):
                 raise RuntimeError('nonfinite TP output in untimed sanity pass')
-            del pooled, embedding
-        pooled, embedding = forward(data[0][0]); backend.synchronize()
-        begin=time.perf_counter_ns(); copied=embedding.cpu(); backend.synchronize()
+            del output
+        output = forward(data[0][0]); backend.synchronize()
+        begin=time.perf_counter_ns(); copied=tensor_tree(adapter.output_transfer(output), lambda t: t.cpu()); backend.synchronize()
         output_ns=time.perf_counter_ns()-begin
-        output_bytes=copied.numel()*copied.element_size()
-        del pooled,embedding,copied
+        output_bytes=sum(t.numel()*t.element_size() for t in tensors(copied))
+        del output,copied
         stage('warmup'); begin=time.perf_counter_ns()
         for _ in range(cfg['performance']['warmup_rounds']):
             for inputs,_,_ in data:
-                pooled,embedding=forward(inputs);backend.synchronize();del pooled,embedding
+                output=forward(inputs);backend.synchronize();del output
         warmup_seconds=(time.perf_counter_ns()-begin)/1e9
         if phase:
             from runtime.layer_capture import run_pass
@@ -238,25 +276,23 @@ def run(cfg, root, prepared, include, repeat_index, profile=False, phase=None):
                 'route':{'requested':include is not None,'allowed':include,'registered':registered,
                          'counting_in_timed_loop':False},
                 'transfer':{'model_weights':{'status':'not_separately_measured',
-                    'reason':'Transformers TP loader fuses loading, sharding and placement'},
+                    'reason':'TP model loader does not expose separate loading and device transfer stages'},
                     'input':{'seconds':copy_ns/1e9,'logical_bytes':copy_bytes,'scope':'all prepared inputs once on this rank'},
-                    'output_embedding':{'seconds':output_ns/1e9,'logical_bytes':output_bytes,'scope':'first batch embedding copy on this rank'}},
+                    adapter.transfer_key:{'seconds':output_ns/1e9,'logical_bytes':output_bytes,'scope':adapter.transfer_scope}},
                 'memory':{'before_model_load':before,'after_model_load':after,
                           'weight_storage_bytes':tensor_storage_bytes(model),'measurement_baseline':baseline}}
+        if cache_evidence:
+            result['generation_cache']=cache_evidence
         if profile:
-            import torch_npu
+            from runtime.performance_profiler import profiler
             from runtime.communication import Capture
             count=len(data)*cfg['performance']['communication_profile_rounds']
             # Profiler warmup and active phases each use whole input sweeps.
             stage('communication_profile')
-            with Capture(model,root,rank) as capture:
-                with torch_npu.profiler.profile(
-                    activities=[torch_npu.profiler.ProfilerActivity.CPU,torch_npu.profiler.ProfilerActivity.NPU],
-                    schedule=torch_npu.profiler.schedule(wait=0,warmup=len(data),active=count,repeat=1),
-                    on_trace_ready=torch_npu.profiler.tensorboard_trace_handler(str(root/'profiler')),
-                    record_shapes=True,
-                    experimental_config=torch_npu.profiler._ExperimentalConfig(
-                        profiler_level=torch_npu.profiler.ProfilerLevel.Level1)) as prof:
+            with Capture(model,root,rank,roles=adapter.communication_roles(model)) as capture:
+                if hasattr(forward,'observer'):
+                    forward.observer=lambda when,context,step,session: capture.set_step(context) if when=='before' else None
+                with profiler(cfg,root,len(data),count) as prof:
                     for step in range(len(data)+count):
                         inputs,_,_=data[step%len(data)]
                         capture.active=step>=len(data)
@@ -264,9 +300,9 @@ def run(cfg, root, prepared, include, repeat_index, profile=False, phase=None):
                         capture.cycle=max(0,step//len(data)-1)
                         barrier();backend.synchronize()
                         with torch.profiler.record_function('flagperf/model_batch'):
-                            pooled,embedding=forward(inputs);backend.synchronize();del pooled,embedding
+                            output=forward(inputs);backend.synchronize();del output
                         barrier();prof.step()
-            result.update(profile_batches=count,expected_model_collectives=count*2*len(model.layers))
+            result.update(profile_batches=count,expected_model_collectives=count*adapter.expected_collectives(model) if adapter.expected_collectives(model) is not None else None)
         else:
             stage('measurement');rows=[]
             with (root/'batches.jsonl').open('w') as stream:
@@ -274,16 +310,19 @@ def run(cfg, root, prepared, include, repeat_index, profile=False, phase=None):
                     for index,(inputs,samples,tokens) in enumerate(data):
                         backend.synchronize();barrier()
                         begin=time.perf_counter_ns()
-                        pooled,embedding=forward(inputs);backend.synchronize()
+                        output=forward(inputs);backend.synchronize()
                         end=time.perf_counter_ns()
-                        del pooled,embedding
+                        del output
                         barrier()
                         row={'cycle':cycle,'batch_index':index,'samples':samples,'tokens':tokens,
                              'start_ns':begin,'end_ns':end,'latency_ns':end-begin, **batch_metadata[index]}
+                        from runtime.execution import generation_row
+                        row.update(generation_row(forward,tokens))
                         rows.append(row);stream.write(json.dumps(row)+'\n');stream.flush()
             peak={'allocated_bytes':backend.max_memory_allocated(rank),'reserved_bytes':backend.max_memory_reserved(rank)}
             result['memory'].update(measurement_peak=peak,measurement_end=memory(),
-                                    peak_increment_bytes={k:peak[k]-baseline[k] for k in peak})
+                                    peak_increment_bytes={k:peak[k]-baseline[k] if peak[k] is not None and baseline[k] is not None else None for k in peak},
+                                    measurement=backend.metadata())
             result.update(batches=rows,summary=summarize(rows),completed_batches=len(rows),
                           expected_batches=len(data)*cfg['performance']['measure_rounds'])
         stage('completed')

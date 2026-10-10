@@ -16,7 +16,7 @@ Inference 使用独立的 torch_npu 运行栈，配置方式见 [Inference 环�
 | Base Benchmark | `python3 base/run.py benchmark run ...` | 保留 Case、配置合并、rank、计时和结果公式；一次调用选择一个 Case |
 | Ascend Toolkit | `python3 base/run.py toolkit run ...` | 单机厂商测量与诊断；独立权限、测量、监控和诊断状态 |
 | Operation | `python3 operation/run.py run --vendor ascend ...` | 52 个 Case 已接入；每个 dtype/路径的通过状态单独报告 |
-| Inference | `python3 inference/run.py accuracy / performance ...` | Qwen3-Embedding-0.6B；同设备配置的模型/模块差异及整体性能；环境单独准备 |
+| Inference | `python3 inference/run.py accuracy / performance ...` | 四模型、同设备与 A100 参考差分、总体/逐层性能及独立监控；[环境单独准备](../inference/environment.md) |
 | P2P 资格验证 | `python3 base/vendors/ascend/torch_fl_2.10_flagcx/run_p2p_qualification.py` | 单机双 rank、指定拓扑/方向/大小；默认只输出计划 |
 
 各模块的支持范围独立；不由 Base/Operation 记录推定 Training、Generate、Inference 或其他厂商的运行结果。

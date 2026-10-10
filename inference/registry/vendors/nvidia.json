@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "id": "nvidia",
+  "factory": "vendors.nvidia.adapter:NvidiaAdapter",
+  "capabilities": {
+    "accuracy": true,
+    "performance": true,
+    "preview": false,
+    "export": false,
+    "oracle": true,
+    "performance-baseline": true,
+    "parallelism": [
+      "single",
+      "tp"
+    ],
+    "container": false,
+    "trace": [
+      "kineto"
+    ],
+    "trace_versions": {
+      "kineto": [
+        "1"
+      ]
+    },
+    "components": [
+      "flaggems"
+    ]
+  },
+  "sources": [
+    "vendors/__init__.py",
+    "vendors/base.py",
+    "vendors/nvidia/__init__.py",
+    "vendors/nvidia/adapter.py",
+    "vendors/nvidia/numerics.py"
+  ],
+  "analysis_sources": [
+    "vendors/nvidia/trace.py",
+    "vendors/nvidia/scope_index.py",
+    "vendors/nvidia/trace_index.py"
+  ],
+  "packages": [],
+  "config_defaults": {
+    "env": {}
+  },
+  "path_fields": [],
+  "decoder": "vendors.nvidia.trace",
+  "capture_patterns": ["profiler/**/*.pt.trace.json", "profiler/**/kineto.json"]
+}

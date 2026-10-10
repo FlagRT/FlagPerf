@@ -1,7 +1,7 @@
 schema_version: 1
 model:
   name: qwen3_embedding_0.6b
-  # Set a local model directory here or pass --model-path.
+  # Supply a local model directory here or with --model-path.
   path: null
   dtype: bfloat16
   attention: eager
@@ -20,7 +20,19 @@ accuracy:
   worst_samples: 5
   task_score: false
   data_path: null
+  # Successful ordinary accuracy is compact; true keeps debugging evidence.
+  keep_tensors: false
+reference:
+  performance_path: null
+  path: null
 performance:
+  monitor: 'on'
+  monitor_interval_ms: 1000
+  variability:
+    repeat_cv_threshold: 0.10
+    spike_ratio_threshold: 5.0
+  # Successful ordinary performance is compact; reference producers stay full.
+  keep_evidence: false
   flaggems: 'off'
   flagtree: 'off'
   flagcx: 'off'
@@ -38,9 +50,11 @@ runtime:
   devices: null
   seed: 2026
   timeout_seconds: 900
+  # Independent deadline for one CUDA trace analysis, including result writing.
+  analysis_timeout_seconds: 900
   output_root: ../result
 container:
-  # Set a compatible local Docker image here or pass --image.
+  # Supply a compatible local image here or with --image.
   image: null
   shm_size: 4g
 vendors:

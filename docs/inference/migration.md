@@ -1,19 +1,33 @@
-# 旧 Inference 迁移说明
+# Inference 版本迁移
 
-当前 Inference 使用显式命令进行模型精度和性能分析。原 host.yaml、SSH 集群启动、旧模型案例、任务评分器及
-TensorRT/TorchTRT/Inductor 等编译引擎流程已移出当前工作树，不属于当前支持清单。
-`run.py` 的旧无参数启动方式已被 `list|preview|accuracy|performance|export` 命令取代。
+当前提供四模型、A100 参考比较、运行监控及离线恢复。源码统一采用 benchmarks、inference_engine、vendors、components、registry 与 runtime 分层。
+此前的 models/engines/analysis/reporting 内部位置已收敛到该布局；公开使用以 CLI、配置和结果协议为入口。
 
-需要原框架时，在单独工作树恢复迁移前提交，不覆盖当前代码：
+## 现有用户
+
+保留 Ascend 的 list、preview、accuracy、performance、export、report，以及 `--image` 配置入口。
+将本机设置存入 `config/local*.yaml`。模型与镜像默认为空；原生路径不再要求准备编译器包，组件路径仍校验用户提供的包。
+性能默认开启独立监控；成功无异常的普通任务默认精简原始证据，诊断时加 `--keep-tensors` / `--keep-evidence`。
+
+NVIDIA 通用 preview/accuracy/performance/export 入口收敛为 A100 参考生产：
 
 ```bash
-# 从包含完整历史的 FlagPerf 仓库根目录执行。
+python3 run_inference.py oracle --config config/a100.yaml --model-path /absolute/path/to/model --output result/new-oracle
+python3 run_inference.py performance-baseline --config config/a100-performance.yaml \
+  --model-path /absolute/path/to/model --output result/new-baseline
+```
+
+run.py 不启动 NVIDIA 容器。参考消费见[A100 指南](references.md)。
+历史结果按读协议保留；schema 1～3 参考包只读兼容，新参考使用 schema 4。可转换到新目录，不自动覆盖旧包。
+策略仍绑定执行源码与环境，代码或目录变化后须新 preview，不修改历史身份摘要继续使用。
+
+## 更早的执行框架
+
+旧 host.yaml、SSH 集群启动、任务评分器、其他模型和编译引擎已移出当前工作树，不属于当前支持清单。
+在包含完整历史的仓库根目录恢复迁移前提交：
+
+```bash
 git worktree add --detach ../FlagPerf-legacy 3e7c558b6f56e6ea5f9c8b318852d97d1517a14c
 ```
 
-然后阅读该历史工作树中的根 README 与 `docs/inference/inference-case-doc.md`。
-旧流程仍要求其对应的软件、权重、数据集及设备环境，不能因源码可恢复而认为兼容当前镜像。
-浅克隆若没有该提交，需先获取仓库历史。
-
-新工具从 [当前入门指南](../../inference/README.md) 开始。旧配置不能直接传入新入口；模型和环境应按新配置重新填写。
-preview 策略绑定执行源码及环境，迁移后重新生成。历史 schema 1/2 报告可以读取，但其策略不能用于 schema 3 执行或续探。
+浅克隆需先获取历史。恢复源码仍需原流程对应的环境、模型和数据，不能由源码存在推断与当前镜像兼容。

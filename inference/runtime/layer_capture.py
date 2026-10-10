@@ -1,5 +1,3 @@
-# Copyright 2026 FlagOS Contributors
-# Licensed under the Apache License, Version 2.0.
 """Execution-side module scopes. Timing, memory and trace use separate workers."""
 from collections import Counter, defaultdict
 from contextlib import nullcontext
@@ -22,8 +20,8 @@ def memory_groups(names):
 
 
 def stream_id(backend):
-    stream = backend.current_stream()
-    return int(getattr(stream, 'npu_stream', getattr(stream, 'cuda_stream', 0)))
+    from vendors.device import stream_id as selected_stream
+    return selected_stream(backend)
 
 
 def memory(backend, rank):
@@ -33,8 +31,9 @@ def memory(backend, rank):
 
 class Scopes:
     """Inclusive scopes, paired by invocation rather than just module name."""
-    def __init__(self, modules, mode, backend=None, rank=0):
+    def __init__(self, modules, mode, backend=None, rank=0, stream=stream_id):
         self.modules, self.mode, self.backend, self.rank = modules, mode, backend, rank
+        self.stream = stream
         self.handles, self.stack, self.rows = [], [], []
         self.active = False
         self.context = {}
@@ -71,7 +70,7 @@ class Scopes:
                 self.events[key] = (self.backend.Event(enable_timing=True),
                                     self.backend.Event(enable_timing=True))
             row['_events'] = self.events[key]
-            row['start_stream'] = stream_id(self.backend)
+            row['start_stream'] = self.stream(self.backend)
             row['_events'][0].record()
         elif self.mode == 'layer_profile':
             import torch
@@ -94,7 +93,7 @@ class Scopes:
         failed = sys.exc_info()[0] is not None
         row['status'] = 'failed' if failed else 'completed'
         if self.mode == 'layer_timing':
-            row['end_stream'] = stream_id(self.backend)
+            row['end_stream'] = self.stream(self.backend)
             row['_events'][1].record()
         elif self.mode == 'layer_memory' and not failed:
             self.backend.synchronize()
@@ -173,28 +172,39 @@ class RouteScopes(Scopes):
 
 
 def cpu_outputs(value):
-    import torch
-    if isinstance(value, torch.Tensor):
-        return [value.detach().cpu()]
-    if isinstance(value, (tuple, list)):
-        return [t for v in value for t in cpu_outputs(v)]
-    raise TypeError('unsupported model output in instrumentation check')
+    from runtime.workload import tensors
+    return [t.detach().cpu() for t in tensors(value)]
 
 
 def run_pass(cfg, root, model, forward, data, metadata, backend, repeat, phase,
              identity_key, registered, rank=0, barrier=lambda: None):
     import torch
-    from models.qwen3_embedding.model import selected_layers
-    modules = selected_layers(model, cfg['performance']['layers'])
+    from runtime.adapters import model_adapter, vendor_adapter
+    adapter = model_adapter(cfg)
+    backend = vendor_adapter(cfg).device_session(backend)
+    backend.require('events', 'stream') if phase == 'layer_timing' else None
+    backend.require('memory', 'peak_memory') if phase == 'layer_memory' else None
+    selected_stream = lambda session: session.stream_id()
+    modules = adapter.selected_modules(model, cfg['performance']['layers'])
     root = Path(root)
+    write_json(root/'stage.json', {'stage': phase, 'rank': rank, 'repeat': repeat})
     inventory = [{'module': name, 'type': type(module).__name__,
                   'selected_parent': max((n for n in modules if name.startswith(n + '.')),
                                          key=len, default=None),
                   'weight_storage_bytes': tensor_storage_bytes(module)} for name, module in modules.items()]
     write_json(root/'modules.json', inventory)
-    references = []
+    references, reference_steps, observed_steps = [], [], []
+    stepped=hasattr(forward,'observer')
+    def remember(context,step):
+        return {'context':{k:context[k] for k in ('phase','generation_step','active_samples','kv_length_before')},
+                'outputs':cpu_outputs(step.outputs),'tokens':step.token_ids.detach().cpu()}
     for inputs, _, _ in data:
+        saved=[]
+        if stepped:
+            forward.observer=lambda when,context,step,session: saved.append(remember(context,step)) if when=='after' else None
         references.append(cpu_outputs(forward(inputs)))
+        reference_steps.append(saved)
+    if stepped: forward.observer=None
     backend.synchronize()
     result = {'status': 'completed', 'phase': phase, 'rank': rank, 'repeat': repeat,
               'identity_key': identity_key, 'modules': inventory, 'rows': [], 'batches': [],
@@ -204,39 +214,50 @@ def run_pass(cfg, root, model, forward, data, metadata, backend, repeat, phase,
     groups = memory_groups(list(modules)) if phase == 'layer_memory' else [list(modules)]
     result['memory_groups'] = groups if phase == 'layer_memory' else None
     result['expected_batches'] = len(data) * rounds * len(groups)
-    result['expected_calls'] = len(modules) * len(data) * rounds
+    result['expected_calls'] = len(modules) * len(data) * rounds * adapter.execution_steps(cfg)
     def checked(output, index):
         actual = cpu_outputs(output)
         expected = references[index]
         if len(actual) != len(expected) or any(not torch.equal(a, b) for a, b in zip(actual, expected)):
             result['instrumentation_output_equal'] = False
             raise RuntimeError('instrumented forward changed the model output')
+        if stepped:
+            expected_steps=reference_steps[index]
+            if (len(observed_steps)!=len(expected_steps) or any(
+                    a['context']!=b['context'] or not torch.equal(a['tokens'],b['tokens'])
+                    or len(a['outputs'])!=len(b['outputs']) or any(not torch.equal(x,y) for x,y in zip(a['outputs'],b['outputs']))
+                    for a,b in zip(observed_steps,expected_steps))):
+                result['instrumentation_output_equal']=False
+                raise RuntimeError('instrumented generation changed a hidden-state step or emitted token')
+            result['instrumentation_checks']+=len(observed_steps)
+            return
         result['instrumentation_checks'] += 1
+    verify_steps=False
+    from runtime.artifacts import Store, RecordWriter, storage_root
+    row_writer = RecordWriter(Store(storage_root(root/'result.json')))
     try:
-        with (root/'layers.jsonl').open('w') as stream, (root/'batches.jsonl').open('w') as batch_stream:
+        with (root/'batches.jsonl').open('w') as batch_stream:
             for group_index, names in enumerate(groups):
-                with Scopes({n: modules[n] for n in names}, phase, backend, rank) as capture:
+                with Scopes({n: modules[n] for n in names}, phase, backend, rank, stream=selected_stream) as capture:
                     profiler, comm = nullcontext(), nullcontext()
                     warm = 0
                     if phase == 'layer_profile':
-                        if cfg['runtime']['vendor'] == 'ascend':
-                            import torch_npu
-                            api = torch_npu.profiler
-                            activities = [api.ProfilerActivity.CPU, api.ProfilerActivity.NPU]
-                            extra = {'experimental_config': api._ExperimentalConfig(profiler_level=api.ProfilerLevel.Level1)}
-                        else:
-                            api = torch.profiler
-                            activities = [api.ProfilerActivity.CPU, api.ProfilerActivity.CUDA]
-                            extra = {}
+                        from runtime.performance_profiler import profiler as make_profiler
                         warm = len(data)
-                        profiler = api.profile(activities=activities,
-                            schedule=api.schedule(wait=0, warmup=warm, active=rounds*len(data), repeat=1),
-                            on_trace_ready=api.tensorboard_trace_handler(str(root/'profiler')),
-                            record_shapes=True, **extra)
+                        profiler = make_profiler(cfg, root, warm, rounds*len(data))
                         if cfg['runtime'].get('parallelism') == 'tp':
                             from runtime.communication import Capture
-                            comm = Capture(model, root, rank)
+                            comm = Capture(model, root, rank, roles=adapter.communication_roles(model))
                     with comm as communication, profiler as prof:
+                        if hasattr(forward,'observer'):
+                            def step_observer(when,context,step,session):
+                                if when=='before':
+                                    capture.context.update(context)
+                                    capture.context['tokens']=sum(context['active_samples']) if context['phase']=='decode' else sum(metadata[capture.context.get('batch_index',0)]['valid_tokens'])
+                                    if communication is not None: communication.set_step(context)
+                                elif verify_steps:
+                                    observed_steps.append(remember(context,step))
+                            forward.observer=step_observer
                         model_events = (backend.Event(enable_timing=True), backend.Event(enable_timing=True)) if phase == 'layer_timing' else None
                         # Prime lazy event allocations outside retained measurements.
                         if model_events:
@@ -244,22 +265,24 @@ def run_pass(cfg, root, model, forward, data, metadata, backend, repeat, phase,
                             model_events[0].record()
                             output = forward(data[0][0])
                             model_events[1].record(); backend.synchronize()
-                            capture.finish(model_events, stream_id(backend)); del output
+                            capture.finish(model_events, selected_stream(backend)); del output
                         for step in range(warm + rounds*len(data)):
                             index = step % len(data)
                             cycle = (step-warm)//len(data)
                             active = step >= warm
+                            verify_steps=active and cycle==0
+                            observed_steps.clear()
                             inputs, samples, tokens = data[index]
                             context = dict(repeat=repeat, cycle=cycle, batch_index=index,
                                            samples=samples, tokens=tokens, **metadata[index],
                                            measurement_kind=phase, group_index=group_index)
                             backend.synchronize(); barrier()
-                            if active: capture.begin(context)
+                            if active: capture.begin(dict(context))
                             if communication is not None:
                                 communication.active = active
                                 communication.batch_index, communication.cycle = index, cycle
                             marker = torch.profiler.record_function('flagperf/model_batch') if prof else nullcontext()
-                            model_stream = stream_id(backend)
+                            model_stream = selected_stream(backend)
                             if model_events: model_events[0].record()
                             started = time.perf_counter_ns()
                             with marker:
@@ -272,10 +295,11 @@ def run_pass(cfg, root, model, forward, data, metadata, backend, repeat, phase,
                                 if any(r['status'] != 'completed' for r in rows):
                                     raise RuntimeError('incomplete layer invocation')
                                 batch = dict(context, rank=rank, start_ns=started, end_ns=ended, latency_ns=ended-started)
+                                from runtime.execution import generation_row
+                                batch.update(generation_row(forward, tokens))
                                 if model_events: batch['device_ns'] = round(model_events[0].elapsed_time(model_events[1])*1e6)
-                                result['rows'].extend(rows); result['batches'].append(batch)
-                                for row in rows: stream.write(json.dumps(row)+'\n')
-                                stream.flush(); batch_stream.write(json.dumps(batch)+'\n'); batch_stream.flush()
+                                row_writer.extend(rows); result['batches'].append(batch)
+                                batch_stream.write(json.dumps(batch)+'\n'); batch_stream.flush()
                                 if cycle == 0: checked(output, index)
                             del output
                             barrier()
@@ -283,15 +307,20 @@ def run_pass(cfg, root, model, forward, data, metadata, backend, repeat, phase,
                             write_json(root/'stage.json', {'stage': phase, 'group': group_index,
                                        'completed_batches': len(result['batches']), 'expected_batches': result['expected_batches']})
         result['completed_batches'] = len(result['batches'])
+        result['rows'] = row_writer.finish()
+        result['storage_version'] = 1
         observed = {row['module'] for row in result['rows']}
         if set(modules) != observed:
             raise RuntimeError('selected modules not observed: ' + ', '.join(set(modules)-observed))
         if phase == 'layer_profile' and cfg['runtime'].get('parallelism') == 'tp':
-            result['expected_model_collectives'] = len(data)*rounds*2*len(model.layers)
+            result['expected_model_collectives'] = len(data)*rounds*adapter.expected_collectives(model) if adapter.expected_collectives(model) is not None else None
         return result
     except BaseException as error:
+        result['rows'] = row_writer.finish()
         result.update(status='failed', error=str(error), failure_count=1,
                       failure_count_scope='worker failure; layer root cause not inferred',
                       completed_batches=len(result['batches']))
         write_json(root/'layer-failure.json', result)
         raise
+    finally:
+        if hasattr(forward,'observer'): forward.observer=None
