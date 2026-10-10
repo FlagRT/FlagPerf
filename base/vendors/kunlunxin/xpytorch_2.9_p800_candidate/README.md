@@ -1,218 +1,72 @@
-# P800 M1 candidate runtime
+# P800 XPYTORCH 2.9 candidate runtime
 
-## Current Base scope — 2026-10-08
+本目录保存 P800 Base/Toolkit 使用的运行时身份、依赖锁、设备绑定及检查工具。
+运行测试从 [Base 使用指南](../../../README.md) 开始；环境准备与支持范围见
+[P800 适配指南](../../../../docs/kunlunxin/README.md)。
 
-The Base implementation covers ten executable cases and five early skips. All 114 final runs pass measurement/correctness. MPI has 2/6/7/8-rank hardware evidence: 2/6-rank groups qualify strictly; seven ranks have three repeats; eight ranks are stable but include degraded card 2. Three D2H pageable/nonblocking groups have a user-accepted duration exception, recorded separately from strict qualification. Manifest candidate state is unchanged.
+## 运行时身份
 
-Use the [current Base handoff](../../../docs/p800-base-handoff.md) and [acceptance audit](../../../docs/p800-base-acceptance-20261008.md). The PR0 launcher below remains a separate API probe, not the Base benchmark runner.
-
-## Historical PR0–Day 5 observations
-
-M1 passes the bounded single-card PR0 smoke checks and is retained for further
-Base development. The unified Base `benchmark preflight` entrypoint now connects
-this profile to bounded identity, telemetry and cleanup qualification. On
-2026-09-21 the unified `benchmark run` path passed five single-card native FP32
-4096-cubed repetitions on physical card 6: median 113.057737 TFLOPS, CV 0.088744%.
-See the [Day 4 review](evidence/day4/review.md) for the exact measurement and
-correctness scope, and the [FP32 runbook](../../../benchmarks/computation-FP32/kunlunxin/P800/README.md). On 2026-09-22 physical card 5 extended this chain to FP16, BF16 and
-8192-cubed device-kernel INT8 computation plus H2D/D2H copy cases: FP16 median 258.869 TFLOPS
-(CV 0.2294%), BF16 118.970 TFLOPS (CV 0.0029%), FP32 117.049 TFLOPS (CV 0.086%) and INT8
-504.591 TOPS (CV 0.3315%), all at the Ascend 8192-cubed scale with warmup 100; BF16 is a
-device measurement but the vendor bf16 kernel runs at fp32-equivalent throughput;
-transfer modes are qualified at the toolkit-reference payload (512 MiB, matching
-`ascend-dmi -s 536870912`); every one of the eight request modes passes its stability gate at
-that payload, including the pinned non-blocking pair that a 4 GiB payload cannot run. The first INT8 round measured a
-host-CPU fallback and is retracted; the review records the evidence and the device-kernel
-replacement. See the
-[Day 5 review](evidence/day5/review.md) for the capability matrix, per-group
-statistics, retained failure evidence and open items.
-The [preflight runbook](../../../docs/p800-preflight.md) and
-[Day 3 evidence review](evidence/day3/review.md) describe the separate identity gate. Day 1 is complete for
-development: the user accepts the tested version combination, confirms that
-recipients can obtain the same image, and confirms observing execution on card 2.
-These are explicit user decisions/observations, not vendor certification or a
-registry pull/named-kernel trace performed by this tool.
-The two-rank benchmark container runs on the internal-only bridge
-`flagperf-p800-internal`, created once per host:
-
-    docker network create --internal --subnet 172.31.254.0/24 flagperf-p800-internal
-
-`--network none` leaves the namespace with loopback only, and the BKCL/FlagCX
-socket bootstrap refuses to start without an IPv4/IPv6 net card; the internal
-bridge keeps the no-egress intent and gives the runtime a usable interface. The
-host preflight does not create it: a missing network fails the run at container
-creation.
-
-`image-manifest.json` remains `validated: false`, with empty aggregate validation scope;
-the new per-case qualification is recorded separately. No strict internal IEEE
-arithmetic, hardware peak or FlagGems claim is made. Day 6/7 communication evidence is historical. Current 2–8-rank implementation and health-scoped results are documented in the current handoff above.
-
-## Targeted recheck before performance work (2026-09-20)
-
-Use physical card 6 or 7 only after a fresh authorized-window preflight. Both
-passed the normal tensor/16-sample observation and controlled timeout cleanup.
-All eight cards were checked: 0/3/4/5 were occupied and did not run workloads.
-After the user stopped their xpu-smi monitor, 2/6/7 normal and timeout postflight
-passed without follow-up recovery. These dated observations are archived evidence;
-current selection has no operator exclusions and applies the same gates to every card.
-Card 2 completed tensor/observation
-but retains historical uncorrectable ECC 8/8 and remap pending YES; avoid using
-it as a performance baseline until assessed. Transient `xpu-smi` handles can
-reject strict pre/postflight even with zero utilization. Pause user-controlled
-refresh loops during checks; never ignore handles or stop other users' processes.
-Preserve failed summaries; independent later idle/lock recovery is separate.
-
-See the [recheck evidence review](evidence/day3-recheck/review.md).
-
-## Development and evidence
-
-Development branch: `zhiyu/kunlunxin-p800`, based on `origin/dev-1.0` at
-`3e7c558b6f56e6ea5f9c8b318852d97d1517a14c`. Do not create another worktree.
-Use Conventional Commits without attribution trailers. Recipients may place the
-checkout anywhere; the launcher discovers its repository root with Git.
-
-The immutable image is
-`flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev:202608`, ID
-`sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975`.
-The lock is JSON-compatible YAML, readable with the Python standard library.
-
-Static inventory is in `evidence/static-audit.json`; portable single-card
-evidence and its review are in `evidence/day1/`. Full operational logs, including
-failed attempts, remain under ignored `base/result/p800-pr0-20260918*` directories.
-Read `qualification-record.json` for accepted conditions and scoped results.
-Maintainer questions remain as reference, not a prerequisite for development.
-
-## Observed API and mapping (2026-09-18)
-
-| Item | Observed behavior |
+| 项目 | 锁定值 |
 |---|---|
-| Host identity | xpu-smi index 2, PCI `0000:1c:00.0`, UUID `09d75c76-1b13-5686-a3d2-a9647e48f619` |
-| Actual device node | `/dev/xpu3` (major 195, minor 3), plus `/dev/xpuctrl` |
-| Container/runtime | Nonprivileged, capabilities dropped; `CUDA_VISIBLE_DEVICES=0`, device `cuda:0`, device count 1 |
-| Initialization | Explicit Conda activation, site hooks, `torch` and `torch_xmlir` imports |
-| FP32 | 32×32, CPU FP64 reference, rtol/atol 1e-4, maximum absolute error `6.6186313503191485e-06` |
-| Seed | `torch.cuda.manual_seed_all(519)`, exact repeat |
-| Memory | `torch.cuda.mem_get_info(0)`: total 103079215104 bytes; OOM exception API exists, allocation failure NOT exercised |
-| Pinned copy | 1024-byte H2D/D2H round trip matches exactly with full synchronization |
-| Event | Completes after device synchronization, but elapsed time is 0; unsuitable for Perf timing |
-| Environment | `XPU_EVENT_KL3_ENABLE` and `XPU_VISIBLE_DEVICES` unset; `USE_FLAGGEMS=0` |
+| profile | `xpytorch_2.9_p800_candidate` |
+| 镜像 | `flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev:202608` |
+| image ID | `sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975` |
+| 平台 | `linux/amd64` |
+| Python / PyTorch | `3.10.18` / `2.9.0+cu129` |
+| Conda prefix | `/root/miniconda/envs/python310_torch29_cuda`，镜像内部路径 |
+| 宿主观察基线 | Driver `5.0.21.47`、SMI Runtime `10.2`、头文件 `5.0.21` |
+| 镜像厂商元数据 | XPYTORCH `XMLIR--bc1b1dc6f-dev+2026032411`、XRE `5.13.0.0` |
+| 发布状态 | `candidate / validated:false`，聚合 validation scope 为空 |
 
-**Never equate xpu-smi index with node minor.** Query `xpu-smi -i INDEX -q`,
-match its PCI BDF against the machine inventory, then use its Minor Number and
-UUID. The framework reports a generic `GPU` name and zero PCI fields; its UUID
-must match the selected host card before allocating tensors. One mapped node is
-enumerated as logical zero. The launcher implements these checks.
+[stack.lock.yaml](stack.lock.yaml) 是 JSON 兼容的锁文件，保存所有包版本、厂商元数据和
+bootstrap 约定；[image-manifest.json](image-manifest.json) 保存镜像身份。
+锁中的 XHPC 依赖元数据声明了不同版本的 XRE/XTDK，不能据既有实测称其已获厂商一致性认证。
+新镜像或驱动应独立验证，不通过改 tag 或跳过检查复用旧结果。
 
-Native tracing showed 4 `cu_xpu_launch_async` calls for the input-only control
-and 8 for the same preparation plus 4 matmuls. Combined with matching UUID,
-opened nodes, correct output and actual Kunlun libraries, this supports P800
-execution for this FP32 smoke. It is not a named-kernel trace or proof that every
-internal operation avoids CPU execution. The raw supervisor keeps its broad
-`cpu_fallback_excluded` flag false; the scoped review is separate. PyTorch
-profiler exposed CPU events only, and combining it with native tracing caused a
-subscriber conflict. Do not enable both together.
+镜像需由使用者自行取得并核对授权，本仓库没有验证匿名 pull，也不分发其底座制品。
+镜像名含 CUDA 兼容标识不表示实际执行硬件为 NVIDIA。
 
-The worker's loaded-library paths and hashes resolve the earlier pre-import
-`ldd` uncertainty: runtime uses the Conda `xcudart/lib/*.kunlun` libraries and
-`torch_xmlir/xccl/so/libbkcl.so`. This does not establish collective support or
-explain XRE 5.13 versus XHPC metadata requiring 5.18. The user has accepted this
-observed combination; this metadata question does not block continued work.
+## 工具与职责
 
-## Portable single/multi-device selection
+| 文件 | 用途 |
+|---|---|
+| `container_bootstrap.sh` | 进入锁定 Conda 环境，隔离 site hooks 并设置受控启动路径 |
+| `verify_runtime.py` | 校验镜像、包版本、可见设备及宿主上下文，驱动隔离子进程检查 |
+| `device_mapping.py` | 从 SMI PCI/UUID/minor 到实际节点和 framework UUID 的映射 |
+| `hardware_probe.py` | 有界的微小 API/身份检查，不作为正式吞吐 benchmark |
+| `launch_qualification.py` | 底层 runtime API 探针，保留已有接口；日常身份检查优先用统一 `benchmark preflight` |
+| `qualification-record.json` | 带日期和范围的历史探针记录，不是当前全部 Base/Toolkit 的资格声明 |
 
-`device_mapping.py` implements host identity validation and the framework UUID
-join for both paths. There is no fixed card count, index-to-node table or assumed
-framework ordering. Each run queries the selected indices, validates PCI/UUID/
-minor and actual character devices, rejects duplicate identities, locks UUIDs in
-stable order, and rechecks occupancy/identity before creating the container.
-Any open device handle now rejects the launch, including transient samplers.
+历史记录中的原始 evidence/result 不随源码分发；相关路径只是来源标识，不是运行前置依赖。
+现行功能与历史结果范围以 [公开验证说明](../../../../docs/kunlunxin/validation.md) 为准。
 
-For a small multi-device check, use the same launcher with these selection flags
-(and the time/reference/result arguments shown below):
+## 设备与环境约定
 
-```bash
---cards FIRST_SMI_INDEX SECOND_SMI_INDEX --mapping-only
-```
+物理 SMI index、设备节点 minor、framework ordinal 和 rank 分开记录。
+每轮先查询所选卡的 PCI、UUID、minor 和字符设备，再获取稳定 UUID 租约，锁内重查。
+容器仅映射所选计算节点及 `/dev/xpuctrl`，分配前校验全部可见设备与宿主选择一致。
+单卡容器通常枚举为逻辑零，多卡顺序必须以 UUID join 为准，禁止写死对应关系。
 
-All visible framework UUIDs must exactly equal the selected host UUIDs before
-tensor work. `requested_rank` preserves the caller's card order;
-`logical_device` comes from observed framework enumeration. Future distributed
-workers must use the resolved logical device for their requested rank, not
-blindly use `cuda:LOCAL_RANK`.
+bootstrap 根据验证后的可见集合设置 `CUDA_VISIBLE_DEVICES`，真正 unset
+`XPU_VISIBLE_DEVICES` 与 `XPU_EVENT_KL3_ENABLE`，并固定 `USE_FLAGGEMS=0`。
+通用设备名 `GPU` 或 CUDA 兼容 API 不能替代厂商和 UUID 身份检查。
 
-Hardware verification at code `f632019c`: selecting `6,2` resolved to nodes
-`/dev/xpu5,/dev/xpu3` and logical devices `1,0`. Independent tiny FP32 and readback
-passed on both. This verifies mapping in a two-device container, not concurrent
-multi-rank communication or AllReduce. See `evidence/mapping/`.
+正式计时使用 `perf_counter`/`perf_counter_ns` 并在边界同步实际目标设备。
+早期 CUDA Event elapsed 返回零，因此不用于性能计算。微小探针与 native launch 计数只能
+支持对应测试的执行路径，不证明所有内部操作都无 CPU fallback，也不是完整 kernel trace。
 
-Card IDs, repository paths and container owner are dynamic. The Conda prefix is
-read from `stack.lock.yaml` by bootstrap and verifier; the privilege prefix is
-configurable with `--privilege-command` (default `sudo -n`, empty for direct
-Docker/fuser access). Image identity and component versions remain intentionally
-locked for reproducibility. This profile targets the recorded M1 stack; a
-different stack needs its own reviewed lock and runtime qualification.
+Base 容器使用 internal bridge；Toolkit 和底层 API 探针使用各自的无网络策略。
+不同入口的权限、预约窗口、超时和证据语义不能互换，统一入口说明见 P800 指南。
 
-## Reproduce a bounded single-card probe
+## 离线检查
 
-Obtain authorization for an idle card, then run from the repository root. The
-launcher rechecks memory, utilization and open device handles. Its advisory lock
-coordinates only instances of this tool; it is not a team-wide reservation.
-Replace all placeholders; previous card numbers and windows are not reusable
-reservations.
+从仓库根目录执行：
 
 ```bash
-sudo -v
-python3 base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/launch_qualification.py \
-  --card SMI_INDEX --profile-route \
-  --reservation-end 'END_TIME_WITH_TIMEZONE' \
-  --reservation-reference 'AUTHORIZATION_OR_RESERVATION_REFERENCE' \
-  --result-dir base/result/UNIQUE_PR0_ATTEMPT
-```
-
-The result directory must be new. The window must cover the default 360-second
-container timeout plus 30 seconds for cleanup. The launcher records the commit,
-working-tree status, script hashes, immutable image, host identity, actual Docker
-device spec, per-stage output, selected-card telemetry and postflight state.
-It removes only its own container. Keep failed attempt directories; never reset
-cards or modify another user's container. No host driver library mount is needed.
-
-The container has no network, a read-only source and root filesystem, bounded
-writable cache/tmp, and a group-writable result directory. Only the selected
-node and control node are mapped. Bootstrap explicitly unsets KL3 and native XPU
-visibility. The supervisor starts with `python -S`, checks image/binding/time
-before site hooks, and uses isolated workers with a 45-second stage timeout.
-`--profile-route` adds a seventh, input-only control stage and native API counters.
-
-Use `perf_counter` with synchronization before and after the measurement window
-for subsequent performance work. PR0 numbers include initialization/JIT costs
-and are not throughput results. No large allocations, FlagGems qualification,
-collectives, other precisions, Base end-to-end case or Ascend regression were run.
-
-## Static audit and offline checks
-
-In an owned no-device, no-network container using the manifest image, read-only
-source and /bin/bash entrypoint, the static audit command is:
-
-```bash
-bash /workspace/FlagPerf/base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/container_bootstrap.sh \
-  --static --inspect-json /workspace/FlagPerf/base/result/p800-pr0-20260918/image-inspect.json
-```
-
-Obtain the inspect JSON from a fresh host `docker image inspect`. Static audit
-uses `python -S` and does not import accelerator packages or imply hardware approval.
-
-```bash
-python3 -S -m unittest discover \
-  -s base/vendors/kunlunxin/xpytorch_2.9_p800_candidate -p 'test_*.py' -v
+python3 -S -B -m unittest discover \
+  -s base/vendors/kunlunxin/xpytorch_2.9_p800_candidate -p 'test_*.py'
 bash -n base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/container_bootstrap.sh
 ```
 
-32 offline tests cover image/package locks, binding/UUID/minor/visibility gates,
-time windows, worker failure/timeout, host identity parsing and reordered multi-device sets. They do not
-simulate hardware success or verify the entire Docker lifecycle.
-
-Team references are pinned at
-`runtime-team@e740bf78c08e1463c3920959e47dad3ed348118c`: device-context P800 API and
-conformance, memory device/copy probes, and isolated process patterns. Perf adds
-explicit-device synchronization, assertions, bounded allocation and evidence;
-legacy timing and swallowed-error behavior are not reused.
+这些检查覆盖版本锁、设备映射、UUID/minor、可见集、窗口和子进程失败等合同，
+不启动真实 benchmark，不替代 Docker 生命周期和硬件验收。

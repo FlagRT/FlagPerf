@@ -23,6 +23,8 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
+      - name: Install host planning dependencies
+        run: python3 -m pip install -r base/requirements-host.txt
       - name: Validate public CLI, records and documentation
         env:
           PYTHONDONTWRITEBYTECODE: '1'
@@ -31,3 +33,10 @@ jobs:
         env:
           PYTHONDONTWRITEBYTECODE: '1'
         run: python3 -m unittest discover -s base/toolkits/_common/ascend/A3/tests -v
+
+      - name: Validate P800 device-free contracts
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 -m unittest discover -s base/tests -p test_p800_toolkit.py -v
+          python3 -S -m unittest discover -s base/vendors/kunlunxin/xpytorch_2.9_p800_candidate -p 'test_*.py' -v

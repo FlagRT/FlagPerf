@@ -1,12 +1,5 @@
 # 验证与维护
 
-For the 2026-09-20 PR1 control-plane refactor, see the separate
-[CPU-only validation record](../../base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day2/review.md)
-and [migration guide](../../base/docs/vendor-control-plane.md). Those tests use
-an isolated CPU PyTorch environment on klx; they do not supersede the historical
-locked-runtime or hardware evidence below. Toolkit test injection follows the
-moved preflight implementation, and the legacy command remains covered.
-
 
 ## 本次验证口径
 
@@ -30,9 +23,10 @@ Operation 的数值失败、依赖阻塞和路由 partial 保留。Toolkit 和 B
 
 ## 任何克隆均可运行的检查
 
-宿主 Python 3.11 或更新版本，不需要 Torch、Docker、NPU、相邻源码仓库或私有结果目录：
+宿主 Python 3.11 或更新版本，先安装轻量配置解析依赖；不需要 Torch、Docker、NPU、相邻源码仓库或私有结果目录：
 
 ```bash
+python3 -m pip install -r base/requirements-host.txt
 python3 -m unittest discover -s tests -p test_public_distribution.py -v
 python3 -m unittest discover -s base/toolkits/_common/ascend/A3/tests -v
 ```
@@ -91,3 +85,5 @@ shape、warmup、ITERS、方向或阈值时，明确记录影响并重新验证�
 
 本次不自动改写已有提交历史，不发布镜像，也不改变 GitHub 仓库设置。
 当前公开运行环境仍受基础镜像获取权限和未发布 registry digest 限制；这项限制在环境指南明确说明。
+
+共享控制面适配后的离线回归应同时覆盖 Ascend 与 P800；P800 的范围和历史记录见 [P800 验证说明](../kunlunxin/validation.md)。

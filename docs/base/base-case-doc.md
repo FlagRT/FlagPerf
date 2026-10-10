@@ -16,10 +16,10 @@
 
 # 基础规格评测研发与适配文档
 
-> Current host/worker integration uses static vendor providers and a shared
-> four-layer case contract. See [PR1 migration](../../base/docs/vendor-control-plane.md)
-> for required capability contracts, physical selection, override semantics and
-> evidence schema compatibility. The production registry still registers only Ascend.
+当前统一入口通过显式厂商 provider 支持 Ascend 和昆仑芯 P800。
+设备绑定、四层配置合并、worker 资产校验及历史证据兼容见
+[厂商控制面与 Case 合同](../../base/docs/vendor-control-plane.md)。
+使用步骤以 [Base 指南](../../base/README.md) 为准，下面保留领域组织及适配约定。
 
 ## 评测方案简介
 
@@ -137,7 +137,7 @@
 
 面向使用者的环境准备、启动命令和结果读取见
 [`base/README.md`](../../base/README.md)；公开支持范围见
-[`Ascend 适配指南`](../ascend/README.md)。
+[`Ascend 适配指南`](../ascend/README.md) 和 [`P800 适配指南`](../kunlunxin/README.md)。
 
 统一入口要求显式选择设备，并在正式执行前进行宿主 preflight；`--dry-run` 只生成静态计划，不读取
 NPU 状态或启动 Docker：
@@ -167,11 +167,13 @@ FlagCX 是内部数据面。入口要求恰好两 rank 和哈希允许的配置�
 历史资格不是新主机或新镜像的自动认证。计划、配置、公开资格记录的哈希关联可在独立克隆中检查。
 
 Benchmark 的宿主控制流为
-`run.py -> BenchmarkExecutor -> Docker -> benchmark_worker.py -> torchrun -> Case`；Toolkit 为
-`run.py -> ToolkitExecutor -> evidence_runner.py -> DMI/npu-smi/HCCL`。两条路径共享设备选择、
+`run.py -> BenchmarkExecutor -> Docker -> benchmark_worker.py -> torchrun -> Case`；Toolkit 按厂商分派：Ascend 为
+`run.py -> ToolkitExecutor -> evidence_runner.py -> DMI/npu-smi/HCCL`，P800 为
+`run.py -> ToolkitExecutor -> p800_toolkit -> evidence_runner -> XBLAS/XRE/xpu-smi`。两条路径共享设备选择、
 `flock` lease、容器与外层证据能力，但保持参数、权限和领域结果分离。
 
-Benchmark 的 `--monitor {on,off}` 默认为 `on`。宿主只对当次 preflight 映射出的所选物理 NPU 执行
+Benchmark 的 `--monitor {on,off}` 默认为 `on`。以下监控字段描述 Ascend；P800 使用独立
+`xpu-smi` 采集器和设备绑定，字段及门禁见 [P800 验证说明](../kunlunxin/validation.md)。宿主只对当次 preflight 映射出的所选物理 NPU 执行
 低频 `npu-smi info -t usages`，worker 和 Rank 只记录 torchrun/原 Case 计时窗事件；不会调用 DMI，
 也不会为凑足监控样本自动延长或重跑 workload。显式 `off` 用于监控开销 A/B 或明确的无监控实验。
 

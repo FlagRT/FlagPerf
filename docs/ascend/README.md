@@ -41,7 +41,8 @@ Operation 是单算子输入上的 CPU 参考检查及路由取证，没有实�
 它们仍核对固定 commit、patch 和父镜像身份，不会自动更新到其他版本。
 自行重建得到不同镜像 ID 时，应作为新 runtime 验证并记录，不能直接复制旧 `validated=true`。
 
-宿主需有 Docker、可用驱动、`npu-smi` 和 `fuser`。Base 配置是 JSON 格式的 YAML 子集：
+宿主需有 Python 3.11 或更新版本、Docker、可用驱动、`npu-smi` 和 `fuser`；先执行
+`python3 -m pip install -r base/requirements-host.txt` 安装规划入口使用的 PyYAML。Base 配置是 JSON 格式的 YAML 子集：
 复制 [本机配置](../../base/configs/ascend910_cann9_local.yaml) 为自行管理的配置文件，按实际宿主填写
 `expected_device_ids`、挂载和 `toolbox_host_path`，通过 `--config` 使用。ToolBox 默认路径为
 `/usr/local/Ascend/toolbox`；自定义配置应放在版本库外。示例设备编号必须替换成已预约、空闲的设备，

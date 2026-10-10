@@ -74,6 +74,7 @@
       <th>英伟达</th>
       <th>沐曦</th>
       <th>昇腾</th>
+      <th>昆仑芯 P800</th>
     </tr>
   </thead>
   <tbody>
@@ -84,6 +85,7 @@
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/benchmarks/computation-FP64/nvidia/A100">算子或原语</a>,<br><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/toolkits/computation-FP64/nvidia/A100">厂商专用工具</a></td>
       <td>N/A</td>
       <td>N/A</td>
+      <td>N/A（当前范围未支持）</td>
     </tr>
     <tr>
       <td>2</td>
@@ -92,6 +94,7 @@
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/benchmarks/computation-FP32/nvidia/A100">算子或原语</a>,<br><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/toolkits/computation-FP32/nvidia/A100">厂商专用工具</a></td>
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/benchmarks/computation-FP32/metax">算子或原语</a></td>
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/benchmarks/computation-FP32/ascend">厂商专用工具</a></td>
+      <td><a href="base/benchmarks/computation-FP32/kunlunxin/P800/README.md">算子或原语</a>,<br><a href="base/toolkits/computation-FP32/kunlunxin/P800/README.md">厂商专用工具</a></td>
     </tr>
     <tr>
       <td>3</td>
@@ -100,6 +103,7 @@
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/benchmarks/computation-TF32/nvidia/A100">算子或原语</a>,<br><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/toolkits/computation-TF32/nvidia/A100">厂商专用工具</a></td>
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/benchmarks/computation-TF32/metax">算子或原语</a></td>
       <td>N/A</td>
+      <td>N/A（当前范围未支持）</td>
     </tr>
     <tr>
       <td>4</td>
@@ -108,6 +112,7 @@
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/benchmarks/computation-FP16/nvidia/A100">算子或原语</a>,<br><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/toolkits/computation-FP16/nvidia/A100">厂商专用工具</a></td>
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/benchmarks/computation-FP16/metax">算子或原语</a></td>
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/benchmarks/computation-FP16/ascend">厂商专用工具</a></td>
+      <td><a href="base/benchmarks/computation-FP16/kunlunxin/P800/README.md">算子或原语</a>,<br><a href="base/toolkits/computation-FP16/kunlunxin/P800/README.md">厂商专用工具</a></td>
     </tr>
     <tr>
       <td>5</td>
@@ -116,6 +121,7 @@
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/benchmarks/computation-BF16/nvidia/A100">算子或原语</a>,<br><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/toolkits/computation-BF16/nvidia/A100">厂商专用工具</a></td>
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/benchmarks/computation-BF16/metax">算子或原语</a></td>
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/benchmarks/computation-BF16/ascend">厂商专用工具</a></td>
+      <td><a href="base/benchmarks/computation-BF16/kunlunxin/P800/README.md">算子或原语</a>,<br><a href="base/toolkits/computation-BF16/kunlunxin/P800/README.md">厂商专用工具</a></td>
     </tr>
     <tr>
       <td>6</td>
@@ -124,6 +130,7 @@
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/toolkits/computation-INT8/nvidia/A100">厂商专用工具</a></td>
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/toolkits/computation-INT8/metax">厂商专用工具</a></td>
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/benchmarks/computation-INT8/ascend">厂商专用工具</a></td>
+      <td><a href="base/benchmarks/computation-INT8/kunlunxin/P800/README.md">算子或原语</a>,<br><a href="base/toolkits/computation-INT8/kunlunxin/P800/README.md">厂商专用工具</a></td>
     </tr>
     <tr>
       <td>7</td>
@@ -132,6 +139,7 @@
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/benchmarks/main_memory-bandwidth/nvidia/A100">算子或原语</a>,<br><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/toolkits/main_memory-bandwidth/nvidia/A100">厂商专用工具</a></td>
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/benchmarks/main_memory-bandwidth/metax">算子或原语</a></td>
       <td>N/A</td>
+      <td><a href="base/benchmarks/main_memory-bandwidth/kunlunxin/P800/README.md">算子或原语</a>,<br><a href="base/toolkits/main_memory-bandwidth/kunlunxin/P800/README.md">厂商专用工具</a></td>
     </tr>
     <tr>
       <td>8</td>
@@ -140,6 +148,7 @@
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/benchmarks/main_memory-capacity/nvidia/A100">算子或原语</a>,<br><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/toolkits/main_memory-capacity/nvidia/A100">厂商专用工具</a></td>
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/benchmarks/main_memory-capacity/metax">算子或原语</a></td>
       <td>N/A</td>
+      <td><a href="base/benchmarks/main_memory-capacity/kunlunxin/P800/README.md">算子或原语</a>,<br><a href="base/toolkits/main_memory-capacity/kunlunxin/P800/README.md">厂商专用工具</a></td>
     </tr>
     <tr>
       <td>9</td>
@@ -148,6 +157,7 @@
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/benchmarks/interconnect-h2d/nvidia/A100">算子或原语</a>,<br><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/toolkits/interconnect-h2d/nvidia/A100">厂商专用工具</a></td>
       <td>N/A</td>
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/toolkits/interconnect-h2d/ascend">厂商专用工具</a></td>
+      <td><a href="base/benchmarks/interconnect-h2d/kunlunxin/P800/README.md">算子或原语</a>,<br><a href="base/toolkits/interconnect-h2d/kunlunxin/P800/README.md">厂商专用工具</a></td>
     </tr>
     <tr>
       <td>10</td>
@@ -156,6 +166,7 @@
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/benchmarks/interconnect-P2P_intraserver/nvidia/A100">算子或原语</a>,<br><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/toolkits/interconnect-P2P_intraserver/nvidia/A100">厂商专用工具</a></td>
       <td>N/A</td>
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/toolkits/interconnect-P2P_intraserver/ascend">厂商专用工具</a></td>
+      <td><a href="base/benchmarks/interconnect-P2P_intraserver/kunlunxin/P800/README.md">算子或原语</a>,<br><a href="base/toolkits/interconnect-P2P_intraserver/kunlunxin/P800/README.md">厂商专用工具</a></td>
     </tr>
     <tr>
       <td>11</td>
@@ -164,6 +175,7 @@
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/benchmarks/interconnect-MPI_intraserver/nvidia/A100">算子或原语</a>,<br><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/toolkits/interconnect-MPI_intraserver/nvidia/A100">厂商专用工具</a></td>
       <td>N/A</td>
       <td>N/A</td>
+      <td><a href="base/benchmarks/interconnect-MPI_intraserver/kunlunxin/P800/README.md">算子或原语</a></td>
     </tr>
     <tr>
       <td>12</td>
@@ -172,6 +184,7 @@
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/benchmarks/interconnect-P2P_interserver/nvidia/A100">算子或原语</a>,<br><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/toolkits/interconnect-P2P_interserver/nvidia/A100">厂商专用工具</a></td>
       <td>N/A</td>
       <td>N/A</td>
+      <td>N/A（当前范围未支持）</td>
     </tr>
     <tr>
       <td>13</td>
@@ -180,9 +193,13 @@
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/benchmarks/interconnect-MPI_interserver/nvidia/A100">算子或原语</a>,<br><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/toolkits/interconnect-MPI_interserver/nvidia/A100">厂商专用工具</a></td>
       <td>N/A</td>
       <td>N/A</td>
+      <td>N/A（当前范围未支持）</td>
     </tr>
   </tbody>
-  </table>  
+  </table>
+
+P800 Base 的完整 15-case 支持矩阵及 12 项 Toolkit（含 D2H 与时延）见 [Base 使用指南](base/README.md)。
+环境及限制见 [P800 适配指南](docs/kunlunxin/README.md)；当前 runtime 为 candidate，静态支持不等于所有范围已通过硬件验证。
 
 
 算子列表：
@@ -661,7 +678,3 @@ sudo python generate/main.py
 ## 联系我们
 
 如有疑问，可以发送邮件至flagperf@baai.ac.cn，或在[issue](https://github.com/FlagOpen/FlagPerf/issues)中说明情况
-
-
-
-

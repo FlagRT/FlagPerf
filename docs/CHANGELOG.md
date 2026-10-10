@@ -1,33 +1,17 @@
 # 适配与文档变更记录
 
-## 2026-09-20 — P800 bounded Base preflight (PR2, local branch)
 
-Added case-independent P800 preflight, strict host identity/occupancy checks,
-PR0-compatible UUID leases, gated container UUID binding, bounded owned-container
-cleanup and target telemetry. Single-card identity/readback and a controlled
-120-second timeout cleanup drill passed on physical card 6. Base 154, PR0 32 and
-Toolkit 80 tests passed; Ascend planning retained 10 applicable/5 skipped cases.
-Physical card 1 synchronization timeouts remain unresolved and recorded.
-Candidate validation and performance scope are unchanged; FP32 driver/case work
-remains separate. No push or published PR.
-See [runbook](../base/docs/p800-preflight.md) and
-[Day 3 evidence](../base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day3/review.md).
+## 2026-10-10 — 昆仑芯 P800 Base 与 Toolkit 集成（待发布）
 
-## 2026-09-20 — Base vendor control plane (PR1, local branch)
+- 接入 P800 candidate runtime、显式物理选卡、PCI/UUID 绑定、监控和受限容器清理。
+- Base 覆盖 10 个可执行 Case 与 5 个提前跳过 Case；支持单卡计算/传输/内存、2–8 rank AllReduce 和双 rank P2P。
+- Toolkit 增加 12 个独立 XBLAS/XRE 测试，保留载荷、计时、正确性、监控与诊断合同。
+- D2D 总览分为设备内存读写带宽与 runtime memcpy 拷贝吞吐两行，保持原摘要格式。
+- 共享配置按 generic、vendor、chip、override 合并；旧 Ascend 入口、租约和历史报告读取继续兼容。
+- 补齐中文使用与验证文档，公开模板移除站点路径，声明宿主 PyYAML 依赖；开发记录与原始证据不随源码分发。
 
-Static vendor providers now own runtime/preflight/container/monitor policies.
-Benchmark adds physical selection with compatible Ascend leases, shared case
-asset verification and evidence-driven reports. Case overrides now merge after
-vendor/chip defaults; summary 3 and monitor 2 retain old evidence readers.
-Production support remains Ascend-only; the P800 provider is the next stage.
-
-CPU-only validation: Base 120, PR0 32, Toolkit 80 tests passed; all 15 Ascend
-cases planned (10 applicable, 5 skipped). Operation vendor dry-runs also pass;
-the public-distribution suite retains one baseline private-path failure.
-No accelerator performance workload.
-See [migration](../base/docs/vendor-control-plane.md) and
-[Day 2 evidence](../base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/day2/review.md).
-
+runtime 保持 candidate / validated:false；历史测量、稳定性和项目例外见
+[P800 验证说明](kunlunxin/validation.md)。本次文档整理与离线检查没有重跑硬件。
 
 ## 2026-09-12 — Ascend Base 与 Operation 集成（待发布）
 
