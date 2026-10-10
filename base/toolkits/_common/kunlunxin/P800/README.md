@@ -35,7 +35,7 @@ python3 base/run.py toolkit run \
 python3 base/run.py report --result-root base/result/p800-toolkit --run-id RUN_ID
 ```
 
-Card **1 is reserved for the authorized eight-card Base run only**. It remains excluded from normal Toolkit runs and all Toolkit ranges such as `0-7`; the eight-card authorization does not qualify a shared or unhealthy card. There is no default-all device selector. Check the host inventory first and prefer
+No physical card is excluded by operator policy; the former card-1 reservation ended on 2026-10-10. Every selected card still passes the same health, identity and lease gates. There is no default-all device selector. Check the host inventory first and prefer
 idle eligible cards. Busy-card permission does not override health, identity or
 lease checks, kill other processes, reset cards, or qualify a shared run as idle.
 The twelve `main.sh` entries forward their arguments to the same host facade;
@@ -51,8 +51,8 @@ dtype or a silently smaller replacement. `--privilege-command 'sudo -n'` is
 available when the host user needs an existing authorized sudo configuration. It prefixes
 Docker/fuser commands only; it does not grant the host runner access to shared
 root-owned lease files or make a user-owned mode-755 evidence directory writable
-by a capability-dropped container root. The verified path on klx is to run the
-host runner as root; preserve shared lock ownership and permissions.
+by a capability-dropped container root. The verified path on this deployment host (klx) is to run the
+host runner as root; this note and the cloud-observer paragraph below are site records, and other environments replay the same gates with their own inventory and paths. Preserve shared lock ownership and permissions.
 
 No `--case` selects all twelve cases. For two cards and five repeats the complete
 suite has 485 targets: 40 compute, 20 D2D, 10 capacity, 40 H2D bandwidth,
@@ -65,7 +65,7 @@ GiB of available storage because every raw timing sample is retained. Capacity
 remains a static query. `--p2p-payload-bytes 268435456` explicitly selects 256 MiB
 bandwidth payloads; P2P latency remains 64 KiB.
 
-If host preflight identifies a verified read-only cloud observer,
+If host preflight identifies a verified read-only cloud observer (recorded on the klx host),
 `P800_KNOWN_READONLY_MONITORS=barad_agent` enables the existing exact observer
 allowlist. Check its executable and command line first. This does not authorize
 busy devices or bypass memory, utilization, health, identity or lease checks.
