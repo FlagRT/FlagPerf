@@ -29,9 +29,7 @@
   },
   "d2d_scope": "separate runtime memcpy (1*payload) and independent XBLAS device-kernel copy (2*payload read+write); never pool these modes",
   "diagnosis_scope": "xpu-smi ECC/temperature/power and pre/post identity; vendor threshold diagnostics not-supported",
-  "excluded_physical_ids": [
-    1
-  ],
+  "excluded_physical_ids": [],
   "formal_gate": "idle resources, five independent repetitions, sufficient concurrent monitor, correctness and cleanup; shared-card runs stay exploratory",
   "latency_payload_bytes": [
     512,

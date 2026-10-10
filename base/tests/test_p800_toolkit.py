@@ -54,9 +54,10 @@ class ContractTests(unittest.TestCase):
         from toolkits._common.kunlunxin.P800.evidence_runner import target_name
         self.assertNotEqual(target_name(points[0],1),target_name(points[1],1))
 
-    def test_excluded_card_and_invalid_selection(self):
-        for ids in ([1], [0,1,2], [4,4], [], [-1], [8]):
+    def test_invalid_selection(self):
+        for ids in ([4,4], [], [-1], [8]):
             with self.assertRaises(ValueError): c.validate_selection(ids)
+        c.validate_selection([1]); c.validate_selection([0,1,2])
 
     def test_identity_join_uses_pci_not_ordinal(self):
         host=[{'host_physical_id':6,'pci_bdf':'0000:b6:00.0','uuid':'six'},
@@ -138,10 +139,12 @@ class FacadeTests(unittest.TestCase):
         self.assertEqual(expanded['settings']['p2p_payload_bytes'],268435456)
         self.assertEqual(expanded['point_counts']['interconnect-P2P_intraserver'],60)
 
-    def test_range_excludes_card_one_before_execution(self):
-        for value in ('1','0-7','0,1,4'):
-            with self.assertRaisesRegex(RuntimeError,'card 1'):
-                ToolkitExecutor().plan(self.request('--physical-device-ids',value,'--dry-run'))
+    def test_card_one_selection_allowed(self):
+        expanded=ToolkitExecutor().plan(self.request('--physical-device-ids','0,1,4','--dry-run'))
+        self.assertEqual(expanded['excluded_physical_ids'],[])
+        self.assertEqual(expanded['point_counts']['computation-FP32'],15)
+        full=ToolkitExecutor().plan(self.request('--physical-device-ids','0-7','--dry-run'))
+        self.assertEqual(full['point_counts']['computation-FP32'],40)
 
     def test_aliases_and_vendor_flags_rejected(self):
         for flags in (('--npu-ids','4'),('--physical-device-ids','4','--allow-disruptive-dmi'),

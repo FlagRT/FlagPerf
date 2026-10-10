@@ -10,14 +10,14 @@ CASES = tuple("computation-" + x for x in ("BF16", "FP16", "FP32", "INT8")) + (
 )
 LATENCY_BYTES = (512, 4096, 65536, 1048576)
 MODES = tuple(product((False, True), (False, True)))
-EXCLUDED_PHYSICAL_IDS = (1,)
+EXCLUDED_PHYSICAL_IDS = ()
 
 
 def validate_selection(ids):
     if not ids or any(type(i) is not int or i < 0 or i > 7 for i in ids) or len(set(ids)) != len(ids):
         raise ValueError("P800 requires unique physical IDs in 0..7")
     if set(ids).intersection(EXCLUDED_PHYSICAL_IDS):
-        raise ValueError("physical card 1 is excluded by the operator; ranges containing 1 are also rejected")
+        raise ValueError("physical IDs excluded by operator policy: " + ",".join(map(str, sorted(set(ids).intersection(EXCLUDED_PHYSICAL_IDS)))))
 
 
 def case_points(case, devices, payload_bytes=536870912, p2p_payload_bytes=33554432):

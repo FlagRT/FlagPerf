@@ -118,7 +118,7 @@ def add_cli_arguments(
         help=("logical Device IDs/ranges for ascend-toolkit, for example "
               "2,3,6-9"),
     )
-    selection.add_argument("--physical-device-ids", help="P800 physical card IDs/ranges; card 1 is excluded")
+    selection.add_argument("--physical-device-ids", help="P800 physical card IDs/ranges")
     from executors.p800_toolkit import add_cli_arguments as add_p800_arguments
     add_p800_arguments(parser)
     parser.add_argument(

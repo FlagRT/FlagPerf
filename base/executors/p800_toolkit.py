@@ -16,7 +16,7 @@ from executors.lifecycle import HostCommands, ManagedContainer
 from base.vendors.registry import get_provider
 from base.vendors.kunlunxin import preflight
 from base.vendors.kunlunxin.reuse import mapping
-from toolkits._common.kunlunxin.P800.contract import CASES, case_points, layer_status, validate_selection
+from toolkits._common.kunlunxin.P800.contract import CASES, EXCLUDED_PHYSICAL_IDS, case_points, layer_status, validate_selection
 from toolkits._common.kunlunxin.P800.evidence import index, now, sha256, write_json
 
 DEFAULTS = {"allow_candidate_runtime": False, "allow_busy_devices": False,
@@ -85,7 +85,7 @@ def plan(request, config_path, config):
     return {"schema_version": 1, "kind": "toolkit", "suite": "kunlunxin-p800-toolkit", "vendor": "kunlunxin", "chip": "P800",
             "mode": "static-dry-run" if request.context.dry_run else "execution", "host_config": str(config_path),
             "cases": cases, "settings": options, "selection_request": request.context.selection_request(),
-            "excluded_physical_ids": [1], "runtime_lock": runtime_lock_record(config.get("runtime_profile"), vendor="kunlunxin"),
+            "excluded_physical_ids": list(EXCLUDED_PHYSICAL_IDS), "runtime_lock": runtime_lock_record(config.get("runtime_profile"), vendor="kunlunxin"),
             "permissions": {"network": "none", "privileged_root": False, "ipc_namespace": "private", "pid_namespace": "private",
                             "read_only_root": True, "cap_drop": ["ALL"], "allow_busy_devices": options["allow_busy_devices"]},
             "monitoring": {"compute": request.compute_monitor, "data_movement": request.data_movement_monitor, "required_samples": 10},
