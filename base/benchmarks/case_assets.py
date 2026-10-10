@@ -29,7 +29,15 @@ def file_record(path: Path, base: Path, *, override: bool = False) -> dict[str, 
 
 
 def read_config(path: Path) -> dict[str, Any]:
-    import yaml
+    try:
+        import yaml
+    except ModuleNotFoundError as exc:
+        if exc.name != "yaml":
+            raise
+        raise ConfigurationError(
+            "Benchmark configuration requires PyYAML; from the repository root run "
+            "python3 -m pip install -r base/requirements-host.txt"
+        ) from exc
     try:
         value = yaml.safe_load(path.read_text(encoding="utf-8"))
     except (OSError, ValueError, yaml.YAMLError) as exc:

@@ -1,0 +1,2 @@
+# Host-side Base planning and configuration parsing; no accelerator runtime.
+PyYAML>=6.0,<7
