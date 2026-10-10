@@ -91,6 +91,14 @@ Report summaries group metrics by the complete device/mode/payload point, field
 and unit. Only repeated results within that group share a median; runtime D2D,
 kernel D2D and the two P2P directions never share an aggregate median. Reports
 display exclusions from the saved run plan or contract, not from current policy.
+For D2D, Scopy read+write (2x payload) is the measured device-memory bandwidth
+reference; XRE runtime memcpy (1x payload) is an API copy-throughput comparator,
+not an HBM bandwidth ceiling. Both include API-to-completion synchronization;
+neither establishes theoretical peak bandwidth. A roughly 11 GB/s runtime result
+and a roughly 2.1 TB/s Scopy result must not become a roughly 1.07 TB/s median.
+The counting factor alone does not explain the gap; its cause needs separate
+diagnosis. Report labels spell out both meanings and charts use separate axes
+for the two modes. Updating the renderer does not rewrite frozen reports.
 
 ## Tools, origins and measured semantics
 

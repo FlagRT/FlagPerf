@@ -21,7 +21,7 @@ STATUS_TEXT = {"passed": "通过", "partial": "部分完成", "failed": "失败"
 CASE_DISPLAY = {
     "computation-BF16": "BF16 算力", "computation-FP16": "FP16 算力",
     "computation-FP32": "FP32 算力", "computation-INT8": "INT8 算力",
-    "main_memory-bandwidth": "设备内存带宽（D2D）", "main_memory-capacity": "HBM 容量",
+    "main_memory-bandwidth": "设备内存带宽 / D2D 拷贝吞吐", "main_memory-capacity": "HBM 容量",
     "interconnect-h2d": "H2D 带宽", "interconnect-d2h": "D2H 带宽",
     "interconnect-h2d-latency": "H2D 时延", "interconnect-d2h-latency": "D2H 时延",
     "interconnect-P2P_intraserver": "单机 P2P 带宽",
@@ -39,7 +39,19 @@ FAMILIES = (
     ("p2p", "单机 P2P 覆盖所选物理卡组合",
      "P2P 覆盖所选物理卡的全部无序 pair；双向单独运行两个并发方向，以实际两份 payload/两方向完成时间计算，含线程协调开销。"),
     ("memory", "设备内存带宽与 HBM 容量",
-     "设备内存带宽回答片上 D2D 拷贝的持续带宽；容量为每卡 HBM 查询值，逐卡原值保留、不聚合。"),
+     "设备内存读写带宽与 runtime API 拷贝吞吐按不同口径分别报告；容量为每卡 HBM 查询值，逐卡原值保留、不聚合。"),
+)
+
+D2D_TITLES = {
+    "d2d-kernel": "Scopy 设备内存读写带宽（2× payload）",
+    "d2d": "XRE runtime memcpy 拷贝吞吐（1× payload）",
+}
+D2D_EXPLANATION = (
+    "D2D 两种口径：Scopy（d2d-kernel）以 2×payload/耗时统计读写合计，作为设备内存带宽的实测参考；"
+    "XRE runtime memcpy（d2d）以 1×payload/耗时统计 API 拷贝吞吐，供使用该 API 的应用参考。"
+    "两者均包含调用至完成同步的耗时；runtime memcpy 吞吐不代表 HBM 带宽上限，Scopy 也不是理论峰值。"
+    "分别按设备、载荷、模式和字段统计重复结果，禁止跨口径合并范围或中位数。"
+    "两者的差距不能仅用 1×/2×计数解释；具体瓶颈需另行诊断。"
 )
 
 
@@ -114,7 +126,7 @@ def metric_summary(metrics):
         parts.append(f"{scope} / {field}：n={len(values)}，"
                      f"{min(values):.3f}–{max(values):.3f} {unit}，"
                      f"中位数 {statistics.median(values):.3f}")
-    return "；".join(parts)
+    return "<br>".join(parts)
 
 
 def case_scope(case, value):
@@ -138,7 +150,7 @@ def label(point):
         s += " to " + str(point["destination"])
         s += " / " + point.get("direction", "single-direction")
     if point.get("mode") in ("d2d", "d2d-kernel"):
-        s += " / " + point["mode"] + (" (read+write)" if point["mode"] == "d2d-kernel" else " (payload)")
+        s += " / " + point["mode"] + (" / Scopy (2x)" if point["mode"] == "d2d-kernel" else " / XRE memcpy (1x)")
     if "bytes" in point:
         s += " / " + str(point["bytes"]) + " B"
     if point.get("mode") in ("h2d", "d2h"):
@@ -281,24 +293,35 @@ def generate(root):
          status_text(cases[c].get("status")), metric_summary(cases[c].get("metrics", [])),
          case_scope(c, cases[c]), fmt_duration(cases[c].get("duration_s")), case_limits(cases[c])]
         for c in ordered])
+    if "main_memory-bandwidth" in cases:
+        lines += ["", D2D_EXPLANATION, ""]
     missing = [c for c in CASES if c not in cases]
     if missing:
         lines += ["", f"本轮未执行（合同定义但未运行）：{'、'.join(case_display(c) for c in missing)}。"]
 
     def render_case(case, value):
         lines_ = ["", "### " + case_display(case), ""]
+        if case == "main_memory-bandwidth":
+            lines_ += [D2D_EXPLANATION, ""]
         metrics = value.get("metrics", [])
         rows = [[label(m.get("point", {})), m.get("repetition", "query"), m["field"], f"{m['value']:.8g}", m["unit"],
                  m.get("sample_count", "query"), f"{m.get('sample_cv', 0):.4%}" if m.get("sample_cv") is not None else "N/A",
                  f"[stdout](toolkit-evidence/{m['source']})"] for m in metrics]
         if rows:
             lines_ += table(["设备/模式/载荷", "重复", "字段", "值", "单位", "样本数", "样本 CV", "原始来源"], rows)
-            for unit in sorted({m["unit"] for m in metrics}):
-                chart = asset(case+"-"+unit.replace("/", "-")+".svg", bars(case_display(case),
+            chart_groups = defaultdict(list)
+            for metric in metrics:
+                # D2D API throughput and kernel read+write need independent axes.
+                mode = metric.get("point", {}).get("mode", "unknown") if case == "main_memory-bandwidth" else ""
+                chart_groups[(mode, metric["unit"])].append(metric)
+            for (mode, unit), chart_metrics in sorted(chart_groups.items()):
+                suffix = "-"+mode if mode else ""
+                title = D2D_TITLES.get(mode, case_display(case))
+                chart = asset(case+suffix+"-"+unit.replace("/", "-")+".svg", bars(title,
                     [(label(m.get("point", {}))+(" / "+m["field"].split("/")[-1] if case == "main_memory-capacity" else "")
-                      +" / R"+str(m.get("repetition", "Q")), m["value"]) for m in metrics if m["unit"] == unit], unit))
+                      +" / R"+str(m.get("repetition", "Q")), m["value"]) for m in chart_metrics], unit))
                 if chart:
-                    lines_ += ["", f"![{case}]({chart})", ""]
+                    lines_ += ["", f"![{title}]({chart})", ""]
         else:
             lines_ += ["没有有效性能指标；不得从退出码、工具存在性或邻近设备结果推断数值。", ""]
         if case == "main_memory-bandwidth":

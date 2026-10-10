@@ -296,6 +296,48 @@ class EvidenceTests(unittest.TestCase):
             self.assertIn('4.3844%',(root/'report.md').read_text())
             self.assertEqual(json.loads((root/'summary.json').read_text())['status'],'partial')
 
+    def test_public_report_entry_separates_d2d_meanings_and_chart_axes(self):
+        from generate_toolkit_report import generate_and_record as generate_public
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            metrics = []
+            for device, mode, value in ((4, 'd2d', 11), (7, 'd2d', 12),
+                                        (4, 'd2d-kernel', 2100), (7, 'd2d-kernel', 2200)):
+                for repetition in range(1, 6):
+                    metrics.append({'point': {'source': device, 'mode': mode, 'bytes': 536870912},
+                                    'field': 'bandwidth', 'unit': 'GB/s', 'value': value,
+                                    'repetition': repetition, 'source': 'raw.log'})
+            e.write_json(root/'summary.json', {'suite': 'kunlunxin-p800-toolkit',
+                                              'status': 'partial', 'run_id': 'fixture'})
+            manifest_path = root/'toolkit-evidence/manifest.json'
+            e.write_json(manifest_path, {'schema_version': 1, 'settings': {}, 'cases': {
+                'main_memory-bandwidth': {'metrics': metrics, 'targets': []}}})
+            original_manifest = manifest_path.read_bytes()
+            metadata = generate_public(root)
+            text = (root/'report.md').read_text()
+            row = next(line for line in text.splitlines()
+                       if line.startswith('| 设备内存带宽 / D2D 拷贝吞吐 |'))
+            self.assertEqual(row.count('n=5'), 4)
+            self.assertEqual(row.count('<br>'), 3)
+            self.assertNotIn('n=20', row)
+            self.assertNotIn('1056.000', row)  # median of the mixed twenty values
+            self.assertIn('中位数 11.000', row)
+            self.assertIn('中位数 2100.000', row)
+            self.assertIn('runtime memcpy 吞吐不代表 HBM 带宽上限', text)
+            self.assertIn('Scopy 也不是理论峰值', text)
+            for mode, included, excluded in (('d2d', 'XRE memcpy', 'Scopy'),
+                                              ('d2d-kernel', 'Scopy', 'XRE memcpy')):
+                name = 'report-assets/main_memory-bandwidth-' + mode + '-GB-s.svg'
+                chart = (root/name).read_text()
+                self.assertIn(included, chart)
+                self.assertNotIn(excluded, chart)
+                self.assertIn(name, text)
+                self.assertIn(name, [asset['path'] for asset in metadata['assets']])
+            self.assertFalse((root/'report-assets/main_memory-bandwidth-GB-s.svg').exists())
+            self.assertEqual(manifest_path.read_bytes(), original_manifest)
+            self.assertEqual(json.loads((root/'summary.json').read_text())['status'], 'partial')
+            self.assertEqual(e.validate_index(root), [])
+
     def test_report_regeneration_preserves_status_and_is_deterministic(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d)
