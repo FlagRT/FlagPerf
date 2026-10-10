@@ -229,34 +229,16 @@ class EvidenceTests(unittest.TestCase):
             (root/'test').write_text('changed')
             self.assertEqual(e.validate_index(root),['test'])
 
-    def test_summary_keeps_distinct_measurement_scopes_separate(self):
+    def test_case_summary_uses_original_compact_format_and_splits_d2d(self):
+        from toolkits._common.kunlunxin.P800.report import case_metric_rows
         base = {'point': {'source': 4, 'mode': 'd2d', 'bytes': 1000},
                 'field': 'bandwidth', 'unit': 'GB/s', 'value': 10}
-        variants = [
-            {'point': {**base['point'], 'mode': 'd2d-kernel'}},
-            {'point': {**base['point'], 'bytes': 2000}},
-            {'point': {**base['point'], 'source': 7}},
-            {'field': 'other-field'},
-            {'unit': 'GiB/s'},
-        ]
-        for variant in variants:
-            with self.subTest(variant=variant):
-                text = metric_summary([base, {**base, **variant, 'value': 2090}])
-                self.assertEqual(text.count('n=1'), 2)
-                self.assertNotIn('1050.000', text)
-                self.assertIn('10.000', text)
-                self.assertIn('2090.000', text)
-        repeated = metric_summary([base, {**base, 'value': 12}])
-        self.assertIn('n=2', repeated)
-        self.assertIn('11.000', repeated)
-        pair = {**base, 'point': {'source': 4, 'destination': 7, 'mode': 'p2p',
-                                 'direction': 'single-direction', 'bytes': 1000}}
-        for change in ({'mode': 'p2p-bidir', 'direction': 'bidirectional'}, {'destination': 6}):
-            text = metric_summary([pair, {**pair, 'point': {**pair['point'], **change}, 'value': 2090}])
-            self.assertEqual(text.count('n=1'), 2)
-        for change in ({'pinned': True}, {'async': True}):
-            copy = {**base, 'point': {**base['point'], 'mode': 'h2d', 'pinned': False, 'async': False}}
-            self.assertEqual(metric_summary([copy, {**copy, 'point': {**copy['point'], **change}}]).count('n=1'), 2)
+        kernel = {**base, 'point': {**base['point'], 'mode': 'd2d-kernel'}, 'value': 2090}
+        rows = case_metric_rows('main_memory-bandwidth', {'metrics': [base, kernel]})
+        self.assertEqual([title for title, _ in rows], ['D2D设备内存读写带宽', 'XRE runtime memcpy 拷贝吞吐'])
+        self.assertEqual(metric_summary(rows[0][1]), 'n=1，2090.000–2090.000 GB/s，中位数 2090.000')
+        self.assertEqual(metric_summary(rows[1][1]), 'n=1，10.000–10.000 GB/s，中位数 10.000')
+        self.assertEqual(metric_summary([base, {**base, 'value': 12}]), 'n=2，10.000–12.000 GB/s，中位数 11.000')
 
     def test_report_uses_recorded_policy_and_does_not_infer_missing_policy(self):
         for source, excluded in (('resolved-plan.json', []), ('resolved-plan.json', [1]),
@@ -296,9 +278,8 @@ class EvidenceTests(unittest.TestCase):
             self.assertIn('4.3844%',(root/'report.md').read_text())
             self.assertEqual(json.loads((root/'summary.json').read_text())['status'],'partial')
 
-    def test_public_report_only_labels_d2d_summary_and_preserves_other_columns(self):
+    def test_public_report_splits_only_case_names_and_restores_original_summary(self):
         from generate_toolkit_report import generate_and_record as generate_public
-        from toolkits._common.kunlunxin.P800.report import case_metric_summary
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
             metrics = []
@@ -321,28 +302,21 @@ class EvidenceTests(unittest.TestCase):
             generate_public(root)
             text = (root/'report.md').read_text()
             self.assertIn('| Case | 测量 | 监控 | 诊断 | 最终 | 指标摘要 | 范围 | 耗时 | 限制/错误 |', text)
-            rows = [line for line in text.splitlines() if line.startswith('| 设备内存带宽（D2D） |')]
-            self.assertEqual(len(rows), 1)
-            columns = [column.strip() for column in rows[0].strip('|').split('|')]
-            self.assertEqual(columns[:5], ['设备内存带宽（D2D）', '通过', '部分完成', '通过', '部分完成'])
-            self.assertEqual(columns[6:], ['20 个厂商执行目标', '5 min 27.0 s', '—'])
-            kernel, runtime = columns[5].split('<br>')
-            self.assertTrue(kernel.startswith('D2D设备内存读写带宽：'))
-            self.assertTrue(runtime.startswith('XRE runtime memcpy 拷贝吞吐：'))
-            for part in (kernel, runtime):
-                self.assertEqual(part.count('n=5'), 2)
-                self.assertNotIn('1056.000', part)
-            self.assertIn('中位数 11.000', runtime)
-            self.assertNotIn('2100.000', runtime)
-            self.assertIn('中位数 2100.000', kernel)
-            self.assertNotIn('11.000', kernel)
+            rows = [line for line in text.splitlines() if line.startswith(('| D2D设备内存读写带宽 |', '| XRE runtime memcpy 拷贝吞吐 |'))]
+            self.assertEqual(len(rows), 2)
+            for row in rows:
+                columns = [column.strip() for column in row.strip('|').split('|')]
+                self.assertEqual(columns[1:5], ['通过', '部分完成', '通过', '部分完成'])
+                self.assertEqual(columns[6:], ['20 个厂商执行目标', '5 min 27.0 s', '—'])
+            self.assertIn('| n=10，2100.000–2200.000 GB/s，中位数 2150.000 |', rows[0])
+            self.assertIn('| n=10，11.000–12.000 GB/s，中位数 11.500 |', rows[1])
+            self.assertNotIn('<br>', ''.join(rows))
+            self.assertNotIn('card 4', ''.join(rows))
             self.assertNotIn('Case / 测量模式', text)
             self.assertNotIn('#### Scopy', text)
             self.assertNotIn('D2D 按模式分行展示', text)
             self.assertNotIn('进入的是 runtime 的通用复制路径', text)
             self.assertTrue((root/'report-assets/main_memory-bandwidth-GB-s.svg').is_file())
-            for name in ('computation-FP32', 'interconnect-h2d', 'interconnect-P2P_intraserver'):
-                self.assertEqual(case_metric_summary(name, metrics), metric_summary(metrics))
             self.assertEqual(manifest_path.read_bytes(), original_manifest)
             self.assertEqual(json.loads((root/'summary.json').read_text())['status'], 'partial')
             self.assertEqual(e.validate_index(root), [])

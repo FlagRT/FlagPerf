@@ -87,22 +87,21 @@ Historical failed runs remain failed after the fix. With the default 1 MiB chunk
 all four latency payloads use a single submission. Reducing the chunk can split
 larger pinned async latency payloads and changes the measured protocol.
 
-Report summaries group metrics by the complete device/mode/payload point, field
-and unit. Only repeated results within that group share a median; runtime D2D,
-kernel D2D and the two P2P directions never share an aggregate median. Reports
-display exclusions from the saved run plan or contract, not from current policy.
+The overview keeps its original compact n/min/max/median format. D2D is split
+into two Case rows so runtime memcpy and kernel read+write never share a median.
+Detailed repeat groups retain device/mode/payload, field and unit separation.
+Reports display exclusions from the saved run plan or contract, not current policy.
 For D2D, Scopy read+write (2x payload) is the measured device-memory bandwidth
 reference; XRE runtime memcpy (1x payload) is an API copy-throughput comparator,
 not an HBM bandwidth ceiling. Both include API-to-completion synchronization;
 neither establishes theoretical peak bandwidth. A roughly 11 GB/s runtime result
 and a roughly 2.1 TB/s Scopy result must not become a roughly 1.07 TB/s median.
 The counting factor alone does not explain the gap; its cause needs separate
-diagnosis. The report keeps its original Case row, columns, detail sections and
-chart format. Only the D2D metric-summary cell labels the two scopes separately:
-"D2D设备内存读写带宽" (Scopy, read+write 2x) and
-"XRE runtime memcpy 拷贝吞吐" (payload 1x). Grouping remains by device, payload,
-field and unit. Status, target count, duration and errors retain the original
-whole-Case values; no independent mode-level verdict or duration is inferred.
+diagnosis. The Case column contains two rows: "D2D设备内存读写带宽"
+(Scopy, read+write 2x) and "XRE runtime memcpy 拷贝吞吐" (payload 1x).
+Other columns, other Cases, detail sections and charts retain their original
+format. Both rows repeat the original whole-Case status, target count, duration
+and errors; do not add those counts or durations together.
 Updating the renderer does not rewrite frozen reports.
 
 `xpu_memcpy` enters the runtime's general copy path. The runtime implementation

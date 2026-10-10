@@ -98,38 +98,30 @@ def family_of(case):
 def metric_summary(metrics):
     if not metrics:
         return "无有效指标"
-    # Pool only repetitions of the same device/mode/payload/field contract.
-    groups = defaultdict(list)
+    by_unit = defaultdict(list)
     for entry in metrics:
-        point = json.dumps(entry.get("point", {}), sort_keys=True)
-        groups[(point, entry["field"], entry["unit"])].append(float(entry["value"]))
+        by_unit[entry["unit"]].append(float(entry["value"]))
     parts = []
-    for (encoded_point, field, unit), values in sorted(groups.items()):
-        point = json.loads(encoded_point)
-        scope = label(point)
-        if point.get("mode") not in (None, "d2d", "d2d-kernel"):
-            scope += " / " + point["mode"]
-        if point.get("dtype"):
-            scope += " / " + point["dtype"]
-        parts.append(f"{scope} / {field}：n={len(values)}，"
-                     f"{min(values):.3f}–{max(values):.3f} {unit}，"
+    for unit, values in sorted(by_unit.items()):
+        parts.append(f"n={len(values)}，{min(values):.3f}–{max(values):.3f} {unit}，"
                      f"中位数 {statistics.median(values):.3f}")
     return "；".join(parts)
 
 
-def case_metric_summary(case, metrics):
+def case_metric_rows(case, value):
+    metrics = value.get("metrics", [])
     if case != "main_memory-bandwidth":
-        return metric_summary(metrics)
-    parts = []
+        return [(case_display(case), metrics)]
+    rows = []
     for mode, title in (("d2d-kernel", "D2D设备内存读写带宽"),
                         ("d2d", "XRE runtime memcpy 拷贝吞吐")):
         selected = [m for m in metrics if m.get("point", {}).get("mode") == mode]
         if selected:
-            parts.append(title + "：" + metric_summary(selected))
+            rows.append((title, selected))
     other = [m for m in metrics if m.get("point", {}).get("mode") not in ("d2d", "d2d-kernel")]
-    if other:
-        parts.append(metric_summary(other))
-    return "<br>".join(parts) if parts else "无有效指标"
+    if other or not rows:
+        rows.append((case_display(case), other))
+    return rows
 
 
 def case_scope(case, value):
@@ -291,11 +283,11 @@ def generate(root):
               "最终状态综合三者，三者均通过才为通过。"
               "P800 工具链不提供 DMI 式阈值判定，诊断层采用合规校验语义（2026-10-08 口径，见方法与指标口径）。", ""]
     lines += table(["Case", "测量", "监控", "诊断", "最终", "指标摘要", "范围", "耗时", "限制/错误"], [
-        [case_display(c), status_text(cases[c].get("measurement_status")),
+        [title, status_text(cases[c].get("measurement_status")),
          status_text(cases[c].get("monitoring_status")), status_text(cases[c].get("diagnosis_status")),
-         status_text(cases[c].get("status")), case_metric_summary(c, cases[c].get("metrics", [])),
+         status_text(cases[c].get("status")), metric_summary(metrics),
          case_scope(c, cases[c]), fmt_duration(cases[c].get("duration_s")), case_limits(cases[c])]
-        for c in ordered])
+        for c in ordered for title, metrics in case_metric_rows(c, cases[c])])
     missing = [c for c in CASES if c not in cases]
     if missing:
         lines += ["", f"本轮未执行（合同定义但未运行）：{'、'.join(case_display(c) for c in missing)}。"]
