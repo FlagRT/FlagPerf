@@ -296,8 +296,9 @@ class EvidenceTests(unittest.TestCase):
             self.assertIn('4.3844%',(root/'report.md').read_text())
             self.assertEqual(json.loads((root/'summary.json').read_text())['status'],'partial')
 
-    def test_public_report_entry_separates_d2d_meanings_and_chart_axes(self):
+    def test_public_report_only_labels_d2d_summary_and_preserves_other_columns(self):
         from generate_toolkit_report import generate_and_record as generate_public
+        from toolkits._common.kunlunxin.P800.report import case_metric_summary
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
             metrics = []
@@ -307,46 +308,41 @@ class EvidenceTests(unittest.TestCase):
                     metrics.append({'point': {'source': device, 'mode': mode, 'bytes': 536870912},
                                     'field': 'bandwidth', 'unit': 'GB/s', 'value': value,
                                     'repetition': repetition, 'source': 'raw.log'})
+            case = {'metrics': metrics, 'targets': [{'point': m['point'], 'target': str(i)}
+                                                   for i, m in enumerate(metrics)],
+                    'measurement_status': 'passed', 'monitoring_status': 'partial',
+                    'diagnosis_status': 'passed', 'status': 'partial', 'duration_s': 327}
             e.write_json(root/'summary.json', {'suite': 'kunlunxin-p800-toolkit',
                                               'status': 'partial', 'run_id': 'fixture'})
             manifest_path = root/'toolkit-evidence/manifest.json'
-            targets = [{'point': m['point'], 'target': str(i)} for i, m in enumerate(metrics)]
             e.write_json(manifest_path, {'schema_version': 1, 'settings': {}, 'cases': {
-                'main_memory-bandwidth': {'metrics': metrics, 'targets': targets,
-                                          'status': 'partial', 'duration_s': 327}}})
+                'main_memory-bandwidth': case}})
             original_manifest = manifest_path.read_bytes()
-            metadata = generate_public(root)
+            generate_public(root)
             text = (root/'report.md').read_text()
-            runtime_row = next(line for line in text.splitlines() if line.startswith('| XRE runtime memcpy'))
-            kernel_row = next(line for line in text.splitlines() if line.startswith('| Scopy 设备内存'))
-            for row in (runtime_row, kernel_row):
-                self.assertEqual(row.count('n=5'), 2)
-                self.assertEqual(row.count('<br>'), 1)
-                self.assertIn('10 个厂商执行目标', row)
-                self.assertIn('部分完成', row)
-                self.assertNotIn('n=20', row)
-                self.assertNotIn('1056.000', row)  # median of the mixed twenty values
-            self.assertIn('中位数 11.000', runtime_row)
-            self.assertNotIn('2100.000', runtime_row)
-            self.assertIn('中位数 2100.000', kernel_row)
-            self.assertNotIn('11.000', kernel_row)
-            self.assertEqual(text.count('5 min 27.0 s'), 1)
-            self.assertIn('两行的状态均引用同一 main_memory-bandwidth Case', text)
-            self.assertIn('#### Scopy 设备内存读写带宽', text)
-            self.assertIn('#### XRE runtime memcpy 拷贝吞吐', text)
-            self.assertIn('`xpu_memcpy` 进入的是 runtime 的通用复制路径', text)
-            self.assertIn('Scopy 则进入数学库的向量复制实现', text)
-            self.assertIn('runtime memcpy 吞吐不代表 HBM 带宽上限', text)
-            self.assertIn('Scopy 也不是理论峰值', text)
-            for mode, included, excluded in (('d2d', 'XRE memcpy', 'Scopy'),
-                                              ('d2d-kernel', 'Scopy', 'XRE memcpy')):
-                name = 'report-assets/main_memory-bandwidth-' + mode + '-GB-s.svg'
-                chart = (root/name).read_text()
-                self.assertIn(included, chart)
-                self.assertNotIn(excluded, chart)
-                self.assertIn(name, text)
-                self.assertIn(name, [asset['path'] for asset in metadata['assets']])
-            self.assertFalse((root/'report-assets/main_memory-bandwidth-GB-s.svg').exists())
+            self.assertIn('| Case | 测量 | 监控 | 诊断 | 最终 | 指标摘要 | 范围 | 耗时 | 限制/错误 |', text)
+            rows = [line for line in text.splitlines() if line.startswith('| 设备内存带宽（D2D） |')]
+            self.assertEqual(len(rows), 1)
+            columns = [column.strip() for column in rows[0].strip('|').split('|')]
+            self.assertEqual(columns[:5], ['设备内存带宽（D2D）', '通过', '部分完成', '通过', '部分完成'])
+            self.assertEqual(columns[6:], ['20 个厂商执行目标', '5 min 27.0 s', '—'])
+            kernel, runtime = columns[5].split('<br>')
+            self.assertTrue(kernel.startswith('D2D设备内存读写带宽：'))
+            self.assertTrue(runtime.startswith('XRE runtime memcpy 拷贝吞吐：'))
+            for part in (kernel, runtime):
+                self.assertEqual(part.count('n=5'), 2)
+                self.assertNotIn('1056.000', part)
+            self.assertIn('中位数 11.000', runtime)
+            self.assertNotIn('2100.000', runtime)
+            self.assertIn('中位数 2100.000', kernel)
+            self.assertNotIn('11.000', kernel)
+            self.assertNotIn('Case / 测量模式', text)
+            self.assertNotIn('#### Scopy', text)
+            self.assertNotIn('D2D 按模式分行展示', text)
+            self.assertNotIn('进入的是 runtime 的通用复制路径', text)
+            self.assertTrue((root/'report-assets/main_memory-bandwidth-GB-s.svg').is_file())
+            for name in ('computation-FP32', 'interconnect-h2d', 'interconnect-P2P_intraserver'):
+                self.assertEqual(case_metric_summary(name, metrics), metric_summary(metrics))
             self.assertEqual(manifest_path.read_bytes(), original_manifest)
             self.assertEqual(json.loads((root/'summary.json').read_text())['status'], 'partial')
             self.assertEqual(e.validate_index(root), [])

@@ -97,9 +97,12 @@ not an HBM bandwidth ceiling. Both include API-to-completion synchronization;
 neither establishes theoretical peak bandwidth. A roughly 11 GB/s runtime result
 and a roughly 2.1 TB/s Scopy result must not become a roughly 1.07 TB/s median.
 The counting factor alone does not explain the gap; its cause needs separate
-diagnosis. The two modes have separate summary rows, detail sections and chart
-axes. Both rows retain the saved Case-level verdict, not independent diagnoses;
-each row counts its own targets and the combined Case duration appears only once.
+diagnosis. The report keeps its original Case row, columns, detail sections and
+chart format. Only the D2D metric-summary cell labels the two scopes separately:
+"D2D设备内存读写带宽" (Scopy, read+write 2x) and
+"XRE runtime memcpy 拷贝吞吐" (payload 1x). Grouping remains by device, payload,
+field and unit. Status, target count, duration and errors retain the original
+whole-Case values; no independent mode-level verdict or duration is inferred.
 Updating the renderer does not rewrite frozen reports.
 
 `xpu_memcpy` enters the runtime's general copy path. The runtime implementation
