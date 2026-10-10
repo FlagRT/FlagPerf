@@ -1,8 +1,0 @@
-stdout
-...stderr
-..........................................................................WARNING: toolkit Markdown report generation failed: fixture report failure
-...
-----------------------------------------------------------------------
-Ran 80 tests in 0.159s
-
-OK

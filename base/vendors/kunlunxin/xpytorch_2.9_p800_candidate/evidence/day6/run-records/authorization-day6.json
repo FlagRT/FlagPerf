@@ -1,7 +1,0 @@
-{
-  "reference": "user-20260924-rerun-day6-unfinished-two-card-official-gate",
-  "authorized_scope": "Official re-run of the unfinished Day 6 two-card intraserver communication gate (AllReduce + P2P correctness, curve, formulas, timeout drills) on the idle pair smi4,smi7; single-card reruns only if a card is idle; verified read-only xpu-smi observers",
-  "created_at": "2026-09-24T01:36:51.655885+00:00",
-  "reservation_end": "2026-09-24T09:36:51.655885+00:00",
-  "interpretation": "Bounded execution budget under the user instruction of 2026-09-24; not a reservation with other users"
-}

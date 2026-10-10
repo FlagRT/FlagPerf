@@ -1,4 +1,0 @@
-PAYLOAD_BYTES: 4194304
-ITERS: 10
-MODE: diagnostic
-FAULT_MODE: cpu-wait

@@ -1,9 +1,0 @@
-{
-  "name": "attempt03-bootstrap",
-  "command": [
-    "bash",
-    "-n",
-    "base/vendors/kunlunxin/runtime_bootstrap.sh"
-  ],
-  "exit_code": 0
-}
