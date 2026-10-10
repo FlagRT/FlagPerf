@@ -26,7 +26,7 @@ DEFAULTS = {"allow_candidate_runtime": False, "allow_busy_devices": False,
 
 
 def add_cli_arguments(parser):
-    parser.add_argument("--allow-candidate-runtime", action="store_true", help="P800: run the locked candidate without promoting it")
+    parser.add_argument("--allow-candidate-runtime", action="store_true", help="P800: opt in to an unvalidated candidate; unnecessary for a validated runtime")
     parser.add_argument("--allow-busy-devices", action="store_true", help="P800: explicitly permit exploratory use of occupied selected cards")
     parser.add_argument("--privilege-command", default="", help="P800 host Docker/fuser prefix: empty or 'sudo -n'")
     parser.add_argument("--samples", type=int, default=50, help="P800 native timing samples per point (minimum 25 for all cases)")
@@ -360,7 +360,8 @@ def execute(request, static):
                                  "error": summary.get("error", "container did not produce evidence")} for c in static["cases"]},
                    "status": "failed", "measurement_status": "not-run", "monitoring_status": "not-run", "diagnosis_status": "not-run"})
     summary.update(finished_at=now(), qualification_status="exploratory" if host and host["foreign_occupancy_observed"] else "not-qualified",
-                   release_stage="candidate", validated=False)
+                   **{key: static["runtime_lock"]["image_manifest"].get(key) for key in
+                      ("release_stage", "validated", "validation_status", "validation_scope")})
     write_json(root / "summary.json", summary)
     from generate_toolkit_report import generate_and_record
     try:

@@ -1,6 +1,6 @@
 # 昆仑芯 P800 显存容量属性实验
 
-本 Case 通过锁定 candidate 镜像内的 `xpu-smi` 读取显存容量属性，不通过逐步分配
+本 Case 通过锁定镜像内的 `xpu-smi` 读取显存容量属性，不通过逐步分配
 寻找 OOM 边界，因此不是"当前可分配显存"测试。
 
 ## 测量协议
@@ -19,7 +19,7 @@
 
 ```bash
 bash base/toolkits/main_memory-capacity/kunlunxin/P800/main.sh \
-  --physical-device-ids 4 --allow-candidate-runtime \
+  --physical-device-ids 4 \
   --repeat 5 \
   --result-root base/result/p800-toolkit
 ```
@@ -34,7 +34,7 @@ PCI 映射。监控默认开启；容量按静态查询口径观察，不涉及�
 窗口，也不生成伪造的利用率 timeline；诊断层结合查询身份校验与宿主健康观测。
 三层全部通过 Case 才为 passed。重复指独立查询进程；报告详情按设备和字段分别统计五次
 查询值，CV > 5% 标记 unstable，均值为零时 CV 为 N/A。稳定性结论不改变测量状态，
-也不晋级 candidate runtime。`--samples`、`--warmup` 和 `--minimum-seconds` 不控制静态查询；
+也不扩大 runtime 的验证范围。`--samples`、`--warmup` 和 `--minimum-seconds` 不控制静态查询；
 Toolkit 容量查询不需要 Base 分配/OOM case 的 `--allow-high-risk-case`。
 
 完整契约、工具来源、证据目录与权限路径见 [Toolkit 总说明](../../../_common/kunlunxin/P800/README.md)。

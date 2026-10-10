@@ -2,7 +2,7 @@
 """Isolated PR0 probes. Run only inside an explicitly selected-device container.
 
 The supervisor starts with -S. Only gated worker processes enable site hooks.
-This produces candidate evidence, never a validated runtime or a benchmark.
+This produces probe evidence, never promotes the runtime or qualifies a benchmark.
 """
 import argparse
 import faulthandler
@@ -242,10 +242,10 @@ def main():
     parser.add_argument('--stage', choices=STAGES+('route_control', 'mapping'), help=argparse.SUPPRESS)
     args = parser.parse_args()
     require(sys.flags.no_site, 'use bootstrap or python -S; gate must precede site hooks')
-    require(args.allow_candidate, 'explicit --allow-candidate required')
     require(1 <= args.timeout <= 120, 'timeout must be 1..120 seconds')
-    validate_manifest(json.loads((ROOT/'image-manifest.json').read_text()),
-                      json.loads(args.inspect_json.read_text()))
+    manifest = json.loads((ROOT/'image-manifest.json').read_text())
+    validate_manifest(manifest, json.loads(args.inspect_json.read_text()))
+    require(manifest['validated'] is True or args.allow_candidate, 'explicit --allow-candidate required')
     binding = json.loads(args.binding_json.read_text())
     end = validate_binding(binding, os.environ, [str(p) for p in Path('/dev').glob('xpu*')])
     require(binding['schema_version'] == 1 or args.mapping_only, 'multi-device binding requires mapping-only mode')
@@ -255,7 +255,8 @@ def main():
         return 0
     # A fresh directory prevents stale successful results from masking a failed worker.
     args.output_dir.mkdir(parents=True, exist_ok=False)
-    summary = {'validated': False, 'release_stage': 'candidate', 'binding': binding,
+    summary = {'validated': manifest['validated'], 'release_stage': manifest['release_stage'],
+               'qualification_status': 'not-qualified', 'binding': binding,
                'image_id': json.loads((ROOT/'image-manifest.json').read_text())['image_id'],
                'stages': [], 'status': 'running',
                'scope': 'selected-device mapping smoke' if args.mapping_only else 'native single-card PR0 probes',

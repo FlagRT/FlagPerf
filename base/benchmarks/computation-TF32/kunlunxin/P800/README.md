@@ -17,7 +17,7 @@
 python3 base/run.py benchmark run \
   --config base/configs/kunlunxin_p800_xpytorch29.yaml \
   --case computation-TF32:P800 --physical-device-ids 4 \
-  --nproc-per-node 1 --timeout 300 --allow-candidate-runtime --dry-run
+  --nproc-per-node 1 --timeout 300 --dry-run
 ```
 
 真实执行的环境、权限、预约窗口和全新结果目录参数见 [Base 使用指南](../../../../README.md)。

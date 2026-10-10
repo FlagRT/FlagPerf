@@ -8,7 +8,7 @@ import sys
 import tempfile
 from types import SimpleNamespace
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 BASE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(BASE))
@@ -126,6 +126,34 @@ class ContractTests(unittest.TestCase):
 class FacadeTests(unittest.TestCase):
     def request(self, *flags):
         return ToolkitRunRequest.from_namespace(parse_args(['--config',str(BASE/'configs/kunlunxin_p800_xpytorch29.yaml'),*flags]))
+
+    def test_release_snapshot_does_not_qualify_a_failed_run(self):
+        from executors import p800_toolkit as executor
+        from executors.common import ConfigurationError
+        with tempfile.TemporaryDirectory() as temp:
+            request = self.request('--physical-device-ids', '4', '--result-root', temp)
+            plan = ToolkitExecutor().plan(request)
+            commands = Mock()
+            commands.checked.side_effect = RuntimeError('fixture image inspection failed')
+            container = Mock()
+            container.cleanup.return_value = {'status': 'passed', 'container_absent': True}
+            with patch.object(executor, 'HostCommands', return_value=commands), \
+                 patch.object(executor, 'ManagedContainer', return_value=container), \
+                 patch('subprocess.run', side_effect=AssertionError('hardware access forbidden')):
+                self.assertEqual(executor.execute(request, plan), 1)
+            summary = json.loads(next(Path(temp).glob('*/summary.json')).read_text())
+            self.assertTrue(summary['validated'])
+            self.assertEqual(summary['release_stage'], 'validated')
+            self.assertEqual(summary['validation_status'], 'partial')
+            self.assertEqual(summary['qualification_status'], 'not-qualified')
+            self.assertEqual(summary['measurement_status'], 'not-run')
+            self.assertEqual(summary['status'], 'failed')
+            commands.checked.assert_called_once()
+            container.create.assert_not_called()
+            plan['runtime_lock']['image_manifest']['validated'] = False
+            with patch.object(Path, 'mkdir', side_effect=AssertionError('write before gate')):
+                with self.assertRaisesRegex(ConfigurationError, 'candidate'):
+                    executor.execute(request, plan)
 
     def test_static_plan_never_calls_subprocess(self):
         with patch('subprocess.run',side_effect=AssertionError('dry-run touched system')):

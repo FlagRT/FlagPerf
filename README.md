@@ -199,7 +199,7 @@
   </table>
 
 P800 Base 的完整 15-case 支持矩阵及 12 项 Toolkit（含 D2H 与时延）见 [Base 使用指南](base/README.md)。
-环境及限制见 [P800 适配指南](docs/kunlunxin/README.md)；当前 runtime 为 candidate，静态支持不等于所有范围已通过硬件验证。
+环境及限制见 [P800 适配指南](docs/kunlunxin/README.md)；runtime 已在[声明范围](docs/kunlunxin/validation.md)内设为 `validated:true / partial`，静态支持不等于所有范围已通过硬件验证。
 
 
 算子列表：

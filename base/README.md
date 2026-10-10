@@ -27,7 +27,7 @@ Ascend 和昆仑芯 P800 共用宿主入口，分别使用自己的运行时、�
 | `report` | 从已有证据重建 Markdown/SVG | 从已有证据重建 Markdown/SVG |
 
 Benchmark 使用框架算子，Toolkit 使用厂商工具或原生 API；同名 Case 的输出不能未经
-协议对齐直接比较。P800 runtime 保持 `candidate / validated:false`，真实执行需要显式允许。
+协议对齐直接比较。P800 runtime 为 `validated:true / partial`，验证范围见 [P800 验证说明](../docs/kunlunxin/validation.md)。
 环境与公开验证范围分别见 [Ascend 指南](../docs/ascend/README.md) 和
 [P800 指南](../docs/kunlunxin/README.md)，适配机制见 [厂商控制面](docs/vendor-control-plane.md)。
 
@@ -101,7 +101,7 @@ python3 base/run.py toolkit run \
 python3 base/run.py benchmark run \
   --config base/configs/kunlunxin_p800_xpytorch29.yaml \
   --case computation-FP16:P800 --physical-device-ids 4 \
-  --nproc-per-node 1 --timeout 300 --allow-candidate-runtime --dry-run
+  --nproc-per-node 1 --timeout 300 --dry-run
 ```
 
 真实运行前，为本轮设置 `P800_CARD`（已预约空闲物理卡）、`P800_END`（带时区的 ISO-8601
@@ -115,7 +115,7 @@ python3 base/run.py benchmark run \
   --case computation-FP16:P800 \
   --case-config base/benchmarks/computation-FP16/kunlunxin/P800/case_config.smoke.yaml \
   --physical-device-ids "${P800_CARD:?set authorized physical ID}" --nproc-per-node 1 \
-  --timeout 300 --monitor off --allow-candidate-runtime --privilege-command 'sudo -n' \
+  --timeout 300 --monitor off --privilege-command 'sudo -n' \
   --reservation-end "${P800_END:?set future ISO-8601 time with timezone}" \
   --reservation-reference "${P800_AUTH:?set authorization reference}" \
   --result-dir "base/result/${P800_RUN:?set unique run name}"
@@ -188,6 +188,8 @@ cp base/configs/ascend910_cann9_local.yaml /tmp/flagperf-host.json
 [`xpytorch_2.9_p800_candidate`](vendors/kunlunxin/xpytorch_2.9_p800_candidate/README.md)。
 镜像内 Python 3.10.18、PyTorch 2.9.0+cu129、XPYTORCH/torch_xmlir 及 XRE/XBLAS
 版本由锁文件固定；宿主 Python 与容器 Python 分开准备。
+当前锁定镜像不需要 `--allow-candidate-runtime`；该选项保留给未验证的候选版本。
+profile 名中的 `_candidate` 是兼容既有配置的历史标识，发布状态以 manifest 为准。
 镜像身份、取得方式与依赖差异见 [P800 环境指南](../docs/kunlunxin/README.md#环境准备)。
 
 宿主需要 Git、Docker、可用驱动、`xpu-smi` 和 `fuser`。配置采用 JSON 语法，
@@ -243,7 +245,7 @@ FlagPerf 进程，仍需事先预约资源。监控采样按实际选中的设�
 ```bash
 python3 base/run.py toolkit run \
   --config base/configs/kunlunxin_p800_xpytorch29.yaml \
-  --physical-device-ids 4,7 --allow-candidate-runtime --dry-run
+  --physical-device-ids 4,7 --dry-run
 ```
 
 P800 两个领域都要求 `--physical-device-ids`；不接受 Ascend 别名。
@@ -520,7 +522,7 @@ P800 使用独立原生 XBLAS/XRE 程序；选择与权限不同于上面的 Asc
 ```bash
 python3 base/run.py toolkit run \
   --config base/configs/kunlunxin_p800_xpytorch29.yaml \
-  --physical-device-ids 4,7 --allow-candidate-runtime \
+  --physical-device-ids 4,7 \
   --repeat 5 --samples 50 --warmup 5 --minimum-seconds 15 \
   --compute-monitor on --data-movement-monitor on \
   --command-timeout 600 --timeout 14400 \
@@ -591,7 +593,7 @@ P2P 选择 `interconnect-P2P_intraserver:P800`、恰好两卡。
 python3 base/run.py benchmark run \
   --config base/configs/kunlunxin_p800_xpytorch29.yaml \
   --case interconnect-MPI_intraserver:P800 --physical-device-ids 4,7 \
-  --nproc-per-node 2 --timeout 300 --allow-candidate-runtime --dry-run
+  --nproc-per-node 2 --timeout 300 --dry-run
 ```
 
 真实执行还需加入快速上手中的 `--reservation-end`、`--reservation-reference`、
@@ -705,7 +707,7 @@ python3 base/qualification.py RUN1 RUN2 RUN3 RUN4 RUN5 --output NEW_STATS.json
 | inventory / Device 映射不一致 | Ascend 用 `npu-smi info -m` 核对逻辑清单；P800 核对物理 inventory 与 PCI/UUID；本轮选卡用 CLI，不通过删减 `expected_device_ids` 实现 |
 | Device 被占用或 `already leased` | 等待持有资源的任务结束或选择其他已预约空闲设备；不要删除锁文件绕过正在运行的任务 |
 | rank 数不匹配 | 删除手写的 `--nproc-per-node`，采用默认值，或使它等于所选逻辑 Device 数 |
-| 缺少权限开关 | Ascend 按需使用 privileged/DMI 开关；P800 使用 candidate 授权与自身宿主权限；容量 Benchmark 另需 `--allow-high-risk-case` |
+| 缺少权限开关 | Ascend 按需使用 privileged/DMI 开关；P800 需要自身宿主权限，未验证的候选镜像另需 candidate 授权；容量 Benchmark 另需 `--allow-high-risk-case` |
 | OOM 或 timeout | 查看 Case 原始日志；普通 Case 可减小数据规模/迭代数；容量 Case 的 OOM 探测有专门语义，不应与普通测试混淆 |
 | 有性能数值但总体 `partial` | 检查独立的监控、测量及报告状态；数值存在不代表所请求证据已完整 |
 | P2P 提示 runtime/config 不满足 | Ascend 使用第 5.1 节专用通信配置与 allowlist；P800 使用第 5.2 节 profile；均需恰好两个 rank |

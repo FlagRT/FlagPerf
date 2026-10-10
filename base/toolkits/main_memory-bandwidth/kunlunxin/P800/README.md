@@ -44,7 +44,7 @@ Scopy 则进入数学库的向量复制实现。这类设备内核通常可以�
 
 ```bash
 bash base/toolkits/main_memory-bandwidth/kunlunxin/P800/main.sh \
-  --physical-device-ids 4 --allow-candidate-runtime \
+  --physical-device-ids 4 \
   --repeat 5 --samples 50 --warmup 5 --minimum-seconds 15 \
   --result-root base/result/p800-toolkit
 ```
@@ -57,6 +57,6 @@ PCI 映射。监控默认开启并与计时同窗。
 监控层要求每个计时目标至少 10 个完整位于原生计时窗口内的有效样本，
 不足保持 partial；诊断层为厂商工具链合规校验。三层全部通过 Case 才为 passed。重复指独立进程；
 五次重复组 CV（ddof=1）与进程内 CV（ddof=0）分开计算，报告以 CV > 5% 标记 unstable；稳定性结论不改变
-测量状态，也不晋级 candidate runtime。
+测量状态，也不扩大 runtime 的验证范围。
 
 完整契约、工具来源、证据目录与权限路径见 [Toolkit 总说明](../../../_common/kunlunxin/P800/README.md)。

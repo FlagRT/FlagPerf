@@ -14,18 +14,18 @@ P800 Toolkit 提供 12 项独立 C++ microbenchmark，直接调用锁定镜像�
 # 只生成计划，不启动设备负载。
 python3 base/run.py toolkit run \
   --config base/configs/kunlunxin_p800_xpytorch29.yaml \
-  --physical-device-ids 4,7 --allow-candidate-runtime --dry-run
+  --physical-device-ids 4,7 --dry-run
 
 # 独立容量查询，不分配显存或探测 OOM。
 python3 base/run.py toolkit run \
   --config base/configs/kunlunxin_p800_xpytorch29.yaml \
-  --physical-device-ids 4 --case main_memory-capacity --allow-candidate-runtime \
+  --physical-device-ids 4 --case main_memory-capacity \
   --result-root base/result/p800-toolkit
 
 # 双卡全量：显式选择 15 秒计时下限及五次独立进程。
 python3 base/run.py toolkit run \
   --config base/configs/kunlunxin_p800_xpytorch29.yaml \
-  --physical-device-ids 4,7 --allow-candidate-runtime \
+  --physical-device-ids 4,7 \
   --repeat 5 --samples 50 --warmup 5 --minimum-seconds 15 \
   --compute-monitor on --data-movement-monitor on \
   --command-timeout 600 --timeout 14400 \
@@ -51,7 +51,7 @@ Toolkit 容量是静态查询，不需要 Benchmark 分配/OOM Case 的 `--allow
 | `--config` | 必须选择 P800 host profile | 默认通用入口为 Ascend，P800 示例始终显式指定配置 |
 | `--physical-device-ids` | 必填，唯一的 0–7 ID，支持逗号和范围 | 不接受 Ascend 的 NPU/logical Device 别名 |
 | `--case` | 全部 12 项 | 选择唯一、已注册 Case；P2P 至少两卡才有 pair 测量点 |
-| `--allow-candidate-runtime` | 默认关闭 | 真实运行 candidate 的显式允许，不晋级 runtime |
+| `--allow-candidate-runtime` | 默认关闭 | 仅未验证候选版本需要；当前 validated 镜像无需此选项，不改变发布声明 |
 | `--repeat` | 5；1–20 | 每个逻辑点独立启动的进程次数 |
 | `--samples` | 50；25–100000 | 每个计时进程最低样本数，全 Case 参数校验下限为 25 |
 | `--warmup` | 5；0–100 | 每进程计时外预热次数 |
@@ -126,7 +126,7 @@ Scopy 按 2×payload 计费，作为设备内存读写带宽的实测参考；ru
 ### pinned async 协议与保留失败
 
 默认 pinned 内存通过 `posix_memalign` + `xpu_host_register` 准备，`alloc` 显式选择
-`xpu_host_alloc`。该 candidate 在两条路径上均出现过 512 MiB pinned async 整块提交 `-999`。
+`xpu_host_alloc`。该锁定镜像在两条路径上均出现过 512 MiB pinned async 整块提交 `-999`。
 默认以 1 MiB 分块：512 MiB 逻辑载荷提交 512 次，最后统一 stream wait；整个过程计时，
 包含提交开销。指标保存 `async_chunk_bytes`、`api_calls_per_sample` 和 `submission_scope`。
 
@@ -172,7 +172,10 @@ stdout/stderr、samples 和 metrics。
 
 总览中其他 Case 的简短摘要仅用于概览，性能比较应使用相同设备/载荷/模式的详情重复组。
 报告读取该 run 保存的排除策略，缺失则标“未记录”，不借当前配置推断历史。
-Toolkit 结果保持 not-qualified，共享资源结果为 exploratory，均不会自动晋级 candidate。
+Toolkit 结果保持 not-qualified，共享资源结果为 exploratory；这些是单次运行的资格状态。
+当前锁定 runtime 为 `validated:true / partial`，只覆盖[公开验证说明](../../../../../docs/kunlunxin/validation.md)
+中的范围，不表示所有重复组稳定。新 summary 中的 runtime 字段取自本次计划锁定的 manifest；
+历史结果保留原值，单次运行不会扩大 runtime 的验证范围。
 
 ```bash
 python3 base/run.py report --result-root base/result/p800-toolkit --run-id RUN_ID

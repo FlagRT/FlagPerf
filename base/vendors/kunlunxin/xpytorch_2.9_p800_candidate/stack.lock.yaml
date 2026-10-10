@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "release_stage": "candidate",
-  "validated": false,
+  "release_stage": "validated",
+  "validated": true,
   "image_manifest": "image-manifest.json",
   "conda_prefix": "/root/miniconda/envs/python310_torch29_cuda",
   "python": "3.10.18",
@@ -28,7 +28,11 @@
     "XTDK": "3.6.0.1",
     "XRE": "5.13.0.0",
     "XCCL": "20260209_9",
-    "xhpc_declared_dependency": {"XTDK": "3.6.27.1", "XRE": "5.18.0.0", "XCCL": "3.0.7.4"}
+    "xhpc_declared_dependency": {
+      "XTDK": "3.6.27.1",
+      "XRE": "5.18.0.0",
+      "XCCL": "3.0.7.4"
+    }
   },
   "host_observed": {
     "os": "Ubuntu 24.04.2 LTS",
@@ -40,7 +44,10 @@
   "observed_single_card_api": {
     "device": "cuda:0",
     "cuda_visible_devices": "0",
-    "unset_environment": ["XPU_EVENT_KL3_ENABLE", "XPU_VISIBLE_DEVICES"],
+    "unset_environment": [
+      "XPU_EVENT_KL3_ENABLE",
+      "XPU_VISIBLE_DEVICES"
+    ],
     "USE_FLAGGEMS": "0",
     "mapping": "xpu-smi indices -> queried PCI/UUID/minor -> exact nodes -> observed framework UUID join; single-device logical zero",
     "framework_identity": "UUID; name is GPU and PCI properties are zero",
@@ -49,5 +56,15 @@
     "loaded_library_evidence": "evidence/day1/fp32.json",
     "scope": "single-card native FP32 32x32 smoke; selected two-device identity and tiny FP32; not formal benchmark qualification"
   },
-  "qualification": "qualification-record.json"
+  "qualification": "qualification-record.json",
+  "validation_status": "partial",
+  "validation_scope": [
+    "Base native XPYTORCH: FP32/FP16/BF16/INT8, H2D/D2H, device copy bandwidth and bounded allocation capacity; fixed-image 2026-10-08 records and documented exceptions.",
+    "Base single-host communication: two/six-rank AllReduce and two-rank P2P; no all-topology or healthy eight-card qualification claim.",
+    "Toolkit native XRE/XBLAS: 12 cases on physical devices 4,7, five independent processes per point, 2026-10-09; 81 stable and 20 unstable repeat groups, run remains not-qualified."
+  ],
+  "validation_record": {
+    "path": "validation-summary.json",
+    "sha256": "a2a7b9633f892394317c5b3e548efced5e67d1c7e3c0a5fa87918f5e2aa0c7c3"
+  }
 }

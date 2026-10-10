@@ -1,0 +1,45 @@
+{
+  "_description": "Minimal sanitized offline test input from the original candidate audit. Not distributed raw evidence, live inspection or runtime qualification.",
+  "image_inspect": {
+    "Id": "sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975",
+    "Architecture": "amd64",
+    "RepoDigests": [
+      "flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev@sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975"
+    ]
+  },
+  "static_audit": {
+    "python": "3.10.18",
+    "packages": {
+      "torch": {
+        "version": "2.9.0+cu129"
+      },
+      "torch-xray": {
+        "version": "2.0.4"
+      },
+      "xmlir": {
+        "version": "1.0.0.1"
+      },
+      "xtorch-ops": {
+        "version": "0.1.2640+9bc36a18"
+      },
+      "torch-plugin": {
+        "version": "0.1.0"
+      },
+      "flag-gems": {
+        "version": "5.3.4.post1.dev12+g4fa5805b8"
+      },
+      "flagtree": {
+        "version": "0.6.1+xpu3.6"
+      },
+      "flagcx": {
+        "version": "0.10.0"
+      },
+      "vllm": {
+        "version": "0.13.0"
+      },
+      "vllm-plugin-fl": {
+        "version": "0.1.0"
+      }
+    }
+  }
+}

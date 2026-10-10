@@ -53,7 +53,10 @@ python3 base/run.py --help
 | image ID | `sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975` |
 | 平台 | `linux/amd64` |
 | 容器 Python / PyTorch | `3.10.18` / `2.9.0+cu129`；XPYTORCH、`torch_xmlir` |
-| 运行状态 | `candidate`、`validated:false`、空聚合 validation scope |
+| 运行状态 | `validated:true`、`release_stage:validated`、`validation_status:partial`，仅覆盖声明范围 |
+
+profile 的 `_candidate` 后缀为兼容旧配置保留，不表示当前发布状态。
+当前镜像无需 `--allow-candidate-runtime`；既有实测、限制及范围见 [验证说明](validation.md)。
 
 依赖版本和运行路径以 [runtime 目录](../../base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/README.md)
 中的锁文件为准。宿主 Driver、SMI Runtime、头文件版本及镜像 XRE 元数据来自不同层，不能混作同一个版本号。
@@ -94,11 +97,11 @@ docker network create --internal flagperf-p800-internal
 python3 base/run.py benchmark run \
   --config base/configs/kunlunxin_p800_xpytorch29.yaml \
   --case computation-FP32:P800 --physical-device-ids 4 \
-  --nproc-per-node 1 --timeout 300 --allow-candidate-runtime --dry-run
+  --nproc-per-node 1 --timeout 300 --dry-run
 
 python3 base/run.py toolkit run \
   --config base/configs/kunlunxin_p800_xpytorch29.yaml \
-  --physical-device-ids 4,7 --allow-candidate-runtime --dry-run
+  --physical-device-ids 4,7 --dry-run
 ```
 
 真实执行还需符合 [Base 指南](../../base/README.md) 中的资源预约、权限及输出目录条件。
@@ -107,14 +110,14 @@ Toolkit 的原生 API、载荷、计时、参数和证据格式见 [Toolkit 使�
 ## 身份预检查与故障处理
 
 `benchmark preflight` 的默认 `--probe-mode identity` 仅检查单卡身份、微小张量回读和观察窗口。
-真实运行需要 candidate opt-in、带时区的资源窗口和全新结果目录；timeout 为 30–180 秒。
+真实运行需要带时区的资源窗口和全新结果目录；当前锁定镜像无需 candidate opt-in；timeout 为 30–180 秒。
 与性能测试一样，资源截止时间需要覆盖执行预算和至少 30 秒清理，并在启动前重新检查。
 
 ```bash
 python3 base/run.py benchmark preflight \
   --config base/configs/kunlunxin_p800_xpytorch29.yaml \
   --physical-device-ids 4 --probe-mode identity \
-  --allow-candidate-runtime --timeout 120 --dry-run
+  --timeout 120 --dry-run
 ```
 
 故障演练 `--probe-mode timeout-check` 会故意触发宿主 watchdog，实验状态应保持失败；
@@ -122,7 +125,7 @@ python3 base/run.py benchmark preflight \
 
 | 现象 | 检查与处理 |
 |---|---|
-| 参数或 runtime 不匹配 | 检查厂商配置、`:P800` selector、candidate 授权和镜像锁 |
+| 参数或 runtime 不匹配 | 检查厂商配置、`:P800` selector和镜像锁；未验证候选版本另需 candidate 授权 |
 | 设备占用或句柄拒绝 | 重新选择已预约空闲设备；只读监控例外必须显式配置并通过进程身份校验 |
 | `already leased` | 等待持有者释放；不删除共享锁或修改其权限 |
 | 容器无法写入结果 | 检查宿主创建目录的所有者、权限与容器身份，不能只给 Docker 增加 sudo 前缀 |

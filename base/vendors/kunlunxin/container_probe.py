@@ -28,11 +28,15 @@ def save(path, value):
     temporary.replace(path)
 
 
-def validate_context(context, environ, nodes, now=None):
+def validate_context(context, environ, nodes, now=None, manifest=None):
     require(context.get('schema_version') == 1 and context.get('kind') in ('benchmark-preflight', 'benchmark'), 'invalid host context')
     benchmark = context['kind'] == 'benchmark'
     require(context.get('probe_mode') in (('performance',) if benchmark else ('identity', 'timeout-check', *('capability-' + precision for precision in PRECISIONS))), 'invalid probe mode')
-    require(context.get('allow_candidate_runtime') is True, 'candidate runtime needs explicit authorization')
+    if manifest is None:
+        manifest = json.loads((runtime.ROOT / 'image-manifest.json').read_text())
+    runtime.validate_manifest(manifest)
+    if manifest['validated'] is not True:
+        require(context.get('allow_candidate_runtime') is True, 'candidate runtime needs explicit authorization')
     require(isinstance(context.get('run_id'), str) and context['run_id'], 'missing run identity')
     require(type(context.get('timeout')) is int and 30 <= context['timeout'] <= (600 if benchmark else 180), 'invalid probe timeout')
     if benchmark:

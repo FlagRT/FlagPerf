@@ -76,13 +76,14 @@ class PublicDistributionTests(unittest.TestCase):
                         'base/configs/kunlunxin_p800_xpytorch29.yaml', '--case', case + ':P800',
                         '--physical-device-ids', '4,7' if case in communication else '4',
                         '--nproc-per-node', '2' if case in communication else '1',
-                        '--timeout', '300', '--allow-candidate-runtime', '--dry-run']
+                        '--timeout', '300', '--dry-run']
                 if case == 'main_memory-capacity':
                     argv += ['--allow-high-risk-case']
                 plan = run(*argv)
                 self.assertEqual(plan['vendor'], 'kunlunxin')
                 self.assertEqual(plan['applicability']['status'], 'skipped' if case in skipped else 'applicable')
-                self.assertFalse(plan['runtime_lock']['image_manifest']['validated'])
+                self.assertTrue(plan['runtime_lock']['image_manifest']['validated'])
+                self.assertEqual(plan['runtime_lock']['image_manifest']['validation_status'], 'partial')
 
     def test_p800_toolkit_documented_entries_and_complete_plans(self):
         readmes = sorted(p for p in (ROOT / 'base/toolkits').glob('*/kunlunxin/P800/README.md')
@@ -101,7 +102,8 @@ class PublicDistributionTests(unittest.TestCase):
                 plan = json.loads(proc.stdout)
                 self.assertEqual(plan['cases'], [case])
                 self.assertEqual(plan['excluded_physical_ids'], [])
-                self.assertTrue(plan['settings']['allow_candidate_runtime'])
+                self.assertFalse(plan['settings']['allow_candidate_runtime'])
+                self.assertTrue(plan['runtime_lock']['image_manifest']['validated'])
         for devices, logical, targets in (('4,7', 97, 485), ('0-7', 460, 2300)):
             plan = run('base/run.py', 'toolkit', 'run', '--config',
                        'base/configs/kunlunxin_p800_xpytorch29.yaml',

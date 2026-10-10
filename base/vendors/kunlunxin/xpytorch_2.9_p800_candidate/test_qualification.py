@@ -1,4 +1,4 @@
-"""Offline checks; no torch imports and no accelerator access."""
+"""Offline checks using public fixtures; no private evidence or accelerator access."""
 from datetime import datetime, timezone
 import copy
 import json
@@ -7,6 +7,9 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
+import hashlib
+import verify_runtime
 
 from hardware_probe import validate_binding, run_isolated
 from verify_runtime import ROOT, validate_manifest, validate_packages
@@ -16,7 +19,8 @@ from launch_qualification import selected_device, normalize_bdf, device_identity
 class QualificationTests(unittest.TestCase):
     def setUp(self):
         self.manifest = json.loads((ROOT/'image-manifest.json').read_text())
-        self.inspect = json.loads((ROOT/'evidence/image-inspect.json').read_text())
+        self.fixture = json.loads((ROOT/'fixtures/runtime-offline.json').read_text())
+        self.inspect = self.fixture['image_inspect']
         self.binding = dict(schema_version=1, host_physical_id=3, container_node='/dev/xpu3',
                             host_device_node='/dev/xpu3', device_minor=3, cuda_visible_devices='0',
                             uuid='09d75c76-1b13-5686-a3d2-a9647e48f619',
@@ -38,12 +42,37 @@ class QualificationTests(unittest.TestCase):
             validate_manifest(self.manifest, observed)
 
     def test_no_self_promotion(self):
-        self.manifest['validated'] = True
-        with self.assertRaises(ValueError):
-            validate_manifest(self.manifest, self.inspect)
+        for updates in ({'release_stage': 'candidate'}, {'validated': False},
+                        {'validation_record': {}}, {'validation_scope': []}):
+            with self.subTest(updates=updates), self.assertRaises(ValueError):
+                validate_manifest(dict(self.manifest, **updates), self.inspect)
 
-    def test_static_evidence_matches_lock(self):
-        audit = json.loads((ROOT/'evidence/static-audit.json').read_text())['audit']
+    def test_candidate_manifest_remains_supported(self):
+        candidate = dict(self.manifest, release_stage='candidate', validated=False,
+                         validation_scope=[])
+        validate_manifest(candidate, self.inspect)
+
+    def test_scoped_validation_rejects_tampering_and_wrong_image(self):
+        raw = (ROOT/'validation-summary.json').read_bytes()
+        with tempfile.TemporaryDirectory() as temp, patch.object(verify_runtime, 'ROOT', Path(temp)):
+            path = Path(temp)/'validation-summary.json'
+            path.write_bytes(raw + b' ')
+            with self.assertRaisesRegex(ValueError, 'hash mismatch'):
+                validate_manifest(self.manifest)
+            record = json.loads(raw)
+            record['image_id'] = 'sha256:' + '0'*64
+            path.write_text(json.dumps(record))
+            self.manifest['validation_record']['sha256'] = hashlib.sha256(path.read_bytes()).hexdigest()
+            with self.assertRaisesRegex(ValueError, 'mismatch: image_id'):
+                validate_manifest(self.manifest)
+
+    def test_release_lock_agrees_with_manifest(self):
+        lock = json.loads((ROOT/'stack.lock.yaml').read_text())
+        for field in ('validated', 'release_stage', 'validation_status', 'validation_scope', 'validation_record'):
+            self.assertEqual(lock[field], self.manifest[field], field)
+
+    def test_static_package_fixture_matches_lock(self):
+        audit = self.fixture['static_audit']
         lock = json.loads((ROOT/'stack.lock.yaml').read_text())
         self.assertEqual(validate_packages(audit['packages'], lock['packages']), [])
         self.assertEqual(audit['python'], lock['python'])

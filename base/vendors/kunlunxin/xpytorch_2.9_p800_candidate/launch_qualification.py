@@ -86,7 +86,8 @@ def main():
     name = 'flagperf-p800-pr0-'+uuid.uuid4().hex[:12]
     cid = None
     summary = {'status': 'preflight', 'container_name': name, 'cards': cards,
-               'validated': False, 'reservation_end': args.reservation_end}
+               'validated': manifest['validated'], 'release_stage': manifest['release_stage'],
+               'qualification_status': 'not-qualified', 'reservation_end': args.reservation_end}
     lock_fds = []
     try:
         inspected = json.loads(checked(docker+['image', 'inspect', manifest['image_id']]))[0]

@@ -1,7 +1,20 @@
 # P800 验证与维护
 
-本文区分可执行范围、历史实测和当前代码的离线检查。runtime 保持
-`candidate / validated:false`；单项测量通过不自动晋级镜像，也不构成理论峰值或全卡健康认证。
+本文区分可执行范围、历史实测和当前代码的离线检查。2026-10-10 经维护者确认，锁定
+runtime 设为 `release_stage:validated`、`validated:true`、`validation_status:partial`，
+采用与 Ascend 相同的“已验证但范围受限”约定。此声明基于下文 2026-10-08 Base 与
+2026-10-09 Toolkit 的既有记录，本次发布调整没有重新运行硬件测试。
+
+机器可读的 [验证摘要](../../base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/validation-summary.json)
+绑定 image ID、范围和来源摘要哈希；manifest 记录该摘要的 SHA-256，运行时拒绝哈希或身份不符。
+它是可分发的维护者验证声明，原始证据仍单独保存。profile 中的 `_candidate` 为兼容旧配置
+保留；当前镜像无需 `--allow-candidate-runtime`，未验证的新镜像仍须显式授权。
+
+`validated:true` 不表示所有重复组稳定、所有卡健康、所有维度完成验证或镜像可匿名拉取。
+范围限于 native Base 的计算/传输/内存、已记录的单机通信组合，以及双卡 12-case Toolkit；
+不覆盖 Training、Inference、Operation、FlagGems、跨机和未实现精度。新镜像不能沿用该声明。
+单次运行仍独立判定：Toolkit 的 `not-qualified`、`exploratory` 和 `unstable` 不因发布状态改变。
+历史报告及 `qualification-record.json` 保留当时的 candidate 状态，不回写为新验证结果。
 
 ## 无设备检查
 
@@ -24,6 +37,8 @@ python3 -B -m unittest discover -s base/tests -p 'test_*.py'
 ```
 
 缺少依赖、跳过测试或仅通过 dry-run 时，不得记录为完整回归通过。
+runtime 单元测试使用公开的最小测试夹具，不读取私有 evidence。Base 全量套件另有一项
+可选的历史 smoke 报告重放测试；未提供该归档时会明确 skipped，应单独记录，不能计入通过数。
 公开分发检查覆盖两家厂商入口、P800 Case 合同及文档链接；也应在不含 `.git`、
 原始结果、私有 evidence 和相邻项目的源码导出目录运行。正式测量还需 Git 工作副本记录源码身份。
 
@@ -69,7 +84,7 @@ Base 的三组 D2H pageable/nonblocking 历史组存在不足 15 秒的窗口，
 
 - Base 早期 `torch._int_mm` 走主机 CPU 的 INT8 数字已撤回。现行使用
   `xtorch_ops.gemm_I8_I8_bf16_nt`，INT8 输入、显式缩放、BF16 输出。
-- Toolkit INT8 的 GemmEx-int32 与 Lt 路线在该 candidate 失败；现行使用
+- Toolkit INT8 的 GemmEx-int32 与 Lt 路线在该锁定镜像上失败；现行使用
   XBLAS `fc_fusion`、INT8 输入和 FP32 输出，不把失败路线改写为成功。
 - Toolkit 的 512 MiB pinned async 整块提交在 register/alloc 两种 API 下均曾返回 `-999`；
   默认按 1 MiB 分块后统一等待。Base 的整块 `Tensor.copy_` 是另一协议，历史 4 GiB

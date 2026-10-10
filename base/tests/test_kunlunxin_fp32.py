@@ -164,7 +164,7 @@ class ContractTests(unittest.TestCase):
             with self.assertRaises(ConfigurationError):
                 verify_worker_assets(BASE, root / 'control/case-assets.json', 'computation-FP32:P800', 'kunlunxin')
 
-    def test_candidate_and_window_gate_before_commands(self):
+    def test_reservation_gate_before_commands_for_validated_runtime(self):
         with tempfile.TemporaryDirectory() as temp, patch('subprocess.run', side_effect=AssertionError('device access')):
             with self.assertRaises(ConfigurationError):
                 BenchmarkExecutor().execute(request('--result-dir', str(Path(temp) / 'run')))
@@ -280,7 +280,7 @@ class BoundedIntegrationTests(unittest.TestCase):
             leases, calls = [], []
             config = resolve_case_assets(BASE, 'computation-FP32:P800', 'kunlunxin', CASE / 'case_config.smoke.yaml')['merged_config']
             request_value = replace(request('--case-config', str(CASE / 'case_config.smoke.yaml')),
-                result_dir=root, allow_candidate_runtime=True, monitor='on' if mode == 'partial' else 'off',
+                result_dir=root, allow_candidate_runtime=False, monitor='on' if mode == 'partial' else 'off',
                 reservation_end=(datetime.now(timezone.utc) + timedelta(minutes=10)).isoformat(),
                 reservation_reference='synthetic CPU test')
             def lease_factory(ids, **kwargs):

@@ -118,7 +118,7 @@ class BenchmarkWorkload:
 
     def initial_summary(self, static):
         scope = (f'{self.ranks}-card native XPYTORCH ' if self.request.case in DAY6_CASES else 'single-card native XPYTORCH ') \
-            + self.request.case + '; candidate runtime'
+            + self.request.case + '; locked runtime; see declared validation scope'
         return {'schema_version': 3, 'kind': 'benchmark', 'case': self.request.case,
                 'vendor_display_name': self.provider.display_name, 'static_plan': static,
                 'execution_status': 'running', 'measurement_status': 'not_started',

@@ -189,8 +189,10 @@ class ContractTests(unittest.TestCase):
 
     def test_candidate_and_reservation_gate_before_files_or_commands(self):
         with patch.object(Path, 'mkdir', side_effect=AssertionError('write forbidden')), patch('subprocess.run', side_effect=AssertionError('subprocess forbidden')):
-            with self.assertRaises(ConfigurationError):
-                executor.execute(arguments())
+            static, config, provider = executor.plan(arguments())
+            static['runtime_lock']['image_manifest']['validated'] = False
+            with self.assertRaisesRegex(ConfigurationError, 'candidate runtime'):
+                executor.execute(arguments(), prepared=(static, config, provider))
             with self.assertRaises(ConfigurationError):
                 executor.execute(arguments(allow_candidate_runtime=True))
 
@@ -221,10 +223,17 @@ class ContractTests(unittest.TestCase):
         env = {'CUDA_VISIBLE_DEVICES': '0', 'USE_FLAGGEMS': '0'}
         nodes = ['/dev/xpu3', '/dev/xpuctrl']
         self.assertEqual(validate_context(ctx, env, nodes), [DEVICE])
+        self.assertEqual(validate_context(dict(ctx, allow_candidate_runtime=False), env, nodes), [DEVICE])
+        from base.vendors.kunlunxin.reuse import runtime
+        manifest = json.loads((runtime.ROOT/'image-manifest.json').read_text())
+        candidate = dict(manifest, validated=False, release_stage='candidate', validation_scope=[])
+        with self.assertRaisesRegex(RuntimeError, 'explicit authorization'):
+            validate_context(dict(ctx, allow_candidate_runtime=False), env, nodes, manifest=candidate)
+        self.assertEqual(validate_context(ctx, env, nodes, manifest=candidate), [DEVICE])
         zulu = dict(ctx, reservation_start=ctx['reservation_start'].replace('+00:00', 'Z'))
         self.assertEqual(validate_context(zulu, env, nodes), [DEVICE])
         for c, e, n in ((ctx, env, nodes+['/dev/xpu4']), (ctx, dict(env, CUDA_VISIBLE_DEVICES='1'), nodes),
-                        (ctx, dict(env, XPU_EVENT_KL3_ENABLE='1'), nodes), (dict(ctx, allow_candidate_runtime=False), env, nodes),
+                        (ctx, dict(env, XPU_EVENT_KL3_ENABLE='1'), nodes),
                         (dict(ctx, reservation_end=(now-timedelta(seconds=1)).isoformat()), env, nodes)):
             with self.assertRaises(RuntimeError):
                 validate_context(c, e, n)
@@ -451,7 +460,7 @@ class ExecutionTests(unittest.TestCase):
             commands=Mock(); commands.checked.side_effect=lambda argv, **kw: result(json.dumps([image]) if argv[0]=='docker' else 'fixture')
             commands.deadline=time.monotonic()+60
             monitor=Mock(); monitor.finish.return_value={'status':'partial'}
-            args=arguments(allow_candidate_runtime=True, result_dir=root, monitor='on' if mode=='partial' else 'off',
+            args=arguments(allow_candidate_runtime=False, result_dir=root, monitor='on' if mode=='partial' else 'off',
                            reservation_end=(datetime.now(timezone.utc)+timedelta(minutes=10)).isoformat(), reservation_reference='synthetic fixture')
             with patch.object(executor,'HostCommands',return_value=commands), patch.object(executor,'ManagedContainer',return_value=container), \
                  patch.object(executor,'DeviceLease',side_effect=make_lease), patch.object(KunlunxinProvider,'inspect_host',side_effect=inspect), \

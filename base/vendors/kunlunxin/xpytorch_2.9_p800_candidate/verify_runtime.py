@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""P800 candidate qualification; static audit never imports accelerator packages.
+"""P800 runtime identity checks; static audit never imports accelerator packages.
 
-PR0 only: not a Base driver and not an automatic candidate promotion tool.
+Reads the declared release scope; never promotes a runtime or a benchmark result.
 """
 from __future__ import annotations
 
@@ -49,8 +49,28 @@ def validate_manifest(manifest, observed=None):
         raise ValueError('wrong vendor/chip')
     if not re.fullmatch(r'sha256:[0-9a-f]{64}', manifest.get('image_id', '')):
         raise ValueError('immutable image ID required')
-    if manifest.get('validated') is not False or manifest.get('release_stage') != 'candidate':
-        raise ValueError('PR0 must remain candidate; cannot promote itself')
+    state = (manifest.get('release_stage'), manifest.get('validated'))
+    if state[0] == 'candidate' and state[1] is False:
+        pass
+    elif state[0] == 'validated' and state[1] is True:
+        record_ref = manifest.get('validation_record') or {}
+        if record_ref.get('path') != 'validation-summary.json':
+            raise ValueError('validated runtime requires its scoped validation record')
+        raw = (ROOT / record_ref['path']).read_bytes()
+        if hashlib.sha256(raw).hexdigest() != record_ref.get('sha256'):
+            raise ValueError('validation record hash mismatch')
+        record = json.loads(raw)
+        if (manifest.get('validation_status') != 'partial'
+                or not isinstance(manifest.get('validation_scope'), list)
+                or not manifest['validation_scope']
+                or not all(isinstance(item, str) and item.strip() for item in manifest['validation_scope'])):
+            raise ValueError('validated runtime requires an explicit partial scope')
+        for field in ('schema_version', 'vendor', 'chip', 'runtime_profile', 'image_id',
+                      'release_stage', 'validated', 'validation_status', 'validation_scope'):
+            if record.get(field) != manifest.get(field):
+                raise ValueError(f'validation record mismatch: {field}')
+    else:
+        raise ValueError('inconsistent runtime release state')
     if manifest.get('platform') != 'linux/amd64':
         raise ValueError('expected linux/amd64')
     if observed is not None:
@@ -169,12 +189,13 @@ def main():
     parser.add_argument('--inspect-json', type=Path)
     parser.add_argument('--output', type=Path)
     args = parser.parse_args()
-    result = {'schema_version': 1, 'scope': 'static-audit', 'validated': False,
-              'release_stage': 'candidate', 'timestamp_utc': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}
+    result = {'schema_version': 1, 'scope': 'static-audit', 'qualification_status': 'not-qualified', 'timestamp_utc': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}
     try:
         manifest = json.loads((ROOT / 'image-manifest.json').read_text())
         observed = json.loads(args.inspect_json.read_text()) if args.inspect_json else None
         validate_manifest(manifest, observed)
+        result.update({key: manifest.get(key) for key in
+                       ('validated', 'release_stage', 'validation_status', 'validation_scope')})
         if not args.static:
             raise ValueError('use --static here; hardware stages are in hardware_probe.py')
         if not sys.flags.no_site:
@@ -183,7 +204,7 @@ def main():
         lock = json.loads((ROOT / 'stack.lock.yaml').read_text())
         result['audit']['inventory_errors'].extend(validate_packages(result['audit']['packages'], lock['packages']))
         result['status'] = 'failed' if result['audit']['inventory_errors'] else 'passed'
-        result['status_meaning'] = 'inventory collection only; hardware and library qualification pending'
+        result['status_meaning'] = 'inventory collection only; runtime fields are the existing release declaration, not new hardware qualification'
     except Exception as exc:
         result.update(status='failed', error_type=type(exc).__name__, error=str(exc))
     text = json.dumps(result, indent=2, sort_keys=True)
