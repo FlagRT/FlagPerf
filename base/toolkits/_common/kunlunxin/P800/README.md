@@ -97,8 +97,19 @@ not an HBM bandwidth ceiling. Both include API-to-completion synchronization;
 neither establishes theoretical peak bandwidth. A roughly 11 GB/s runtime result
 and a roughly 2.1 TB/s Scopy result must not become a roughly 1.07 TB/s median.
 The counting factor alone does not explain the gap; its cause needs separate
-diagnosis. Report labels spell out both meanings and charts use separate axes
-for the two modes. Updating the renderer does not rewrite frozen reports.
+diagnosis. The two modes have separate summary rows, detail sections and chart
+axes. Both rows retain the saved Case-level verdict, not independent diagnoses;
+each row counts its own targets and the combined Case duration appears only once.
+Updating the renderer does not rewrite frozen reports.
+
+`xpu_memcpy` enters the runtime's general copy path. The runtime implementation
+decides how to arrange transfers, submit work, split it internally and wait.
+Scopy enters the math library's vector-copy implementation. Such device kernels
+can typically use many execution units to read contiguous addresses in parallel
+and write destination addresses in parallel, making effective use of the device
+memory system. These are descriptions of the paths and their usual operation,
+not a profile of this runtime's internals or Scopy's exact scheduling. The measured
+gap alone does not prove host staging, PCIe traffic or an internal fallback.
 
 ## Tools, origins and measured semantics
 

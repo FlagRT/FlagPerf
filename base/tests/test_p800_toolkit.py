@@ -310,19 +310,32 @@ class EvidenceTests(unittest.TestCase):
             e.write_json(root/'summary.json', {'suite': 'kunlunxin-p800-toolkit',
                                               'status': 'partial', 'run_id': 'fixture'})
             manifest_path = root/'toolkit-evidence/manifest.json'
+            targets = [{'point': m['point'], 'target': str(i)} for i, m in enumerate(metrics)]
             e.write_json(manifest_path, {'schema_version': 1, 'settings': {}, 'cases': {
-                'main_memory-bandwidth': {'metrics': metrics, 'targets': []}}})
+                'main_memory-bandwidth': {'metrics': metrics, 'targets': targets,
+                                          'status': 'partial', 'duration_s': 327}}})
             original_manifest = manifest_path.read_bytes()
             metadata = generate_public(root)
             text = (root/'report.md').read_text()
-            row = next(line for line in text.splitlines()
-                       if line.startswith('| 设备内存带宽 / D2D 拷贝吞吐 |'))
-            self.assertEqual(row.count('n=5'), 4)
-            self.assertEqual(row.count('<br>'), 3)
-            self.assertNotIn('n=20', row)
-            self.assertNotIn('1056.000', row)  # median of the mixed twenty values
-            self.assertIn('中位数 11.000', row)
-            self.assertIn('中位数 2100.000', row)
+            runtime_row = next(line for line in text.splitlines() if line.startswith('| XRE runtime memcpy'))
+            kernel_row = next(line for line in text.splitlines() if line.startswith('| Scopy 设备内存'))
+            for row in (runtime_row, kernel_row):
+                self.assertEqual(row.count('n=5'), 2)
+                self.assertEqual(row.count('<br>'), 1)
+                self.assertIn('10 个厂商执行目标', row)
+                self.assertIn('部分完成', row)
+                self.assertNotIn('n=20', row)
+                self.assertNotIn('1056.000', row)  # median of the mixed twenty values
+            self.assertIn('中位数 11.000', runtime_row)
+            self.assertNotIn('2100.000', runtime_row)
+            self.assertIn('中位数 2100.000', kernel_row)
+            self.assertNotIn('11.000', kernel_row)
+            self.assertEqual(text.count('5 min 27.0 s'), 1)
+            self.assertIn('两行的状态均引用同一 main_memory-bandwidth Case', text)
+            self.assertIn('#### Scopy 设备内存读写带宽', text)
+            self.assertIn('#### XRE runtime memcpy 拷贝吞吐', text)
+            self.assertIn('`xpu_memcpy` 进入的是 runtime 的通用复制路径', text)
+            self.assertIn('Scopy 则进入数学库的向量复制实现', text)
             self.assertIn('runtime memcpy 吞吐不代表 HBM 带宽上限', text)
             self.assertIn('Scopy 也不是理论峰值', text)
             for mode, included, excluded in (('d2d', 'XRE memcpy', 'Scopy'),

@@ -53,6 +53,14 @@ D2D_EXPLANATION = (
     "分别按设备、载荷、模式和字段统计重复结果，禁止跨口径合并范围或中位数。"
     "两者的差距不能仅用 1×/2×计数解释；具体瓶颈需另行诊断。"
 )
+D2D_PATH_EXPLANATION = (
+    "`xpu_memcpy` 进入的是 runtime 的通用复制路径。它内部怎样安排传输、如何提交任务、"
+    "是否分块、怎样等待，都由 runtime 实现决定。",
+    "Scopy 则进入数学库的向量复制实现。这类设备内核通常可以让许多执行单元并行读取连续地址，"
+    "再并行写入目标地址，充分利用设备内存系统。",
+    "以上说明两条路径的职责与通常工作方式；本报告未剖析 runtime 内部实现或 Scopy 的具体调度，"
+    "不据吞吐差距断言主机中转、PCIe 路径或内部回退。",
+)
 
 
 def read(path, default=None):
@@ -142,6 +150,23 @@ def case_limits(value):
     errors = [md(t.get("target")) + "：" + md(t["error"])
               for t in value.get("targets", []) if t.get("error")]
     return "；".join(errors) if errors else "—"
+
+
+def case_views(case, value):
+    """Split D2D presentation only; keep the saved Case-level verdict intact."""
+    if case != "main_memory-bandwidth":
+        return [(case_display(case), value)]
+    modes = {m.get("point", {}).get("mode", "unknown")
+             for m in value.get("metrics", []) + value.get("targets", [])}
+    order = [mode for mode in D2D_TITLES if mode in modes]
+    order += sorted(modes - set(D2D_TITLES))
+    if not order:
+        return [(case_display(case), value)]
+    return [(D2D_TITLES.get(mode, "D2D / " + mode), {
+        **value,
+        "metrics": [m for m in value.get("metrics", []) if m.get("point", {}).get("mode", "unknown") == mode],
+        "targets": [t for t in value.get("targets", []) if t.get("point", {}).get("mode", "unknown") == mode],
+    }) for mode in order]
 
 
 def label(point):
@@ -287,22 +312,22 @@ def generate(root):
               "`diagnosis_status` 说明厂商工具链合规校验（XBLAS/XRE 正确性回读 + 契约覆盖率校验 + xpu-smi 健康观测）；"
               "最终状态综合三者，三者均通过才为通过。"
               "P800 工具链不提供 DMI 式阈值判定，诊断层采用合规校验语义（2026-10-08 口径，见方法与指标口径）。", ""]
-    lines += table(["Case", "测量", "监控", "诊断", "最终", "指标摘要", "范围", "耗时", "限制/错误"], [
-        [case_display(c), status_text(cases[c].get("measurement_status")),
+    lines += table(["Case / 测量模式", "测量", "监控", "诊断", "最终", "指标摘要", "范围", "耗时", "限制/错误"], [
+        [title, status_text(cases[c].get("measurement_status")),
          status_text(cases[c].get("monitoring_status")), status_text(cases[c].get("diagnosis_status")),
-         status_text(cases[c].get("status")), metric_summary(cases[c].get("metrics", [])),
-         case_scope(c, cases[c]), fmt_duration(cases[c].get("duration_s")), case_limits(cases[c])]
-        for c in ordered])
+         status_text(cases[c].get("status")), metric_summary(view.get("metrics", [])),
+         case_scope(c, view), fmt_duration(cases[c].get("duration_s")) if i == 0 else "—", case_limits(view)]
+        for c in ordered for i, (title, view) in enumerate(case_views(c, cases[c]))])
     if "main_memory-bandwidth" in cases:
-        lines += ["", D2D_EXPLANATION, ""]
+        lines += ["", "D2D 按模式分行展示；两行的状态均引用同一 main_memory-bandwidth Case，"
+                  "不代表各模式独立诊断。范围为各模式目标数；耗时为整个 Case 合计，仅首行显示。",
+                  "", D2D_EXPLANATION, ""]
     missing = [c for c in CASES if c not in cases]
     if missing:
         lines += ["", f"本轮未执行（合同定义但未运行）：{'、'.join(case_display(c) for c in missing)}。"]
 
-    def render_case(case, value):
-        lines_ = ["", "### " + case_display(case), ""]
-        if case == "main_memory-bandwidth":
-            lines_ += [D2D_EXPLANATION, ""]
+    def render_case(case, value, title=None):
+        lines_ = ["", ("#### " + title) if title else ("### " + case_display(case)), ""]
         metrics = value.get("metrics", [])
         rows = [[label(m.get("point", {})), m.get("repetition", "query"), m["field"], f"{m['value']:.8g}", m["unit"],
                  m.get("sample_count", "query"), f"{m.get('sample_cv', 0):.4%}" if m.get("sample_cv") is not None else "N/A",
@@ -361,7 +386,14 @@ def generate(root):
             continue
         lines += ["", "## " + title, "", blurb, ""]
         for case in members:
-            lines += render_case(case, cases[case])
+            if case == "main_memory-bandwidth":
+                lines += ["", "### " + case_display(case), "", D2D_EXPLANATION, ""]
+                for paragraph in D2D_PATH_EXPLANATION:
+                    lines += [paragraph, ""]
+                for view_title, view in case_views(case, cases[case]):
+                    lines += render_case(case, view, view_title)
+            else:
+                lines += render_case(case, cases[case])
     others = [c for c in ordered if family_of(c) == "other"]
     if others:
         lines += ["", "## 其他测量", ""]
