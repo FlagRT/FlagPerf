@@ -363,11 +363,18 @@ def render(root,result):
         selected=result.get('report_view',{}).get('selection',{})
         detail=['# A100 逐层比较','', '同 rank、module、shape 的包含式 Event 窗口；倍率为被测/A100。', '',
                 '| 路径 | module | rank | shape | A100 ms | 被测 ms | 倍率 |', '|---|---|---|---|---:|---:|---:|']
+        generation=bool(value.get('contract',{}).get('generation'))
+        if generation:
+            detail=['# A100 逐层比较','',
+                    '同 rank、module、shape、phase、生成步和 KV 长度的包含式 Event 窗口；倍率为被测/A100。', '',
+                    '| 路径 | module | rank | shape | phase | 生成步 | KV 长度 | A100 ms | 被测 ms | 倍率 |',
+                    '|---|---|---|---|---|---:|---:|---:|---:|---:|']
         view={}
         for side,p in value['paths'].items():
             view[side]=[r for r in p['layers'] if matches(r,selected)]
             for row in view[side]:
-                detail.append(f"| {side} | {row['module']} | {row['rank']} | {row['shape']} | {fmt(row['a100']['mean_ms'])} | {fmt(row['candidate']['mean_ms'])} | {fmt(row['candidate_over_a100']['mean_ms'])} |")
+                context=f" {row['phase']} | {row['generation_step']} | {row['kv_length_before']} |" if generation else ''
+                detail.append(f"| {side} | {row['module']} | {row['rank']} | {row['shape']} |{context} {fmt(row['a100']['mean_ms'])} | {fmt(row['candidate']['mean_ms'])} | {fmt(row['candidate_over_a100']['mean_ms'])} |")
         (root/'a100-layer-comparison.md').write_text('\n'.join(detail)+'\n')
         write_json(root/'performance-comparison-view.json',{'selection':selected,'paths':view})
         lines += ['','[按模块、rank、shape 筛选的 A100 逐层比较](a100-layer-comparison.md) · [当前比较视图](performance-comparison-view.json)']

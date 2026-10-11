@@ -44,11 +44,13 @@ def selection(result, layers=None, selected_ranks=None, shapes=None, phases=None
 
 
 def matches(row, selected, rank=None):
+    # Comparison group keys are strings; capture step numbers are integers.
     return (not selected.get('layers') or row.get('module') in selected['layers']) and (
         not selected.get('ranks') or str(row.get('rank', rank)) in selected['ranks']) and (
         not selected.get('shapes') or shape_key(row.get('shape', row.get('input_shape'))) in selected['shapes']) and (
         not selected.get('phases') or row.get('phase') in selected['phases']) and (
-        not selected.get('generation_steps') or row.get('generation_step') in selected['generation_steps'])
+        not selected.get('generation_steps') or str(row.get('generation_step')) in
+        {str(step) for step in selected['generation_steps']})
 
 
 def invocation_key(row, rank, side):
