@@ -78,7 +78,9 @@ def replay(root, args, task, identity, data):
     from runtime.cli import ids, Lease, Workers
     if task.get('case') not in catalog.names() or task.get('dtype') not in catalog.dtypes(task['case']) or task.get('oplib') not in ('nativetorch', 'flaggems'):
         raise ValueError('source case/dtype/path is not supported by the current Case contract')
-    adapter = get_vendor(task['vendor'])
+    adapter = get_vendor(task['vendor'], task.get('runtime_profile'))
+    if hasattr(adapter, 'ensure_execution_ready'):
+        adapter.ensure_execution_ready()
     devices = ids(args.device_ids or str(task['device_id']))
     if len(devices) != 1:
         raise ValueError('common replay requires one local device')

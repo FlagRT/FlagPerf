@@ -170,7 +170,7 @@ def dropout_check(output, inputs, bp, dtype):
 
 def device_phase(root, task, phase):
     from vendors import get_vendor
-    adapter = get_vendor(task['vendor'])
+    adapter = get_vendor(task['vendor'], task.get('runtime_profile'))
     device = adapter.bootstrap(task['worker_device'])
     import torch
     fn, _, bp, count = build(task)
@@ -358,7 +358,7 @@ def run_phase(root, phase):
     try:
         if phase == 'profiling':
             from vendors import get_vendor
-            adapter = get_vendor(task['vendor'])
+            adapter = get_vendor(task['vendor'], task.get('runtime_profile'))
             if hasattr(adapter, 'collect_profile'):
                 adapter.collect_profile(root, task)
             else:

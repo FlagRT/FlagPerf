@@ -7,9 +7,15 @@ import importlib.util
 AVAILABLE = ('ascend', 'nvidia', 'cambricon', 'kunlunxin', 'iluvatar', 'metax')
 
 
-def get_vendor(name):
+def get_vendor(name, runtime_profile=None):
     if name not in AVAILABLE:
         raise ValueError(f'unsupported vendor: {name}; available: {", ".join(AVAILABLE)}')
+    if runtime_profile is not None:
+        profiles = {('kunlunxin', 'p800-xpytorch29'): 'vendors.kunlunxin.p800'}
+        module = profiles.get((name, runtime_profile))
+        if module is None:
+            raise ValueError(f'unsupported runtime profile for {name}: {runtime_profile}')
+        return importlib.import_module(module).Adapter()
     module = f'vendors.{name}.adapter'
     if importlib.util.find_spec(module) is not None:
         return importlib.import_module(module).Adapter()

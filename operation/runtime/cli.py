@@ -84,6 +84,7 @@ def parser():
     list_mode.add_argument('--case', metavar='CASE', help='print supported input types for one case')
     run = sub.add_parser('run', allow_abbrev=False)
     run.add_argument('--vendor', choices=AVAILABLE, required=True)
+    run.add_argument('--runtime-profile', help='optional vendor runtime selection; independent of --workload')
     run.add_argument('--device-ids', required=True, help='host IDs for docker; runtime-visible IDs for local')
     run.add_argument('--execution', choices=['docker', 'local'], default='docker')
     run.add_argument('--image')
@@ -124,7 +125,9 @@ def resolve(args):
             raise ValueError('spectflops must be positive and finite')
         if args.dtype and len(args.dtype) != 1:
             raise ValueError('a peak requires a single explicit dtype')
-    adapter = get_vendor(args.vendor)
+    adapter = get_vendor(args.vendor, args.runtime_profile)
+    if hasattr(adapter, 'validate_options'):
+        adapter.validate_options(args, selected)
     image = args.image or (adapter.default_image() if args.execution == 'docker' else None)
     if args.execution == 'docker' and not image:
         raise ValueError('this vendor requires --image')
@@ -137,8 +140,13 @@ def resolve(args):
               'diagnostics_mode': args.diagnostics, 'diagnostic_protocol': DIAGNOSTIC_PROTOCOL} for d in selected for t in tasks]
     from runtime.metrics import pair_key
     for task in tasks:
+        if args.runtime_profile is not None:
+            task['runtime_profile'] = args.runtime_profile
+        if hasattr(adapter, 'task_metadata'):
+            task.update(adapter.task_metadata(args, task['device_id']))
         task['pair_id'] = pair_key(task) if args.oplib == 'both' else None
     return adapter, {'schema_version': 2, 'protocol': 'operation-v2', 'vendor': args.vendor,
+                     **({'runtime_profile': args.runtime_profile} if args.runtime_profile is not None else {}),
                      'execution': args.execution, 'image': image, 'device_ids': selected,
                      'workload': args.workload, 'profiling': args.profiling, 'oplib_selection': args.oplib, 'soft_target_s': 120, 'watchdog_per_phase_s': args.watchdog,
                      'tasks': tasks}
@@ -257,7 +265,8 @@ class Workers:
 def snapshot(root):
     files = [ROOT / 'run.py', *list((ROOT / 'runtime').glob('*.py')),
              *list((ROOT / 'vendors').rglob('*.py')), *list((ROOT / 'benchmarks').glob('*/main.py')),
-             *list((ROOT / 'benchmarks/drivers').glob('*.py'))]
+             *list((ROOT / 'benchmarks/drivers').glob('*.py')),
+             *list((ROOT / 'vendors').glob('*/profiles/*.json'))]
     for p in files:
         dest = root / 'source' / p.relative_to(ROOT)
         dest.parent.mkdir(parents=True, exist_ok=True);dest.write_bytes(p.read_bytes())
@@ -283,6 +292,8 @@ def execute(args, adapter, plan):
     began = time.monotonic();ran_device=False;image_id=None;pool=None
     try:
         stage(args, 'runtime-identity')
+        if hasattr(adapter, 'ensure_execution_ready'):
+            adapter.ensure_execution_ready()
         if args.execution == 'docker':
             info = json.loads(subprocess.check_output(['docker','image','inspect',plan['image']], text=True))[0]
             summary['runtime'] = adapter.runtime_identity(plan['image'], info)
