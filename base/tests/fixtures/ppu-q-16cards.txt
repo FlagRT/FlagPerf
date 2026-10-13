@@ -1,0 +1,2059 @@
+
+==============PPUSMI LOG==============
+
+Timestamp                                   : Tue Oct 13 20:57:30 2026
+Driver Version                              : 1.5.1-1d747a
+HGGC Version                                : N/A
+SDK Version                                 : N/A
+
+Attached PPUs                               : 16
+PPU 00000001:C9:00.0                        
+    Product Name                            : PPU-ZW810E
+    Product Architecture                    : Beethoven
+    Persistence Mode                        : N/A
+    MIG Mode                                
+        Current                             : Disabled
+        Pending                             : Disabled
+    Serial Number                           : GUQB22K10561Y04
+    PPU UUID                                : GPU-011ef111-4522-040e-0000-0000c08f6579
+    Minor Number                            : 1
+    Rear ID                                 : 0
+    PPU Virtualization Mode                 
+        Virtualization Mode                 : None
+        Host VGPU Mode                      : Non SR-IOV
+    PCI                                     
+        Bus                                 : 0xC9
+        Device                              : 0x00
+        Domain                              : 0x0001
+        Device Id                           : 0x60011DED
+        Bus Id                              : 00000001:C9:00.0
+        Sub System Id                       : 0x20041DED
+        Vendor Id                           : 0x1DED
+        PPU Link Info                       
+            PCIe Generation                 
+                Max                         : 5
+                Current                     : 5
+            Link Width                      
+                Max                         : 8x
+                Current                     : 8x
+        Replays Since Reset                 : N/A
+        Tx Throughput                       : 0 KB/s
+        Rx Throughput                       : 0 KB/s
+    Fan Speed                               : N/A
+    Performance State                       : N/A
+    VBIOS Version                           : 1.6.6-a35155
+    Auto Reset                              : Enabled
+    Overclocking Mode                       : Ultra
+    Performance Counter                     : Enabled
+    Tide Mode                               : Disabled
+    MPS Mode                                : Disabled
+    Clocks Throttle Reasons                 
+        Idle                                : Active
+        Applications Clocks Setting         : Not Active
+        SW Power Cap                        : Not Active
+        HW Slowdown                         : Not Active
+            HW Thermal Slowdown             : Not Active
+            HW Power Brake Slowdown         : Not Active
+        Sync Boost                          : Not Active
+        SW Thermal Slowdown                 : Not Active
+    Xid Errors                              
+        PPU Reset Correctable               : N/A
+        OS Reboot Correctable               : N/A
+        Cold Reboot Correctable             : N/A
+    Compute Mode                            : Default
+    HBM Vendor                              : Samsung
+    Memory Usage                            
+        Total                               : 98304 MiB
+        Used                                : 191 MiB
+        Free                                : 98113 MiB
+    Utilization                             
+        Ppu                                 : 0 %
+        Core                                : 0 %
+        Memory                              : 0 %
+        Encoder                             : 0 %
+        Decoder                             : 0 %
+    Ecc Mode                                
+        Current                             : Enabled
+        Pending                             : Enabled
+    ECC Errors                              
+        Volatile                            
+            SRAM Correctable                : N/A
+            SRAM Uncorrectable              : N/A
+            DRAM Correctable                : 0
+            DRAM Uncorrectable              : 0
+        Aggregate                           
+            SRAM Correctable                : N/A
+            SRAM Uncorrectable              : N/A
+            DRAM Correctable                : 0
+            DRAM Uncorrectable              : 0
+    Retired Pages                           
+        Single Bit ECC                      : 0
+        Double Bit ECC                      : 0
+        Pending Page Blacklist              : No
+    Remapped Rows                           
+        Correctable Error                   : 0
+        Uncorrectable Error                 : 0
+        Pending                             : No
+        Remapping Failure Occurred          : No
+        Bank Remap Availability Histogram   
+            Max                             : 3072 bank(s)
+            High                            : 0 bank(s)
+            Partial                         : 0 bank(s)
+            Low                             : 0 bank(s)
+            None                            : 0 bank(s)
+    Temperature                             
+        PPU Current Temp                    : 33 C
+        PPU Shutdown Temp                   : 95 C
+        PPU Slowdown Temp                   : 85 C
+        PPU Max Operating Temp              : 85 C
+        PPU Target Temperature              : N/A
+        Memory Current Temp                 : 36 C
+        Memory Max Operating Temp           : 95 C
+    Power Readings                          
+        Power Management                    : Supported
+        Power Draw                          : 81.58 W
+        Power Limit                         : 400.00 W
+        Default Power Limit                 : 400.00 W
+        Enforced Power Limit                : 400.00 W
+        Min Power Limit                     : 250.00 W
+        Max Power Limit                     : 400.00 W
+    Clocks                                  
+        CU                                  : 200 MHz
+        Memory                              : 1800 MHz
+        Video                               : 1000 MHz
+    Applications Clocks                     
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+    Default Applications Clocks             
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+    Max Clocks                              
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+        Video                               : 1000 MHz
+    Processes                               
+        Compute instance ID                 : N/A
+        Process ID                          : 910760
+            Type                            : Compute
+            Name                            : /bmcp_lvm_fs/kfc/projects/es/deploy/elasticsearch-9.6.0-SNAPSHOT/jdk/bin/java
+            Used PPU Memory                 : 188 MiB
+PPU 00000001:C8:00.0                        
+    Product Name                            : PPU-ZW810E
+    Product Architecture                    : Beethoven
+    Persistence Mode                        : N/A
+    MIG Mode                                
+        Current                             : Disabled
+        Pending                             : Disabled
+    Serial Number                           : GUQB22K10302Y04
+    PPU UUID                                : GPU-011ef111-47c0-0010-0000-0000a05fba7d
+    Minor Number                            : 2
+    Rear ID                                 : 0
+    PPU Virtualization Mode                 
+        Virtualization Mode                 : None
+        Host VGPU Mode                      : Non SR-IOV
+    PCI                                     
+        Bus                                 : 0xC8
+        Device                              : 0x00
+        Domain                              : 0x0001
+        Device Id                           : 0x60011DED
+        Bus Id                              : 00000001:C8:00.0
+        Sub System Id                       : 0x20041DED
+        Vendor Id                           : 0x1DED
+        PPU Link Info                       
+            PCIe Generation                 
+                Max                         : 5
+                Current                     : 5
+            Link Width                      
+                Max                         : 8x
+                Current                     : 8x
+        Replays Since Reset                 : N/A
+        Tx Throughput                       : 0 KB/s
+        Rx Throughput                       : 0 KB/s
+    Fan Speed                               : N/A
+    Performance State                       : N/A
+    VBIOS Version                           : 1.6.6-a35155
+    Auto Reset                              : Enabled
+    Overclocking Mode                       : Ultra
+    Performance Counter                     : Enabled
+    Tide Mode                               : Disabled
+    MPS Mode                                : Disabled
+    Clocks Throttle Reasons                 
+        Idle                                : Active
+        Applications Clocks Setting         : Not Active
+        SW Power Cap                        : Not Active
+        HW Slowdown                         : Not Active
+            HW Thermal Slowdown             : Not Active
+            HW Power Brake Slowdown         : Not Active
+        Sync Boost                          : Not Active
+        SW Thermal Slowdown                 : Not Active
+    Xid Errors                              
+        PPU Reset Correctable               : N/A
+        OS Reboot Correctable               : N/A
+        Cold Reboot Correctable             : N/A
+    Compute Mode                            : Default
+    HBM Vendor                              : Samsung
+    Memory Usage                            
+        Total                               : 98304 MiB
+        Used                                : 10 MiB
+        Free                                : 98294 MiB
+    Utilization                             
+        Ppu                                 : 0 %
+        Core                                : 0 %
+        Memory                              : 0 %
+        Encoder                             : 0 %
+        Decoder                             : 0 %
+    Ecc Mode                                
+        Current                             : Enabled
+        Pending                             : Enabled
+    ECC Errors                              
+        Volatile                            
+            SRAM Correctable                : N/A
+            SRAM Uncorrectable              : N/A
+            DRAM Correctable                : 0
+            DRAM Uncorrectable              : 0
+        Aggregate                           
+            SRAM Correctable                : N/A
+            SRAM Uncorrectable              : N/A
+            DRAM Correctable                : 0
+            DRAM Uncorrectable              : 0
+    Retired Pages                           
+        Single Bit ECC                      : 0
+        Double Bit ECC                      : 0
+        Pending Page Blacklist              : No
+    Remapped Rows                           
+        Correctable Error                   : 0
+        Uncorrectable Error                 : 0
+        Pending                             : No
+        Remapping Failure Occurred          : No
+        Bank Remap Availability Histogram   
+            Max                             : 3072 bank(s)
+            High                            : 0 bank(s)
+            Partial                         : 0 bank(s)
+            Low                             : 0 bank(s)
+            None                            : 0 bank(s)
+    Temperature                             
+        PPU Current Temp                    : 35 C
+        PPU Shutdown Temp                   : 95 C
+        PPU Slowdown Temp                   : 85 C
+        PPU Max Operating Temp              : 85 C
+        PPU Target Temperature              : N/A
+        Memory Current Temp                 : 36 C
+        Memory Max Operating Temp           : 95 C
+    Power Readings                          
+        Power Management                    : Supported
+        Power Draw                          : 81.17 W
+        Power Limit                         : 400.00 W
+        Default Power Limit                 : 400.00 W
+        Enforced Power Limit                : 400.00 W
+        Min Power Limit                     : 250.00 W
+        Max Power Limit                     : 400.00 W
+    Clocks                                  
+        CU                                  : 200 MHz
+        Memory                              : 1800 MHz
+        Video                               : 1000 MHz
+    Applications Clocks                     
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+    Default Applications Clocks             
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+    Max Clocks                              
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+        Video                               : 1000 MHz
+    Processes                               : None
+PPU 00000001:80:00.0                        
+    Product Name                            : PPU-ZW810E
+    Product Architecture                    : Beethoven
+    Persistence Mode                        : N/A
+    MIG Mode                                
+        Current                             : Disabled
+        Pending                             : Disabled
+    Serial Number                           : GUQB22K10137Y04
+    PPU UUID                                : GPU-011ef111-8270-0910-0000-0000a0c34d3c
+    Minor Number                            : 3
+    Rear ID                                 : 0
+    PPU Virtualization Mode                 
+        Virtualization Mode                 : None
+        Host VGPU Mode                      : Non SR-IOV
+    PCI                                     
+        Bus                                 : 0x80
+        Device                              : 0x00
+        Domain                              : 0x0001
+        Device Id                           : 0x60011DED
+        Bus Id                              : 00000001:80:00.0
+        Sub System Id                       : 0x20041DED
+        Vendor Id                           : 0x1DED
+        PPU Link Info                       
+            PCIe Generation                 
+                Max                         : 5
+                Current                     : 5
+            Link Width                      
+                Max                         : 8x
+                Current                     : 8x
+        Replays Since Reset                 : N/A
+        Tx Throughput                       : 0 KB/s
+        Rx Throughput                       : 0 KB/s
+    Fan Speed                               : N/A
+    Performance State                       : N/A
+    VBIOS Version                           : 1.6.6-a35155
+    Auto Reset                              : Enabled
+    Overclocking Mode                       : Ultra
+    Performance Counter                     : Enabled
+    Tide Mode                               : Disabled
+    MPS Mode                                : Disabled
+    Clocks Throttle Reasons                 
+        Idle                                : Active
+        Applications Clocks Setting         : Not Active
+        SW Power Cap                        : Not Active
+        HW Slowdown                         : Not Active
+            HW Thermal Slowdown             : Not Active
+            HW Power Brake Slowdown         : Not Active
+        Sync Boost                          : Not Active
+        SW Thermal Slowdown                 : Not Active
+    Xid Errors                              
+        PPU Reset Correctable               : N/A
+        OS Reboot Correctable               : N/A
+        Cold Reboot Correctable             : N/A
+    Compute Mode                            : Default
+    HBM Vendor                              : Samsung
+    Memory Usage                            
+        Total                               : 98304 MiB
+        Used                                : 10 MiB
+        Free                                : 98294 MiB
+    Utilization                             
+        Ppu                                 : 0 %
+        Core                                : 0 %
+        Memory                              : 0 %
+        Encoder                             : 0 %
+        Decoder                             : 0 %
+    Ecc Mode                                
+        Current                             : Enabled
+        Pending                             : Enabled
+    ECC Errors                              
+        Volatile                            
+            SRAM Correctable                : N/A
+            SRAM Uncorrectable              : N/A
+            DRAM Correctable                : 0
+            DRAM Uncorrectable              : 0
+        Aggregate                           
+            SRAM Correctable                : N/A
+            SRAM Uncorrectable              : N/A
+            DRAM Correctable                : 0
+            DRAM Uncorrectable              : 0
+    Retired Pages                           
+        Single Bit ECC                      : 0
+        Double Bit ECC                      : 0
+        Pending Page Blacklist              : No
+    Remapped Rows                           
+        Correctable Error                   : 0
+        Uncorrectable Error                 : 0
+        Pending                             : No
+        Remapping Failure Occurred          : No
+        Bank Remap Availability Histogram   
+            Max                             : 3072 bank(s)
+            High                            : 0 bank(s)
+            Partial                         : 0 bank(s)
+            Low                             : 0 bank(s)
+            None                            : 0 bank(s)
+    Temperature                             
+        PPU Current Temp                    : 32 C
+        PPU Shutdown Temp                   : 95 C
+        PPU Slowdown Temp                   : 85 C
+        PPU Max Operating Temp              : 85 C
+        PPU Target Temperature              : N/A
+        Memory Current Temp                 : 35 C
+        Memory Max Operating Temp           : 95 C
+    Power Readings                          
+        Power Management                    : Supported
+        Power Draw                          : 82.89 W
+        Power Limit                         : 400.00 W
+        Default Power Limit                 : 400.00 W
+        Enforced Power Limit                : 400.00 W
+        Min Power Limit                     : 250.00 W
+        Max Power Limit                     : 400.00 W
+    Clocks                                  
+        CU                                  : 200 MHz
+        Memory                              : 1800 MHz
+        Video                               : 1000 MHz
+    Applications Clocks                     
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+    Default Applications Clocks             
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+    Max Clocks                              
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+        Video                               : 1000 MHz
+    Processes                               : None
+PPU 00000001:81:00.0                        
+    Product Name                            : PPU-ZW810E
+    Product Architecture                    : Beethoven
+    Persistence Mode                        : N/A
+    MIG Mode                                
+        Current                             : Disabled
+        Pending                             : Disabled
+    Serial Number                           : GUQB22K10705Y04
+    PPU UUID                                : GPU-01de0016-0350-0908-0000-0000e0c85a03
+    Minor Number                            : 4
+    Rear ID                                 : 0
+    PPU Virtualization Mode                 
+        Virtualization Mode                 : None
+        Host VGPU Mode                      : Non SR-IOV
+    PCI                                     
+        Bus                                 : 0x81
+        Device                              : 0x00
+        Domain                              : 0x0001
+        Device Id                           : 0x60011DED
+        Bus Id                              : 00000001:81:00.0
+        Sub System Id                       : 0x20041DED
+        Vendor Id                           : 0x1DED
+        PPU Link Info                       
+            PCIe Generation                 
+                Max                         : 5
+                Current                     : 5
+            Link Width                      
+                Max                         : 8x
+                Current                     : 8x
+        Replays Since Reset                 : N/A
+        Tx Throughput                       : 0 KB/s
+        Rx Throughput                       : 0 KB/s
+    Fan Speed                               : N/A
+    Performance State                       : N/A
+    VBIOS Version                           : 1.6.6-a35155
+    Auto Reset                              : Enabled
+    Overclocking Mode                       : Ultra
+    Performance Counter                     : Enabled
+    Tide Mode                               : Disabled
+    MPS Mode                                : Disabled
+    Clocks Throttle Reasons                 
+        Idle                                : Active
+        Applications Clocks Setting         : Not Active
+        SW Power Cap                        : Not Active
+        HW Slowdown                         : Not Active
+            HW Thermal Slowdown             : Not Active
+            HW Power Brake Slowdown         : Not Active
+        Sync Boost                          : Not Active
+        SW Thermal Slowdown                 : Not Active
+    Xid Errors                              
+        PPU Reset Correctable               : N/A
+        OS Reboot Correctable               : N/A
+        Cold Reboot Correctable             : N/A
+    Compute Mode                            : Default
+    HBM Vendor                              : Samsung
+    Memory Usage                            
+        Total                               : 98304 MiB
+        Used                                : 10 MiB
+        Free                                : 98294 MiB
+    Utilization                             
+        Ppu                                 : 0 %
+        Core                                : 0 %
+        Memory                              : 0 %
+        Encoder                             : 0 %
+        Decoder                             : 0 %
+    Ecc Mode                                
+        Current                             : Enabled
+        Pending                             : Enabled
+    ECC Errors                              
+        Volatile                            
+            SRAM Correctable                : N/A
+            SRAM Uncorrectable              : N/A
+            DRAM Correctable                : 0
+            DRAM Uncorrectable              : 0
+        Aggregate                           
+            SRAM Correctable                : N/A
+            SRAM Uncorrectable              : N/A
+            DRAM Correctable                : 1
+            DRAM Uncorrectable              : 0
+    Retired Pages                           
+        Single Bit ECC                      : 0
+        Double Bit ECC                      : 0
+        Pending Page Blacklist              : No
+    Remapped Rows                           
+        Correctable Error                   : 0
+        Uncorrectable Error                 : 0
+        Pending                             : No
+        Remapping Failure Occurred          : No
+        Bank Remap Availability Histogram   
+            Max                             : 3072 bank(s)
+            High                            : 0 bank(s)
+            Partial                         : 0 bank(s)
+            Low                             : 0 bank(s)
+            None                            : 0 bank(s)
+    Temperature                             
+        PPU Current Temp                    : 30 C
+        PPU Shutdown Temp                   : 95 C
+        PPU Slowdown Temp                   : 85 C
+        PPU Max Operating Temp              : 85 C
+        PPU Target Temperature              : N/A
+        Memory Current Temp                 : 33 C
+        Memory Max Operating Temp           : 95 C
+    Power Readings                          
+        Power Management                    : Supported
+        Power Draw                          : 81.50 W
+        Power Limit                         : 400.00 W
+        Default Power Limit                 : 400.00 W
+        Enforced Power Limit                : 400.00 W
+        Min Power Limit                     : 250.00 W
+        Max Power Limit                     : 400.00 W
+    Clocks                                  
+        CU                                  : 200 MHz
+        Memory                              : 1800 MHz
+        Video                               : 1000 MHz
+    Applications Clocks                     
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+    Default Applications Clocks             
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+    Max Clocks                              
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+        Video                               : 1000 MHz
+    Processes                               : None
+PPU 00000000:7E:00.0                        
+    Product Name                            : PPU-ZW810E
+    Product Architecture                    : Beethoven
+    Persistence Mode                        : N/A
+    MIG Mode                                
+        Current                             : Disabled
+        Pending                             : Disabled
+    Serial Number                           : GUQB22K10826Y04
+    PPU UUID                                : GPU-011ef111-c791-0204-0000-000020ae9f22
+    Minor Number                            : 5
+    Rear ID                                 : 0
+    PPU Virtualization Mode                 
+        Virtualization Mode                 : None
+        Host VGPU Mode                      : Non SR-IOV
+    PCI                                     
+        Bus                                 : 0x7E
+        Device                              : 0x00
+        Domain                              : 0x0000
+        Device Id                           : 0x60011DED
+        Bus Id                              : 00000000:7E:00.0
+        Sub System Id                       : 0x20041DED
+        Vendor Id                           : 0x1DED
+        PPU Link Info                       
+            PCIe Generation                 
+                Max                         : 5
+                Current                     : 5
+            Link Width                      
+                Max                         : 8x
+                Current                     : 8x
+        Replays Since Reset                 : N/A
+        Tx Throughput                       : 0 KB/s
+        Rx Throughput                       : 0 KB/s
+    Fan Speed                               : N/A
+    Performance State                       : N/A
+    VBIOS Version                           : 1.6.6-a35155
+    Auto Reset                              : Enabled
+    Overclocking Mode                       : Ultra
+    Performance Counter                     : Enabled
+    Tide Mode                               : Disabled
+    MPS Mode                                : Disabled
+    Clocks Throttle Reasons                 
+        Idle                                : Not Active
+        Applications Clocks Setting         : Not Active
+        SW Power Cap                        : Not Active
+        HW Slowdown                         : Not Active
+            HW Thermal Slowdown             : Not Active
+            HW Power Brake Slowdown         : Not Active
+        Sync Boost                          : Not Active
+        SW Thermal Slowdown                 : Not Active
+    Xid Errors                              
+        PPU Reset Correctable               : N/A
+        OS Reboot Correctable               : N/A
+        Cold Reboot Correctable             : N/A
+    Compute Mode                            : Default
+    HBM Vendor                              : Samsung
+    Memory Usage                            
+        Total                               : 98304 MiB
+        Used                                : 78683 MiB
+        Free                                : 19621 MiB
+    Utilization                             
+        Ppu                                 : 100 %
+        Core                                : 100 %
+        Memory                              : 80 %
+        Encoder                             : 0 %
+        Decoder                             : 0 %
+    Ecc Mode                                
+        Current                             : Enabled
+        Pending                             : Enabled
+    ECC Errors                              
+        Volatile                            
+            SRAM Correctable                : N/A
+            SRAM Uncorrectable              : N/A
+            DRAM Correctable                : 0
+            DRAM Uncorrectable              : 0
+        Aggregate                           
+            SRAM Correctable                : N/A
+            SRAM Uncorrectable              : N/A
+            DRAM Correctable                : 0
+            DRAM Uncorrectable              : 0
+    Retired Pages                           
+        Single Bit ECC                      : 0
+        Double Bit ECC                      : 0
+        Pending Page Blacklist              : No
+    Remapped Rows                           
+        Correctable Error                   : 0
+        Uncorrectable Error                 : 0
+        Pending                             : No
+        Remapping Failure Occurred          : No
+        Bank Remap Availability Histogram   
+            Max                             : 3072 bank(s)
+            High                            : 0 bank(s)
+            Partial                         : 0 bank(s)
+            Low                             : 0 bank(s)
+            None                            : 0 bank(s)
+    Temperature                             
+        PPU Current Temp                    : 38 C
+        PPU Shutdown Temp                   : 95 C
+        PPU Slowdown Temp                   : 85 C
+        PPU Max Operating Temp              : 85 C
+        PPU Target Temperature              : N/A
+        Memory Current Temp                 : 37 C
+        Memory Max Operating Temp           : 95 C
+    Power Readings                          
+        Power Management                    : Supported
+        Power Draw                          : 146.68 W
+        Power Limit                         : 400.00 W
+        Default Power Limit                 : 400.00 W
+        Enforced Power Limit                : 400.00 W
+        Min Power Limit                     : 250.00 W
+        Max Power Limit                     : 400.00 W
+    Clocks                                  
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+        Video                               : 1000 MHz
+    Applications Clocks                     
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+    Default Applications Clocks             
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+    Max Clocks                              
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+        Video                               : 1000 MHz
+    Processes                               
+        Compute instance ID                 : N/A
+        Process ID                          : 2351399
+            Type                            : Compute
+            Name                            : /opt/ac2/bin/python3
+            Used PPU Memory                 : 78622 MiB
+        Compute instance ID                 : N/A
+        Process ID                          : 2351400
+            Type                            : Compute
+            Name                            : /opt/ac2/bin/python3
+            Used PPU Memory                 : 40 MiB
+PPU 00000000:7F:00.0                        
+    Product Name                            : PPU-ZW810E
+    Product Architecture                    : Beethoven
+    Persistence Mode                        : N/A
+    MIG Mode                                
+        Current                             : Disabled
+        Pending                             : Disabled
+    Serial Number                           : GUQB22K10849Y04
+    PPU UUID                                : GPU-011ef111-8641-0b14-0000-0000409a1f5f
+    Minor Number                            : 6
+    Rear ID                                 : 0
+    PPU Virtualization Mode                 
+        Virtualization Mode                 : None
+        Host VGPU Mode                      : Non SR-IOV
+    PCI                                     
+        Bus                                 : 0x7F
+        Device                              : 0x00
+        Domain                              : 0x0000
+        Device Id                           : 0x60011DED
+        Bus Id                              : 00000000:7F:00.0
+        Sub System Id                       : 0x20041DED
+        Vendor Id                           : 0x1DED
+        PPU Link Info                       
+            PCIe Generation                 
+                Max                         : 5
+                Current                     : 5
+            Link Width                      
+                Max                         : 8x
+                Current                     : 8x
+        Replays Since Reset                 : N/A
+        Tx Throughput                       : 0 KB/s
+        Rx Throughput                       : 0 KB/s
+    Fan Speed                               : N/A
+    Performance State                       : N/A
+    VBIOS Version                           : 1.6.6-a35155
+    Auto Reset                              : Enabled
+    Overclocking Mode                       : Ultra
+    Performance Counter                     : Enabled
+    Tide Mode                               : Disabled
+    MPS Mode                                : Disabled
+    Clocks Throttle Reasons                 
+        Idle                                : Active
+        Applications Clocks Setting         : Not Active
+        SW Power Cap                        : Active
+        HW Slowdown                         : Not Active
+            HW Thermal Slowdown             : Not Active
+            HW Power Brake Slowdown         : Not Active
+        Sync Boost                          : Not Active
+        SW Thermal Slowdown                 : Not Active
+    Xid Errors                              
+        PPU Reset Correctable               : N/A
+        OS Reboot Correctable               : N/A
+        Cold Reboot Correctable             : N/A
+    Compute Mode                            : Default
+    HBM Vendor                              : Samsung
+    Memory Usage                            
+        Total                               : 98304 MiB
+        Used                                : 76255 MiB
+        Free                                : 22049 MiB
+    Utilization                             
+        Ppu                                 : 0 %
+        Core                                : 0 %
+        Memory                              : 77 %
+        Encoder                             : 0 %
+        Decoder                             : 0 %
+    Ecc Mode                                
+        Current                             : Enabled
+        Pending                             : Enabled
+    ECC Errors                              
+        Volatile                            
+            SRAM Correctable                : N/A
+            SRAM Uncorrectable              : N/A
+            DRAM Correctable                : 0
+            DRAM Uncorrectable              : 0
+        Aggregate                           
+            SRAM Correctable                : N/A
+            SRAM Uncorrectable              : N/A
+            DRAM Correctable                : 0
+            DRAM Uncorrectable              : 0
+    Retired Pages                           
+        Single Bit ECC                      : 0
+        Double Bit ECC                      : 0
+        Pending Page Blacklist              : No
+    Remapped Rows                           
+        Correctable Error                   : 0
+        Uncorrectable Error                 : 0
+        Pending                             : No
+        Remapping Failure Occurred          : No
+        Bank Remap Availability Histogram   
+            Max                             : 3072 bank(s)
+            High                            : 0 bank(s)
+            Partial                         : 0 bank(s)
+            Low                             : 0 bank(s)
+            None                            : 0 bank(s)
+    Temperature                             
+        PPU Current Temp                    : 36 C
+        PPU Shutdown Temp                   : 95 C
+        PPU Slowdown Temp                   : 85 C
+        PPU Max Operating Temp              : 85 C
+        PPU Target Temperature              : N/A
+        Memory Current Temp                 : 37 C
+        Memory Max Operating Temp           : 95 C
+    Power Readings                          
+        Power Management                    : Supported
+        Power Draw                          : 82.73 W
+        Power Limit                         : 400.00 W
+        Default Power Limit                 : 400.00 W
+        Enforced Power Limit                : 400.00 W
+        Min Power Limit                     : 250.00 W
+        Max Power Limit                     : 400.00 W
+    Clocks                                  
+        CU                                  : 200 MHz
+        Memory                              : 1800 MHz
+        Video                               : 1000 MHz
+    Applications Clocks                     
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+    Default Applications Clocks             
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+    Max Clocks                              
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+        Video                               : 1000 MHz
+    Processes                               
+        Compute instance ID                 : N/A
+        Process ID                          : 2351399
+            Type                            : Compute
+            Name                            : /opt/ac2/bin/python3
+            Used PPU Memory                 : 40 MiB
+        Compute instance ID                 : N/A
+        Process ID                          : 2351400
+            Type                            : Compute
+            Name                            : /opt/ac2/bin/python3
+            Used PPU Memory                 : 76194 MiB
+PPU 00000000:C7:00.0                        
+    Product Name                            : PPU-ZW810E
+    Product Architecture                    : Beethoven
+    Persistence Mode                        : N/A
+    MIG Mode                                
+        Current                             : Disabled
+        Pending                             : Disabled
+    Serial Number                           : GUQB22K10154Y04
+    PPU UUID                                : GPU-011ef111-8311-071a-0000-000080716533
+    Minor Number                            : 7
+    Rear ID                                 : 0
+    PPU Virtualization Mode                 
+        Virtualization Mode                 : None
+        Host VGPU Mode                      : Non SR-IOV
+    PCI                                     
+        Bus                                 : 0xC7
+        Device                              : 0x00
+        Domain                              : 0x0000
+        Device Id                           : 0x60011DED
+        Bus Id                              : 00000000:C7:00.0
+        Sub System Id                       : 0x20041DED
+        Vendor Id                           : 0x1DED
+        PPU Link Info                       
+            PCIe Generation                 
+                Max                         : 5
+                Current                     : 5
+            Link Width                      
+                Max                         : 8x
+                Current                     : 8x
+        Replays Since Reset                 : N/A
+        Tx Throughput                       : 1831312 KB/s
+        Rx Throughput                       : 0 KB/s
+    Fan Speed                               : N/A
+    Performance State                       : N/A
+    VBIOS Version                           : 1.6.6-a35155
+    Auto Reset                              : Enabled
+    Overclocking Mode                       : Ultra
+    Performance Counter                     : Enabled
+    Tide Mode                               : Disabled
+    MPS Mode                                : Disabled
+    Clocks Throttle Reasons                 
+        Idle                                : Not Active
+        Applications Clocks Setting         : Not Active
+        SW Power Cap                        : Not Active
+        HW Slowdown                         : Not Active
+            HW Thermal Slowdown             : Not Active
+            HW Power Brake Slowdown         : Not Active
+        Sync Boost                          : Not Active
+        SW Thermal Slowdown                 : Not Active
+    Xid Errors                              
+        PPU Reset Correctable               : N/A
+        OS Reboot Correctable               : N/A
+        Cold Reboot Correctable             : N/A
+    Compute Mode                            : Default
+    HBM Vendor                              : Samsung
+    Memory Usage                            
+        Total                               : 98304 MiB
+        Used                                : 97721 MiB
+        Free                                : 583 MiB
+    Utilization                             
+        Ppu                                 : 6 %
+        Core                                : 6 %
+        Memory                              : 99 %
+        Encoder                             : 0 %
+        Decoder                             : 0 %
+    Ecc Mode                                
+        Current                             : Enabled
+        Pending                             : Enabled
+    ECC Errors                              
+        Volatile                            
+            SRAM Correctable                : N/A
+            SRAM Uncorrectable              : N/A
+            DRAM Correctable                : 0
+            DRAM Uncorrectable              : 0
+        Aggregate                           
+            SRAM Correctable                : N/A
+            SRAM Uncorrectable              : N/A
+            DRAM Correctable                : 0
+            DRAM Uncorrectable              : 0
+    Retired Pages                           
+        Single Bit ECC                      : 0
+        Double Bit ECC                      : 0
+        Pending Page Blacklist              : No
+    Remapped Rows                           
+        Correctable Error                   : 0
+        Uncorrectable Error                 : 0
+        Pending                             : No
+        Remapping Failure Occurred          : No
+        Bank Remap Availability Histogram   
+            Max                             : 3072 bank(s)
+            High                            : 0 bank(s)
+            Partial                         : 0 bank(s)
+            Low                             : 0 bank(s)
+            None                            : 0 bank(s)
+    Temperature                             
+        PPU Current Temp                    : 44 C
+        PPU Shutdown Temp                   : 95 C
+        PPU Slowdown Temp                   : 85 C
+        PPU Max Operating Temp              : 85 C
+        PPU Target Temperature              : N/A
+        Memory Current Temp                 : 42 C
+        Memory Max Operating Temp           : 95 C
+    Power Readings                          
+        Power Management                    : Supported
+        Power Draw                          : 160.94 W
+        Power Limit                         : 400.00 W
+        Default Power Limit                 : 400.00 W
+        Enforced Power Limit                : 400.00 W
+        Min Power Limit                     : 250.00 W
+        Max Power Limit                     : 400.00 W
+    Clocks                                  
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+        Video                               : 1000 MHz
+    Applications Clocks                     
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+    Default Applications Clocks             
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+    Max Clocks                              
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+        Video                               : 1000 MHz
+    Processes                               
+        Compute instance ID                 : N/A
+        Process ID                          : 1061961
+            Type                            : Compute
+            Name                            : /usr/lib/jvm/java-11-openjdk-11.0.22.0.7-2.0.1.1.al8.x86_64/bin/java
+            Used PPU Memory                 : 97710 MiB
+PPU 00000000:C6:00.0                        
+    Product Name                            : PPU-ZW810E
+    Product Architecture                    : Beethoven
+    Persistence Mode                        : N/A
+    MIG Mode                                
+        Current                             : Disabled
+        Pending                             : Disabled
+    Serial Number                           : GUQB22K10709Y04
+    PPU UUID                                : GPU-01de0016-03e0-0200-0000-0000c0d81d36
+    Minor Number                            : 8
+    Rear ID                                 : 0
+    PPU Virtualization Mode                 
+        Virtualization Mode                 : None
+        Host VGPU Mode                      : Non SR-IOV
+    PCI                                     
+        Bus                                 : 0xC6
+        Device                              : 0x00
+        Domain                              : 0x0000
+        Device Id                           : 0x60011DED
+        Bus Id                              : 00000000:C6:00.0
+        Sub System Id                       : 0x20041DED
+        Vendor Id                           : 0x1DED
+        PPU Link Info                       
+            PCIe Generation                 
+                Max                         : 5
+                Current                     : 5
+            Link Width                      
+                Max                         : 8x
+                Current                     : 8x
+        Replays Since Reset                 : N/A
+        Tx Throughput                       : 0 KB/s
+        Rx Throughput                       : 0 KB/s
+    Fan Speed                               : N/A
+    Performance State                       : N/A
+    VBIOS Version                           : 1.6.6-a35155
+    Auto Reset                              : Enabled
+    Overclocking Mode                       : Ultra
+    Performance Counter                     : Enabled
+    Tide Mode                               : Disabled
+    MPS Mode                                : Disabled
+    Clocks Throttle Reasons                 
+        Idle                                : Active
+        Applications Clocks Setting         : Not Active
+        SW Power Cap                        : Active
+        HW Slowdown                         : Not Active
+            HW Thermal Slowdown             : Not Active
+            HW Power Brake Slowdown         : Not Active
+        Sync Boost                          : Not Active
+        SW Thermal Slowdown                 : Not Active
+    Xid Errors                              
+        PPU Reset Correctable               : N/A
+        OS Reboot Correctable               : N/A
+        Cold Reboot Correctable             : N/A
+    Compute Mode                            : Default
+    HBM Vendor                              : Samsung
+    Memory Usage                            
+        Total                               : 98304 MiB
+        Used                                : 10 MiB
+        Free                                : 98294 MiB
+    Utilization                             
+        Ppu                                 : 0 %
+        Core                                : 0 %
+        Memory                              : 0 %
+        Encoder                             : 0 %
+        Decoder                             : 0 %
+    Ecc Mode                                
+        Current                             : Enabled
+        Pending                             : Enabled
+    ECC Errors                              
+        Volatile                            
+            SRAM Correctable                : N/A
+            SRAM Uncorrectable              : N/A
+            DRAM Correctable                : 0
+            DRAM Uncorrectable              : 0
+        Aggregate                           
+            SRAM Correctable                : N/A
+            SRAM Uncorrectable              : N/A
+            DRAM Correctable                : 0
+            DRAM Uncorrectable              : 0
+    Retired Pages                           
+        Single Bit ECC                      : 0
+        Double Bit ECC                      : 0
+        Pending Page Blacklist              : No
+    Remapped Rows                           
+        Correctable Error                   : 0
+        Uncorrectable Error                 : 0
+        Pending                             : No
+        Remapping Failure Occurred          : No
+        Bank Remap Availability Histogram   
+            Max                             : 3072 bank(s)
+            High                            : 0 bank(s)
+            Partial                         : 0 bank(s)
+            Low                             : 0 bank(s)
+            None                            : 0 bank(s)
+    Temperature                             
+        PPU Current Temp                    : 34 C
+        PPU Shutdown Temp                   : 95 C
+        PPU Slowdown Temp                   : 85 C
+        PPU Max Operating Temp              : 85 C
+        PPU Target Temperature              : N/A
+        Memory Current Temp                 : 37 C
+        Memory Max Operating Temp           : 95 C
+    Power Readings                          
+        Power Management                    : Supported
+        Power Draw                          : 82.51 W
+        Power Limit                         : 400.00 W
+        Default Power Limit                 : 400.00 W
+        Enforced Power Limit                : 400.00 W
+        Min Power Limit                     : 250.00 W
+        Max Power Limit                     : 400.00 W
+    Clocks                                  
+        CU                                  : 200 MHz
+        Memory                              : 1800 MHz
+        Video                               : 1000 MHz
+    Applications Clocks                     
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+    Default Applications Clocks             
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+    Max Clocks                              
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+        Video                               : 1000 MHz
+    Processes                               : None
+PPU 00000001:A5:00.0                        
+    Product Name                            : PPU-ZW810E
+    Product Architecture                    : Beethoven
+    Persistence Mode                        : N/A
+    MIG Mode                                
+        Current                             : Disabled
+        Pending                             : Disabled
+    Serial Number                           : GUQB22K10881Y04
+    PPU UUID                                : GPU-011ef111-8430-0924-0000-000060b05552
+    Minor Number                            : 9
+    Rear ID                                 : 1
+    PPU Virtualization Mode                 
+        Virtualization Mode                 : None
+        Host VGPU Mode                      : Non SR-IOV
+    PCI                                     
+        Bus                                 : 0xA5
+        Device                              : 0x00
+        Domain                              : 0x0001
+        Device Id                           : 0x60011DED
+        Bus Id                              : 00000001:A5:00.0
+        Sub System Id                       : 0x20041DED
+        Vendor Id                           : 0x1DED
+        PPU Link Info                       
+            PCIe Generation                 
+                Max                         : 5
+                Current                     : 5
+            Link Width                      
+                Max                         : 8x
+                Current                     : 8x
+        Replays Since Reset                 : N/A
+        Tx Throughput                       : 0 KB/s
+        Rx Throughput                       : 0 KB/s
+    Fan Speed                               : N/A
+    Performance State                       : N/A
+    VBIOS Version                           : 1.6.6-a35155
+    Auto Reset                              : Enabled
+    Overclocking Mode                       : Ultra
+    Performance Counter                     : Enabled
+    Tide Mode                               : Disabled
+    MPS Mode                                : Disabled
+    Clocks Throttle Reasons                 
+        Idle                                : Active
+        Applications Clocks Setting         : Not Active
+        SW Power Cap                        : Not Active
+        HW Slowdown                         : Not Active
+            HW Thermal Slowdown             : Not Active
+            HW Power Brake Slowdown         : Not Active
+        Sync Boost                          : Not Active
+        SW Thermal Slowdown                 : Not Active
+    Xid Errors                              
+        PPU Reset Correctable               : N/A
+        OS Reboot Correctable               : N/A
+        Cold Reboot Correctable             : N/A
+    Compute Mode                            : Default
+    HBM Vendor                              : Samsung
+    Memory Usage                            
+        Total                               : 98304 MiB
+        Used                                : 10 MiB
+        Free                                : 98294 MiB
+    Utilization                             
+        Ppu                                 : 0 %
+        Core                                : 0 %
+        Memory                              : 0 %
+        Encoder                             : 0 %
+        Decoder                             : 0 %
+    Ecc Mode                                
+        Current                             : Enabled
+        Pending                             : Enabled
+    ECC Errors                              
+        Volatile                            
+            SRAM Correctable                : N/A
+            SRAM Uncorrectable              : N/A
+            DRAM Correctable                : 0
+            DRAM Uncorrectable              : 0
+        Aggregate                           
+            SRAM Correctable                : N/A
+            SRAM Uncorrectable              : N/A
+            DRAM Correctable                : 0
+            DRAM Uncorrectable              : 0
+    Retired Pages                           
+        Single Bit ECC                      : 0
+        Double Bit ECC                      : 0
+        Pending Page Blacklist              : No
+    Remapped Rows                           
+        Correctable Error                   : 0
+        Uncorrectable Error                 : 0
+        Pending                             : No
+        Remapping Failure Occurred          : No
+        Bank Remap Availability Histogram   
+            Max                             : 3072 bank(s)
+            High                            : 0 bank(s)
+            Partial                         : 0 bank(s)
+            Low                             : 0 bank(s)
+            None                            : 0 bank(s)
+    Temperature                             
+        PPU Current Temp                    : 31 C
+        PPU Shutdown Temp                   : 95 C
+        PPU Slowdown Temp                   : 85 C
+        PPU Max Operating Temp              : 85 C
+        PPU Target Temperature              : N/A
+        Memory Current Temp                 : 32 C
+        Memory Max Operating Temp           : 95 C
+    Power Readings                          
+        Power Management                    : Supported
+        Power Draw                          : 82.29 W
+        Power Limit                         : 400.00 W
+        Default Power Limit                 : 400.00 W
+        Enforced Power Limit                : 400.00 W
+        Min Power Limit                     : 250.00 W
+        Max Power Limit                     : 400.00 W
+    Clocks                                  
+        CU                                  : 200 MHz
+        Memory                              : 1800 MHz
+        Video                               : 1000 MHz
+    Applications Clocks                     
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+    Default Applications Clocks             
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+    Max Clocks                              
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+        Video                               : 1000 MHz
+    Processes                               : None
+PPU 00000001:A4:00.0                        
+    Product Name                            : PPU-ZW810E
+    Product Architecture                    : Beethoven
+    Persistence Mode                        : N/A
+    MIG Mode                                
+        Current                             : Disabled
+        Pending                             : Disabled
+    Serial Number                           : GUQB22K10277Y04
+    PPU UUID                                : GPU-01de0016-03c0-0422-0000-0000806b5449
+    Minor Number                            : 10
+    Rear ID                                 : 1
+    PPU Virtualization Mode                 
+        Virtualization Mode                 : None
+        Host VGPU Mode                      : Non SR-IOV
+    PCI                                     
+        Bus                                 : 0xA4
+        Device                              : 0x00
+        Domain                              : 0x0001
+        Device Id                           : 0x60011DED
+        Bus Id                              : 00000001:A4:00.0
+        Sub System Id                       : 0x20041DED
+        Vendor Id                           : 0x1DED
+        PPU Link Info                       
+            PCIe Generation                 
+                Max                         : 5
+                Current                     : 5
+            Link Width                      
+                Max                         : 8x
+                Current                     : 8x
+        Replays Since Reset                 : N/A
+        Tx Throughput                       : 0 KB/s
+        Rx Throughput                       : 0 KB/s
+    Fan Speed                               : N/A
+    Performance State                       : N/A
+    VBIOS Version                           : 1.6.6-a35155
+    Auto Reset                              : Enabled
+    Overclocking Mode                       : Ultra
+    Performance Counter                     : Enabled
+    Tide Mode                               : Disabled
+    MPS Mode                                : Disabled
+    Clocks Throttle Reasons                 
+        Idle                                : Active
+        Applications Clocks Setting         : Not Active
+        SW Power Cap                        : Active
+        HW Slowdown                         : Not Active
+            HW Thermal Slowdown             : Not Active
+            HW Power Brake Slowdown         : Not Active
+        Sync Boost                          : Not Active
+        SW Thermal Slowdown                 : Not Active
+    Xid Errors                              
+        PPU Reset Correctable               : N/A
+        OS Reboot Correctable               : N/A
+        Cold Reboot Correctable             : N/A
+    Compute Mode                            : Default
+    HBM Vendor                              : Samsung
+    Memory Usage                            
+        Total                               : 98304 MiB
+        Used                                : 10 MiB
+        Free                                : 98294 MiB
+    Utilization                             
+        Ppu                                 : 0 %
+        Core                                : 0 %
+        Memory                              : 0 %
+        Encoder                             : 0 %
+        Decoder                             : 0 %
+    Ecc Mode                                
+        Current                             : Enabled
+        Pending                             : Enabled
+    ECC Errors                              
+        Volatile                            
+            SRAM Correctable                : N/A
+            SRAM Uncorrectable              : N/A
+            DRAM Correctable                : 0
+            DRAM Uncorrectable              : 0
+        Aggregate                           
+            SRAM Correctable                : N/A
+            SRAM Uncorrectable              : N/A
+            DRAM Correctable                : 0
+            DRAM Uncorrectable              : 0
+    Retired Pages                           
+        Single Bit ECC                      : 0
+        Double Bit ECC                      : 0
+        Pending Page Blacklist              : No
+    Remapped Rows                           
+        Correctable Error                   : 0
+        Uncorrectable Error                 : 0
+        Pending                             : No
+        Remapping Failure Occurred          : No
+        Bank Remap Availability Histogram   
+            Max                             : 3072 bank(s)
+            High                            : 0 bank(s)
+            Partial                         : 0 bank(s)
+            Low                             : 0 bank(s)
+            None                            : 0 bank(s)
+    Temperature                             
+        PPU Current Temp                    : 31 C
+        PPU Shutdown Temp                   : 95 C
+        PPU Slowdown Temp                   : 85 C
+        PPU Max Operating Temp              : 85 C
+        PPU Target Temperature              : N/A
+        Memory Current Temp                 : 34 C
+        Memory Max Operating Temp           : 95 C
+    Power Readings                          
+        Power Management                    : Supported
+        Power Draw                          : 80.95 W
+        Power Limit                         : 400.00 W
+        Default Power Limit                 : 400.00 W
+        Enforced Power Limit                : 400.00 W
+        Min Power Limit                     : 250.00 W
+        Max Power Limit                     : 400.00 W
+    Clocks                                  
+        CU                                  : 200 MHz
+        Memory                              : 1800 MHz
+        Video                               : 1000 MHz
+    Applications Clocks                     
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+    Default Applications Clocks             
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+    Max Clocks                              
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+        Video                               : 1000 MHz
+    Processes                               : None
+PPU 00000001:0A:00.0                        
+    Product Name                            : PPU-ZW810E
+    Product Architecture                    : Beethoven
+    Persistence Mode                        : N/A
+    MIG Mode                                
+        Current                             : Disabled
+        Pending                             : Disabled
+    Serial Number                           : GUQB22K10710Y04
+    PPU UUID                                : GPU-01de0016-0310-0728-0000-000020761f6d
+    Minor Number                            : 11
+    Rear ID                                 : 1
+    PPU Virtualization Mode                 
+        Virtualization Mode                 : None
+        Host VGPU Mode                      : Non SR-IOV
+    PCI                                     
+        Bus                                 : 0x0A
+        Device                              : 0x00
+        Domain                              : 0x0001
+        Device Id                           : 0x60011DED
+        Bus Id                              : 00000001:0A:00.0
+        Sub System Id                       : 0x20041DED
+        Vendor Id                           : 0x1DED
+        PPU Link Info                       
+            PCIe Generation                 
+                Max                         : 5
+                Current                     : 5
+            Link Width                      
+                Max                         : 8x
+                Current                     : 8x
+        Replays Since Reset                 : N/A
+        Tx Throughput                       : 0 KB/s
+        Rx Throughput                       : 0 KB/s
+    Fan Speed                               : N/A
+    Performance State                       : N/A
+    VBIOS Version                           : 1.6.6-a35155
+    Auto Reset                              : Enabled
+    Overclocking Mode                       : Ultra
+    Performance Counter                     : Enabled
+    Tide Mode                               : Disabled
+    MPS Mode                                : Disabled
+    Clocks Throttle Reasons                 
+        Idle                                : Active
+        Applications Clocks Setting         : Not Active
+        SW Power Cap                        : Not Active
+        HW Slowdown                         : Not Active
+            HW Thermal Slowdown             : Not Active
+            HW Power Brake Slowdown         : Not Active
+        Sync Boost                          : Not Active
+        SW Thermal Slowdown                 : Not Active
+    Xid Errors                              
+        PPU Reset Correctable               : N/A
+        OS Reboot Correctable               : N/A
+        Cold Reboot Correctable             : N/A
+    Compute Mode                            : Default
+    HBM Vendor                              : Samsung
+    Memory Usage                            
+        Total                               : 98304 MiB
+        Used                                : 10 MiB
+        Free                                : 98294 MiB
+    Utilization                             
+        Ppu                                 : 0 %
+        Core                                : 0 %
+        Memory                              : 0 %
+        Encoder                             : 0 %
+        Decoder                             : 0 %
+    Ecc Mode                                
+        Current                             : Enabled
+        Pending                             : Enabled
+    ECC Errors                              
+        Volatile                            
+            SRAM Correctable                : N/A
+            SRAM Uncorrectable              : N/A
+            DRAM Correctable                : 0
+            DRAM Uncorrectable              : 0
+        Aggregate                           
+            SRAM Correctable                : N/A
+            SRAM Uncorrectable              : N/A
+            DRAM Correctable                : 0
+            DRAM Uncorrectable              : 0
+    Retired Pages                           
+        Single Bit ECC                      : 0
+        Double Bit ECC                      : 0
+        Pending Page Blacklist              : No
+    Remapped Rows                           
+        Correctable Error                   : 0
+        Uncorrectable Error                 : 0
+        Pending                             : No
+        Remapping Failure Occurred          : No
+        Bank Remap Availability Histogram   
+            Max                             : 3072 bank(s)
+            High                            : 0 bank(s)
+            Partial                         : 0 bank(s)
+            Low                             : 0 bank(s)
+            None                            : 0 bank(s)
+    Temperature                             
+        PPU Current Temp                    : 32 C
+        PPU Shutdown Temp                   : 95 C
+        PPU Slowdown Temp                   : 85 C
+        PPU Max Operating Temp              : 85 C
+        PPU Target Temperature              : N/A
+        Memory Current Temp                 : 34 C
+        Memory Max Operating Temp           : 95 C
+    Power Readings                          
+        Power Management                    : Supported
+        Power Draw                          : 82.68 W
+        Power Limit                         : 400.00 W
+        Default Power Limit                 : 400.00 W
+        Enforced Power Limit                : 400.00 W
+        Min Power Limit                     : 250.00 W
+        Max Power Limit                     : 400.00 W
+    Clocks                                  
+        CU                                  : 200 MHz
+        Memory                              : 1800 MHz
+        Video                               : 1000 MHz
+    Applications Clocks                     
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+    Default Applications Clocks             
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+    Max Clocks                              
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+        Video                               : 1000 MHz
+    Processes                               : None
+PPU 00000001:0B:00.0                        
+    Product Name                            : PPU-ZW810E
+    Product Architecture                    : Beethoven
+    Persistence Mode                        : N/A
+    MIG Mode                                
+        Current                             : Disabled
+        Pending                             : Disabled
+    Serial Number                           : GUQB22K10879Y04
+    PPU UUID                                : GPU-011ef111-8470-030e-0000-000080ce6a2f
+    Minor Number                            : 12
+    Rear ID                                 : 1
+    PPU Virtualization Mode                 
+        Virtualization Mode                 : None
+        Host VGPU Mode                      : Non SR-IOV
+    PCI                                     
+        Bus                                 : 0x0B
+        Device                              : 0x00
+        Domain                              : 0x0001
+        Device Id                           : 0x60011DED
+        Bus Id                              : 00000001:0B:00.0
+        Sub System Id                       : 0x20041DED
+        Vendor Id                           : 0x1DED
+        PPU Link Info                       
+            PCIe Generation                 
+                Max                         : 5
+                Current                     : 5
+            Link Width                      
+                Max                         : 8x
+                Current                     : 8x
+        Replays Since Reset                 : N/A
+        Tx Throughput                       : 0 KB/s
+        Rx Throughput                       : 0 KB/s
+    Fan Speed                               : N/A
+    Performance State                       : N/A
+    VBIOS Version                           : 1.6.6-a35155
+    Auto Reset                              : Enabled
+    Overclocking Mode                       : Ultra
+    Performance Counter                     : Enabled
+    Tide Mode                               : Disabled
+    MPS Mode                                : Disabled
+    Clocks Throttle Reasons                 
+        Idle                                : Not Active
+        Applications Clocks Setting         : Not Active
+        SW Power Cap                        : Not Active
+        HW Slowdown                         : Not Active
+            HW Thermal Slowdown             : Not Active
+            HW Power Brake Slowdown         : Not Active
+        Sync Boost                          : Not Active
+        SW Thermal Slowdown                 : Not Active
+    Xid Errors                              
+        PPU Reset Correctable               : N/A
+        OS Reboot Correctable               : N/A
+        Cold Reboot Correctable             : N/A
+    Compute Mode                            : Default
+    HBM Vendor                              : Samsung
+    Memory Usage                            
+        Total                               : 98304 MiB
+        Used                                : 46929 MiB
+        Free                                : 51375 MiB
+    Utilization                             
+        Ppu                                 : 96 %
+        Core                                : 96 %
+        Memory                              : 47 %
+        Encoder                             : 0 %
+        Decoder                             : 0 %
+    Ecc Mode                                
+        Current                             : Enabled
+        Pending                             : Enabled
+    ECC Errors                              
+        Volatile                            
+            SRAM Correctable                : N/A
+            SRAM Uncorrectable              : N/A
+            DRAM Correctable                : 0
+            DRAM Uncorrectable              : 0
+        Aggregate                           
+            SRAM Correctable                : N/A
+            SRAM Uncorrectable              : N/A
+            DRAM Correctable                : 0
+            DRAM Uncorrectable              : 0
+    Retired Pages                           
+        Single Bit ECC                      : 0
+        Double Bit ECC                      : 0
+        Pending Page Blacklist              : No
+    Remapped Rows                           
+        Correctable Error                   : 0
+        Uncorrectable Error                 : 0
+        Pending                             : No
+        Remapping Failure Occurred          : No
+        Bank Remap Availability Histogram   
+            Max                             : 3072 bank(s)
+            High                            : 0 bank(s)
+            Partial                         : 0 bank(s)
+            Low                             : 0 bank(s)
+            None                            : 0 bank(s)
+    Temperature                             
+        PPU Current Temp                    : 37 C
+        PPU Shutdown Temp                   : 95 C
+        PPU Slowdown Temp                   : 85 C
+        PPU Max Operating Temp              : 85 C
+        PPU Target Temperature              : N/A
+        Memory Current Temp                 : 41 C
+        Memory Max Operating Temp           : 95 C
+    Power Readings                          
+        Power Management                    : Supported
+        Power Draw                          : 197.72 W
+        Power Limit                         : 400.00 W
+        Default Power Limit                 : 400.00 W
+        Enforced Power Limit                : 400.00 W
+        Min Power Limit                     : 250.00 W
+        Max Power Limit                     : 400.00 W
+    Clocks                                  
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+        Video                               : 1000 MHz
+    Applications Clocks                     
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+    Default Applications Clocks             
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+    Max Clocks                              
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+        Video                               : 1000 MHz
+    Processes                               
+        Compute instance ID                 : N/A
+        Process ID                          : 2073037
+            Type                            : Compute
+            Name                            : .venv/bin/python
+            Used PPU Memory                 : 46918 MiB
+PPU 00000000:08:00.0                        
+    Product Name                            : PPU-ZW810E
+    Product Architecture                    : Beethoven
+    Persistence Mode                        : N/A
+    MIG Mode                                
+        Current                             : Disabled
+        Pending                             : Disabled
+    Serial Number                           : GUQB22K10924Y04
+    PPU UUID                                : GPU-011ef111-c601-012c-0000-0000e0f3b604
+    Minor Number                            : 13
+    Rear ID                                 : 1
+    PPU Virtualization Mode                 
+        Virtualization Mode                 : None
+        Host VGPU Mode                      : Non SR-IOV
+    PCI                                     
+        Bus                                 : 0x08
+        Device                              : 0x00
+        Domain                              : 0x0000
+        Device Id                           : 0x60011DED
+        Bus Id                              : 00000000:08:00.0
+        Sub System Id                       : 0x20041DED
+        Vendor Id                           : 0x1DED
+        PPU Link Info                       
+            PCIe Generation                 
+                Max                         : 5
+                Current                     : 5
+            Link Width                      
+                Max                         : 8x
+                Current                     : 8x
+        Replays Since Reset                 : N/A
+        Tx Throughput                       : 0 KB/s
+        Rx Throughput                       : 0 KB/s
+    Fan Speed                               : N/A
+    Performance State                       : N/A
+    VBIOS Version                           : 1.6.6-a35155
+    Auto Reset                              : Enabled
+    Overclocking Mode                       : Ultra
+    Performance Counter                     : Enabled
+    Tide Mode                               : Disabled
+    MPS Mode                                : Disabled
+    Clocks Throttle Reasons                 
+        Idle                                : Not Active
+        Applications Clocks Setting         : Not Active
+        SW Power Cap                        : Not Active
+        HW Slowdown                         : Not Active
+            HW Thermal Slowdown             : Not Active
+            HW Power Brake Slowdown         : Not Active
+        Sync Boost                          : Not Active
+        SW Thermal Slowdown                 : Not Active
+    Xid Errors                              
+        PPU Reset Correctable               : N/A
+        OS Reboot Correctable               : N/A
+        Cold Reboot Correctable             : N/A
+    Compute Mode                            : Default
+    HBM Vendor                              : Samsung
+    Memory Usage                            
+        Total                               : 98304 MiB
+        Used                                : 58385 MiB
+        Free                                : 39919 MiB
+    Utilization                             
+        Ppu                                 : 100 %
+        Core                                : 100 %
+        Memory                              : 59 %
+        Encoder                             : 0 %
+        Decoder                             : 0 %
+    Ecc Mode                                
+        Current                             : Enabled
+        Pending                             : Enabled
+    ECC Errors                              
+        Volatile                            
+            SRAM Correctable                : N/A
+            SRAM Uncorrectable              : N/A
+            DRAM Correctable                : 0
+            DRAM Uncorrectable              : 0
+        Aggregate                           
+            SRAM Correctable                : N/A
+            SRAM Uncorrectable              : N/A
+            DRAM Correctable                : 0
+            DRAM Uncorrectable              : 0
+    Retired Pages                           
+        Single Bit ECC                      : 0
+        Double Bit ECC                      : 0
+        Pending Page Blacklist              : No
+    Remapped Rows                           
+        Correctable Error                   : 0
+        Uncorrectable Error                 : 0
+        Pending                             : No
+        Remapping Failure Occurred          : No
+        Bank Remap Availability Histogram   
+            Max                             : 3072 bank(s)
+            High                            : 0 bank(s)
+            Partial                         : 0 bank(s)
+            Low                             : 0 bank(s)
+            None                            : 0 bank(s)
+    Temperature                             
+        PPU Current Temp                    : 51 C
+        PPU Shutdown Temp                   : 95 C
+        PPU Slowdown Temp                   : 85 C
+        PPU Max Operating Temp              : 85 C
+        PPU Target Temperature              : N/A
+        Memory Current Temp                 : 51 C
+        Memory Max Operating Temp           : 95 C
+    Power Readings                          
+        Power Management                    : Supported
+        Power Draw                          : 310.45 W
+        Power Limit                         : 400.00 W
+        Default Power Limit                 : 400.00 W
+        Enforced Power Limit                : 400.00 W
+        Min Power Limit                     : 250.00 W
+        Max Power Limit                     : 400.00 W
+    Clocks                                  
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+        Video                               : 1000 MHz
+    Applications Clocks                     
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+    Default Applications Clocks             
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+    Max Clocks                              
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+        Video                               : 1000 MHz
+    Processes                               
+        Compute instance ID                 : N/A
+        Process ID                          : 2098470
+            Type                            : Compute
+            Name                            : /usr/local/bin/python3
+            Used PPU Memory                 : 58356 MiB
+PPU 00000000:09:00.0                        
+    Product Name                            : PPU-ZW810E
+    Product Architecture                    : Beethoven
+    Persistence Mode                        : N/A
+    MIG Mode                                
+        Current                             : Disabled
+        Pending                             : Disabled
+    Serial Number                           : GUQB22K11331Y04
+    PPU UUID                                : GPU-011ef111-8220-0924-0000-0000a04fec75
+    Minor Number                            : 14
+    Rear ID                                 : 1
+    PPU Virtualization Mode                 
+        Virtualization Mode                 : None
+        Host VGPU Mode                      : Non SR-IOV
+    PCI                                     
+        Bus                                 : 0x09
+        Device                              : 0x00
+        Domain                              : 0x0000
+        Device Id                           : 0x60011DED
+        Bus Id                              : 00000000:09:00.0
+        Sub System Id                       : 0x20041DED
+        Vendor Id                           : 0x1DED
+        PPU Link Info                       
+            PCIe Generation                 
+                Max                         : 5
+                Current                     : 5
+            Link Width                      
+                Max                         : 8x
+                Current                     : 8x
+        Replays Since Reset                 : N/A
+        Tx Throughput                       : 0 KB/s
+        Rx Throughput                       : 0 KB/s
+    Fan Speed                               : N/A
+    Performance State                       : N/A
+    VBIOS Version                           : 1.6.6-a35155
+    Auto Reset                              : Enabled
+    Overclocking Mode                       : Ultra
+    Performance Counter                     : Enabled
+    Tide Mode                               : Disabled
+    MPS Mode                                : Disabled
+    Clocks Throttle Reasons                 
+        Idle                                : Active
+        Applications Clocks Setting         : Not Active
+        SW Power Cap                        : Not Active
+        HW Slowdown                         : Not Active
+            HW Thermal Slowdown             : Not Active
+            HW Power Brake Slowdown         : Not Active
+        Sync Boost                          : Not Active
+        SW Thermal Slowdown                 : Not Active
+    Xid Errors                              
+        PPU Reset Correctable               : N/A
+        OS Reboot Correctable               : N/A
+        Cold Reboot Correctable             : N/A
+    Compute Mode                            : Default
+    HBM Vendor                              : Samsung
+    Memory Usage                            
+        Total                               : 98304 MiB
+        Used                                : 947 MiB
+        Free                                : 97357 MiB
+    Utilization                             
+        Ppu                                 : 0 %
+        Core                                : 0 %
+        Memory                              : 0 %
+        Encoder                             : 0 %
+        Decoder                             : 0 %
+    Ecc Mode                                
+        Current                             : Enabled
+        Pending                             : Enabled
+    ECC Errors                              
+        Volatile                            
+            SRAM Correctable                : N/A
+            SRAM Uncorrectable              : N/A
+            DRAM Correctable                : 0
+            DRAM Uncorrectable              : 0
+        Aggregate                           
+            SRAM Correctable                : N/A
+            SRAM Uncorrectable              : N/A
+            DRAM Correctable                : 0
+            DRAM Uncorrectable              : 0
+    Retired Pages                           
+        Single Bit ECC                      : 0
+        Double Bit ECC                      : 0
+        Pending Page Blacklist              : No
+    Remapped Rows                           
+        Correctable Error                   : 0
+        Uncorrectable Error                 : 0
+        Pending                             : No
+        Remapping Failure Occurred          : No
+        Bank Remap Availability Histogram   
+            Max                             : 3072 bank(s)
+            High                            : 0 bank(s)
+            Partial                         : 0 bank(s)
+            Low                             : 0 bank(s)
+            None                            : 0 bank(s)
+    Temperature                             
+        PPU Current Temp                    : 35 C
+        PPU Shutdown Temp                   : 95 C
+        PPU Slowdown Temp                   : 85 C
+        PPU Max Operating Temp              : 85 C
+        PPU Target Temperature              : N/A
+        Memory Current Temp                 : 37 C
+        Memory Max Operating Temp           : 95 C
+    Power Readings                          
+        Power Management                    : Supported
+        Power Draw                          : 79.70 W
+        Power Limit                         : 400.00 W
+        Default Power Limit                 : 400.00 W
+        Enforced Power Limit                : 400.00 W
+        Min Power Limit                     : 250.00 W
+        Max Power Limit                     : 400.00 W
+    Clocks                                  
+        CU                                  : 200 MHz
+        Memory                              : 1800 MHz
+        Video                               : 1000 MHz
+    Applications Clocks                     
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+    Default Applications Clocks             
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+    Max Clocks                              
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+        Video                               : 1000 MHz
+    Processes                               
+        Compute instance ID                 : N/A
+        Process ID                          : 2320614
+            Type                            : Compute
+            Name                            : VLLM::EngineCore
+            Used PPU Memory                 : 928 MiB
+PPU 00000000:A3:00.0                        
+    Product Name                            : PPU-ZW810E
+    Product Architecture                    : Beethoven
+    Persistence Mode                        : N/A
+    MIG Mode                                
+        Current                             : Disabled
+        Pending                             : Disabled
+    Serial Number                           : GUQB22K12571Y04
+    PPU UUID                                : GPU-011ef111-4562-0426-0000-000040c8c877
+    Minor Number                            : 15
+    Rear ID                                 : 1
+    PPU Virtualization Mode                 
+        Virtualization Mode                 : None
+        Host VGPU Mode                      : Non SR-IOV
+    PCI                                     
+        Bus                                 : 0xA3
+        Device                              : 0x00
+        Domain                              : 0x0000
+        Device Id                           : 0x60011DED
+        Bus Id                              : 00000000:A3:00.0
+        Sub System Id                       : 0x20041DED
+        Vendor Id                           : 0x1DED
+        PPU Link Info                       
+            PCIe Generation                 
+                Max                         : 5
+                Current                     : 5
+            Link Width                      
+                Max                         : 8x
+                Current                     : 8x
+        Replays Since Reset                 : N/A
+        Tx Throughput                       : 0 KB/s
+        Rx Throughput                       : 0 KB/s
+    Fan Speed                               : N/A
+    Performance State                       : N/A
+    VBIOS Version                           : 1.6.6-a35155
+    Auto Reset                              : Enabled
+    Overclocking Mode                       : Ultra
+    Performance Counter                     : Enabled
+    Tide Mode                               : Disabled
+    MPS Mode                                : Disabled
+    Clocks Throttle Reasons                 
+        Idle                                : Active
+        Applications Clocks Setting         : Not Active
+        SW Power Cap                        : Not Active
+        HW Slowdown                         : Not Active
+            HW Thermal Slowdown             : Not Active
+            HW Power Brake Slowdown         : Not Active
+        Sync Boost                          : Not Active
+        SW Thermal Slowdown                 : Not Active
+    Xid Errors                              
+        PPU Reset Correctable               : N/A
+        OS Reboot Correctable               : N/A
+        Cold Reboot Correctable             : N/A
+    Compute Mode                            : Default
+    HBM Vendor                              : Samsung
+    Memory Usage                            
+        Total                               : 98304 MiB
+        Used                                : 10 MiB
+        Free                                : 98294 MiB
+    Utilization                             
+        Ppu                                 : 0 %
+        Core                                : 0 %
+        Memory                              : 0 %
+        Encoder                             : 0 %
+        Decoder                             : 0 %
+    Ecc Mode                                
+        Current                             : Enabled
+        Pending                             : Enabled
+    ECC Errors                              
+        Volatile                            
+            SRAM Correctable                : N/A
+            SRAM Uncorrectable              : N/A
+            DRAM Correctable                : 0
+            DRAM Uncorrectable              : 0
+        Aggregate                           
+            SRAM Correctable                : N/A
+            SRAM Uncorrectable              : N/A
+            DRAM Correctable                : 0
+            DRAM Uncorrectable              : 0
+    Retired Pages                           
+        Single Bit ECC                      : 0
+        Double Bit ECC                      : 0
+        Pending Page Blacklist              : No
+    Remapped Rows                           
+        Correctable Error                   : 0
+        Uncorrectable Error                 : 0
+        Pending                             : No
+        Remapping Failure Occurred          : No
+        Bank Remap Availability Histogram   
+            Max                             : 3072 bank(s)
+            High                            : 0 bank(s)
+            Partial                         : 0 bank(s)
+            Low                             : 0 bank(s)
+            None                            : 0 bank(s)
+    Temperature                             
+        PPU Current Temp                    : 37 C
+        PPU Shutdown Temp                   : 95 C
+        PPU Slowdown Temp                   : 85 C
+        PPU Max Operating Temp              : 85 C
+        PPU Target Temperature              : N/A
+        Memory Current Temp                 : 36 C
+        Memory Max Operating Temp           : 95 C
+    Power Readings                          
+        Power Management                    : Supported
+        Power Draw                          : 82.65 W
+        Power Limit                         : 400.00 W
+        Default Power Limit                 : 400.00 W
+        Enforced Power Limit                : 400.00 W
+        Min Power Limit                     : 250.00 W
+        Max Power Limit                     : 400.00 W
+    Clocks                                  
+        CU                                  : 200 MHz
+        Memory                              : 1800 MHz
+        Video                               : 1000 MHz
+    Applications Clocks                     
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+    Default Applications Clocks             
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+    Max Clocks                              
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+        Video                               : 1000 MHz
+    Processes                               : None
+PPU 00000000:A2:00.0                        
+    Product Name                            : PPU-ZW810E
+    Product Architecture                    : Beethoven
+    Persistence Mode                        : N/A
+    MIG Mode                                
+        Current                             : Disabled
+        Pending                             : Disabled
+    Serial Number                           : GUQB22K10606Y04
+    PPU UUID                                : GPU-011ef111-8641-0312-0000-0000e070fc59
+    Minor Number                            : 16
+    Rear ID                                 : 1
+    PPU Virtualization Mode                 
+        Virtualization Mode                 : None
+        Host VGPU Mode                      : Non SR-IOV
+    PCI                                     
+        Bus                                 : 0xA2
+        Device                              : 0x00
+        Domain                              : 0x0000
+        Device Id                           : 0x60011DED
+        Bus Id                              : 00000000:A2:00.0
+        Sub System Id                       : 0x20041DED
+        Vendor Id                           : 0x1DED
+        PPU Link Info                       
+            PCIe Generation                 
+                Max                         : 5
+                Current                     : 5
+            Link Width                      
+                Max                         : 8x
+                Current                     : 8x
+        Replays Since Reset                 : N/A
+        Tx Throughput                       : 0 KB/s
+        Rx Throughput                       : 0 KB/s
+    Fan Speed                               : N/A
+    Performance State                       : N/A
+    VBIOS Version                           : 1.6.6-a35155
+    Auto Reset                              : Enabled
+    Overclocking Mode                       : Ultra
+    Performance Counter                     : Enabled
+    Tide Mode                               : Disabled
+    MPS Mode                                : Disabled
+    Clocks Throttle Reasons                 
+        Idle                                : Not Active
+        Applications Clocks Setting         : Not Active
+        SW Power Cap                        : Not Active
+        HW Slowdown                         : Not Active
+            HW Thermal Slowdown             : Not Active
+            HW Power Brake Slowdown         : Not Active
+        Sync Boost                          : Not Active
+        SW Thermal Slowdown                 : Not Active
+    Xid Errors                              
+        PPU Reset Correctable               : N/A
+        OS Reboot Correctable               : N/A
+        Cold Reboot Correctable             : N/A
+    Compute Mode                            : Default
+    HBM Vendor                              : Samsung
+    Memory Usage                            
+        Total                               : 98304 MiB
+        Used                                : 28915 MiB
+        Free                                : 69389 MiB
+    Utilization                             
+        Ppu                                 : 76 %
+        Core                                : 76 %
+        Memory                              : 29 %
+        Encoder                             : 0 %
+        Decoder                             : 0 %
+    Ecc Mode                                
+        Current                             : Enabled
+        Pending                             : Enabled
+    ECC Errors                              
+        Volatile                            
+            SRAM Correctable                : N/A
+            SRAM Uncorrectable              : N/A
+            DRAM Correctable                : 0
+            DRAM Uncorrectable              : 0
+        Aggregate                           
+            SRAM Correctable                : N/A
+            SRAM Uncorrectable              : N/A
+            DRAM Correctable                : 0
+            DRAM Uncorrectable              : 0
+    Retired Pages                           
+        Single Bit ECC                      : 0
+        Double Bit ECC                      : 0
+        Pending Page Blacklist              : No
+    Remapped Rows                           
+        Correctable Error                   : 0
+        Uncorrectable Error                 : 0
+        Pending                             : No
+        Remapping Failure Occurred          : No
+        Bank Remap Availability Histogram   
+            Max                             : 3072 bank(s)
+            High                            : 0 bank(s)
+            Partial                         : 0 bank(s)
+            Low                             : 0 bank(s)
+            None                            : 0 bank(s)
+    Temperature                             
+        PPU Current Temp                    : 44 C
+        PPU Shutdown Temp                   : 95 C
+        PPU Slowdown Temp                   : 85 C
+        PPU Max Operating Temp              : 85 C
+        PPU Target Temperature              : N/A
+        Memory Current Temp                 : 43 C
+        Memory Max Operating Temp           : 95 C
+    Power Readings                          
+        Power Management                    : Supported
+        Power Draw                          : 175.63 W
+        Power Limit                         : 400.00 W
+        Default Power Limit                 : 400.00 W
+        Enforced Power Limit                : 400.00 W
+        Min Power Limit                     : 250.00 W
+        Max Power Limit                     : 400.00 W
+    Clocks                                  
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+        Video                               : 1000 MHz
+    Applications Clocks                     
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+    Default Applications Clocks             
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+    Max Clocks                              
+        CU                                  : 1700 MHz
+        Memory                              : 1800 MHz
+        Video                               : 1000 MHz
+    Processes                               
+        Compute instance ID                 : N/A
+        Process ID                          : 2072968
+            Type                            : Compute
+            Name                            : .venv/bin/python
+            Used PPU Memory                 : 28904 MiB

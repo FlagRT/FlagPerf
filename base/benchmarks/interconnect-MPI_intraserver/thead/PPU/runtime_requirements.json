@@ -1,0 +1,1 @@
+{"schema_version":1,"supported":true,"runtime_profile":"torch210_ppu_candidate","runtime_role":"operator","process_scope":{"nnodes":1,"min_nproc_per_node":2,"max_nproc_per_node":16},"implementation":"native-torch-cuda","backend":"cpu:gloo,cuda:nccl","correctness_required":true}

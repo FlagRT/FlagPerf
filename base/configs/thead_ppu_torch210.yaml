@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "vendor": "thead",
+  "chip": "PPU",
+  "runtime_profile": "torch210_ppu_candidate",
+  "image": "flagtree-ppu-3.6-dev:202608",
+  "shm_size": "16g",
+  "requires_privileged_root": false,
+  "expected_device_ids": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+  "result_root": "result",
+  "required_devices": ["/dev/alixpu"],
+  "host_mounts": [],
+  "runtime_environment": {}
+}
