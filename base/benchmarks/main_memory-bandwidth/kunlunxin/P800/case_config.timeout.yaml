@@ -1,0 +1,9 @@
+Melements: 4
+WARMUP: 1
+ITERS: 2
+SEED: 519
+DTYPE: float32
+DIST_BACKEND: gloo
+IMPLEMENTATION: native-xpytorch
+MODE: timeout
+FAULT_MODE: cpu-wait

@@ -1,0 +1,1 @@
+{"schema_version":1,"supported":true,"runtime_profile":"xpytorch_2.9_p800_candidate","process_scope":{"nnodes":1,"nproc_per_node":1},"correctness_required":true}

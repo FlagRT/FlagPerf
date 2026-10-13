@@ -1,0 +1,7 @@
+# Same 512 MiB payload as the reference, with a short iteration count for the path check.
+PAYLOAD_BYTES: 536870912
+ITERS: 5
+WARMUP: 5
+PIN_MEMORY: false
+NON_BLOCKING: false
+MODE: smoke

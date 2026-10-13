@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "supported": true,
+  "process_scope": {
+    "nnodes": 1
+  },
+  "compatibility_note": "Explicit contract for the existing Ascend case; no new hardware qualification is claimed."
+}

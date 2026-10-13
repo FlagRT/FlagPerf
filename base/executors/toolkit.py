@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Copyright 2026 FlagOS Contributors
 # Licensed under the Apache License, Version 2.0.
-"""Ascend Base Toolkit request, planner, and host executor."""
+"""Vendor-dispatched Base Toolkit request, planner, and host executor."""
 
 from __future__ import annotations
 
@@ -84,11 +84,11 @@ def add_cli_arguments(
     )
     parser.add_argument(
         "--compute-monitor", choices=("on", "off"), default="on",
-        help="collect concurrent npu-smi evidence for Ascend computation Cases",
+        help="collect concurrent computation telemetry: Ascend npu-smi / P800 xpu-smi",
     )
     parser.add_argument(
         "--data-movement-monitor", choices=("on", "off"), default="on",
-        help="collect concurrent/static npu-smi evidence for data movement Cases",
+        help="collect concurrent/static data movement telemetry: Ascend npu-smi / P800 xpu-smi",
     )
     parser.add_argument(
         "--allow-disruptive-dmi", action="store_true",
@@ -97,7 +97,7 @@ def add_cli_arguments(
     )
     parser.add_argument(
         "--latency-sizes", default=None,
-        help="Override latency sizes; default P2P: 64K, H2D/D2H: 512,4K,64K,1M",
+        help="Ascend only: override latency sizes; default P2P: 64K, H2D/D2H: 512,4K,64K,1M; P800 uses a fixed sweep",
     )
     parser.add_argument("--hccl-min-bytes", default="8K")
     parser.add_argument("--hccl-max-bytes", default="1G")
@@ -118,6 +118,9 @@ def add_cli_arguments(
         help=("logical Device IDs/ranges for ascend-toolkit, for example "
               "2,3,6-9"),
     )
+    selection.add_argument("--physical-device-ids", help="P800 physical card IDs/ranges")
+    from executors.p800_toolkit import add_cli_arguments as add_p800_arguments
+    add_p800_arguments(parser)
     parser.add_argument(
         "--result-root", type=Path,
         help="override the host profile result root for this run",
@@ -152,6 +155,7 @@ class ToolkitRunRequest:
     hccl_min_bytes: str
     hccl_max_bytes: str
     allow_privileged_root: bool
+    p800_options: dict[str, Any] | None = None
 
     @classmethod
     def from_namespace(cls, args: argparse.Namespace) -> "ToolkitRunRequest":
@@ -160,6 +164,7 @@ class ToolkitRunRequest:
                 config=args.config,
                 npu_ids=args.npu_ids,
                 device_ids=args.device_ids,
+                physical_device_ids=getattr(args, "physical_device_ids", None),
                 result_root=args.result_root,
                 timeout=args.timeout,
                 dry_run=args.dry_run,
@@ -173,6 +178,7 @@ class ToolkitRunRequest:
             hccl_min_bytes=args.hccl_min_bytes,
             hccl_max_bytes=args.hccl_max_bytes,
             allow_privileged_root=args.allow_privileged_root,
+            p800_options={key: getattr(args, key, default) for key, default in p800_defaults().items()},
         )
 
     def to_namespace(self) -> argparse.Namespace:
@@ -190,9 +196,11 @@ class ToolkitRunRequest:
             allow_privileged_root=self.allow_privileged_root,
             npu_ids=self.context.npu_ids,
             device_ids=self.context.device_ids,
+            physical_device_ids=self.context.physical_device_ids,
             result_root=self.context.result_root,
             timeout=self.context.timeout,
             dry_run=self.context.dry_run,
+            **(self.p800_options or p800_defaults()),
         )
 
     def validate(self, *, require_selection: bool) -> None:
@@ -209,6 +217,11 @@ class ToolkitExecutor:
     def plan(self, request: ToolkitRunRequest) -> dict[str, Any]:
         request.validate(require_selection=self.require_selection)
         config_path, config = load_host_config(request.context.config)
+        if config["vendor"] == "kunlunxin":
+            from executors.p800_toolkit import plan as p800_plan
+            return p800_plan(request, config_path, config)
+        if request.context.physical_device_ids is not None:
+            fail("Ascend Toolkit uses --npu-ids or --device-ids")
         namespace_args = container_namespace_args(
             list(request.cases) if request.cases else None
         )
@@ -248,11 +261,19 @@ class ToolkitExecutor:
         if request.context.dry_run:
             print(json.dumps(plan, indent=2, sort_keys=True))
             return 0
+        if plan.get("vendor") == "kunlunxin":
+            from executors.p800_toolkit import execute as p800_execute
+            return p800_execute(request, plan)
         return execute_toolkit(request.to_namespace(), plan=plan)
 
 
 def fail(message: str) -> None:
     raise RuntimeError(message)
+
+
+def p800_defaults():
+    from executors.p800_toolkit import DEFAULTS
+    return DEFAULTS.copy()
 
 
 def validate_static_args(args: argparse.Namespace) -> None:
@@ -305,41 +326,9 @@ def generate_report_safely(result_dir: Path) -> dict[str, Any]:
         return current["report_generation"]
 
 
-def docker_inspect(image: str) -> dict[str, Any]:
-    proc = subprocess.run(
-        ["docker", "image", "inspect", image], text=True,
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False,
-    )
-    if proc.returncode != 0:
-        fail(f"image is unavailable: {image}: {proc.stderr.strip()}")
-    return json.loads(proc.stdout)[0]
-
-
-def run_host_preflight(
-    result_dir: Path, expected_device_ids: list[int], *,
-    npu_ids: str | None = None, device_ids: str | None = None,
-    label: str = "host-preflight",
-) -> Path:
-    helper = BASE_DIR / "toolkits" / "_common" / "ascend" / "A3" / "host_preflight.py"
-    output = result_dir / label
-    command = [
-        sys.executable, str(helper), "--output", str(output),
-        "--expected-device-ids", ",".join(map(str, expected_device_ids)),
-    ]
-    if npu_ids is not None:
-        command.extend(["--npu-ids", npu_ids])
-    if device_ids is not None:
-        command.extend(["--device-ids", device_ids])
-    proc = subprocess.run(
-        command,
-        text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False,
-    )
-    if proc.stdout:
-        print(proc.stdout, end="" if proc.stdout.endswith("\n") else "\n")
-    summaries = list(output.glob("*/summary.json"))
-    if proc.returncode != 0 or len(summaries) != 1:
-        fail("Ascend host preflight failed; inspect " + str(output))
-    return summaries[0]
+# Compatibility names retained for Toolkit callers and tests.
+from executors.host import docker_inspect
+from base.vendors.ascend.provider import run_host_preflight
 
 
 def execute_toolkit(

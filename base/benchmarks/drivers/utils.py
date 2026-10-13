@@ -16,23 +16,36 @@ except ImportError:
 
 
 def _vendor_name(vendor):
-    return vendor.split("/", 1)[0].lower()
+    name = vendor.split("/", 1)[0].lower()
+    if name not in {"nvidia", "ascend", "kunlunxin", "mthreads", "cambricon", "iluvatar", "metax", "dcu", "tsingmicro"}:
+        raise ValueError(f"unsupported runtime vendor: {name!r}")
+    return name
 
 
 def bootstrap_vendor(vendor):
     """Initialize only the runtime extension required by the selected vendor."""
     if _vendor_name(vendor) == "ascend":
         ascend_driver.initialize()
+    elif _vendor_name(vendor) == "kunlunxin":
+        from . import kunlunxin
+        kunlunxin.initialize()
 
 
 def accelerator_device(vendor, local_rank):
     """Resolve the explicit device for vendors that require an adapter."""
     if _vendor_name(vendor) == "ascend":
         return ascend_driver.device(local_rank)
+    if _vendor_name(vendor) == "kunlunxin":
+        from . import kunlunxin
+        return kunlunxin.device(local_rank)
     return local_rank
 
 
 def set_ieee_float32(vendor):
+    _vendor_name(vendor)
+    if _vendor_name(vendor) == "kunlunxin":
+        from . import kunlunxin
+        return kunlunxin.set_float32()
     if vendor == "nvidia":
         torch.backends.cuda.matmul.allow_tf32 = False
     elif _vendor_name(vendor) == "ascend":
@@ -48,6 +61,7 @@ def set_ieee_float32(vendor):
 
 
 def unset_ieee_float32(vendor):
+    _vendor_name(vendor)
     if vendor == "nvidia":
         torch.backends.cuda.matmul.allow_tf32 = True
     elif _vendor_name(vendor) == "ascend":
@@ -62,18 +76,26 @@ def unset_ieee_float32(vendor):
 
 
 def host_device_sync(vendor):
+    if _vendor_name(vendor) == "kunlunxin":
+        from . import kunlunxin
+        return kunlunxin.synchronize()
     if _vendor_name(vendor) == "nvidia":
         torch.cuda.synchronize()
     elif _vendor_name(vendor) == "ascend":
         ascend_driver.synchronize()
     elif "mthreads" in vendor:
         torch.musa.synchronize()
+    elif _vendor_name(vendor) == "cambricon":
+        torch.mlu.synchronize()
     else:
-        print("unspecified vendor {}, using default pytorch \"torch.cuda.synchronize\"".format(vendor))
+        # Explicit legacy CUDA-compatible adapters, never an unknown vendor.
         torch.cuda.synchronize()
 
 
 def multi_device_sync(vendor):
+    if _vendor_name(vendor) == "kunlunxin":
+        torch.distributed.barrier()
+        return
     if _vendor_name(vendor) == "nvidia":
         torch.distributed.barrier()
     elif _vendor_name(vendor) == "ascend":

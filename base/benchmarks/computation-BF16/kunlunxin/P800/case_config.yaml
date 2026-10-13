@@ -1,0 +1,14 @@
+M: 8192
+N: 8192
+K: 8192
+WARMUP: 100
+ITERS: 5000
+SEED: 519
+ATOL: 0.008
+RTOL: 0.008
+DTYPE: bfloat16
+OPERATOR: torch.mm
+DIST_BACKEND: gloo
+IMPLEMENTATION: native-xpytorch
+MODE: qualification
+FAULT_MODE: none

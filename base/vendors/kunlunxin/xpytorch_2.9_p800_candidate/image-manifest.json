@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "vendor": "kunlunxin",
+  "chip": "P800",
+  "runtime_profile": "xpytorch_2.9_p800_candidate",
+  "image": "flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev:202608",
+  "image_id": "sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975",
+  "repo_digests": [
+    "flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev@sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975"
+  ],
+  "created": "2026-08-12T21:47:16.130386935+08:00",
+  "platform": "linux/amd64",
+  "release_stage": "validated",
+  "validated": true,
+  "validation_scope": [
+    "Base native XPYTORCH: FP32/FP16/BF16/INT8, H2D/D2H, device copy bandwidth and bounded allocation capacity; fixed-image 2026-10-08 records and documented exceptions.",
+    "Base single-host communication: two/six-rank AllReduce and two-rank P2P; no all-topology or healthy eight-card qualification claim.",
+    "Toolkit native XRE/XBLAS: 12 cases on physical devices 4,7, five independent processes per point, 2026-10-09; 81 stable and 20 unstable repeat groups, run remains not-qualified."
+  ],
+  "registry_pull_verified": false,
+  "qualification_record": "qualification-record.json",
+  "validation_status": "partial",
+  "validation_record": {
+    "path": "validation-summary.json",
+    "sha256": "a2a7b9633f892394317c5b3e548efced5e67d1c7e3c0a5fa87918f5e2aa0c7c3"
+  }
+}

@@ -14,3 +14,4 @@ base/result/*
 operation/result/*
 operation/Note.md
 inference/onnxs/*
+base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/

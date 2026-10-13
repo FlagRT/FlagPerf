@@ -57,13 +57,8 @@ def parse_args():
 
 
 def load_case_config():
-    with (CASE_DIR / "case_config.yaml").open("r", encoding="utf-8") as file:
-        case_config = yaml.safe_load(file)
-    with (Path(__file__).resolve().parent / "case_config.yaml").open(
-        "r", encoding="utf-8"
-    ) as file:
-        case_config.update(yaml.safe_load(file))
-    return Namespace(**case_config)
+    from case_assets import load_case_config as resolve_config
+    return Namespace(**resolve_config(CASE_DIR, "ascend"))
 
 
 def resolve_output_dtype(name):

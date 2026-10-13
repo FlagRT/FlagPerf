@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "vendor": "kunlunxin",
+  "chip": "P800",
+  "runtime_profile": "xpytorch_2.9_p800_candidate",
+  "image_id": "sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975",
+  "release_stage": "validated",
+  "validated": true,
+  "validation_status": "partial",
+  "validation_scope": [
+    "Base native XPYTORCH: FP32/FP16/BF16/INT8, H2D/D2H, device copy bandwidth and bounded allocation capacity; fixed-image 2026-10-08 records and documented exceptions.",
+    "Base single-host communication: two/six-rank AllReduce and two-rank P2P; no all-topology or healthy eight-card qualification claim.",
+    "Toolkit native XRE/XBLAS: 12 cases on physical devices 4,7, five independent processes per point, 2026-10-09; 81 stable and 20 unstable repeat groups, run remains not-qualified."
+  ],
+  "reviewed_on": "2026-10-10",
+  "basis": "Maintainer-reviewed existing hardware records; explicit scoped release decision, following the Ascend validated + partial convention.",
+  "hardware_revalidated_during_release": false,
+  "raw_evidence_distributed": false,
+  "evidence_integrity": "Hashes identify the retained review records; this public attestation does not embed raw evidence or certify every historical archive index.",
+  "source_records": [
+    {
+      "record": "base-final-review",
+      "sha256": "fa46ce9386a22e9330eb58090afa4b23c7cab41ab5f21847233bd42992b4b680"
+    },
+    {
+      "record": "base-repeat-groups",
+      "sha256": "c6fc681a9beeef0b1b73634ccb56a3529f6aefcc253565cee1c5408b98487e37"
+    },
+    {
+      "record": "toolkit-full-verification",
+      "sha256": "11f9c75aff5909939a1a81fcac32ded4160d1c74b19ca2d7b77ec149ac7de402"
+    },
+    {
+      "record": "historical-runtime-probes",
+      "sha256": "4158d4f488c9ab24fc56451f2e158b418e29f6b688449ae54eb0bde1f287b16d"
+    }
+  ],
+  "base": {
+    "measurement_correctness_passed_runs": 114,
+    "run_status_counts": {
+      "passed": 110,
+      "partial": 4
+    },
+    "strict_repeat_group_counts": {
+      "passed": 15,
+      "unstable": 2,
+      "rejected": 5
+    },
+    "exceptions": [
+      "Three historical D2H pageable/nonblocking groups include windows shorter than 15 seconds; project acceptance does not override strict script rejection.",
+      "Seven-card group has only three repeats; eight-card measurement/stability passed but historical health was degraded.",
+      "Capacity is a bounded allocation observation with partial monitoring, not five-run throughput qualification."
+    ]
+  },
+  "toolkit": {
+    "run_id": "20261009T014046Z-0cb914bb",
+    "physical_device_ids": [
+      4,
+      7
+    ],
+    "cases": 12,
+    "execution_targets": 485,
+    "measurement_status": "passed",
+    "monitoring_status": "passed",
+    "diagnosis_status": "passed",
+    "qualification_status": "not-qualified",
+    "repeat_groups": {
+      "stable": 81,
+      "unstable": 20
+    },
+    "matrix_size": 8192,
+    "payload_bytes": 536870912,
+    "p2p_payload_bytes": 268435456,
+    "pinned_api": "register",
+    "async_chunk_bytes": 1048576,
+    "minimum_seconds": 15,
+    "repeat": 5
+  },
+  "limitations": [
+    "No Training, Inference, Operation, FlagGems, multi-host, FP64, FP8 or TF32 validation.",
+    "Not a theoretical peak, all-card health, all-shape, all-topology or vendor dependency-consistency certification.",
+    "Toolkit pinned latency bimodality/CV > 5%, INT8 GemmEx-int32/Lt failures and whole-payload pinned async -999 remain recorded.",
+    "Registry pull is unverified; users must obtain the exact image with appropriate access.",
+    "New image, driver, shape, payload or topology requires validation of its own scope; a passing run cannot expand this declaration."
+  ]
+}
