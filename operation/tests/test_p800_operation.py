@@ -121,18 +121,20 @@ assert not any(n == 'torch' or n.startswith(('torch.', 'torch_xmlir', 'flag_gems
                 cli.snapshot(root)
             self.assertEqual((root / 'source/vendors/kunlunxin/profiles/p800-xpytorch29.json').read_bytes(), PROFILE.read_bytes())
 
-    def test_unimplemented_execution_fails_before_docker_or_device(self):
+    def test_inconsistent_profile_fails_before_docker_or_device(self):
         with tempfile.TemporaryDirectory() as tmp:
             args = arguments('--case', 'abs', '--result-root', tmp)
             adapter, plan = cli.resolve(args)
+            adapter.lock['runtime_profile'] = 'inconsistent'
             with patch.object(cli, 'snapshot'), patch.object(cli.subprocess, 'check_output', side_effect=AssertionError('docker')), \
                  patch.object(cli.Workers, 'start', side_effect=AssertionError('worker')), \
                  patch.object(cli.Lease, 'acquire', side_effect=AssertionError('lease')), \
                  contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
                 self.assertEqual(cli.execute(args, adapter, plan), 1)
             summary = cli.read(next(Path(tmp).glob('*/summary.json')))
-            self.assertIn('device workers are not integrated', summary['error'])
+            self.assertIn('runtime profile is missing or inconsistent', summary['error'])
             self.assertEqual(summary['tasks'][0]['status'], 'not-run')
+
 
 
 if __name__ == '__main__':

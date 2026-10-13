@@ -21,7 +21,8 @@ Ascend 默认使用 CANN 9 / PyTorch 2.10 / Torch-FL 的锁定组合，按 [Asce
 注册入口可用不代表每个厂商和 dtype 都已经实机通过。
 
 [昆仑芯 P800](vendors/kunlunxin/README.md) 通过 `--runtime-profile p800-xpytorch29` 显式选择独立运行栈。
-当前仅支持规划与接入契约，真实设备执行尚未开放；该参数与控制工作量的 `--workload` 不同。
+已接通 Docker/local 与最小双路径验证，Operation 运行栈仍为 `validated:false`；该参数与控制工作量的 `--workload` 不同。
+P800 的原生路由证据、FlagGems mm 编译限制和显式共享模式见上述厂商说明，不能外推为全算子验收通过。
 
 所有命令从 **FlagPerf 仓库根目录** 执行。先选当前空闲设备，下面的 `0` 是物理编号示例。
 Ascend 镜像涉及的特权权限由 `--allow-privileged-root` 显式开启；只在获准使用的主机上运行。

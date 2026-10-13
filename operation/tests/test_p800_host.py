@@ -175,6 +175,25 @@ class P800HostTests(unittest.TestCase):
                 self.assertTrue((Path(tmp) / 'logical-device-9.lock').exists())
 
 
+    def test_explicit_shared_host_policy_is_recorded_without_dropping_leases(self):
+        with tempfile.TemporaryDirectory() as tmp, fake_host(Path(tmp)) as (_, _), \
+             patch.object(host, 'inspect_shared_host', return_value=observed([4])):
+            root = Path(tmp); adapter = Adapter()
+            args = arguments('--device-ids', '4', '--allow-shared-device')
+            _, plan = cli.resolve(args)
+            lease = adapter.create_lease(root, [4], 'shared-fixture', allow_shared=True)
+            lease.acquire()
+            try:
+                record = adapter.preflight(root, [4])
+                self.assertEqual(record['sharing_policy'], 'shared-authorized')
+                self.assertEqual(record['performance_qualification'], 'partial-shared-host')
+                self.assertTrue(lease._streams)
+                adapter.bind_tasks(plan['tasks'], record)
+                self.assertEqual(plan['tasks'][0]['runtime_config']['sharing_policy'], 'shared-authorized')
+            finally:
+                lease.release()
+
+
 class P800LifecycleTests(unittest.TestCase):
     def test_replay_cleanup_interruption_preserves_release_and_signal_handler(self):
         for failure in ('cleanup', 'postflight', 'release'):
@@ -267,6 +286,7 @@ class P800LifecycleTests(unittest.TestCase):
                                 patch.object(cli, 'report'), patch.object(cli, 'seal'),
                                 patch.object(adapter, 'local_lease_root', return_value=root/'local-locks'),
                                 patch.object(adapter, 'route', return_value={'status':'passed'}),
+                                patch.object(adapter, 'qualify_result'),
                                 patch.object(cli.Workers, 'phase', side_effect=phase),
                                 patch.object(cli.Workers, 'close', side_effect=close),
                                 patch.object(cli.subprocess, 'check_output', return_value=json.dumps([{'Id':adapter.lock['image_id']}])),

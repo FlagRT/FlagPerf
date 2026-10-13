@@ -5,7 +5,7 @@
   "runtime_profile": "p800-xpytorch29",
   "validated": false,
   "validation_scope": [],
-  "execution_status": "not-integrated",
+  "execution_status": "integrated; scoped validation in vendor README; full coverage pending",
   "image": "flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev:202608",
   "image_id": "sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975",
   "registry_pull_verified": false,

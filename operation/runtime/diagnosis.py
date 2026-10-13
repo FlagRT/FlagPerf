@@ -30,6 +30,7 @@ def add_parser(sub):
     p.add_argument('--result-root', type=Path, default=catalog.ROOT / 'result')
     p.add_argument('--watchdog', type=float, default=300, help='per replay phase timeout')
     p.add_argument('--dry-run', action='store_true')
+    p.add_argument('--allow-shared-device', action='store_true', help='explicit shared P800 replay; performance remains unqualified')
     p.add_argument('--allow-privileged-root', action='store_true')
     p.add_argument('--container-device', action='append', default=[])
     p.add_argument('--mount', action='append', default=[])
@@ -80,6 +81,8 @@ def replay(root, args, task, identity, data):
     if task.get('case') not in catalog.names() or task.get('dtype') not in catalog.dtypes(task['case']) or task.get('oplib') not in ('nativetorch', 'flaggems'):
         raise ValueError('source case/dtype/path is not supported by the current Case contract')
     adapter = get_vendor(task['vendor'], task.get('runtime_profile'))
+    if getattr(args, 'allow_shared_device', False) and not getattr(adapter, 'supports_shared_device', False):
+        raise ValueError('selected vendor does not support --allow-shared-device')
     if hasattr(adapter, 'ensure_execution_ready'):
         adapter.ensure_execution_ready()
     devices = ids(args.device_ids or str(task['device_id']))
@@ -115,6 +118,8 @@ def replay(root, args, task, identity, data):
             if source.exists(): shutil.copyfile(source, work / name)
         current = {**task, 'device_id': devices[0], 'worker_device': 0, 'common_diagnosis': True, 'diagnostics_mode': 'failures', 'diagnostic_protocol': diagnostics.PROTOCOL}
         current.pop('attribution', None)
+        if hasattr(adapter, 'prepare_replay'):
+            adapter.prepare_replay(current, args)
         if hasattr(adapter, 'bind_tasks'):
             adapter.bind_tasks([current], data['preflight'])
         write(work / 'task.json', current)
@@ -227,7 +232,7 @@ def run(args):
     try:
         stage(args, 'snapshot-and-copy')
         write(root / 'plan.json', plan)
-        snapshot(root)
+        snapshot(root, get_vendor(task['vendor'], task.get('runtime_profile')))
         source = root / 'source-task';source.mkdir()
         for name, digest in digests.items():
             destination = source / name;destination.parent.mkdir(parents=True, exist_ok=True)

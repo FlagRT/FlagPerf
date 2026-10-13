@@ -77,7 +77,8 @@ def ids(value):
 def make_lease(adapter, root, args, devices, run_id):
     """Use a vendor's physical resource lease only in host-managed execution."""
     if args.execution == 'docker' and hasattr(adapter, 'create_lease'):
-        return adapter.create_lease(root, devices, run_id)
+        options = {'allow_shared':True} if getattr(args, 'allow_shared_device', False) else {}
+        return adapter.create_lease(root, devices, run_id, **options)
     lease_root = adapter.local_lease_root() if args.execution == 'local' and hasattr(adapter, 'local_lease_root') else adapter.lease_root()
     return Lease(lease_root, devices, run_id)
 
@@ -121,6 +122,8 @@ def parser():
     run.add_argument('--watchdog', type=float, default=300, help='per-phase hang safeguard, independent of the 120s soft target')
     run.add_argument('--result-root', type=Path, default=ROOT / 'result')
     run.add_argument('--dry-run', action='store_true')
+    run.add_argument('--allow-shared-device', action='store_true',
+                     help='explicitly allow shared P800 host devices; numerical results remain performance-partial')
     run.add_argument('--diagnostics', choices=['off', 'failures'], default='failures')
     run.add_argument('--allow-privileged-root', action='store_true')
     run.add_argument('--container-device', action='append', default=[], help='explicit additional Docker device mapping')
@@ -144,6 +147,8 @@ def resolve(args):
         if args.dtype and len(args.dtype) != 1:
             raise ValueError('a peak requires a single explicit dtype')
     adapter = get_vendor(args.vendor, args.runtime_profile)
+    if args.allow_shared_device and not getattr(adapter, 'supports_shared_device', False):
+        raise ValueError('--allow-shared-device is supported only by an explicit shared-device vendor profile')
     if hasattr(adapter, 'validate_options'):
         adapter.validate_options(args, selected)
     image = args.image or (adapter.default_image() if args.execution == 'docker' else None)
@@ -162,6 +167,8 @@ def resolve(args):
             task['runtime_profile'] = args.runtime_profile
         if hasattr(adapter, 'task_metadata'):
             task.update(adapter.task_metadata(args, task['device_id']))
+        if hasattr(adapter, 'task_identity'):
+            adapter.task_identity(task)
         task['pair_id'] = pair_key(task) if args.oplib == 'both' else None
     return adapter, {'schema_version': 2, 'protocol': 'operation-v2', 'vendor': args.vendor,
                      **({'runtime_profile': args.runtime_profile} if args.runtime_profile is not None else {}),
@@ -193,6 +200,7 @@ class Workers:
         env = dict(os.environ, PYTHONDONTWRITEBYTECODE='1', TORCH_DEVICE_BACKEND_AUTOLOAD='0',
                    OMP_NUM_THREADS='1', MKL_NUM_THREADS='1')
         relative = str(control.relative_to(self.root))
+        entry = getattr(self.adapter, 'worker_entry', 'runtime/worker.py')
         if self.args.execution == 'docker':
             operation_source = self.root / 'source'
             command = ['docker', 'run', '-d', '--rm', '--name', name, '--network=none',
@@ -201,13 +209,23 @@ class Workers:
                        '-e', 'OMP_NUM_THREADS=1', '-e', 'MKL_NUM_THREADS=1']
             if getattr(self.adapter, 'strict_worker_lifecycle', False):
                 command += ['--label', 'flagperf.run_id=' + self.run_id]
+            if hasattr(self.adapter, 'worker_environment'):
+                for k,v in self.adapter.worker_environment(task['device_id'], mode).items():
+                    command += ['-e', f'{k}={v}']
+            if hasattr(self.adapter, 'snapshot_paths'):
+                command += ['-v', f'{self.root / "base"}:/base:ro']
             if mode not in ('reference', 'diagnose', 'reference-check'):
                 command += self.adapter.docker_options(task['device_id'], self.args)
-                for k,v in self.adapter.environment(task['device_id'], mode).items():
-                    command += ['-e', f'{k}={v}']
+                if not hasattr(self.adapter, 'worker_environment'):
+                    for k,v in self.adapter.environment(task['device_id'], mode).items():
+                        command += ['-e', f'{k}={v}']
                 for device in self.args.container_device: command += ['--device', device]
                 for mount in self.args.mount: command += ['-v', mount]
-            command += [self.image_id, 'python3', '-X', 'faulthandler', '/operation/runtime/worker.py', '--root', '/evidence',
+            prefix = self.adapter.worker_command(local=False) if hasattr(self.adapter, 'worker_command') else ['python3', '-X', 'faulthandler']
+            if hasattr(self.adapter, 'worker_command'):
+                command += ['--entrypoint', prefix[0]]
+                prefix = prefix[1:]
+            command += [self.image_id, *prefix, '/operation/' + entry, '--root', '/evidence',
                         '--phase', mode, '--serve', relative]
             write(control / 'command.json', {'argv':command})
             # Track the exact name before launch: a client timeout may leave a live container.
@@ -218,8 +236,12 @@ class Workers:
                 raise RuntimeError(f'worker launch failed: {result.stderr}')
             worker = {'name':name, 'control':control, 'proc':None}
         else:
-            if mode not in ('reference', 'diagnose', 'reference-check'): env.update(self.adapter.environment(task['device_id'], mode, local=True))
-            command = [sys.executable, str(self.root / 'source/runtime/worker.py'), '--root', str(self.root),
+            if hasattr(self.adapter, 'worker_environment'):
+                env.update(self.adapter.worker_environment(task['device_id'], mode, local=True))
+            if mode not in ('reference', 'diagnose', 'reference-check') and not hasattr(self.adapter, 'worker_environment'):
+                env.update(self.adapter.environment(task['device_id'], mode, local=True))
+            prefix = self.adapter.worker_command(local=True) if hasattr(self.adapter, 'worker_command') else [sys.executable]
+            command = [*prefix, str(self.root / 'source' / entry), '--root', str(self.root),
                        '--phase', mode, '--serve', relative]
             write(control / 'command.json', {'argv':command})
             with (control / 'server.log').open('w') as log:
@@ -293,14 +315,30 @@ class Workers:
         if errors: raise CleanupError('; '.join(errors))
 
 
-def snapshot(root):
-    files = [ROOT / 'run.py', *list((ROOT / 'runtime').glob('*.py')),
+def snapshot_files():
+    return [ROOT / 'run.py', *list((ROOT / 'runtime').glob('*.py')),
              *list((ROOT / 'vendors').rglob('*.py')), *list((ROOT / 'benchmarks').glob('*/main.py')),
              *list((ROOT / 'benchmarks/drivers').glob('*.py')),
+             *list((ROOT / 'benchmarks').glob('*/case_config.yaml')),
              *list((ROOT / 'vendors').glob('*/profiles/*.json'))]
+
+
+def snapshot(root, adapter=None):
+    files = snapshot_files()
     for p in files:
         dest = root / 'source' / p.relative_to(ROOT)
         dest.parent.mkdir(parents=True, exist_ok=True);dest.write_bytes(p.read_bytes())
+    if adapter is not None and hasattr(adapter, 'snapshot_paths'):
+        for p in adapter.snapshot_paths():
+            p = Path(p)
+            repo = ROOT.parent
+            if not p.is_file() or not p.is_relative_to(repo):
+                raise ValueError('missing or external vendor dependency: ' + str(p))
+            dest = root / p.relative_to(repo)
+            dest.parent.mkdir(parents=True, exist_ok=True);dest.write_bytes(p.read_bytes())
+        write(root / 'source-manifest.json', {
+            str(p.relative_to(root)):sha(p) for folder in ('source','base')
+            for p in sorted((root / folder).rglob('*')) if p.is_file()})
     for label, cmd in [('git-head.txt', ['git','rev-parse','HEAD']), ('git-status.txt', ['git','status','--short']),
                        ('git-diff.patch', ['git','diff','HEAD','--','operation'])]:
         result = subprocess.run(cmd, cwd=ROOT.parent, capture_output=True, text=True)
@@ -315,7 +353,7 @@ def execute(args, adapter, plan):
     root = args.result_root.resolve() / f'operation-{token}'
     root.mkdir(parents=True)
     args._result_root = root
-    write(root / 'plan.json', plan);snapshot(root)
+    write(root / 'plan.json', plan);snapshot(root, adapter)
     summary = {'schema_version': 2, 'status': 'partial', 'tasks': [], 'vendor': args.vendor,
                'execution': args.execution, 'device_ids': plan['device_ids'], 'protocol': plan['protocol'],
                'run_id': token, 'oplib_selection': args.oplib, 'workload': args.workload, 'profiling': args.profiling}
@@ -392,6 +430,8 @@ def execute(args, adapter, plan):
                     item.update(failure_stage='correctness', diagnosis='numerical-mismatch: original tolerance exceeded')
                 elif item['status'] != 'passed':
                     item.update(failure_stage='routing', diagnosis='routing-evidence: inspect target dispatch and fallback evidence')
+                if hasattr(adapter, 'qualify_result'):
+                    adapter.qualify_result(item, read(work / 'probe.json'))
                 item['phase'] = 'completed'
                 # Extra measurement errors do not overwrite clean timing or correctness.
                 for extra in ('memory', 'profiling'):

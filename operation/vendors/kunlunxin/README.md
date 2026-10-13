@@ -1,60 +1,119 @@
 # Kunlunxin P800 Operation
 
-P800 使用显式 `--runtime-profile p800-xpytorch29` 接入公共 Operation catalog。
-当前支持静态规划、运行栈身份约束及宿主身份/租约/清理契约；设备 worker 尚未接通，真实执行和设备复放会明确拒绝。
-该状态不代表 P800 算子已实机验证，也不继承 Base 的 validated 结论。
-省略 runtime profile 时仍使用原有昆仑芯兼容入口，不改变其他设备的运行栈。
+使用 `--vendor kunlunxin --runtime-profile p800-xpytorch29` 选择 P800 专用入口。
+支持 Docker/local、原生 PyTorch 与显式 FlagGems，以及公共参考、取证、计时和诊断流程。
+Operation 独立锁保持 **`validated:false`**；Base 的发布声明不适用于算子结果。
+省略 runtime profile 时仍走原有昆仑芯兼容入口。
 
-## 静态规划
+## 环境与最小运行
 
-从 FlagPerf 根目录执行，只需 Linux/Python 3.10+ 标准库，不访问 Docker 或设备：
+从 FlagPerf 根目录执行。规划只需 Linux/Python 3.10+ 标准库，不访问 Docker 或设备。
+真实 Docker 执行需要镜像、驱动、设备权限、`xpu-smi`、`fuser`，以及完整的宿主 `/proc` 句柄读取权限。
+执行器不自动 sudo、下载镜像、安装依赖或清理他人进程。
+镜像、Python 和包的精确版本见[独立锁](profiles/p800-xpytorch29.json)；tag 或 `--image` 别名必须解析为同一 image ID。
+镜像没有验证匿名 registry pull，需由使用者取得。
 
 ```bash
+# 0 仅为示例：先确认实际设备授权与占用。
 python3 -B operation/run.py run --vendor kunlunxin \
-  --runtime-profile p800-xpytorch29 --device-ids 4 \
-  --oplib both --dtype FP32 FP16 BF16 INT32 INT16 BOOL INT64 --dry-run
-
-python3 -B operation/run.py run --vendor kunlunxin \
-  --runtime-profile p800-xpytorch29 --execution local --device-ids 1 \
-  --case abs --dtype FP32 --oplib both --workload smoke --dry-run
+  --runtime-profile p800-xpytorch29 --device-ids 0 \
+  --case abs --case add --dtype FP32 --oplib both --workload smoke \
+  --result-root operation/result/p800-smoke --dry-run
 ```
 
-第一条生成 728 个组合，其中 308 适用、420 类型不适用；省略 dtype、选择 both 则为 104 项。
-Docker 编号是宿主物理号，唯一且在 0..7，没有固定排除卡；local 是当前命名空间可见编号，非负且唯一。
-静态计划不会猜测 UUID、minor 或框架编号，Docker 的 worker_device 保持 null，待实际观察。
+确认计划、权限和资源后去掉 `--dry-run`。每次执行创建新的 `operation-<id>` 子目录。
+默认要求独占；获得共享授权后可显式增加 **`--allow-shared-device`**，允许现有占用，但仍持有 UUID 租约、
+记录真实占用/句柄并检查身份及健康。共享运行的正确性和路由分别判定，性能资格保持 partial，
+报告不产生合格的性能比值；正常完成也可能退出 2。这不是资源预约工具，不应干预占用者。
 
-`--runtime-profile` 选择运行栈；`--workload smoke|daily` 选择工作量，默认 daily。
-旧 `--profile` 仍是 workload 的兼容别名，不可与 `--workload` 同用。
-case、dtype、size、迭代与正确性协议均沿用[公共入口](../../README.md)。
+`--runtime-profile` 选择运行栈，`--workload smoke|daily` 选择工作量（默认 daily）；
+旧 `--profile` 是 workload 的兼容别名，不能与 `--workload` 同时指定。
+case、dtype、size、迭代、容差与退出码遵循[公共入口](../../README.md)，不套用 Base 的资格门槛。
+全类型双路径单卡规划为 728 项，其中 308 适用、420 类型不适用；默认类型双路径为 104 项。
+Docker 物理编号须唯一且在 0..7，没有固定排除卡。
 
-## 运行身份与边界
+## local 运行
 
-[运行栈锁](profiles/p800-xpytorch29.json)记录期望镜像 ID、Python 和包版本，来源为已存在的 Base 锁记录。
-镜像可访问性与实际包版本须在使用环境另行核验；镜像 tag 不能代替 ID，显式 `--image` 也须匹配锁定 ID。
-没有自动下载镜像或安装依赖。锁中的 Conda 路径属于镜像内部，不是通用宿主路径。
+由调用者在宿主或自己的容器中准备相同版本的 Python、包和动态库，并在外部预约宿主设备。
+`OP_LOCAL_PYTHON` 是示例变量，须指向该环境的 Python 绝对路径；CPU 测试 venv 不适用。
+锁文件中的 Conda 路径仅是锁定镜像的内部路径，不能直接套用于另一台宿主。
 
-真实 local 运行将使用调用 CLI 的 Python；CPU 测试 venv 不能作为 P800 运行栈。
-本阶段仅提供规划示例，不能通过删除 `--dry-run` 获得可用的设备 benchmark。
-独立 Operation 锁保持 validated:false；源码快照包含该锁，任务记录 profile 的 SHA-256，未知厂商/profile 组合拒绝。
-P800 不接受 `--allow-privileged-root`、附加 `--container-device` 或 `--mount`，也暂不支持 timeline/full 设备 profiling。
+```bash
+: "${OP_LOCAL_PYTHON:?Set the verified Python absolute path}"
+"$OP_LOCAL_PYTHON" -B -S operation/run.py run --vendor kunlunxin \
+  --runtime-profile p800-xpytorch29 --execution local --device-ids 0 \
+  --case abs --dtype FP32 --oplib both --workload smoke \
+  --result-root operation/result/p800-local --dry-run
+```
 
-## 宿主资源与失败处理
+准备好运行栈后去掉 `--dry-run`，共享设备另加 `--allow-shared-device`。
+`-S` 让 CLI 在执行 site hooks 前启动；所有阶段 worker 继承同一解释器，并由专用 bootstrap 检查包版本。
+local 保持调用者的设备 visibility，编号是当前框架可见编号（非负且唯一），不是宿主物理号。
+local 只有当前命名空间的逻辑锁，记录 externally-managed，不宣称完成宿主预约或镜像核验；
+多个 local run 不支持公共 Docker 聚合，只能分别重建报告。
 
-Docker 接入复用 Base 的 P800 provider：锁前读取物理编号、PCI、UUID、minor/节点及占用，按 UUID 获取
-`/tmp/flagperf-base-device-leases` 中的资源锁和 `/tmp/flagperf-p800-<UUID>.lock` 兼容锁，持锁重新检查身份与占用。
-这些路径是现有 Base/Toolkit 的共享协议；不能给 Operation 单独换目录来规避占锁。
-只映射选中设备的实际节点及 `/dev/xpuctrl`，不以物理号推断节点或框架编号。
-任务保存宿主绑定，真实框架编号仍须由 worker 观察 UUID 后匹配；静态测试不构成设备映射实测。
+## 引导、身份与生命周期
 
-宿主检查需要运行账号能够完整读取设备占用、进程句柄和必要 `/proc` 信息；权限不足时应由管理员准备运行账号。
-执行器不自动调用 sudo，不把“看不到其他用户进程”视为空闲。宿主运行权限与容器 `--privileged` 是两回事。
-只读观察者沿用 Base 的严格识别及显式授权机制，授权名称随证据记录；不内置某台机器的云代理例外。
-`P800_ALLOW_FOREIGN_HANDLES=1` 在 Operation 中明确拒绝，不能继承它绕过独占检查。
+- Docker 使用锁定 Conda Python 的绝对 entrypoint 和 `-S`。执行 site hooks 前检查 Python、包元数据与 Triton literal version。
+  CPU 的 reference/diagnose/reference-check 不映射 XPU、不执行 `.pth` 代码，结束时核验没有导入设备后端或初始化 CUDA 兼容 API。
+  local CPU worker 处于调用者现有命名空间，仍不导入/初始化 XPU。
+- probe/measure/trace/memory 执行设备阶段。Docker 只映射选中实际节点和 `/dev/xpuctrl`，网络关闭。
+  先观察完整可见框架 UUID 集合并与宿主 UUID 匹配，再选逻辑设备；不猜测物理号、minor 与框架编号相同。
+- 两条路径均设置 `USE_FLAGGEMS=0`、`XRAY_DEBUG_ENABLE=0`、`TORCH_DEVICE_BACKEND_AUTOLOAD=0`；
+  FlagGems worker 只在 CPU 输入/参数构造后显式调用公开的 `flag_gems.enable()`。
+  跨 case 复用时检查构造张量仍在 CPU。两种 oplib 和不同阶段的 worker 独立。
+- trace 仅在诊断 worker 设置 `XPU_ENABLE_PROFILER_TRACING=1`，采集公共 CPU 事件诊断；
+  probe/measure/memory 设为 0。trace 不等价于目标设备 kernel 证明；timeline/full profiling 尚不支持并在入口拒绝。
+- probe/measure 对比解释器、包、hook 哈希、关键环境、输入、源码、profile 和注册状态；不同则 failed。
+  计时进程没有 Python 跟踪，计时后另做同输入正确性检查。memory 按公共 allocator-window 协议报告，不是整卡 HBM 使用量。
+- 宿主默认复用 Base provider 的严格占用检查。锁前观察，持有 `/tmp/flagperf-base-device-leases` 中的 UUID 锁及
+  `/tmp/flagperf-p800-<UUID>.lock` 兼容锁后重查；这些路径是 Base/Toolkit 共用协议，不能更换以绕过互斥。
+  共享模式复用同一组身份/健康解析器，记录占用，不声称空闲。`P800_ALLOW_FOREIGN_HANDLES=1` 仍明确拒绝。
+- 仅清理本轮 run ID 标签匹配的容器，确认消失后再继续；local 仅回收本轮子进程组。
+  watchdog、SIGTERM、启动失败均进入清理，postflight 在释放租约前执行；清理/健康未确认则停止后续执行。
 
-仅清理本轮创建的容器：通过 run ID 标签核对所有权，随后确认容器已不存在。
-启动失败、worker 死亡、watchdog、SIGTERM/中断均进入清理；未确认回收或健康复查失败时停止后续任务及设备诊断。
-postflight 在锁释放前执行。清理、健康或锁释放失败进入总状态；释放文件锁不等于宣称设备已恢复健康。
-local 只使用当前命名空间的逻辑锁和原有 visibility，报告标记 externally-managed，不声称完成宿主预约或镜像核验。
+宿主 root 启动和 `P800_KNOWN_READONLY_MONITORS=barad_agent` 是 klx 的部署记录，均非通用要求。
+只读观察者须按 Base 规则显式授权并验证进程身份；不能将任意持卡 Python 进程列为只读观察者。
+P800 不接受 `--allow-privileged-root`、额外 `--container-device` 或 `--mount`。
 
-开发者可在已准备的 CPU 测试环境运行 `python -B -m unittest discover -s operation/tests -p 'test_p800*.py' -v`。
-测试使用模拟设备/容器和临时锁目录，覆盖与 Base/Toolkit 的锁冲突、身份变化、失败停止和清理；不会占用实际设备。
+## 路由证据与结果边界
+
+P800 通过观察现有调用取证，不替换或包装数学库/后端。路由规则目前审阅 abs/add/mm 的简单前向目标：
+FlagGems 目标实现必须出现在 `XPULauncher.__call__` 的调用祖先中，且首次和缓存窗口均观察到
+真实 `self.launch` 的 C 调用正常返回，并完成同步。目标区间须有完整 begin/end。
+仅 Python 调用、编译、注册、辅助复制/分配/transpose 或 CPU profiler 事件均不能使路由通过。
+原生、复合及反向目标缺少充分证据时保持 partial；注册 FlagGems 后使用原生实现不自动等同于 CPU fallback。
+CPU 目标输出判 failed；尚未建立覆盖所有原生实现的通用 CPU fallback 检测器。
+
+2026-10-13 的共享卡最小验证范围：
+
+| 组合 | 数值链路 | 目标路由 |
+|---|---|---|
+| Docker/local abs、add FP32，原生 | probe/measure 通过 | partial：缺少具体原生目标派发证据 |
+| Docker/local abs、add FP32，FlagGems | probe/measure 通过 | 首次及缓存 XPU launcher 证据通过；共享性能仍 partial |
+| Docker/local mm FP16，原生 | probe/measure 通过 | partial |
+| Docker/local mm FP16，FlagGems | 编译受阻，未产生有效测量 | 锁定栈的 `OutOfResources: uni_sram PassManager::run failed` |
+
+上述 mm 异常只有同时匹配异常类型、FlagGems mm 与 Triton XPU `make_ttxir` 的真实调用栈才分类 blocked；
+仅错误关键词不能分类，未知异常仍 failed。没有修改库、缩小 smoke 规模或改变容差来绕过失败。
+这不是 104 项 smoke 或 308 项全量验收，不据此晋级 Operation runtime。
+
+## 证据、复放与回归
+
+每个 run 保存源代码、原始 case YAML、解析后配置、profile、使用的 Base 纯检查文件及其静态传递依赖，按原字节封存。
+`source-manifest.json` 和公共 `artifacts.json` 覆盖这些文件；任务稳定身份包含公共源码、独立 case 源码/默认配置、profile 及宿主 UUID。
+随机 run ID、Git HEAD 和文档不混入稳定指纹；失败和不适用项也保留身份。
+worker 的 `bootstrap.json`、每阶段 identity/退出记录、probe 的首次/缓存窗口和 cleanup 记录用于追溯初始化、编译尝试及清理耗时。
+首次目标窗口可能使用磁盘缓存，不声称是清空缓存后的纯编译耗时。
+
+```bash
+python3 -B operation/run.py report --run-dir /absolute/path/to/operation-run
+python3 -B operation/run.py diagnose --source-task /absolute/path/to/case-result --dry-run
+# 明确需要设备复放时增加 --replay；已获共享授权时再加 --allow-shared-device。
+python3 -B -m unittest discover -s operation/tests -p 'test_p800*.py' -v
+```
+
+单元测试不占用实际设备。全套 Operation 回归还需 CPU PyTorch 与 PyYAML。
+聚合要求相同主机、镜像与执行模式；不同 UUID/profile/源码/协议保留独立行。
+源编排、清理、postflight 或租约释放错误会拒绝聚合；算子本身的 failed/blocked/partial 保留。
+不改公共 schema、报告列布局、原数值容差与 Ascend 命令。
