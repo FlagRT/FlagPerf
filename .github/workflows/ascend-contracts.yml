@@ -34,6 +34,11 @@ jobs:
           PYTHONDONTWRITEBYTECODE: '1'
         run: python3 -m unittest discover -s base/toolkits/_common/ascend/A3/tests -v
 
+      - name: Validate case assets and worker log isolation
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m unittest discover -s base/tests -p test_case_assets.py -v
+
       - name: Validate P800 device-free contracts
         env:
           PYTHONDONTWRITEBYTECODE: '1'

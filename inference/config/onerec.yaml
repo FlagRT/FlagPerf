@@ -1,0 +1,16 @@
+model:
+  name: onerec_8b
+  path: null
+  dtype: bfloat16
+  attention: eager
+  options:
+    max_new_tokens: 32
+inputs:
+  path: ../inputs/minimal.jsonl
+  batch_size: 1
+  max_length: 256
+  padding_side: left
+runtime:
+  timeout_seconds: 3600
+export:
+  formats: []

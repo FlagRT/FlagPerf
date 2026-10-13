@@ -42,6 +42,7 @@ class Adapter:
         return {'backend_config': config.read_text(),
                 'backend_config_sha256': hashlib.sha256(config.read_bytes()).hexdigest(),
                 'extension_sha256': hashlib.sha256(extension.read_bytes()).hexdigest(),
+                'backend_library_sha256': hashlib.sha256((root / 'lib/libtorch_fl.so').read_bytes()).hexdigest(),
                 'fp32_math_mode': 'runtime default; strict IEEE mode not asserted by harness',
                 'visibility': os.environ.get('ASCEND_RT_VISIBLE_DEVICES')}
 
@@ -53,10 +54,26 @@ class Adapter:
         # CUDA Triton do_bench is not a valid device timer for this locked stack.
         return None
 
+    def memory_stats(self):
+        import torch_fl
+        return torch_fl.flagos.memory_stats(self.device.index)
+
+    def reset_peak_memory_stats(self):
+        import torch_fl
+        torch_fl.flagos.reset_peak_memory_stats(self.device.index)
+
+    def profile_target(self, root, task, call):
+        from .profiling import target_window
+        target_window(self, root, task, call)
+
+    def collect_profile(self, root, task):
+        from .profiling import collect
+        collect(root, task)
+
     def environment(self, device, mode="probe", local=False):
         env = {'ASCEND_RT_VISIBLE_DEVICES': str(device), 'GEMS_VENDOR': 'ascend',
                 'TRITON_ENABLE_TASKQUEUE': 'false', 'DO_NOT_TRACK': '1',
-                'FLAGOS_LOG_FALLBACK': '1', 'FLAGOS_LOG_DISPATCH': '0' if mode == 'measure' else '1',
+                'FLAGOS_LOG_FALLBACK': '1', 'FLAGOS_LOG_DISPATCH': '0' if mode in ('measure', 'memory', 'profiling') else '1',
                 'TORCH_DEVICE_BACKEND_AUTOLOAD': '0'}
         if local: env.pop('ASCEND_RT_VISIBLE_DEVICES')
         return env

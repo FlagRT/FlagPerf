@@ -109,9 +109,11 @@ class CaseAssetsTests(unittest.TestCase):
         override.write_text('D: 4\n')
         (self.chip/'env.sh').write_text('export FIXTURE_ENV=from-chip\n')
         (self.chip/'main.py').write_text(
-            'import json,os\nfrom pathlib import Path\n'
+            'import json,os,sys\nfrom pathlib import Path\n'
             'from benchmarks.case_assets import load_case_config\n'
-            'print(json.dumps({"config":load_case_config(Path.cwd(),"fixture/Chip"),"env":os.environ["FIXTURE_ENV"]},sort_keys=True))\n')
+            'print("fixture stdout diagnostic", flush=True)\n'
+            'print("fixture stderr diagnostic", file=sys.stderr, flush=True)\n'
+            'Path(os.environ["FIXTURE_RESULT_PATH"]).write_text(json.dumps({"config":load_case_config(Path.cwd(),"fixture/Chip"),"env":os.environ["FIXTURE_ENV"]},sort_keys=True))\n')
         contract=result/'case-assets.json'
         contract.write_text(json.dumps(portable_assets(self.resolve(override))))
         binary=self.base/'bin';binary.mkdir()
@@ -120,7 +122,9 @@ class CaseAssetsTests(unittest.TestCase):
                             'args=sys.argv[1:]\nindex=next(i for i,a in enumerate(args) if not a.startswith("--"))\n'
                             'os.execv(sys.executable,[sys.executable,*args[index:]])\n')
         launcher.chmod(0o755)
+        fixture_result=result/'fixture-result.json'
         env={**os.environ,'PATH':str(binary)+os.pathsep+os.environ.get('PATH',''),'PYTHONPATH':str(BASE),
+             'FIXTURE_RESULT_PATH':str(fixture_result),
              'PYTHONDONTWRITEBYTECODE':'1'}
         command=[sys.executable,str(BASE/'benchmark_worker.py'),'--case_name','example:Chip','--vendor','fixture',
                  '--case-assets',str(contract),'--perf_path',str(self.base),'--log_dir',str(result),
@@ -128,7 +132,10 @@ class CaseAssetsTests(unittest.TestCase):
                  '--master_port','29721','--host_addr','127.0.0.1','--log_level','INFO','--monitor-events']
         proc=subprocess.run(command,env=env,capture_output=True,text=True,timeout=15)
         self.assertEqual(proc.returncode,0,proc.stderr+proc.stdout)
-        output=json.loads((result/'example/127.0.0.1_noderank0/benchmark.log.txt').read_text())
+        log=(result/'example/127.0.0.1_noderank0/benchmark.log.txt').read_text()
+        self.assertIn('fixture stdout diagnostic',log)
+        self.assertIn('fixture stderr diagnostic',log)
+        output=json.loads(fixture_result.read_text())
         self.assertEqual(output,{'config':{'A':1,'B':2,'C':3,'D':4},'env':'from-chip'})
         self.assertEqual(json.loads((result/'benchmark-events/torchrun-window.json').read_text())['returncode'],0)
 

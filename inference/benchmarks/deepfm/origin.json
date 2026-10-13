@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "repository": "https://github.com/rixwew/pytorch-fm",
+  "source_files": [
+    "torchfm/model/dfm.py",
+    "torchfm/layer.py"
+  ],
+  "license": "MIT",
+  "adaptation": "inference-only DeepFM; registered field offsets; hidden capture and tensor parallel adapters; vendored code has no external workspace imports"
+}

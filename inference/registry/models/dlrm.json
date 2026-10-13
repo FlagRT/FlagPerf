@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "id": "dlrm",
+  "factory": "benchmarks.dlrm.adapter:DLRMAdapter",
+  "capabilities": {"accuracy": true, "performance": true, "preview": true, "export": ["fx"], "parallelism": ["single", "tp"], "tp_degrees": [2], "oracle": true, "performance-baseline": true},
+  "sources": ["benchmarks/__init__.py", "benchmarks/dlrm/__init__.py", "benchmarks/dlrm/adapter.py", "benchmarks/dlrm/model.py", "benchmarks/dlrm/config.py", "benchmarks/dlrm/parallel.py", "benchmarks/dlrm/origin.json", "benchmarks/dlrm/LICENSE", "benchmarks/recommendation/__init__.py", "benchmarks/recommendation/adapter.py", "benchmarks/recommendation/modules.py", "benchmarks/recommendation/parallel.py"],
+  "packages": ["safetensors", "numpy"]
+}

@@ -1,0 +1,7 @@
+/result/
+/runtime_assets/
+/oracles/
+/performance_baselines/
+/config/local*.yaml
+__pycache__/
+.pytest_cache/

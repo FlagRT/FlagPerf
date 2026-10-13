@@ -1,0 +1,11 @@
+model:
+  path: null
+  dtype: bfloat16
+runtime:
+  vendor: nvidia
+  device: 0
+  parallelism: single
+  output_root: ../result/oracles
+accuracy:
+  levels: [model, layer]
+  layers: [all]

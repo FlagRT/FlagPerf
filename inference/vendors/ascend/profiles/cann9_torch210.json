@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "id": "cann9_torch210",
+  "image_tag": null,
+  "image_id": null,
+  "compiler_source_image": null,
+  "environment_constraints": {
+    "TASK_QUEUE_ENABLE": "0"
+  },
+  "flagtree_distribution": "flagtree",
+  "trace_format": "cann",
+  "trace_version": "9.0",
+  "compiler_packages": [
+    "triton",
+    "triton-ascend",
+    "flagtree"
+  ],
+  "flagcx_group_lifetime": "worker_process"
+}

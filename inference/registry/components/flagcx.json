@@ -1,0 +1,5 @@
+{
+  "schema_version": 1, "id": "flagcx", "factory": "components.flagcx:FlagCXAdapter",
+  "capabilities": {"communication": true, "audit": true},
+  "sources": ["components/__init__.py", "components/flagcx.py", "components/audit.py"], "packages": ["flagcx"]
+}
