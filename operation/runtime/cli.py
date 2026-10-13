@@ -74,6 +74,24 @@ def ids(value):
     return values
 
 
+def make_lease(adapter, root, args, devices, run_id):
+    """Use a vendor's physical resource lease only in host-managed execution."""
+    if args.execution == 'docker' and hasattr(adapter, 'create_lease'):
+        return adapter.create_lease(root, devices, run_id)
+    lease_root = adapter.local_lease_root() if args.execution == 'local' and hasattr(adapter, 'local_lease_root') else adapter.lease_root()
+    return Lease(lease_root, devices, run_id)
+
+
+def install_termination_handler(adapter):
+    if not getattr(adapter, 'strict_worker_lifecycle', False):
+        return None
+    previous = signal.getsignal(signal.SIGTERM)
+    def interrupted(signum, frame):
+        raise KeyboardInterrupt('termination requested')
+    signal.signal(signal.SIGTERM, interrupted)
+    return previous
+
+
 def parser():
     p = argparse.ArgumentParser(description='Portable operation benchmark; no host.yaml or SSH initialization.')
     sub = p.add_subparsers(dest='command', required=True)
@@ -181,6 +199,8 @@ class Workers:
                        '-v', f'{operation_source}:/operation:ro', '-v', f'{self.root}:/evidence:rw',
                        '-e', 'PYTHONDONTWRITEBYTECODE=1', '-e', 'TORCH_DEVICE_BACKEND_AUTOLOAD=0',
                        '-e', 'OMP_NUM_THREADS=1', '-e', 'MKL_NUM_THREADS=1']
+            if getattr(self.adapter, 'strict_worker_lifecycle', False):
+                command += ['--label', 'flagperf.run_id=' + self.run_id]
             if mode not in ('reference', 'diagnose', 'reference-check'):
                 command += self.adapter.docker_options(task['device_id'], self.args)
                 for k,v in self.adapter.environment(task['device_id'], mode).items():
@@ -230,7 +250,7 @@ class Workers:
                 raise RuntimeError(f'{mode}: watchdog exceeded {self.args.watchdog}s')
             if worker['proc'] is not None and worker['proc'].poll() is not None:
                 raise RuntimeError(f'{mode}: worker exited unexpectedly')
-            if task.get('common_diagnosis') and worker['proc'] is None and time.monotonic() - last_liveness_check >= 2:
+            if (task.get('common_diagnosis') or getattr(self.adapter, 'strict_worker_lifecycle', False)) and worker['proc'] is None and time.monotonic() - last_liveness_check >= 2:
                 state = subprocess.run(['docker', 'inspect', '--format', '{{.State.Running}}', worker['name']],
                                        capture_output=True, text=True, timeout=10)
                 last_liveness_check = time.monotonic()
@@ -246,13 +266,24 @@ class Workers:
                 continue
             try:
                 if worker['proc'] is None:
-                    result = subprocess.run(['docker','rm','-f',worker['name']], capture_output=True, text=True, timeout=30)
-                    write(worker['control'] / 'cleanup.json', {'returncode':result.returncode, 'stderr':result.stderr})
-                    if result.returncode and 'No such container' not in result.stderr:
-                        raise CleanupError(result.stderr)
+                    if hasattr(self.adapter, 'cleanup_worker'):
+                        result = self.adapter.cleanup_worker(worker, self.run_id)
+                        write(worker['control'] / 'cleanup.json', result)
+                        if result.get('container_absent') is not True:
+                            raise CleanupError('worker cleanup unconfirmed: ' + json.dumps(result))
+                    else:
+                        result = subprocess.run(['docker','rm','-f',worker['name']], capture_output=True, text=True, timeout=30)
+                        write(worker['control'] / 'cleanup.json', {'returncode':result.returncode, 'stderr':result.stderr})
+                        if result.returncode and 'No such container' not in result.stderr:
+                            raise CleanupError(result.stderr)
                 else:
                     proc = worker['proc']
-                    if proc.poll() is None:
+                    if hasattr(self.adapter, 'cleanup_process'):
+                        result = self.adapter.cleanup_process(proc)
+                        write(worker['control'] / 'cleanup.json', result)
+                        if result.get('process_group_absent') is not True:
+                            raise CleanupError('local worker process group cleanup unconfirmed')
+                    elif proc.poll() is None:
                         os.killpg(proc.pid, signal.SIGTERM)
                         try: proc.wait(timeout=5)
                         except subprocess.TimeoutExpired:
@@ -288,8 +319,9 @@ def execute(args, adapter, plan):
     summary = {'schema_version': 2, 'status': 'partial', 'tasks': [], 'vendor': args.vendor,
                'execution': args.execution, 'device_ids': plan['device_ids'], 'protocol': plan['protocol'],
                'run_id': token, 'oplib_selection': args.oplib, 'workload': args.workload, 'profiling': args.profiling}
-    lease = Lease(adapter.lease_root(), plan['device_ids'], token)
-    began = time.monotonic();ran_device=False;image_id=None;pool=None
+    lease = None
+    began = time.monotonic();ran_device=False;image_id=None;pool=None;host_checked=False
+    previous_sigterm = install_termination_handler(adapter)
     try:
         stage(args, 'runtime-identity')
         if hasattr(adapter, 'ensure_execution_ready'):
@@ -302,9 +334,16 @@ def execute(args, adapter, plan):
             summary['runtime'] = {'validation': 'local runtime packages recorded per worker; image provenance externally managed',
                                   'visibility': {k:v for k,v in os.environ.items() if k.endswith('VISIBLE_DEVICES')}}
         stage(args, 'preflight')
+        lease = make_lease(adapter, root, args, plan['device_ids'], token)
         lease.acquire()
+        if hasattr(lease, 'record'):
+            summary['lease'] = {**lease.record(), 'released': False}
         if args.execution == 'docker':
             summary['preflight'] = adapter.preflight(root, plan['device_ids'])
+            host_checked = True
+            if hasattr(adapter, 'bind_tasks'):
+                adapter.bind_tasks(plan['tasks'], summary['preflight'])
+                write(root / 'bound-plan.json', plan)
         else:
             summary['preflight'] = {'status': 'externally-managed', 'boundary': 'local lease protects this namespace only; caller reserves host devices'}
         pool = Workers(root, adapter, args, image_id, token)
@@ -397,10 +436,16 @@ def execute(args, adapter, plan):
                 diagnosis = adapter.diagnose(str(exc), work)
                 item.update(status='blocked' if diagnosis else 'failed', error=f'{type(exc).__name__}: {exc}',
                             diagnosis=diagnosis or 'unclassified; inspect phase logs', failure_stage=item['phase'])
-                if not diagnosis:
+                if not diagnosis or getattr(adapter, 'strict_worker_lifecycle', False):
+                    item['diagnostic_execution_blocked'] = True
                     pool.close()
                     if ran_device and args.execution == 'docker':
-                        adapter.preflight(root, plan['device_ids'], label=f'health-after-{index}')
+                        try:
+                            adapter.preflight(root, plan['device_ids'], label=f'health-after-{index}')
+                        except Exception as health_error:
+                            item['diagnostic_execution_blocked'] = True
+                            raise CleanupError(f'recovery health check failed: {health_error}') from health_error
+                    item.pop('diagnostic_execution_blocked', None)
             finally:
                 for extra in ('memory', 'profiling'):
                     if extra not in item:
@@ -422,19 +467,29 @@ def execute(args, adapter, plan):
     except (Exception, KeyboardInterrupt, SystemExit) as exc:
         summary['error'] = f'{type(exc).__name__}: {exc}'
     finally:
+        if previous_sigterm is not None:
+            signal.signal(signal.SIGTERM, signal.SIG_IGN)
         if pool is not None:
             try: pool.close()
-            except Exception as exc: summary['cleanup_error'] = str(exc)
-        if ran_device and args.execution == 'docker':
+            except (Exception, KeyboardInterrupt, SystemExit) as exc: summary['cleanup_error'] = str(exc)
+        if args.execution == 'docker' and (ran_device or (host_checked and getattr(adapter, 'postflight_after_preflight', False))):
             stage(args, 'postflight')
             try: summary['postflight'] = adapter.preflight(root, plan['device_ids'], label='postflight')
-            except (Exception, SystemExit) as exc: summary['postflight_error'] = str(exc)
-        lease.release()
+            except (Exception, KeyboardInterrupt, SystemExit) as exc: summary['postflight_error'] = str(exc)
+        if lease is not None:
+            try:
+                lease.release()
+                if 'lease' in summary:
+                    summary['lease']['released'] = True
+            except (Exception, KeyboardInterrupt, SystemExit) as exc:
+                summary['lease_release_error'] = str(exc)
+        if previous_sigterm is not None:
+            signal.signal(signal.SIGTERM, previous_sigterm)
         # Unstarted work is explicit and remains part of the coverage denominator.
         for task in plan['tasks'][len(summary['tasks']):]:
             summary['tasks'].append({**task, 'status': 'not-run'})
         statuses = [t['status'] for t in summary['tasks'] if t['status'] != 'not-applicable']
-        summary['status'] = 'failed' if summary.get('error') or summary.get('postflight_error') or summary.get('cleanup_error') or 'failed' in statuses else 'passed' if statuses and all(s == 'passed' for s in statuses) else 'partial'
+        summary['status'] = 'failed' if any(summary.get(k) for k in ('error', 'postflight_error', 'cleanup_error', 'lease_release_error')) or 'failed' in statuses else 'passed' if statuses and all(s == 'passed' for s in statuses) else 'partial'
         summary['elapsed_s'] = time.monotonic() - began
         summary['counts'] = {s:sum(t['status']==s for t in summary['tasks']) for s in sorted({t['status'] for t in summary['tasks']})}
         from runtime.metrics import comparisons

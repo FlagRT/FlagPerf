@@ -11,9 +11,13 @@ PROFILE = Path(__file__).parent / 'profiles/p800-xpytorch29.json'
 
 
 class Adapter(CompatAdapter):
+    strict_worker_lifecycle = True
+    postflight_after_preflight = True
+
     def __init__(self):
         super().__init__('kunlunxin')
         self.lock = json.loads(PROFILE.read_text())
+        self.host_session = None
 
     def default_image(self):
         return self.lock['image']
@@ -53,7 +57,47 @@ class Adapter(CompatAdapter):
         self.ensure_execution_ready()
 
     def docker_options(self, device, args):
-        self.ensure_execution_ready()
+        self.validate_options(args, [device])
+        if self.host_session is None:
+            raise RuntimeError('P800 device mapping requires a host session')
+        binding = self.host_session.binding(device)
+        return ['--device', binding['host_device_node'] + ':' + binding['container_node'] + ':rwm',
+                '--device', '/dev/xpuctrl:/dev/xpuctrl:rwm', '--ipc=private',
+                '--cap-drop=ALL', '--security-opt=no-new-privileges', '--pids-limit=512']
+
+    def lease_root(self):
+        from .host import base_modules
+        return base_modules()[0].DEFAULT_LEASE_ROOT
+
+    def local_lease_root(self):
+        return Path('/tmp/flagperf-operation-kunlunxin-local-leases')
+
+    def create_lease(self, root, devices, run_id):
+        from .host import HostSession
+        self.host_session = HostSession(root, devices, run_id, self.lock)
+        return self.host_session.prepare_lease()
+
+    def preflight(self, root, devices, label='preflight'):
+        if self.host_session is None or self.host_session.root != Path(root) or self.host_session.devices != list(devices):
+            raise RuntimeError('P800 preflight does not match its host session')
+        return self.host_session.preflight(label)
+
+    def bind_tasks(self, tasks, host):
+        for task in tasks:
+            binding = self.host_session.binding(task['device_id'])
+            task['device_binding'] = {**binding, 'status': 'host-observed; framework-pending',
+                                      'framework_logical_id': None}
+            task['runtime_config'] = {**task['runtime_config'], 'physical_uuid': binding['uuid'],
+                                      'pci_bdf': binding['pci_bdf'], 'device_minor': binding['device_minor']}
+            task['worker_device'] = None
+
+    def cleanup_worker(self, worker, run_id):
+        from .host import cleanup_worker
+        return cleanup_worker(worker, run_id)
+
+    def cleanup_process(self, proc):
+        from .host import cleanup_process
+        return cleanup_process(proc)
 
     def kernel_time(self, fn, cfg):
         return None
