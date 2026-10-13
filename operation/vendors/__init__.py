@@ -24,3 +24,10 @@ def legacy_reporter(schema_version):
     if schema_version not in readers:
         raise ValueError(f'unknown legacy schema: {schema_version}')
     return importlib.import_module(readers[schema_version]).report
+
+
+def report_metadata(name):
+    """Optional offline vocabulary, independent of runtime adapter imports."""
+    modules = {'ascend': 'vendors.ascend.report_metrics'}
+    module = modules.get(name)
+    return importlib.import_module(module) if module else None

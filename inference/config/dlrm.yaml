@@ -1,0 +1,11 @@
+model:
+  name: dlrm
+  path: ../runtime_assets/dlrm-v1
+  dtype: float32
+  options:
+    compare_probability: false
+inputs:
+  path: ../runtime_assets/dlrm-v1/inputs.jsonl
+  batch_size: 32
+export:
+  formats: [fx]

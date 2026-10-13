@@ -1,0 +1,85 @@
+schema_version: 1
+model:
+  name: qwen3_embedding_0.6b
+  # Supply a local model directory here or with --model-path.
+  path: null
+  dtype: bfloat16
+  attention: eager
+inputs:
+  path: ../inputs/minimal.jsonl
+  batch_size: 4
+  max_length: 256
+  padding_side: left
+accuracy:
+  # These options also apply when runtime.parallelism is tp.
+  flaggems: 'off'
+  flagtree: 'off'
+  flagcx: 'off'
+  levels: [model]
+  layers: [all]
+  worst_samples: 5
+  task_score: false
+  data_path: null
+  # Successful ordinary accuracy is compact; true keeps debugging evidence.
+  keep_tensors: false
+reference:
+  performance_path: null
+  path: null
+performance:
+  monitor: 'on'
+  monitor_interval_ms: 1000
+  variability:
+    repeat_cv_threshold: 0.10
+    spike_ratio_threshold: 5.0
+  # Successful ordinary performance is compact; reference producers stay full.
+  keep_evidence: false
+  flaggems: 'off'
+  flagtree: 'off'
+  flagcx: 'off'
+  level: total
+  layers: [all]
+  layer_profile_rounds: 1
+  warmup_rounds: 5
+  measure_rounds: 30
+  repeats: 3
+  communication_profile_rounds: 1
+runtime:
+  vendor: ascend
+  device: 0
+  parallelism: single
+  devices: null
+  seed: 2026
+  timeout_seconds: 900
+  # Independent deadline for one CUDA trace analysis, including result writing.
+  analysis_timeout_seconds: 900
+  output_root: ../result
+container:
+  # Supply a compatible local image here or with --image.
+  image: null
+  shm_size: 4g
+vendors:
+  ascend:
+    vendor_compiler: ../runtime_assets/ascend-triton
+    env:
+      TORCH_DEVICE_BACKEND_AUTOLOAD: '0'
+      GEMS_VENDOR: ascend
+      TRITON_ENABLE_TASKQUEUE: 'true'
+      TASK_QUEUE_ENABLE: '0'
+  nvidia:
+    env:
+      TORCH_DEVICE_BACKEND_AUTOLOAD: '0'
+      GEMS_VENDOR: nvidia
+policy:
+  path: null
+preview:
+  flaggems: 'off'
+  flagtree: 'off'
+  flagcx: 'off'
+  budget_seconds: 3600
+  resume_from: null
+  evidence_mode: lightweight
+  resume_cache: auto
+  search_strategy: grouped
+  budget_mode: adaptive
+export:
+  formats: [fx, onnx]

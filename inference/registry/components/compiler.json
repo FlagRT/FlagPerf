@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "id": "compiler",
+  "factory": "components.compiler:CompilerAdapter",
+  "capabilities": {
+    "identity": true,
+    "audit": true
+  },
+  "sources": [
+    "components/__init__.py",
+    "components/compiler.py",
+    "components/audit.py",
+    "components/cache.py"
+  ],
+  "packages": [
+    "triton",
+    "triton-ascend",
+    "flagtree"
+  ]
+}

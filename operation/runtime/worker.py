@@ -57,12 +57,16 @@ def cpu(value):
     return map_tensors(value, lambda t: t.detach().cpu())
 
 
+def tolerances(dtype):
+    return {'FP32': (1e-5, 1e-4), 'FP16': (2e-3, 2e-2), 'BF16': (2e-2, 8e-2)}.get(dtype, (0, 0))
+
+
 def compare(actual, expected, dtype):
     import torch
     aa, ee = tensors(actual), tensors(expected)
     if len(aa) != len(ee) or not aa:
         return {'status': 'failed', 'reason': 'output structure mismatch'}
-    atol, rtol = {'FP32': (1e-5, 1e-4), 'FP16': (2e-3, 2e-2), 'BF16': (2e-2, 8e-2)}.get(dtype, (0, 0))
+    atol, rtol = tolerances(dtype)
     checks = []
     for a, e in zip(aa, ee):
         a, e = a.detach().cpu(), e.detach().cpu()
@@ -172,6 +176,13 @@ def device_phase(root, task, phase):
     fn, _, bp, count = build(task)
     bundle = torch.load(root / 'inputs.pt', map_location='cpu', weights_only=True)
     inputs = map_tensors(bundle['inputs'], lambda t: t.detach().to(device).requires_grad_(t.requires_grad))
+    if task.get('common_diagnosis'):
+        adapter.synchronize()
+        same = all(torch.equal(a.contiguous().reshape(-1).view(torch.uint8), b.cpu().contiguous().reshape(-1).view(torch.uint8))
+                   for a, b in zip(tensors(bundle['inputs']), tensors(inputs)))
+        write(root / 'input-roundtrip.json', {'passed': same, 'input_sha256': sha(root / 'inputs.pt')})
+        if not same:
+            raise ValueError('Host/Device input roundtrip differs')
     if isinstance(fn, torch.nn.Module):
         fn.load_state_dict(bundle['state']);fn = fn.to(device)
     # CPU construction and parameter initialization precede explicit FlagGems registration.
@@ -186,6 +197,22 @@ def device_phase(root, task, phase):
         except metadata.PackageNotFoundError: pass
     identity = {'correctness_protocol': 'nonuniform-gradient-v1', 'measurement_protocol': 'cached-zero-gradient-v1', 'vendor_runtime': adapter.identity(), 'packages': packages, 'device': str(device), 'case_sha256': sha(ROOT / 'benchmarks' / task['case'] / 'main.py'),
                 'input_sha256': sha(root / 'inputs.pt'), 'input_devices': [str(t.device) for t in tensors(inputs)]}
+    if phase == 'profile-target':
+        cache = []
+        def target():
+            return invocation(fn, inputs, bp, grad_cache=cache)
+        adapter.profile_target(root, task, target)
+        write(root / 'profile-target-identity.json', identity)
+        return
+    if phase == 'memory':
+        from runtime.metrics import memory_window
+        cache = []
+        try:
+            result = memory_window(adapter, lambda: invocation(fn, inputs, bp, grad_cache=cache), task['case_config']['WARMUP'])
+        except (AttributeError, NotImplementedError) as exc:
+            result = {'status': 'not-supported', 'reason': str(exc)}
+        write(root / 'memory.json', {**identity, **result})
+        return
     if phase == 'trace':
         adapter.synchronize()
         print('OPERATION_TARGET_BEGIN', file=sys.stderr, flush=True)
@@ -257,13 +284,27 @@ def device_phase(root, task, phase):
         per_call.append((time.perf_counter_ns() - start) / cfg['ITERS'] / 1000)
     kernel_seconds = adapter.kernel_time(timed_call, cfg)
     # Check an actual measurement-process result too, outside the timer.
-    checked = cpu(invocation(fn, inputs, bp, nonzero=True));adapter.synchronize()
+    actual_output = invocation(fn, inputs, bp, nonzero=True)
+    checked = cpu(actual_output);adapter.synchronize()
     check = dropout_check(checked, bundle['inputs'], bp, task['dtype']) if task['case'] in ('dropout','native_dropout') else compare(checked, torch.load(root / 'reference.pt', weights_only=True), task['dtype'])
-    if task.get('diagnostics_mode') == 'failures' and (check['status'] == 'failed' or read(root / 'correctness.json')['status'] == 'failed'):
+    if task.get('common_diagnosis') or (task.get('diagnostics_mode') == 'failures' and (check['status'] == 'failed' or read(root / 'correctness.json')['status'] == 'failed')):
         torch.save(checked, root / 'measurement-output.pt')
     median = statistics.median(per_call)
     rate = count(1) * (3 if bp else 1) / (median / 1e6) / 1e12
+    from runtime.metrics import repeat_statistics, logical_traffic
+    def descriptor(t):
+        return {'bytes': t.numel() * t.element_size(), 'shape': list(t.shape), 'dtype': str(t.dtype)}
+    # Reuse the correctness invocation's device metadata; FP64 reference bytes differ.
+    outs = []
+    for t in tensors(actual_output):
+        d = descriptor(t)
+        d['view'] = t._base is not None and any(t.untyped_storage().data_ptr() == x.untyped_storage().data_ptr() for x in tensors(inputs))
+        outs.append(d)
+    traffic = logical_traffic([descriptor(t) for t in tensors(inputs)], outs, bp,
+                              [descriptor(t) for t in fn.parameters()] if isinstance(fn, torch.nn.Module) else [])
     write(root / 'measurement.json', {**identity, 'correctness': check,
+          'statistics': repeat_statistics(per_call), 'logical_traffic': traffic,
+          'effective_bandwidth_gb_s': traffic['total_bytes'] / median / 1000 if traffic.get('status') == 'estimated' else None,
           'cold_us': cold, 'warm_us': warm, 'per_call_us': per_call, 'median_us': median,
           'throughput_op_s': 1e6 / median, 'equivalent_tflops': rate if task['dtype'].startswith(('FP','BF')) else None,
           'work_units_per_second': rate * 1e12, 'formula': 'original op2flops, backward multiplier 3 is an estimate',
@@ -277,7 +318,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--root', type=Path, required=True)
     parser.add_argument('--serve', help='persistent worker control directory relative to root')
-    parser.add_argument('--phase', choices=['reference', 'probe', 'measure', 'diagnose', 'trace'], required=True)
+    parser.add_argument('--phase', choices=['reference', 'probe', 'measure', 'diagnose', 'trace', 'reference-check', 'memory', 'profiling', 'profile-target'], required=True)
     args = parser.parse_args()
     if args.serve:
         control = args.root / args.serve
@@ -315,7 +356,17 @@ def main():
 def run_phase(root, phase):
     task = read(root / 'task.json')
     try:
-        if phase == 'reference': reference(root, task)
+        if phase == 'profiling':
+            from vendors import get_vendor
+            adapter = get_vendor(task['vendor'])
+            if hasattr(adapter, 'collect_profile'):
+                adapter.collect_profile(root, task)
+            else:
+                write(root / 'profiling.json', {'status': 'not-supported', 'reason': 'vendor collector unavailable'})
+        elif phase == 'reference-check':
+            from runtime.diagnostics import reference_check
+            reference_check(root, task)
+        elif phase == 'reference': reference(root, task)
         elif phase == 'diagnose':
             from runtime.diagnostics import numeric
             numeric(root, task)
