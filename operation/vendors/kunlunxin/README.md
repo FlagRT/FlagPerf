@@ -103,7 +103,7 @@ CPU 目标输出判 failed；尚未建立覆盖所有原生实现的通用 CPU f
 
 ## 已执行的覆盖范围（2026-10-14）
 
-以下为锁定栈上 Docker / 单卡共享授权模式的实际评估；local 仍以上述最小验证范围为准。
+以下为锁定栈上 Docker / 单卡共享授权模式的实际评估；local 的补充路由复测范围另列于下文。
 
 | 范围 | 组合数 | 结果 |
 |---|---:|---|
@@ -111,9 +111,11 @@ CPU 目标输出判 failed；尚未建立覆盖所有原生实现的通用 CPU f
 | 低精度代表补测 | 6 | 1 blocked、2 failed、3 partial |
 | 10 个异常 case 独立双路径复测 | 20 | 2 blocked、8 failed、10 partial |
 | 29 case daily，七种 dtype 双路径 | 406 | 232 not-applicable、174 partial |
+| 15 case daily，七种 dtype 双路径 | 210 | 124 not-applicable、71 partial、9 failed、6 blocked |
 
 daily 的 406 项包含 174 个适用组合和 232 个 catalog 类型不适用项，涵盖算术、激活、比较及位运算 29 个 case。
-使用公共默认 warmup=5、iters=20、rounds=10、seed=2026；其余 daily case 尚未完成。
+使用公共默认 warmup=5、iters=20、rounds=10、seed=2026；新增第二批涵盖归约、矩阵和三角操作。
+两批共完成 44 case / 260 个适用组合的尝试；归一化、损失和 dropout 等剩余 8 case / 48 个适用组合尚未完成 daily 评估。
 这 174 个 daily 适用项的 probe 与 measure 正确性均通过；执行清理也已确认。
 partial 需结合逐项正确性和路由读取；共享计时不用于独占性能资格，运行栈仍为 validated:false。
 
@@ -123,6 +125,21 @@ layer_norm 出现 Triton autotune 计时除零，log_softmax/native_dropout/nati
 invalid device function。log_softmax 还存在 probe 数值门禁失败。低精度补测保留 mm FP16、layer_norm BF16、
 native_dropout FP16 的对应异常。以上记录错误发生位置，不把它们当作已查明的最终根因。
 复现可使用上方 run 模板，明确指定对应 --case/--dtype/--oplib，并使用新的结果目录；不降低尺寸或容差来改写结论。
+
+第二批 daily 的 86 个适用组合中，71 个 probe/measure 数值通过，3 个原生 FP32 组合（addmm、bmm、mm）
+在两个进程均超过公共容差，另 12 个 Gems 组合在 probe 执行或编译失败。CPU FP32 对 FP64 的辅助对照也存在少量超差，
+因此只确认未通过门禁，不据此认定最终根因。Gems addmm FP32、bmm FP32/FP16 为 LLVM bad signature 断言；
+addmm FP16/BF16、bmm BF16 为 uni_sram 编译失败，因不匹配已审阅的 mm 调用栈分类规则，仍保留 failed。
+mm/mv 三种浮点类型符合既有 mm 编译栈规则，保留 blocked。没有通过关键词扩展 blocked 范围。
+上述 12 个异常 case/dtype 组合均进行了独立双路径 daily 复测，共 24 项；状态和失败阶段全部复现，
+输入哈希、配置与运行身份一致。原生 FP32 addmm/bmm/mm 的超差元素数分别为 89/166/82；容差未放宽。
+
+路由门禁补充了实际 kernel 名称和最近目标实现校验，并用嵌套辅助 kernel、未知/缺失/错误目标名称验证负例。
+新规则只读核对既有 290 条已保存路由记录，状态没有变化；原始报告未改写。
+Docker abs/add 的 FP32/FP16/BF16 双路径 smoke 与 daily 各 12 个适用组合，local smoke 同样 12 个组合，均完成数值检查；
+Gems 目标路由通过，原生路由和共享性能仍 partial。另复测 Docker mm FP32/FP16 与 local mm FP16，保留 Gems 编译阻塞。
+local 仍未完成完整的七个代表 case 验收矩阵。补测不重复计入 daily 覆盖分母。
+修订前后的数据保留各自源码身份；没有把新判定写回旧证据，后续聚合应保留对应源码分组。
 
 ## 证据、复放与回归
 
@@ -138,6 +155,10 @@ python3 -B operation/run.py diagnose --source-task /absolute/path/to/case-result
 # 明确需要设备复放时增加 --replay；已获共享授权时再加 --allow-shared-device。
 python3 -B -m unittest discover -s operation/tests -p 'test_p800*.py' -v
 ```
+
+报告中的 P800 Docker 复放命令不使用 `--allow-privileged-root`；共享来源会带 `--allow-shared-device`，
+执行前仍须确认当前设备授权。旧版报告若含不适用的特权参数，应按当前模板修正命令，或在新目录汇总原始 run；
+不要改写封存数据来修正命令文字。
 
 单元测试不占用实际设备。全套 Operation 回归还需 CPU PyTorch 与 PyYAML。
 聚合要求相同主机、镜像与执行模式；不同 UUID/profile/源码/协议保留独立行。
