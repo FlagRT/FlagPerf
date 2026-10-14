@@ -386,6 +386,51 @@ class P800LifecycleTests(unittest.TestCase):
                 self.assertEqual(record.get('container_absent') is True, expected)
                 self.assertEqual(any(argv[1]=='rm' for argv in calls), expected)
 
+    def test_cleanup_waits_for_confirmed_async_removal(self):
+        _, lifecycle, _ = host.base_modules()
+        with tempfile.TemporaryDirectory() as tmp:
+            calls=[];lookups=0;cid='b'*64
+            def command(self, argv, **kwargs):
+                nonlocal lookups
+                calls.append(argv)
+                if argv[1:3] == ['ps', '-a']:
+                    lookups+=1;out=cid if lookups<=2 else ''
+                elif argv[1]=='inspect':
+                    out=json.dumps([{'Id':cid,'Config':{'Labels':{'flagperf.run_id':'fixture-run'}},'State':{'Running':False}}])
+                else:out=''
+                return {'returncode':1 if argv[1]=='rm' else 0,'stdout':out,'stderr':'removal already in progress' if argv[1]=='rm' else ''}
+            with patch.object(lifecycle.HostCommands,'run',command):
+                result=host.cleanup_worker({'name':'owned-fixture','control':Path(tmp)},'fixture-run')
+            self.assertTrue(result['container_absent'])
+            self.assertEqual(result['status'],'passed')
+            self.assertEqual(sum(argv[1]=='rm' for argv in calls),1)
+            self.assertEqual(lookups,3)
+            self.assertEqual(json.loads((Path(tmp)/'cleanup.json').read_text()),result)
+
+    def test_cleanup_timeout_and_failed_observation_never_pass(self):
+        _, lifecycle, _ = host.base_modules()
+        for failed_query in (False,True):
+            with self.subTest(failed_query=failed_query), tempfile.TemporaryDirectory() as tmp:
+                cid='c'*64;lookups=0;clock=[0.0]
+                def command(self,argv,**kwargs):
+                    nonlocal lookups
+                    if argv[1:3]==['ps','-a']:
+                        lookups+=1
+                        if lookups>2 and failed_query:return {'returncode':124,'stdout':'','stderr':'timeout'}
+                        out=cid
+                    elif argv[1]=='inspect':
+                        out=json.dumps([{'Id':cid,'Config':{'Labels':{'flagperf.run_id':'fixture-run'}},'State':{'Running':False}}])
+                    else:out=''
+                    return {'returncode':0,'stdout':out,'stderr':''}
+                def advance(seconds):clock[0]+=seconds
+                with patch.object(lifecycle.HostCommands,'run',command), patch.object(host.time,'monotonic',lambda:clock[0]), patch.object(host.time,'sleep',advance):
+                    result=host.cleanup_worker({'name':'owned-fixture','control':Path(tmp)},'fixture-run')
+                self.assertFalse(result['container_absent'])
+                self.assertEqual(result['status'],'failed')
+                self.assertGreaterEqual(clock[0],5)
+                self.assertLessEqual(clock[0],5.1)
+                self.assertGreater(lookups,2)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -153,7 +153,26 @@ def cleanup_worker(worker, run_id):
     # A docker run client can fail after the daemon has created the container.
     # Recover by exact name and check its ownership label before any deletion.
     container.create_attempted = True
-    return container.cleanup()
+    result = container.cleanup()
+    # Docker --rm may still be deleting an owned container after stop/rm
+    # returns. Confirm disappearance within a bound; never infer success from
+    # a removal-in-progress message, and never delete a different container.
+    if result.get('container_absent') is False and container.cid:
+        deadline = time.monotonic() + 5
+        while time.monotonic() < deadline:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                break
+            observed = container.commands.run(
+                ['docker', 'ps', '-a', '--no-trunc', '--filter', 'id=' + container.cid,
+                 '--format', '{{.ID}}'], privileged=True, timeout=min(1, remaining))
+            result['commands'].append(observed)
+            if observed['returncode'] == 0 and not observed['stdout'].strip():
+                result.update(container_absent=True, status='passed')
+                break
+            time.sleep(min(0.1, max(0, deadline - time.monotonic())))
+        lifecycle.save(worker['control'] / 'cleanup.json', result)
+    return result
 
 
 def cleanup_process(proc, timeout=5):

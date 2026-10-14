@@ -71,6 +71,7 @@ local 只有当前命名空间的逻辑锁，记录 externally-managed，不宣�
   共享模式复用同一组身份/健康解析器，记录占用，不声称空闲。`P800_ALLOW_FOREIGN_HANDLES=1` 仍明确拒绝。
 - 仅清理本轮 run ID 标签匹配的容器，确认消失后再继续；local 仅回收本轮子进程组。
   watchdog、SIGTERM、启动失败均进入清理，postflight 在释放租约前执行；清理/健康未确认则停止后续执行。
+  Docker 自动删除尚未完成时，对已确认身份的容器最多再等待 5 秒并查询消失状态；超时、查询失败或仍存在均不算清理成功。
 
 宿主 root 启动和 `P800_KNOWN_READONLY_MONITORS=barad_agent` 是 klx 的部署记录，均非通用要求。
 只读观察者须按 Base 规则显式授权并验证进程身份；不能将任意持卡 Python 进程列为只读观察者。
