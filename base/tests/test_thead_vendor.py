@@ -102,6 +102,29 @@ class TheadMonitorTests(unittest.TestCase):
             self.assertTrue((root / 'monitor/samples.jsonl').exists())
             self.assertTrue((root / 'monitor/summary.json').exists())
 
+    def test_neutral_report_renderer_renders_thread_telemetry_without_vendor_branch(self):
+        from benchmark_report_schema import monitor_svg, render_monitor_report
+        raw = FIXTURE.read_text()
+        monitor = UsageMonitor(targets_pair(), commands=FakeCommands(raw))
+        for _ in range(3):
+            monitor.collect_once()
+        windows = [{'role': 'measurement', 'device_id': t['device_id'],
+                    'started_offset_s': 0.0, 'finished_offset_s': 2.0} for t in targets_pair()]
+        policy = TheadProvider().monitor_policy(True)
+        summary = {'schema_version': 2, 'vendor': 'thead', 'status': 'passed',
+                   'collector': 'ppu-smi single -q full parse',
+                   'primary_sample_counts_by_target': {t['device_id']: 3 for t in targets_pair()}}
+        rendered = render_monitor_report(Path('.'), summary,
+                                         {'policy': policy, 'workload_windows': windows,
+                                          'vendor': 'thead', 'status': 'passed'},
+                                         monitor.samples, None)
+        for expected in ('thead/' + U0, 'thead/' + U1, 'Device utilization', 'Allocated device memory'):
+            self.assertIn(expected, rendered)
+        self.assertNotIn('npu', rendered)
+        svg = monitor_svg(monitor.samples, {'policy': policy, 'workload_windows': windows})
+        self.assertIsNotNone(svg)
+        self.assertIn('thead/' + U0, svg)
+
 
 class TheadBindingTests(unittest.TestCase):
     def test_binding_records_join_uuids_without_guessing_order(self):
@@ -153,22 +176,90 @@ class TheadProviderTests(unittest.TestCase):
         self.assertEqual(container_policy['cap_drop'], ['ALL'])
         self.assertFalse(container_policy['privileged_root'])
 
-    def test_day3_container_methods_stay_unimplemented(self):
+    def test_day3_selection_contract_requires_physical_ids(self):
         provider = TheadProvider()
-        for call in (lambda: provider.bindings({}, [0]),
-                     lambda: provider.docker_args({}, []),
-                     lambda: provider.bootstrap(BASE, {}),
-                     lambda: provider.worker_python({}),
-                     lambda: provider.container_preflight({}, []),
-                     lambda: provider.probe_spec(BASE, BASE, {}, {}, 'img'),
-                     lambda: provider.resolve_bindings({}, 'hash', {})):
-            with self.subTest(call=call), self.assertRaises(NotImplementedError):
-                call()
+        recorded = []
 
-    def test_registry_does_not_register_thread_before_day3(self):
-        self.assertNotIn('thead', PROVIDERS)
+        class FakeContext:
+            physical_device_ids = [1]
+
+            @classmethod
+            def validate(cls, require_selection=False):
+                recorded.append(require_selection)
+
+        provider.validate_selection(FakeContext)
+        self.assertEqual(recorded, [True])
+        legacy = type('LegacyContext', (), {'physical_device_ids': None, 'validate': lambda self, require_selection=False: None})()
         with self.assertRaises(ConfigurationError):
-            get_provider('thead')
+            provider.validate_selection(legacy)
+
+    def test_day3_benchmark_cases_fail_closed_until_day4_registration(self):
+        provider = TheadProvider()
+        for case in ('computation-FP32:PPU', 'interconnect-MPI_intraserver:PPU'):
+            request = type('R', (), {'case': case, 'allow_privileged_root': False,
+                                     'context': type('C', (), {'timeout': 120, 'result_root': None})(),
+                                     'result_dir': None, 'nproc_per_node': 1})()
+            with self.subTest(case=case), self.assertRaises(ConfigurationError):
+                provider.validate_benchmark(request, {'merged_config': {}, 'environments': ()})
+
+    def test_day3_container_methods_produce_bounded_contract(self):
+        provider = TheadProvider()
+        self.assertEqual(provider.code_identity_files(),
+                         ('configs/thead_ppu_torch210.yaml', 'vendors/thead/runtime_bootstrap.sh'))
+        self.assertTrue((BASE / 'configs/thead_ppu_torch210.yaml').is_file())
+        self.assertTrue((BASE / 'vendors/thead/runtime_bootstrap.sh').is_file())
+        host = {'devices': [device_record(0, U0, '00000001:C9:00.0')]}
+        lease = provider.lease_spec(host)
+        self.assertEqual(lease['resource_keys'], ['thead/' + U0])
+        self.assertEqual([str(p) for p in lease['compatibility_paths']], ['/tmp/flagperf-ppu-' + U0 + '.lock'])
+        with tempfile.TemporaryDirectory() as tmp:
+            arguments, expected = provider.probe_spec(BASE, Path(tmp) / 'result',
+                                                      self.load_config(), host, 'sha256:' + '0' * 64)
+        self.assertIn('--network=thead-internal', arguments)
+        self.assertIn('--ipc=private', arguments)
+        self.assertIn('--cap-drop=ALL', arguments)
+        self.assertIn('--read-only', arguments)
+        self.assertIn('--shm-size=16g', arguments)
+        self.assertIn('--group-add', arguments)
+        self.assertIn('--env', arguments)
+        self.assertIn('CUDA_VISIBLE_DEVICES=0', arguments)
+        self.assertIn('FLAGPERF_CVD=0', arguments)
+        self.assertIn('--device', arguments)
+        self.assertIn('/dev/alixpu_ppu0:/dev/alixpu_ppu0:rwm', arguments)
+        self.assertIn('/dev/alixpu:/dev/alixpu:rwm', arguments)
+        self.assertIn('--entrypoint', arguments)
+        self.assertIn('/workspace/FlagPerf/base/vendors/thead/runtime_bootstrap.sh', arguments)
+        self.assertEqual(expected['image_id'], 'sha256:' + '0' * 64)
+        self.assertEqual(expected['network'], 'thead-internal')
+        self.assertEqual(expected['devices'], [('/dev/alixpu_ppu0', '/dev/alixpu_ppu0', 'rwm'),
+                                               ('/dev/alixpu', '/dev/alixpu', 'rwm')])
+
+    def test_day3_resolve_bindings_round_trip_and_rejections(self):
+        provider = TheadProvider()
+        devices = [device_record(0, U0, '00000001:C9:00.0')]
+        expected = binding_records(devices, [U0])
+        result = {'schema_version': 1, 'context_sha256': 'a' * 64,
+                  'observed_uuids': [U0], 'bindings': expected}
+        bindings = provider.resolve_bindings(host={'devices': devices}, context_hash='a' * 64, result=result)
+        self.assertEqual([b.record() for b in bindings], expected)
+        for drifted in ({'schema_version': 2, 'context_sha256': 'a' * 64, 'observed_uuids': [U0], 'bindings': expected},
+                        {'schema_version': 1, 'context_sha256': 'b' * 64, 'observed_uuids': [U0], 'bindings': expected},
+                        {'schema_version': 1, 'context_sha256': 'a' * 64, 'observed_uuids': [U0],
+                         'bindings': [dict(expected[0], resource_key='thead/other')]}):
+            with self.subTest(drifted=drifted['schema_version']), self.assertRaises(RuntimeError):
+                provider.resolve_bindings({'devices': devices}, 'a' * 64, drifted)
+        with self.assertRaises(ConfigurationError):
+            provider.bindings({}, [0])
+        with self.assertRaises(ConfigurationError):
+            provider.preflight()
+
+    def test_registry_registers_thread_with_day3_contract(self):
+        self.assertIs(get_provider('thead'), PROVIDERS['thead'])
+        self.assertEqual(PROVIDERS['thead'].name, 'thead')
+        self.assertTrue(PROVIDERS['thead'].supports_preflight)
+        self.assertTrue(PROVIDERS['thead'].supports_bounded_benchmark)
+        with self.assertRaises(ConfigurationError):
+            get_provider('unknown')
 
 
 class TheadAssetTests(unittest.TestCase):
@@ -184,7 +275,7 @@ class TheadAssetTests(unittest.TestCase):
         self.assertEqual(requirements['process_scope']['max_nproc_per_node'], 16)
         self.assertEqual(requirements['runtime_profile'], config['runtime_profile'])
 
-    def test_driver_branches_route_to_thread_adapter(self):
+    def test_driver_branches_route_to_thead_adapter(self):
         script = """
 import sys
 sys.path.insert(0, BASE_PATH)

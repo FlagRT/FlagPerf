@@ -42,6 +42,7 @@ def parse_card(raw, bdf):
     identity = {'pci_bdf': bdf}
     identity['uuid'] = canonical_uuid(one(raw, r'^\s*PPU UUID\s*:\s*GPU-([0-9a-fA-F-]+)\s*$', 'uuid'))
     identity['device_minor'] = int(one(raw, r'^\s*Minor Number\s*:\s*(\d+)\s*$', 'minor'))
+    identity['serial'] = one(raw, r'^\s*Serial Number\s*:\s*(\S+)\s*$', 'serial')
     identity['host_device_node'] = '/dev/alixpu_ppu%d' % (identity['device_minor'] - 1)
     memory = one(raw, r"^    Memory Usage\s*\n((?:[ \t]+[^\n]*\n)+?)(?=    \S)", 'Memory Usage')
     values = {}

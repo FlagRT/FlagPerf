@@ -4,8 +4,9 @@
 from base.vendors.protocol import ConfigurationError, VendorProvider
 from base.vendors.ascend.provider import AscendProvider
 from base.vendors.kunlunxin.provider import KunlunxinProvider
+from base.vendors.thead.provider import TheadProvider
 
-PROVIDERS = {"ascend": AscendProvider(), "kunlunxin": KunlunxinProvider()}
+PROVIDERS = {"ascend": AscendProvider(), "kunlunxin": KunlunxinProvider(), "thead": TheadProvider()}
 
 
 def get_provider(vendor: str) -> VendorProvider:

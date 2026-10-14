@@ -155,10 +155,11 @@ def execute(args, *, prepared=None, workload=None):
         provider.check_identity(host, locked)
         if absolute_deadline - time.monotonic() < args.timeout + 30:
             raise RuntimeError('insufficient reservation remaining before container start')
-        context = {'schema_version': 1, 'kind': 'benchmark-preflight', 'run_id': run_id, 'host': locked,
-                   'image_identity': identity, 'reservation_start': utc_now(), 'reservation_end': end.isoformat(),
-                   'reservation_reference': args.reservation_reference, 'probe_mode': args.probe_mode,
-                   'timeout': args.timeout, 'allow_candidate_runtime': args.allow_candidate_runtime}
+        context = {'schema_version': 1, 'kind': 'benchmark-preflight', 'run_id': run_id, 'vendor': provider.name,
+                   'host': locked, 'image_identity': identity, 'reservation_start': utc_now(),
+                   'reservation_end': end.isoformat(), 'reservation_reference': args.reservation_reference,
+                   'probe_mode': args.probe_mode, 'timeout': args.timeout,
+                   'allow_candidate_runtime': args.allow_candidate_runtime}
         if workload is not None:
             context.update(workload.context_record(root))
         write_json(root / 'control/host-context.json', context)
@@ -170,7 +171,7 @@ def execute(args, *, prepared=None, workload=None):
         write_json(root / 'code-identity.json', {'git_head': commands.checked(['git', '-C', str(BASE_DIR.parent), 'rev-parse', 'HEAD'])['stdout'].strip(),
                    'git_status': commands.checked(['git', '-C', str(BASE_DIR.parent), 'status', '--porcelain'])['stdout'],
                    'source_sha256': {str(p.relative_to(BASE_DIR)): hashlib.sha256(p.read_bytes()).hexdigest()
-                                     for subdir in ('executors', 'vendors/kunlunxin', 'monitoring', 'benchmarks/drivers',
+                                     for subdir in ('executors', 'vendors/' + provider.name, 'monitoring', 'benchmarks/drivers',
                                                     'benchmarks/computation-FP32', 'benchmarks/computation-FP16',
                                      'benchmarks/computation-BF16', 'benchmarks/computation-INT8',
                                      'benchmarks/interconnect-h2d', 'benchmarks/interconnect-d2h')
@@ -181,8 +182,7 @@ def execute(args, *, prepared=None, workload=None):
             code_identity = json.loads(identity_path.read_text())
             code_identity['source_sha256'].update({relative: hashlib.sha256((BASE_DIR / relative).read_bytes()).hexdigest()
                 for relative in ('benchmark_worker.py', 'benchmarks/fp32_contract.py', 'benchmarks/computation_contract.py',
-                                 'benchmarks/transfer_contract.py', 'configs/kunlunxin_p800_xpytorch29.yaml', 'benchmarks/case_assets.py',
-                                 'vendors/kunlunxin/runtime_bootstrap.sh')})
+                                 'benchmarks/transfer_contract.py', 'benchmarks/case_assets.py', *provider.code_identity_files())})
             write_json(identity_path, code_identity)
         stage = 'container-inspect'
         container.create(arguments, expected)

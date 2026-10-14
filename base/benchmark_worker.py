@@ -38,7 +38,7 @@ def run_bound_case(context, context_path, output):
         raise RuntimeError('bound case worker requires a one- to eight-rank benchmark context')
     base = Path(__file__).resolve().parent
     contract = context_path.parent / 'case-assets.json'
-    assets = verify_worker_assets(base, contract, context['case'], 'kunlunxin')
+    assets = verify_worker_assets(base, contract, context['case'], context.get('vendor', 'kunlunxin'))
     environment = {'MASTER_ADDR': '127.0.0.1', 'MASTER_PORT': str(context['master_port']),
                    'FLAGPERF_CASE_ASSETS': str(contract),
                    'FLAGPERF_HOST_CONTEXT': str(context_path),
