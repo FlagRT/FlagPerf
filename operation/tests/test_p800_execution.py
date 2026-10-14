@@ -23,7 +23,7 @@ MARKERS = 'OPERATION_TARGET_BEGIN\nOPERATION_TARGET_END'
 
 def probe_fixture():
     launch = {'actual_c_return':True, 'class':'XPULauncher',
-              'driver':'/env/triton/backends/xpu/driver.py', 'kernel':'abs_kernel',
+              'driver':'/env/triton/backends/xpu/driver.py', 'kernel':'abs_func_kernel_rank_1',
               'implementation':[{'path':'/env/flag_gems/runtime/backend/_kunlunxin/ops/abs.py','function':'abs'}]}
     return {'device':'cuda:0','output_devices':['cuda:0'],
             'p800_route':{'protocol':'p800-xpu-launch-v1','case':'abs','oplib':'flaggems','backward':False,
@@ -31,6 +31,27 @@ def probe_fixture():
 
 
 class RouteTests(unittest.TestCase):
+    def test_target_ancestor_does_not_qualify_nested_helper_or_unknown_kernel(self):
+        for kind in ('nested-copy', 'unknown', 'missing', 'wrong-target', 'nested-with-target-name'):
+            p = probe_fixture()
+            for window in p['p800_route']['windows'].values():
+                row = window['launches'][0]
+                if kind.startswith('nested'):
+                    row['implementation'].insert(0, {'path':'/env/flag_gems/ops/copy.py','function':'copy'})
+                if kind == 'nested-copy': row['kernel'] = 'copy_kernel'
+                if kind == 'unknown': row['kernel'] = 'unknown'
+                if kind == 'missing': row.pop('kernel')
+                if kind == 'wrong-target': row['kernel'] = 'add_func_kernel_rank_1'
+            self.assertEqual(Adapter().route(p, MARKERS)['status'], 'partial', kind)
+
+    def test_reviewed_add_passes_and_unreviewed_mm_stays_partial(self):
+        for case, kernel, expected in (('add', 'add_func_kernel_rank_1', 'passed'), ('mm', 'mm_kernel', 'partial')):
+            p = probe_fixture();p['p800_route']['case'] = case
+            for window in p['p800_route']['windows'].values():
+                row = window['launches'][0];row['kernel'] = kernel
+                row['implementation'][0].update(path='/env/flag_gems/ops/' + case + '.py', function=case)
+            self.assertEqual(Adapter().route(p, MARKERS)['status'], expected)
+
     def test_actual_first_and_cached_launch(self):
         result = Adapter().route(probe_fixture(), MARKERS)
         self.assertEqual(result['status'],'passed');self.assertTrue(result['cached_launch_proven'])
@@ -66,7 +87,7 @@ class RouteTests(unittest.TestCase):
 
     def test_observer_requires_matching_c_call_return_and_ancestry(self):
         observer=routing.Observer({'case':'abs','oplib':'flaggems'},False)
-        launcher=type('XPULauncher',(),{})();launcher.launch=object();launcher._fn_name='abs_kernel'
+        launcher=type('XPULauncher',(),{})();launcher.launch=object();launcher._fn_name='abs_func_kernel_rank_1'
         parent=SimpleNamespace(f_code=SimpleNamespace(co_filename='/env/flag_gems/ops/abs.py',co_name='abs'),f_back=None)
         frame=SimpleNamespace(f_code=SimpleNamespace(co_filename='/env'+routing.DRIVER,co_name='__call__'),
                               f_locals={'self':launcher},f_back=parent)

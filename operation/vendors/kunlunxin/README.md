@@ -79,8 +79,10 @@ P800 不接受 `--allow-privileged-root`、额外 `--container-device` 或 `--mo
 
 ## 路由证据与结果边界
 
-P800 通过观察现有调用取证，不替换或包装数学库/后端。路由规则目前审阅 abs/add/mm 的简单前向目标：
-FlagGems 目标实现必须出现在 `XPULauncher.__call__` 的调用祖先中，且首次和缓存窗口均观察到
+P800 通过观察现有调用取证，不替换或包装数学库/后端。路由通过范围目前仅为已核验的 abs/add 简单前向目标：
+实际 kernel 名称须分别为 `abs_func_kernel_rank_1` / `add_func_kernel_rank_1`，最近一层 FlagGems ops/fused 调用祖先须为对应目标实现。
+其他名称、维度实现及尚无成功目标证据的 mm 保持 partial；新增通过范围须另行审阅实际实现与启动证据。
+首次和缓存窗口均须观察到
 真实 `self.launch` 的 C 调用正常返回，并完成同步。目标区间须有完整 begin/end。
 仅 Python 调用、编译、注册、辅助复制/分配/transpose 或 CPU profiler 事件均不能使路由通过。
 原生、复合及反向目标缺少充分证据时保持 partial；注册 FlagGems 后使用原生实现不自动等同于 CPU fallback。

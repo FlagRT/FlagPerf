@@ -8,6 +8,10 @@ DRIVER = '/triton/backends/xpu/driver.py'
 # Reviewed simple forward targets. Compound/backward cases stay partial until
 # all their semantic components have an equally specific evidence rule.
 REVIEWED = {'abs': {'abs', 'abs_wrapper'}, 'add': {'add', 'add_tensor', 'add_tensor_'}, 'mm': {'mm'}}
+# Exact target kernels observed in the locked runtime. A target ancestor alone
+# does not distinguish its computation from nested copies or autotune helpers.
+# mm remains partial until a successful target launch has been reviewed.
+REVIEWED_KERNELS = {'abs': {'abs_func_kernel_rank_1'}, 'add': {'add_func_kernel_rank_1'}}
 
 
 class Observer:
@@ -53,11 +57,15 @@ class Observer:
 
 
 def meaningful(launch, case):
+    implementation = launch.get('implementation', [])
+    target = implementation[0] if implementation else {}
     return (launch.get('actual_c_return') is True and launch.get('class') == 'XPULauncher'
             and launch.get('driver','').endswith(DRIVER)
-            and any(Path(x.get('path','')).stem == case and x.get('function') in REVIEWED.get(case,set())
-                    and '/flag_gems/' in x.get('path','') and '/ops/' in x.get('path','')
-                    for x in launch.get('implementation',[])))
+            and launch.get('kernel') in REVIEWED_KERNELS.get(case, set())
+            and Path(target.get('path', '')).stem == case
+            and target.get('function') in REVIEWED.get(case, set())
+            and '/flag_gems/' in target.get('path', '')
+            and '/ops/' in target.get('path', ''))
 
 
 def route(probe, log):
