@@ -97,7 +97,30 @@ CPU 目标输出判 failed；尚未建立覆盖所有原生实现的通用 CPU f
 
 上述 mm 异常只有同时匹配异常类型、FlagGems mm 与 Triton XPU `make_ttxir` 的真实调用栈才分类 blocked；
 仅错误关键词不能分类，未知异常仍 failed。没有修改库、缩小 smoke 规模或改变容差来绕过失败。
-这不是 104 项 smoke 或 308 项全量验收，不据此晋级 Operation runtime。
+以上 2026-10-13 最小验证不代表全量验收；后续覆盖范围见下节，仍不据此晋级 Operation runtime。
+
+## 已执行的覆盖范围（2026-10-14）
+
+以下为锁定栈上 Docker / 单卡共享授权模式的实际评估；local 仍以上述最小验证范围为准。
+
+| 范围 | 组合数 | 结果 |
+|---|---:|---|
+| 52 case 默认类型 smoke | 104 | 2 blocked、8 failed、94 partial |
+| 低精度代表补测 | 6 | 1 blocked、2 failed、3 partial |
+| 10 个异常 case 独立双路径复测 | 20 | 2 blocked、8 failed、10 partial |
+| 29 case daily，七种 dtype 双路径 | 406 | 232 not-applicable、174 partial |
+
+daily 的 406 项包含 174 个适用组合和 232 个 catalog 类型不适用项，涵盖算术、激活、比较及位运算 29 个 case。
+使用公共默认 warmup=5、iters=20、rounds=10、seed=2026；其余 daily case 尚未完成。
+这 174 个 daily 适用项的 probe 与 measure 正确性均通过；执行清理也已确认。
+partial 需结合逐项正确性和路由读取；共享计时不用于独占性能资格，运行栈仍为 validated:false。
+
+10 个 smoke 异常 case 经独立双路径 run 复现，原状态和失败阶段一致。除 mm/mv 的 uni_sram 编译阻塞外，
+FlagGems addmm/bmm 出现 LLVM bad signature 断言，cross_entropy_loss 出现 kernel -714 异常，
+layer_norm 出现 Triton autotune 计时除零，log_softmax/native_dropout/native_group_norm/softmax 出现
+invalid device function。log_softmax 还存在 probe 数值门禁失败。低精度补测保留 mm FP16、layer_norm BF16、
+native_dropout FP16 的对应异常。以上记录错误发生位置，不把它们当作已查明的最终根因。
+复现可使用上方 run 模板，明确指定对应 --case/--dtype/--oplib，并使用新的结果目录；不降低尺寸或容差来改写结论。
 
 ## 证据、复放与回归
 
