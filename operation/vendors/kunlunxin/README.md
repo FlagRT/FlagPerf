@@ -103,7 +103,7 @@ CPU 目标输出判 failed；尚未建立覆盖所有原生实现的通用 CPU f
 
 ## 已执行的覆盖范围（2026-10-14）
 
-以下为锁定栈上 Docker / 单卡共享授权模式的实际评估；local 的补充路由复测范围另列于下文。
+以下为锁定栈上 Docker / 单卡共享授权模式的实际评估；local 的代表验证和补充路由复测范围另列于下文。
 
 | 范围 | 组合数 | 结果 |
 |---|---:|---|
@@ -112,10 +112,13 @@ CPU 目标输出判 failed；尚未建立覆盖所有原生实现的通用 CPU f
 | 10 个异常 case 独立双路径复测 | 20 | 2 blocked、8 failed、10 partial |
 | 29 case daily，七种 dtype 双路径 | 406 | 232 not-applicable、174 partial |
 | 15 case daily，七种 dtype 双路径 | 210 | 124 not-applicable、71 partial、9 failed、6 blocked |
+| 8 case daily，七种 dtype 双路径 | 112 | 64 not-applicable、30 partial、18 failed |
 
 daily 的 406 项包含 174 个适用组合和 232 个 catalog 类型不适用项，涵盖算术、激活、比较及位运算 29 个 case。
 使用公共默认 warmup=5、iters=20、rounds=10、seed=2026；新增第二批涵盖归约、矩阵和三角操作。
-两批共完成 44 case / 260 个适用组合的尝试；归一化、损失和 dropout 等剩余 8 case / 48 个适用组合尚未完成 daily 评估。
+三批共完成 52 case / 308 个适用组合的尝试，另有 420 个类型不适用项，无未运行项。
+原始 daily 覆盖账目为 275 partial、27 failed、6 blocked、420 not-applicable；独立复测不重复计数。
+三批保留各自源码修订，不是同一源码版本的全量通过认证；后续交付审查仍需按身份核对。
 这 174 个 daily 适用项的 probe 与 measure 正确性均通过；执行清理也已确认。
 partial 需结合逐项正确性和路由读取；共享计时不用于独占性能资格，运行栈仍为 validated:false。
 
@@ -138,8 +141,35 @@ mm/mv 三种浮点类型符合既有 mm 编译栈规则，保留 blocked。没�
 新规则只读核对既有 290 条已保存路由记录，状态没有变化；原始报告未改写。
 Docker abs/add 的 FP32/FP16/BF16 双路径 smoke 与 daily 各 12 个适用组合，local smoke 同样 12 个组合，均完成数值检查；
 Gems 目标路由通过，原生路由和共享性能仍 partial。另复测 Docker mm FP32/FP16 与 local mm FP16，保留 Gems 编译阻塞。
-local 仍未完成完整的七个代表 case 验收矩阵。补测不重复计入 daily 覆盖分母。
+local 七个代表 case 的双路径 smoke 已实际尝试：abs FP32、mm FP16、sum BF16、bitwise_and INT32、all INT64、
+layer_norm BF16、native_dropout FP16，共 14 项：11 partial、2 failed、1 blocked。
+失败为 Gems layer_norm / native_dropout，阻塞为 Gems mm；其余 probe/measure 数值检查通过。
+native_dropout 含反向。验证在调用者自建的锁定镜像容器内执行 local CLI，由外层 harness 持有宿主 UUID 租约；
+不是裸宿主运行栈安装证明，也不改变 local 只管理当前命名空间的边界。七份报告分别保留，不自动聚合。
+补测不重复计入 daily 覆盖分母。
 修订前后的数据保留各自源码身份；没有把新判定写回旧证据，后续聚合应保留对应源码分组。
+
+第三批 daily 覆盖 group_norm、native_group_norm、layer_norm、softmax、log_softmax、cross_entropy_loss、
+dropout、native_dropout 的 FP32/FP16/BF16 双路径。24 个原生项及 Gems group_norm/dropout 的 6 项完成
+probe/measure 数值检查，路由与共享性能仍 partial。其余 18 个 Gems 项 failed：
+
+| Case（各含三种浮点类型） | 原始失败阶段与现象 |
+|---|---|
+| native_group_norm、native_dropout | measure：invalid device function |
+| layer_norm | probe：Triton autotune ZeroDivisionError |
+| softmax | probe：invalid device function |
+| log_softmax | probe 数值失败，随后 measure：invalid device function；两项记录均保留 |
+| cross_entropy_loss | probe：xpuLaunchKernel("empty_kernel") 返回 -714 |
+
+上述 18 个 case/dtype 均以新 run 独立双路径 daily 复测，共 36 项：18 partial、18 failed；
+状态与失败阶段全部复现，输入哈希和配置一致。复测中另有一次 softmax FP16 run 因 Docker 清理查询超时被停止，
+该异常 run 原样保留、排除于有效复测账目；随后确认本轮容器消失、设备健康和租约释放，用新 run 补齐 FP16 及尚未执行的 FP32。
+另一次 native_group_norm BF16 复测在 probe 的 docker inspect 查询超时，与原始 kernel 错误不同，
+也单独保留并用新 run 补测，不算作原异常的复现。未放宽清理门禁。这些是观察到的异常位置，尚不能认定最终根因。
+沿用公共 build_case：native_group_norm、softmax、log_softmax、cross_entropy_loss、native_dropout 含反向；
+group_norm、layer_norm、dropout 为前向。模块参数从输入包恢复；正确性反向采用非零上游梯度。
+dropout 检查缩放、保留率及掩码对应梯度，不要求 CPU 与设备随机序列相同，也不把原计时的零梯度当作完整反向正确性证明。
+第三批及 local 的清理、postflight、租约释放均确认；不改变公共 workload、容差、FlagGems 或 Triton 来规避失败。
 
 ## 证据、复放与回归
 
