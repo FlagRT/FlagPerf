@@ -3,6 +3,7 @@
 """P800 execution gates: stdlib-only negative controls and evidence isolation."""
 import copy
 import json
+import shlex
 from pathlib import Path
 import subprocess
 import sys
@@ -206,6 +207,25 @@ class ExecutionIdentityTests(unittest.TestCase):
 
 
 class AggregationTests(unittest.TestCase):
+    def test_replay_command_matches_p800_options_and_preserves_ascend(self):
+        from runtime.reporting import replay_command
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);work=root/'task';work.mkdir()
+            for name in ('task.json','inputs.pt','reference.pt'):(work/name).write_text('fixture')
+            write(root/'summary.json',{'actual_image_id':'sha256:fixture'})
+            for vendor,profile,shared in (('kunlunxin','p800-xpytorch29',True),
+                                          ('kunlunxin','p800-xpytorch29',False),('ascend',None,False)):
+                task={'case':'abs','device_id':0,'directory':'task','vendor':vendor,'runtime_profile':profile,
+                      'runtime_config':{'sharing_policy':'shared-authorized' if shared else 'exclusive-required'}}
+                command,reason=replay_command(root,task)
+                self.assertIsNone(reason)
+                argv=shlex.split(command)
+                self.assertEqual('--allow-privileged-root' in argv,vendor=='ascend')
+                self.assertEqual('--allow-shared-device' in argv,shared)
+                if vendor=='kunlunxin':
+                    args=cli.parser().parse_args(argv[argv.index('diagnose'):])
+                    Adapter().validate_options(args,[0])
+
     def source(self, root, config=None, status='passed', **extra):
         root.mkdir()
         write(root/'summary.json',{'schema_version':2,'protocol':'operation-v2','status':status,
