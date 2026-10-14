@@ -1,4 +1,4 @@
-"""Explicit, CPU-only contracts for candidate P800 computation cases."""
+"""Explicit, CPU-only contracts for candidate P800/PPU computation cases."""
 import math
 
 from base.vendors.protocol import ConfigurationError
@@ -10,6 +10,12 @@ CONTRACTS = {
     'FP16': {'dtype': 'float16', 'unit': 'TFLOPS', 'atol': 1e-3, 'rtol': 1e-3, 'small_cases': 5},
     'BF16': {'dtype': 'bfloat16', 'unit': 'TFLOPS', 'atol': 8e-3, 'rtol': 8e-3, 'small_cases': 5},
     'INT8': {'dtype': 'int8', 'unit': 'TOPS', 'atol': 0.02, 'rtol': 8e-3, 'small_cases': 5},
+    # FP64/TF32 joined on day 5 from the day-4 capability probe: PPU torch.mm
+    # keeps float64 exactly (the 2**-40 probe passed) and honors the TF32
+    # flag. TF32 inherits the BF16 error budget so a bf16x3 emulation inside
+    # the CUDA compatibility layer would still pass.
+    'FP64': {'dtype': 'float64', 'unit': 'TFLOPS', 'atol': 1e-12, 'rtol': 1e-12, 'small_cases': 5},
+    'TF32': {'dtype': 'float32', 'unit': 'TFLOPS', 'atol': 8e-3, 'rtol': 8e-3, 'small_cases': 5},
 }
 # Case selectors are chip-scoped. A chip registers here together with its
 # vendor provider PERFORMANCE_CASES and per-chip case assets; the
@@ -21,17 +27,34 @@ CASES = tuple('computation-' + precision + ':' + chip for precision in CONTRACTS
 def contract(case):
     if case not in CASES:
         raise ConfigurationError('computation case has no verified implementation contract: ' + str(case))
-    precision = case.split(':')[0].split('-')[1]
+    selector, chip = case.rsplit(':', 1)
+    precision = selector.split('-')[1]
     integer = precision == 'INT8'
-    return {'precision': precision, 'metric': 'computation-' + precision,
-            'operator': 'xtorch_ops.gemm_I8_I8_bf16_nt' if integer else 'torch.mm',
-            'reference_dtype': 'float64' if integer else 'float64',
-            'output_dtype': 'bfloat16' if integer else CONTRACTS[precision]['dtype'],
-            'reference_inputs': 'signed int8 inputs; CPU float64 accumulation of the quantized operands times SCALE_A*SCALE_B; '
+    # The P800 INT8 kernel is the vendor xtorch op with a bf16 output; the
+    # day-4 PPU probe fixed torch._int_mm as the real device kernel (torch.mm
+    # raises NotImplementedError for int8 on PPU, and the P800 _int_mm runs
+    # on the host CPU, so the two chips must not share the operator).
+    device_int8 = integer and chip == 'PPU'
+    # torch._int_mm refuses M <= 16 on the device ("self.size(0) needs to be
+    # greater than 16"), so the PPU INT8 small cases run at M = 32; K and N
+    # keep their 8-multiple alignment. The 8192-cube measurement shape and
+    # the P800 small cases are unchanged.
+    int8_shapes = [[32, 32, 32], [32, 32, 48], [32, 16, 16], [32, 2048, 16], [32, 1024, 32]]
+    spec = {'precision': precision, 'metric': 'computation-' + precision,
+            'operator': 'torch._int_mm' if device_int8 else 'xtorch_ops.gemm_I8_I8_bf16_nt' if integer else 'torch.mm',
+            'reference_dtype': 'float64',
+            'output_dtype': 'int32' if device_int8 else 'bfloat16' if integer else CONTRACTS[precision]['dtype'],
+            'reference_inputs': 'signed int8 inputs; CPU int64 accumulation reference; device int32 accumulation '
+                                'and int32 output via torch._int_mm' if device_int8 else
+                                'signed int8 inputs; CPU float64 accumulation of the quantized operands times SCALE_A*SCALE_B; '
                                 'int32 accumulation and bf16 output inside the device kernel' if integer else
                                 'CPU inputs quantized to target dtype before FP64 reference',
-            'shapes': [[32, 32, 32], [16, 32, 48], [16, 16, 16], [16, 2048, 16], [16, 1024, 32]] if integer else
+            'shapes': int8_shapes if device_int8 else
+                      [[32, 32, 32], [16, 32, 48], [16, 16, 16], [16, 2048, 16], [16, 1024, 32]] if integer else
                       [[32, 32, 32], [17, 29, 11], [16, 16, 16], [4, 2048, 4], [2, 1024, 2]], **CONTRACTS[precision]}
+    if device_int8:
+        spec.update(atol=0.0, rtol=0.0)
+    return spec
 
 
 def validate_config(config, case):

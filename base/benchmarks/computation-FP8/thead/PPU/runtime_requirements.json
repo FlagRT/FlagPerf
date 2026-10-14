@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "supported": false,
+  "unsupported_reason": "PPU torch 2.10.0 has no float8 matmul: torch.mm raises NotImplementedError (\"addmm_cuda\" not implemented for 'Float8_e4m3fn'/'Float8_e5m2') and torch._scaled_mm refuses the device through its compute-capability gate. Verbatim exceptions and dependency evidence: probes/day4/evidence/capability.json on the result root.",
+  "runtime_profile": "torch210_ppu_candidate",
+  "process_scope": {"nnodes": 1, "nproc_per_node": 1},
+  "correctness_required": true
+}

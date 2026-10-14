@@ -1,0 +1,5 @@
+# Pageable host buffer with non_blocking copy_: ITERS from the pageable calibration run; non_blocking has no staging effect for pageable host memory.
+PIN_MEMORY: false
+NON_BLOCKING: true
+ITERS: 400
+MODE: measured

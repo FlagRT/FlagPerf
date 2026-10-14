@@ -1,0 +1,21 @@
+# thead PPU computation-TF32 bounded case. Layered after the generic
+# case_config.yaml; the generic MPI backend, 4096 shape and 10000 iterations
+# are overridden here on purpose (merged DIST_BACKEND is gloo).
+# Window calibration (day-5, probes/day5 on the result root): 16.278 ms per 8192^3 iteration
+# with allow_tf32=True over the 64-iteration bounded run (67.5 TFLOPS
+# steady); ITERS=1080 targets ~17.6 s, above the 15 s qualification floor
+# with ~17% margin.
+M: 8192
+N: 8192
+K: 8192
+WARMUP: 100
+ITERS: 1080
+SEED: 519
+ATOL: 0.008
+RTOL: 0.008
+DTYPE: float32
+OPERATOR: torch.mm
+DIST_BACKEND: gloo
+IMPLEMENTATION: native-xpytorch
+MODE: qualification
+FAULT_MODE: none

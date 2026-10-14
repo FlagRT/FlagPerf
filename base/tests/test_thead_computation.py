@@ -86,7 +86,7 @@ class TheadComputationContractTests(unittest.TestCase):
         provider.validate_benchmark(request(), assets)
         provider.validate_benchmark(request(nproc=1), assets)
         for kwargs in ({'nproc': 2}, {'timeout': 20}, {'privileged': True},
-                       {'case': 'interconnect-MPI_intraserver:PPU'}, {'case': 'computation-FP16:PPU'}):
+                       {'case': 'interconnect-MPI_intraserver:PPU'}, {'case': 'computation-FP8:PPU'}):
             with self.subTest(**kwargs), self.assertRaises(ConfigurationError):
                 provider.validate_benchmark(request(**kwargs), assets)
         broken = {'requirements': assets['requirements'],
@@ -95,8 +95,11 @@ class TheadComputationContractTests(unittest.TestCase):
             provider.validate_benchmark(request(), broken)
 
     def test_probe_and_provider_registries_match(self):
+        registered = ('computation-FP32:PPU', 'computation-FP16:PPU', 'computation-BF16:PPU',
+                      'computation-INT8:PPU', 'computation-FP64:PPU', 'computation-TF32:PPU',
+                      'interconnect-h2d:PPU', 'interconnect-d2h:PPU')
         self.assertEqual(container_probe.PERFORMANCE_CASES, thead_provider.PERFORMANCE_CASES)
-        self.assertEqual(container_probe.PERFORMANCE_CASES, (CASE,))
+        self.assertEqual(container_probe.PERFORMANCE_CASES, registered)
 
 
 class TheadComputationExecutionTests(unittest.TestCase):
@@ -169,6 +172,70 @@ class TheadMainRoutingTests(unittest.TestCase):
         self.assertEqual(result, 12.5)
         self.assertEqual(routed, [(True, case_config.M, 0, 1, 0)])
         set_ieee.assert_called_once_with('thead/PPU')
+
+
+
+class TheadDay5ComputationAssetTests(unittest.TestCase):
+    def test_new_precisions_share_contracts_across_chips(self):
+        for precision in ('FP16', 'BF16', 'FP64', 'TF32'):
+            with self.subTest(precision=precision):
+                case = 'computation-' + precision + ':PPU'
+                self.assertIn(case, CASES)
+                self.assertEqual(contract(case), contract('computation-' + precision + ':P800'))
+
+    def test_int8_contract_is_chip_specific(self):
+        p800 = contract('computation-INT8:P800')
+        ppu = contract('computation-INT8:PPU')
+        self.assertEqual((ppu['operator'], ppu['output_dtype'], ppu['atol'], ppu['rtol']),
+                         ('torch._int_mm', 'int32', 0.0, 0.0))
+        self.assertEqual((p800['operator'], p800['output_dtype'], p800['atol']),
+                         ('xtorch_ops.gemm_I8_I8_bf16_nt', 'bfloat16', 0.02))
+        # torch._int_mm refuses M <= 16 on the device; the P800 xtorch kernel
+        # keeps its historical small cases.
+        self.assertEqual(ppu['shapes'], [[32, 32, 32], [32, 32, 48], [32, 16, 16], [32, 2048, 16], [32, 1024, 32]])
+        self.assertEqual(p800['shapes'], [[32, 32, 32], [16, 32, 48], [16, 16, 16], [16, 2048, 16], [16, 1024, 32]])
+
+    def test_day5_chip_assets_validate(self):
+        expectations = {
+            'FP16': {'DTYPE': 'float16', 'ATOL': 0.001, 'OPERATOR': 'torch.mm'},
+            'BF16': {'DTYPE': 'bfloat16', 'ATOL': 0.008, 'OPERATOR': 'torch.mm'},
+            'INT8': {'DTYPE': 'int8', 'ATOL': 0, 'OPERATOR': 'torch._int_mm'},
+            'FP64': {'DTYPE': 'float64', 'ATOL': 1e-12, 'OPERATOR': 'torch.mm'},
+            'TF32': {'DTYPE': 'float32', 'ATOL': 0.008, 'OPERATOR': 'torch.mm'},
+        }
+        for precision, expected in expectations.items():
+            case = 'computation-' + precision + ':PPU'
+            with self.subTest(precision=precision):
+                assets = resolve_case_assets(BASE, case, 'thead')
+                merged = assets['merged_config']
+                for key, value in expected.items():
+                    self.assertEqual(merged.get(key), value, key)
+                self.assertEqual(merged['RTOL'], expected['ATOL'])
+                self.assertEqual(merged['MODE'], 'qualification')
+                self.assertEqual(merged['DIST_BACKEND'], 'gloo')
+                validate_config(merged, case)
+                self.assertEqual(assets['requirements']['process_scope'], {'nnodes': 1, 'nproc_per_node': 1})
+                if precision == 'INT8':
+                    self.assertTrue(assets['entrypoint']['relative_path'].endswith('computation-INT8/thead/PPU/main.py'))
+                else:
+                    self.assertTrue(assets['entrypoint']['relative_path'].endswith('computation-' + precision + '/main.py'))
+
+    def test_day5_calibration_overrides_stay_bounded(self):
+        for precision in ('FP16', 'BF16', 'INT8', 'FP64', 'TF32'):
+            directory = BASE / ('benchmarks/computation-' + precision + '/thead/PPU')
+            with self.subTest(precision=precision):
+                override = read_config(directory / 'case_config.calibration.yaml')
+                self.assertEqual(override['MODE'], 'calibration')
+                self.assertLessEqual(override['ITERS'], 128)
+                validate_config({**read_config(directory / 'case_config.yaml'), **override},
+                                'computation-' + precision + ':PPU')
+
+    def test_fp8_stays_an_evidenced_skip(self):
+        requirements = json.loads((BASE / 'benchmarks/computation-FP8/thead/PPU/runtime_requirements.json').read_text())
+        self.assertIs(requirements['supported'], False)
+        self.assertTrue(requirements['unsupported_reason'])
+        assets = resolve_case_assets(BASE, 'computation-FP8:PPU', 'thead')
+        self.assertIs(assets['requirements']['supported'], False)
 
 
 if __name__ == '__main__':

@@ -174,6 +174,7 @@ def execute(args, *, prepared=None, workload=None):
                                      for subdir in ('executors', 'vendors/' + provider.name, 'monitoring', 'benchmarks/drivers',
                                                     'benchmarks/computation-FP32', 'benchmarks/computation-FP16',
                                      'benchmarks/computation-BF16', 'benchmarks/computation-INT8',
+                                     'benchmarks/computation-FP64', 'benchmarks/computation-TF32',
                                      'benchmarks/interconnect-h2d', 'benchmarks/interconnect-d2h')
                                      for p in sorted((BASE_DIR / subdir).glob('*.py'))},
                    'context_sha256': context_hash})

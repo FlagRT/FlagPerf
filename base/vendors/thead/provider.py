@@ -81,10 +81,12 @@ def authorized_monitors():
 
 
 # Bounded performance scopes are registered together with their case
-# contracts: computation-FP32 on day 4, memory/communication on day 6. Every
-# unregistered case still fails closed in validate_benchmark and inside the
-# container probe.
-PERFORMANCE_CASES = ('computation-FP32:PPU',)
+# contracts: the six computation precisions and the two transfer directions
+# on day 5, memory/communication on day 6. Every unregistered case still
+# fails closed in validate_benchmark and inside the container probe.
+PERFORMANCE_CASES = ('computation-FP32:PPU', 'computation-FP16:PPU', 'computation-BF16:PPU',
+                     'computation-INT8:PPU', 'computation-FP64:PPU', 'computation-TF32:PPU',
+                     'interconnect-h2d:PPU', 'interconnect-d2h:PPU')
 
 
 class TheadProvider:
@@ -125,7 +127,7 @@ class TheadProvider:
     def validate_benchmark(self, request, assets):
         if request.case not in PERFORMANCE_CASES:
             raise ConfigurationError('thead case is not registered for bounded performance yet; '
-                                     'case contracts land with the day-4 computation assets')
+                                     'case contracts land with the day-5 computation and transfer assets')
         if request.allow_privileged_root:
             raise ConfigurationError('PPU performance uses nonprivileged containers')
         if not 30 <= request.context.timeout <= 600:
@@ -134,11 +136,17 @@ class TheadProvider:
             raise ConfigurationError('choose result-dir or result-root, not both')
         requirements = assets.get('requirements', {})
         if requirements.get('process_scope') != {'nnodes': 1, 'nproc_per_node': 1}:
-            raise ConfigurationError('thead computation cases are single-rank per node')
+            raise ConfigurationError('thead bounded performance cases are single-rank per node')
         if request.nproc_per_node not in (None, 1):
-            raise ConfigurationError('thead computation cases run exactly one local rank')
-        from benchmarks.computation_contract import validate_config
-        validate_config(assets.get('merged_config', {}), request.case)
+            raise ConfigurationError('thead bounded performance cases run exactly one local rank')
+        from benchmarks.computation_contract import validate_config as validate_computation
+        from benchmarks.transfer_contract import CASES as TRANSFER_CASES
+        from benchmarks.transfer_contract import validate_config as validate_transfer
+        merged = assets.get('merged_config', {})
+        if request.case in TRANSFER_CASES:
+            validate_transfer(merged, request.case)
+        else:
+            validate_computation(merged, request.case)
 
     def code_identity_files(self):
         """Repository files that define this vendor's bounded runtime identity."""
