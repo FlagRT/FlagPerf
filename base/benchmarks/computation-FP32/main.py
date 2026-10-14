@@ -45,6 +45,10 @@ def main(config, case_config, rank, world_size, local_rank):
         from drivers import kunlunxin
         from drivers.fp32 import run_verified_fp32
         return run_verified_fp32(kunlunxin, vars(case_config), rank, world_size, local_rank)
+    if config.vendor.split("/", 1)[0] == "thead":
+        from drivers import thead
+        from drivers.fp32 import run_verified_fp32
+        return run_verified_fp32(thead, vars(case_config), rank, world_size, local_rank)
     if rank == 0:
         print("finish initialization")
     

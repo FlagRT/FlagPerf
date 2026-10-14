@@ -11,12 +11,16 @@ CONTRACTS = {
     'BF16': {'dtype': 'bfloat16', 'unit': 'TFLOPS', 'atol': 8e-3, 'rtol': 8e-3, 'small_cases': 5},
     'INT8': {'dtype': 'int8', 'unit': 'TOPS', 'atol': 0.02, 'rtol': 8e-3, 'small_cases': 5},
 }
-CASES = tuple('computation-' + precision + ':P800' for precision in CONTRACTS)
+# Case selectors are chip-scoped. A chip registers here together with its
+# vendor provider PERFORMANCE_CASES and per-chip case assets; the
+# per-precision contract itself stays chip-independent.
+CHIPS = ('P800', 'PPU')
+CASES = tuple('computation-' + precision + ':' + chip for precision in CONTRACTS for chip in CHIPS)
 
 
 def contract(case):
     if case not in CASES:
-        raise ConfigurationError('P800 computation case has no verified implementation contract: ' + str(case))
+        raise ConfigurationError('computation case has no verified implementation contract: ' + str(case))
     precision = case.split(':')[0].split('-')[1]
     integer = precision == 'INT8'
     return {'precision': precision, 'metric': 'computation-' + precision,

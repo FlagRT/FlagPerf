@@ -193,14 +193,21 @@ class TheadProviderTests(unittest.TestCase):
         with self.assertRaises(ConfigurationError):
             provider.validate_selection(legacy)
 
-    def test_day3_benchmark_cases_fail_closed_until_day4_registration(self):
+    def test_day4_computation_case_registration_and_residual_fail_closed(self):
+        from benchmarks.case_assets import resolve_case_assets
         provider = TheadProvider()
-        for case in ('computation-FP32:PPU', 'interconnect-MPI_intraserver:PPU'):
-            request = type('R', (), {'case': case, 'allow_privileged_root': False,
-                                     'context': type('C', (), {'timeout': 120, 'result_root': None})(),
-                                     'result_dir': None, 'nproc_per_node': 1})()
-            with self.subTest(case=case), self.assertRaises(ConfigurationError):
-                provider.validate_benchmark(request, {'merged_config': {}, 'environments': ()})
+        assets = resolve_case_assets(BASE, 'computation-FP32:PPU', 'thead')
+
+        def request(case, nproc=None):
+            return type('R', (), {'case': case, 'allow_privileged_root': False,
+                                  'context': type('C', (), {'timeout': 300, 'result_root': None})(),
+                                  'result_dir': None, 'nproc_per_node': nproc})()
+        provider.validate_benchmark(request('computation-FP32:PPU'), assets)
+        provider.validate_benchmark(request('computation-FP32:PPU', nproc=1), assets)
+        for case, nproc in (('interconnect-MPI_intraserver:PPU', 1), ('computation-FP16:PPU', 1),
+                            ('computation-FP32:PPU', 2)):
+            with self.subTest(case=case, nproc=nproc), self.assertRaises(ConfigurationError):
+                provider.validate_benchmark(request(case, nproc), assets)
 
     def test_day3_container_methods_produce_bounded_contract(self):
         provider = TheadProvider()

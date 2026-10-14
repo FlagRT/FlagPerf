@@ -334,13 +334,18 @@ class TheadProbeContextTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             self.validate(self.valid_context(reservation_start='2026-10-15T00:00:00+00:00'))
 
-    def test_unexpected_device_nodes_and_foreign_case_fail(self):
+    def test_unexpected_device_nodes_and_unregistered_case_fail(self):
         with self.assertRaises(RuntimeError):
             self.validate(self.valid_context(), nodes=['/dev/alixpu', '/dev/alixpu_ppu0', '/dev/alixpu_ctl'])
         benchmark = self.valid_context(kind='benchmark', probe_mode='performance',
-                                       case='computation-FP32:PPU', case_assets_sha256='0' * 64)
+                                       case='interconnect-MPI_intraserver:PPU', case_assets_sha256='0' * 64)
         with self.assertRaises(RuntimeError):
             self.validate(benchmark)
+
+    def test_day4_registered_computation_case_passes_probe_gate(self):
+        benchmark = self.valid_context(kind='benchmark', probe_mode='performance',
+                                       case='computation-FP32:PPU', case_assets_sha256='0' * 64)
+        self.assertEqual(self.validate(benchmark)[0]['uuid'], U1)
 
 
 class WorkerVendorParameterizationTests(unittest.TestCase):

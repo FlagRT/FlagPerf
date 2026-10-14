@@ -28,7 +28,11 @@ def run_verified_fp32(driver, config, rank, world_size, local_rank):
 
 
 def run_verified_computation(driver, config, rank, world_size, local_rank, precision):
-    case = 'computation-' + precision + ':P800'
+    # Bounded workers export the full case selector; direct P800 harnesses and
+    # legacy callers keep the historical default.
+    case = os.environ.get('FLAGPERF_BENCHMARK_CASE') or 'computation-' + precision + ':P800'
+    if case.split(':')[0] != 'computation-' + precision:
+        raise RuntimeError('case selector does not match the verified computation precision')
     validate_config(config, case)
     spec = contract(case)
     dtype = getattr(torch, spec['dtype'])

@@ -81,9 +81,10 @@ def authorized_monitors():
 
 
 # Bounded performance scopes are registered together with their case
-# contracts: computation on day 4, memory/communication on day 6. Until then
-# every case fails closed in validate_benchmark and inside the container probe.
-PERFORMANCE_CASES = ()
+# contracts: computation-FP32 on day 4, memory/communication on day 6. Every
+# unregistered case still fails closed in validate_benchmark and inside the
+# container probe.
+PERFORMANCE_CASES = ('computation-FP32:PPU',)
 
 
 class TheadProvider:
@@ -131,6 +132,13 @@ class TheadProvider:
             raise ConfigurationError('PPU performance timeout must be 30..600 seconds')
         if request.result_dir is not None and request.context.result_root is not None:
             raise ConfigurationError('choose result-dir or result-root, not both')
+        requirements = assets.get('requirements', {})
+        if requirements.get('process_scope') != {'nnodes': 1, 'nproc_per_node': 1}:
+            raise ConfigurationError('thead computation cases are single-rank per node')
+        if request.nproc_per_node not in (None, 1):
+            raise ConfigurationError('thead computation cases run exactly one local rank')
+        from benchmarks.computation_contract import validate_config
+        validate_config(assets.get('merged_config', {}), request.case)
 
     def code_identity_files(self):
         """Repository files that define this vendor's bounded runtime identity."""

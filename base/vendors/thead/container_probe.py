@@ -17,9 +17,9 @@ from base.vendors.thead import runtime
 from base.vendors.thead.provider import binding_records, canonical_uuid
 
 # Performance scopes are registered together with their case contracts
-# (computation on day 4, memory/communication on day 6). The identity probe
-# itself needs no case registry; everything else fails closed here.
-PERFORMANCE_CASES = ()
+# (computation-FP32 on day 4, memory/communication on day 6). The identity
+# probe itself needs no case registry; everything else fails closed here.
+PERFORMANCE_CASES = ('computation-FP32:PPU',)
 
 
 def require(condition, message):
