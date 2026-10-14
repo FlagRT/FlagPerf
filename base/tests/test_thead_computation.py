@@ -149,6 +149,56 @@ class TheadComputationExecutionTests(unittest.TestCase):
                 with self.assertRaises(RuntimeError):
                     fp32.run_verified_fp32(driver, thead_case_config(), 0, 1, 0)
 
+    def test_ppu_int8_hands_the_kernel_k_major_operands(self):
+        # The PPU tuned IMMA kernel only engages when the second operand is
+        # K-contiguous (row-major input measured at 0.176 TOPS vs 268.6 TOPS,
+        # probes/day5/evidence/int8-kmajor-verify.json). Pin the layout the
+        # driver hands to torch._int_mm for every device call.
+        binding = binding_records([DEVICE], [PPU_UUID])[0]
+        directory = BASE / 'benchmarks/computation-INT8/thead/PPU'
+        config = read_config(directory / 'case_config.yaml')
+        config.update(M=32, N=32, K=32, ITERS=4, WARMUP=1)
+        context = {'case': 'computation-INT8:PPU', 'run_id': 'fixture', 'case_assets_sha256': 'case-hash'}
+        original = torch._int_mm
+        layouts = []
+
+        def record(left, right):
+            layouts.append((right.shape, right.stride()))
+            return original(left, right)
+
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / 'context.json').write_text(json.dumps({'case_assets_sha256': 'case-hash'}))
+            driver = Mock()
+            driver.device.return_value = torch.device('cpu')
+            driver.evidence.return_value = {'binding': binding, 'bindings': [binding],
+                                            'run_id': 'fixture', 'context_sha256': 'context'}
+            calls = []
+            driver.synchronize.side_effect = lambda: calls.append('sync')
+
+            def tick():
+                calls.append('timer')
+                return calls.count('timer') * 10**9
+
+            env = {'FLAGPERF_BENCHMARK_OUTPUT': str(root), 'FLAGPERF_HOST_CONTEXT': str(root / 'context.json'),
+                   'FLAGPERF_BENCHMARK_CASE': 'computation-INT8:PPU'}
+            with patch.dict(os.environ, env), patch.object(fp32.time, 'perf_counter_ns', side_effect=tick), \
+                 patch.object(fp32, 'benchmark_measurement_start', side_effect=lambda: calls.append('start')), \
+                 patch.object(fp32, 'benchmark_measurement_finish', side_effect=lambda token: calls.append('finish')), \
+                 patch.object(torch, '_int_mm', side_effect=record):
+                value = fp32.run_verified_computation(driver, config, 0, 1, 0, 'INT8')
+            self.assertEqual(value, 2 * 32**3 * 4 / 1e12)
+            metric = json.loads((root / 'metric-rank-0.json').read_text())
+            correctness = json.loads((root / 'correctness-rank-0.json').read_text())
+            self.assertEqual((metric['unit'], metric['metric']), ('TOPS', 'computation-INT8'))
+            self.assertEqual(correctness['status'], 'passed')
+        # Small cases and the measurement shape alike: the (K, N) operand is
+        # K-contiguous, i.e. strides (1, K). 5 small cases + shape_before +
+        # warmup + 4 timed iterations.
+        self.assertEqual(len(layouts), 11)
+        for shape, stride in layouts:
+            self.assertEqual(stride, (1, shape[0]))
+
 
 class TheadMainRoutingTests(unittest.TestCase):
     def test_main_routes_thread_selector_to_verified_fp32(self):

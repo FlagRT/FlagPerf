@@ -1,19 +1,25 @@
 # thead PPU computation-INT8 bounded case. Layered after the generic
 # case_config.yaml; the generic MPI backend, 4096 shape and 10000 iterations
 # are overridden here on purpose (merged DIST_BACKEND is gloo).
-# Kernel and window calibration (day-5, probes/day5 on the result root): torch._int_mm measures
-# 6236 ms per 8192^3 iteration (0.176 TOPS; first iteration 6.80 s, steady
-# from the second), so the bounded window is WARMUP=2, ITERS=3
-# (3 x 6.236 s = 18.7 s >= 15 s floor + 25% margin). The naive-kernel rate is
-# a recorded PPU-stack limitation, not a configuration choice; the measurement
-# shape stays at the 8192-cube P800 comparison baseline (R16: fewer
-# iterations, never a smaller cube). Zero tolerance: int32 accumulation of
-# int8 operands is exact.
+# Kernel and window calibration (day-5, probes/day5 on the result root): the
+# PPU tuned _int_mm kernel engages only when both operands are K-contiguous,
+# so the driver builds the (K, N) operand K-major (right.t().contiguous().t(),
+# one-time copy outside the timed loop; drivers/fp32.py device_operands).
+# With the row-major operand the kernel falls back to a naive path at
+# 6236 ms/iteration = 0.176 TOPS (evidence retained in
+# probes/day5/evidence/int8-timing.json and the superseded
+# day5-int8-q01..q05 group); K-major measures 4.0841 ms/iteration = 269.2 TOPS
+# (calibration run day5-int8km-calibration-01 on the qualification path;
+# probes/day5/evidence/int8-kmajor-verify.json adds exactness vs float64 and
+# CV < 0.1% stability), so the bounded window is WARMUP=2, ITERS=4400
+# (4400 x 4.084 ms = 17.97 s >= 15 s floor + 19.8% margin; R16: fewer
+# iterations, never a smaller 8192-cube). Zero tolerance: int32 accumulation
+# of int8 operands is exact.
 M: 8192
 N: 8192
 K: 8192
 WARMUP: 2
-ITERS: 3
+ITERS: 4400
 SEED: 519
 ATOL: 0
 RTOL: 0
