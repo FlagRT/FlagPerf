@@ -1,0 +1,18 @@
+# thead PPU intraserver P2P bounded case: exactly two ranks, one-way
+# rank0 -> rank1 send/recv over the vendor NCCL backend. The day-1 host
+# survey found no direct card-to-card P2P path on this machine; NCCL stages
+# through the host, so published numbers describe the staged path and the
+# run evidence must keep the P2P=disabled annotation (never presented as
+# direct peer bandwidth). Window calibration (result root, run
+# day6-p2p-calibration-01 on the qualification path): 55.8 ms per
+# iteration at two ranks = 4.81 GB/s one-way staged, so the bounded
+# window is ITERS=340 (19.0 s >= 15 s floor + 26% margin).
+Melements: 64
+WARMUP: 10
+ITERS: 340
+SEED: 519
+DTYPE: float32
+DIST_BACKEND: cpu:gloo,cuda:nccl
+IMPLEMENTATION: native-xpytorch
+MODE: qualification
+FAULT_MODE: none

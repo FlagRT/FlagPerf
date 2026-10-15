@@ -26,19 +26,29 @@ from benchmarks.case_assets import resolve_case_assets, verify_worker_assets
 LOGGER = logging.getLogger("flagperf.base.benchmark_worker")
 
 
-def run_bound_case(context, context_path, output):
-    """Run the bounded case in the already gated child (one or two ranks).
+def vendor_rank_limit(vendor: str) -> int:
+    """Bounded local-rank ceiling per vendor contract.
 
-    Two-rank Day 6 communication cases spawn torchrun, which sets
+    The P800 qualification contract runs up to eight ranks; the thead PPU
+    contract (day 6) reaches all sixteen cards of the host.
+    """
+    return 16 if vendor == "thead" else 8
+
+
+def run_bound_case(context, context_path, output):
+    """Run the bounded case in the already gated child (one or more ranks).
+
+    Multi-rank Day 6 communication cases spawn torchrun, which sets
     RANK/LOCAL_RANK/WORLD_SIZE per child; all FLAGPERF_* evidence variables
     are inherited so each rank re-verifies its own device binding.
     """
     nproc = context.get('nproc_per_node') or 1
-    if nproc not in range(1, 9) or context.get('kind') != 'benchmark':
-        raise RuntimeError('bound case worker requires a one- to eight-rank benchmark context')
+    vendor = context.get('vendor', 'kunlunxin')
+    if nproc not in range(1, vendor_rank_limit(vendor) + 1) or context.get('kind') != 'benchmark':
+        raise RuntimeError('bound case worker requires a benchmark context within the vendor rank bound')
     base = Path(__file__).resolve().parent
     contract = context_path.parent / 'case-assets.json'
-    assets = verify_worker_assets(base, contract, context['case'], context.get('vendor', 'kunlunxin'))
+    assets = verify_worker_assets(base, contract, context['case'], vendor)
     environment = {'MASTER_ADDR': '127.0.0.1', 'MASTER_PORT': str(context['master_port']),
                    'FLAGPERF_CASE_ASSETS': str(contract),
                    'FLAGPERF_HOST_CONTEXT': str(context_path),

@@ -97,7 +97,9 @@ class TheadComputationContractTests(unittest.TestCase):
     def test_probe_and_provider_registries_match(self):
         registered = ('computation-FP32:PPU', 'computation-FP16:PPU', 'computation-BF16:PPU',
                       'computation-INT8:PPU', 'computation-FP64:PPU', 'computation-TF32:PPU',
-                      'interconnect-h2d:PPU', 'interconnect-d2h:PPU')
+                      'interconnect-h2d:PPU', 'interconnect-d2h:PPU',
+                      'main_memory-bandwidth:PPU', 'main_memory-capacity:PPU',
+                      'interconnect-MPI_intraserver:PPU', 'interconnect-P2P_intraserver:PPU')
         self.assertEqual(container_probe.PERFORMANCE_CASES, thead_provider.PERFORMANCE_CASES)
         self.assertEqual(container_probe.PERFORMANCE_CASES, registered)
 

@@ -82,11 +82,33 @@ def authorized_monitors():
 
 # Bounded performance scopes are registered together with their case
 # contracts: the six computation precisions and the two transfer directions
-# on day 5, memory/communication on day 6. Every unregistered case still
-# fails closed in validate_benchmark and inside the container probe.
+# on day 5, the two memory cases and the two intraserver communication cases
+# on day 6. Every unregistered case still fails closed in validate_benchmark
+# and inside the container probe.
 PERFORMANCE_CASES = ('computation-FP32:PPU', 'computation-FP16:PPU', 'computation-BF16:PPU',
                      'computation-INT8:PPU', 'computation-FP64:PPU', 'computation-TF32:PPU',
-                     'interconnect-h2d:PPU', 'interconnect-d2h:PPU')
+                     'interconnect-h2d:PPU', 'interconnect-d2h:PPU',
+                     'main_memory-bandwidth:PPU', 'main_memory-capacity:PPU',
+                     'interconnect-MPI_intraserver:PPU', 'interconnect-P2P_intraserver:PPU')
+
+
+def _validate_day6_process_scope(request, requirements):
+    """Day-6 rank bounds: memory stays single-rank, P2P is exactly two
+    local ranks, MPI spans two to sixteen on the 16-card PPU host."""
+    scope = requirements.get('process_scope')
+    family = request.case.rpartition(':')[0]
+    if family in ('main_memory-bandwidth', 'main_memory-capacity'):
+        if scope != {'nnodes': 1, 'nproc_per_node': 1} or request.nproc_per_node not in (None, 1):
+            raise ConfigurationError('thead day-six memory cases run exactly one local rank')
+        return
+    if family == 'interconnect-P2P_intraserver':
+        if scope != {'nnodes': 1, 'nproc_per_node': 2, 'min_nproc_per_node': 2} \
+                or request.nproc_per_node not in (None, 2):
+            raise ConfigurationError('thead day-six P2P runs exactly two local ranks')
+        return
+    if scope != {'nnodes': 1, 'min_nproc_per_node': 2, 'max_nproc_per_node': 16} \
+            or not 2 <= (request.nproc_per_node or 2) <= 16:
+        raise ConfigurationError('thead day-six MPI runs two to sixteen local ranks')
 
 
 class TheadProvider:
@@ -127,22 +149,29 @@ class TheadProvider:
     def validate_benchmark(self, request, assets):
         if request.case not in PERFORMANCE_CASES:
             raise ConfigurationError('thead case is not registered for bounded performance yet; '
-                                     'case contracts land with the day-5 computation and transfer assets')
+                                     'case contracts land with the day-5 computation/transfer and '
+                                     'day-6 memory/communication assets')
         if request.allow_privileged_root:
             raise ConfigurationError('PPU performance uses nonprivileged containers')
         if not 30 <= request.context.timeout <= 600:
             raise ConfigurationError('PPU performance timeout must be 30..600 seconds')
         if request.result_dir is not None and request.context.result_root is not None:
             raise ConfigurationError('choose result-dir or result-root, not both')
-        requirements = assets.get('requirements', {})
-        if requirements.get('process_scope') != {'nnodes': 1, 'nproc_per_node': 1}:
-            raise ConfigurationError('thead bounded performance cases are single-rank per node')
-        if request.nproc_per_node not in (None, 1):
-            raise ConfigurationError('thead bounded performance cases run exactly one local rank')
+        from benchmarks.day6_contract import CASES as DAY6_CASES
+        from benchmarks.day6_contract import validate_config as validate_day6
         from benchmarks.computation_contract import validate_config as validate_computation
         from benchmarks.transfer_contract import CASES as TRANSFER_CASES
         from benchmarks.transfer_contract import validate_config as validate_transfer
         merged = assets.get('merged_config', {})
+        requirements = assets.get('requirements', {})
+        if request.case in DAY6_CASES:
+            _validate_day6_process_scope(request, requirements)
+            validate_day6(merged, request.case)
+            return
+        if requirements.get('process_scope') != {'nnodes': 1, 'nproc_per_node': 1}:
+            raise ConfigurationError('thead bounded performance cases are single-rank per node')
+        if request.nproc_per_node not in (None, 1):
+            raise ConfigurationError('thead bounded performance cases run exactly one local rank')
         if request.case in TRANSFER_CASES:
             validate_transfer(merged, request.case)
         else:

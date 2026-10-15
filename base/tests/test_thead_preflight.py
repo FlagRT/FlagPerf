@@ -338,7 +338,7 @@ class TheadProbeContextTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             self.validate(self.valid_context(), nodes=['/dev/alixpu', '/dev/alixpu_ppu0', '/dev/alixpu_ctl'])
         benchmark = self.valid_context(kind='benchmark', probe_mode='performance',
-                                       case='interconnect-MPI_intraserver:PPU', case_assets_sha256='0' * 64)
+                                       case='interconnect-MPI_interserver:PPU', case_assets_sha256='0' * 64)
         with self.assertRaises(RuntimeError):
             self.validate(benchmark)
 
