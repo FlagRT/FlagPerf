@@ -1,5 +1,12 @@
 # 适配与文档变更记录
 
+## 2026-10-14 — P800 Operation Day 08/09 评估与离线交付核对（未发布）
+
+- 完成 52 case、308 个适用组合的 Docker daily 尝试，保留 275 partial、27 failed、6 blocked 及 420 个类型不适用项。
+- 完成 7 个 local 代表 case、14 个双路径 smoke；local 结果独立列出，不与 Docker daily 分母合并。
+- 按 Day 06/07/08 的三个源码身份分别重建离线报告，核对 728 个唯一组合、源 evidence 哈希、复放命令和确定性；Operation 继续保持 `validated:false`。
+- 保留底层 kernel/编译/数值失败及两次 Docker 查询异常；不将评估覆盖写成 runtime 晋级，不重新解释 Base/Toolkit 历史资格。
+
 
 ## 未发布：模型分析与算子诊断更新
 

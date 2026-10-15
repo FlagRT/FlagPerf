@@ -14,6 +14,12 @@ runtime 设为 `release_stage:validated`、`validated:true`、`validation_status
 范围限于 native Base 的计算/传输/内存、已记录的单机通信组合，以及双卡 12-case Toolkit；
 不覆盖 Training、Inference、Operation、FlagGems、跨机和未实现精度。新镜像不能沿用该声明。
 单次运行仍独立判定：Toolkit 的 `not-qualified`、`exploratory` 和 `unstable` 不因发布状态改变。
+
+### Operation 独立评估记录（2026-10-14）
+
+Operation 不继承 Base/Toolkit 的 `validated:true`。在锁定镜像、P800 共享授权和当前源码身份下，Day 06–08 的三批 Docker daily 共覆盖 52 个 case 的 728 个唯一 case/dtype/oplib 组合：308 个适用、420 个类型不适用；适用项保留 275 个 `partial`、27 个 `failed` 和 6 个 `blocked`。local 另有 7 个代表 case 的 14 项双路径 smoke：11 `partial`、2 `failed`、1 `blocked`。这些数字是评估覆盖和失败记录，不是 Operation runtime 晋级或全算子通过声明。
+
+Day 09 已在无设备条件下按源码身份分别重建 Day 06、Day 07、Day 08 报告，核对源 evidence 哈希、清理/租约字段、公开复放参数和报告确定性；不同源码指纹没有跨组混合。完整入口、失败阶段和边界见 [昆仑芯 Operation 指南](../../operation/vendors/kunlunxin/README.md)；原始运行结果不随公开源码分发。
 历史报告及 `qualification-record.json` 保留当时的 candidate 状态，不回写为新验证结果。
 
 ## 无设备检查
