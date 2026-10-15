@@ -19,6 +19,7 @@ DOCS = [ROOT / p for p in (
     'README.md', 'docs/README.md', 'docs/CHANGELOG.md', 'docs/base/base-case-doc.md',
     'base/README.md', 'operation/README.md',
     'operation/vendors/ascend/README.md',
+    'operation/vendors/kunlunxin/README.md',
     'base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/README.md',
     'base/toolkits/_common/kunlunxin/P800/README.md',
 )] + list((ROOT / 'docs/ascend').glob('*.md')) + list((ROOT / 'docs/kunlunxin').glob('*.md'))
@@ -131,6 +132,56 @@ class PublicDistributionTests(unittest.TestCase):
                 self.assertEqual(plan['vendor'], vendor)
                 self.assertEqual(len(plan['tasks']), 1)
 
+    def test_p800_operation_documented_plans_need_only_stdlib(self):
+        path = ROOT / 'operation/vendors/kunlunxin/README.md'
+        blocks = re.findall(r'```bash\n(.*?)```', path.read_text(encoding='utf-8'), re.S)
+        plans = []
+        for block in blocks:
+            for line in block.replace('\\\n', ' ').splitlines():
+                if 'operation/run.py run ' not in line:
+                    continue
+                argv = shlex.split(line)
+                self.assertIn('--dry-run', argv)
+                # Substitute only the documented interpreter; do not evaluate shell variables.
+                plan = run('-S', *argv[1:])
+                self.assertEqual(plan['runtime_profile'], 'p800-xpytorch29')
+                self.assertTrue(all(t['runtime_profile'] == 'p800-xpytorch29' for t in plan['tasks']))
+                plans.append((plan['execution'], len(plan['tasks'])))
+        self.assertCountEqual(plans, [('docker', 4), ('local', 2), ('docker', 728)])
+
+    def test_p800_operation_full_matrix_and_validation_boundary(self):
+        lock = json.loads((ROOT / 'operation/vendors/kunlunxin/profiles/p800-xpytorch29.json').read_text())
+        self.assertFalse(lock['validated'])
+        self.assertEqual(lock['excluded_physical_ids'], [])
+        for mode in ('docker', 'local'):
+            with self.subTest(execution=mode):
+                plan = run('-S', 'operation/run.py', 'run', '--vendor', 'kunlunxin',
+                           '--runtime-profile', 'p800-xpytorch29', '--execution', mode,
+                           '--device-ids', '1', '--oplib', 'both', '--dtype',
+                           'FP32', 'FP16', 'BF16', 'INT32', 'INT16', 'BOOL', 'INT64', '--dry-run')
+                tasks = plan['tasks']
+                applicable = sum(t['applicable'] for t in tasks)
+                self.assertEqual((len(tasks), applicable, len(tasks) - applicable), (728, 308, 420))
+                self.assertEqual(len({(t['case'], t['dtype'], t['oplib']) for t in tasks}), 728)
+                self.assertEqual(plan['runtime_profile'], 'p800-xpytorch29')
+                self.assertEqual(plan['image'], lock['image'] if mode == 'docker' else None)
+                self.assertTrue(all(t['runtime_config']['sharing_policy'] == 'exclusive-required' for t in tasks))
+
+    def test_p800_operation_multidevice_sizes_and_shared_plans(self):
+        for mode, devices in (('docker', '1,7'), ('local', '0,9')):
+            with self.subTest(execution=mode):
+                plan = run('-S', 'operation/run.py', 'run', '--vendor', 'kunlunxin',
+                           '--runtime-profile', 'p800-xpytorch29', '--execution', mode,
+                           '--device-ids', devices, '--case', 'mm', '--dtype', 'FP32',
+                           '--oplib', 'both', '--size', 'M=7', '--size', 'M=13',
+                           '--workload', 'smoke', '--allow-shared-device', '--dry-run')
+                self.assertEqual(len(plan['tasks']), 8)
+                self.assertEqual({t['case_config']['M'] for t in plan['tasks']}, {7, 13})
+                self.assertEqual({t['device_id'] for t in plan['tasks']}, {int(d) for d in devices.split(',')})
+                self.assertTrue(all(t['runtime_config']['sharing_policy'] == 'shared-authorized' for t in plan['tasks']))
+                if mode == 'local':
+                    self.assertTrue(all(t['device_binding']['status'] == 'externally-managed' for t in plan['tasks']))
+
     def test_p2p_plans_need_no_private_experiment_directory(self):
         for script, count in (('run_p2p_calibration.py', 8),
                               ('run_p2p_qualification.py', 30)):
@@ -180,6 +231,7 @@ class PublicDistributionTests(unittest.TestCase):
         for directory in (
             ROOT / 'base/vendors/ascend', CASE, ROOT / 'base/tests',
             ROOT / 'operation/runtime', ROOT / 'operation/vendors/ascend', ROOT / 'docs/ascend',
+            ROOT / 'operation/vendors/kunlunxin',
         ):
             paths.update(p for p in directory.rglob('*') if p.suffix in ('.py', '.json', '.yaml', '.md'))
         paths.update((ROOT / 'base/configs').glob('ascend*.yaml'))

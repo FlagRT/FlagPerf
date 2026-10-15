@@ -32,6 +32,18 @@ case、dtype、size、迭代、容差与退出码遵循[公共入口](../../READ
 全类型双路径单卡规划为 728 项，其中 308 适用、420 类型不适用；默认类型双路径为 104 项。
 Docker 物理编号须唯一且在 0..7，没有固定排除卡。
 
+全类型双路径 daily 规划（仍不访问设备）：
+
+```bash
+python3 -B operation/run.py run --vendor kunlunxin \
+  --runtime-profile p800-xpytorch29 --device-ids 0 --oplib both --workload daily \
+  --dtype FP32 FP16 BF16 INT32 INT16 BOOL INT64 \
+  --result-root operation/result/p800-daily --dry-run
+```
+
+去掉 `--dry-run` 前仍需满足上面的运行栈、权限和设备授权条件。
+308 个适用组合表示计划规模；运行结束后按实际 failed/blocked/partial 等状态读取结果，不能据覆盖数认定通过。
+
 ## local 运行
 
 由调用者在宿主或自己的容器中准备相同版本的 Python、包和动态库，并在外部预约宿主设备。
@@ -191,6 +203,9 @@ python3 -B -m unittest discover -s operation/tests -p 'test_p800*.py' -v
 不要改写封存数据来修正命令文字。
 
 单元测试不占用实际设备。全套 Operation 回归还需 CPU PyTorch 与 PyYAML。
+公开 CI 检查本页 Docker/local 示例、全类型分母、多设备/尺寸规划和 P800 标准库负例；
+这些检查不证明设备可用或底层算子通过。当前没有原生全目标路由证明，也没有独占性能验收；
+设备 timeline/full profiling 尚未接入。交付的是评估工具与已记录的受限覆盖，运行栈不自动晋级。
 聚合要求相同主机、镜像与执行模式；不同 UUID/profile/源码/协议保留独立行。
 源编排、清理、postflight 或租约释放错误会拒绝聚合；算子本身的 failed/blocked/partial 保留。
 不改公共 schema、报告列布局、原数值容差与 Ascend 命令。

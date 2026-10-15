@@ -1,5 +1,11 @@
 # 适配与文档变更记录
 
+## 2026-10-15 — P800 Operation 公开契约与交付边界（未发布）
+
+- 公开分发测试增加 P800 专用 profile 的 Docker/local 文档示例、全类型 728/308/420 分母和多设备/尺寸规划，纳入 vendor README 的链接与私有路径检查。
+- 现有 CI 增加 P800 Operation 标准库门禁与负例测试；不要求设备、Docker 或 torch，不更改 Ascend 命令。
+- 明确评估覆盖与全通过的区别；原生路由、共享性能、profiling 和已知算子失败仍按实际范围保留，Operation 保持 `validated:false`。
+
 ## 2026-10-14 — P800 Operation Day 08/09 评估与离线交付核对（未发布）
 
 - 完成 52 case、308 个适用组合的 Docker daily 尝试，保留 275 partial、27 failed、6 blocked 及 420 个类型不适用项。
