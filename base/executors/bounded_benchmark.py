@@ -173,8 +173,8 @@ class BenchmarkWorkload:
                   'correctness': 'artifacts/correctness-rank-0.json'}
         write_json(root / 'benchmark-result.json', result)
         try:
-            events = sorted((output / 'benchmark-events').glob('measurement-rank-*.json'))
-            check([path.name for path in events] == ['measurement-rank-%d.json' % rank for rank in range(self.ranks)],
+            events_dir = output / 'benchmark-events'
+            check(rank_artifact_names(events_dir, 'measurement-rank-', self.ranks) == ['measurement-rank-%d.json' % rank for rank in range(self.ranks)],
                   'missing/extra measurement events')
             for rank in range(self.ranks):
                 event = read(output / 'benchmark-events' / ('measurement-rank-%d.json' % rank))

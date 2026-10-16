@@ -11,10 +11,14 @@ class RankArtifactOrderTests(unittest.TestCase):
  def test_two_digit_ranks_sort_numerically(self):
   with tempfile.TemporaryDirectory() as d:
    out = Path(d)
+   (out / 'events').mkdir()
    for r in range(12):
     (out / ('metric-rank-%d.json' % r)).write_text('{}')
+    (out / 'events' / ('measurement-rank-%d.json' % r)).write_text('{}')
    got = rank_artifact_names(out, 'metric-rank-', 12)
    self.assertEqual(got, ['metric-rank-%d.json' % r for r in range(12)])
+   self.assertEqual(rank_artifact_names(out / 'events', 'measurement-rank-', 12),
+                    ['measurement-rank-%d.json' % r for r in range(12)])
    lexicographic = sorted(path.name for path in out.glob('metric-rank-*.json'))
    self.assertNotEqual(lexicographic, got, 'test lost its two-digit regression bite')
 
