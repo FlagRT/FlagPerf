@@ -256,7 +256,8 @@ abs 数值检查通过而路由仍 partial；原生 mm 再次出现 82/262144 �
 三项输入哈希未变化，postflight 与租约释放记录完整。诊断总状态描述检查覆盖/执行状态，须同时读取原任务状态和各项检查；
 例如原生 mm 的诊断执行完成不等于数值通过。复放只重做 reference-check/probe 及适用诊断，不重跑 measure，不能用它证明测量阶段异常已复现。
 另以相同 FP16 输入比较显式传入 `CUDART_DUMMY_REGISTER=1` 与现行环境，两侧均为 2 partial、1 failed、1 blocked。
-复核发现现行设备 bootstrap 后该变量也已为 1，因此这不是有效的开/关对照；只能确认显式重复设置未解决错误，不能排除其底层作用。
+bootstrap 记录分别为未设置和 1，但两组成功测量的运行身份中该变量均为 1；失败测量未产出完结身份。
+这只比较了是否在启动时显式设置，不能视为整个运行期间恒定的 0/1 对照，也不能排除初始化时机或底层作用。
 没有据此修改正式 profile 或宣称修复。
 
 native_dropout FP16 的测量栈进一步定位到反向 `grad_output.contiguous()` → 昆仑芯 FlagGems `copy_` → ATen redispatch。
