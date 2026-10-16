@@ -135,7 +135,7 @@ PPU 00000001:C9:00.0
         Compute instance ID                 : N/A
         Process ID                          : 910760
             Type                            : Compute
-            Name                            : /bmcp_lvm_fs/kfc/projects/es/deploy/elasticsearch-9.6.0-SNAPSHOT/jdk/bin/java
+            Name                            : /usr/bin/java
             Used PPU Memory                 : 188 MiB
 PPU 00000001:C8:00.0                        
     Product Name                            : PPU-ZW810E

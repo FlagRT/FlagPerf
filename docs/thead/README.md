@@ -64,7 +64,7 @@ python3 base/run.py --help
 PPU 使用 `--physical-device-ids` 显式选卡。SMI 物理编号、`/dev/alixpu_ppuN`
 （minor 为 N+1）、容器内逻辑编号和 rank 不是同一个编号；执行器校验 BDF/UUID/minor，
 并在容器内重新绑定。设备身份以 UUID 为主键（`resource_key=thead/<uuid>`），
-UUID join（torch `get_device_properties(i).uuid` 与 SMI UUID）已在 Day-1 探针验证。
+UUID join（torch `get_device_properties(i).uuid` 与 SMI UUID）在适配时的身份探针中验证；执行器对绑定不一致 fail closed。
 
 容器以非特权方式运行：丢弃全部 capabilities、只读根文件系统、pids 上限、
 结果目录由容器实际身份写入（必要时 `--group-add` 宿主组）。

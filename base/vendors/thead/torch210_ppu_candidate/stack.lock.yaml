@@ -30,8 +30,8 @@
     "framework_identity": "UUID (011ef111-... form); pci_bus_id cross-check available",
     "event_timing_usable": true,
     "event_vs_wall_8192_fp32_ms": {"event": 31.867, "wall": 31.902},
-    "probe_evidence": "/bmcp_lvm_fs/zhiyuding/flagperf-ppu-base/probes/day1/",
-    "scope": "day-1 identity/timing probes on free cards 1,2; not formal benchmark qualification"
+    "probe_evidence": "probes/day1/ under the controlled result root; not distributed with the source tree",
+    "scope": "initial identity/timing probes on free cards 1,2; not formal benchmark qualification"
   },
   "validation_status": "pending"
 }

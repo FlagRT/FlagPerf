@@ -1,7 +1,7 @@
 # computation-FP8 / thead PPU - evidenced skip
 
-The day-4 bounded capability probe (probes/day4 on the result root) fixed FP8
-as the only computation precision the PPU cannot execute:
+The bounded capability probe recorded on the controlled result root fixed FP8
+as the only computation precision this locked stack cannot execute:
 
 - `torch.mm` on float8_e4m3fn / float8_e5m2 raises `NotImplementedError`
   ("addmm_cuda" not implemented for 'Float8_e4m3fn').

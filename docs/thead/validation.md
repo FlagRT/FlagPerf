@@ -19,7 +19,7 @@ PPU 的 validated 复评条件是 16 rank 同机通信资格在独占窗口补�
 |---|---|---|---:|
 | 计算 FP32 / FP16 / BF16 / TF32 / FP64 | A | 34.535 / 135.612 / 135.018 / 67.675 / 5.432 TFLOPS | 0.004–0.4% |
 | 计算 INT8（`torch._int_mm` K-major 路径） | A | 269.249 TOPS | 0.041% |
-| H2D/D2H × pinned/pageable × 基线/跨 NUMA 8 变体 | B | pinned 29.0（H2D）/ 28.5（D2H）GB/s；pageable 12.1 / 11.5 GB/s | 0.007–3.48% |
+| H2D/D2H × pinned/pageable × 基线/跨 NUMA 8 变体 | B | pinned 29.0（H2D）/ 28.5（D2H）GB/s；pageable H2D 11.7–12.1 / D2H 11.5–11.9 GB/s（基线–跨 NUMA 区间） | 0.007–3.48% |
 | 设备显存带宽（4 GiB 拷贝） | C | 2052.36 GB/s | 0.004% |
 | 同机 AllReduce（256 MiB，8 rank） | C | 25.907 GB/s algbw（busbw 45.3 GB/s） | 0.048% |
 | 同机 P2P 单向（256 MiB，2 rank，staged） | C | 4.832 GB/s | 0.31% |
