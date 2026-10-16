@@ -36,8 +36,6 @@ class Adapter(CompatAdapter):
             raise ValueError('P800 Docker physical device IDs must be unique and in 0..7')
         if args.allow_privileged_root or args.container_device or args.mount:
             raise ValueError('P800 uses managed device mappings and mounts; privileged/additional mappings are not supported')
-        if getattr(args, 'profiling', 'off') != 'off':
-            raise ValueError('P800 device profiling is not integrated; use --profiling off')
 
     def task_metadata(self, args, device):
         shared = bool(getattr(args, 'allow_shared_device', False))
@@ -123,13 +121,23 @@ class Adapter(CompatAdapter):
     def kernel_time(self, fn, cfg):
         return None
 
+    def profile_target(self, root, task, call):
+        from .profiling import target_window
+        target_window(self, root, task, call)
+
+    def collect_profile(self, root, task):
+        from .profiling import collect
+        collect(root, task)
+
     def environment(self, device, mode='probe', local=False):
         from .bootstrap import CPU_PHASES
         cpu = mode in CPU_PHASES
         env = {'DO_NOT_TRACK':'1', 'TORCH_DEVICE_BACKEND_AUTOLOAD':'0',
                'USE_FLAGGEMS':'0', 'XRAY_DEBUG_ENABLE':'0', 'DISABLE_XPYTORCH':'1' if cpu else '0',
                'P800_OPERATION_EXECUTION':'local' if local else 'docker'}
-        env['XPU_ENABLE_PROFILER_TRACING'] = '1' if mode == 'trace' else '0'
+        profiling = mode in ('profiling', 'profile-target')
+        env['XPU_ENABLE_PROFILER_TRACING'] = '1' if mode == 'trace' or profiling else '0'
+        env['XPU_CUPTI_ENABLE_DEVICE'] = str(device if local else 0) if profiling else ''
         if not local:
             env.update(CUDA_VISIBLE_DEVICES='' if cpu else '0',
                        PATH=self.lock['conda_prefix'] + '/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin')
@@ -270,6 +278,39 @@ class Adapter(CompatAdapter):
             'scope':'shared device: timings are diagnostic only' if shared else 'exclusive host checks; other gates still apply'}
         if shared and item['status'] == 'passed':
             item.update(status='partial', diagnosis='shared device: no exclusive performance qualification')
+
+    def supplementary_gate(self, item, phase):
+        # Independent diagnostic workers are safe after a successful same-input
+        # measurement, even when route proof/exclusive performance is incomplete.
+        # Failed execution, fallback, mismatched identity or correctness never opt in.
+        if (phase in ('memory', 'profiling') and item.get('status') == 'partial'
+                and item.get('correctness', {}).get('status') == 'passed'
+                and item.get('measurement', {}).get('correctness', {}).get('status') == 'passed'
+                and item.get('phase_consistency', {}).get('status') == 'passed'
+                and item.get('routing', {}).get('status') in ('passed', 'partial')
+                and item.get('measurement_fallback_observed') is False
+                and not item.get('routing', {}).get('target_cpu_fallback')
+                and not any(item.get(k) for k in ('error', 'diagnostic_execution_blocked',
+                                                'cleanup_error', 'postflight_error'))):
+            return {'allowed': True, 'scope': 'diagnostic-only',
+                    'reason': 'correctness and phase identity passed; route or exclusive performance remains incomplete; capture does not qualify the task'}
+        return None
+
+    def qualify_supplement(self, item, phase):
+        record = item[phase]
+        if phase != 'memory' or record.get('status') not in ('measured', 'partial'):
+            return
+        fields = ('vendor_runtime', 'packages', 'case_sha256', 'input_sha256',
+                  'registration', 'runtime_config', 'device', 'input_devices')
+        measured = item['measurement']
+        mismatches = [k for k in fields if k not in record or k not in measured or record[k] != measured[k]]
+        record['phase_consistency'] = {'status': 'failed' if mismatches else 'passed', 'mismatches': mismatches}
+        if mismatches:
+            record.update(status='partial', reason='memory replay identity differs from clean measurement')
+            # Keep raw observations but do not display mismatched values as the target's memory.
+            for key in list(record):
+                if key.endswith('_bytes'):
+                    record.pop(key)
 
     def diagnose(self, error, root=None):
         if root is not None and 'uni_sram PassManager::run failed' in error:

@@ -7,16 +7,18 @@ import time
 DRIVER = '/triton/backends/xpu/driver.py'
 # Reviewed simple forward targets. Compound/backward cases stay partial until
 # all their semantic components have an equally specific evidence rule.
-REVIEWED = {'abs': {'abs', 'abs_wrapper'}, 'add': {'add', 'add_tensor', 'add_tensor_'}, 'mm': {'mm'}}
+REVIEWED = {'abs': {'abs', 'abs_wrapper'}, 'add': {'add', 'add_tensor', 'add_tensor_'}, 'mm': {'mm'}, 'sum': {'sum'}}
 # Exact target kernels observed in the locked runtime. A target ancestor alone
 # does not distinguish its computation from nested copies or autotune helpers.
 # mm remains partial until a successful target launch has been reviewed.
-REVIEWED_KERNELS = {'abs': {'abs_func_kernel_rank_1'}, 'add': {'add_func_kernel_rank_1'}}
+REVIEWED_KERNELS = {'abs': {'abs_func_kernel_rank_1'}, 'add': {'add_func_kernel_rank_1'},
+                    'sum': {'sum_kernel_1', 'sum_kernel_2'}}
 
 
 class Observer:
     def __init__(self, task, backward):
         self.case, self.oplib, self.backward = task['case'], task['oplib'], backward
+        self.dtype = task.get('dtype')
         self.windows = {};self.window = None;self.pending = {};self.compiling = {}
 
     def begin(self, name):
@@ -53,7 +55,7 @@ class Observer:
 
     def record(self):
         return {'protocol':'p800-xpu-launch-v1', 'case':self.case, 'oplib':self.oplib,
-                'backward':self.backward, 'windows':self.windows}
+                'backward':self.backward, 'dtype':self.dtype, 'windows':self.windows}
 
 
 def meaningful(launch, case):
@@ -78,6 +80,18 @@ def route(probe, log):
     proven = {name:bool(windows.get(name,{}).get('complete')) and
               any(meaningful(row, case) for row in windows.get(name,{}).get('launches',[]))
               for name in ('first','cached')}
+    if case == 'sum':
+        # Reviewed full-tensor floating-point sum is a two-stage reduction.
+        # An allocation/helper or only one reduction stage cannot prove it.
+        for name in ('first', 'cached'):
+            launches = windows.get(name, {}).get('launches', [])
+            target = [r for r in launches if r.get('implementation') and
+                      r['implementation'][0].get('path', '').endswith('/_kunlunxin/ops/sum.py') and
+                      r['implementation'][0].get('function') == 'sum']
+            proven[name] = (bool(windows.get(name, {}).get('complete')) and
+                            data.get('dtype') in ('FP32', 'FP16', 'BF16') and
+                            [r.get('kernel') for r in target] == ['sum_kernel_1', 'sum_kernel_2'] and
+                            all(meaningful(r, case) for r in target))
     passed = (complete and on_device and not data.get('backward',True) and data.get('oplib') == 'flaggems'
               and data.get('protocol') == 'p800-xpu-launch-v1' and all(proven.values()))
     return {'status':'failed' if devices and not on_device else 'passed' if passed else 'partial',

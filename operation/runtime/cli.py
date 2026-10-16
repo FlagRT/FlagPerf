@@ -315,6 +315,17 @@ class Workers:
         if errors: raise CleanupError('; '.join(errors))
 
 
+def supplementary_gate(adapter, item, phase):
+    """Vendor opt-in diagnostic capture never promotes the original task."""
+    if item.get('status') == 'passed':
+        return {'allowed': True, 'scope': 'qualified-task', 'reason': None}
+    if hasattr(adapter, 'supplementary_gate'):
+        gate = adapter.supplementary_gate(item, phase)
+        if gate is not None:
+            return gate
+    return {'allowed': False, 'scope': None, 'reason': 'requires passed correctness and routing'}
+
+
 def snapshot_files():
     return [ROOT / 'run.py', *list((ROOT / 'runtime').glob('*.py')),
              *list((ROOT / 'vendors').rglob('*.py')), *list((ROOT / 'benchmarks').glob('*/main.py')),
@@ -438,12 +449,19 @@ def execute(args, adapter, plan):
                     if extra == 'profiling' and task.get('profiling_mode', 'off') == 'off':
                         item[extra] = {'status': 'off'}
                         continue
-                    if item['status'] != 'passed':
-                        item[extra] = {'status': 'skipped', 'reason': 'requires passed correctness and routing'}
+                    gate = supplementary_gate(adapter, item, extra)
+                    if not gate['allowed']:
+                        item[extra] = {'status': 'skipped', 'reason': gate['reason']}
                         continue
                     try:
                         pool.phase(work, task, extra)
                         item[extra] = read(work / f'{extra}.json')
+                        if hasattr(adapter, 'qualify_supplement'):
+                            adapter.qualify_supplement(item, extra)
+                            write(work / f'{extra}.json', item[extra])
+                        if gate['scope'] == 'diagnostic-only':
+                            item[extra]['qualification'] = gate
+                            write(work / f'{extra}.json', item[extra])
                         if item[extra].get('execution_error'):
                             pool.close()
                             if args.execution == 'docker':

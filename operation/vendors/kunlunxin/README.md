@@ -69,13 +69,14 @@ local 只有当前命名空间的逻辑锁，记录 externally-managed，不宣�
 - Docker 使用锁定 Conda Python 的绝对 entrypoint 和 `-S`。执行 site hooks 前检查 Python、包元数据与 Triton literal version。
   CPU 的 reference/diagnose/reference-check 不映射 XPU、不执行 `.pth` 代码，结束时核验没有导入设备后端或初始化 CUDA 兼容 API。
   local CPU worker 处于调用者现有命名空间，仍不导入/初始化 XPU。
-- probe/measure/trace/memory 执行设备阶段。Docker 只映射选中实际节点和 `/dev/xpuctrl`，网络关闭。
+- probe/measure/trace/memory 及独立 profiling 目标执行设备阶段。Docker 只映射选中实际节点和 `/dev/xpuctrl`，网络关闭。
   先观察完整可见框架 UUID 集合并与宿主 UUID 匹配，再选逻辑设备；不猜测物理号、minor 与框架编号相同。
 - 两条路径均设置 `USE_FLAGGEMS=0`、`XRAY_DEBUG_ENABLE=0`、`TORCH_DEVICE_BACKEND_AUTOLOAD=0`；
   FlagGems worker 只在 CPU 输入/参数构造后显式调用公开的 `flag_gems.enable()`。
   跨 case 复用时检查构造张量仍在 CPU。两种 oplib 和不同阶段的 worker 独立。
-- trace 仅在诊断 worker 设置 `XPU_ENABLE_PROFILER_TRACING=1`，采集公共 CPU 事件诊断；
-  probe/measure/memory 设为 0。trace 不等价于目标设备 kernel 证明；timeline/full profiling 尚不支持并在入口拒绝。
+- trace 设置 `XPU_ENABLE_PROFILER_TRACING=1`，采集公共 CPU 事件诊断；它不等价于设备 kernel 时间线。
+  profiling/profile-target 同样设置为 1，并通过 `XPU_CUPTI_ENABLE_DEVICE` 选择已绑定的逻辑设备；
+  Docker 单设备命名空间为 0，local 为调用者选择的逻辑编号。probe/measure/memory tracing 为 0，CUPTI 设备选择为空，避免污染干净测量。
 - probe/measure 对比解释器、包、hook 哈希、关键环境、输入、源码、profile 和注册状态；不同则 failed。
   计时进程没有 Python 跟踪，计时后另做同输入正确性检查。memory 按公共 allocator-window 协议报告，不是整卡 HBM 使用量。
 - 宿主默认复用 Base provider 的严格占用检查。锁前观察，持有 `/tmp/flagperf-base-device-leases` 中的 UUID 锁及
@@ -89,11 +90,59 @@ local 只有当前命名空间的逻辑锁，记录 externally-managed，不宣�
 只读观察者须按 Base 规则显式授权并验证进程身份；不能将任意持卡 Python 进程列为只读观察者。
 P800 不接受 `--allow-privileged-root`、额外 `--container-device` 或 `--mount`。
 
+## 显存与设备 profiling
+
+memory 使用独立 worker，按公共 `allocator-window-v1` 协议采集预热后基线、重置后计数、保留目标输出时的峰值及增量。
+它描述当前进程分配器，不是整卡 HBM、物理总流量或其他进程占用。原始计数和归一化规则保存在 `memory.json`。
+输入、源码、包、注册、设备绑定与 clean measurement 不一致时，采集保持 partial，保留原始观察，不展示错配的归一化指标。
+
+正确性及 probe/measure 身份一致、无已观察回退或执行错误时，P800 允许路由/共享性能为 partial 的任务进行独立诊断采集。
+结果写明 `qualification.scope=diagnostic-only`；采集成功不改变原任务、路由或性能资格。failed/blocked、正确性失败、身份不一致、
+已观察回退或清理/健康异常不会通过此门禁。其他厂商继续使用原有附加阶段门禁。
+
+```bash
+python3 -B operation/run.py run --vendor kunlunxin \
+  --runtime-profile p800-xpytorch29 --device-ids 0 \
+  --case abs --dtype FP32 --oplib both --workload smoke --profiling timeline \
+  --result-root operation/result/p800-timeline --dry-run
+```
+
+权限、设备授权和运行栈满足前述条件后去掉 `--dry-run`；已获共享授权才加 `--allow-shared-device`。local 使用同一个 profiling 参数。
+`--profiling` 默认 off；timeline 请求设备时间线，full 请求时间线及硬件指标覆盖检查。
+
+- 时间线使用锁定栈的 XPU CUPTI CUDA 兼容接口，在独立子进程恢复同一保存输入及模块参数，预热后记录 5 次原调用及完成同步。
+  主机目标窗口只用于选择主机启动；用 correlation 和 `ac2g` 流关联设备 kernel，不直接用主机/设备时间戳包含关系推断归因。
+  反向在其他 CPU 线程启动时，额外要求唯一 `fwdbwd` 流、匹配的前反向 Sequence number 和目标窗口内的完整 CPU 调用；仅时间重叠不能关联。
+  五次调用及每个启动都必须有唯一、完整的相关事件；缺事件、错误设备、重复/歧义关联、身份不符或目标错误保持 partial。
+- 报告分别显示 kernel 累计、执行区间并集及首尾跨度，时间单位为 μs；原始 Chrome trace、采集日志、输入身份、解析器 SHA256 和兼容工具版本保留。
+  CUDA/GPU 字样是该运行栈的接口命名，不表示测试使用 NVIDIA 硬件；实际 P800 身份由 UUID 绑定和运行栈记录确定。
+- CUDA 兼容 trace 中的 grid/block、occupancy、寄存器、SM 等字段尚未在 P800 验证，实测存在异常值，不能作为 P800 硬件计数器。
+  full 的六组硬件指标目前没有可信采集器及语义映射，均记录 not-supported，整体 profiling 保持 partial；不以这些字段、逻辑带宽或主机时间代替。
+- 设备 timeline 成功只证明关联事件已采集，不证明所有复合/反向语义都在设备执行，也不自动证明没有 CPU fallback。
+  它与原有路由、正确性、独占性能门禁独立。超时终止并回收子进程；local 子进程保留在 worker 的进程组中，Docker 受同一容器清理覆盖。
+
+2026-10-16 的新增验证均使用共享授权，输入与运行身份逐项核验，不计入历史全矩阵分母：
+
+| 范围 | 任务结果 | 附加阶段 |
+|---|---|---|
+| Docker abs FP32 双路径 smoke/full，2 项 | 2 partial | 2 项 memory/timeline measured；六组硬件指标 not-supported，整体 profiling partial |
+| Docker abs/add/sum/mm/native_dropout 三种浮点类型双路径 daily/full，30 项 | 23 partial、4 failed、3 blocked | 23 项 memory、20 项 timeline measured；3 项原生反向 timeline 当时缺少跨线程关联，原记录保留 |
+| 修正跨线程关联后，Docker abs/sum/native_dropout 三种浮点类型双路径 daily/timeline，18 项 | 15 partial、3 failed | 15 项 memory/timeline measured，包含原生 native_dropout 的三种类型；Gems 失败项不补采 |
+| local abs/sum/native_dropout FP16 双路径 daily/timeline，6 项 | 5 partial、1 failed | 5 项 memory/timeline measured；Gems native_dropout 测量失败 |
+
+local 验证在调用者自建的锁定镜像容器中执行，由外层持有宿主 UUID 租约，不代表裸宿主安装或 local 全矩阵验收。
+以上独立批次保留各自源码身份；新解析器不回写旧报告。没有取得独占性能资格，不晋级 Operation runtime。
+宿主还发现 `xprofiler` 工具及信号配置入口，但信号定义、计数单位、共享卡进程隔离和目标归因尚未验证；
+工具存在不等于六组指标已经可用。未用整卡观测或兼容 CUDA 字段填充缺失的计数器。
+
 ## 路由证据与结果边界
 
-P800 通过观察现有调用取证，不替换或包装数学库/后端。路由通过范围目前仅为已核验的 abs/add 简单前向目标：
+P800 通过观察现有调用取证，不替换或包装数学库/后端。路由通过范围包括已核验的 abs/add 简单前向目标：
 实际 kernel 名称须分别为 `abs_func_kernel_rank_1` / `add_func_kernel_rank_1`，最近一层 FlagGems ops/fused 调用祖先须为对应目标实现。
 其他名称、维度实现及尚无成功目标证据的 mm 保持 partial；新增通过范围须另行审阅实际实现与启动证据。
+另外支持 FP32/FP16/BF16 的全张量 sum 前向：最近实现须为 `/_kunlunxin/ops/sum.py` 的 `sum`，
+首次与缓存窗口均须按顺序完整执行 `sum_kernel_1`、`sum_kernel_2`，每次实际 C 调用正常返回并完成同步。
+缺阶段、顺序错误、辅助调用、未核验类型或反向不能套用此规则。三种浮点类型已做 Docker daily 复测，local 另验证 FP16。
 首次和缓存窗口均须观察到
 真实 `self.launch` 的 C 调用正常返回，并完成同步。目标区间须有完整 begin/end。
 仅 Python 调用、编译、注册、辅助复制/分配/transpose 或 CPU profiler 事件均不能使路由通过。
@@ -202,10 +251,23 @@ python3 -B -m unittest discover -s operation/tests -p 'test_p800*.py' -v
 执行前仍须确认当前设备授权。旧版报告若含不适用的特权参数，应按当前模板修正命令，或在新目录汇总原始 run；
 不要改写封存数据来修正命令文字。
 
+2026-10-16 使用保存输入实际复放了原生 abs FP32、原生 mm FP32 和 Gems mm FP16。
+abs 数值检查通过而路由仍 partial；原生 mm 再次出现 82/262144 个元素超出原容差；Gems mm 再次在 probe 编译报 uni_sram 错误。
+三项输入哈希未变化，postflight 与租约释放记录完整。诊断总状态描述检查覆盖/执行状态，须同时读取原任务状态和各项检查；
+例如原生 mm 的诊断执行完成不等于数值通过。复放只重做 reference-check/probe 及适用诊断，不重跑 measure，不能用它证明测量阶段异常已复现。
+另以相同 FP16 输入比较显式传入 `CUDART_DUMMY_REGISTER=1` 与现行环境，两侧均为 2 partial、1 failed、1 blocked。
+复核发现现行设备 bootstrap 后该变量也已为 1，因此这不是有效的开/关对照；只能确认显式重复设置未解决错误，不能排除其底层作用。
+没有据此修改正式 profile 或宣称修复。
+
+native_dropout FP16 的测量栈进一步定位到反向 `grad_output.contiguous()` → 昆仑芯 FlagGems `copy_` → ATen redispatch。
+独立诊断把 FP16 标量 0/1 展开为 `[1,1024,1024]` 后转为连续张量：原生两项完成且值正确，Gems 两项均在同一 copy_ 转派发位置报 invalid device function。
+这将问题缩小到展开布局的复制路径；异步异常的最终底层原因尚未证明，也不能外推所有失败均由此引起。
+未通过改为连续上游梯度、改计时协议、禁用注册或替换实现让原 benchmark 通过；诊断结果不计入正式覆盖分母。
+
 单元测试不占用实际设备。全套 Operation 回归还需 CPU PyTorch 与 PyYAML。
 公开 CI 检查本页 Docker/local 示例、全类型分母、多设备/尺寸规划和 P800 标准库负例；
 这些检查不证明设备可用或底层算子通过。当前没有原生全目标路由证明，也没有独占性能验收；
-设备 timeline/full profiling 尚未接入。交付的是评估工具与已记录的受限覆盖，运行栈不自动晋级。
+设备 timeline 已接入独立 XPU CUPTI 采集；full 硬件计数器尚未支持，完整适配验收仍未完成。运行栈不自动晋级。
 聚合要求相同主机、镜像与执行模式；不同 UUID/profile/源码/协议保留独立行。
 源编排、清理、postflight 或租约释放错误会拒绝聚合；算子本身的 failed/blocked/partial 保留。
 不改公共 schema、报告列布局、原数值容差与 Ascend 命令。

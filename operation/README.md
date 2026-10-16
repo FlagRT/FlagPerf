@@ -23,6 +23,8 @@ Ascend 默认使用 CANN 9 / PyTorch 2.10 / Torch-FL 的锁定组合，按 [Asce
 [昆仑芯 P800](vendors/kunlunxin/README.md) 通过 `--runtime-profile p800-xpytorch29` 显式选择独立运行栈。
 已接通 Docker/local，完成 52 case 默认类型 smoke、52 case 多类型 daily 的 Docker 评估，以及 local 七个代表 case 双路径验证；仍含数值/执行失败和路由/性能 partial。
 Operation 运行栈仍为 `validated:false`；该参数与控制工作量的 `--workload` 不同。
+已接入独立 allocator 显存诊断与 `--profiling timeline` 设备事件采集，并完成 Docker/local 代表验证；
+`--profiling full` 的六组硬件计数器仍未支持。诊断采集成功不改变原任务的路由或共享性能资格。
 P800 的路由证据边界、已知执行/数值失败和显式共享模式见上述厂商说明，不能外推为全算子验收通过。
 
 所有命令从 **FlagPerf 仓库根目录** 执行。先选当前空闲设备，下面的 `0` 是物理编号示例。

@@ -52,8 +52,7 @@ class P800PlanningTests(unittest.TestCase):
         for extra in [('--runtime-profile', 'unknown'), ('--vendor', 'ascend'),
                       ('--device-ids', '1,1'), ('--device-ids', '8'), ('--device-ids', '3-1'),
                       ('--device-ids', '-1'), ('--allow-privileged-root',),
-                      ('--container-device', '/dev/xpu3'), ('--mount', '/tmp:/tmp'),
-                      ('--profiling', 'timeline')]:
+                      ('--container-device', '/dev/xpu3'), ('--mount', '/tmp:/tmp')]:
             with self.subTest(extra=extra), self.assertRaises(ValueError):
                 cli.resolve(arguments(*extra))
         self.assertEqual(cli.resolve(arguments('--device-ids', '1'))[1]['device_ids'], [1])

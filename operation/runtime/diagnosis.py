@@ -108,6 +108,8 @@ def replay(root, args, task, identity, data):
     previous_sigterm = install_termination_handler(adapter)
     try:
         lease.acquire()
+        if hasattr(lease, 'record'):
+            data['lease'] = {**lease.record(), 'released': False}
         stage(args, 'preflight')
         data['preflight'] = adapter.preflight(root, devices)
         host_checked = True
@@ -177,6 +179,8 @@ def replay(root, args, task, identity, data):
             data['postflight_error'] = str(exc)
         try:
             lease.release()
+            if 'lease' in data:
+                data['lease']['released'] = True
         except (Exception, KeyboardInterrupt, SystemExit) as exc:
             data['cleanup_error'] = data.get('cleanup_error', '') + '; lease release: ' + str(exc)
         finally:

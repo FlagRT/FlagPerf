@@ -32,6 +32,23 @@ def probe_fixture():
 
 
 class RouteTests(unittest.TestCase):
+    def test_sum_requires_ordered_two_stage_actual_target_in_both_windows(self):
+        for kind in ('valid', 'stage1-only', 'stage2-only', 'reversed', 'helper', 'unreviewed-dtype', 'exception'):
+            p = probe_fixture();data = p['p800_route'];data.update(case='sum', dtype='FP32')
+            for window in data['windows'].values():
+                first = window['launches'][0]
+                first.update(kernel='sum_kernel_1', implementation=[{'path':'/env/flag_gems/runtime/backend/_kunlunxin/ops/sum.py','function':'sum'}])
+                second = copy.deepcopy(first);second['kernel']='sum_kernel_2'
+                window['launches']=[first,second]
+            cached = data['windows']['cached']['launches']
+            if kind=='stage1-only':cached.pop()
+            if kind=='stage2-only':cached.pop(0)
+            if kind=='reversed':cached.reverse()
+            if kind=='helper':cached[0]['implementation'].insert(0,{'path':'/env/flag_gems/ops/empty.py','function':'empty'})
+            if kind=='unreviewed-dtype':data['dtype']='INT32'
+            if kind=='exception':cached[1]['actual_c_return']=False
+            self.assertEqual(Adapter().route(p, MARKERS)['status'], 'passed' if kind=='valid' else 'partial', kind)
+
     def test_target_ancestor_does_not_qualify_nested_helper_or_unknown_kernel(self):
         for kind in ('nested-copy', 'unknown', 'missing', 'wrong-target', 'nested-with-target-name'):
             p = probe_fixture()

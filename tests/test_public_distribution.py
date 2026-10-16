@@ -146,8 +146,11 @@ class PublicDistributionTests(unittest.TestCase):
                 plan = run('-S', *argv[1:])
                 self.assertEqual(plan['runtime_profile'], 'p800-xpytorch29')
                 self.assertTrue(all(t['runtime_profile'] == 'p800-xpytorch29' for t in plan['tasks']))
-                plans.append((plan['execution'], len(plan['tasks'])))
-        self.assertCountEqual(plans, [('docker', 4), ('local', 2), ('docker', 728)])
+                modes = {t['profiling_mode'] for t in plan['tasks']}
+                self.assertEqual(len(modes), 1)
+                plans.append((plan['execution'], len(plan['tasks']), modes.pop()))
+        self.assertCountEqual(plans, [('docker', 4, 'off'), ('local', 2, 'off'),
+                                     ('docker', 728, 'off'), ('docker', 2, 'timeline')])
 
     def test_p800_operation_full_matrix_and_validation_boundary(self):
         lock = json.loads((ROOT / 'operation/vendors/kunlunxin/profiles/p800-xpytorch29.json').read_text())

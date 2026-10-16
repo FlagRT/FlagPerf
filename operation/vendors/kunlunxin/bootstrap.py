@@ -20,7 +20,8 @@ ENV_KEYS = ('CUDA_VISIBLE_DEVICES', 'XPU_VISIBLE_DEVICES', 'XPU_VISIBLE_DEVICE',
             'TRITON_XPU_DEVICE', 'FLAGTREE_BACKEND', 'GEMS_VENDOR', 'LD_PRELOAD',
             'LD_LIBRARY_PATH', 'XPU_FORCE_SHARED_DEVICE_CONTEXT', 'CUDART_DUMMY_REGISTER',
             'CUDART_MODULE_LOADING', 'CUDA_DEVICE_MAX_CONNECTIONS', 'PYTHONPATH',
-            'TRITON_INTERPRET', 'TRITON_ALWAYS_COMPILE', 'XPU_ENABLE_PROFILER_TRACING')
+            'TRITON_INTERPRET', 'TRITON_ALWAYS_COMPILE', 'XPU_ENABLE_PROFILER_TRACING',
+            'XPU_CUPTI_ENABLE_DEVICE')
 
 
 def digest(path):
@@ -95,7 +96,7 @@ def configure(phase):
 def main():
     phase = sys.argv[sys.argv.index('--phase') + 1]
     root = Path(sys.argv[sys.argv.index('--root') + 1])
-    control = root / sys.argv[sys.argv.index('--serve') + 1]
+    control = root / sys.argv[sys.argv.index('--serve') + 1] if '--serve' in sys.argv else root
     try:
         record = configure(phase)
         (control / 'bootstrap.json').write_text(json.dumps(record, indent=2) + '\n')

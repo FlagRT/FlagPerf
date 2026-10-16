@@ -20,6 +20,13 @@ runtime 设为 `release_stage:validated`、`validated:true`、`validation_status
 Operation 不继承 Base/Toolkit 的 `validated:true`。在锁定镜像和 P800 共享授权下，三个源码身份对应的三批 Docker daily 共覆盖 52 个 case 的 728 个唯一 case/dtype/oplib 组合：308 个适用、420 个类型不适用；适用项保留 275 个 `partial`、27 个 `failed` 和 6 个 `blocked`。local 另有 7 个代表 case 的 14 项双路径 smoke：11 `partial`、2 `failed`、1 `blocked`。这些数字是评估覆盖和失败记录，不是 Operation runtime 晋级或单一源码版本的全算子通过声明。
 
 离线检查按三个源码身份分别重建报告，核对源 evidence 哈希、清理/租约字段、公开复放参数和报告确定性；不同源码指纹没有跨组混合。公开测试覆盖 P800 专用 profile 的 Docker/local 示例、全类型分母、多设备/尺寸规划、文档链接和标准库负例；无设备回归不替代硬件复测。原生路由证据、独占性能资格、设备 timeline/full profiling 和底层失败仍有限制，Operation 保持 `validated:false`。完整入口、失败阶段和边界见 [昆仑芯 Operation 指南](../../operation/vendors/kunlunxin/README.md)；原始运行结果不随公开源码分发。
+
+2026-10-16 新增独立 memory 诊断采集及 XPU CUPTI 设备 timeline。完成 Docker 2 项 smoke、30 项 daily、修正反向跨线程关联后的 18 项 daily，
+以及 local 6 项 daily 代表验证；后两批分别有 15/5 项 memory 与 timeline measured，Gems native_dropout 的 3/1 项测量失败保留。
+sum 浮点前向新增两阶段目标路由证明；原生全目标路由和通用 fallback 证明仍有缺口。
+另实际执行 partial、数值失败、编译阻塞三类来源的同输入 replay，确认原生 mm FP32 数值超差和 Gems mm FP16 编译错误仍存在。
+各批输入/运行身份和清理分别核验，详情见厂商指南。原任务不因附加采集晋级；full 的六组硬件指标没有已验证的采集器和语义映射，明确记录 not-supported。
+CUDA 兼容 trace 中的 occupancy、grid/block、SM 等未经验证字段不作为 P800 硬件计数器。历史统计与新采集范围分开记录，不改写旧结果。
 历史报告及 `qualification-record.json` 保留当时的 candidate 状态，不回写为新验证结果。
 
 ## 无设备检查
