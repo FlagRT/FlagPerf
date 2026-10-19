@@ -183,7 +183,7 @@ class PublicDistributionTests(unittest.TestCase):
         ):
             paths.update(p for p in directory.rglob('*') if p.suffix in ('.py', '.json', '.yaml', '.md'))
         paths.update((ROOT / 'base/configs').glob('ascend*.yaml'))
-        stage = re.compile(r'(?<![A-Za-z0-9#:])(?:C[0-9](?:[-_/]|\b)|c[0-9][-_])')  # colon excluded: PCI BDF segments are hardware addresses, not stage labels
+        stage = re.compile(r'(?<![A-Za-z0-9#])(?<!\d:)(?:C[0-9](?:[-_/]|\b)|c[0-9][-_])')  # PCI BDF segments ('0000:C1:...') stay exempt via the digit-colon lookbehind; 'label:C1' stage markers are caught again
         private = re.compile(r'/home/kzhang(?:519|520)|/data1/flagperf-|FlagPerf_advance|(?:\.\./)+personal/')
         for path in sorted(paths):
             with self.subTest(path=str(path.relative_to(ROOT))):
