@@ -1,0 +1,171 @@
+{
+  "schema_version": 1,
+  "stage": "p2p-calibration-only",
+  "formal_baseline_eligible": false,
+  "case": "interconnect-P2P_intraserver",
+  "runtime_profile": "torch210_ppu_candidate",
+  "runtime_config": "base/configs/thead_ppu_torch210.yaml",
+  "measurement_contract": {
+    "workload": "one-way blocking torch.distributed send/recv",
+    "dtype": "float32",
+    "reported_formula": "one-way payload x iterations / elapsed (never doubled)",
+    "one_way_payload_bytes_per_point": 68719476736,
+    "monitor": "off",
+    "repeats": 1,
+    "warmup": 20,
+    "purpose": "estimate per-iteration time before pinning qualified scan configurations"
+  },
+  "topology_evidence": {
+    "sha256": "2bb76e400ff1481d5535373afc68583cb5e836870de6c7db6e51d0aca1253441",
+    "availability": "site-internal; original artifact identified by sha256",
+    "pairing_rule": "ppu-smi Bus-Id: two device indices on one physical card show adjacent BDF bus bytes; intra-card cells take both indices of one card, inter-card cells take indices from two different cards"
+  },
+  "representative_pairs": [
+    {
+      "pair_id": "intracard-die-pair",
+      "device_ids": [
+        14,
+        15
+      ],
+      "bus_ids": [
+        "00000000:A3:00.0",
+        "00000000:A2:00.0"
+      ],
+      "expected_path": "same-physical-card die pair; staged path per the P2P=disabled annotation",
+      "direction": "14-to-15-only"
+    },
+    {
+      "pair_id": "intercard-staged-pair",
+      "device_ids": [
+        7,
+        8
+      ],
+      "bus_ids": [
+        "00000000:C6:00.0",
+        "00000000:A5:00.0"
+      ],
+      "expected_path": "two physical cards; NCCL stages through the host (P2P=disabled)",
+      "direction": "7-to-8-only"
+    }
+  ],
+  "size_points": [
+    {
+      "size": "4m",
+      "message_bytes": 4194304,
+      "melements": 1,
+      "warmup": 20,
+      "iterations": 16384,
+      "config": "base/benchmarks/interconnect-P2P_intraserver/thead/PPU/case_config.p2p-calibration-4m.yaml",
+      "sha256": "312224ddfda454f71caf48db179f3ffa4487fa105d0c98aaa79074a03d0c1efb"
+    },
+    {
+      "size": "16m",
+      "message_bytes": 16777216,
+      "melements": 4,
+      "warmup": 20,
+      "iterations": 4096,
+      "config": "base/benchmarks/interconnect-P2P_intraserver/thead/PPU/case_config.p2p-calibration-16m.yaml",
+      "sha256": "228af6886e41172054fdcae53b31fabacf997e489ca49867ce1cdf5f9d262848"
+    },
+    {
+      "size": "64m",
+      "message_bytes": 67108864,
+      "melements": 16,
+      "warmup": 20,
+      "iterations": 1024,
+      "config": "base/benchmarks/interconnect-P2P_intraserver/thead/PPU/case_config.p2p-calibration-64m.yaml",
+      "sha256": "c620c8b23686c9df0312559d7d8e736c5a2cf62cd16397b42b91055f31135faf"
+    },
+    {
+      "size": "256m",
+      "message_bytes": 268435456,
+      "melements": 64,
+      "warmup": 20,
+      "iterations": 256,
+      "config": "base/benchmarks/interconnect-P2P_intraserver/thead/PPU/case_config.p2p-calibration-256m.yaml",
+      "sha256": "69e9b7f0df716d5add6208d67cc7cba91d0d6e53021642144c193556b89c376c"
+    }
+  ],
+  "observed": {
+    "status": "passed",
+    "record_type": "maintainer-attestation",
+    "per_cell": [
+      {
+        "cell": "intracard-4m",
+        "run": "day9-p2pcal-ic-4m-01",
+        "elapsed_seconds": 2.0711,
+        "per_iteration_ms": 0.1264,
+        "one_way_gb_s": 33.1796
+      },
+      {
+        "cell": "intracard-16m",
+        "run": "day9-p2pcal-ic-16m-01",
+        "elapsed_seconds": 1.6438,
+        "per_iteration_ms": 0.4013,
+        "one_way_gb_s": 41.8054
+      },
+      {
+        "cell": "intracard-64m",
+        "run": "day9-p2pcal-ic-64m-01",
+        "elapsed_seconds": 1.5489,
+        "per_iteration_ms": 1.5126,
+        "one_way_gb_s": 44.366
+      },
+      {
+        "cell": "intracard-256m",
+        "run": "day9-p2pcal-ic-256m-01",
+        "elapsed_seconds": 1.6262,
+        "per_iteration_ms": 6.3522,
+        "one_way_gb_s": 42.2589
+      },
+      {
+        "cell": "intercard-4m",
+        "run": "day9-p2pcal-ec-4m-01",
+        "elapsed_seconds": 14.3585,
+        "per_iteration_ms": 0.8764,
+        "one_way_gb_s": 4.786
+      },
+      {
+        "cell": "intercard-16m",
+        "run": "day9-p2pcal-ec-16m-01",
+        "elapsed_seconds": 14.3165,
+        "per_iteration_ms": 3.4952,
+        "one_way_gb_s": 4.8
+      },
+      {
+        "cell": "intercard-64m",
+        "run": "day9-p2pcal-ec-64m-01",
+        "elapsed_seconds": 14.2911,
+        "per_iteration_ms": 13.9561,
+        "one_way_gb_s": 4.8086
+      },
+      {
+        "cell": "intercard-256m",
+        "run": "day9-p2pcal-ec-256m-01",
+        "elapsed_seconds": 14.2221,
+        "per_iteration_ms": 55.5549,
+        "one_way_gb_s": 4.8319
+      }
+    ]
+  },
+  "formal_followup": {
+    "minimum_measurement_seconds_per_run": 15,
+    "target_measurement_seconds_per_run": 60,
+    "contract_iteration_cap": 200000,
+    "minimum_repeats_per_topology_size_cell": 3,
+    "monitor_ab_cell": "intracard-64m",
+    "monitor_ab_size_bytes": 67108864,
+    "monitor_ab_order": [
+      "off",
+      "on",
+      "on",
+      "off",
+      "off",
+      "on"
+    ],
+    "maximum_cv_pct": 5.0,
+    "maximum_absolute_monitor_median_delta_pct": 5.0,
+    "requires_repository_pinned_formal_configs": true
+  },
+  "claim_boundary": "Calibration estimates iteration cost; it does not qualify a runtime or establish a stable performance baseline."
+}

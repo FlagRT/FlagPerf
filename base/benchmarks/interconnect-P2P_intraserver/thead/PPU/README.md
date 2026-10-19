@@ -10,6 +10,27 @@
 
 配置合并顺序为 generic < vendor < PPU < 显式 override；每次运行保存配置和源码哈希。选择 case 时使用 `interconnect-P2P_intraserver:PPU` 与 PPU host profile。共同的完整命令、权限/窗口/选卡、报告再生和故障处置见 [Base 使用手册](../../../../README.md)。
 
+## 扫点协议（p2p-single-node-v1）
+
+本机为单卡双芯（每张物理卡两个 PPU 芯片），同卡两芯与跨卡两芯的通信带宽不同。对标 ascend 的 p2p-single-node 扫点协议，本目录维护同一协议形状的 thead 版本：
+
+- **代表对**：`intracard-die-pair`（同卡两芯，实测对 14,15）与 `intercard-staged-pair`（跨卡 staged，实测对 7,8）；方向钉死 rank0→rank1（`14-to-15-only` / `7-to-8-only`），不声明反向。
+- **校准**：4 个规格（4/16/64/256 MiB），每点 64 GiB 单向 payload，monitor off、单次（`case_config.p2p-calibration-*.yaml`），只用于钉扫点 ITERS，不入正式账目。
+- **扫点矩阵**：8 cell（2 对 × 4 规格），每 cell 3 次重复（`case_config.p2p-scan-*.yaml`，ITERS 由校准钉扎，目标 ~60 s 窗口，monitor on——本 harness 将无监控的 qualification run 判为 partial，与 ascend monitor-off 曲线的这一偏离记录在计划文件），验收 CV ≤ 5%；monitor A/B（off,on,on,off,off,on）钉在 intracard-64m，中位数偏差 ≤ 5%，off 腿按设计为 partial（失真探针，不作资格声明）。共享契约 ITERS 上限 200000，故 intracard-4m cell 窗口约 25 s（契约下限 15 s）。
+- **配置钉扎**：本 case 开启 `requires_case_override`，每次运行必须显式传 `--case-config` 且其 sha256 在 `runtime_requirements.json` 名单内（正式、烟囱、校准、扫点共 15 条）。
+- cell 明细、中位数、CV 与 monitor A/B 记录见 `p2p-qualification-plan.json`（校准观测见 `p2p-calibration-plan.json`）；两份计划与名单的一致性由 `base/tests/test_thead_p2p_scan.py` 守护。
+
+扫点运行示例（cell 与设备对的对应关系以计划文件为准；卡号仅为示例）：
+
+```bash
+python3 base/run.py benchmark run \
+  --config base/configs/thead_ppu_torch210.yaml \
+  --case interconnect-P2P_intraserver:PPU \
+  --case-config base/benchmarks/interconnect-P2P_intraserver/thead/PPU/case_config.p2p-scan-intercard-4m.yaml \
+  --physical-device-ids 7,8 --nproc-per-node 2 --timeout 300 \
+  --monitor off --allow-candidate-runtime --dry-run
+```
+
 ## 指标和验收
 
 单向带宽 = payload_bytes×ITERS/elapsed；不乘 2。每 run 取两个有效 rank 的较小带宽，再对五次取中位数。
