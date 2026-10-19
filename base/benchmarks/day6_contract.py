@@ -44,7 +44,7 @@ def _int(c, k, lo, hi):
 def validate_config(c, case):
     family, _, chip = case.rpartition(':')
     if chip not in CHIPS:
-        raise ConfigurationError('unknown P800 Day 6 case')
+        raise ConfigurationError('unknown Day 6 case')
     if family == 'main_memory-bandwidth':
         _int(c, 'Melements', 1, 1024); _int(c, 'WARMUP', 1, 100); _int(c, 'ITERS', 1, 200000)
         if c.get('DTYPE') != 'float32' or c.get('DIST_BACKEND') != 'gloo':
@@ -59,7 +59,7 @@ def validate_config(c, case):
         if c.get('DTYPE') != 'float32' or c.get('DIST_BACKEND') != communication_backend(chip):
             raise ConfigurationError('invalid communication backend contract')
     else:
-        raise ConfigurationError('unknown P800 Day 6 case')
+        raise ConfigurationError('unknown Day 6 case')
     if c.get('IMPLEMENTATION') != 'native-xpytorch':
         raise ConfigurationError('native XPYTORCH required')
     return c

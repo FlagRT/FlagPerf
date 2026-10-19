@@ -44,7 +44,7 @@ def contract(case):
             'operator': 'torch._int_mm' if device_int8 else 'xtorch_ops.gemm_I8_I8_bf16_nt' if integer else 'torch.mm',
             'reference_dtype': 'float64',
             'output_dtype': 'int32' if device_int8 else 'bfloat16' if integer else CONTRACTS[precision]['dtype'],
-            'reference_inputs': 'signed int8 inputs; CPU int64 accumulation reference; device int32 accumulation '
+            'reference_inputs': 'signed int8 inputs; CPU float64 accumulation reference; device int32 accumulation '
                                 'and int32 output via torch._int_mm' if device_int8 else
                                 'signed int8 inputs; CPU float64 accumulation of the quantized operands times SCALE_A*SCALE_B; '
                                 'int32 accumulation and bf16 output inside the device kernel' if integer else

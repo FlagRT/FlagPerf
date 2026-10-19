@@ -74,7 +74,9 @@ def unset_ieee_float32(vendor):
     if vendor == "nvidia":
         torch.backends.cuda.matmul.allow_tf32 = True
     elif _vendor_name(vendor) == "thead":
-        # PPU torch is a full CUDA build: restore the CUDA default TF32 state.
+        # Parity with the nvidia branch: leave TF32 enabled for training-style
+        # float32 matmuls. The PPU boot default is False; cases record the
+        # flag in evidence and do not certify internal arithmetic.
         torch.backends.cuda.matmul.allow_tf32 = True
     elif _vendor_name(vendor) == "ascend":
         pass
