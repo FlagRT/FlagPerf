@@ -3,11 +3,93 @@
   "supported": true,
   "runtime_profile": "torch210_ppu_candidate",
   "runtime_role": "operator",
-  "process_scope": {"nnodes": 1, "nproc_per_node": 2, "min_nproc_per_node": 2},
+  "process_scope": {
+    "nnodes": 1,
+    "nproc_per_node": 2,
+    "min_nproc_per_node": 2
+  },
   "implementation": "native-xpytorch",
   "correctness_required": true,
   "qualification_repetitions": 5,
   "qualification_min_measurement_seconds": 15,
   "qualification_max_cv_percent": 5,
-  "compatibility_note": "No direct card-to-card P2P on this host; NCCL stages through the host and published numbers describe the staged path (P2P=disabled annotation required in evidence)."
+  "requires_case_override": true,
+  "allowed_case_configs": [
+    {
+      "path": "thead/PPU/case_config.yaml",
+      "sha256": "5ebcebcfb79c486bc88a473de7d85a58803a7945fd03faf9b40991dc8de55d41",
+      "scope": "formal-qualification"
+    },
+    {
+      "path": "thead/PPU/case_config.smoke.yaml",
+      "sha256": "b16172efd303fd4fe72b5b8caea9a1f7c63c923c7503966664272f5588c0174b",
+      "scope": "bounded-smoke"
+    },
+    {
+      "path": "thead/PPU/case_config.p2p-calibration-4m.yaml",
+      "sha256": "312224ddfda454f71caf48db179f3ffa4487fa105d0c98aaa79074a03d0c1efb",
+      "scope": "p2p-calibration-only"
+    },
+    {
+      "path": "thead/PPU/case_config.p2p-calibration-16m.yaml",
+      "sha256": "228af6886e41172054fdcae53b31fabacf997e489ca49867ce1cdf5f9d262848",
+      "scope": "p2p-calibration-only"
+    },
+    {
+      "path": "thead/PPU/case_config.p2p-calibration-64m.yaml",
+      "sha256": "c620c8b23686c9df0312559d7d8e736c5a2cf62cd16397b42b91055f31135faf",
+      "scope": "p2p-calibration-only"
+    },
+    {
+      "path": "thead/PPU/case_config.p2p-calibration-256m.yaml",
+      "sha256": "69e9b7f0df716d5add6208d67cc7cba91d0d6e53021642144c193556b89c376c",
+      "scope": "p2p-calibration-only"
+    },
+    {
+      "path": "thead/PPU/case_config.p2p-scan-intracard-4m.yaml",
+      "sha256": "4b5ede4da5e1a26edc176ce8105db6fb52349db000bfc07d3ca2808da31baeb7",
+      "scope": "p2p-qualification"
+    },
+    {
+      "path": "thead/PPU/case_config.p2p-scan-intracard-16m.yaml",
+      "sha256": "90f7126f86db30ed2403882e774de87d525bc34832b1249750447c5340405016",
+      "scope": "p2p-qualification"
+    },
+    {
+      "path": "thead/PPU/case_config.p2p-scan-intracard-64m.yaml",
+      "sha256": "fcb368b79771b58709eb3036eb306ede1b0fbfa688d913ce668f200023104bf2",
+      "scope": "p2p-qualification"
+    },
+    {
+      "path": "thead/PPU/case_config.p2p-scan-intracard-256m.yaml",
+      "sha256": "146dbbf69a5050fb7b72395d2d69e103117aab87dc1b47e38e9ec9ebd3311233",
+      "scope": "p2p-qualification"
+    },
+    {
+      "path": "thead/PPU/case_config.p2p-scan-intercard-4m.yaml",
+      "sha256": "08f0e86045cf29fe11325d2513200a4b3c6ee1fd00a06179a8f50d3c0d620643",
+      "scope": "p2p-qualification"
+    },
+    {
+      "path": "thead/PPU/case_config.p2p-scan-intercard-16m.yaml",
+      "sha256": "2ee18ee733575f6b127fcd5139835a59c623c65ae473fe3d42edae8058b80fc7",
+      "scope": "p2p-qualification"
+    },
+    {
+      "path": "thead/PPU/case_config.p2p-scan-intercard-64m.yaml",
+      "sha256": "57ed0d1a7e6d19c52d77f99b5e8073b5234874d8557f98f5b0d7f8f80675763f",
+      "scope": "p2p-qualification"
+    },
+    {
+      "path": "thead/PPU/case_config.p2p-scan-intercard-256m.yaml",
+      "sha256": "49e4a27db0ef5309dc90659ba1f6d3c00be1e47b6a7015a2e63b41fd29155c91",
+      "scope": "p2p-qualification"
+    },
+    {
+      "path": "thead/PPU/case_config.calibration.yaml",
+      "sha256": "081bc80d70e061c4148ac30c9c83bfb74331c7cee539d044ec4927526fb207fe",
+      "scope": "p2p-calibration-only"
+    }
+  ],
+  "compatibility_note": "No direct card-to-card P2P on this host; NCCL stages through the host and published numbers describe the staged path (P2P=disabled annotation required in evidence). The allowlist pins the formal, smoke, calibration and scan-point configurations of the p2p-single-node-v1 protocol (see thead/PPU/p2p-qualification-plan.json); every bounded P2P run must pass an explicit --case-config from this list."
 }
