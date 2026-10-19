@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "record_type": "maintainer-attestation",
+  "protocol_id": "p2p-single-node-v1",
+  "status": "passed",
+  "formal_baseline_eligible": false,
+  "runtime_image": "flagtree-ppu-3.6-dev:202608",
+  "runtime_image_id": "sha256:be1606e81fb24ca3da57a6d4a990280369b89146c2999e88eb8cd07c661dcc79",
+  "source_plan_sha256": "fa99ee443c7c0b601dc252969330875ca7c14f9a7f433dbe5dd11e7fcd260505",
+  "source_summary_sha256": "e7bc6ff7930d274477c10f028f52b23aa05efee23e6b03d2a223f797936deaf3",
+  "observed": [
+    {
+      "run": "day9-p2pcal-ic-4m-01",
+      "config": "base/benchmarks/interconnect-P2P_intraserver/thead/PPU/case_config.p2p-calibration-4m.yaml",
+      "message_bytes": 4194304,
+      "iterations": 16384,
+      "one_way_gb_s": 33.1796,
+      "per_iteration_ms": 0.1264,
+      "elapsed_seconds": 2.0711,
+      "summary_sha256": "dea31b9ec6f82ce21bbc0dbe3f8a253299c4bd830b267e8cedb4bd15998b659d"
+    },
+    {
+      "run": "day9-p2pcal-ic-16m-01",
+      "config": "base/benchmarks/interconnect-P2P_intraserver/thead/PPU/case_config.p2p-calibration-16m.yaml",
+      "message_bytes": 16777216,
+      "iterations": 4096,
+      "one_way_gb_s": 41.8054,
+      "per_iteration_ms": 0.4013,
+      "elapsed_seconds": 1.6438,
+      "summary_sha256": "8233f0f39a2d7d14b39c3f9858b338ca476758564256e84f23d9061460ce90f0"
+    },
+    {
+      "run": "day9-p2pcal-ic-64m-01",
+      "config": "base/benchmarks/interconnect-P2P_intraserver/thead/PPU/case_config.p2p-calibration-64m.yaml",
+      "message_bytes": 67108864,
+      "iterations": 1024,
+      "one_way_gb_s": 44.366,
+      "per_iteration_ms": 1.5126,
+      "elapsed_seconds": 1.5489,
+      "summary_sha256": "e73f907255c7c552ced8b5e81783f5e6dba916835f83780bce87f6934ae94818"
+    },
+    {
+      "run": "day9-p2pcal-ic-256m-01",
+      "config": "base/benchmarks/interconnect-P2P_intraserver/thead/PPU/case_config.p2p-calibration-256m.yaml",
+      "message_bytes": 268435456,
+      "iterations": 256,
+      "one_way_gb_s": 42.2589,
+      "per_iteration_ms": 6.3522,
+      "elapsed_seconds": 1.6262,
+      "summary_sha256": "a3790732acb5993318d1b8292972be689cf6f094ed381db3405b599198255561"
+    },
+    {
+      "run": "day9-p2pcal-ec-4m-01",
+      "config": "base/benchmarks/interconnect-P2P_intraserver/thead/PPU/case_config.p2p-calibration-4m.yaml",
+      "message_bytes": 4194304,
+      "iterations": 16384,
+      "one_way_gb_s": 4.786,
+      "per_iteration_ms": 0.8764,
+      "elapsed_seconds": 14.3585,
+      "summary_sha256": "f0427408f8bd63a527e4073166331ea15a101946b6ae86333775762c6cbf82eb"
+    },
+    {
+      "run": "day9-p2pcal-ec-16m-01",
+      "config": "base/benchmarks/interconnect-P2P_intraserver/thead/PPU/case_config.p2p-calibration-16m.yaml",
+      "message_bytes": 16777216,
+      "iterations": 4096,
+      "one_way_gb_s": 4.8,
+      "per_iteration_ms": 3.4952,
+      "elapsed_seconds": 14.3165,
+      "summary_sha256": "e4b541ed6cbbb4fc93f1275e882fdac4697a5df6979300af04f0de99f894776f"
+    },
+    {
+      "run": "day9-p2pcal-ec-64m-01",
+      "config": "base/benchmarks/interconnect-P2P_intraserver/thead/PPU/case_config.p2p-calibration-64m.yaml",
+      "message_bytes": 67108864,
+      "iterations": 1024,
+      "one_way_gb_s": 4.8086,
+      "per_iteration_ms": 13.9561,
+      "elapsed_seconds": 14.2911,
+      "summary_sha256": "0bff8ccbf7a916faee50e8346c289eb5ad26104fd5989b085030a4336e10233a"
+    },
+    {
+      "run": "day9-p2pcal-ec-256m-01",
+      "config": "base/benchmarks/interconnect-P2P_intraserver/thead/PPU/case_config.p2p-calibration-256m.yaml",
+      "message_bytes": 268435456,
+      "iterations": 256,
+      "one_way_gb_s": 4.8319,
+      "per_iteration_ms": 55.5549,
+      "elapsed_seconds": 14.2221,
+      "summary_sha256": "aaa347269f177158a26dbfd66e00e24aa246d047989fca418933b8df4cbe947f"
+    }
+  ],
+  "raw_evidence_available_in_this_checkout": false,
+  "hardware_revalidated_during_integration": true,
+  "boundary": "Calibration pins the fixed iteration counts of the scan configs; it is not a performance baseline. Observed values derive from the site result root; the per-point medians and one-way payload contract are re-derivable from p2p-calibration-plan.json plus these summary hashes."
+}
