@@ -47,6 +47,15 @@
 当前版本无需 candidate opt-in，历史失败和单次资格状态保留。历史测量、稳定性和项目例外见
 [P800 验证说明](kunlunxin/validation.md)。本次文档整理与离线检查没有重跑硬件。
 
+## 2026-10-19 — 平头哥 PPU Base 首次集成（待发布）
+
+- 接入 PPU-ZW810E provider（16 卡候选 runtime）：显式物理选卡、UUID/BDF 绑定、`ppu-smi` 监控、有界容器与三层身份校验。
+- Base 覆盖 12 个可执行 Case 与 3 个提前跳过 Case：单卡计算/传输/内存、AllReduce 2–16 rank 契约、双 rank P2P；共享 day-6 契约双芯片化，P800 行为不变。
+- AllReduce 资格按部分完成条款以 8 rank 五次完成；16 rank 需独占窗口，迭代数不得跨 rank 数外推。
+- P2P 对标 ascend `p2p-single-node-v1` 扫点协议：单卡双芯拓扑按同卡两芯/跨卡 staged 两对 × 4 规格建矩阵，校准钉扎 ITERS；配置 sha256 名单强制显式 `--case-config`，计划与名单一致性由守卫测试保障。
+- 执行器 rank 证据按数字序收集，修复两位数 rank 运行的假失败；监控采样与 run 判定语义保持共享。
+- 公开文档 `docs/thead/`、公开分发检查、FP8 唯一跳过与 staged 路径口径均有独立证据；站点信息不入源码分发。
+
 ## 2026-09-12 — Ascend Base 与 Operation 集成（待发布）
 
 - 同步 Base 短时默认配置、容量测试结束等待配置及 `npu-smi` 进程占用检查；保留设备 lease 和独立状态。

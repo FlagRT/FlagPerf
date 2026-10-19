@@ -29,6 +29,25 @@ INT8 的 K-major 前置条件（`b.t().contiguous().t()`，双操作数 K 维连
 唯一有效路径：naive 布局实测 0.176 TOPS（回退证据保留），转置视图直达调优内核。
 FP16 真实调用形态（`F.linear`、`mm(x, W.t())`）与裸 mm 同档满速，无布局陷阱。
 
+### P2P 扫点矩阵（p2p-single-node-v1，2026-10-19）
+
+单卡双芯拓扑下，同卡两芯与跨卡两芯的通信路径带宽不同。对标 ascend 同名扫点协议，
+以两对代表设备 × 4 个消息规格建 8 cell 矩阵（每 cell 3 次重复，方向钉死 rank0→rank1）：
+ITERS 由 64 GiB 单点校准钉扎（目标 ~60 s 窗口；共享契约 ITERS ≤ 200000，故同卡 4 MiB
+cell 约 25 s）。size 曲线在 monitor on 下采集（与 ascend monitor-off 曲线的偏离及
+原因记录在计划文件）；monitor A/B（off,on,on,off,off,on，钉在同卡 64 MiB cell）
+中位数偏差 0.07 %（≤ 5 %）。cell 中位 CV：0.18%, 0.15%, 0.06%, 0.05%, 0.40%, 0.45%, 0.39%, 0.33%。
+
+| cell（单向，staged 口径） | 4 MiB | 16 MiB | 64 MiB | 256 MiB |
+|---|---:|---:|---:|---:|
+| 同卡两芯（14→15） | 33.23 | 42.18 | 44.64 | 42.37 |
+| 跨卡 staged（7→8） | 4.78 | 4.8 | 4.81 | 4.8 |
+
+同卡两芯约为跨卡 staged 的 9 倍，两条路径均为主机转运口径（`P2P=disabled`）；
+数字只覆盖钉死方向与实测设备对，不外推到反向、其他设备对或直连互联。
+cell 明细、逐 run 值与验收判定见
+[资格计划](../../base/benchmarks/interconnect-P2P_intraserver/thead/PPU/p2p-qualification-plan.json)。
+
 ## 无设备检查
 
 使用 Python 3.11 或更新版本，先安装[宿主依赖](../../base/requirements-host.txt)。
@@ -71,7 +90,8 @@ python3 -B -m unittest discover -s base/tests -p 'test_*.py'
 3. **跨机 2 条不适用**：单机执行器只解析 `nnodes=1`，且配对目标机未上线；
    目标机上线不自动扩大已冻结范围。
 4. **P2P 为 staged 路径**：当前服务器无卡间直连，NCCL 经主机内存转运；
-   证据按 `P2P=disabled` 如实标注，不冒充直连带宽。
+   证据按 `P2P=disabled` 如实标注，不冒充直连带宽。扫点矩阵同样只覆盖
+   staged 路径与钉死方向。
 5. **通信数字的口径**：本轮全部同机通信吞吐基于 PCIe + 主机转运路径实测；
    若目标硬件的直连互联（厂商标称 700 GB/s 量级）在其他机型启用，
    须重新测量，不能沿用本文数字。
