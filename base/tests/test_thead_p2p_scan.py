@@ -132,6 +132,38 @@ class TheadP2PScanProtocolTests(unittest.TestCase):
         self.assertEqual(self.qualification["acceptance"]["per_cell_cv_pct_max"], 5.0)
         self.assertEqual(self.qualification["acceptance"]["monitor_median_delta_pct_max"], 5.0)
 
+    def test_qualification_record_binds_plan_manifest_and_calibration(self):
+        vendor = BASE_DIR / "vendors" / "thead" / "torch210_ppu_candidate"
+        record = json.loads((vendor / "p2p-qualification.json").read_text(encoding="utf-8"))
+        self.assertEqual(record["protocol_id"], "p2p-single-node-v1")
+        self.assertEqual(record["status"], "passed")
+        self.assertEqual(record["source_plan"]["sha256"],
+                         sha256_file(CASE_DIR / "p2p-qualification-plan.json"))
+        self.assertEqual(record["evidence"]["run_count"], 30)
+        self.assertEqual(record["evidence"]["preserved_failed_attempts"], 17)
+        self.assertEqual(record["evidence"]["sha256"],
+                         sha256_file(vendor / "p2p-evidence-manifest.json"))
+        self.assertLessEqual(record["acceptance"]["maximum_observed_cv_pct"],
+                             record["acceptance"]["maximum_allowed_cv_pct"])
+        self.assertLessEqual(abs(record["acceptance"]["monitor_median_delta_pct"]),
+                             record["acceptance"]["maximum_absolute_monitor_median_delta_pct"])
+        self.assertIs(record["decision"]["production_eligible_for_declared_scope"], False)
+        self.assertEqual(record["published_contract"]["runtime_config_sha256"],
+                         record["published_contract"]["runtime_config"]["sha256"])
+        self.assertEqual(record["published_contract"]["calibration_record_sha256"],
+                         sha256_file(vendor / "p2p-calibration-record.json"))
+        calibration = json.loads((vendor / "p2p-calibration-record.json").read_text(encoding="utf-8"))
+        self.assertIs(calibration["formal_baseline_eligible"], False)
+        self.assertEqual(calibration["source_plan_sha256"],
+                         sha256_file(CASE_DIR / "p2p-calibration-plan.json"))
+        manifest = json.loads((vendor / "p2p-evidence-manifest.json").read_text(encoding="utf-8"))
+        self.assertEqual(len(manifest["runs"]), 38)
+        passed = sum(1 for run in manifest["runs"] if run["run_status"] == "passed")
+        partial = sum(1 for run in manifest["runs"] if run["run_status"] == "partial")
+        self.assertEqual((passed, partial), (35, 3),
+                         "24 scan + 3 monitor-on + 8 calibration passed; "
+                         "only the 3 monitor-off A/B legs are partial by design")
+
 
 if __name__ == "__main__":
     unittest.main()
