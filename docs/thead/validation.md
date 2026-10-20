@@ -77,7 +77,7 @@ acblas 隔离子进程（正确性回读）、ppu-smi 静态容量；宿主执�
 acblas 子进程按样本数与下限双条件计时，官方闭源工具在同一测量点内重复调用并取
 各次原值中位数；参考监控范围 15 秒。工具链无 DMI 等价阈值诊断，诊断层为合规校验
 语义；computation-INT8 因 `acblasGemmEx` int8 输出错误与 `acblasLtMatmul` 厂商 JIT 崩溃
-被排除（probes/day9/toolkit T8 证据）；computation-BF16 保持注册 case，厂商内核缺陷
+被排除（probes/day9/toolkit T8 证据）；缺陷详情、复现参数与复测协议见 [acblas 已知问题](acblas-issues.md)；computation-BF16 保持注册 case，厂商内核缺陷
 见下。参数、协议与运行方式见
 [Toolkit 使用说明](../../base/toolkits/_common/thead/PPU/README.md)。
 
