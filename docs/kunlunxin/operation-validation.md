@@ -238,3 +238,30 @@ mmap 组过滤前后原始字节一致。读取阶段的 60 条记录均按 PID/
 p800-native-buffer-20261020T145815Z、p800-native-mmap-20261020T150603Z、
 p800-converted-20261020T151702Z、p800-uninstrumented-20261020T152232Z；
 完整 artifacts、postflight、容器消失和租约释放均核验通过。
+
+### 2026-10-21 联合采集：链路已核验，原缺失未复现
+
+在同一进程同时保存原生过滤器入口/出口的记录字节、保留偏移、CUPTI 返回的 kernel
+及 enable/disable/flush 生命周期，再按进程、采集会话和 correlation 对应最终 trace。
+helper 只在本轮诊断容器加载，不安装进 runtime，不改变原 API 参数、返回值和记录。
+这是原生过滤器入口之后的观察，尚未直接观察设备端采样；原生入口缺失时仍须调查
+设备采集、缓冲和停止采样，不能直接判定硬件或某个库负责。
+
+更正比较范围：10 月 20 日分批原生/转换/无诊断库对照未带 `--profiling full`，
+与原失败调用条件并不完全一致。本轮恢复 `--profiling full`，原 daily Gems div/tanh FP16、
+diagnostics off、TRACE 关闭；预先限定最多八个独立 CLI run，发现不完整路由窗口即停止。
+八次均未复现：16 任务、32 首次/缓存窗口通过，48 条路由关联与独立 timeline 的
+280 条提交关联均有原生输入、保留记录、CUPTI 返回和最终 kernel，逐条一一对应。
+24 个进程、48 个采集会话，无记录槽溢出或无效快照；376 条原生记录均保留且过滤前后字节一致。
+
+完整外层 2512 文件 SHA-256、八个内层 artifacts、probe/measure 正确性、postflight、
+容器消失及租约释放已核验。内层八次仍 partial/退出 2，外层退出 0 仅表示调度和封存成功；
+共享卡无独占性能资格，timeline measured，六组计数器仍 not-supported。
+目录为 `/data1/flagperf-kzhang519/operation/p800-chain-full-20261020T163022Z`
+（UTC 10 月 20 日，北京时间 10 月 21 日）。执行代码 e2f42fd3，运行源码指纹仍为
+`b341b549aeb5c22e63c8bdfa799b312308734282de8b461770e688439e3bd988`。
+
+诊断会影响时序；本轮未取得失败同次的逐层证据，不能给原缺失分配责任或声明修复。
+原 tanh FP16 首次反向 correlation 30 缺 kernel 的 partial 与原始文件不变，
+Operation 保持 validated:false。helper 与分析脚本位于 `/tmp/p800-operation-chain-20261021/`，
+不据成功复测晋级，也不扩大本轮到全量或独占验收。
