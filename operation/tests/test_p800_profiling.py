@@ -96,9 +96,9 @@ class P800ProfilerTests(unittest.TestCase):
             _,plan=cli.resolve(args)
             self.assertEqual(plan['tasks'][0]['profiling_mode'],mode)
         adapter=Adapter()
-        for phase in ('reference','probe','measure','memory','trace'):
+        for phase in ('reference','measure','memory','trace'):
             self.assertEqual(adapter.environment(7,phase)['XPU_CUPTI_ENABLE_DEVICE'],'')
-        for phase in ('profiling','profile-target'):
+        for phase in ('probe','profiling','profile-target'):
             self.assertEqual(adapter.environment(7,phase)['XPU_CUPTI_ENABLE_DEVICE'],'0')
             self.assertEqual(adapter.environment(7,phase,True)['XPU_CUPTI_ENABLE_DEVICE'],'7')
 

@@ -36,7 +36,7 @@ def union_duration(intervals):
     return float(total)
 
 
-def analyze_events(events, device=0):
+def analyze_events(events, device=0, *, count=5, marker=MARKER):
     """Require host launch + explicit ac2g flow + matching device correlation.
 
     Host windows select host launches only. Device timestamps are never compared
@@ -47,16 +47,16 @@ def analyze_events(events, device=0):
         if not isinstance(events, list) or any(not isinstance(e, dict) for e in events):
             return partial('traceEvents must be a list of event objects')
         ranges = []
-        for i in range(5):
+        for i in range(count):
             matches = [e for e in events if e.get('ph') == 'X' and e.get('cat') == 'user_annotation'
-                       and e.get('name') == MARKER + str(i)]
+                       and e.get('name') == marker + str(i)]
             if len(matches) != 1:
-                return partial('requires five unique complete target ranges')
+                return partial('requires unique complete target ranges')
             e = matches[0];lo = number(e['ts']);dur = number(e['dur'])
             if dur <= 0:
                 return partial('invalid target duration')
             ranges.append((e, lo, lo + dur))
-        if any(ranges[i][2] > ranges[i+1][1] for i in range(4)):
+        if any(ranges[i][2] > ranges[i+1][1] for i in range(count-1)):
             return partial('overlapping or unordered target ranges')
         # Autograd may launch on a separate host thread. Require an explicit
         # fwdbwd flow from a CPU forward op inside the target to the containing
@@ -130,11 +130,11 @@ def analyze_events(events, device=0):
             kernels.append({'name': e.get('name'), 'call': call, 'start': lo, 'duration': dur,
                             'correlation': corr, 'device': device, 'stream': args.get('stream'),
                             'pid': e.get('pid'), 'tid': e.get('tid')})
-        if {k['call'] for k in kernels} != set(range(5)) or {k['correlation'] for k in kernels} != set(launches):
+        if {k['call'] for k in kernels} != set(range(count)) or {k['correlation'] for k in kernels} != set(launches):
             return partial('not every target call and launch has a correlated device kernel')
         origin = min(k['start'] for k in kernels)
         calls = []
-        for i in range(5):
+        for i in range(count):
             kk = [k for k in kernels if k['call'] == i]
             spans = [(k['start'],k['start']+k['duration']) for k in kk]
             calls.append({'kernel_count': len(kk), 'kernel_sum_us': float(sum(k['duration'] for k in kk)),

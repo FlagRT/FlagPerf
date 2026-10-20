@@ -3,6 +3,7 @@
 """Isolated CPU oracle, routing probe and uninstrumented measurement phases."""
 import argparse
 import copy
+from contextlib import nullcontext
 import importlib.util
 from importlib import metadata
 import os
@@ -260,16 +261,19 @@ def device_phase(root, task, phase):
         print('OPERATION_TARGET_BEGIN', file=sys.stderr, flush=True)
         sys.setprofile(profile)
         try:
-            before = time.monotonic()
-            if observer: observer.begin('first')
-            out = target()
-            adapter.synchronize()
-            if observer:
-                observer.end(time.monotonic() - before)
-                before = time.monotonic();observer.begin('cached')
+            window = getattr(adapter, 'probe_window', lambda root, observer, name: nullcontext())
+            with window(root, observer, 'first'):
+                before = time.monotonic()
+                if observer: observer.begin('first')
                 out = target()
                 adapter.synchronize()
-                observer.end(time.monotonic() - before)
+                if observer: observer.end(time.monotonic() - before)
+            if observer:
+                with window(root, observer, 'cached'):
+                    before = time.monotonic();observer.begin('cached')
+                    out = target()
+                    adapter.synchronize()
+                    observer.end(time.monotonic() - before)
         finally:
             sys.setprofile(None)
             print('OPERATION_TARGET_END', file=sys.stderr, flush=True)

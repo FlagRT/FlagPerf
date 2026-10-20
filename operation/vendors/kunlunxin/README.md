@@ -13,6 +13,11 @@ Operation 独立锁保持 **`validated:false`**；Base 的发布声明不适用�
 镜像、Python 和包的精确版本见[独立锁](profiles/p800-xpytorch29.json)；tag 或 `--image` 别名必须解析为同一 image ID。
 镜像没有验证匿名 registry pull，需由使用者取得。
 
+无公共 registry 地址时，可由获准的镜像提供方用 `docker image save --output p800-runtime.tar IMAGE` 离线交付，
+接收方执行 `docker image load --input p800-runtime.tar`，再用 `docker image inspect IMAGE --format '{{.Id}}'`
+核对独立锁中的完整 image ID。`IMAGE` 取锁文件中的 tag；传输前后另核对归档 SHA-256。
+执行器只接受锁定 ID，换 tag 或导入成功不代表包、设备或算子验收通过；本项目不附带镜像归档。
+
 ```bash
 # 0 仅为示例：先确认实际设备授权与占用。
 python3 -B operation/run.py run --vendor kunlunxin \
@@ -75,9 +80,11 @@ local 只有当前命名空间的逻辑锁，记录 externally-managed，不宣�
   FlagGems worker 只在 CPU 输入/参数构造后显式调用公开的 `flag_gems.enable()`。
   跨 case 复用时检查构造张量仍在 CPU。两种 oplib 和不同阶段的 worker 独立。
 - trace 设置 `XPU_ENABLE_PROFILER_TRACING=1`，采集公共 CPU 事件诊断；它不等价于设备 kernel 时间线。
-  profiling/profile-target 同样设置为 1，并通过 `XPU_CUPTI_ENABLE_DEVICE` 选择已绑定的逻辑设备；
-  Docker 单设备命名空间为 0，local 为调用者选择的逻辑编号。probe/measure/memory tracing 为 0，CUPTI 设备选择为空，避免污染干净测量。
+  probe/profiling/profile-target 同样设置为 1，并通过 `XPU_CUPTI_ENABLE_DEVICE` 选择已绑定的逻辑设备；
+  Docker 单设备命名空间为 0，local 为调用者选择的逻辑编号。measure/memory tracing 为 0，CUPTI 设备选择为空，保持计时进程独立。
 - probe/measure 对比解释器、包、hook 哈希、关键环境、输入、源码、profile 和注册状态；不同则 failed。
+  只允许 probe 的 tracing=1、CUPTI=已绑定逻辑号到 measure 的 tracing=0、CUPTI=空串这两项预期转换，
+  原始身份不改写，转换记录在 `phase_consistency.expected_profiler_environment`；其他环境或运行身份变化仍失败。
   计时进程没有 Python 跟踪，计时后另做同输入正确性检查。memory 按公共 allocator-window 协议报告，不是整卡 HBM 使用量。
 - 宿主默认复用 Base provider 的严格占用检查。锁前观察，持有 `/tmp/flagperf-base-device-leases` 中的 UUID 锁及
   `/tmp/flagperf-p800-<UUID>.lock` 兼容锁后重查；这些路径是 Base/Toolkit 共用协议，不能更换以绕过互斥。
@@ -149,20 +156,29 @@ local 验证在调用者自建的锁定镜像容器中执行，由外层持有�
 以上独立批次保留各自源码身份；新解析器不回写旧报告。没有取得独占性能资格，不晋级 Operation runtime。
 宿主还发现 `xprofiler` 工具及信号配置入口，但信号定义、计数单位、共享卡进程隔离和目标归因尚未验证；
 工具存在不等于六组指标已经可用。未用整卡观测或兼容 CUDA 字段填充缺失的计数器。
+已核对的 XRE 5.0.21.47 工具包未提供事件配置生成脚本。硬件计数器接入还需要适配该工具版本的配置、
+各信号的含义/单位与取样规则、丢样检测及进程或独占窗口归因；工具帮助中的 API/SSE 采集不是这些指标的替代品。
+不同芯片的本地存储和执行单元没有天然一一映射关系，不能仅因 Ascend 有同名组便填入推测值。
 
 ## 路由证据与结果边界
 
-P800 通过观察现有调用取证，不替换或包装数学库/后端。路由通过范围包括已核验的 abs/add 简单前向目标：
-实际 kernel 名称须分别为 `abs_func_kernel_rank_1` / `add_func_kernel_rank_1`，最近一层 FlagGems ops/fused 调用祖先须为对应目标实现。
-其他名称、维度实现及尚无成功目标证据的 mm 保持 partial；新增通过范围须另行审阅实际实现与启动证据。
-另外支持 FP32/FP16/BF16 的全张量 sum 前向：最近实现须为 `/_kunlunxin/ops/sum.py` 的 `sum`，
-首次与缓存窗口均须按顺序完整执行 `sum_kernel_1`、`sum_kernel_2`，每次实际 C 调用正常返回并完成同步。
-缺阶段、顺序错误、辅助调用、未核验类型或反向不能套用此规则。三种浮点类型已做 Docker daily 复测，local 另验证 FP16。
-首次和缓存窗口均须观察到
-真实 `self.launch` 的 C 调用正常返回，并完成同步。目标区间须有完整 begin/end。
-仅 Python 调用、编译、注册、辅助复制/分配/transpose 或 CPU profiler 事件均不能使路由通过。
-原生、复合及反向目标缺少充分证据时保持 partial；注册 FlagGems 后使用原生实现不自动等同于 CPU fallback。
-CPU 目标输出判 failed；尚未建立覆盖所有原生实现的通用 CPU fallback 检测器。
+P800 在独立 probe 的首次/缓存原调用中观察 ATen 派发、主机 launch、`ac2g` 与设备 kernel，
+不替换数学实现，不在 measure 中启用 Python dispatch 或 profiler。
+保存 `route-first-trace.json`、`route-cached-trace.json` 及对应 `*-dispatch.json`。
+每个有设备输入的非元数据计算都须在自己的标记中关联正确设备 kernel；每个 kernel 都须归于计算或显式准备操作。
+只有复制、分配、view/transpose、注册、编译、另一线程的邻近 kernel 或不完整关联均不能通过。
+CPU 梯度权重准备单列记录；设备输入产生 CPU 张量或最终输出不在目标设备时失败。
+
+锁定 XPyTorch 的 `linear` 使用不经 Python dispatch 的 C++ `LinearFunction`。该特例要求唯一、完整的
+CPU 记录及同线程 launch，FP32/FP16 的 XBLAS FC kernel，或 BF16 的两组 findmax/cast 加 FC 完整有序链。
+辅助分配单独归类，缺转换、仅辅助 kernel、错误类型/线程/设备或重复记录均不能套用此规则。
+`aten::_has_same_storage_numel` 仅在该目标中作为存储元数据检查；其他目标不据此豁免。
+
+目标日志 begin/end、首次及缓存证据、同步和正确设备输出须同时成立。新 dispatch 证据存在而不完整时保持 partial，
+不能被旧 abs/add/sum 的 Python launcher 白名单覆盖；旧证据仍按原规则解释，不回写历史。
+目标抛错时保留原异常，并尽可能导出失败 trace；导出失败不能覆盖算子异常。
+路由通过表示上述目标设备执行证据成立，不保证所选 Gems 路径一定对应专用 Gems kernel，
+也不构成覆盖所有 C++ 后端内部指令和 CPU fallback 的通用证明。注册 Gems 后走原生设备实现不自动等同 CPU fallback。
 
 2026-10-13 的共享卡最小验证范围：
 
@@ -177,7 +193,38 @@ CPU 目标输出判 failed；尚未建立覆盖所有原生实现的通用 CPU f
 仅错误关键词不能分类，未知异常仍 failed。没有修改库、缩小 smoke 规模或改变容差来绕过失败。
 以上 2026-10-13 最小验证不代表全量验收；后续覆盖范围见下节，仍不据此晋级 Operation runtime。
 
-## 已执行的覆盖范围（2026-10-14）
+## 已执行的覆盖范围
+
+### 2026-10-20 最终源码复测
+
+在同一冻结运行源码上重新执行 52 case、七种 dtype、双路径 daily，按不重叠 case 分三批使用不同物理 UUID。
+总计 728 个唯一 case/dtype/oplib：420 not-applicable；308 个适用项全部尝试，结果为 275 partial、27 failed、6 blocked。
+三批各自的身份保留，不能据此声称每张卡都完成全矩阵。共享性能不具备独占资格，不生成合格性能比值。
+路由为 286 passed、1 partial、21 缺失；275 项 allocator memory measured，其余 33 项因原失败/门禁 skipped。
+所有批次的封存、容器消失、postflight 和租约释放均核验；没有未解决的编排或清理错误。
+
+其中 Gems tanh FP16 首次 trace 有前向 launch，但缺相应 kernel 事件，缓存关联完整，原路由保持 partial。
+同保存输入另做一次 replay，正确性/路由通过；新结果不覆盖原记录，也不能证明事件缺失的最终原因。
+原生 FP32 mm/addmm/bmm 数值超差、Gems 编译/运行/autotune 错误继续保留，未改 workload、容差、算子或编译器。
+
+同一源码另做 abs/linear/relu、三种浮点、双路径 daily/full 的 18 项代表验证：
+18 项路由 passed、allocator memory 和设备 timeline measured；六组计数器各自 not-supported，任务和 full 总体仍 partial。
+local 七个代表 daily/timeline 共 14 项为 11 partial、2 failed、1 blocked，路由 12 passed、2 缺失；不是 local 全矩阵。
+无 `.git` 的纯源码副本也实际执行锁定本地镜像的 abs FP32 双路径，正确性/路由通过、共享性能 partial；
+这不代表公开 registry、跨主机镜像获取或裸宿主安装已验证。
+
+relu 三种浮点双路径的 6 组观察器开/关对照使用同保存输入，两侧正确性通过、kernel 名称及数量相同。
+该检查只覆盖所列 6 组，不是全算子观察中性证明。profile 子进程实际执行时分别触发 watchdog 与 SIGTERM，
+本轮子进程和容器均消失、postflight 与租约释放正常；中断及采集失败状态原样保存。
+最终原生 abs、数值失败的原生 mm FP32、编译阻塞的 Gems mm FP16 均实际同输入 replay；后两项原异常仍存在。
+diagnose 的 passed 表示公共检查覆盖完整，仍须读取其中 correctness failed，不能解读为算子通过。
+最终三批离线聚合及再次重建确定性已核对，report 退出 0 不改变失败任务。
+
+本轮 CPU 回归：Operation 127、P800 标准库子集 81、Base 256（1 skip）、Ascend Toolkit 80、公开分发 13 项通过。
+Ascend/旧昆仑芯代表 Docker/local dry-run 与修订前逐字节一致；未执行 Ascend 实机对照。
+完整功能验收仍受六组计数器和独占性能等限制，Operation 保持 validated:false。
+
+### 历史评估（2026-10-14）
 
 以下为锁定栈上 Docker / 单卡共享授权模式的实际评估；local 的代表验证和补充路由复测范围另列于下文。
 
@@ -282,7 +329,7 @@ native_dropout FP16 的测量栈进一步定位到反向 `grad_output.contiguous
 
 单元测试不占用实际设备。全套 Operation 回归还需 CPU PyTorch 与 PyYAML。
 公开 CI 检查本页 Docker/local 示例、全类型分母、多设备/尺寸规划和 P800 标准库负例；
-这些检查不证明设备可用或底层算子通过。当前没有原生全目标路由证明，也没有独占性能验收；
+这些检查不证明设备可用或底层算子通过。首次/缓存设备路由按上文逐目标证据判定，不是通用 CPU fallback 的完全证明；仍没有独占性能验收；
 设备 timeline 已接入独立 XPU CUPTI 采集；full 硬件计数器尚未支持，完整适配验收仍未完成。运行栈不自动晋级。
 聚合要求相同主机、镜像与执行模式；不同 UUID/profile/源码/协议保留独立行。
 源编排、清理、postflight 或租约释放错误会拒绝聚合；算子本身的 failed/blocked/partial 保留。

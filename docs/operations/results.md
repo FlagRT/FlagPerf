@@ -29,6 +29,15 @@
 profiler、显存和失败诊断均不插入普通性能计时区间，但会增加任务总耗时。
 `full` 尝试额外性能指标组，可用范围由设备、依赖与采集能力决定；不可用项不会当作测得零值。
 
+P800 在独立 probe 中，分别把首次/缓存的 ATen 设备计算关联到同线程主机 launch、`ac2g` 流及正确设备 kernel。
+`route-*-trace.json` 与 `route-*-dispatch.json` 保存原始事件、逐计算关联和缺失原因；
+锁定栈的 C++ `LinearFunction` 另用明确的 CPU 记录及经核对的 XBLAS kernel 链证明。
+仅复制/分配、邻近 kernel 或不完整关联不能通过；观察到设备输入转到 CPU 时失败。
+未观察到回退不等于已经排除所有 C++ 内部回退；路由通过也不保证 Gems 路径采用专用 Gems kernel。
+probe 与 measure 只允许厂商指南记录的两项 profiler 环境转换，其他身份变化仍失败；计时进程不开启该观察器。
+共享卡的性能资格始终 partial，即使正确性、路由、memory 或 timeline 各自通过，也不生成合格性能比值。
+完整 P800 协议和硬件计数器限制见[厂商指南](../../operation/vendors/kunlunxin/README.md)。
+
 ## 结果文件
 
 终端 `Report:` 指向阅读入口，`Summary:` 指向总状态。每个任务子目录保存自己的配置、输入/参考、

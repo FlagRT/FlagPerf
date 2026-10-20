@@ -19,7 +19,7 @@ class Observer:
     def __init__(self, task, backward):
         self.case, self.oplib, self.backward = task['case'], task['oplib'], backward
         self.dtype = task.get('dtype')
-        self.windows = {};self.window = None;self.pending = {};self.compiling = {}
+        self.dispatch = {};self.windows = {};self.window = None;self.pending = {};self.compiling = {}
 
     def begin(self, name):
         self.window = {'launches':[], 'compilation_calls':0, 'compilation_attempt_s':0, 'complete':False}
@@ -55,7 +55,7 @@ class Observer:
 
     def record(self):
         return {'protocol':'p800-xpu-launch-v1', 'case':self.case, 'oplib':self.oplib,
-                'backward':self.backward, 'dtype':self.dtype, 'windows':self.windows}
+                'backward':self.backward, 'dtype':self.dtype, 'windows':self.windows, 'dispatch':self.dispatch}
 
 
 def meaningful(launch, case):
@@ -94,10 +94,26 @@ def route(probe, log):
                             all(meaningful(r, case) for r in target))
     passed = (complete and on_device and not data.get('backward',True) and data.get('oplib') == 'flaggems'
               and data.get('protocol') == 'p800-xpu-launch-v1' and all(proven.values()))
-    return {'status':'failed' if devices and not on_device else 'passed' if passed else 'partial',
+    dispatch = data.get('dispatch', {})
+    observed = [dispatch.get(name, {}) for name in ('first', 'cached')]
+    fallback = any(row.get('target_cpu_fallback') is True for row in observed)
+    dispatch_passed = (data.get('protocol') == 'p800-xpu-launch-v1' and complete and on_device
+                       and all(row.get('protocol') == 'p800-dispatch-correlation-v1' and row.get('status') == 'passed'
+                               for row in observed))
+    if dispatch:
+        # Present but incomplete/newer evidence must not be bypassed by an old whitelist.
+        passed = dispatch_passed
+    result = {'status':'failed' if fallback or devices and not on_device else 'passed' if passed else 'partial',
             'output_devices':devices, 'target_interval_complete':complete, 'windows':windows,
             'cached_launch_proven':all(proven.values()),
             'target_cpu_fallback':True if devices and all(d == 'cpu' for d in devices) else None,
             'fallback_detection':'CPU target output fails; no universal native fallback detector established',
             'boundary':'reviewed simple forward Gems implementation ancestry + actual XPULauncher C return + synchronization; not a device timeline',
             'reason':None if passed else 'native/compound/backward target dispatch or required launcher evidence is not proven'}
+    result['dispatch'] = dispatch
+    if dispatch:
+        result['target_cpu_fallback'] = fallback
+        result['fallback_detection'] = 'device-input dispatch to CPU fails; device computations require correlated kernels; opaque internal fallback is not independently instrumented'
+        result['cached_launch_proven'] = dispatch_passed
+        result['boundary'] = 'first/cached ATen device computation windows require runtime launch, ac2g and device kernel; metadata excluded explicitly; not a hardware counter or proof of every internal backend instruction'
+    return result

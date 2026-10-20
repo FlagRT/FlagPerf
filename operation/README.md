@@ -26,6 +26,9 @@ Operation 运行栈仍为 `validated:false`；该参数与控制工作量的 `--
 已接入独立 allocator 显存诊断与 `--profiling timeline` 设备事件采集，并完成 Docker/local 代表验证；
 `--profiling full` 的六组硬件计数器仍未支持。诊断采集成功不改变原任务的路由或共享性能资格。
 P800 的路由证据边界、已知执行/数值失败和显式共享模式见上述厂商说明，不能外推为全算子验收通过。
+P800 probe 分别保存首次及缓存调用的 ATen 派发、主机 launch 与关联设备 kernel；
+只有复制、分配、设备输出或不完整关联不能判为路由通过。该观察不插入正式计时，
+也不构成覆盖 C++ 后端全部内部指令的通用 CPU fallback 证明。
 
 所有命令从 **FlagPerf 仓库根目录** 执行。先选当前空闲设备，下面的 `0` 是物理编号示例。
 Ascend 镜像涉及的特权权限由 `--allow-privileged-root` 显式开启；只在获准使用的主机上运行。

@@ -19,7 +19,7 @@ runtime 设为 `release_stage:validated`、`validated:true`、`validation_status
 
 Operation 不继承 Base/Toolkit 的 `validated:true`。在锁定镜像和 P800 共享授权下，三个源码身份对应的三批 Docker daily 共覆盖 52 个 case 的 728 个唯一 case/dtype/oplib 组合：308 个适用、420 个类型不适用；适用项保留 275 个 `partial`、27 个 `failed` 和 6 个 `blocked`。local 另有 7 个代表 case 的 14 项双路径 smoke：11 `partial`、2 `failed`、1 `blocked`。这些数字是评估覆盖和失败记录，不是 Operation runtime 晋级或单一源码版本的全算子通过声明。
 
-离线检查按三个源码身份分别重建报告，核对源 evidence 哈希、清理/租约字段、公开复放参数和报告确定性；不同源码指纹没有跨组混合。公开测试覆盖 P800 专用 profile 的 Docker/local 示例、全类型分母、多设备/尺寸规划、文档链接和标准库负例；无设备回归不替代硬件复测。原生路由证据、独占性能资格、设备 timeline/full profiling 和底层失败仍有限制，Operation 保持 `validated:false`。完整入口、失败阶段和边界见 [昆仑芯 Operation 指南](../../operation/vendors/kunlunxin/README.md)；原始运行结果不随公开源码分发。
+离线检查按三个源码身份分别重建报告，核对源 evidence 哈希、清理/租约字段、公开复放参数和报告确定性；不同源码指纹没有跨组混合。公开测试覆盖 P800 专用 profile 的 Docker/local 示例、全类型分母、多设备/尺寸规划、文档链接和标准库负例；无设备回归不替代硬件复测。当时的原生路由证据、独占性能资格、设备 timeline/full profiling 和底层失败仍有限制，Operation 保持 `validated:false`。完整入口、失败阶段和边界见 [昆仑芯 Operation 指南](../../operation/vendors/kunlunxin/README.md)；原始运行结果不随公开源码分发。
 
 2026-10-16 新增独立 memory 诊断采集及 XPU CUPTI 设备 timeline。完成 Docker 2 项 smoke、30 项 daily、修正反向跨线程关联后的 18 项 daily，
 以及 local 6 项 daily 代表验证；后两批分别有 15/5 项 memory 与 timeline measured，Gems native_dropout 的 3/1 项测量失败保留。
@@ -28,6 +28,22 @@ sum 浮点前向新增两阶段目标路由证明；原生全目标路由和通�
 各批输入/运行身份和清理分别核验，详情见厂商指南。原任务不因附加采集晋级；full 的六组硬件指标没有已验证的采集器和语义映射，明确记录 not-supported。
 CUDA 兼容 trace 中的 occupancy、grid/block、SM 等未经验证字段不作为 P800 硬件计数器。历史统计与新采集范围分开记录，不改写旧结果。
 历史报告及 `qualification-record.json` 保留当时的 candidate 状态，不回写为新验证结果。
+
+2026-10-20 补充首次/缓存 ATen 派发、主机 launch、`ac2g` 与设备 kernel 关联，以及锁定栈 C++ linear 的专门证据。
+复制、分配、错误设备、缺失/歧义关联和已观察 CPU 转移不能通过；新证据不完整时不能沿用旧白名单放行。
+probe 使用独立进程取证，只允许文档明确的两项 profiler 环境转换；measure 保持无 profiler/dispatch 观察器。
+这是一项有明确边界的目标设备执行证明，不是覆盖 C++ 内部全部指令的通用 fallback 检测器。
+六组硬件计数器仍没有可信配置、语义及单位映射；已查 XRE 5.0.21.47 工具包不足以补齐。
+不将 API/SSE trace 或 CUDA 兼容 occupancy/SM 字段当作这些计数器。完整功能验收未完成，运行栈不晋级。
+
+同日以单一冻结运行源码重新执行 728 个唯一组合（分三批、不同 UUID）：420 not-applicable，
+308 个适用项为 275 partial、27 failed、6 blocked；路由 286 passed、1 partial、21 缺失，allocator memory 275 measured。
+Gems tanh FP16 首次 trace 缺一项 kernel 事件而保持 partial；独立同输入 replay 路由通过，不覆盖原记录。
+三批哈希、清理、postflight、租约释放及离线报告确定性核验通过。另 18 项 abs/linear/relu daily/full 的
+路由、memory、timeline 分别通过，六组计数器仍 not-supported；local 14 项仍含两失败和一编译阻塞。
+同输入 replay 保留原生 mm FP32 数值失败和 Gems mm FP16 编译错误；diagnose 检查完成不等于算子通过。
+profile 子进程 watchdog/SIGTERM 清理及无 .git 纯源码副本的锁定本地镜像代表执行已实测，
+不外推为独占性能、公开镜像获取、local 全矩阵或 Ascend 实机回归通过。完整范围见厂商指南。
 
 ## 无设备检查
 

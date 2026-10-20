@@ -139,7 +139,7 @@ class Adapter(CompatAdapter):
         env = {'DO_NOT_TRACK':'1', 'TORCH_DEVICE_BACKEND_AUTOLOAD':'0',
                'USE_FLAGGEMS':'0', 'XRAY_DEBUG_ENABLE':'0', 'DISABLE_XPYTORCH':'1' if cpu else '0',
                'P800_OPERATION_EXECUTION':'local' if local else 'docker'}
-        profiling = mode in ('profiling', 'profile-target')
+        profiling = mode in ('probe', 'profiling', 'profile-target')
         env['XPU_ENABLE_PROFILER_TRACING'] = '1' if mode == 'trace' or profiling else '0'
         env['XPU_CUPTI_ENABLE_DEVICE'] = str(device if local else 0) if profiling else ''
         if not local:
@@ -239,6 +239,10 @@ class Adapter(CompatAdapter):
         from .routing import Observer
         return Observer(task, backward)
 
+    def probe_window(self, root, observer, name):
+        from .dispatch import capture
+        return capture(root, self, observer, name)
+
     def route(self, probe, log):
         from .routing import route
         return route(probe, log)
@@ -274,7 +278,24 @@ class Adapter(CompatAdapter):
         measured = item['measurement']
         fields = ('vendor_runtime','packages','case_sha256','input_sha256','registration','runtime_config')
         mismatches = [key for key in fields if key not in probe or key not in measured or probe[key] != measured[key]]
-        item['phase_consistency'] = {'status':'failed' if mismatches else 'passed', 'mismatches':mismatches}
+        expected_differences = {}
+        if 'vendor_runtime' in mismatches:
+            from copy import deepcopy
+            observed = deepcopy(probe.get('vendor_runtime', {}))
+            clean = measured.get('vendor_runtime', {})
+            before = observed.get('environment', {})
+            after = clean.get('environment', {})
+            changes = {'XPU_ENABLE_PROFILER_TRACING': ('1', '0'),
+                       'XPU_CUPTI_ENABLE_DEVICE': (str(probe.get('device', '')).removeprefix('cuda:'), '')}
+            if (str(probe.get('device', '')).startswith('cuda:')
+                    and all((before.get(k), after.get(k)) == values for k, values in changes.items())):
+                for key in changes:
+                    before[key] = after[key]
+                if observed == clean:
+                    mismatches.remove('vendor_runtime')
+                    expected_differences = {k: {'probe': a, 'measure': b} for k, (a, b) in changes.items()}
+        item['phase_consistency'] = {'status':'failed' if mismatches else 'passed',
+                                     'mismatches':mismatches, 'expected_profiler_environment':expected_differences}
         if mismatches:
             item.update(status='failed', failure_stage='phase-consistency', diagnosis='probe/measure identity differs')
         shared = item.get('runtime_config',{}).get('sharing_policy') == 'shared-authorized'

@@ -214,6 +214,26 @@ class ExecutionIdentityTests(unittest.TestCase):
         Adapter().qualify_result(item,probe)
         self.assertEqual(item['status'],'partial');self.assertEqual(item['phase_consistency']['status'],'passed')
 
+    def test_probe_tracing_identity_only_allows_exact_documented_environment_transition(self):
+        fields=('vendor_runtime','packages','case_sha256','input_sha256','registration','runtime_config')
+        for kind in ('valid','wrong-device','other-environment','other-runtime','missing-key','wrong-tracing'):
+            probe={k:{'fixture':1} for k in fields}
+            probe.update(device='cuda:0')
+            probe['vendor_runtime']={'environment':{'XPU_ENABLE_PROFILER_TRACING':'1',
+                                                   'XPU_CUPTI_ENABLE_DEVICE':'0','other':'same'},'hook':'same'}
+            measured=copy.deepcopy(probe)
+            measured['vendor_runtime']['environment'].update(XPU_ENABLE_PROFILER_TRACING='0', XPU_CUPTI_ENABLE_DEVICE='')
+            env=probe['vendor_runtime']['environment']
+            if kind=='wrong-device':env['XPU_CUPTI_ENABLE_DEVICE']='7'
+            if kind=='other-environment':env['other']='different'
+            if kind=='other-runtime':probe['vendor_runtime']['hook']='different'
+            if kind=='missing-key':env.pop('XPU_CUPTI_ENABLE_DEVICE')
+            if kind=='wrong-tracing':env['XPU_ENABLE_PROFILER_TRACING']='0'
+            item={'status':'passed','measurement':measured,'runtime_config':{}}
+            Adapter().qualify_result(item,probe)
+            self.assertEqual(item['phase_consistency']['status'],'passed' if kind=='valid' else 'failed',kind)
+            self.assertEqual(env.get('XPU_ENABLE_PROFILER_TRACING'),'0' if kind=='wrong-tracing' else '1')
+
     def test_failed_and_na_tasks_retain_profile_fingerprint(self):
         args=cli.parser().parse_args(['run','--vendor','kunlunxin','--runtime-profile','p800-xpytorch29',
                                      '--device-ids','0','--case','mm','--dtype','FP16','INT32'])
