@@ -9,6 +9,7 @@ import shutil
 import subprocess
 import sys
 import time
+import ctypes
 
 from runtime.evidence import read, write, sha
 from runtime.progress import publish_profile
@@ -16,6 +17,58 @@ from runtime.progress import publish_profile
 MARKER = 'operation_target_'
 COUNTER_GROUPS = ('ArithmeticUtilization', 'PipeUtilization', 'Memory',
                   'MemoryL0', 'MemoryUB', 'ResourceConflictRatio')
+
+
+def counter_interface_probe(probe):
+    """Reject native counter APIs that claim success without writing outputs."""
+    if not isinstance(probe, dict):
+        return {'status': 'unknown', 'reason': 'missing native counter probe'}
+    checks = []
+    for name in ('cuptiDeviceGetNumMetrics', 'cuptiDeviceGetNumEventDomains'):
+        rows = probe.get(name)
+        if (not isinstance(rows, list) or len(rows) != 2
+                or any(not isinstance(row, dict) for row in rows)
+                or [row.get('before') for row in rows] != [0x13579BDF, 0x2468ACE0]):
+            return {'status': 'unknown', 'reason': name + ' probe missing or malformed'}
+        checks.extend(rows)
+    unchanged = all(type(row.get('returncode')) is int and row['returncode'] == 0
+                    and type(row.get('after')) is int and row['before'] == row['after'] for row in checks)
+    if unchanged:
+        return {'status': 'not-supported',
+                'reason': 'native metric/domain count APIs returned success without writing output values',
+                'evidence': {'probed': ['metric-count', 'event-domain-count'],
+                             'output_unchanged': True}}
+    return {'status': 'unknown', 'reason': 'probe did not establish a usable counter contract'}
+
+
+def probe_active_counter_interface(device):
+    """Probe the CUPTI shim already loaded by the XPU runtime, never load a new one."""
+    try:
+        paths = []
+        for line in Path('/proc/self/maps').read_text().splitlines():
+            path = line.split()[-1] if line.split() else ''
+            if path.startswith('/') and 'libcupti.so' in path and path not in paths:
+                paths.append(path)
+        if len(paths) != 1:
+            return {'status': 'unknown', 'reason': 'expected one active CUPTI library', 'libraries': paths}
+        mode = getattr(os, 'RTLD_NOLOAD', 4) | getattr(ctypes, 'RTLD_LOCAL', 0)
+        library = ctypes.CDLL(paths[0], mode=mode)
+        probe = {}
+        for name in ('cuptiDeviceGetNumMetrics', 'cuptiDeviceGetNumEventDomains'):
+            fn = getattr(library, name)
+            fn.argtypes = [ctypes.c_int, ctypes.POINTER(ctypes.c_uint)]
+            fn.restype = ctypes.c_int
+            probe[name] = []
+            for initial in (0x13579BDF, 0x2468ACE0):
+                value = ctypes.c_uint(initial)
+                code = fn(device, ctypes.byref(value))
+                probe[name].append({'returncode': code, 'before': initial, 'after': value.value})
+        result = counter_interface_probe(probe)
+        result.update(library=paths[0], library_sha256=sha(Path(paths[0])), device=device, probe=probe,
+                      boundary='read-only API output-contract probe; not a hardware capability verdict or a zero-drop guarantee')
+        return result
+    except (OSError, AttributeError, TypeError, ValueError) as exc:
+        return {'status': 'unknown', 'reason': 'native counter probe failed: ' + str(exc)}
 
 
 def number(value):
@@ -130,8 +183,20 @@ def analyze_events(events, device=0, *, count=5, marker=MARKER):
             kernels.append({'name': e.get('name'), 'call': call, 'start': lo, 'duration': dur,
                             'correlation': corr, 'device': device, 'stream': args.get('stream'),
                             'pid': e.get('pid'), 'tid': e.get('tid')})
-        if {k['call'] for k in kernels} != set(range(count)) or {k['correlation'] for k in kernels} != set(launches):
-            return partial('not every target call and launch has a correlated device kernel')
+        observed_calls = {k['call'] for k in kernels}
+        observed_correlations = {k['correlation'] for k in kernels}
+        if observed_calls != set(range(count)) or observed_correlations != set(launches):
+            result = partial('not every target call and launch has a correlated device kernel')
+            result['expected_calls'] = list(range(count))
+            result['observed_calls'] = sorted(observed_calls)
+            result['missing_calls'] = sorted(set(range(count)) - observed_calls)
+            result['expected_correlations'] = sorted(launches)
+            result['observed_correlations'] = sorted(observed_correlations)
+            result['missing_correlations'] = sorted(set(launches) - observed_correlations)
+            result['launches_without_device_kernel'] = [
+                {'call': launches[corr][0], 'correlation': corr}
+                for corr in sorted(set(launches) - observed_correlations)]
+            return result
         origin = min(k['start'] for k in kernels)
         calls = []
         for i in range(count):
@@ -166,7 +231,9 @@ def target_window(adapter, root, task, call):
                 adapter.synchronize()
                 del out
     prof.export_chrome_trace(str(root/'trace.json'))
+    counter_interface = probe_active_counter_interface(adapter.device.index) if task['profiling_mode'] == 'full' else None
     write(root/'profile-window.json', {'calls':5, 'marker':MARKER, 'device':adapter.device.index,
+          'counter_interface':counter_interface,
           'boundary':'independent synchronized replays after warmup; original invocation and saved inputs; not clean timing',
           'environment':{k:os.environ.get(k) for k in ('XPU_CUPTI_ENABLE_DEVICE','XPU_ENABLE_PROFILER_TRACING')}})
 
@@ -233,9 +300,13 @@ def collect(root, task):
                                    'trace':'trace.json','trace_sha256':timeline['trace_sha256']})
     result['groups'].append(entry)
     if task['profiling_mode']=='full':
+        window = read(folder/'profile-window.json') if (folder/'profile-window.json').is_file() else {}
+        result['counter_interface'] = window.get('counter_interface') or {
+            'status':'unknown', 'reason':'profile worker did not complete a native counter probe'}
         for name in COUNTER_GROUPS:
             result['groups'].append({'group':name,'status':'not-supported',
-                                    'reason':'no validated P800 hardware counter collector or semantic mapping; CUDA trace metadata is not a replacement'})
+                                    'reason':'no validated P800 hardware counter collector or semantic mapping; CUDA trace metadata is not a replacement',
+                                    'interface_status':result['counter_interface']['status']})
         result['reason']='timeline attempted; six hardware counter groups remain unsupported'
     result['status']='measured' if all(g['status']=='measured' for g in result['groups']) else 'partial'
     result['elapsed_s']=time.monotonic()-began

@@ -44,6 +44,47 @@ class P800ProfilerTests(unittest.TestCase):
         ev=[e for e in events() if e.get('cat') not in ('kernel','ac2g')]
         self.assertEqual(profiling.analyze_events(ev)['status'],'partial')
 
+    def test_missing_kernel_reports_unmatched_host_launch_without_weakening_gate(self):
+        ev=events()
+        ev=[e for e in ev if not (e.get('cat')=='kernel' and e.get('args',{}).get('correlation')==12)]
+        result=profiling.analyze_events(ev)
+        self.assertEqual(result['status'],'partial')
+        self.assertEqual(result['missing_calls'],[2])
+        self.assertEqual(result['missing_correlations'],[12])
+        self.assertEqual(result['launches_without_device_kernel'],[{'call':2,'correlation':12}])
+
+    def test_native_counter_stub_success_without_output_write_is_not_supported(self):
+        probe={'cuptiDeviceGetNumMetrics':[{'returncode':0,'before':0x13579bdf,'after':0x13579bdf},
+                                           {'returncode':0,'before':0x2468ace0,'after':0x2468ace0}],
+               'cuptiDeviceGetNumEventDomains':[{'returncode':0,'before':0x13579bdf,'after':0x13579bdf},
+                                                {'returncode':0,'before':0x2468ace0,'after':0x2468ace0}]}
+        result=profiling.counter_interface_probe(probe)
+        self.assertEqual(result['status'],'not-supported')
+        self.assertTrue(result['evidence']['output_unchanged'])
+        probe['cuptiDeviceGetNumMetrics'][0]['after']=0
+        self.assertEqual(profiling.counter_interface_probe(probe)['status'],'unknown')
+        self.assertEqual(profiling.counter_interface_probe({})['status'],'unknown')
+
+    def test_counter_probe_does_not_load_an_unmapped_library(self):
+        with patch.object(profiling.Path,'read_text',return_value=''), patch.object(profiling.ctypes,'CDLL') as load:
+            result=profiling.probe_active_counter_interface(3)
+        load.assert_not_called()
+        self.assertEqual(result['status'],'unknown')
+
+    def test_counter_probe_records_selected_device_library_and_unchanged_outputs(self):
+        with patch.object(profiling.Path,'read_text',return_value='0-1 r-xp 0 00:00 0 /runtime/libcupti.so.12'), \
+             patch.object(profiling.ctypes,'CDLL') as load, patch.object(profiling,'sha',return_value='library-digest'):
+            library=load.return_value
+            library.cuptiDeviceGetNumMetrics.return_value=0
+            library.cuptiDeviceGetNumEventDomains.return_value=0
+            result=profiling.probe_active_counter_interface(3)
+        self.assertEqual(result['status'],'not-supported')
+        self.assertEqual(result['device'],3)
+        self.assertEqual(result['library_sha256'],'library-digest')
+        self.assertTrue(load.call_args.kwargs['mode'] & 4)
+        self.assertEqual(library.cuptiDeviceGetNumMetrics.call_args.args[0],3)
+        library.cuptiActivityGetNumDroppedRecords.assert_not_called()
+
     def test_missing_ambiguous_wrong_thread_device_and_nan_fail_closed(self):
         for kind in ('source','finish','duplicate-launch','duplicate-source','duplicate-range',
                      'wrong-thread','wrong-device','missing-call','nan','negative','outside','unmatched-kernel','duplicate-kernel','boolean-device',

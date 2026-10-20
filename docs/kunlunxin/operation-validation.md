@@ -194,3 +194,24 @@ native_dropout FP16 的测量栈进一步定位到反向 `grad_output.contiguous
 独立诊断把 FP16 标量 0/1 展开为 `[1,1024,1024]` 后转为连续张量：原生两项完成且值正确，Gems 两项均在同一 copy_ 转派发位置报 invalid device function。
 这将问题缩小到展开布局的复制路径；异步异常的最终底层原因尚未证明，也不能外推所有失败均由此引起。
 未通过改为连续上游梯度、改计时协议、禁用注册或替换实现让原 benchmark 通过；诊断结果不计入正式覆盖分母。
+
+### 2026-10-20 路由与计数器接口诊断
+
+针对历史上首次调用偶发缺少设备 kernel 事件的问题，使用锁定镜像、原 daily 输入和共享授权，
+对 Gems `div`/`tanh` FP16 各执行两次独立 run；四个任务的首次和缓存窗口均通过 host launch、
+correlation、`ac2g` 流和设备 kernel 的严格关联。本批启用 CUPTI TRACE 日志，日志可能影响采集时序，
+不用于性能资格。该结果只说明本批次未复现，不能覆盖历史 partial，
+也没有重试至成功、放宽门禁或改变 profiler 生命周期。严格解析器现在在 partial 结果中写出
+`missing_calls`、`missing_correlations` 和 `launches_without_device_kernel`，以便区分“主机提交存在但设备记录缺失”的具体关联。
+
+六组硬件计数器仍未实现。full profiling 额外对运行时已加载的 CUPTI 兼容库做只读输出契约探针；
+若 `cuptiDeviceGetNumMetrics` 和 `cuptiDeviceGetNumEventDomains` 均在两种不同哨兵值下返回成功却不写调用方输出，
+报告记录 `counter_interface.status=not-supported`，六组仍逐项 `not-supported`。这不是硬件不支持或零丢样的结论，
+也不把 CUDA 兼容 trace 字段当作 P800 计数器；完成六组仍需要厂商事件配置、信号单位、采样缩放和归因定义。
+
+增加诊断字段后的独立 daily/full 复测两项中，div 首次/缓存均通过，而 tanh 首次再次缺少
+反向 launch correlation 30 的设备 kernel；前向 correlation 26 和缓存窗口完整，probe/measure 数值均通过。
+原始 partial 与缺事件 trace 完整保留。这表明间歇缺事件尚未解决，不能由前四项未复现得出修复结论。
+收紧探针为只查询设备 metric/domain 接口后，最终代码的两项 daily/full TRACE 诊断关联及数值均通过，
+timeline 均 measured、六组仍 not-supported；这同样不能抵消前述 partial。未使用空 context 的
+dropped-record 查询证明零丢样，也不把接口枚举探针当作六组实际采集。
