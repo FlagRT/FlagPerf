@@ -1,6 +1,6 @@
 # 平头哥 PPU 适配指南
 
-本适配提供 FlagPerf Base 的 PyTorch Benchmark。所有命令从 FlagPerf 仓库根目录执行；
+本适配提供 FlagPerf Base 的 PyTorch Benchmark 和独立官方工具 Toolkit。所有命令从 FlagPerf 仓库根目录执行；
 完整运行步骤见 [Base 使用指南](../../base/README.md)。
 
 ## 入口和支持范围
@@ -9,6 +9,7 @@
 |---|---|---|
 | Base Benchmark | `python3 base/run.py benchmark run ...` | 21 个 case×变体条目：18 项可执行，3 项启动前跳过；每次运行一个 `CASE:PPU` |
 | 身份预检查 | `python3 base/run.py benchmark preflight ...` | 单卡身份、微小张量回读、监控和清理检查，不给出性能指标 |
+| PPU Toolkit | `python3 base/run.py toolkit run ...` | 12 项官方工具/acblas 微基准（sailbandwidth、p2pBandwidthLatencyTest、ppu-smi 静态容量）；可重复指定 `--case`；候选镜像须显式 `--allow-candidate-runtime` |
 | 报告重建 | `python3 base/run.py report ...` | 读取已有证据，重建 Markdown/SVG，不重新测量硬件 |
 | 重复性检查 | `python3 base/qualification.py ...` | 五次独立 run 的严格资格检查，与单 run passed 分开 |
 
@@ -17,6 +18,11 @@
 P2P 恰好 2 rank。FP8（算子路由失败）和两个跨机 Case（单机执行器与目标机未上线）
 在当前锁定栈下提前跳过，不产生性能值。该范围不代表芯片在其他软件栈下没有相应能力。
 本次适配不扩大 Operation、Training、Inference 或 Generate 的验证范围。
+
+Toolkit 覆盖 FP32/FP64/FP16/BF16/TF32 算力、H2D/D2H 带宽（CE/SM 双通道）、设备内存带宽、
+主机-设备访问时延、显存容量与单机 P2P 带宽/时延；computation-INT8 在当前 SDK 构建上排除
+（day-9 T8 证据）。参数、协议、运行方式与三层判定见
+[Toolkit 使用说明](../../base/toolkits/_common/thead/PPU/README.md)。
 
 ## 环境准备
 
@@ -79,7 +85,8 @@ docker network create --internal --subnet 172.31.253.0/24 thead-internal
 ```
 
 创建命令仅用于尚未创建该网络的宿主；如需固定子网，应先确认地址段无冲突。
-执行器不自动创建网络，单次清理也不删除这项共享设施。
+执行器不自动创建网络，单次清理也不删除这项共享设施。Toolkit 使用 `--network=none`，
+不需要该 bridge。
 
 ## 最小静态检查
 
