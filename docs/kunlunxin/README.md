@@ -20,7 +20,8 @@
 Toolkit 覆盖 FP32/FP16/BF16/INT8 算力、H2D/D2H 带宽及各自时延、设备内存带宽、
 容量查询和同机 P2P 带宽/时延；不提供 AllReduce 或跨机测试。
 本页 Base/Toolkit 适配不把结论扩大到 Operation、Training、Inference 或 Generate。
-Operation 是独立的算子评估入口，当前运行栈保持 `validated:false`；它的 Docker/local 范围、双路径状态和失败复现见 [Operation 使用指南](../../operation/vendors/kunlunxin/README.md)。
+Operation 是独立的算子评估入口，当前运行栈保持 `validated:false`；
+[最小运行](../../operation/vendors/kunlunxin/README.md)、[执行机制](operation-design.md)和[验证/失败/责任边界](operation-validation.md)分别维护。
 
 ## 环境准备
 

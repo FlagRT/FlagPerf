@@ -133,24 +133,25 @@ class PublicDistributionTests(unittest.TestCase):
                 self.assertEqual(len(plan['tasks']), 1)
 
     def test_p800_operation_documented_plans_need_only_stdlib(self):
-        path = ROOT / 'operation/vendors/kunlunxin/README.md'
-        blocks = re.findall(r'```bash\n(.*?)```', path.read_text(encoding='utf-8'), re.S)
+        paths = [ROOT / 'operation/vendors/kunlunxin/README.md',
+                 ROOT / 'docs/kunlunxin/operation-design.md']
         plans = []
-        for block in blocks:
-            for line in block.replace('\\\n', ' ').splitlines():
-                if 'operation/run.py run ' not in line:
-                    continue
-                argv = shlex.split(line)
-                # Audit both preview and real-run examples without starting hardware.
-                if '--dry-run' not in argv:
-                    argv.append('--dry-run')
-                # Substitute only the documented interpreter; do not evaluate shell variables.
-                plan = run('-S', *argv[1:])
-                self.assertEqual(plan['runtime_profile'], 'p800-xpytorch29')
-                self.assertTrue(all(t['runtime_profile'] == 'p800-xpytorch29' for t in plan['tasks']))
-                modes = {t['profiling_mode'] for t in plan['tasks']}
-                self.assertEqual(len(modes), 1)
-                plans.append((plan['execution'], len(plan['tasks']), modes.pop()))
+        for path in paths:
+            blocks = re.findall(r'```bash\n(.*?)```', path.read_text(encoding='utf-8'), re.S)
+            for block in blocks:
+                for line in block.replace('\\\n', ' ').splitlines():
+                    if 'operation/run.py run ' not in line:
+                        continue
+                    argv = shlex.split(line)
+                    # Audit real-run examples as plans too; never start hardware.
+                    if '--dry-run' not in argv:
+                        argv.append('--dry-run')
+                    plan = run('-S', *argv[1:])
+                    self.assertEqual(plan['runtime_profile'], 'p800-xpytorch29')
+                    self.assertTrue(all(t['runtime_profile'] == 'p800-xpytorch29' for t in plan['tasks']))
+                    modes = {t['profiling_mode'] for t in plan['tasks']}
+                    self.assertEqual(len(modes), 1)
+                    plans.append((plan['execution'], len(plan['tasks']), modes.pop()))
         self.assertCountEqual(plans, [('docker', 1, 'off'), ('docker', 1, 'off'), ('local', 2, 'off'),
                                      ('docker', 728, 'off'), ('docker', 2, 'timeline')])
 
