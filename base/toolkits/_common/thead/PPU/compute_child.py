@@ -174,44 +174,65 @@ def make_call(handle, spec):
 
 
 def lt_call(handle, spec, c_style_hggc):
-    """Build the BF16 Lt pipeline; returns (call, a_hggc, c_hggc, cleanup)."""
-    desc, layout_a, layout_b, layout_c, pref, workspace = (C.c_void_p() for _ in range(6))
-    if LT.acblasLtMatmulDescCreate(C.byref(desc), COMPUTE_32F, HGGC["R_32F"]):
-        raise RuntimeError("Lt desc create failed")
-    zero = C.c_int32(0)
-    for attr in (DESC_TRANSA, DESC_TRANSB):
-        if LT.acblasLtMatmulDescSetAttribute(desc, attr, C.byref(zero), C.c_size_t(4)):
-            raise RuntimeError("Lt desc attribute failed")
+    """Build the BF16 Lt pipelines; returns (call, a_hggc, c_hggc, cleanup).
 
-    def build_layouts(n):
-        if LT.acblasLtMatrixLayoutCreate(C.byref(layout_a), HGGC["R_16BF"], C.c_uint64(n), C.c_uint64(n), C.c_int64(n)):
-            raise RuntimeError("Lt layout create failed")
-        if LT.acblasLtMatrixLayoutCreate(C.byref(layout_b), HGGC["R_16BF"], C.c_uint64(n), C.c_uint64(n), C.c_int64(n)):
-            raise RuntimeError("Lt layout create failed")
-        if LT.acblasLtMatrixLayoutCreate(C.byref(layout_c), c_style_hggc, C.c_uint64(n), C.c_uint64(n), C.c_int64(n)):
-            raise RuntimeError("Lt layout create failed")
-
-    build_layouts(spec["matrix_size"])
-    if LT.acblasLtMatmulPreferenceCreate(C.byref(pref)):
-        raise RuntimeError("Lt preference create failed")
-    ws = C.c_size_t(32 * 1024 * 1024)
-    LT.acblasLtMatmulPreferenceSetAttribute(pref, PREF_MAX_WORKSPACE_BYTES, C.byref(ws), C.c_size_t(C.sizeof(ws)))
-    results = (HeuristicResult * 4)()
-    returned = C.c_int(0)
-    if LT.acblasLtMatmulAlgoGetHeuristic(handle, desc, layout_a, layout_b, layout_c, layout_c, pref, 4, results, C.byref(returned)):
-        raise RuntimeError("Lt heuristic failed")
-    if returned.value < 1 or results[0].state != 0:
-        raise RuntimeError("Lt heuristic returned no usable algorithm")
-    ws_ptr = device_alloc(max(1, results[0].workspaceSize), 1)
+    One pipeline per problem size, each with its own desc/layouts/heuristic/
+    workspace: the correctness precheck runs at CHECK_N, measurement at the
+    spec size. Applying a measurement-size layout to check-sized buffers is
+    out-of-bounds — the 20261020T090026Z BF16 failure signature (illegal
+    memory access at hggcMemPoolDestroy, AssertionError with zero samples).
+    Both pipelines keep the toolkit operand order (column-major row-major
+    idiom: feed B as the left operand, see make_call).
+    """
     alpha, beta = C.c_float(1.0), C.c_float(0.0)
-    # Column-major row-major idiom: feed B as the left operand (see make_call).
-    call = lambda pa, pb, pc, n: LT.acblasLtMatmul(handle, desc, C.byref(alpha), pb, layout_a, pa, layout_b, C.byref(beta), pc, layout_c, pc, layout_c, C.byref(results[0].algo), ws_ptr, C.c_size_t(max(1, results[0].workspaceSize)), C.c_void_p())
-    cleanup = lambda: (RT.cudaFree(ws_ptr), LT.acblasLtMatmulPreferenceDestroy(pref),
-                       LT.acblasLtMatrixLayoutDestroy(layout_c),
-                       LT.acblasLtMatrixLayoutDestroy(layout_b),
-                       LT.acblasLtMatrixLayoutDestroy(layout_a),
-                       LT.acblasLtMatmulDescDestroy(desc))
-    return call, "bf16", "bf16", cleanup, build_layouts
+
+    def build_pipeline(n):
+        desc, layout_a, layout_b, layout_c, pref = (C.c_void_p() for _ in range(5))
+        if LT.acblasLtMatmulDescCreate(C.byref(desc), COMPUTE_32F, HGGC["R_32F"]):
+            raise RuntimeError("Lt desc create failed")
+        zero = C.c_int32(0)
+        for attr in (DESC_TRANSA, DESC_TRANSB):
+            if LT.acblasLtMatmulDescSetAttribute(desc, attr, C.byref(zero), C.c_size_t(4)):
+                raise RuntimeError("Lt desc attribute failed")
+        for lay in (C.byref(layout_a), C.byref(layout_b), C.byref(layout_c)):
+            if LT.acblasLtMatrixLayoutCreate(lay, c_style_hggc, C.c_uint64(n), C.c_uint64(n), C.c_int64(n)):
+                raise RuntimeError("Lt layout create failed")
+        if LT.acblasLtMatmulPreferenceCreate(C.byref(pref)):
+            raise RuntimeError("Lt preference create failed")
+        ws = C.c_size_t(32 * 1024 * 1024)
+        LT.acblasLtMatmulPreferenceSetAttribute(pref, PREF_MAX_WORKSPACE_BYTES, C.byref(ws), C.c_size_t(C.sizeof(ws)))
+        results = (HeuristicResult * 4)()
+        returned = C.c_int(0)
+        if LT.acblasLtMatmulAlgoGetHeuristic(handle, desc, layout_a, layout_b, layout_c, layout_c, pref, 4, results, C.byref(returned)):
+            raise RuntimeError("Lt heuristic failed")
+        if returned.value < 1 or results[0].state != 0:
+            raise RuntimeError("Lt heuristic returned no usable algorithm")
+        ws_ptr = device_alloc(max(1, results[0].workspaceSize), 1)
+
+        def call(pa, pb, pc):
+            return LT.acblasLtMatmul(handle, desc, C.byref(alpha), pb, layout_a, pa, layout_b, C.byref(beta), pc, layout_c, pc, layout_c, C.byref(results[0].algo), ws_ptr, C.c_size_t(max(1, results[0].workspaceSize)), C.c_void_p())
+
+        def cleanup():
+            RT.cudaFree(ws_ptr)
+            LT.acblasLtMatmulPreferenceDestroy(pref)
+            LT.acblasLtMatrixLayoutDestroy(layout_c)
+            LT.acblasLtMatrixLayoutDestroy(layout_b)
+            LT.acblasLtMatrixLayoutDestroy(layout_a)
+            LT.acblasLtMatmulDescDestroy(desc)
+
+        return call, cleanup
+
+    measure_call, measure_cleanup = build_pipeline(spec["matrix_size"])
+    check_call, check_cleanup = build_pipeline(CHECK_N)
+
+    def dispatch(pa, pb, pc, n):
+        return (check_call if n == CHECK_N else measure_call)(pa, pb, pc)
+
+    def cleanup():
+        measure_cleanup()
+        check_cleanup()
+
+    return dispatch, "bf16", "bf16", cleanup, None
 
 
 def correctness(handle, call, a_style, c_style, tolerance):
