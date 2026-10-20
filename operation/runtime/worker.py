@@ -178,7 +178,7 @@ def device_phase(root, task, phase):
         adapter.check_cpu_construction(tensors(built_inputs), fn)
     bundle = torch.load(root / 'inputs.pt', map_location='cpu', weights_only=True)
     inputs = map_tensors(bundle['inputs'], lambda t: t.detach().to(device).requires_grad_(t.requires_grad))
-    if task.get('common_diagnosis'):
+    if task.get('common_diagnosis') and not getattr(adapter, 'verify_execution_payload', False):
         adapter.synchronize()
         same = all(torch.equal(a.contiguous().reshape(-1).view(torch.uint8), b.cpu().contiguous().reshape(-1).view(torch.uint8))
                    for a, b in zip(tensors(bundle['inputs']), tensors(inputs)))
@@ -187,6 +187,9 @@ def device_phase(root, task, phase):
             raise ValueError('Host/Device input roundtrip differs')
     if isinstance(fn, torch.nn.Module):
         fn.load_state_dict(bundle['state']);fn = fn.to(device)
+    verify_payload = getattr(adapter, 'verify_execution_payload', None)
+    if verify_payload:
+        verify_payload(root, bundle, inputs, fn, phase)
     # CPU construction and parameter initialization precede explicit FlagGems registration.
     global _GEMS_ENABLED
     if task['oplib'] == 'flaggems' and not _GEMS_ENABLED:
@@ -307,7 +310,7 @@ def device_phase(root, task, phase):
     actual_output = invocation(fn, inputs, bp, nonzero=True)
     checked = cpu(actual_output);adapter.synchronize()
     check = dropout_check(checked, bundle['inputs'], bp, task['dtype']) if task['case'] in ('dropout','native_dropout') else compare(checked, torch.load(root / 'reference.pt', weights_only=True), task['dtype'])
-    if task.get('common_diagnosis') or (task.get('diagnostics_mode') == 'failures' and (check['status'] == 'failed' or read(root / 'correctness.json')['status'] == 'failed')):
+    if getattr(adapter, 'verify_execution_payload', False) or task.get('common_diagnosis') or (task.get('diagnostics_mode') == 'failures' and (check['status'] == 'failed' or read(root / 'correctness.json')['status'] == 'failed')):
         torch.save(checked, root / 'measurement-output.pt')
     median = statistics.median(per_call)
     rate = count(1) * (3 if bp else 1) / (median / 1e6) / 1e12

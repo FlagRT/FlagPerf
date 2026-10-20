@@ -20,6 +20,10 @@ class Adapter(CompatAdapter):
     postflight_after_preflight = True
     supports_shared_device = True
 
+    def verify_execution_payload(self, root, bundle, inputs, fn, phase):
+        from .execution import verify_payload
+        verify_payload(root, self, bundle, inputs, fn, phase)
+
     def __init__(self):
         super().__init__('kunlunxin')
         self.lock = json.loads(PROFILE.read_text())

@@ -90,6 +90,21 @@ local 只有当前命名空间的逻辑锁，记录 externally-managed，不宣�
 只读观察者须按 Base 规则显式授权并验证进程身份；不能将任意持卡 Python 进程列为只读观察者。
 P800 不接受 `--allow-privileged-root`、额外 `--container-device` 或 `--mount`。
 
+## 输入核验与失败结果
+
+对齐 Ascend 的公共测试机制，框架适配与算子通过率分别报告。P800 在每个设备阶段、目标调用及计时之前，
+回传并核验保存输入、模块参数/缓冲区的 shape、dtype、requires_grad 和逻辑元素字节哈希，并检查设备绑定。
+`<phase>-payload.json` 保存比较结果；不一致直接失败，不继续调用目标。
+这是逻辑值核验，不证明 stride、存储别名或完整的目标路由/无 CPU fallback。
+首个 FlagGems 任务在审计后显式注册；复用 worker 可能已经注册，仍逐任务审计。
+probe 保存 `output.pt`（反向含梯度）；测量进程在计时外校验的实际结果保存为 `measurement-output.pt`。
+测量中途失败时可能没有该文件，须按阶段原始异常读取，不能补造输出。
+
+只修复已确认的 FlagPerf 数据准备、调用或记录错误。算子数值超差、编译和运行失败保持原始状态、
+输入、输出（如已生成）、异常及调用栈，交算子/编译器团队处理；不替换算子、改 workload、改变数学模式、
+放宽容差或关闭注册来取得通过。框架执行正确并不意味着算子通过，failed/blocked 不自动晋级。
+路由、计数器等框架能力缺口仍单独验收，不用“算子问题”豁免。
+
 ## 显存与设备 profiling
 
 memory 使用独立 worker，按公共 `allocator-window-v1` 协议采集预热后基线、重置后计数、保留目标输出时的峰值及增量。

@@ -18,6 +18,7 @@ from runtime import cli
 from runtime.evidence import read, write, seal, merge_runs
 from vendors.kunlunxin import bootstrap, routing
 from vendors.kunlunxin.p800 import Adapter, PROFILE
+from vendors.kunlunxin.execution import payload_matches
 
 MARKERS = 'OPERATION_TARGET_BEGIN\nOPERATION_TARGET_END'
 
@@ -142,6 +143,21 @@ triton.runtime.errors.OutOfResources: out of resource: uni_sram PassManager::run
             self.assertIn('dependency-blocked',Adapter().diagnose(error,root))
             write(root/'probe-error.json',{'type':'RuntimeError','error':error})
             self.assertIsNone(Adapter().diagnose(error,root))
+
+
+class ExecutionPayloadTests(unittest.TestCase):
+    def test_exact_saved_and_device_payload_match(self):
+        expected = [{'shape': [2], 'dtype': 'torch.float32', 'sha256': 'same', 'requires_grad': True}]
+        self.assertTrue(payload_matches(expected, [dict(expected[0])]))
+        for key, value in [('shape', [1, 2]), ('dtype', 'torch.float64'),
+                           ('sha256', 'different'), ('requires_grad', False)]:
+            observed = [dict(expected[0])]
+            observed[0][key] = value
+            self.assertFalse(payload_matches(expected, observed), key)
+        self.assertFalse(payload_matches(expected, []))
+
+    def test_p800_always_enables_pre_call_payload_audit(self):
+        self.assertTrue(Adapter().verify_execution_payload)
 
 
 class ExecutionIdentityTests(unittest.TestCase):
