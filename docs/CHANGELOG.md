@@ -1,5 +1,11 @@
 # 适配与文档变更记录
 
+## 2026-10-20 — Operation 各芯片最小运行说明（未发布）
+
+- 入门指南补齐 Ascend、P800、NVIDIA 及四个旧厂商 local 兼容入口的预览/实际执行命令，明确镜像、解释器、设备预约与支持边界。
+- 说明 P800 专用 runtime profile 与 workload/profiling 的区别，以及省略 profile 会选择旧昆仑芯入口。
+- 对齐 Ascend/P800 厂商指南的最小原生案例，说明两者特权参数差异；不修改运行行为、已有证据或 validated 状态。
+
 ## 2026-10-15 — P800 Operation 公开契约与交付边界（未发布）
 
 - 公开分发测试增加 P800 专用 profile 的 Docker/local 文档示例、全类型 728/308/420 分母和多设备/尺寸规划，纳入 vendor README 的链接与私有路径检查。

@@ -141,7 +141,9 @@ class PublicDistributionTests(unittest.TestCase):
                 if 'operation/run.py run ' not in line:
                     continue
                 argv = shlex.split(line)
-                self.assertIn('--dry-run', argv)
+                # Audit both preview and real-run examples without starting hardware.
+                if '--dry-run' not in argv:
+                    argv.append('--dry-run')
                 # Substitute only the documented interpreter; do not evaluate shell variables.
                 plan = run('-S', *argv[1:])
                 self.assertEqual(plan['runtime_profile'], 'p800-xpytorch29')
@@ -149,7 +151,7 @@ class PublicDistributionTests(unittest.TestCase):
                 modes = {t['profiling_mode'] for t in plan['tasks']}
                 self.assertEqual(len(modes), 1)
                 plans.append((plan['execution'], len(plan['tasks']), modes.pop()))
-        self.assertCountEqual(plans, [('docker', 4, 'off'), ('local', 2, 'off'),
+        self.assertCountEqual(plans, [('docker', 1, 'off'), ('docker', 1, 'off'), ('local', 2, 'off'),
                                      ('docker', 728, 'off'), ('docker', 2, 'timeline')])
 
     def test_p800_operation_full_matrix_and_validation_boundary(self):

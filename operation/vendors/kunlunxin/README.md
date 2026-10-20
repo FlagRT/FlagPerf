@@ -3,7 +3,11 @@
 使用 `--vendor kunlunxin --runtime-profile p800-xpytorch29` 选择 P800 专用入口。
 支持 Docker/local、原生 PyTorch 与显式 FlagGems，以及公共参考、取证、计时和诊断流程。
 Operation 独立锁保持 **`validated:false`**；Base 的发布声明不适用于算子结果。
-省略 runtime profile 时仍走原有昆仑芯兼容入口。
+省略 runtime profile 时仍走原有昆仑芯兼容入口，**不会自动选择 P800**。
+`p800-xpytorch29` 表示 P800 + XPyTorch 2.9 的专用适配器及运行栈配置，包括锁定镜像、包版本和设备初始化规则，
+不是测试规模或通过标志。Ascend 直接使用 `--vendor ascend`，不需要且不能使用这个 P800 profile。
+`--workload smoke|daily` 才控制输入规模及采样预设。
+各芯片的最小命令对照见 [Operation 入门](../../README.md#2-按芯片跑通最小案例)。
 
 ## 环境与最小运行
 
@@ -19,14 +23,20 @@ Operation 独立锁保持 **`validated:false`**；Base 的发布声明不适用�
 执行器只接受锁定 ID，换 tag 或导入成功不代表包、设备或算子验收通过；本项目不附带镜像归档。
 
 ```bash
-# 0 仅为示例：先确认实际设备授权与占用。
+# 预览最小原生案例；0 仅为示例，先确认实际设备授权与占用。
 python3 -B operation/run.py run --vendor kunlunxin \
   --runtime-profile p800-xpytorch29 --device-ids 0 \
-  --case abs --case add --dtype FP32 --oplib both --workload smoke \
-  --result-root operation/result/p800-smoke --dry-run
+  --case abs --dtype FP32 --workload smoke --dry-run
+
+# 实际执行同一案例；默认要求设备空闲。
+python3 -B operation/run.py run --vendor kunlunxin \
+  --runtime-profile p800-xpytorch29 --device-ids 0 \
+  --case abs --dtype FP32 --workload smoke
 ```
 
-确认计划、权限和资源后去掉 `--dry-run`。每次执行创建新的 `operation-<id>` 子目录。
+确认计划、权限和资源后再执行第二条命令。默认使用 `--oplib nativetorch`；需要同次比较原生和 FlagGems 时增加 `--oplib both`。
+不要增加 Ascend 示例中的 `--allow-privileged-root`，P800 会拒绝该参数；宿主 root 账号与 privileged 容器不是同一概念。
+每次实际执行创建新的 `operation-<id>` 子目录；dry-run 不生成结果目录。
 默认要求独占；获得共享授权后可显式增加 **`--allow-shared-device`**，允许现有占用，但仍持有 UUID 租约、
 记录真实占用/句柄并检查身份及健康。共享运行的正确性和路由分别判定，性能资格保持 partial，
 报告不产生合格的性能比值；正常完成也可能退出 2。这不是资源预约工具，不应干预占用者。
