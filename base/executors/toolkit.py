@@ -121,6 +121,8 @@ def add_cli_arguments(
     selection.add_argument("--physical-device-ids", help="P800 physical card IDs/ranges")
     from executors.p800_toolkit import add_cli_arguments as add_p800_arguments
     add_p800_arguments(parser)
+    from executors.thead_toolkit import add_cli_arguments as add_thead_arguments
+    add_thead_arguments(parser)
     parser.add_argument(
         "--result-root", type=Path,
         help="override the host profile result root for this run",
@@ -156,6 +158,7 @@ class ToolkitRunRequest:
     hccl_max_bytes: str
     allow_privileged_root: bool
     p800_options: dict[str, Any] | None = None
+    thead_options: dict[str, Any] | None = None
 
     @classmethod
     def from_namespace(cls, args: argparse.Namespace) -> "ToolkitRunRequest":
@@ -179,6 +182,7 @@ class ToolkitRunRequest:
             hccl_max_bytes=args.hccl_max_bytes,
             allow_privileged_root=args.allow_privileged_root,
             p800_options={key: getattr(args, key, default) for key, default in p800_defaults().items()},
+            thead_options={key: getattr(args, key, default) for key, default in thead_defaults().items()},
         )
 
     def to_namespace(self) -> argparse.Namespace:
@@ -200,7 +204,9 @@ class ToolkitRunRequest:
             result_root=self.context.result_root,
             timeout=self.context.timeout,
             dry_run=self.context.dry_run,
-            **(self.p800_options or p800_defaults()),
+            # PPU options overlay the shared P800-registered flags; shared keys are
+            # deliberately aligned and vendor-unique keys pass through unchanged.
+            **{**(self.p800_options or p800_defaults()), **(self.thead_options or thead_defaults())},
         )
 
     def validate(self, *, require_selection: bool) -> None:
@@ -220,6 +226,9 @@ class ToolkitExecutor:
         if config["vendor"] == "kunlunxin":
             from executors.p800_toolkit import plan as p800_plan
             return p800_plan(request, config_path, config)
+        if config["vendor"] == "thead":
+            from executors.thead_toolkit import plan as thead_plan
+            return thead_plan(request, config_path, config)
         if request.context.physical_device_ids is not None:
             fail("Ascend Toolkit uses --npu-ids or --device-ids")
         namespace_args = container_namespace_args(
@@ -264,6 +273,9 @@ class ToolkitExecutor:
         if plan.get("vendor") == "kunlunxin":
             from executors.p800_toolkit import execute as p800_execute
             return p800_execute(request, plan)
+        if plan.get("vendor") == "thead":
+            from executors.thead_toolkit import execute as thead_execute
+            return thead_execute(request, plan)
         return execute_toolkit(request.to_namespace(), plan=plan)
 
 
@@ -273,6 +285,11 @@ def fail(message: str) -> None:
 
 def p800_defaults():
     from executors.p800_toolkit import DEFAULTS
+    return DEFAULTS.copy()
+
+
+def thead_defaults():
+    from executors.thead_toolkit import DEFAULTS
     return DEFAULTS.copy()
 
 
