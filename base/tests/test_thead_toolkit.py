@@ -196,6 +196,35 @@ class ContractTests(unittest.TestCase):
         for matrix in matrices:
             er.expected_bytes_token(matrix["header"], 40000000, True)
 
+    def test_bibw_rank_merge_replaces_mpirun_stream(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            directory = root / "point" / "bi-write-14-to-15" / "rep-1"
+            directory.mkdir(parents=True)
+            stem = "p2p-biBw"
+            (directory / (stem + ".stdout")).write_bytes(b"garbled interleaved stream\n")
+            (directory / (stem + ".rank.0")).write_bytes(b"RANK0 REPORT\n")
+            (directory / (stem + ".rank.1")).write_bytes(b"RANK1 REPORT\n")
+            record = {"stdout": {"path": "point/bi-write-14-to-15/rep-1/p2p-biBw.stdout", "sha256": "x", "bytes": 27}}
+            text = er.merge_p2p_rank_stdouts(directory, root, record, stem)
+            self.assertEqual(text, "RANK0 REPORT\nRANK1 REPORT\n")
+            self.assertEqual((directory / (stem + ".mpirun.stdout")).read_bytes(), b"garbled interleaved stream\n")
+            self.assertEqual(record["stdout"]["bytes"], len(text))
+            self.assertEqual(record["mpirun_stdout"]["path"], "point/bi-write-14-to-15/rep-1/p2p-biBw.mpirun.stdout")
+            self.assertEqual(record["stdout_rank_files"][1]["path"], "point/bi-write-14-to-15/rep-1/p2p-biBw.rank.1")
+            self.assertEqual(json.loads((directory / (stem + ".command.json")).read_text())["stdout"]["sha256"],
+                             record["stdout"]["sha256"])
+
+    def test_bibw_rank_merge_requires_both_rank_files(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            directory = root / "p"
+            directory.mkdir()
+            (directory / "s.stdout").write_bytes(b"mpirun stream")
+            (directory / "s.rank.0").write_bytes(b"R0\n")
+            with self.assertRaisesRegex(ValueError, "rank 1 stdout missing or empty"):
+                er.merge_p2p_rank_stdouts(directory, root, {}, "s")
+
     def test_tflops_formula_and_sample_cv(self):
         record = {"samples_ns": [1000000, 1000000, 1000000, 1000000, 2000000]}
         metric = c.metric_from_record(record, "computation-FP32", 64)

@@ -253,16 +253,52 @@ def run_p2p_point(root, directory, point, source, destination, settings, perf, d
     return merged, window_record
 
 
+def merge_p2p_rank_stdouts(directory, root, record, stem):
+    """Replace mpirun's racy stdout stream with the deterministic rank
+    concatenation (probes/day11/toolkit: concurrent rank writes interleave
+    mid-line under host scheduling noise and corrupt the matrix text, while
+    each rank's own report stays complete and self-consistent). The merged
+    text keeps the per-rank matrix blocks the parser already expects; the
+    raw mpirun stream and both rank files stay archived and referenced."""
+    directory = Path(directory)
+    mpirun_stdout = directory / (stem + ".stdout")
+    moved = directory / (stem + ".mpirun.stdout")
+    mpirun_stdout.rename(moved)
+    ranks = []
+    for rank in (0, 1):
+        path = directory / ("%s.rank.%d" % (stem, rank))
+        if not path.is_file() or path.stat().st_size == 0:
+            raise ValueError("p2p rank %d stdout missing or empty: %s" % (rank, path.name))
+        ranks.append(path)
+    mpirun_stdout.write_bytes(b"".join(path.read_bytes() for path in ranks))
+    record["stdout"] = reference(mpirun_stdout, root)
+    record["mpirun_stdout"] = reference(moved, root)
+    record["stdout_rank_files"] = [reference(path, root) for path in ranks]
+    write_json(directory / (stem + ".command.json"), record)
+    return mpirun_stdout.read_text(errors="replace")
+
+
 def p2p_single_invocation(root, directory, point, source, destination, settings, perf, direction, repetition, stem):
     argv = p2p_argv(P2P_MP if perf == "biBw" else P2P_SP, perf, direction, settings)
     env = device_env(",".join(str(s) for s in sorted((source["local_index"], destination["local_index"]))))
     if perf == "biBw":
-        argv = [str(MPIRUN), "--allow-run-as-root", "-np", "2"] + argv
+        # mpirun multiplexes two ranks into one stdout stream; concurrent rank
+        # writes interleave mid-line under host scheduling noise. Each rank
+        # appends to its own file and the parser sees the deterministic
+        # rank0-then-rank1 concatenation.
+        env = dict(env)
+        env["PPU_P2P_RANK_OUT"] = str(Path(directory) / (stem + ".rank"))
+        argv = [str(MPIRUN), "--allow-run-as-root", "-np", "2", "/bin/sh", "-c",
+                'exec "$0" "$@" >> "$PPU_P2P_RANK_OUT.$OMPI_COMM_WORLD_RANK"',
+                str(P2P_MP)] + argv[1:]
     record = command(argv, directory, root, stem=stem,
                      timeout=settings["command_timeout"], env=env)
     if record["returncode"]:
         raise RuntimeError("p2pBandwidthLatencyTest exited " + str(record["returncode"]))
-    text = (root / record["stdout"]["path"]).read_text(errors="replace")
+    if perf == "biBw":
+        text = merge_p2p_rank_stdouts(directory, root, record, stem)
+    else:
+        text = (root / record["stdout"]["path"]).read_text(errors="replace")
     if "P2P test finished" not in text:
         raise ValueError("p2p output does not reach a finished marker")
     verified = perf in ("uniBw", "biBw")
