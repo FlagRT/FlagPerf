@@ -215,3 +215,26 @@ correlation、`ac2g` 流和设备 kernel 的严格关联。本批启用 CUPTI TR
 收紧探针为只查询设备 metric/domain 接口后，最终代码的两项 daily/full TRACE 诊断关联及数值均通过，
 timeline 均 measured、六组仍 not-supported；这同样不能抵消前述 partial。未使用空 context 的
 dropped-record 查询证明零丢样，也不把接口枚举探针当作六组实际采集。
+
+
+### 2026-10-20 原生事件追查：本轮未复现，未解决
+
+保持原 daily 的 Gems div/tanh FP16，在共享授权下完成固定次数对照：原生过滤函数后保存记录、
+预分配 mmap 保存过滤前后记录、CUPTI 事件读取阶段保存返回记录，各六次独立 run；
+另有不加载诊断库且不开启 TRACE 的两次独立 run。共 20 run、40 任务、80 个首次/缓存窗口，
+本轮路由及 probe/measure 数值检查均通过。所有 run 整体仍 partial，内层 CLI 退出 2，
+共享条件没有独占性能资格；外层退出 0 只表示调度与封存完成。
+
+两组原生观察各捕获 24 个 buffer、60 条 kernel 记录，本轮无记录被原生过滤器剔除；
+mmap 组过滤前后原始字节一致。读取阶段的 60 条记录均按 PID/correlation 对应最终 trace。
+诊断介入可能扰动时序，以上只描述成功窗口，不能排除原失败曾发生采样遗漏或过滤。
+锁定 Kineto 存在 outOfRange 时间范围过滤，但没有证据证明它导致历史缺失。
+目标调用后已有设备同步，本轮没有添加睡眠、预热、重试或绕过过滤。
+
+原生、转换和最终 trace 尚未在同一个失败窗口同时捕获，因此根因仍未确定，原 tanh FP16
+首次反向 correlation 30 缺设备 kernel 的 partial 保留，不据本轮成功声明修复。
+本轮执行代码为 3ca12671，生产代码未改，Operation 仍 validated:false；六组计数器仍未完成。
+四批目录依次为 /data1/flagperf-kzhang519/operation/ 下的
+p800-native-buffer-20261020T145815Z、p800-native-mmap-20261020T150603Z、
+p800-converted-20261020T151702Z、p800-uninstrumented-20261020T152232Z；
+完整 artifacts、postflight、容器消失和租约释放均核验通过。
