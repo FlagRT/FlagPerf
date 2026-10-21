@@ -52,7 +52,9 @@ bootstrap 约定；[image-manifest.json](image-manifest.json) 保存镜像身份
 单卡容器通常枚举为逻辑零，多卡顺序必须以 UUID join 为准，禁止写死对应关系。
 
 bootstrap 根据验证后的可见集合设置 `CUDA_VISIBLE_DEVICES`，真正 unset
-`XPU_VISIBLE_DEVICES` 与 `XPU_EVENT_KL3_ENABLE`，并固定 `USE_FLAGGEMS=0`。
+`XPU_VISIBLE_DEVICES` 与 `XPU_EVENT_KL3_ENABLE`，并固定 `USE_FLAGGEMS=0`、
+`XMLIR_MATMUL_FAST_MODE=1`（2026-10-19 补：BF16 matmul 默认走 16-bit SDNN
+快通路，避免落到 FP32 等价路径，见 computation-BF16 case 文档）。
 通用设备名 `GPU` 或 CUDA 兼容 API 不能替代厂商和 UUID 身份检查。
 
 正式计时使用 `perf_counter`/`perf_counter_ns` 并在边界同步实际目标设备。

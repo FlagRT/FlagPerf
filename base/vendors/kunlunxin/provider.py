@@ -36,8 +36,8 @@ class KunlunxinProvider:
             raise ConfigurationError('P800 profile requires chip=P800 and nonprivileged containers')
         if config.get('host_mounts') != [] or config.get('required_devices') != ['/dev/xpuctrl']:
             raise ConfigurationError('P800 profile has unreviewed mounts or required devices')
-        if config.get('runtime_environment') != {'USE_FLAGGEMS': '0'}:
-            raise ConfigurationError('P800 runtime_environment must be exactly USE_FLAGGEMS=0')
+        if config.get('runtime_environment') != {'USE_FLAGGEMS': '0', 'XMLIR_MATMUL_FAST_MODE': '1'}:
+            raise ConfigurationError('P800 runtime_environment must be exactly USE_FLAGGEMS=0, XMLIR_MATMUL_FAST_MODE=1')
         if config.get('shm_size') != '128m':
             raise ConfigurationError('P800 bounded probe requires shm_size=128m')
 
@@ -121,7 +121,9 @@ class KunlunxinProvider:
                 '--read-only', '--pids-limit=512', '--shm-size=512m', '--group-add', str(os.getgid()),
                 '--tmpfs', '/tmp:rw,nosuid,size=512m', '--tmpfs', '/root/.cache:rw,nosuid,size=512m',
                 '--env', 'CUDA_VISIBLE_DEVICES=' + ','.join(str(i) for i in range(len(host['devices']))),
-                '--env', 'USE_FLAGGEMS=0', '--env', 'PYTHONDONTWRITEBYTECODE=1',
+                '--env', 'USE_FLAGGEMS=0',
+                '--env', 'XMLIR_MATMUL_FAST_MODE=1',
+                '--env', 'PYTHONDONTWRITEBYTECODE=1',
                 '--env', 'PYTHONNOUSERSITE=1', '--env', 'XDG_CACHE_HOME=/tmp/cache',
                 '--env', 'TRITON_CACHE_DIR=/tmp/triton']
         for source, target, perms in devices:

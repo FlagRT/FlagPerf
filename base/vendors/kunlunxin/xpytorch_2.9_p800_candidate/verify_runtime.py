@@ -25,7 +25,7 @@ PREFIX = Path(json.loads((ROOT/'stack.lock.yaml').read_text())['conda_prefix'])
 PACKAGES = ('torch', 'torch-xray', 'torch-xmlir', 'xmlir', 'xtorch-ops',
             'torch-plugin', 'flag-gems', 'flagtree', 'triton', 'flagcx',
             'vllm', 'vllm-plugin-fl')
-ENV_KEYS = ('CUDA_VISIBLE_DEVICES', 'XPU_VISIBLE_DEVICES', 'XPU_EVENT_KL3_ENABLE',
+ENV_KEYS = ('CUDA_VISIBLE_DEVICES', 'XPU_VISIBLE_DEVICES', 'XPU_EVENT_KL3_ENABLE', 'XMLIR_MATMUL_FAST_MODE',
             'FLAGCX_ADAPTOR', 'GEMS_VENDOR', 'USE_FLAGGEMS', 'CONDA_PREFIX',
             'LD_LIBRARY_PATH', 'LD_PRELOAD', 'PYTHONPATH', 'TORCH_DEVICE_BACKEND_AUTOLOAD')
 
