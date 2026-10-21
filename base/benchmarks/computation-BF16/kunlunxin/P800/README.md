@@ -2,7 +2,13 @@
 
 ## 实现和范围
 
-XPYTORCH torch.mm；BF16 输入/输出，reference 使用量化输入的 CPU FP64 值。锁定栈约 FP32 吞吐；历史算子对照支持该路径限制，不外推所有硬件或未来 runtime。
+XPYTORCH torch.mm；BF16 输入/输出，reference 使用量化输入的 CPU FP64 值。
+2026-10-19 起锁定栈默认 `XMLIR_MATMUL_FAST_MODE=1`（见 P800 profile 的
+`runtime_environment`），BF16 matmul 走 16-bit SDNN 快通路，不再落到
+FP32 等价路径；此前锁定栈约 FP32 吞吐的记录属于该开关生效前的历史状态，
+不代表当前默认行为。历史算子对照支持该路径限制，不外推所有硬件或未来
+runtime；本次改动尚未产出新的严格五次资格记录，复测结果见
+`每日记录/2026-10-19-P800-BF16吞吐修复验收.md`（文档仓）。
 
 ## 配置
 
