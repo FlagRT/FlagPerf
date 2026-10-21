@@ -22,6 +22,7 @@
 
 当前 Inference 提供 Qwen3-Embedding-0.6B、DeepFM、DLRM、OneRec-8B；被测端支持 Ascend 单卡/单机 TP，NVIDIA A100 用于精度与性能参考采集。具体组合和限制见 Inference 指南。
 Base、Operation、Inference 的当前单机入口不要求 SSH。先阅读所选模块的环境准备，再执行其最小示例。
+昆仑芯 P800 的基础能力见 [Base/Toolkit 指南](docs/kunlunxin/README.md)，算子精度与性能见 [P800 Operation](operation/vendors/kunlunxin/README.md)。
 完整导航见 [docs](docs/README.md)。
 
 ## 📣 FlagPerf评测亮点
@@ -215,10 +216,10 @@ Base、Operation、Inference 的当前单机入口不要求 SSH。先阅读所�
   </table>
 
 P800 Base 的完整 15-case 支持矩阵及 12 项 Toolkit（含 D2H 与时延）见 [Base 使用指南](base/README.md)。
-环境及限制见 [P800 适配指南](docs/kunlunxin/README.md)；runtime 已在[声明范围](docs/kunlunxin/validation.md)内设为 `validated:true / partial`，静态支持不等于所有范围已通过硬件验证。
+环境及限制见 [P800 适配指南](docs/kunlunxin/README.md)；Base runtime 已在[声明范围](docs/kunlunxin/validation.md)内设为 `validated:true / partial`，静态支持不等于所有范围已通过硬件验证。
 
 
-算子列表：
+算子列表（下表保留部分历史条目，当前公共入口见表后说明）：
 
 <table border="1" class="dataframe">
   <thead>
@@ -256,6 +257,17 @@ P800 Base 的完整 15-case 支持矩阵及 12 项 Toolkit（含 D2H 与时延�
     </tr>
 </tbody>
 </table>
+
+当前 Operation 提供 52 个公共 Case，以 `python3 operation/run.py list --names-only` 查询完整列表。
+各芯片的最小运行命令见 [Operation 入门](operation/README.md#2-按芯片跑通最小案例)。
+
+| 算子适配 | 实现路径与入口 | 验证范围 |
+|---|---|---|
+| Ascend 910C / A3 | 原生 PyTorch / FlagGems；[Ascend Operation](operation/vendors/ascend/README.md) | [历史覆盖与限制](docs/ascend/operation-coverage.json)，不是本轮 NPU 实机复测 |
+| 昆仑芯 P800 | 原生 PyTorch / FlagGems；[P800 Operation](operation/vendors/kunlunxin/README.md) | Docker/local 各完成 728 项规划中 308 个适用组合的尝试，另各有 420 个不适用；[结果及补测边界](docs/kunlunxin/operation-validation.md#2026-10-21-dockerlocal-完整矩阵与补测) |
+
+P800 Operation 独立运行栈保持 `validated:false`，不沿用 Base 的 `validated:true / partial`。
+完整覆盖不代表全算子通过；数值/编译/运行失败、间歇 trace 缺失、精确比较统计缺口和六组计数器限制均保留。
 
 训练列表：
 > [!TIP]

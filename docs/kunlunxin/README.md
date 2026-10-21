@@ -10,7 +10,8 @@
   必须显式选择 `--vendor kunlunxin --runtime-profile p800-xpytorch29`，不能套用 Base 命令。
 - **Operation 机制、结果目录及复放**：[机制与维护](operation-design.md)。
 - **Operation 实测范围与限制**：[验证与已知问题](operation-validation.md)。Operation 保持 `validated:false`；
-  六组硬件计数器、独占性能和 local 全量等仍未完成，不能从 Base 的发布状态推断算子已完整验收。
+  Docker/local 全矩阵及受干扰范围补测已完成；六组硬件计数器仍未完成，间歇 trace 缺失与精确比较统计缺口暂时保留。
+  各批次资格分开记录，不能从覆盖数或 Base 发布状态推断算子已完整验收。
 
 
 ## 入口和支持范围

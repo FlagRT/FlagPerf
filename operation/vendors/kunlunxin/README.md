@@ -68,12 +68,16 @@ local 的编号为该环境当前可见的逻辑编号；仅提供当前命名�
 两条实现路径独立对 CPU 参考检查；数值超差、编译失败和运行异常保留输入、实际输出（如已生成）与错误栈，
 不替换算子、放宽容差或修改输入来取得通过。原生 PyTorch 也会调用厂商后端，不能据“原生”推断数值必然通过。
 路由检查在独立 probe 的首次/缓存调用取证，缺 kernel 事件保持 partial；这表示证据不足，不表示设备丢失。
-个别 FP16 Gems 首次调用的间歇缺事件已登记为 `P800-TRACE-001` 并接受为评估 PR 的已知限制；
+个别 Gems 首次调用的间歇缺事件（已观察 div/tanh FP16、max BF16）登记为 `P800-TRACE-001`，接受为评估 PR 的已知限制；
 原始判定保留，提交处置和严格结果分开，详见[已接受的记录限制](../../../docs/kunlunxin/operation-validation.md#已接受的记录限制)。
 allocator memory 与设备 timeline 已接入；full 的六组硬件计数器尚无可信采集器和语义映射，报告 not-supported，
 **这不是已证明硬件不支持**。状态、责任边界和复测结果见 [验证与已知问题](../../../docs/kunlunxin/operation-validation.md)。
 
-实际运行生成 `operation/result/operation-<id>/report.md`，终端打印 Report/Summary/Results；dry-run 仅输出计划。
+Docker/local 全矩阵及受干扰范围补测已完成，逐批结果见[最新验证记录](../../../docs/kunlunxin/operation-validation.md#2026-10-21-dockerlocal-完整矩阵与补测)，不代表全算子通过。
+公共精确比较只保存通过与否而缺详细统计的 `OP-CHECK-001` 暂时保留，见[结果指南](../../../docs/operations/results.md#已知限制精确比较缺少详细统计op-check-001)。
+
+默认生成 `operation/result/operation-<id>/report.md`；指定 `--result-root` 后改为该路径下的 `operation-<id>/report.md`。
+终端打印 Report/Summary/Results；dry-run 仅输出计划。
 正确性、路由、性能和诊断分别读取；诊断完成或报告生成成功不等于原任务通过。
 离线报告和显式同输入复放见 [公共诊断指南](../../../docs/operations/diagnosis.md)。
 

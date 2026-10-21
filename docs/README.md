@@ -3,7 +3,8 @@
 | 使用目的 | 入口 |
 |---|---|
 | Ascend 环境、支持范围与公开验证记录 | [Ascend 适配指南](ascend/README.md) |
-| 昆仑芯 P800 环境、Base/Toolkit 范围与验证 | [P800 适配指南](kunlunxin/README.md) |
+| 昆仑芯 P800 环境、Base/Toolkit/Operation 范围与验证 | [P800 适配指南](kunlunxin/README.md) |
+| P800 算子最小运行、完整矩阵与已知问题 | [运行入口](../operation/vendors/kunlunxin/README.md)、[验证与限制](kunlunxin/operation-validation.md) |
 | 基础算力、内存、传输与厂商诊断 | [Base 使用指南](../base/README.md) |
 | 算子正确性、路由、性能与失败诊断 | [Operation 使用指南](../operation/README.md) |
 | 模型输出差异、A100 参考、性能与监控 | [Inference 使用指南](../inference/README.md) |

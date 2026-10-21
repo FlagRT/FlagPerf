@@ -23,10 +23,14 @@ local 模式不需要 `--image`，但须自行准备当前 Python 运行环境�
 注册入口可用不代表每个厂商和 dtype 都已经实机通过。
 
 [昆仑芯 P800](vendors/kunlunxin/README.md) 通过 `--runtime-profile p800-xpytorch29` 显式选择独立运行栈。
-已接通 Docker/local，完成 52 case 默认类型 smoke、52 case 多类型 daily 的 Docker 评估，以及 local 七个代表 case 双路径验证；仍含数值/执行失败和路由/性能 partial。
+已接通 Docker/local；2026-10-21 两入口各完成 52 case × 七种 dtype × 双路径的 728 项规划，
+其中 308 个适用组合全部尝试、420 项不适用，无未运行/中断项；仍有数值/编译/运行失败。
+原 Docker 后段及首次补测有外部占用，受影响范围另行补测，不能称原整轮持续独占。
+逐批结果和证据边界见 [P800 验证与已知问题](../docs/kunlunxin/operation-validation.md#2026-10-21-dockerlocal-完整矩阵与补测)。
 Operation 运行栈仍为 `validated:false`；该参数与控制工作量的 `--workload` 不同。
-已接入独立 allocator 显存诊断与 `--profiling timeline` 设备事件采集，并完成 Docker/local 代表验证；
-`--profiling full` 的六组硬件计数器仍未支持。诊断采集成功不改变原任务的路由或共享性能资格。
+已接入独立 allocator 显存诊断与 `--profiling timeline` 设备事件采集；
+`--profiling full` 的六组硬件计数器仍为 not-supported，不能据此断言硬件不支持。
+诊断采集成功不改变原任务的路由或共享性能资格。
 P800 的路由证据边界、已知执行/数值失败和显式共享模式见上述厂商说明，不能外推为全算子验收通过。
 P800 probe 分别保存首次及缓存调用的 ATen 派发、主机 launch 与关联设备 kernel；
 只有复制、分配、设备输出或不完整关联不能判为路由通过。该观察不插入正式计时，
@@ -217,6 +221,10 @@ python3 operation/run.py run --vendor kunlunxin \
 每一侧都独立检查 CPU 参考和路由。结果不足以比较时保留原因，不产生看似有效的性能比值。
 只想运行一侧，可选择 `--oplib nativetorch`（默认）或 `--oplib flaggems`。
 
+当前两条实现路径限于原生 PyTorch 和已安装 FlagGems。没有任意外部 Python 函数、Triton kernel、
+C++/AscendC 动态库的直接导入评测入口；扩展仓库 Case 还需提供输入、独立参考及工作量/路由契约，
+不能把同一被测实现同时作为正确性参考。此边界与 Ascend 相同，见[案例适配说明](../docs/operations/operations-case-doc.md#新增-case-与外部自定义算子的边界)。
+
 ## 常用变化
 
 ```bash
@@ -238,6 +246,33 @@ python3 operation/run.py report --run-dir operation/result/operation-YOUR_RUN_ID
 旧参数 `--profile` 保留为 `--workload` 的兼容别名，两者不能同时指定。
 没有指定 `--case` 时会规划全部案例；第一次使用建议明确选择一个小案例。
 `--spectflops` 是所选设备范围、dtype 对应的峰值分母；不填写时利用率为 N/A，不猜测硬件峰值。
+
+## 运行结束后在哪里看报告
+
+终端打印 `Report:`、`Summary:` 和 `Results:`，按实际打印路径查看。默认结构为：
+
+```text
+operation/result/operation-<id>/
+├── report.md                    # 人阅读的报告，逐项展示结果
+├── summary.json                 # 整次运行结构化汇总
+├── artifacts.json               # 已封存证据的 SHA-256 清单
+└── <序号>-<case>-<dtype>-<oplib>-d<id>/
+    ├── result.json              # 单个组合最终结果
+    ├── correctness.json        # probe 正确性
+    ├── measurement.json        # 耗时、统计及测量阶段正确性
+    └── 其他输出、路由、显存、采集及日志文件
+```
+
+指定 `--result-root /your/path` 后，目录为 `/your/path/operation-<id>/`，不再位于默认路径。
+一次运行生成一份总报告：单算子时展示该算子的所选组合，多算子时逐项展示；
+任务结果逐项保存，总报告在运行收尾后生成，不是每项完成就刷新，也不默认给每个任务另建 Markdown。
+dry-run 不生成评测报告；中途失败和类型不适用项不保证具有全部任务文件。
+完整文件职责见 [P800 报告与逐算子结果](../docs/kunlunxin/operation-design.md#报告与逐算子结果)。
+
+精确比较的通过结果可能显示“最大误差/不匹配元素数未记录、0/1 项检查有元素计数”，
+这是已做比较但未保存详细统计的公共缺口 `OP-CHECK-001`，不是没有执行或零项通过。
+`等效 T运算/s` 沿用 Case 的估算工作量和主机耗时，不能当作硬件实测浮点指令数或芯片峰值。
+指标定义和已知统计限制见 [如何读指标与报告](../docs/operations/results.md)。
 
 ## 失败后从哪里开始
 
