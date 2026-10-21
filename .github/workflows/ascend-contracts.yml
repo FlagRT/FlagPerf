@@ -45,3 +45,4 @@ jobs:
         run: |
           python3 -m unittest discover -s base/tests -p test_p800_toolkit.py -v
           python3 -S -m unittest discover -s base/vendors/kunlunxin/xpytorch_2.9_p800_candidate -p 'test_*.py' -v
+          python3 -B -S -m unittest discover -s operation/tests -p 'test_p800*.py' -v

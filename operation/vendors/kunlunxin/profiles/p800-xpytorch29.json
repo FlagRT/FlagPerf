@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "vendor": "kunlunxin",
+  "chip": "P800",
+  "runtime_profile": "p800-xpytorch29",
+  "validated": false,
+  "validation_scope": [],
+  "execution_status": "integrated; scoped validation in vendor README; full coverage pending",
+  "image": "flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev:202608",
+  "image_id": "sha256:cd53efa40eb7ddc49c2ad76a9bfbd252572c5fb01bd10d02cffbf667c34a1975",
+  "registry_pull_verified": false,
+  "identity_source": "base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/stack.lock.yaml and image-manifest.json; Operation validation is independent",
+  "conda_prefix": "/root/miniconda/envs/python310_torch29_cuda",
+  "python": "3.10.18",
+  "packages": {
+    "torch": "2.9.0+cu129",
+    "torch-xray": "2.0.4",
+    "xmlir": "1.0.0.1",
+    "xtorch-ops": "0.1.2640+9bc36a18",
+    "torch-plugin": "0.1.0",
+    "flag-gems": "5.3.4.post1.dev12+g4fa5805b8",
+    "flagtree": "0.6.1+xpu3.6"
+  },
+  "triton_literal_version": "3.6.0",
+  "expected_device_ids": [0, 1, 2, 3, 4, 5, 6, 7],
+  "excluded_physical_ids": []
+}

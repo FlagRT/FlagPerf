@@ -3,6 +3,7 @@
 """Isolated CPU oracle, routing probe and uninstrumented measurement phases."""
 import argparse
 import copy
+from contextlib import nullcontext
 import importlib.util
 from importlib import metadata
 import os
@@ -170,13 +171,15 @@ def dropout_check(output, inputs, bp, dtype):
 
 def device_phase(root, task, phase):
     from vendors import get_vendor
-    adapter = get_vendor(task['vendor'])
-    device = adapter.bootstrap(task['worker_device'])
+    adapter = get_vendor(task['vendor'], task.get('runtime_profile'))
+    device = adapter.bootstrap_task(task) if hasattr(adapter, 'bootstrap_task') else adapter.bootstrap(task['worker_device'])
     import torch
-    fn, _, bp, count = build(task)
+    fn, built_inputs, bp, count = build(task)
+    if hasattr(adapter, 'check_cpu_construction'):
+        adapter.check_cpu_construction(tensors(built_inputs), fn)
     bundle = torch.load(root / 'inputs.pt', map_location='cpu', weights_only=True)
     inputs = map_tensors(bundle['inputs'], lambda t: t.detach().to(device).requires_grad_(t.requires_grad))
-    if task.get('common_diagnosis'):
+    if task.get('common_diagnosis') and not getattr(adapter, 'verify_execution_payload', False):
         adapter.synchronize()
         same = all(torch.equal(a.contiguous().reshape(-1).view(torch.uint8), b.cpu().contiguous().reshape(-1).view(torch.uint8))
                    for a, b in zip(tensors(bundle['inputs']), tensors(inputs)))
@@ -185,6 +188,9 @@ def device_phase(root, task, phase):
             raise ValueError('Host/Device input roundtrip differs')
     if isinstance(fn, torch.nn.Module):
         fn.load_state_dict(bundle['state']);fn = fn.to(device)
+    verify_payload = getattr(adapter, 'verify_execution_payload', None)
+    if verify_payload:
+        verify_payload(root, bundle, inputs, fn, phase)
     # CPU construction and parameter initialization precede explicit FlagGems registration.
     global _GEMS_ENABLED
     if task['oplib'] == 'flaggems' and not _GEMS_ENABLED:
@@ -197,6 +203,9 @@ def device_phase(root, task, phase):
         except metadata.PackageNotFoundError: pass
     identity = {'correctness_protocol': 'nonuniform-gradient-v1', 'measurement_protocol': 'cached-zero-gradient-v1', 'vendor_runtime': adapter.identity(), 'packages': packages, 'device': str(device), 'case_sha256': sha(ROOT / 'benchmarks' / task['case'] / 'main.py'),
                 'input_sha256': sha(root / 'inputs.pt'), 'input_devices': [str(t.device) for t in tensors(inputs)]}
+    if hasattr(adapter, 'worker_identity'):
+        identity.update(adapter.worker_identity(task, _GEMS_ENABLED))
+        write(root / (phase + '-identity.json'), identity)
     if phase == 'profile-target':
         cache = []
         def target():
@@ -234,25 +243,43 @@ def device_phase(root, task, phase):
         calls = {}
         launcher_states = {}
         profile_call = getattr(adapter, 'profile_call', lambda frame: None)
+        observer = adapter.route_observer(task, bp) if hasattr(adapter, 'route_observer') else None
+        profile_event = observer.event if observer else lambda frame, event, arg: None
         def profile(frame, event, arg):
-            path = frame.f_code.co_filename
+            state = profile_call(frame) if event == 'call' else None
+            profile_event(frame, event, arg)
+            path = frame.f_code.co_filename if frame is not None else ''
             if event == 'call' and ('flag_gems' in path or 'triton' in path):
                 key = (path, frame.f_code.co_name)
                 calls[key] = calls.get(key, 0) + 1
-                state = profile_call(frame)
                 if state is not None:
                     states = launcher_states.setdefault(key, [])
                     if state not in states: states.append(state)
+        def target():
+            return invocation(fn, inputs, bp, nonzero=True)
         adapter.synchronize()
         print('OPERATION_TARGET_BEGIN', file=sys.stderr, flush=True)
         sys.setprofile(profile)
         try:
-            out = invocation(fn, inputs, bp, nonzero=True)
-            adapter.synchronize()
+            window = getattr(adapter, 'probe_window', lambda root, observer, name: nullcontext())
+            with window(root, observer, 'first'):
+                before = time.monotonic()
+                if observer: observer.begin('first')
+                out = target()
+                adapter.synchronize()
+                if observer: observer.end(time.monotonic() - before)
+            if observer:
+                with window(root, observer, 'cached'):
+                    before = time.monotonic();observer.begin('cached')
+                    out = target()
+                    adapter.synchronize()
+                    observer.end(time.monotonic() - before)
         finally:
             sys.setprofile(None)
             print('OPERATION_TARGET_END', file=sys.stderr, flush=True)
-        write(root / 'probe.json', {**identity, 'output_devices': [str(t.device) for t in tensors(out)],
+        write(root / 'probe.json', {**identity,
+             'output_devices': [str(t.device) for t in tensors(out)],
+             **({'p800_route':observer.record()} if observer else {}),
              'calls': [{'path': p, 'function': f, 'count': n, 'sha256': sha(p) if Path(p).is_file() else None,
                         **({'launcher_states': launcher_states[(p,f)]} if (p,f) in launcher_states else {})}
                        for (p,f),n in sorted(calls.items())]})
@@ -287,7 +314,7 @@ def device_phase(root, task, phase):
     actual_output = invocation(fn, inputs, bp, nonzero=True)
     checked = cpu(actual_output);adapter.synchronize()
     check = dropout_check(checked, bundle['inputs'], bp, task['dtype']) if task['case'] in ('dropout','native_dropout') else compare(checked, torch.load(root / 'reference.pt', weights_only=True), task['dtype'])
-    if task.get('common_diagnosis') or (task.get('diagnostics_mode') == 'failures' and (check['status'] == 'failed' or read(root / 'correctness.json')['status'] == 'failed')):
+    if getattr(adapter, 'verify_execution_payload', False) or task.get('common_diagnosis') or (task.get('diagnostics_mode') == 'failures' and (check['status'] == 'failed' or read(root / 'correctness.json')['status'] == 'failed')):
         torch.save(checked, root / 'measurement-output.pt')
     median = statistics.median(per_call)
     rate = count(1) * (3 if bp else 1) / (median / 1e6) / 1e12
@@ -358,7 +385,7 @@ def run_phase(root, phase):
     try:
         if phase == 'profiling':
             from vendors import get_vendor
-            adapter = get_vendor(task['vendor'])
+            adapter = get_vendor(task['vendor'], task.get('runtime_profile'))
             if hasattr(adapter, 'collect_profile'):
                 adapter.collect_profile(root, task)
             else:
@@ -371,6 +398,10 @@ def run_phase(root, phase):
             from runtime.diagnostics import numeric
             numeric(root, task)
         else: device_phase(root, task, phase)
+        from vendors import get_vendor
+        adapter = get_vendor(task['vendor'], task.get('runtime_profile'))
+        if hasattr(adapter, 'audit_phase'):
+            adapter.audit_phase(root, phase)
         return 0
     except Exception as exc:
         write(root / f'{phase}-error.json', {'type':type(exc).__name__, 'error':str(exc)})

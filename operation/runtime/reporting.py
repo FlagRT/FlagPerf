@@ -214,7 +214,11 @@ def replay_command(root, task):
     ]
     if task.get('device_id') is not None:
         command += ['--device-ids', shlex.quote(str(task['device_id']))]
-    command += ['--allow-privileged-root']
+    if task.get('vendor') == 'kunlunxin' and task.get('runtime_profile') == 'p800-xpytorch29':
+        if task.get('runtime_config', {}).get('sharing_policy') == 'shared-authorized':
+            command += ['--allow-shared-device']
+    else:
+        command += ['--allow-privileged-root']
     return ' '.join(command), None
 
 
@@ -457,6 +461,9 @@ def measurement_view(root, tasks, names):
                       ' / '.join(mib(t.get('memory',{}).get(k)) for k in ('peak_reserved_bytes','incremental_reserved_bytes')),
                       reason_text(t.get('memory',{}).get('reason') or '; '.join(t.get('memory',{}).get('missing',[])))
                       if t.get('memory',{}).get('reason') or t.get('memory',{}).get('missing') else '') for t in tasks])]
+    diagnostic_memory = [names[id(t)] for t in tasks if t.get('memory', {}).get('qualification', {}).get('scope') == 'diagnostic-only']
+    if diagnostic_memory:
+        body += ['', '以下组合的显存来自独立诊断采集，不改变目标路由或独占性能的未通过状态：' + '、'.join(diagnostic_memory) + '。']
     return lines + body + ['', '> allocated 为分配器已分配给张量等对象的内存，reserved 为分配器保留的内存池。峰值为独立 worker 采集窗口内最高值，增量为峰值相对预热后基线的增长；MiB＝1,048,576 字节。显存状态与原因说明该次采集的完成情况。', '']
 
 
@@ -810,6 +817,10 @@ def profiling_view(root, data, names):
     body += ['', '### 设备执行与硬件观察', '',
              'kernel 是设备实际执行的计算程序；每调用 kernel 数表示一次算子调用关联的执行事件数量，调用样本数为本组记录的目标调用数量。', '',
              '', '']
+    if any(t.get('profiling', {}).get('protocol') == 'p800-cupti-profile-v1' for t in data.get('tasks', [])):
+        body += ['P800 使用 XPU CUPTI 的 CUDA 兼容事件，通过 correlation 与 ac2g 流关联目标窗口内的主机启动和设备 kernel。'
+                 '时间线独立于原性能测量；采集成功不代表全部语义步骤均无 CPU 回退，也不授予独占性能资格。'
+                 'CUDA 兼容元数据中的 occupancy、grid/block、寄存器和 SM 字段未在 P800 上验证，不作为硬件计数器展示。', '']
     if timeline_rows:
         body += table(['组合','目标 kernel','调用样本数','每调用 kernel 数','并集 μs：中位数 [范围]'], timeline_rows)
         body += ['', '并集只累计至少一个关联 kernel 在执行的时间，重叠只计一次', '']

@@ -1,5 +1,37 @@
 # 适配与文档变更记录
 
+## 2026-10-21 — P800 Operation 完整矩阵与文档复核（未发布）
+
+- Docker/local 各完成 728 项规划中的 308 个适用组合尝试；保留数值、编译和运行失败，干扰与独立补测分列，不宣称原 Docker 整轮持续独占。
+- 主 README、Operation 入门及厂商导航同步最新覆盖、最小命令和报告位置，区分 Base 发布范围与 Operation 的 `validated:false`。
+- 登记公共精确比较统计缺口 `OP-CHECK-001`，保留间歇 trace 限制与六组计数器 not-supported；不改写程序判定或历史证据。
+- 说明仓库 Case 扩展与任意外部自定义 kernel 接入的区别；不增加新能力或宣称完成硬件验收。
+
+## 2026-10-20 — P800 Operation 文档分层与责任说明（未发布）
+
+- 厂商 README 保留运行入口和必要边界，机制、覆盖和历史失败迁入独立文档；保留失败与源码身份，不改写 evidence。
+- 更正最新 div FP16 与历史 tanh FP16 缺事件记录的批次归属，说明计数器未接入不等于硬件不支持。
+- 明确原生/FlagGems 错误的证据与归因边界，local 代表验证为七 case/14 组合；独占全量待资源和框架问题处理后再执行，本轮不安排 Ascend 实机回归。
+
+## 2026-10-20 — Operation 各芯片最小运行说明（未发布）
+
+- 入门指南补齐 Ascend、P800、NVIDIA 及四个旧厂商 local 兼容入口的预览/实际执行命令，明确镜像、解释器、设备预约与支持边界。
+- 说明 P800 专用 runtime profile 与 workload/profiling 的区别，以及省略 profile 会选择旧昆仑芯入口。
+- 对齐 Ascend/P800 厂商指南的最小原生案例，说明两者特权参数差异；不修改运行行为、已有证据或 validated 状态。
+
+## 2026-10-15 — P800 Operation 公开契约与交付边界（未发布）
+
+- 公开分发测试增加 P800 专用 profile 的 Docker/local 文档示例、全类型 728/308/420 分母和多设备/尺寸规划，纳入 vendor README 的链接与私有路径检查。
+- 现有 CI 增加 P800 Operation 标准库门禁与负例测试；不要求设备、Docker 或 torch，不更改 Ascend 命令。
+- 明确评估覆盖与全通过的区别；原生路由、共享性能、profiling 和已知算子失败仍按实际范围保留，Operation 保持 `validated:false`。
+
+## 2026-10-14 — P800 Operation Day 08/09 评估与离线交付核对（未发布）
+
+- 完成 52 case、308 个适用组合的 Docker daily 尝试，保留 275 partial、27 failed、6 blocked 及 420 个类型不适用项。
+- 完成 7 个 local 代表 case、14 个双路径 smoke；local 结果独立列出，不与 Docker daily 分母合并。
+- 按 Day 06/07/08 的三个源码身份分别重建离线报告，核对 728 个唯一组合、源 evidence 哈希、复放命令和确定性；Operation 继续保持 `validated:false`。
+- 保留底层 kernel/编译/数值失败及两次 Docker 查询异常；不将评估覆盖写成 runtime 晋级，不重新解释 Base/Toolkit 历史资格。
+
 
 ## 未发布：模型分析与算子诊断更新
 

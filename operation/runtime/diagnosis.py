@@ -3,6 +3,7 @@
 """Common evidence checks and optional same-input replay, without causal controls."""
 import json
 import math
+import signal
 from pathlib import Path
 import shutil
 import subprocess
@@ -29,6 +30,7 @@ def add_parser(sub):
     p.add_argument('--result-root', type=Path, default=catalog.ROOT / 'result')
     p.add_argument('--watchdog', type=float, default=300, help='per replay phase timeout')
     p.add_argument('--dry-run', action='store_true')
+    p.add_argument('--allow-shared-device', action='store_true', help='explicit shared P800 replay; performance remains unqualified')
     p.add_argument('--allow-privileged-root', action='store_true')
     p.add_argument('--container-device', action='append', default=[])
     p.add_argument('--mount', action='append', default=[])
@@ -75,13 +77,19 @@ def source_task(directory):
 
 def replay(root, args, task, identity, data):
     stage(args, 'replay-preparation')
-    from runtime.cli import ids, Lease, Workers
+    from runtime.cli import ids, make_lease, install_termination_handler, Workers
     if task.get('case') not in catalog.names() or task.get('dtype') not in catalog.dtypes(task['case']) or task.get('oplib') not in ('nativetorch', 'flaggems'):
         raise ValueError('source case/dtype/path is not supported by the current Case contract')
-    adapter = get_vendor(task['vendor'])
+    adapter = get_vendor(task['vendor'], task.get('runtime_profile'))
+    if getattr(args, 'allow_shared_device', False) and not getattr(adapter, 'supports_shared_device', False):
+        raise ValueError('selected vendor does not support --allow-shared-device')
+    if hasattr(adapter, 'ensure_execution_ready'):
+        adapter.ensure_execution_ready()
     devices = ids(args.device_ids or str(task['device_id']))
     if len(devices) != 1:
         raise ValueError('common replay requires one local device')
+    if hasattr(adapter, 'validate_options'):
+        adapter.validate_options(args, devices)
     if not identity.get('actual_image_id'):
         raise ValueError('replay requires a recorded source Docker image ID')
     image = args.image or identity['actual_image_id']
@@ -93,13 +101,18 @@ def replay(root, args, task, identity, data):
     data['replay_runtime'] = adapter.runtime_identity(adapter.default_image() or image, info)
     data['replay_image_id'] = info['Id']
     data['replay_device_ids'] = devices
-    lease = Lease(adapter.lease_root(), devices, root.name)
+    lease = make_lease(adapter, root, args, devices, root.name)
     pool = None
     ran_device = False
+    host_checked = False
+    previous_sigterm = install_termination_handler(adapter)
     try:
         lease.acquire()
+        if hasattr(lease, 'record'):
+            data['lease'] = {**lease.record(), 'released': False}
         stage(args, 'preflight')
         data['preflight'] = adapter.preflight(root, devices)
+        host_checked = True
         work = root / 'replay'
         work.mkdir()
         for name in ('inputs.pt', 'reference.pt'):
@@ -107,6 +120,10 @@ def replay(root, args, task, identity, data):
             if source.exists(): shutil.copyfile(source, work / name)
         current = {**task, 'device_id': devices[0], 'worker_device': 0, 'common_diagnosis': True, 'diagnostics_mode': 'failures', 'diagnostic_protocol': diagnostics.PROTOCOL}
         current.pop('attribution', None)
+        if hasattr(adapter, 'prepare_replay'):
+            adapter.prepare_replay(current, args)
+        if hasattr(adapter, 'bind_tasks'):
+            adapter.bind_tasks([current], data['preflight'])
         write(work / 'task.json', current)
         pool = Workers(root, adapter, args, info['Id'], root.name)
         phases = ['reference-check', 'probe']
@@ -148,16 +165,27 @@ def replay(root, args, task, identity, data):
         if supplemental['status'] == 'failed':
             raise RuntimeError('supplemental checks failed; inspect replay/diagnostic-checks.json')
     finally:
+        if previous_sigterm is not None:
+            signal.signal(signal.SIGTERM, signal.SIG_IGN)
         try:
             if pool: pool.close()
-        except Exception as exc:
+        except (Exception, KeyboardInterrupt, SystemExit) as exc:
             data['cleanup_error'] = str(exc)
         try:
             stage(args, 'postflight')
-            if ran_device: data['postflight'] = adapter.preflight(root, devices, label='postflight')
-        except Exception as exc:
+            if ran_device or (host_checked and getattr(adapter, 'postflight_after_preflight', False)):
+                data['postflight'] = adapter.preflight(root, devices, label='postflight')
+        except (Exception, KeyboardInterrupt, SystemExit) as exc:
             data['postflight_error'] = str(exc)
-        lease.release()
+        try:
+            lease.release()
+            if 'lease' in data:
+                data['lease']['released'] = True
+        except (Exception, KeyboardInterrupt, SystemExit) as exc:
+            data['cleanup_error'] = data.get('cleanup_error', '') + '; lease release: ' + str(exc)
+        finally:
+            if previous_sigterm is not None:
+                signal.signal(signal.SIGTERM, previous_sigterm)
 
 
 @tracked
@@ -208,7 +236,7 @@ def run(args):
     try:
         stage(args, 'snapshot-and-copy')
         write(root / 'plan.json', plan)
-        snapshot(root)
+        snapshot(root, get_vendor(task['vendor'], task.get('runtime_profile')))
         source = root / 'source-task';source.mkdir()
         for name, digest in digests.items():
             destination = source / name;destination.parent.mkdir(parents=True, exist_ok=True)

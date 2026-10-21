@@ -3,6 +3,7 @@
 [返回 Operation 入门](../../README.md) · [环境准备](../../../docs/ascend/README.md)
 
 当前运行路径为 CANN 9 / PyTorch 2.10 / Torch-FL，设备 API 是 `torch.flagos`。
+`--vendor ascend` 直接选择该适配器，不需要 `--runtime-profile`；`p800-xpytorch29` 仅适用于昆仑芯 P800，不能用于 Ascend。
 厂商适配负责设备初始化、同步、物理映射、运行身份、资源检查、路由解释和独立 profiling；
 通用 Case 继续负责输入构造和算子调用。不要把 Inference 使用的 torch_npu 镜像直接作为此处默认镜像。
 
@@ -14,8 +15,12 @@
 python3 operation/run.py run --vendor ascend --device-ids 0 --case abs \
   --dtype FP32 --workload smoke --dry-run
 python3 operation/run.py run --vendor ascend --device-ids 0 --case abs \
-  --dtype FP32 --oplib both --workload smoke --allow-privileged-root
+  --dtype FP32 --workload smoke --allow-privileged-root
 ```
+
+上例默认使用原生 `--oplib nativetorch`；增加 `--oplib both` 可在同次运行中比较原生与 FlagGems。
+`--allow-privileged-root` 给设备 worker 添加 Docker `--privileged`，不是自动 sudo，也不是要求宿主 root 账号；仅在获得该权限授权后使用。
+`--workload smoke` 选择小规模预设，省略时默认为 daily。
 
 `--dry-run` 不证明镜像或设备可用；正式运行会核对实际镜像、设备租约、前后健康状态，并限制每个阶段的执行时间。
 异常后的清理/健康检查失败会阻止继续运行。程序不修补底层库，也不把依赖受阻改判为算子通过。

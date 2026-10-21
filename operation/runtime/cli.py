@@ -74,6 +74,25 @@ def ids(value):
     return values
 
 
+def make_lease(adapter, root, args, devices, run_id):
+    """Use a vendor's physical resource lease only in host-managed execution."""
+    if args.execution == 'docker' and hasattr(adapter, 'create_lease'):
+        options = {'allow_shared':True} if getattr(args, 'allow_shared_device', False) else {}
+        return adapter.create_lease(root, devices, run_id, **options)
+    lease_root = adapter.local_lease_root() if args.execution == 'local' and hasattr(adapter, 'local_lease_root') else adapter.lease_root()
+    return Lease(lease_root, devices, run_id)
+
+
+def install_termination_handler(adapter):
+    if not getattr(adapter, 'strict_worker_lifecycle', False):
+        return None
+    previous = signal.getsignal(signal.SIGTERM)
+    def interrupted(signum, frame):
+        raise KeyboardInterrupt('termination requested')
+    signal.signal(signal.SIGTERM, interrupted)
+    return previous
+
+
 def parser():
     p = argparse.ArgumentParser(description='Portable operation benchmark; no host.yaml or SSH initialization.')
     sub = p.add_subparsers(dest='command', required=True)
@@ -84,6 +103,7 @@ def parser():
     list_mode.add_argument('--case', metavar='CASE', help='print supported input types for one case')
     run = sub.add_parser('run', allow_abbrev=False)
     run.add_argument('--vendor', choices=AVAILABLE, required=True)
+    run.add_argument('--runtime-profile', help='optional vendor runtime selection; independent of --workload')
     run.add_argument('--device-ids', required=True, help='host IDs for docker; runtime-visible IDs for local')
     run.add_argument('--execution', choices=['docker', 'local'], default='docker')
     run.add_argument('--image')
@@ -102,6 +122,8 @@ def parser():
     run.add_argument('--watchdog', type=float, default=300, help='per-phase hang safeguard, independent of the 120s soft target')
     run.add_argument('--result-root', type=Path, default=ROOT / 'result')
     run.add_argument('--dry-run', action='store_true')
+    run.add_argument('--allow-shared-device', action='store_true',
+                     help='explicitly allow shared P800 host devices; numerical results remain performance-partial')
     run.add_argument('--diagnostics', choices=['off', 'failures'], default='failures')
     run.add_argument('--allow-privileged-root', action='store_true')
     run.add_argument('--container-device', action='append', default=[], help='explicit additional Docker device mapping')
@@ -124,7 +146,11 @@ def resolve(args):
             raise ValueError('spectflops must be positive and finite')
         if args.dtype and len(args.dtype) != 1:
             raise ValueError('a peak requires a single explicit dtype')
-    adapter = get_vendor(args.vendor)
+    adapter = get_vendor(args.vendor, args.runtime_profile)
+    if args.allow_shared_device and not getattr(adapter, 'supports_shared_device', False):
+        raise ValueError('--allow-shared-device is supported only by an explicit shared-device vendor profile')
+    if hasattr(adapter, 'validate_options'):
+        adapter.validate_options(args, selected)
     image = args.image or (adapter.default_image() if args.execution == 'docker' else None)
     if args.execution == 'docker' and not image:
         raise ValueError('this vendor requires --image')
@@ -137,8 +163,15 @@ def resolve(args):
               'diagnostics_mode': args.diagnostics, 'diagnostic_protocol': DIAGNOSTIC_PROTOCOL} for d in selected for t in tasks]
     from runtime.metrics import pair_key
     for task in tasks:
+        if args.runtime_profile is not None:
+            task['runtime_profile'] = args.runtime_profile
+        if hasattr(adapter, 'task_metadata'):
+            task.update(adapter.task_metadata(args, task['device_id']))
+        if hasattr(adapter, 'task_identity'):
+            adapter.task_identity(task)
         task['pair_id'] = pair_key(task) if args.oplib == 'both' else None
     return adapter, {'schema_version': 2, 'protocol': 'operation-v2', 'vendor': args.vendor,
+                     **({'runtime_profile': args.runtime_profile} if args.runtime_profile is not None else {}),
                      'execution': args.execution, 'image': image, 'device_ids': selected,
                      'workload': args.workload, 'profiling': args.profiling, 'oplib_selection': args.oplib, 'soft_target_s': 120, 'watchdog_per_phase_s': args.watchdog,
                      'tasks': tasks}
@@ -167,19 +200,32 @@ class Workers:
         env = dict(os.environ, PYTHONDONTWRITEBYTECODE='1', TORCH_DEVICE_BACKEND_AUTOLOAD='0',
                    OMP_NUM_THREADS='1', MKL_NUM_THREADS='1')
         relative = str(control.relative_to(self.root))
+        entry = getattr(self.adapter, 'worker_entry', 'runtime/worker.py')
         if self.args.execution == 'docker':
             operation_source = self.root / 'source'
             command = ['docker', 'run', '-d', '--rm', '--name', name, '--network=none',
                        '-v', f'{operation_source}:/operation:ro', '-v', f'{self.root}:/evidence:rw',
                        '-e', 'PYTHONDONTWRITEBYTECODE=1', '-e', 'TORCH_DEVICE_BACKEND_AUTOLOAD=0',
                        '-e', 'OMP_NUM_THREADS=1', '-e', 'MKL_NUM_THREADS=1']
+            if getattr(self.adapter, 'strict_worker_lifecycle', False):
+                command += ['--label', 'flagperf.run_id=' + self.run_id]
+            if hasattr(self.adapter, 'worker_environment'):
+                for k,v in self.adapter.worker_environment(task['device_id'], mode).items():
+                    command += ['-e', f'{k}={v}']
+            if hasattr(self.adapter, 'snapshot_paths'):
+                command += ['-v', f'{self.root / "base"}:/base:ro']
             if mode not in ('reference', 'diagnose', 'reference-check'):
                 command += self.adapter.docker_options(task['device_id'], self.args)
-                for k,v in self.adapter.environment(task['device_id'], mode).items():
-                    command += ['-e', f'{k}={v}']
+                if not hasattr(self.adapter, 'worker_environment'):
+                    for k,v in self.adapter.environment(task['device_id'], mode).items():
+                        command += ['-e', f'{k}={v}']
                 for device in self.args.container_device: command += ['--device', device]
                 for mount in self.args.mount: command += ['-v', mount]
-            command += [self.image_id, 'python3', '-X', 'faulthandler', '/operation/runtime/worker.py', '--root', '/evidence',
+            prefix = self.adapter.worker_command(local=False) if hasattr(self.adapter, 'worker_command') else ['python3', '-X', 'faulthandler']
+            if hasattr(self.adapter, 'worker_command'):
+                command += ['--entrypoint', prefix[0]]
+                prefix = prefix[1:]
+            command += [self.image_id, *prefix, '/operation/' + entry, '--root', '/evidence',
                         '--phase', mode, '--serve', relative]
             write(control / 'command.json', {'argv':command})
             # Track the exact name before launch: a client timeout may leave a live container.
@@ -190,8 +236,12 @@ class Workers:
                 raise RuntimeError(f'worker launch failed: {result.stderr}')
             worker = {'name':name, 'control':control, 'proc':None}
         else:
-            if mode not in ('reference', 'diagnose', 'reference-check'): env.update(self.adapter.environment(task['device_id'], mode, local=True))
-            command = [sys.executable, str(self.root / 'source/runtime/worker.py'), '--root', str(self.root),
+            if hasattr(self.adapter, 'worker_environment'):
+                env.update(self.adapter.worker_environment(task['device_id'], mode, local=True))
+            if mode not in ('reference', 'diagnose', 'reference-check') and not hasattr(self.adapter, 'worker_environment'):
+                env.update(self.adapter.environment(task['device_id'], mode, local=True))
+            prefix = self.adapter.worker_command(local=True) if hasattr(self.adapter, 'worker_command') else [sys.executable]
+            command = [*prefix, str(self.root / 'source' / entry), '--root', str(self.root),
                        '--phase', mode, '--serve', relative]
             write(control / 'command.json', {'argv':command})
             with (control / 'server.log').open('w') as log:
@@ -222,7 +272,7 @@ class Workers:
                 raise RuntimeError(f'{mode}: watchdog exceeded {self.args.watchdog}s')
             if worker['proc'] is not None and worker['proc'].poll() is not None:
                 raise RuntimeError(f'{mode}: worker exited unexpectedly')
-            if task.get('common_diagnosis') and worker['proc'] is None and time.monotonic() - last_liveness_check >= 2:
+            if (task.get('common_diagnosis') or getattr(self.adapter, 'strict_worker_lifecycle', False)) and worker['proc'] is None and time.monotonic() - last_liveness_check >= 2:
                 state = subprocess.run(['docker', 'inspect', '--format', '{{.State.Running}}', worker['name']],
                                        capture_output=True, text=True, timeout=10)
                 last_liveness_check = time.monotonic()
@@ -238,13 +288,24 @@ class Workers:
                 continue
             try:
                 if worker['proc'] is None:
-                    result = subprocess.run(['docker','rm','-f',worker['name']], capture_output=True, text=True, timeout=30)
-                    write(worker['control'] / 'cleanup.json', {'returncode':result.returncode, 'stderr':result.stderr})
-                    if result.returncode and 'No such container' not in result.stderr:
-                        raise CleanupError(result.stderr)
+                    if hasattr(self.adapter, 'cleanup_worker'):
+                        result = self.adapter.cleanup_worker(worker, self.run_id)
+                        write(worker['control'] / 'cleanup.json', result)
+                        if result.get('container_absent') is not True:
+                            raise CleanupError('worker cleanup unconfirmed: ' + json.dumps(result))
+                    else:
+                        result = subprocess.run(['docker','rm','-f',worker['name']], capture_output=True, text=True, timeout=30)
+                        write(worker['control'] / 'cleanup.json', {'returncode':result.returncode, 'stderr':result.stderr})
+                        if result.returncode and 'No such container' not in result.stderr:
+                            raise CleanupError(result.stderr)
                 else:
                     proc = worker['proc']
-                    if proc.poll() is None:
+                    if hasattr(self.adapter, 'cleanup_process'):
+                        result = self.adapter.cleanup_process(proc)
+                        write(worker['control'] / 'cleanup.json', result)
+                        if result.get('process_group_absent') is not True:
+                            raise CleanupError('local worker process group cleanup unconfirmed')
+                    elif proc.poll() is None:
                         os.killpg(proc.pid, signal.SIGTERM)
                         try: proc.wait(timeout=5)
                         except subprocess.TimeoutExpired:
@@ -254,13 +315,41 @@ class Workers:
         if errors: raise CleanupError('; '.join(errors))
 
 
-def snapshot(root):
-    files = [ROOT / 'run.py', *list((ROOT / 'runtime').glob('*.py')),
+def supplementary_gate(adapter, item, phase):
+    """Vendor opt-in diagnostic capture never promotes the original task."""
+    if item.get('status') == 'passed':
+        return {'allowed': True, 'scope': 'qualified-task', 'reason': None}
+    if hasattr(adapter, 'supplementary_gate'):
+        gate = adapter.supplementary_gate(item, phase)
+        if gate is not None:
+            return gate
+    return {'allowed': False, 'scope': None, 'reason': 'requires passed correctness and routing'}
+
+
+def snapshot_files():
+    return [ROOT / 'run.py', *list((ROOT / 'runtime').glob('*.py')),
              *list((ROOT / 'vendors').rglob('*.py')), *list((ROOT / 'benchmarks').glob('*/main.py')),
-             *list((ROOT / 'benchmarks/drivers').glob('*.py'))]
+             *list((ROOT / 'benchmarks/drivers').glob('*.py')),
+             *list((ROOT / 'benchmarks').glob('*/case_config.yaml')),
+             *list((ROOT / 'vendors').glob('*/profiles/*.json'))]
+
+
+def snapshot(root, adapter=None):
+    files = snapshot_files()
     for p in files:
         dest = root / 'source' / p.relative_to(ROOT)
         dest.parent.mkdir(parents=True, exist_ok=True);dest.write_bytes(p.read_bytes())
+    if adapter is not None and hasattr(adapter, 'snapshot_paths'):
+        for p in adapter.snapshot_paths():
+            p = Path(p)
+            repo = ROOT.parent
+            if not p.is_file() or not p.is_relative_to(repo):
+                raise ValueError('missing or external vendor dependency: ' + str(p))
+            dest = root / p.relative_to(repo)
+            dest.parent.mkdir(parents=True, exist_ok=True);dest.write_bytes(p.read_bytes())
+        write(root / 'source-manifest.json', {
+            str(p.relative_to(root)):sha(p) for folder in ('source','base')
+            for p in sorted((root / folder).rglob('*')) if p.is_file()})
     for label, cmd in [('git-head.txt', ['git','rev-parse','HEAD']), ('git-status.txt', ['git','status','--short']),
                        ('git-diff.patch', ['git','diff','HEAD','--','operation'])]:
         result = subprocess.run(cmd, cwd=ROOT.parent, capture_output=True, text=True)
@@ -275,14 +364,17 @@ def execute(args, adapter, plan):
     root = args.result_root.resolve() / f'operation-{token}'
     root.mkdir(parents=True)
     args._result_root = root
-    write(root / 'plan.json', plan);snapshot(root)
+    write(root / 'plan.json', plan);snapshot(root, adapter)
     summary = {'schema_version': 2, 'status': 'partial', 'tasks': [], 'vendor': args.vendor,
                'execution': args.execution, 'device_ids': plan['device_ids'], 'protocol': plan['protocol'],
                'run_id': token, 'oplib_selection': args.oplib, 'workload': args.workload, 'profiling': args.profiling}
-    lease = Lease(adapter.lease_root(), plan['device_ids'], token)
-    began = time.monotonic();ran_device=False;image_id=None;pool=None
+    lease = None
+    began = time.monotonic();ran_device=False;image_id=None;pool=None;host_checked=False
+    previous_sigterm = install_termination_handler(adapter)
     try:
         stage(args, 'runtime-identity')
+        if hasattr(adapter, 'ensure_execution_ready'):
+            adapter.ensure_execution_ready()
         if args.execution == 'docker':
             info = json.loads(subprocess.check_output(['docker','image','inspect',plan['image']], text=True))[0]
             summary['runtime'] = adapter.runtime_identity(plan['image'], info)
@@ -291,9 +383,16 @@ def execute(args, adapter, plan):
             summary['runtime'] = {'validation': 'local runtime packages recorded per worker; image provenance externally managed',
                                   'visibility': {k:v for k,v in os.environ.items() if k.endswith('VISIBLE_DEVICES')}}
         stage(args, 'preflight')
+        lease = make_lease(adapter, root, args, plan['device_ids'], token)
         lease.acquire()
+        if hasattr(lease, 'record'):
+            summary['lease'] = {**lease.record(), 'released': False}
         if args.execution == 'docker':
             summary['preflight'] = adapter.preflight(root, plan['device_ids'])
+            host_checked = True
+            if hasattr(adapter, 'bind_tasks'):
+                adapter.bind_tasks(plan['tasks'], summary['preflight'])
+                write(root / 'bound-plan.json', plan)
         else:
             summary['preflight'] = {'status': 'externally-managed', 'boundary': 'local lease protects this namespace only; caller reserves host devices'}
         pool = Workers(root, adapter, args, image_id, token)
@@ -342,18 +441,27 @@ def execute(args, adapter, plan):
                     item.update(failure_stage='correctness', diagnosis='numerical-mismatch: original tolerance exceeded')
                 elif item['status'] != 'passed':
                     item.update(failure_stage='routing', diagnosis='routing-evidence: inspect target dispatch and fallback evidence')
+                if hasattr(adapter, 'qualify_result'):
+                    adapter.qualify_result(item, read(work / 'probe.json'))
                 item['phase'] = 'completed'
                 # Extra measurement errors do not overwrite clean timing or correctness.
                 for extra in ('memory', 'profiling'):
                     if extra == 'profiling' and task.get('profiling_mode', 'off') == 'off':
                         item[extra] = {'status': 'off'}
                         continue
-                    if item['status'] != 'passed':
-                        item[extra] = {'status': 'skipped', 'reason': 'requires passed correctness and routing'}
+                    gate = supplementary_gate(adapter, item, extra)
+                    if not gate['allowed']:
+                        item[extra] = {'status': 'skipped', 'reason': gate['reason']}
                         continue
                     try:
                         pool.phase(work, task, extra)
                         item[extra] = read(work / f'{extra}.json')
+                        if hasattr(adapter, 'qualify_supplement'):
+                            adapter.qualify_supplement(item, extra)
+                            write(work / f'{extra}.json', item[extra])
+                        if gate['scope'] == 'diagnostic-only':
+                            item[extra]['qualification'] = gate
+                            write(work / f'{extra}.json', item[extra])
                         if item[extra].get('execution_error'):
                             pool.close()
                             if args.execution == 'docker':
@@ -386,10 +494,16 @@ def execute(args, adapter, plan):
                 diagnosis = adapter.diagnose(str(exc), work)
                 item.update(status='blocked' if diagnosis else 'failed', error=f'{type(exc).__name__}: {exc}',
                             diagnosis=diagnosis or 'unclassified; inspect phase logs', failure_stage=item['phase'])
-                if not diagnosis:
+                if not diagnosis or getattr(adapter, 'strict_worker_lifecycle', False):
+                    item['diagnostic_execution_blocked'] = True
                     pool.close()
                     if ran_device and args.execution == 'docker':
-                        adapter.preflight(root, plan['device_ids'], label=f'health-after-{index}')
+                        try:
+                            adapter.preflight(root, plan['device_ids'], label=f'health-after-{index}')
+                        except Exception as health_error:
+                            item['diagnostic_execution_blocked'] = True
+                            raise CleanupError(f'recovery health check failed: {health_error}') from health_error
+                    item.pop('diagnostic_execution_blocked', None)
             finally:
                 for extra in ('memory', 'profiling'):
                     if extra not in item:
@@ -411,19 +525,29 @@ def execute(args, adapter, plan):
     except (Exception, KeyboardInterrupt, SystemExit) as exc:
         summary['error'] = f'{type(exc).__name__}: {exc}'
     finally:
+        if previous_sigterm is not None:
+            signal.signal(signal.SIGTERM, signal.SIG_IGN)
         if pool is not None:
             try: pool.close()
-            except Exception as exc: summary['cleanup_error'] = str(exc)
-        if ran_device and args.execution == 'docker':
+            except (Exception, KeyboardInterrupt, SystemExit) as exc: summary['cleanup_error'] = str(exc)
+        if args.execution == 'docker' and (ran_device or (host_checked and getattr(adapter, 'postflight_after_preflight', False))):
             stage(args, 'postflight')
             try: summary['postflight'] = adapter.preflight(root, plan['device_ids'], label='postflight')
-            except (Exception, SystemExit) as exc: summary['postflight_error'] = str(exc)
-        lease.release()
+            except (Exception, KeyboardInterrupt, SystemExit) as exc: summary['postflight_error'] = str(exc)
+        if lease is not None:
+            try:
+                lease.release()
+                if 'lease' in summary:
+                    summary['lease']['released'] = True
+            except (Exception, KeyboardInterrupt, SystemExit) as exc:
+                summary['lease_release_error'] = str(exc)
+        if previous_sigterm is not None:
+            signal.signal(signal.SIGTERM, previous_sigterm)
         # Unstarted work is explicit and remains part of the coverage denominator.
         for task in plan['tasks'][len(summary['tasks']):]:
             summary['tasks'].append({**task, 'status': 'not-run'})
         statuses = [t['status'] for t in summary['tasks'] if t['status'] != 'not-applicable']
-        summary['status'] = 'failed' if summary.get('error') or summary.get('postflight_error') or summary.get('cleanup_error') or 'failed' in statuses else 'passed' if statuses and all(s == 'passed' for s in statuses) else 'partial'
+        summary['status'] = 'failed' if any(summary.get(k) for k in ('error', 'postflight_error', 'cleanup_error', 'lease_release_error')) or 'failed' in statuses else 'passed' if statuses and all(s == 'passed' for s in statuses) else 'partial'
         summary['elapsed_s'] = time.monotonic() - began
         summary['counts'] = {s:sum(t['status']==s for t in summary['tasks']) for s in sorted({t['status'] for t in summary['tasks']})}
         from runtime.metrics import comparisons

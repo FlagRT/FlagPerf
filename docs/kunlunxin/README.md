@@ -1,7 +1,18 @@
 # 昆仑芯 P800 适配指南
 
-本适配提供 FlagPerf Base 的 PyTorch Benchmark 和独立原生 Toolkit。
-所有命令从 FlagPerf 仓库根目录执行；完整运行步骤见 [Base 使用指南](../../base/README.md)。
+本适配提供 FlagPerf Base 的 PyTorch Benchmark、独立原生 Toolkit，以及 Operation 算子评测适配。
+所有命令从 FlagPerf 仓库根目录执行。Base 与 Operation 分别声明运行栈验证范围，不能互相沿用资格。
+
+## 按任务选择入口
+
+- **设备基础能力**：[Base 使用指南](../../base/README.md)；本页下文说明 Base/Toolkit 的配置、权限与运行栈。
+- **单算子正确性、路由与性能**：[P800 Operation 最小运行](../../operation/vendors/kunlunxin/README.md)。
+  必须显式选择 `--vendor kunlunxin --runtime-profile p800-xpytorch29`，不能套用 Base 命令。
+- **Operation 机制、结果目录及复放**：[机制与维护](operation-design.md)。
+- **Operation 实测范围与限制**：[验证与已知问题](operation-validation.md)。Operation 保持 `validated:false`；
+  Docker/local 全矩阵及受干扰范围补测已完成；六组硬件计数器仍未完成，间歇 trace 缺失与精确比较统计缺口暂时保留。
+  各批次资格分开记录，不能从覆盖数或 Base 发布状态推断算子已完整验收。
+
 
 ## 入口和支持范围
 
@@ -19,7 +30,9 @@
 
 Toolkit 覆盖 FP32/FP16/BF16/INT8 算力、H2D/D2H 带宽及各自时延、设备内存带宽、
 容量查询和同机 P2P 带宽/时延；不提供 AllReduce 或跨机测试。
-本次适配不扩大 Operation、Training、Inference 或 Generate 的验证范围。
+本页 Base/Toolkit 适配不把结论扩大到 Operation、Training、Inference 或 Generate。
+Operation 是独立的算子评估入口，当前运行栈保持 `validated:false`；
+[最小运行](../../operation/vendors/kunlunxin/README.md)、[执行机制](operation-design.md)和[验证/失败/责任边界](operation-validation.md)分别维护。
 
 ## 环境准备
 

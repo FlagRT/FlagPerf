@@ -68,8 +68,8 @@ def merge_runs(sources, destination):
             raise ValueError('aggregation requires recorded Docker image identity')
         if identity is not None and current != identity:
             raise ValueError('cannot aggregate different hosts, runtime images, vendors or execution modes')
-        if data.get('cleanup_error') or data.get('postflight_error'):
-            raise ValueError('source has unresolved cleanup or device health failure')
+        if any(data.get(k) for k in ('error','cleanup_error','postflight_error','lease_release_error')):
+            raise ValueError('source has unresolved orchestration, cleanup or device health failure')
         identity = current
         relative = os.path.relpath(source,destination)
         records.append({'directory':relative,'manifest_sha256':sha(source/'artifacts.json'),

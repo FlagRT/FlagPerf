@@ -32,6 +32,19 @@ Ascend 环境和硬件边界见 [Ascend 指南](../ascend/README.md)。
 下文保留原 SSH 集群适配约定，只适用于显式调用 `operation/legacy/cluster_run.py` 的方式。
 它不代表当前通用 CLI 的启动流程。
 
+## 新增 Case 与外部自定义算子的边界
+
+当前公共 CLI 的实现路径为 `nativetorch`、`flaggems` 或同次 `both`，Ascend 与 P800 共用该机制。
+FlagGems 路径评测已安装库的算子实现；没有将任意外部函数、Triton kernel 或 C++/AscendC 动态库
+作为独立实现路径直接导入的通用接口，也没有对这类任意用户实现完成验收。
+
+源码层扩展需新增 `operation/benchmarks/<case>/main.py` 和 `case_config.yaml`，实现公共
+`build_case(config, case_config)`，返回可调用对象、输入、是否反向和工作量计数函数。
+还需核对 catalog 的类型/规模规则、CPU 参考是否独立可执行、保存输入及模块状态、设备调用与路由证据，
+并补充正负例与最小运行验证；新增目录被发现不等于完成适配。
+当前 CPU 参考复用 Case 构造并以高精度执行；仅支持设备的自定义 kernel 不能直接套用这一假设，
+必须另行设计独立参考和接入契约，不能拿被测 kernel 自己校验自己。
+
 ## 工程组织形式
 算子评测相关代码均在FlagPerf/operation目录下, 整体结构如下：
 ```
