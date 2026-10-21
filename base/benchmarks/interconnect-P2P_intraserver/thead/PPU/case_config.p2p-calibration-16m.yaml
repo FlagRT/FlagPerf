@@ -1,0 +1,15 @@
+# thead PPU intraserver P2P scan-point calibration: 16 MiB per send, 64 GiB
+# one-way payload inside the timer. Calibration-only; the pair (intra-card
+# vs inter-card) is chosen at run time through --physical-device-ids and
+# recorded in the scan plan. Not formal-baseline-eligible: results pin the
+# per-cell ITERS of the qualification configs, they never enter the
+# qualification account.
+Melements: 4
+WARMUP: 20
+ITERS: 4096
+SEED: 519
+DTYPE: float32
+DIST_BACKEND: cpu:gloo,cuda:nccl
+IMPLEMENTATION: native-xpytorch
+MODE: calibration
+FAULT_MODE: none

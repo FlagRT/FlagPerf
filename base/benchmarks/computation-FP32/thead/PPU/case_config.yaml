@@ -1,0 +1,22 @@
+# thead PPU computation-FP32 bounded case. Layered after the generic
+# case_config.yaml; the generic MPI backend, 4096 shape and 10000 iterations
+# are overridden here on purpose (verified: merged DIST_BACKEND is gloo).
+# Window calibration (R16: reduce ITERS, keep the 8192-cube P800 comparison
+# baseline): the day-4 bounded calibration on card 7 measured 31.84 ms per
+# 8192^3 iteration (2.038 s over 64 iters, 34.53 TFLOPS, allow_tf32 False);
+# ITERS=550 targets a ~17.5 s window, above the 15 s floor with margin for
+# run-to-run variance.
+M: 8192
+N: 8192
+K: 8192
+WARMUP: 100
+ITERS: 550
+SEED: 519
+ATOL: 0.0001
+RTOL: 0.0001
+DTYPE: float32
+OPERATOR: torch.mm
+DIST_BACKEND: gloo
+IMPLEMENTATION: native-xpytorch
+MODE: qualification
+FAULT_MODE: none

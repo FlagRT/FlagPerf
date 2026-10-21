@@ -1,0 +1,9 @@
+# Day-5 bounded calibration for interconnect-d2h: pinned blocking,
+# 64 iterations at the full 512 MiB payload; fixes per-variant qualification
+# ITERS. Calibration observations never enter the qualification account.
+PAYLOAD_BYTES: 536870912
+WARMUP: 3
+ITERS: 64
+PIN_MEMORY: true
+NON_BLOCKING: false
+MODE: calibration

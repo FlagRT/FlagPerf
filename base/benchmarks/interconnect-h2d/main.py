@@ -44,6 +44,10 @@ def main(config, case_config, rank, world_size, local_rank):
         from drivers import kunlunxin
         from drivers.transfer import run_verified_transfer
         return run_verified_transfer(kunlunxin, vars(case_config), rank, world_size, local_rank, 'h2d')
+    if config.vendor.split("/", 1)[0] == "thead":
+        from drivers import thead
+        from drivers.transfer import run_verified_transfer
+        return run_verified_transfer(thead, vars(case_config), rank, world_size, local_rank, 'h2d')
     set_ieee_float32(config.vendor)
     if rank == 0:
         print("finish initialization")

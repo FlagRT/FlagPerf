@@ -1,0 +1,17 @@
+# thead PPU intraserver P2P scan-point qualification: intra-card die pair, 4 MiB one-way message, ~25 s (contract ITERS cap reached)
+# window pinned from calibration (result run day9-p2pcal-ic-4m-01: 0.1264 ms/iter).
+# Cell assignments (pair, direction, acceptance) live in
+# p2p-qualification-plan.json; the pair is chosen at run time through
+# --physical-device-ids and must match this cell. The shared day-six contract caps ITERS at 200000 and this is the one cell that reaches it.
+
+# Not formal-baseline-eligible: scan-point evidence, never enters the
+# formal account.
+Melements: 1
+WARMUP: 20
+ITERS: 200000
+SEED: 519
+DTYPE: float32
+DIST_BACKEND: cpu:gloo,cuda:nccl
+IMPLEMENTATION: native-xpytorch
+MODE: qualification
+FAULT_MODE: none

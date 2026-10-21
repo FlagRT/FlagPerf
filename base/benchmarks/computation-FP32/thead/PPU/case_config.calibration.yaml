@@ -1,0 +1,5 @@
+# Day-4 window calibration attempt: one bounded run, iteration timing only;
+# not a qualification repetition (P800 qualification-plan precedent).
+WARMUP: 10
+ITERS: 64
+MODE: calibration

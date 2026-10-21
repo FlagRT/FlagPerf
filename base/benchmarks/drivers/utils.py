@@ -17,7 +17,7 @@ except ImportError:
 
 def _vendor_name(vendor):
     name = vendor.split("/", 1)[0].lower()
-    if name not in {"nvidia", "ascend", "kunlunxin", "mthreads", "cambricon", "iluvatar", "metax", "dcu", "tsingmicro"}:
+    if name not in {"nvidia", "ascend", "kunlunxin", "thead", "mthreads", "cambricon", "iluvatar", "metax", "dcu", "tsingmicro"}:
         raise ValueError(f"unsupported runtime vendor: {name!r}")
     return name
 
@@ -29,6 +29,9 @@ def bootstrap_vendor(vendor):
     elif _vendor_name(vendor) == "kunlunxin":
         from . import kunlunxin
         kunlunxin.initialize()
+    elif _vendor_name(vendor) == "thead":
+        from . import thead
+        thead.initialize()
 
 
 def accelerator_device(vendor, local_rank):
@@ -38,6 +41,9 @@ def accelerator_device(vendor, local_rank):
     if _vendor_name(vendor) == "kunlunxin":
         from . import kunlunxin
         return kunlunxin.device(local_rank)
+    if _vendor_name(vendor) == "thead":
+        from . import thead
+        return thead.device(local_rank)
     return local_rank
 
 
@@ -46,6 +52,9 @@ def set_ieee_float32(vendor):
     if _vendor_name(vendor) == "kunlunxin":
         from . import kunlunxin
         return kunlunxin.set_float32()
+    if _vendor_name(vendor) == "thead":
+        from . import thead
+        return thead.set_float32()
     if vendor == "nvidia":
         torch.backends.cuda.matmul.allow_tf32 = False
     elif _vendor_name(vendor) == "ascend":
@@ -64,6 +73,11 @@ def unset_ieee_float32(vendor):
     _vendor_name(vendor)
     if vendor == "nvidia":
         torch.backends.cuda.matmul.allow_tf32 = True
+    elif _vendor_name(vendor) == "thead":
+        # Parity with the nvidia branch: leave TF32 enabled for training-style
+        # float32 matmuls. The PPU boot default is False; cases record the
+        # flag in evidence and do not certify internal arithmetic.
+        torch.backends.cuda.matmul.allow_tf32 = True
     elif _vendor_name(vendor) == "ascend":
         pass
     elif "cambricon" in vendor:
@@ -79,6 +93,9 @@ def host_device_sync(vendor):
     if _vendor_name(vendor) == "kunlunxin":
         from . import kunlunxin
         return kunlunxin.synchronize()
+    if _vendor_name(vendor) == "thead":
+        from . import thead
+        return thead.synchronize()
     if _vendor_name(vendor) == "nvidia":
         torch.cuda.synchronize()
     elif _vendor_name(vendor) == "ascend":
@@ -94,6 +111,9 @@ def host_device_sync(vendor):
 
 def multi_device_sync(vendor):
     if _vendor_name(vendor) == "kunlunxin":
+        torch.distributed.barrier()
+        return
+    if _vendor_name(vendor) == "thead":
         torch.distributed.barrier()
         return
     if _vendor_name(vendor) == "nvidia":

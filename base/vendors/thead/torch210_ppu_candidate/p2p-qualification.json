@@ -1,0 +1,521 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-19T07:59:45Z",
+  "protocol_id": "p2p-single-node-v1",
+  "status": "passed",
+  "release_role": "candidate-single-node-p2p",
+  "runtime_image": "flagtree-ppu-3.6-dev:202608",
+  "runtime_image_id": "sha256:be1606e81fb24ca3da57a6d4a990280369b89146c2999e88eb8cd07c661dcc79",
+  "source_plan": {
+    "sha256": "82285f00a318db6ad9a2eb64c278291815967c992cbeb5900b281f851d257d7c",
+    "availability": "in this checkout: base/benchmarks/interconnect-P2P_intraserver/thead/PPU/p2p-qualification-plan.json"
+  },
+  "evidence": {
+    "sha256": "7ebf90988c9742cb91ce3677c70a3c979bb0650f19517eded7f7cc580d87dd15",
+    "run_count": 30,
+    "resume_count": 0,
+    "preserved_failed_attempts": 17,
+    "availability": "manifest committed at base/vendors/thead/torch210_ppu_candidate/p2p-evidence-manifest.json; raw run directories live at the site result root"
+  },
+  "declared_scope": {
+    "node_count": 1,
+    "rank_count": 2,
+    "directions": [
+      "single",
+      "rank0-to-rank1 pinned"
+    ],
+    "paths": [
+      "staged host relay (P2P=disabled); the host has no direct interconnect"
+    ],
+    "message_bytes": [
+      4194304,
+      16777216,
+      67108864,
+      268435456
+    ],
+    "dtype": "float32",
+    "workload": "one-way blocking torch.distributed send/recv",
+    "reported_formula": "one-way payload x iterations / elapsed (never doubled)"
+  },
+  "acceptance": {
+    "size_curve_runs": 24,
+    "monitor_ab_runs": 6,
+    "all_child_execution_measurement_postflight": true,
+    "all_monitor_on_runs_monitoring": true,
+    "maximum_observed_cv_pct": 0.4499,
+    "maximum_allowed_cv_pct": 5.0,
+    "monitor_median_delta_pct": 0.0739,
+    "maximum_absolute_monitor_median_delta_pct": 5.0,
+    "fallback_count": 0,
+    "measurement_minutes": 28.2,
+    "successful_child_wall_minutes": 28.2,
+    "first_to_last_child_minutes": 36.64
+  },
+  "decision": {
+    "formal_execution_eligible": true,
+    "production_eligible_for_declared_scope": false,
+    "excluded_scope": [
+      "reverse direction",
+      "device pairs other than the two representative pairs",
+      "direct interconnect (absent on this host; staged only)",
+      "multi-node"
+    ],
+    "excluded_scope_is_release_blocking": false,
+    "reason": "the pinned runtime image remains release_stage=candidate (validated:false); this record qualifies the protocol execution on the declared scope only and does not promote the runtime"
+  },
+  "failure_history": {
+    "status": "preserved",
+    "reason": "the first chain ran 24 monitor-off qualification runs; the bounded verdict policy flips monitor-less qualification runs to partial, so the protocol was revised to monitor-on for the size curve. All 17 completed first-chain run directories (12 intracard, 5 intercard) are preserved as deviation evidence."
+  },
+  "publication": {
+    "prepared_at": "2026-10-19T07:59:45Z",
+    "record_type": "thead-p2p-single-node-qualification",
+    "source_attestation_sha256": "397e37bda673bb4e9f9713257daed502b5058118fca8d02a9ffb9fb41ccc15e6",
+    "raw_evidence_available_in_this_checkout": false,
+    "hardware_revalidated_during_integration": true,
+    "boundary": "Numbers describe the pinned direction and the two representative pairs of this host under the staged path. They do not extend to other hosts, to direct interconnects, or beyond the declared scope. The candidate runtime status is tracked by the image manifest, not by this record."
+  },
+  "published_contract": {
+    "measurement_contract": {
+      "workload": "one-way blocking torch.distributed send/recv",
+      "dtype": "float32",
+      "reported_formula": "one-way payload x iterations / elapsed (never doubled)",
+      "minimum_measurement_seconds_per_run": 15,
+      "target_measurement_seconds_per_run": 60,
+      "warmup_iterations": 20,
+      "size_curve_repeats": 3,
+      "size_curve_monitor": "on",
+      "size_curve_monitor_note": "deviation from the ascend monitor-off size curve: the base harness records qualification-mode runs without monitoring as partial (base/executors/bounded_benchmark.py verdict policy), so thead scan cells run monitored; the monitor A/B toggle keeps its off legs as unmonitored probes and their partial verdicts are expected",
+      "timeout_seconds": 300,
+      "automatic_workload_extension": false
+    },
+    "matrix": [
+      {
+        "cell": "intracard-4m",
+        "pair_id": "intracard-die-pair",
+        "device_ids": [
+          14,
+          15
+        ],
+        "bus_ids": [
+          "00000000:A3:00.0",
+          "00000000:A2:00.0"
+        ],
+        "expected_path": "same-physical-card die pair; staged path per the P2P=disabled annotation",
+        "direction": "14-to-15-only",
+        "message_bytes": 4194304,
+        "warmup": 20,
+        "iterations": 200000,
+        "config": "base/benchmarks/interconnect-P2P_intraserver/thead/PPU/case_config.p2p-scan-intracard-4m.yaml",
+        "sha256": "4b5ede4da5e1a26edc176ce8105db6fb52349db000bfc07d3ca2808da31baeb7",
+        "repeats": [
+          {
+            "run": "day9-p2pscan2-intracard-4m-01",
+            "one_way_gb_s": 33.2192,
+            "elapsed_seconds": 25.2523,
+            "status": "passed",
+            "run_status": "passed"
+          },
+          {
+            "run": "day9-p2pscan2-intracard-4m-02",
+            "one_way_gb_s": 33.3232,
+            "elapsed_seconds": 25.1735,
+            "status": "passed",
+            "run_status": "passed"
+          },
+          {
+            "run": "day9-p2pscan2-intracard-4m-03",
+            "one_way_gb_s": 33.2253,
+            "elapsed_seconds": 25.2476,
+            "status": "passed",
+            "run_status": "passed"
+          }
+        ],
+        "median_one_way_gb_s": 33.2253,
+        "cv_pct": 0.1755
+      },
+      {
+        "cell": "intracard-16m",
+        "pair_id": "intracard-die-pair",
+        "device_ids": [
+          14,
+          15
+        ],
+        "bus_ids": [
+          "00000000:A3:00.0",
+          "00000000:A2:00.0"
+        ],
+        "expected_path": "same-physical-card die pair; staged path per the P2P=disabled annotation",
+        "direction": "14-to-15-only",
+        "message_bytes": 16777216,
+        "warmup": 20,
+        "iterations": 150000,
+        "config": "base/benchmarks/interconnect-P2P_intraserver/thead/PPU/case_config.p2p-scan-intracard-16m.yaml",
+        "sha256": "90f7126f86db30ed2403882e774de87d525bc34832b1249750447c5340405016",
+        "repeats": [
+          {
+            "run": "day9-p2pscan2-intracard-16m-01",
+            "one_way_gb_s": 42.1804,
+            "elapsed_seconds": 59.6623,
+            "status": "passed",
+            "run_status": "passed"
+          },
+          {
+            "run": "day9-p2pscan2-intracard-16m-02",
+            "one_way_gb_s": 42.293,
+            "elapsed_seconds": 59.5035,
+            "status": "passed",
+            "run_status": "passed"
+          },
+          {
+            "run": "day9-p2pscan2-intracard-16m-03",
+            "one_way_gb_s": 42.1827,
+            "elapsed_seconds": 59.6591,
+            "status": "passed",
+            "run_status": "passed"
+          }
+        ],
+        "median_one_way_gb_s": 42.1827,
+        "cv_pct": 0.1524
+      },
+      {
+        "cell": "intracard-64m",
+        "pair_id": "intracard-die-pair",
+        "device_ids": [
+          14,
+          15
+        ],
+        "bus_ids": [
+          "00000000:A3:00.0",
+          "00000000:A2:00.0"
+        ],
+        "expected_path": "same-physical-card die pair; staged path per the P2P=disabled annotation",
+        "direction": "14-to-15-only",
+        "message_bytes": 67108864,
+        "warmup": 20,
+        "iterations": 40000,
+        "config": "base/benchmarks/interconnect-P2P_intraserver/thead/PPU/case_config.p2p-scan-intracard-64m.yaml",
+        "sha256": "fcb368b79771b58709eb3036eb306ede1b0fbfa688d913ce668f200023104bf2",
+        "repeats": [
+          {
+            "run": "day9-p2pscan2-intracard-64m-01",
+            "one_way_gb_s": 44.6409,
+            "elapsed_seconds": 60.1321,
+            "status": "passed",
+            "run_status": "passed"
+          },
+          {
+            "run": "day9-p2pscan2-intracard-64m-02",
+            "one_way_gb_s": 44.6576,
+            "elapsed_seconds": 60.1097,
+            "status": "passed",
+            "run_status": "passed"
+          },
+          {
+            "run": "day9-p2pscan2-intracard-64m-03",
+            "one_way_gb_s": 44.6067,
+            "elapsed_seconds": 60.1782,
+            "status": "passed",
+            "run_status": "passed"
+          }
+        ],
+        "median_one_way_gb_s": 44.6409,
+        "cv_pct": 0.0581
+      },
+      {
+        "cell": "intracard-256m",
+        "pair_id": "intracard-die-pair",
+        "device_ids": [
+          14,
+          15
+        ],
+        "bus_ids": [
+          "00000000:A3:00.0",
+          "00000000:A2:00.0"
+        ],
+        "expected_path": "same-physical-card die pair; staged path per the P2P=disabled annotation",
+        "direction": "14-to-15-only",
+        "message_bytes": 268435456,
+        "warmup": 20,
+        "iterations": 9400,
+        "config": "base/benchmarks/interconnect-P2P_intraserver/thead/PPU/case_config.p2p-scan-intracard-256m.yaml",
+        "sha256": "146dbbf69a5050fb7b72395d2d69e103117aab87dc1b47e38e9ec9ebd3311233",
+        "repeats": [
+          {
+            "run": "day9-p2pscan2-intracard-256m-01",
+            "one_way_gb_s": 42.3703,
+            "elapsed_seconds": 59.5534,
+            "status": "passed",
+            "run_status": "passed"
+          },
+          {
+            "run": "day9-p2pscan2-intracard-256m-02",
+            "one_way_gb_s": 42.3332,
+            "elapsed_seconds": 59.6056,
+            "status": "passed",
+            "run_status": "passed"
+          },
+          {
+            "run": "day9-p2pscan2-intracard-256m-03",
+            "one_way_gb_s": 42.3753,
+            "elapsed_seconds": 59.5463,
+            "status": "passed",
+            "run_status": "passed"
+          }
+        ],
+        "median_one_way_gb_s": 42.3703,
+        "cv_pct": 0.0543
+      },
+      {
+        "cell": "intercard-4m",
+        "pair_id": "intercard-staged-pair",
+        "device_ids": [
+          7,
+          8
+        ],
+        "bus_ids": [
+          "00000000:C6:00.0",
+          "00000000:A5:00.0"
+        ],
+        "expected_path": "two physical cards; NCCL stages through the host (P2P=disabled)",
+        "direction": "7-to-8-only",
+        "message_bytes": 4194304,
+        "warmup": 20,
+        "iterations": 68000,
+        "config": "base/benchmarks/interconnect-P2P_intraserver/thead/PPU/case_config.p2p-scan-intercard-4m.yaml",
+        "sha256": "08f0e86045cf29fe11325d2513200a4b3c6ee1fd00a06179a8f50d3c0d620643",
+        "repeats": [
+          {
+            "run": "day9-p2pscan2-intercard-4m-01",
+            "one_way_gb_s": 4.7835,
+            "elapsed_seconds": 59.6243,
+            "status": "passed",
+            "run_status": "passed"
+          },
+          {
+            "run": "day9-p2pscan2-intercard-4m-02",
+            "one_way_gb_s": 4.7807,
+            "elapsed_seconds": 59.6592,
+            "status": "passed",
+            "run_status": "passed"
+          },
+          {
+            "run": "day9-p2pscan2-intercard-4m-03",
+            "one_way_gb_s": 4.7494,
+            "elapsed_seconds": 60.0522,
+            "status": "passed",
+            "run_status": "passed"
+          }
+        ],
+        "median_one_way_gb_s": 4.7807,
+        "cv_pct": 0.3968
+      },
+      {
+        "cell": "intercard-16m",
+        "pair_id": "intercard-staged-pair",
+        "device_ids": [
+          7,
+          8
+        ],
+        "bus_ids": [
+          "00000000:C6:00.0",
+          "00000000:A5:00.0"
+        ],
+        "expected_path": "two physical cards; NCCL stages through the host (P2P=disabled)",
+        "direction": "7-to-8-only",
+        "message_bytes": 16777216,
+        "warmup": 20,
+        "iterations": 17000,
+        "config": "base/benchmarks/interconnect-P2P_intraserver/thead/PPU/case_config.p2p-scan-intercard-16m.yaml",
+        "sha256": "2ee18ee733575f6b127fcd5139835a59c623c65ae473fe3d42edae8058b80fc7",
+        "repeats": [
+          {
+            "run": "day9-p2pscan2-intercard-16m-01",
+            "one_way_gb_s": 4.8346,
+            "elapsed_seconds": 58.9938,
+            "status": "passed",
+            "run_status": "passed"
+          },
+          {
+            "run": "day9-p2pscan2-intercard-16m-02",
+            "one_way_gb_s": 4.7985,
+            "elapsed_seconds": 59.438,
+            "status": "passed",
+            "run_status": "passed"
+          },
+          {
+            "run": "day9-p2pscan2-intercard-16m-03",
+            "one_way_gb_s": 4.7959,
+            "elapsed_seconds": 59.4697,
+            "status": "passed",
+            "run_status": "passed"
+          }
+        ],
+        "median_one_way_gb_s": 4.7985,
+        "cv_pct": 0.4498
+      },
+      {
+        "cell": "intercard-64m",
+        "pair_id": "intercard-staged-pair",
+        "device_ids": [
+          7,
+          8
+        ],
+        "bus_ids": [
+          "00000000:C6:00.0",
+          "00000000:A5:00.0"
+        ],
+        "expected_path": "two physical cards; NCCL stages through the host (P2P=disabled)",
+        "direction": "7-to-8-only",
+        "message_bytes": 67108864,
+        "warmup": 20,
+        "iterations": 4300,
+        "config": "base/benchmarks/interconnect-P2P_intraserver/thead/PPU/case_config.p2p-scan-intercard-64m.yaml",
+        "sha256": "57ed0d1a7e6d19c52d77f99b5e8073b5234874d8557f98f5b0d7f8f80675763f",
+        "repeats": [
+          {
+            "run": "day9-p2pscan2-intercard-64m-01",
+            "one_way_gb_s": 4.8384,
+            "elapsed_seconds": 59.6412,
+            "status": "passed",
+            "run_status": "passed"
+          },
+          {
+            "run": "day9-p2pscan2-intercard-64m-02",
+            "one_way_gb_s": 4.8062,
+            "elapsed_seconds": 60.0408,
+            "status": "passed",
+            "run_status": "passed"
+          },
+          {
+            "run": "day9-p2pscan2-intercard-64m-03",
+            "one_way_gb_s": 4.8055,
+            "elapsed_seconds": 60.0491,
+            "status": "passed",
+            "run_status": "passed"
+          }
+        ],
+        "median_one_way_gb_s": 4.8062,
+        "cv_pct": 0.3902
+      },
+      {
+        "cell": "intercard-256m",
+        "pair_id": "intercard-staged-pair",
+        "device_ids": [
+          7,
+          8
+        ],
+        "bus_ids": [
+          "00000000:C6:00.0",
+          "00000000:A5:00.0"
+        ],
+        "expected_path": "two physical cards; NCCL stages through the host (P2P=disabled)",
+        "direction": "7-to-8-only",
+        "message_bytes": 268435456,
+        "warmup": 20,
+        "iterations": 1080,
+        "config": "base/benchmarks/interconnect-P2P_intraserver/thead/PPU/case_config.p2p-scan-intercard-256m.yaml",
+        "sha256": "49e4a27db0ef5309dc90659ba1f6d3c00be1e47b6a7015a2e63b41fd29155c91",
+        "repeats": [
+          {
+            "run": "day9-p2pscan2-intercard-256m-01",
+            "one_way_gb_s": 4.8295,
+            "elapsed_seconds": 60.0285,
+            "status": "passed",
+            "run_status": "passed"
+          },
+          {
+            "run": "day9-p2pscan2-intercard-256m-02",
+            "one_way_gb_s": 4.8022,
+            "elapsed_seconds": 60.3699,
+            "status": "passed",
+            "run_status": "passed"
+          },
+          {
+            "run": "day9-p2pscan2-intercard-256m-03",
+            "one_way_gb_s": 4.8014,
+            "elapsed_seconds": 60.3803,
+            "status": "passed",
+            "run_status": "passed"
+          }
+        ],
+        "median_one_way_gb_s": 4.8022,
+        "cv_pct": 0.3325
+      }
+    ],
+    "monitor_ab": {
+      "cell": "intracard-64m",
+      "order": [
+        "off",
+        "on",
+        "on",
+        "off",
+        "off",
+        "on"
+      ],
+      "off_leg_note": "off legs are measurement-distortion probes, not qualification claims: qualification mode with monitor off is partial by the harness verdict policy",
+      "runs": [
+        {
+          "run": "day9-p2pab-intracard-64m-01",
+          "monitor": "off",
+          "one_way_gb_s": 44.6292,
+          "elapsed_seconds": 60.1479,
+          "monitoring_status": null,
+          "run_status": "partial"
+        },
+        {
+          "run": "day9-p2pab-intracard-64m-02",
+          "monitor": "on",
+          "one_way_gb_s": 44.6495,
+          "elapsed_seconds": 60.1206,
+          "monitoring_status": null,
+          "run_status": "passed"
+        },
+        {
+          "run": "day9-p2pab-intracard-64m-03",
+          "monitor": "on",
+          "one_way_gb_s": 44.6151,
+          "elapsed_seconds": 60.167,
+          "monitoring_status": null,
+          "run_status": "passed"
+        },
+        {
+          "run": "day9-p2pab-intracard-64m-04",
+          "monitor": "off",
+          "one_way_gb_s": 44.663,
+          "elapsed_seconds": 60.1024,
+          "monitoring_status": null,
+          "run_status": "partial"
+        },
+        {
+          "run": "day9-p2pab-intracard-64m-05",
+          "monitor": "off",
+          "one_way_gb_s": 44.6481,
+          "elapsed_seconds": 60.1225,
+          "monitoring_status": null,
+          "run_status": "partial"
+        },
+        {
+          "run": "day9-p2pab-intracard-64m-06",
+          "monitor": "on",
+          "one_way_gb_s": 44.5731,
+          "elapsed_seconds": 60.2237,
+          "monitoring_status": null,
+          "run_status": "passed"
+        }
+      ]
+    },
+    "acceptance": {
+      "per_cell_cv_pct_max": 5.0,
+      "monitor_median_delta_pct_max": 5.0,
+      "minimum_measurement_seconds_per_run": 15
+    },
+    "runtime_config": {
+      "path": "base/configs/thead_ppu_torch210.yaml",
+      "runtime_profile": "torch210_ppu_candidate",
+      "sha256": "6e4ee82d9f95855d849d1890be735fb803ee99c67dc5f114ed2db5fa92797112"
+    },
+    "runtime_config_sha256": "6e4ee82d9f95855d849d1890be735fb803ee99c67dc5f114ed2db5fa92797112",
+    "calibration_record_sha256": "397e37bda673bb4e9f9713257daed502b5058118fca8d02a9ffb9fb41ccc15e6"
+  }
+}

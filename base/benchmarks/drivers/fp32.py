@@ -28,13 +28,30 @@ def run_verified_fp32(driver, config, rank, world_size, local_rank):
 
 
 def run_verified_computation(driver, config, rank, world_size, local_rank, precision):
-    case = 'computation-' + precision + ':P800'
+    # Bounded workers export the full case selector; direct P800 harnesses and
+    # legacy callers keep the historical default.
+    case = os.environ.get('FLAGPERF_BENCHMARK_CASE') or 'computation-' + precision + ':P800'
+    if case.split(':')[0] != 'computation-' + precision:
+        raise RuntimeError('case selector does not match the verified computation precision')
     validate_config(config, case)
     spec = contract(case)
     dtype = getattr(torch, spec['dtype'])
     output_dtype = getattr(torch, spec['output_dtype'])
     reference_dtype = getattr(torch, spec['reference_dtype'])
     multiply = torch._int_mm if precision == 'INT8' else torch.mm
+    # The PPU _int_mm kernel only engages its tuned IMMA path when both
+    # operands are K-contiguous; a row-major (K, N) second operand falls back
+    # to a naive kernel measured at 0.176 TOPS instead of 268.6 TOPS on the
+    # same card. The conversion is a one-time device copy outside the timed
+    # loop, and every run still validates against the CPU float64 reference
+    # (probes/day5/evidence/int8-kmajor-verify.json). The P800 xtorch op keeps
+    # its historical operand layout.
+    fast_int8 = precision == 'INT8' and case.rsplit(':', 1)[-1] == 'PPU'
+
+    def device_operands(left, right):
+        if fast_int8:
+            right = right.t().contiguous().t()
+        return left, right
 
     def inputs(rows, inner, columns):
         if precision == 'INT8':
@@ -68,7 +85,7 @@ def run_verified_computation(driver, config, rank, world_size, local_rank, preci
                 left[:, ::2], left[:, 1::2] = 127, -128
                 right[::2], right[1::2] = -128, 127
             left, right = left.to(dtype), right.to(dtype)
-            device_left, device_right = left.to(target), right.to(target)
+            device_left, device_right = device_operands(left.to(target), right.to(target))
             actual = multiply(device_left, device_right)
             require_placement((device_left, device_right), target, dtype)
             require_placement((actual,), target, output_dtype)
@@ -80,7 +97,7 @@ def run_verified_computation(driver, config, rank, world_size, local_rank, preci
         del device_left, device_right, actual
         left, right = inputs(config['M'], config['N'], config['K'])
         left, right = left.to(dtype), right.to(dtype)
-        device_left, device_right = left.to(target), right.to(target)
+        device_left, device_right = device_operands(left.to(target), right.to(target))
         actual = multiply(device_left, device_right)
         require_placement((device_left, device_right), target, dtype)
         require_placement((actual,), target, output_dtype)

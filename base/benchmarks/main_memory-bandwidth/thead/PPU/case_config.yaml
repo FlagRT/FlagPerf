@@ -1,0 +1,17 @@
+# thead PPU main_memory-bandwidth bounded case. Layered after the generic
+# case_config.yaml; the payload keeps the P800 4 GiB shape (Melements 1024,
+# R16 discipline: recalibrate the window, never shrink the payload) and the
+# backend is the plain gloo CPU bootstrap (single rank, no collectives).
+# Window calibration (result root, run day6-bw-calibration-01 on the
+# qualification path): 4.18 ms per iteration = 2056.8 GB/s at the 4 GiB
+# payload (P800 anchor 2236.9 GB/s, same tier), so the bounded window is
+# ITERS=4400 (4400 x 4.18 ms = 18.4 s >= 15 s floor + 22% margin).
+Melements: 1024
+WARMUP: 2
+ITERS: 4400
+SEED: 519
+DTYPE: float32
+DIST_BACKEND: gloo
+IMPLEMENTATION: native-xpytorch
+MODE: qualification
+FAULT_MODE: none

@@ -1,8 +1,10 @@
-"""P800 Day 6 memory and two-rank communication drivers.
+"""Day 6 memory and intraserver communication drivers (P800 and thead PPU).
 
 Every function follows the verified-copy pattern: identity first, content
 correctness before and after the timed window, synchronized wall-clock timing,
 durable per-rank artifacts, and no reset/retry that could hide a failure.
+The case selector comes from FLAGPERF_BENCHMARK_CASE (P800 default), so the
+same verified code serves both chips without forking.
 """
 import json
 import os
@@ -15,6 +17,7 @@ import torch.distributed as dist
 from benchmarks.day6_contract import (
     allreduce_bandwidth,
     expected_ranks,
+    max_allreduce_world_size,
     memory_bandwidth,
     payload_bytes,
     p2p_one_way_bandwidth,
@@ -24,6 +27,19 @@ from benchmarks.day6_contract import (
 )
 from .events import benchmark_measurement_finish, benchmark_measurement_start
 from .fp32 import save
+
+
+def _selector(family):
+    """Resolve the registered case selector for this invocation.
+
+    Bounded workers export the full selector in FLAGPERF_BENCHMARK_CASE; the
+    P800 selector stays the default so historical kunlunxin harnesses and
+    legacy callers keep their exact behavior.
+    """
+    case = os.environ.get('FLAGPERF_BENCHMARK_CASE') or family + ':P800'
+    if case.rpartition(':')[0] != family:
+        raise RuntimeError('day-six driver case family differs from the selected case: ' + case)
+    return case
 
 
 def _require_scope(case, rank, world_size, local_rank):
@@ -114,7 +130,7 @@ def _metric_common(identity, case, config, rank, world_size, metric, unit, value
 
 def run_memory_bandwidth(driver, config, rank, world_size, local_rank):
     """Device-to-device copy bandwidth: one read plus one write per iteration."""
-    case = 'main_memory-bandwidth:P800'
+    case = _selector('main_memory-bandwidth')
     validate_config(config, case)
     target, identity, output = _identity(driver, config, case, rank, world_size, local_rank)
     payload = payload_bytes(config['Melements'])
@@ -193,7 +209,7 @@ def run_memory_bandwidth(driver, config, rank, world_size, local_rank):
 
 def run_memory_capacity(driver, config, rank, world_size, local_rank):
     """Report only allocations actually held; release them before exiting."""
-    case = 'main_memory-capacity:P800'
+    case = _selector('main_memory-capacity')
     validate_config(config, case)
     target, identity, output = _identity(driver, config, case, rank, world_size, local_rank)
     minimum = config['MIN_MIB']
@@ -279,8 +295,8 @@ def run_memory_capacity(driver, config, rank, world_size, local_rank):
 
 
 def run_allreduce(driver, config, rank, world_size, local_rank):
-    """Two to eight rank SUM; algbw=S/t, busbw=algbw*2*(n-1)/n."""
-    case = 'interconnect-MPI_intraserver:P800'
+    """Two to sixteen rank SUM; algbw=S/t, busbw=algbw*2*(n-1)/n."""
+    case = _selector('interconnect-MPI_intraserver')
     validate_config(config, case)
     target, identity, output = _identity(driver, config, case, rank, world_size, local_rank)
     payload = payload_bytes(config['Melements'])
@@ -310,8 +326,9 @@ def run_allreduce(driver, config, rank, world_size, local_rank):
             if not checked['passed']:
                 raise RuntimeError('allreduce content mismatch: ' + phase)
         _fault_point(config)
-        # Coefficients sum to zero for 2..8 ranks, including odd world sizes.
-        coefficient = allreduce_timed_coefficient(rank, world_size)
+        # Coefficients sum to zero for every supported world size, including
+        # odd sizes; the bound follows the chip contract (8 on P800, 16 on PPU).
+        coefficient = allreduce_timed_coefficient(rank, world_size, max_allreduce_world_size(case))
         device_tensor.copy_((base * coefficient).to(target))
         record['timed_input_coefficient'] = coefficient
         driver.synchronize()
@@ -357,7 +374,7 @@ def run_allreduce(driver, config, rank, world_size, local_rank):
 
 def run_p2p(driver, config, rank, world_size, local_rank):
     """One-way rank0->rank1 send/recv; bandwidth never doubled."""
-    case = 'interconnect-P2P_intraserver:P800'
+    case = _selector('interconnect-P2P_intraserver')
     validate_config(config, case)
     target, identity, output = _identity(driver, config, case, rank, world_size, local_rank)
     payload = payload_bytes(config['Melements'])

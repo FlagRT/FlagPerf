@@ -1,0 +1,18 @@
+# thead PPU interconnect-d2h bounded case. The chip layer carries the
+# whole bounded copy contract: one 512 MiB preallocated float32 payload,
+# pageable blocking copy as the base variant, MODE measured (the qualification
+# audit reuses the measured-mode gates).
+# Window calibration (day-5, probes/day5 pageable run + case_config.calibration.yaml pinned run): 46.327 ms/iter pageable (11.589 GB/s) and 18.828 ms/iter pinned (28.514 GB/s) at 512 MiB over 64-iteration bounded runs. ITERS=380 targets ~17.5 s, above the 15 s qualification floor with ~17% margin.
+PAYLOAD_BYTES: 536870912
+WARMUP: 10
+ITERS: 380
+SEED: 519
+DIRECTION: d2h
+PIN_MEMORY: false
+NON_BLOCKING: false
+REUSE_DESTINATION: true
+DTYPE: float32
+DIST_BACKEND: gloo
+IMPLEMENTATION: native-xpytorch
+MODE: measured
+FAULT_MODE: none

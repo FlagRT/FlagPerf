@@ -1,0 +1,9 @@
+# Day-5 bounded calibration, pageable-blocking variant: 64 iterations at the
+# full 512 MiB payload fixes the base/variant qualification ITERS together
+# with the pinned calibration run. Never enters the qualification account.
+PAYLOAD_BYTES: 536870912
+WARMUP: 3
+ITERS: 64
+PIN_MEMORY: false
+NON_BLOCKING: false
+MODE: calibration

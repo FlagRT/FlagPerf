@@ -74,6 +74,16 @@ def validate_metric(metric, correctness, context, context_hash, binding, config)
           rel_tol=1e-12), 'rank metric cannot be recomputed')
 
 
+def rank_artifact_names(output, prefix, ranks):
+    """Rank artifact names sorted by numeric rank; two-digit ranks sort after single digits."""
+    def order(name):
+        try:
+            return int(name[len(prefix):-len('.json')])
+        except ValueError:
+            return -1
+    return sorted((path.name for path in output.glob(prefix + '*.json')), key=order)
+
+
 def validate_stdout(text, raw, case):
     if case in DAY6_CASES:
         from benchmarks.day6_contract import expected_stdout_pairs, parse_stdout_lines
@@ -146,8 +156,8 @@ class BenchmarkWorkload:
         output = root / 'artifacts'
         expected_metrics = ['metric-rank-%d.json' % rank for rank in range(self.ranks)]
         expected_correct = ['correctness-rank-%d.json' % rank for rank in range(self.ranks)]
-        check(sorted(path.name for path in output.glob('metric-rank-*.json')) == expected_metrics, 'missing/extra rank metrics')
-        check(sorted(path.name for path in output.glob('correctness-rank-*.json')) == expected_correct, 'missing/extra correctness ranks')
+        check(rank_artifact_names(output, 'metric-rank-', self.ranks) == expected_metrics, 'missing/extra rank metrics')
+        check(rank_artifact_names(output, 'correctness-rank-', self.ranks) == expected_correct, 'missing/extra correctness ranks')
         metrics = []
         for rank in range(self.ranks):
             metric, correctness = read(output / ('metric-rank-%d.json' % rank)), read(output / ('correctness-rank-%d.json' % rank))
@@ -163,8 +173,8 @@ class BenchmarkWorkload:
                   'correctness': 'artifacts/correctness-rank-0.json'}
         write_json(root / 'benchmark-result.json', result)
         try:
-            events = sorted((output / 'benchmark-events').glob('measurement-rank-*.json'))
-            check([path.name for path in events] == ['measurement-rank-%d.json' % rank for rank in range(self.ranks)],
+            events_dir = output / 'benchmark-events'
+            check(rank_artifact_names(events_dir, 'measurement-rank-', self.ranks) == ['measurement-rank-%d.json' % rank for rank in range(self.ranks)],
                   'missing/extra measurement events')
             for rank in range(self.ranks):
                 event = read(output / 'benchmark-events' / ('measurement-rank-%d.json' % rank))

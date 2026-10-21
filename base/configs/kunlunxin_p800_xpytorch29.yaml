@@ -11,5 +11,5 @@
   "result_root": "result",
   "required_devices": ["/dev/xpuctrl"],
   "host_mounts": [],
-  "runtime_environment": {"USE_FLAGGEMS": "0"}
+  "runtime_environment": {"USE_FLAGGEMS": "0", "XMLIR_MATMUL_FAST_MODE": "1"}
 }
