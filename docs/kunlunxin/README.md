@@ -1,7 +1,17 @@
 # 昆仑芯 P800 适配指南
 
-本适配提供 FlagPerf Base 的 PyTorch Benchmark 和独立原生 Toolkit。
-所有命令从 FlagPerf 仓库根目录执行；完整运行步骤见 [Base 使用指南](../../base/README.md)。
+本适配提供 FlagPerf Base 的 PyTorch Benchmark、独立原生 Toolkit，以及 Operation 算子评测适配。
+所有命令从 FlagPerf 仓库根目录执行。Base 与 Operation 分别声明运行栈验证范围，不能互相沿用资格。
+
+## 按任务选择入口
+
+- **设备基础能力**：[Base 使用指南](../../base/README.md)；本页下文说明 Base/Toolkit 的配置、权限与运行栈。
+- **单算子正确性、路由与性能**：[P800 Operation 最小运行](../../operation/vendors/kunlunxin/README.md)。
+  必须显式选择 `--vendor kunlunxin --runtime-profile p800-xpytorch29`，不能套用 Base 命令。
+- **Operation 机制、结果目录及复放**：[机制与维护](operation-design.md)。
+- **Operation 实测范围与限制**：[验证与已知问题](operation-validation.md)。Operation 保持 `validated:false`；
+  六组硬件计数器、独占性能和 local 全量等仍未完成，不能从 Base 的发布状态推断算子已完整验收。
+
 
 ## 入口和支持范围
 

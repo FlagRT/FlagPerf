@@ -132,6 +132,42 @@ CPU 记录及同线程 launch，FP32/FP16 的 XBLAS FC kernel，或 BF16 的两�
 也不构成覆盖所有 C++ 后端内部指令和 CPU fallback 的通用证明。注册 Gems 后走原生设备实现不自动等同 CPU fallback。
 
 
+## 报告与逐算子结果
+
+Ascend 和 P800 共用公共执行器及报告生成器。每个任务完成后写入自己的 `result.json` 并更新运行汇总；
+整次运行完成收尾、写入最终状态和封存清单后生成 `report.md`。报告不是每完成一个任务就实时刷新。
+只选择一个算子时，总报告就是该算子所选精度、路径和规模的评测报告；多算子同次运行则在一份报告内逐项展示，
+不会默认给每个任务额外生成独立 Markdown。`--dry-run` 只输出计划，不产生评测结果。
+
+默认目录如下；传入 `--result-root` 时，运行目录改为该路径下的 `operation-<id>/`：
+
+```text
+operation/result/operation-<id>/
+├── report.md                         # 可读报告：状态、正确性、路由、性能、显存及证据入口
+├── summary.json                      # 整次运行的任务、状态和运行条件
+├── artifacts.json                    # 封存文件 SHA-256；report.md 是派生视图，不在该清单中
+├── source/、source-manifest.json      # 本次运行源码及其身份
+└── <序号>-<case>-<dtype>-<oplib>-d<id>/
+    ├── task.json、result.json         # 任务配置与最终结果
+    ├── correctness.json              # probe 输出/梯度检查
+    ├── measurement.json              # 独立计时和计时后正确性检查
+    ├── memory.json、profiling.json    # 附加采集或 off/skipped/not-supported 等状态
+    ├── route-*-dispatch.json          # P800 首次/缓存计算关联及缺失诊断
+    ├── route-*-trace.json             # P800 首次/缓存 Chrome trace
+    ├── inputs.pt、output.pt           # 保存输入与 probe 实际输出（含适用梯度）
+    ├── measurement-output.pt          # 计时外检查的实际测量结果
+    └── *.log                         # 原始阶段日志
+```
+
+文件随执行阶段和成功/失败情况而不同；类型不适用或未启动项可能只在 summary 中列出，
+执行中途报错也可能没有输出或 trace。以 `result.json`、summary 和原始异常为准，不能因某文件不存在补造成功结果。
+`profiling off` 不产生设备 profiling trace，timeline/full 的原始时间线保存于任务的 `profiling/timeline/trace.json`。
+终端结束时打印 `Report:`、`Summary:` 和 `Results:`，先从 `Report:` 阅读，再查看对应任务的证据。
+
+报告区分正确性、执行路径和性能资格；未满足通过条件的耗时只供诊断，不生成合格加速比。
+已接受的 `P800-TRACE-001` 是项目审查处置，不改写报告中的严格原始状态。
+指标定义、轮次统计及报告合并规则见[公共结果说明](../operations/results.md)。
+
 ## 证据、复放与回归
 
 每个 run 保存源代码、原始 case YAML、解析后配置、profile、使用的 Base 纯检查文件及其静态传递依赖，按原字节封存。
