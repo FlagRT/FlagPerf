@@ -1848,6 +1848,9 @@ def generate_and_record(result_dir: Path) -> dict[str, Any]:
     summary_path = root / "summary.json"
     summary = read_json(summary_path)
     assert summary is not None
+    if summary.get("suite") == "thead-ppu-toolkit":
+        from toolkits._common.thead.PPU.report import generate_and_record as generate_thead
+        return generate_thead(root)
     if summary.get("suite") == "kunlunxin-p800-toolkit":
         from toolkits._common.kunlunxin.P800.report import generate_and_record as generate_p800
         return generate_p800(root)

@@ -1,9 +1,13 @@
-"""Bounded P800 copy semantics and durable evidence validation."""
+"""Bounded copy semantics and durable evidence validation."""
 import math
 
 from base.vendors.protocol import ConfigurationError
 
-CASES = ('interconnect-h2d:P800', 'interconnect-d2h:P800')
+# Chip-scoped like the computation contracts: a chip registers here together
+# with its vendor provider PERFORMANCE_CASES and per-chip case assets.
+CHIPS = ('P800', 'PPU')
+CASES = tuple('interconnect-' + direction + ':' + chip
+              for direction in ('h2d', 'd2h') for chip in CHIPS)
 
 
 def contract(case):

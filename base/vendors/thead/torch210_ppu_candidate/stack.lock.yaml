@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "release_stage": "candidate",
+  "validated": false,
+  "image_manifest": "image-manifest.json",
+  "python": "3.12.3",
+  "packages": {
+    "torch": "2.10.0",
+    "flagtree": "0.6.1+ppu3.6",
+    "vllm": "0.19.0+cu130",
+    "torchao": "0.11.0",
+    "torchvision": "0.25.0"
+  },
+  "vendor_metadata": {
+    "PPU_SDK": "2.1.0-a5f865",
+    "CUDA_wrapper": "cuda-13.0",
+    "HGGC": "13.0",
+    "envsetup": "/usr/local/PPU_SDK/envsetup.sh (MODE=CUDA default)"
+  },
+  "host_observed": {
+    "os": "Alibaba Cloud Linux 3 (al8)",
+    "kernel": "5.10.134-17.2.al8.x86_64",
+    "driver": "1.5.1-1d747a",
+    "ppu_smi": "v1.17",
+    "device_nodes": "/dev/alixpu + alixpu_ctl + alixpu_sep + alixpu-caps/ + alixpu_ppu0-15"
+  },
+  "observed_single_card_api": {
+    "device": "cuda:0",
+    "mapping": "ppu-smi indices -> /dev/alixpu_ppuN -> container torch cuda ordinal; UUID join verified 2026-10-13 (torch get_device_properties(i).uuid == ppu-smi UUID minus GPU- prefix)",
+    "framework_identity": "UUID (011ef111-... form); pci_bus_id cross-check available",
+    "event_timing_usable": true,
+    "event_vs_wall_8192_fp32_ms": {"event": 31.867, "wall": 31.902},
+    "probe_evidence": "probes/day1/ under the controlled result root; not distributed with the source tree",
+    "scope": "initial identity/timing probes on free cards 1,2; not formal benchmark qualification"
+  },
+  "validation_status": "pending"
+}

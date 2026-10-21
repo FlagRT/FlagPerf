@@ -84,6 +84,10 @@ class KunlunxinProvider:
         if request.result_dir is not None and request.context.result_root is not None:
             raise ConfigurationError('choose result-dir or result-root, not both')
 
+    def code_identity_files(self):
+        """Repository files that define this vendor's bounded runtime identity."""
+        return ('configs/kunlunxin_p800_xpytorch29.yaml', 'vendors/kunlunxin/runtime_bootstrap.sh')
+
     def benchmark_spec(self, base_dir, result_dir, config, host, image_id):
         return self.probe_spec(base_dir, result_dir, config, host, image_id)
 

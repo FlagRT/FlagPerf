@@ -1,0 +1,17 @@
+# thead PPU intraserver P2P scan-point qualification: intra-card die pair, 64 MiB one-way message, ~60 s
+# window pinned from calibration (result run day9-p2pcal-ic-64m-01: 1.5126 ms/iter).
+# Cell assignments (pair, direction, acceptance) live in
+# p2p-qualification-plan.json; the pair is chosen at run time through
+# --physical-device-ids and must match this cell. This is also the monitor A/B cell.
+
+# Not formal-baseline-eligible: scan-point evidence, never enters the
+# formal account.
+Melements: 16
+WARMUP: 20
+ITERS: 40000
+SEED: 519
+DTYPE: float32
+DIST_BACKEND: cpu:gloo,cuda:nccl
+IMPLEMENTATION: native-xpytorch
+MODE: qualification
+FAULT_MODE: none

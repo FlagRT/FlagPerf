@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "vendor": "thead",
+  "chip": "PPU",
+  "runtime_profile": "torch210_ppu_candidate",
+  "image": "flagtree-ppu-3.6-dev:202608",
+  "image_id": "sha256:be1606e81fb24ca3da57a6d4a990280369b89146c2999e88eb8cd07c661dcc79",
+  "repo_digests": [],
+  "created": "2026-08-18T07:56:56.855039935Z",
+  "platform": "linux/amd64",
+  "release_stage": "candidate",
+  "validated": false,
+  "validation_scope": [],
+  "registry_pull_verified": false,
+  "hardware_model": "PPU-ZW810E"
+}

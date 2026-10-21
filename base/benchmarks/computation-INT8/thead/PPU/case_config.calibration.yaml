@@ -1,0 +1,6 @@
+# Day-5 bounded calibration: a short 64-iteration window on the qualification
+# shape that fixes the final qualification ITERS (>= 15 s floor + margin).
+# Calibration observations never enter the qualification account.
+WARMUP: 10
+ITERS: 64
+MODE: calibration

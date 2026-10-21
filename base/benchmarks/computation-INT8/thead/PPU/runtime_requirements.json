@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "supported": true,
+  "runtime_profile": "torch210_ppu_candidate",
+  "process_scope": {"nnodes": 1, "nproc_per_node": 1},
+  "correctness_required": true
+}

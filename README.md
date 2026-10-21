@@ -91,6 +91,7 @@ Base、Operation、Inference 的当前单机入口不要求 SSH。先阅读所�
       <th>沐曦</th>
       <th>昇腾</th>
       <th>昆仑芯 P800</th>
+      <th>平头哥 PPU</th>
     </tr>
   </thead>
   <tbody>
@@ -102,6 +103,7 @@ Base、Operation、Inference 的当前单机入口不要求 SSH。先阅读所�
       <td>N/A</td>
       <td>N/A</td>
       <td>N/A（当前范围未支持）</td>
+      <td><a href="base/benchmarks/computation-FP64/thead/PPU/README.md">算子或原语</a>,<br><a href="base/toolkits/computation-FP64/thead/PPU/README.md">厂商库微基准</a></td>
     </tr>
     <tr>
       <td>2</td>
@@ -111,6 +113,7 @@ Base、Operation、Inference 的当前单机入口不要求 SSH。先阅读所�
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/benchmarks/computation-FP32/metax">算子或原语</a></td>
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/benchmarks/computation-FP32/ascend">厂商专用工具</a></td>
       <td><a href="base/benchmarks/computation-FP32/kunlunxin/P800/README.md">算子或原语</a>,<br><a href="base/toolkits/computation-FP32/kunlunxin/P800/README.md">厂商专用工具</a></td>
+      <td><a href="base/benchmarks/computation-FP32/thead/PPU/README.md">算子或原语</a>,<br><a href="base/toolkits/computation-FP32/thead/PPU/README.md">厂商库微基准</a></td>
     </tr>
     <tr>
       <td>3</td>
@@ -120,6 +123,7 @@ Base、Operation、Inference 的当前单机入口不要求 SSH。先阅读所�
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/benchmarks/computation-TF32/metax">算子或原语</a></td>
       <td>N/A</td>
       <td>N/A（当前范围未支持）</td>
+      <td><a href="base/benchmarks/computation-TF32/thead/PPU/README.md">算子或原语</a>,<br><a href="base/toolkits/computation-TF32/thead/PPU/README.md">厂商库微基准</a></td>
     </tr>
     <tr>
       <td>4</td>
@@ -129,6 +133,7 @@ Base、Operation、Inference 的当前单机入口不要求 SSH。先阅读所�
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/benchmarks/computation-FP16/metax">算子或原语</a></td>
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/benchmarks/computation-FP16/ascend">厂商专用工具</a></td>
       <td><a href="base/benchmarks/computation-FP16/kunlunxin/P800/README.md">算子或原语</a>,<br><a href="base/toolkits/computation-FP16/kunlunxin/P800/README.md">厂商专用工具</a></td>
+      <td><a href="base/benchmarks/computation-FP16/thead/PPU/README.md">算子或原语</a>,<br><a href="base/toolkits/computation-FP16/thead/PPU/README.md">厂商库微基准</a></td>
     </tr>
     <tr>
       <td>5</td>
@@ -138,6 +143,7 @@ Base、Operation、Inference 的当前单机入口不要求 SSH。先阅读所�
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/benchmarks/computation-BF16/metax">算子或原语</a></td>
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/benchmarks/computation-BF16/ascend">厂商专用工具</a></td>
       <td><a href="base/benchmarks/computation-BF16/kunlunxin/P800/README.md">算子或原语</a>,<br><a href="base/toolkits/computation-BF16/kunlunxin/P800/README.md">厂商专用工具</a></td>
+      <td><a href="base/benchmarks/computation-BF16/thead/PPU/README.md">算子或原语</a>,<br><a href="base/toolkits/computation-BF16/thead/PPU/README.md">厂商库微基准</a></td>
     </tr>
     <tr>
       <td>6</td>
@@ -147,6 +153,7 @@ Base、Operation、Inference 的当前单机入口不要求 SSH。先阅读所�
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/toolkits/computation-INT8/metax">厂商专用工具</a></td>
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/benchmarks/computation-INT8/ascend">厂商专用工具</a></td>
       <td><a href="base/benchmarks/computation-INT8/kunlunxin/P800/README.md">算子或原语</a>,<br><a href="base/toolkits/computation-INT8/kunlunxin/P800/README.md">厂商专用工具</a></td>
+      <td><a href="base/benchmarks/computation-INT8/thead/PPU/README.md">算子或原语</a></td>
     </tr>
     <tr>
       <td>7</td>
@@ -156,6 +163,7 @@ Base、Operation、Inference 的当前单机入口不要求 SSH。先阅读所�
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/benchmarks/main_memory-bandwidth/metax">算子或原语</a></td>
       <td>N/A</td>
       <td><a href="base/benchmarks/main_memory-bandwidth/kunlunxin/P800/README.md">算子或原语</a>,<br><a href="base/toolkits/main_memory-bandwidth/kunlunxin/P800/README.md">厂商专用工具</a></td>
+      <td><a href="base/benchmarks/main_memory-bandwidth/thead/PPU/README.md">算子或原语</a>,<br><a href="base/toolkits/main_memory-bandwidth/thead/PPU/README.md">厂商专用工具</a></td>
     </tr>
     <tr>
       <td>8</td>
@@ -165,6 +173,7 @@ Base、Operation、Inference 的当前单机入口不要求 SSH。先阅读所�
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/benchmarks/main_memory-capacity/metax">算子或原语</a></td>
       <td>N/A</td>
       <td><a href="base/benchmarks/main_memory-capacity/kunlunxin/P800/README.md">算子或原语</a>,<br><a href="base/toolkits/main_memory-capacity/kunlunxin/P800/README.md">厂商专用工具</a></td>
+      <td><a href="base/benchmarks/main_memory-capacity/thead/PPU/README.md">算子或原语</a>,<br><a href="base/toolkits/main_memory-capacity/thead/PPU/README.md">厂商专用工具</a></td>
     </tr>
     <tr>
       <td>9</td>
@@ -174,6 +183,7 @@ Base、Operation、Inference 的当前单机入口不要求 SSH。先阅读所�
       <td>N/A</td>
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/toolkits/interconnect-h2d/ascend">厂商专用工具</a></td>
       <td><a href="base/benchmarks/interconnect-h2d/kunlunxin/P800/README.md">算子或原语</a>,<br><a href="base/toolkits/interconnect-h2d/kunlunxin/P800/README.md">厂商专用工具</a></td>
+      <td><a href="base/benchmarks/interconnect-h2d/thead/PPU/README.md">算子或原语</a>,<br><a href="base/toolkits/interconnect-h2d/thead/PPU/README.md">厂商专用工具</a></td>
     </tr>
     <tr>
       <td>10</td>
@@ -183,6 +193,7 @@ Base、Operation、Inference 的当前单机入口不要求 SSH。先阅读所�
       <td>N/A</td>
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/toolkits/interconnect-P2P_intraserver/ascend">厂商专用工具</a></td>
       <td><a href="base/benchmarks/interconnect-P2P_intraserver/kunlunxin/P800/README.md">算子或原语</a>,<br><a href="base/toolkits/interconnect-P2P_intraserver/kunlunxin/P800/README.md">厂商专用工具</a></td>
+      <td><a href="base/benchmarks/interconnect-P2P_intraserver/thead/PPU/README.md">算子或原语</a>,<br><a href="base/toolkits/interconnect-P2P_intraserver/thead/PPU/README.md">厂商专用工具</a></td>
     </tr>
     <tr>
       <td>11</td>
@@ -192,6 +203,7 @@ Base、Operation、Inference 的当前单机入口不要求 SSH。先阅读所�
       <td>N/A</td>
       <td>N/A</td>
       <td><a href="base/benchmarks/interconnect-MPI_intraserver/kunlunxin/P800/README.md">算子或原语</a></td>
+      <td><a href="base/benchmarks/interconnect-MPI_intraserver/thead/PPU/README.md">算子或原语</a></td>
     </tr>
     <tr>
       <td>12</td>
@@ -200,6 +212,7 @@ Base、Operation、Inference 的当前单机入口不要求 SSH。先阅读所�
       <td><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/benchmarks/interconnect-P2P_interserver/nvidia/A100">算子或原语</a>,<br><a href="https://github.com/FlagOpen/FlagPerf/tree/main/base/toolkits/interconnect-P2P_interserver/nvidia/A100">厂商专用工具</a></td>
       <td>N/A</td>
       <td>N/A</td>
+      <td>N/A（当前范围未支持）</td>
       <td>N/A（当前范围未支持）</td>
     </tr>
     <tr>
@@ -210,12 +223,16 @@ Base、Operation、Inference 的当前单机入口不要求 SSH。先阅读所�
       <td>N/A</td>
       <td>N/A</td>
       <td>N/A（当前范围未支持）</td>
+      <td>N/A（当前范围未支持）</td>
     </tr>
   </tbody>
   </table>
 
 P800 Base 的完整 15-case 支持矩阵及 12 项 Toolkit（含 D2H 与时延）见 [Base 使用指南](base/README.md)。
 环境及限制见 [P800 适配指南](docs/kunlunxin/README.md)；runtime 已在[声明范围](docs/kunlunxin/validation.md)内设为 `validated:true / partial`，静态支持不等于所有范围已通过硬件验证。
+
+PPU Base 的完整 21 条目（18 项可执行、3 项启动前跳过）与 12 项官方工具 Toolkit 覆盖见 [Base 使用指南](base/README.md)。
+环境及限制见 [PPU 适配指南](docs/thead/README.md)；锁定 runtime 保持 `validated:false / release_stage:candidate`，每轮 run 须显式 `--allow-candidate-runtime`，静态支持不等于所有范围已通过硬件验证。
 
 
 算子列表：

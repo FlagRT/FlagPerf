@@ -38,7 +38,11 @@ def copy_loop(destination, source, iterations, non_blocking):
 
 
 def run_verified_transfer(driver, config, rank, world_size, local_rank, direction):
-    case = 'interconnect-' + direction + ':P800'
+    # Bounded workers export the full case selector; direct P800 harnesses and
+    # legacy callers keep the historical default.
+    case = os.environ.get('FLAGPERF_BENCHMARK_CASE') or 'interconnect-' + direction + ':P800'
+    if case.split(':')[0] != 'interconnect-' + direction:
+        raise RuntimeError('case selector does not match the verified transfer direction')
     validate_config(config, case)
     if (rank, world_size, local_rank) != (0, 1, 0):
         raise RuntimeError('copy requires exactly rank zero')

@@ -41,6 +41,10 @@ def parse_args():
 
 def main(config, case_config, rank, world_size, local_rank):    
     unset_ieee_float32(config.vendor)
+    if config.vendor.split("/", 1)[0] == "thead":
+        from drivers import thead
+        from drivers.fp32 import run_verified_computation
+        return run_verified_computation(thead, vars(case_config), rank, world_size, local_rank, 'TF32')
     if rank == 0:
         print("finish initialization")
     

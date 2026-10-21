@@ -1,0 +1,5 @@
+# Pinned host buffer with non_blocking copy_: same ITERS as the pinned blocking variant; non_blocking is a request recorded in the metric, never assumed to overlap.
+PIN_MEMORY: true
+NON_BLOCKING: true
+ITERS: 940
+MODE: measured

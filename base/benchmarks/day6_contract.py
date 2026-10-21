@@ -1,21 +1,39 @@
-"""Bounded P800 Day 6 contracts, formulas and artifact validation."""
+"""Bounded Day 6 memory and communication contracts, formulas and validation.
+
+The contracts are shared per case family across the P800 and the thead PPU
+(selectors ``<family>:P800`` and ``<family>:PPU``); every chip difference is
+explicit: the communication backend (FlagCX on the P800, vendor NCCL on the
+PPU) and the allreduce world-size bound (8 on the P800, 16 on the PPU).
+"""
 import math
 import re
 
 from base.vendors.protocol import ConfigurationError
 
 
-MEMORY_CASES = ('main_memory-bandwidth:P800', 'main_memory-capacity:P800')
-COMMUNICATION_CASES = ('interconnect-P2P_intraserver:P800', 'interconnect-MPI_intraserver:P800')
-CASES = MEMORY_CASES + COMMUNICATION_CASES
+CHIPS = ('P800', 'PPU')
+MEMORY_FAMILIES = ('main_memory-bandwidth', 'main_memory-capacity')
+COMMUNICATION_FAMILIES = ('interconnect-P2P_intraserver', 'interconnect-MPI_intraserver')
+MEMORY_CASES = tuple(family + ':' + chip for chip in CHIPS for family in MEMORY_FAMILIES)
+COMMUNICATION_CASES = tuple(family + ':' + chip for chip in CHIPS for family in COMMUNICATION_FAMILIES)
+# Chip-major with the day-6 group order inside keeps the historical P800
+# prefix of CASES byte-identical for every existing consumer.
+CASES = tuple(family + ':' + chip for chip in CHIPS
+              for group in (MEMORY_FAMILIES, COMMUNICATION_FAMILIES) for family in group)
 INTERSERVER_CASES = ('interconnect-P2P_interserver:P800', 'interconnect-MPI_interserver:P800')
 
-METRIC_NAMES = {
-    'main_memory-bandwidth:P800': 'device-memory-bandwidth',
-    'main_memory-capacity:P800': 'main_memory-capacity',
-    'interconnect-MPI_intraserver:P800': 'allreduce-algbw',
-    'interconnect-P2P_intraserver:P800': 'p2p-one-way-bandwidth',
+_FAMILY_METRICS = {
+    'main_memory-bandwidth': 'device-memory-bandwidth',
+    'main_memory-capacity': 'main_memory-capacity',
+    'interconnect-MPI_intraserver': 'allreduce-algbw',
+    'interconnect-P2P_intraserver': 'p2p-one-way-bandwidth',
 }
+METRIC_NAMES = {family + ':' + chip: name for chip in CHIPS for family, name in _FAMILY_METRICS.items()}
+
+
+def communication_backend(chip):
+    """Day-2 thead decision: vendor NCCL on the PPU, FlagCX on the P800."""
+    return 'cpu:gloo,cuda:flagcx' if chip == 'P800' else 'cpu:gloo,cuda:nccl'
 
 
 def _int(c, k, lo, hi):
@@ -24,21 +42,24 @@ def _int(c, k, lo, hi):
 
 
 def validate_config(c, case):
-    if case == 'main_memory-bandwidth:P800':
+    family, _, chip = case.rpartition(':')
+    if chip not in CHIPS:
+        raise ConfigurationError('unknown Day 6 case')
+    if family == 'main_memory-bandwidth':
         _int(c, 'Melements', 1, 1024); _int(c, 'WARMUP', 1, 100); _int(c, 'ITERS', 1, 200000)
         if c.get('DTYPE') != 'float32' or c.get('DIST_BACKEND') != 'gloo':
             raise ConfigurationError('invalid memory bandwidth contract')
-    elif case == 'main_memory-capacity:P800':
+    elif family == 'main_memory-capacity':
         _int(c, 'INITSIZE', 1, 98304); _int(c, 'MIN_MIB', 1, 1024)
         if c.get('DTYPE') != 'float32' or c.get('DIST_BACKEND') != 'gloo' \
                 or c.get('BOUND_REQUEST_BY_FREE_MEMORY') is not True or c.get('POST_TEST_WAIT_SECONDS') != 0:
             raise ConfigurationError('invalid memory capacity contract')
-    elif case in COMMUNICATION_CASES:
+    elif family in COMMUNICATION_FAMILIES:
         _int(c, 'Melements', 1, 256); _int(c, 'WARMUP', 1, 100); _int(c, 'ITERS', 1, 200000)
-        if c.get('DTYPE') != 'float32' or c.get('DIST_BACKEND') != 'cpu:gloo,cuda:flagcx':
-            raise ConfigurationError('invalid FlagCX contract')
+        if c.get('DTYPE') != 'float32' or c.get('DIST_BACKEND') != communication_backend(chip):
+            raise ConfigurationError('invalid communication backend contract')
     else:
-        raise ConfigurationError('unknown P800 Day 6 case')
+        raise ConfigurationError('unknown Day 6 case')
     if c.get('IMPLEMENTATION') != 'native-xpytorch':
         raise ConfigurationError('native XPYTORCH required')
     return c
@@ -85,9 +106,15 @@ def p2p_one_way_bandwidth(payload, iterations, elapsed):
     return bandwidth(payload * iterations, elapsed)
 
 
-def allreduce_timed_coefficient(rank, world_size):
+def max_allreduce_world_size(case):
+    """PPU qualification reaches 16 local ranks; the P800 contract stays 8."""
+    return 16 if case.endswith(':PPU') else 8
+
+
+def allreduce_timed_coefficient(rank, world_size, max_world_size=8):
     """Exact zero sum for every supported world size, including odd sizes."""
-    if type(world_size) is not int or not 2 <= world_size <= 8 or type(rank) is not int or rank not in range(world_size):
+    if type(world_size) is not int or not 2 <= world_size <= max_world_size \
+            or type(rank) is not int or rank not in range(world_size):
         raise ValueError('invalid allreduce rank/world size')
     return world_size - 1 if rank == 0 else -1
 
@@ -132,10 +159,11 @@ def _common_metric_checks(metric, correctness, context, context_hash, binding, c
 
 def validate_metric(metric, correctness, context, context_hash, binding, config, case):
     """Recompute every published number from the artifact's own raw bytes."""
+    family = case.rpartition(':')[0]
     world_size = (context.get('nproc_per_node') or expected_ranks(case)) if case in COMMUNICATION_CASES else 1
     rank, elapsed = _common_metric_checks(metric, correctness, context, context_hash, binding, config, case, world_size)
     name = METRIC_NAMES[case]
-    unit = 'GB' if case == 'main_memory-capacity:P800' else 'GB/s'
+    unit = 'GB' if family == 'main_memory-capacity' else 'GB/s'
     if metric.get('metric') != name or metric.get('unit') != unit:
         raise RuntimeError('unexpected rank metric contract')
     value = metric.get('value')
@@ -144,26 +172,28 @@ def validate_metric(metric, correctness, context, context_hash, binding, config,
 
     # A top-level "passed" cannot substitute for the actual content checks.
     checks = correctness.get('checks', [])
-    if case != 'main_memory-capacity:P800':
-        phases = (['sentinel', 'clone-equivalence', 'changed-input', 'after'] if case == 'main_memory-bandwidth:P800'
-                  else ['cold', 'second', 'post-loop'] if case == 'interconnect-MPI_intraserver:P800'
+    if family != 'main_memory-capacity':
+        phases = (['sentinel', 'clone-equivalence', 'changed-input', 'after'] if family == 'main_memory-bandwidth'
+                  else ['cold', 'second', 'post-loop'] if family == 'interconnect-MPI_intraserver'
                   else ['sent-verified-repeats'] if rank == 0
                   else [f'recv-{i}' for i in range(config['WARMUP'])] + ['post-loop'])
         if [c.get('phase') for c in checks] != phases or any(c.get('passed') is not True for c in checks):
             raise RuntimeError('missing or failed content correctness phases')
-        if case == 'interconnect-P2P_intraserver:P800' and rank == 0:
+        if family == 'interconnect-P2P_intraserver' and rank == 0:
             if checks[0].get('repeats') != config['WARMUP'] or checks[0].get('sequence_range') != [0, config['WARMUP'] - 1]:
                 raise RuntimeError('P2P sender sequence coverage mismatch')
         elif any(c.get('elements') != payload_bytes(config['Melements']) // 4 or c.get('mismatch_count') != 0
                  or c.get('first_mismatch') is not None for c in checks):
             raise RuntimeError('content correctness coverage/mismatch evidence invalid')
-        if case == 'main_memory-bandwidth:P800' and (correctness.get('source_reused') is not True
+        if family == 'main_memory-bandwidth' and (correctness.get('source_reused') is not True
                 or correctness.get('destination_reused') is not True):
             raise RuntimeError('preallocated copy buffers were not reused')
-        if case == 'interconnect-MPI_intraserver:P800' and world_size > 2 and correctness.get('timed_input_coefficient') != allreduce_timed_coefficient(rank, world_size):
+        if family == 'interconnect-MPI_intraserver' and world_size > 2 \
+                and correctness.get('timed_input_coefficient') != allreduce_timed_coefficient(
+                    rank, world_size, max_allreduce_world_size(case)):
             raise RuntimeError('multi-rank timed inputs do not use verified zero-sum coefficients')
 
-    if case == 'main_memory-bandwidth:P800':
+    if family == 'main_memory-bandwidth':
         payload = payload_bytes(config['Melements'])
         expected_gb, expected_gib = memory_bandwidth(payload, config['ITERS'], elapsed)
         if metric.get('total_bytes') != 2 * payload * config['ITERS']:
@@ -171,7 +201,7 @@ def validate_metric(metric, correctness, context, context_hash, binding, config,
         if not math.isclose(value, expected_gb, rel_tol=1e-9) or \
                 not math.isclose(metric.get('value_gib_s', 0), expected_gib, rel_tol=1e-9):
             raise RuntimeError('memory bandwidth cannot be recomputed from bytes and elapsed')
-    elif case == 'main_memory-capacity:P800':
+    elif family == 'main_memory-capacity':
         held = metric.get('held_mib')
         if type(held) is not int or held < config['MIN_MIB']:
             raise RuntimeError('capacity held MiB missing or below the search granularity')
@@ -186,7 +216,7 @@ def validate_metric(metric, correctness, context, context_hash, binding, config,
         held_trail = [r for r in correctness.get('trail', []) if r.get('stage') == 'held']
         if not held_trail or sum(r.get('request_mib', 0) for r in held_trail) != held or correctness.get('held_mib') != held:
             raise RuntimeError('capacity result differs from held allocation trail')
-    elif case == 'interconnect-MPI_intraserver:P800':
+    elif family == 'interconnect-MPI_intraserver':
         payload = payload_bytes(config['Melements'])
         algbw, algbw_gib, busbw, busbw_gib = allreduce_bandwidth(payload, config['ITERS'], elapsed, world_size)
         if metric.get('message_bytes') != payload:
@@ -213,12 +243,12 @@ def validate_metric(metric, correctness, context, context_hash, binding, config,
     return metric
 
 
-STDOUT_UNITS = {
-    'main_memory-bandwidth:P800': [('device-memory-bandwidth', 'GB/s'), ('device-memory-bandwidth', 'GiB/s')],
-    'main_memory-capacity:P800': [('main_memory-capacity', 'GB'), ('main_memory-capacity', 'GiB')],
-    'interconnect-MPI_intraserver:P800': [('allreduce-algbw', 'GB/s'), ('allreduce-busbw', 'GB/s')],
-    'interconnect-P2P_intraserver:P800': [('p2p-one-way-bandwidth', 'GB/s'), ('p2p-one-way-bandwidth', 'GiB/s')],
-}
+STDOUT_UNITS = {family + ':' + chip: pairs for chip in CHIPS for family, pairs in (
+    ('main_memory-bandwidth', [('device-memory-bandwidth', 'GB/s'), ('device-memory-bandwidth', 'GiB/s')]),
+    ('main_memory-capacity', [('main_memory-capacity', 'GB'), ('main_memory-capacity', 'GiB')]),
+    ('interconnect-MPI_intraserver', [('allreduce-algbw', 'GB/s'), ('allreduce-busbw', 'GB/s')]),
+    ('interconnect-P2P_intraserver', [('p2p-one-way-bandwidth', 'GB/s'), ('p2p-one-way-bandwidth', 'GiB/s')]),
+)}
 
 STDOUT_VALUE_FIELDS = {
     'GB/s': 'value', 'GiB/s': 'value_gib_s', 'GB': 'value', 'GiB': 'value_gib_s',
@@ -241,7 +271,7 @@ def parse_stdout_lines(text):
 
 
 def expected_stdout_pairs(case, metric):
-    if case == 'interconnect-MPI_intraserver:P800':
+    if case.rpartition(':')[0] == 'interconnect-MPI_intraserver':
         return [(METRIC_NAMES[case], 'GB/s', metric['value']), ('allreduce-busbw', 'GB/s', metric['busbw_gb_s'])]
     unit_value = {'GB/s': metric['value'], 'GiB/s': metric['value_gib_s'], 'GB': metric['value'], 'GiB': metric['value_gib_s']}
     return [(METRIC_NAMES[case], unit, unit_value[unit]) for _, unit in STDOUT_UNITS[case]]

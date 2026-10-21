@@ -21,7 +21,7 @@ DOCS = [ROOT / p for p in (
     'operation/vendors/ascend/README.md',
     'base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/README.md',
     'base/toolkits/_common/kunlunxin/P800/README.md',
-)] + list((ROOT / 'docs/ascend').glob('*.md')) + list((ROOT / 'docs/kunlunxin').glob('*.md'))
+)] + list((ROOT / 'docs/ascend').glob('*.md')) + list((ROOT / 'docs/kunlunxin').glob('*.md')) + list((ROOT / 'docs/thead').glob('*.md'))
 DOCS += list((ROOT / 'base/docs').glob('*.md'))
 DOCS += list((ROOT / 'base/benchmarks').glob('*/kunlunxin/P800/README.md'))
 DOCS += list((ROOT / 'base/toolkits').glob('*/kunlunxin/P800/README.md'))
@@ -183,7 +183,7 @@ class PublicDistributionTests(unittest.TestCase):
         ):
             paths.update(p for p in directory.rglob('*') if p.suffix in ('.py', '.json', '.yaml', '.md'))
         paths.update((ROOT / 'base/configs').glob('ascend*.yaml'))
-        stage = re.compile(r'(?<![A-Za-z0-9#])(?:C[0-9](?:[-_/]|\b)|c[0-9][-_])')
+        stage = re.compile(r'(?<![A-Za-z0-9#])(?<!\d:)(?:C[0-9](?:[-_/]|\b)|c[0-9][-_])')  # PCI BDF segments ('0000:C1:...') stay exempt via the digit-colon lookbehind; 'label:C1' stage markers are caught again
         private = re.compile(r'/home/kzhang(?:519|520)|/data1/flagperf-|FlagPerf_advance|(?:\.\./)+personal/')
         for path in sorted(paths):
             with self.subTest(path=str(path.relative_to(ROOT))):

@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "supported": false,
+  "unsupported_reason": "the unified PPU entrypoint resolves nnodes=1 and the paired host is not attached; interserver cases are skipped before Docker and lease",
+  "runtime_profile": "torch210_ppu_candidate",
+  "process_scope": {
+    "nnodes": 2,
+    "nproc_per_node": 1
+  }
+}

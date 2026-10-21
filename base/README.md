@@ -17,19 +17,21 @@
 # FlagPerf Base 使用指南
 
 本目录提供 FlagPerf 的基础规格评测能力，推荐入口为 `python3 base/run.py`。
-Ascend 和昆仑芯 P800 共用宿主入口，分别使用自己的运行时、设备绑定、权限与测量协议。
+Ascend、昆仑芯 P800 和平头哥 PPU 共用宿主入口，分别使用自己的运行时、设备绑定、权限与测量协议。
 
-| 入口 | Ascend | 昆仑芯 P800 |
-|---|---|---|
-| `benchmark run` | PyTorch 2.10 / Torch-FL；常规环境与 FlagCX 通信环境分开 | PyTorch 2.9 / XPYTORCH；10 项可执行、5 项启动前跳过，使用 `CASE:P800` |
-| `toolkit run` | MindCluster ToolBox、DMI、SMI、HCCL Test | 12 项独立 C++ XBLAS/XRE microbenchmark |
-| `benchmark preflight` | 不属于当前 Ascend 使用入口 | 单卡身份、微小张量回读、监控及清理检查 |
-| `report` | 从已有证据重建 Markdown/SVG | 从已有证据重建 Markdown/SVG |
+| 入口 | Ascend | 昆仑芯 P800 | 平头哥 PPU |
+|---|---|---|---|
+| `benchmark run` | PyTorch 2.10 / Torch-FL；常规环境与 FlagCX 通信环境分开 | PyTorch 2.9 / XPYTORCH；10 项可执行、5 项启动前跳过，使用 `CASE:P800` | PyTorch 2.10 / 容器内 `torch.cuda`（PPU_SDK CUDA 兼容层）；18 项可执行、3 项启动前跳过，使用 `CASE:PPU` |
+| `toolkit run` | MindCluster ToolBox、DMI、SMI、HCCL Test | 12 项独立 C++ XBLAS/XRE microbenchmark | 12 项官方工具/acblas 微基准（sailbandwidth、p2pBandwidthLatencyTest、ppu-smi）；候选镜像须显式 `--allow-candidate-runtime` |
+| `benchmark preflight` | 不属于当前 Ascend 使用入口 | 单卡身份、微小张量回读、监控及清理检查 | 单卡身份、微小张量回读、监控及清理检查 |
+| `report` | 从已有证据重建 Markdown/SVG | 从已有证据重建 Markdown/SVG | 从已有证据重建 Markdown/SVG |
 
 Benchmark 使用框架算子，Toolkit 使用厂商工具或原生 API；同名 Case 的输出不能未经
-协议对齐直接比较。P800 runtime 为 `validated:true / partial`，验证范围见 [P800 验证说明](../docs/kunlunxin/validation.md)。
-环境与公开验证范围分别见 [Ascend 指南](../docs/ascend/README.md) 和
-[P800 指南](../docs/kunlunxin/README.md)，适配机制见 [厂商控制面](docs/vendor-control-plane.md)。
+协议对齐直接比较。P800 runtime 为 `validated:true / partial`，验证范围见 [P800 验证说明](../docs/kunlunxin/validation.md)；
+PPU runtime 保持 `validated:false / release_stage:candidate`，每轮 run 须显式 `--allow-candidate-runtime`，
+验证范围见 [PPU 验证说明](../docs/thead/validation.md)。
+环境与公开验证范围分别见 [Ascend 指南](../docs/ascend/README.md)、
+[P800 指南](../docs/kunlunxin/README.md) 和 [PPU 指南](../docs/thead/README.md)，适配机制见 [厂商控制面](docs/vendor-control-plane.md)。
 
 ## 阅读导航
 
@@ -39,7 +41,7 @@ Benchmark 使用框架算子，Toolkit 使用厂商工具或原生 API；同名 
 - [设备选择与静态计划](#2-先生成静态计划)：区分物理 NPU、逻辑 Device 和 rank。
 - [Benchmark 使用](#3-运行-benchmark)：查找 Case、调整工作量、运行多个测试。
 - [Toolkit 使用](#4-运行-toolkit)：选择厂商测量、时延和 HCCL 测试。
-- [单机通信](#5-单机通信)：区分 Ascend FlagCX 与 P800 FlagCX/BKCL。
+- [单机通信](#5-单机通信)：区分 Ascend FlagCX、P800 FlagCX/BKCL 与 PPU NCCL。
 - [结果与报告](#6-结果报告和退出码)：判断成功与否、找到原始数据。
 - [常见问题](#7-常见问题)：定位配置、占用、运行和证据问题。
 - [进一步阅读](#8-入口与职责边界)：了解实现和旧入口。
@@ -125,6 +127,23 @@ python3 base/run.py benchmark run \
 开启监控，并检查真实窗口长度。一次 passed 不等于五次稳定性或 runtime 晋级。
 P800 的 Toolkit 启动方法见 [第 4.3 节](#43-p800-toolkit)。
 
+### 平头哥 PPU
+
+准备好 PPU 镜像、宿主权限和结果目录写权限后，先检查 FP32 静态计划（dry-run 不占用设备）：
+
+```bash
+python3 base/run.py benchmark run \
+  --config base/configs/thead_ppu_torch210.yaml \
+  --case computation-FP32:PPU --physical-device-ids 7 \
+  --nproc-per-node 1 --timeout 300 --allow-candidate-runtime --dry-run
+```
+
+真实运行的资源预约条件与 P800 相同：带时区的资源窗口（`--reservation-end`）、
+预约依据（`--reservation-reference`）和全新结果目录（`--result-dir`）。
+锁定镜像保持 candidate 状态，**每轮 run 都必须显式 `--allow-candidate-runtime`**。
+正式测量开启监控并确认真实计时窗；一次 passed 不等于五次稳定性或 runtime 晋级。
+PPU 的 Toolkit 启动方法见 [第 4.4 节](#44-平头哥-ppu-toolkit)。
+
 ## 1. 环境基线
 
 ### Ascend 环境
@@ -201,6 +220,23 @@ Base 使用预先创建的 `flagperf-p800-internal` 内部 bridge；Toolkit 使�
 P800 不使用 Ascend 的 `--allow-privileged-root` 或 `--allow-disruptive-dmi`。
 `--privilege-command 'sudo -n'` 仅提升部分宿主命令；整个 runner 的文件访问权限必须另行满足。
 
+### 平头哥 PPU 环境
+
+使用 [PPU 配置](configs/thead_ppu_torch210.yaml)；锁定镜像 `flagtree-ppu-3.6-dev:202608`
+（image ID 与取得方式见 [PPU 指南](../docs/thead/README.md#锁定镜像)）内含 Python 3.12.3、
+PyTorch 2.10.0+cu130 与 PPU_SDK 2.1.0 CUDA 兼容层（`MODE=CUDA`，workload 走 `torch.cuda` API）。
+镜像保持 `validated:false / release_stage:candidate`，**每轮 run 须显式
+`--allow-candidate-runtime`**；本仓库不分发镜像，更换镜像、驱动或依赖后需重新验证对应范围，
+不能复制旧资格结论。
+
+宿主需要 Linux、Python 3.11 或更新版本、Git、Docker、平头哥驱动和 `ppu-smi`。
+配置采用 JSON 语法，`expected_device_ids` 是完整物理 inventory（默认 0–15），
+不是本轮选卡清单。Base 使用预先创建的 `thead-internal` 内部 bridge（单卡 Benchmark 也使用），
+Toolkit 使用 `--network=none` 无网络容器。设备身份以 UUID 为主键，
+SMI 物理编号、`/dev/alixpu_ppuN`（minor 为 N+1）、容器内逻辑编号和 rank 不是同一个编号；
+执行器校验 BDF/UUID/minor 并对绑定不一致 fail closed；公共控制节点 `/dev/alixpu`
+必须可映射。网络与权限细节见 [PPU 指南](../docs/thead/README.md#设备权限和通信网络)。
+
 ## 2. 先生成静态计划
 
 `--dry-run` 只校验仓库配置并打印静态计划，不检查 Docker、NPU 占用或物理到逻辑
@@ -221,7 +257,8 @@ python3 base/run.py toolkit run \
 
 示例中的 NPU 7 不是固定要求。正式运行前必须按当前宿主拓扑替换为已授权的空闲物理
 NPU ID；也可改用 `--device-ids 14,15` 一类逻辑 Device 集合。Benchmark 的
-`--physical-device-ids`、`--npu-ids`、`--device-ids` 三者互斥；Ascend Toolkit 使用后两者，P800 Toolkit 只使用 `--physical-device-ids`。
+`--physical-device-ids`、`--npu-ids`、`--device-ids` 三者互斥；Ascend Toolkit 使用后两者，
+P800 与 PPU 的两个领域都只使用 `--physical-device-ids`。
 
 ### 物理 NPU、逻辑 Device 与 rank
 
@@ -253,6 +290,20 @@ Toolkit 选择唯一的 0–7 物理 ID，`excluded_physical_ids=[]`。
 每张所选卡仍需通过身份、占用、健康和租约门禁。Framework ordinal 根据 UUID join
 确定，不由 SMI 物理 ID 或 rank 猜测。Benchmark 单卡 Case 使用 1 rank，通信卡数见第 5 节。
 
+### PPU 设备选择
+
+```bash
+python3 base/run.py toolkit run \
+  --config base/configs/thead_ppu_torch210.yaml \
+  --physical-device-ids 14,15 --allow-candidate-runtime --dry-run
+```
+
+PPU 两个领域都要求 `--physical-device-ids`，不接受 Ascend 别名。
+执行器按 UUID join（torch `get_device_properties(i).uuid` 与 SMI UUID）确定框架
+ordinal，对绑定不一致 fail closed；占用判定含进程表与已分配显存底线。
+同机 AllReduce 接受 2–16 rank（本轮实测资格完成于 8 rank，16 rank 见验证说明），
+P2P 恰好 2 rank。单卡 Benchmark 与 Toolkit 均为每卡独立绑定。
+
 ## 3. 运行 Benchmark
 
 ### 3.1 有哪些 Case 可以选
@@ -260,34 +311,36 @@ Toolkit 选择唯一的 0–7 物理 ID，`excluded_physical_ids=[]`。
 `--case` 后填写下表中的完整名称，大小写需一致。**一次调用只运行一个 Case**，
 必须显式指定；当前没有 Benchmark `--all`、`--suite` 或自动全量模式。
 
-下表覆盖当前 `benchmarks/` 中的 15 个 Case 目录；P800 运行时在名称后加 `:P800`。
+下表覆盖当前 `benchmarks/` 中的 15 个 Case 目录；P800 运行时在名称后加 `:P800`，
+PPU 运行时加 `:PPU`。
 “已有入口/配置”表示代码接入范围，
 不表示所有参数都已实机通过，也不保证每次在两分钟内结束。
 
-| Case | 测什么 / 主要输出 | Ascend 使用方式 | P800 使用方式 |
-| --- | --- | --- | --- |
-| `computation-FP16` | FP16 矩阵乘，TFLOPS | 常规 operator runtime，适合作为首次测试 | 单卡 XPYTORCH `torch.mm`，FP16 输入/输出 |
-| `computation-BF16` | BF16 矩阵乘，TFLOPS | 已有 Ascend 配置 | 单卡 `torch.mm`，BF16 输入/输出，保留吞吐限制 |
-| `computation-FP32` | FP32 输入矩阵乘，TFLOPS | 已有配置；使用后端默认精度模式，不强制严格 IEEE FP32 | 单卡 `torch.mm`，FP32 输入/输出，不认证内部 IEEE 算术 |
-| `computation-INT8` | 缩放量化矩阵乘，TOPS | Ascend 专用实现：INT8 输入、INT32 累加、BF16 输出 | 单卡 `xtorch_ops.gemm_I8_I8_bf16_nt`，INT8 输入、BF16 输出 |
-| `main_memory-bandwidth` | 设备内读写吞吐，GB/s、GiB/s | 使用 `clone()`；`main_memory` 在这里指设备内存 | 单卡预分配 `Tensor.copy_`；读写合计 2×payload |
-| `main_memory-capacity` | 持续分配至 OOM，估计可分配设备内存容量 | 高风险；必须加 `--allow-high-risk-case` | 单卡实际持有分配；同样需高风险授权 |
-| `interconnect-h2d` | 主机到设备传输带宽，GB/s、GiB/s | 已有 Ascend 配置 | 单卡 512 MiB，pageable/pinned × blocking/nonblocking |
-| `interconnect-d2h` | 设备到主机传输带宽，GB/s、GiB/s | 已有 Ascend 配置 | 单卡 512 MiB，四种模式分别统计 |
-| `interconnect-P2P_intraserver` | 同机设备间点对点通信带宽 | 使用第 5 节专用 FlagCX 配置，恰好两个 rank | FlagCX/BKCL，恰好 2 rank，单向 payload 计费 |
-| `computation-TF32` | TF32 计算测试 | 未原生适配 Ascend，启动前跳过；暂不做 HF32 适配 | 可控 TF32 路线未证明，启动前跳过 |
-| `computation-FP64` | FP64 计算测试 | 910C/A3 无本 Case 所需的原生 FP64 GEMM，启动前跳过 | 锁定栈探针输出精度不符合本 Case，启动前跳过 |
-| `computation-FP8` | FP8 计算测试 | 910C/A3 无本 Case 所需的原生 FP8 GEMM，启动前跳过 | 锁定栈 API 未实现，启动前跳过 |
-| `interconnect-MPI_intraserver` | 同机 AllReduce SUM 带宽 | 使用既定 FlagCX 通信配置，至少两个 rank；见下方命令 | FlagCX/BKCL AllReduce SUM，2–8 rank |
-| `interconnect-P2P_interserver` | 跨机点对点通信 | 不在当前统一入口的单宿主范围内，启动前跳过 | 不在单宿主范围内，启动前跳过 |
-| `interconnect-MPI_interserver` | 跨机集合通信 | 不在当前统一入口的单宿主范围内，启动前跳过 | 不在单宿主范围内，启动前跳过 |
+| Case | 测什么 / 主要输出 | Ascend 使用方式 | P800 使用方式 | PPU 使用方式 |
+| --- | --- | --- | --- | --- |
+| `computation-FP16` | FP16 矩阵乘，TFLOPS | 常规 operator runtime，适合作为首次测试 | 单卡 XPYTORCH `torch.mm`，FP16 输入/输出 | 单卡 `torch.mm`，FP16 输入/输出 |
+| `computation-BF16` | BF16 矩阵乘，TFLOPS | 已有 Ascend 配置 | 单卡 `torch.mm`，BF16 输入/输出，保留吞吐限制 | 单卡 `torch.mm`，BF16 输入/输出 |
+| `computation-FP32` | FP32 输入矩阵乘，TFLOPS | 已有配置；使用后端默认精度模式，不强制严格 IEEE FP32 | 单卡 `torch.mm`，FP32 输入/输出，不认证内部 IEEE 算术 | 单卡 `torch.mm`，FP32 输入/输出，allow_tf32 关闭（TF32 有独立 Case） |
+| `computation-INT8` | 缩放量化矩阵乘，TOPS | Ascend 专用实现：INT8 输入、INT32 累加、BF16 输出 | 单卡 `xtorch_ops.gemm_I8_I8_bf16_nt`，INT8 输入、BF16 输出 | 单卡 `torch._int_mm`，INT8 输入、int32 输出；K-major 前置，容差为 0 |
+| `main_memory-bandwidth` | 设备内读写吞吐，GB/s、GiB/s | 使用 `clone()`；`main_memory` 在这里指设备内存 | 单卡预分配 `Tensor.copy_`；读写合计 2×payload | 单卡预分配 `Tensor.copy_`；一读一写 2×payload |
+| `main_memory-capacity` | 持续分配至 OOM，估计可分配设备内存容量 | 高风险；必须加 `--allow-high-risk-case` | 单卡实际持有分配；同样需高风险授权 | 单卡实际持有分配；同样需高风险授权 |
+| `interconnect-h2d` | 主机到设备传输带宽，GB/s、GiB/s | 已有 Ascend 配置 | 单卡 512 MiB，pageable/pinned × blocking/nonblocking | 单卡 512 MiB，pageable/pinned × blocking/nonblocking |
+| `interconnect-d2h` | 设备到主机传输带宽，GB/s、GiB/s | 已有 Ascend 配置 | 单卡 512 MiB，四种模式分别统计 | 单卡 512 MiB，四种模式分别统计 |
+| `interconnect-P2P_intraserver` | 同机设备间点对点通信带宽 | 使用第 5 节专用 FlagCX 配置，恰好两个 rank | FlagCX/BKCL，恰好 2 rank，单向 payload 计费 | 厂商 NCCL send/recv，恰好 2 rank，单向计费；本机无卡间直连，staged 口径并保留 `P2P=disabled` 标注 |
+| `computation-TF32` | TF32 计算测试 | 未原生适配 Ascend，启动前跳过；暂不做 HF32 适配 | 可控 TF32 路线未证明，启动前跳过 | 单卡 `torch.mm`，allow_tf32 可控开启 |
+| `computation-FP64` | FP64 计算测试 | 910C/A3 无本 Case 所需的原生 FP64 GEMM，启动前跳过 | 锁定栈探针输出精度不符合本 Case，启动前跳过 | 单卡 `torch.mm`，FP64 输入/输出 |
+| `computation-FP8` | FP8 计算测试 | 910C/A3 无本 Case 所需的原生 FP8 GEMM，启动前跳过 | 锁定栈 API 未实现，启动前跳过 | `torch.mm` 未实现 FP8、`_scaled_mm` 有 CC 门，启动前跳过 |
+| `interconnect-MPI_intraserver` | 同机 AllReduce SUM 带宽 | 使用既定 FlagCX 通信配置，至少两个 rank；见下方命令 | FlagCX/BKCL AllReduce SUM，2–8 rank | 厂商 NCCL all_reduce SUM（`cpu:gloo,cuda:nccl`），2–16 rank；单 iter 对 rank 数非单调，≥8 rank 须窗口内重校 ITERS |
+| `interconnect-P2P_interserver` | 跨机点对点通信 | 不在当前统一入口的单宿主范围内，启动前跳过 | 不在单宿主范围内，启动前跳过 | 不在单宿主范围内，启动前跳过 |
+| `interconnect-MPI_interserver` | 跨机集合通信 | 不在当前统一入口的单宿主范围内，启动前跳过 | 不在单宿主范围内，启动前跳过 | 不在单宿主范围内，启动前跳过 |
 
 其他厂商的目录库存不能直接当作当前 Ascend 入口的支持清单。可在
 [`benchmarks/`](benchmarks/) 查看源码和每个 Case 的配置。
 
 ### 3.2 运行一个 Case
 
-本小节命令与默认值用于 Ascend。P800 的完整启动命令见快速上手及第 3.5 节。
+本小节命令与默认值用于 Ascend。P800 的完整启动命令见快速上手及第 3.5 节，
+PPU 见快速上手与第 3.6 节。
 
 下面的命令使用 NPU 7 映射出的逻辑 Device 启动原始 FP16 Case，并对实际选中设备采集
 同窗 `npu-smi info -t usages` 证据：
@@ -434,6 +487,21 @@ GiB/s 使用 2³⁰ 字节，不能与 GB/s 混用。多 rank 重复资格取本
 不相加。正确性在计时区间外完成；大矩阵为固定样本与有限性检查，不声称逐元素完整 CPU 对照。
 独立 `benchmark preflight` 的使用和失败处理见 [P800 指南](../docs/kunlunxin/README.md#身份预检查与故障处理)。
 
+### 3.6 PPU 工作量与指标
+
+PPU 计算默认 8192³；ITERS 按目标设备计时窗校准以满足 15 秒资格下限
+（FP32 为 `WARMUP/ITERS=100/550`，INT8 为 `2/4400`），跨设备移植须重新校准，
+不能照抄。INT8 将乘加计作两次操作，`ATOL/RTOL` 为 0（int32 累加是精确的）。
+指标公式与第 3.5 节 P800 表一致。
+
+H2D/D2H 在 `thead/PPU/` 下提供四份
+`case_config.measured-{pageable,pinned}-{blocking,nonblocking}.yaml`（512 MiB 载荷），
+per-variant ITERS 由校准 run 钉扎。设备内存带宽为 4 GiB float32、
+`Melements 1024`、读写合计 2×payload。AllReduce 消息 256 MiB（8 rank 资格
+`ITERS=1700`，≥8 rank 窗口内重校）；P2P 消息 256 MiB、`ITERS=340`，staged 口径。
+P2P 配置受哈希 allowlist 限制（第 5.3 节）；容量 Case 需 `--allow-high-risk-case`。
+身份预检查命令与故障处置见 [PPU 指南](../docs/thead/README.md#身份预检查与故障处理)。
+
 <a id="4-运行-ascend-toolkit"></a>
 
 ## 4. 运行 Toolkit
@@ -557,6 +625,40 @@ P2P 带宽可用 `--p2p-payload-bytes 268435456` 选择 256 MiB，时延仍为 6
 三层判定、完整参数、分块协议、D2D 两种路径及工具来源见
 [P800 Toolkit 使用说明](toolkits/_common/kunlunxin/P800/README.md)。
 
+### 4.4 平头哥 PPU Toolkit
+
+PPU Toolkit 调用厂商官方工具：acblas 微基准子进程（直连 `libacblas`，不经过 PyTorch）、
+sail bandwidth、`p2pBandwidthLatencyTest` 与 `ppu-smi`。候选镜像必须显式授权：
+
+```bash
+python3 base/run.py toolkit run \
+  --config base/configs/thead_ppu_torch210.yaml \
+  --physical-device-ids 14,15 \
+  --repeat 5 --minimum-seconds 15 \
+  --compute-monitor on --data-movement-monitor on \
+  --timeout 14400 \
+  --result-root base/result/thead-toolkit --allow-candidate-runtime --dry-run
+```
+
+不指定 `--case` 运行全部 12 项，指定时可重复使用。`--smoke`、`--repeat`、
+`--minimum-seconds` 与监控开关的语义与 P800 相同；工具原生采样参数见
+[PPU Toolkit 使用说明](toolkits/_common/thead/PPU/README.md)。
+
+| PPU Toolkit Case | 协议 |
+|---|---|
+| `computation-FP32/FP64/FP16/BF16/TF32` | 每精度每卡 1 点；默认 8192³；acblas typed/Lt 原生 GEMM，正确性回读在计时窗外 |
+| `computation-INT8` | 当前 SDK 构建无可用原生路径（acblas INT8 缺陷），启动前排除；框架路径 `torch._int_mm` 不受影响 |
+| `main_memory-bandwidth` | 每卡 1 点：sail 设备内带宽 |
+| `main_memory-capacity` | 每卡静态容量查询（ppu-smi），不做分配/OOM，不需要高风险开关 |
+| `interconnect-h2d/d2h` | 每方向每卡 2 点：sail CE/SM 双通道，默认 512 MiB |
+| `interconnect-host_device_latency` | 每卡 1 点：sail 访问时延（pointer-chase，原生 ns） |
+| `interconnect-P2P_intraserver` | 每有向 pair 单向/并发双向各 1 点，默认 40 MB（`p2pBandwidthLatencyTest`） |
+| `interconnect-P2P_intraserver-latency` | 每 pair 时延矩阵，工具原生 us（入账 ×1000 记为 ns） |
+
+计算与搬运监控默认开启；每轮 run 保持 not-qualified（候选镜像 `validated:false` 把守）。
+INT8 排除的缺陷详情、对照证据与 SDK 升级后的复测协议见
+[acblas 已知问题](../docs/thead/acblas-issues.md)。
+
 <a id="5-flagcx-单机-p2p"></a>
 
 ## 5. 单机通信
@@ -604,6 +706,26 @@ python3 base/run.py benchmark run \
 
 P800 P2P 为 rank 0→1 单方向传输，按 payload 一次计费；不能套用 Ascend 原 Case 的额外 2×。
 Toolkit 的原生单进程 peer-copy 与 Base 多 rank 通信分别测量和统计。
+
+### 5.3 平头哥 PPU
+
+使用同一个 PPU profile 和预先创建的 `thead-internal` internal bridge。AllReduce 选择
+`interconnect-MPI_intraserver:PPU`、2–16 张物理卡（本轮实测资格完成于 8 rank，
+16 rank 复评见 [PPU 验证说明](../docs/thead/validation.md)）；P2P 选择
+`interconnect-P2P_intraserver:PPU`、恰好两卡。通信功能检查计划：
+
+```bash
+python3 base/run.py benchmark run \
+  --config base/configs/thead_ppu_torch210.yaml \
+  --case interconnect-MPI_intraserver:PPU --physical-device-ids 7,8 \
+  --nproc-per-node 2 --timeout 300 --allow-candidate-runtime --dry-run
+```
+
+正式 P2P 须使用 `p2p-single-node-v1` 协议的钉扎配置（配置 sha256 名单强制显式
+`--case-config`），协议与资格矩阵见 [PPU P2P 协议](../docs/thead/p2p.md)。
+本机型无卡间直连 P2P 路径：通信数字为 PCIe/主机转运实测口径，运行证据保留
+`P2P=disabled` 标注，不能当作直连互联带宽呈现。PPU 的 Toolkit P2P（单进程
+`p2pBandwidthLatencyTest`）与 Base 多 rank 通信分别测量和统计。
 
 ## 6. 结果、报告和退出码
 
@@ -684,6 +806,13 @@ python3 base/qualification.py RUN1 RUN2 RUN3 RUN4 RUN5 --output NEW_STATS.json
 各 rank 至少 15 秒，并满足正确性、监控、空闲健康和清理门禁；样本 CV > 5% 为 unstable。
 容量不参加吞吐五次资格。历史项目例外不改变严格脚本；详见 [P800 验证说明](../docs/kunlunxin/validation.md)。
 
+PPU 结果的三层判定语义与 P800 相同（measurement/monitoring/diagnosis）；
+锁定镜像保持 candidate（`validated:false`），Toolkit 结果随之保持 not-qualified，
+晋级条件见 [PPU 验证说明](../docs/thead/validation.md)。PPU 的五次资格同样使用
+`qualification.py` 与同一判定口径；INT8 计算在 Toolkit 侧排除（厂商库缺陷），
+缺陷详情、对照证据与 SDK 升级后的复测协议见
+[acblas 已知问题](../docs/thead/acblas-issues.md)。
+
 ### 怎样解释数值
 
 - FP16 等 GEMM 的 TFLOPS 按 `2 × M × N × K × ITERS / 测量秒数 / 10¹²`
@@ -704,13 +833,13 @@ python3 base/qualification.py RUN1 RUN2 RUN3 RUN4 RUN5 --output NEW_STATS.json
 | `--dry-run` 通过，正式运行失败 | 静态计划不检查设备和 Docker；查看本轮 `failure_stage` 与 preflight 日志 |
 | 镜像不存在或身份不匹配 | 按环境指南准备对应镜像，核对宿主配置和运行时清单；tag 相同不足以证明身份一致 |
 | ToolBox 路径或版本不匹配 | 核对自定义宿主配置、实际安装目录和锁定版本 |
-| inventory / Device 映射不一致 | Ascend 用 `npu-smi info -m` 核对逻辑清单；P800 核对物理 inventory 与 PCI/UUID；本轮选卡用 CLI，不通过删减 `expected_device_ids` 实现 |
+| inventory / Device 映射不一致 | Ascend 用 `npu-smi info -m` 核对逻辑清单；P800 核对物理 inventory 与 PCI/UUID；PPU 用 `ppu-smi` 核对物理 inventory 并以 UUID 为主键；本轮选卡用 CLI，不通过删减 `expected_device_ids` 实现 |
 | Device 被占用或 `already leased` | 等待持有资源的任务结束或选择其他已预约空闲设备；不要删除锁文件绕过正在运行的任务 |
 | rank 数不匹配 | 删除手写的 `--nproc-per-node`，采用默认值，或使它等于所选逻辑 Device 数 |
-| 缺少权限开关 | Ascend 按需使用 privileged/DMI 开关；P800 需要自身宿主权限，未验证的候选镜像另需 candidate 授权；容量 Benchmark 另需 `--allow-high-risk-case` |
+| 缺少权限开关 | Ascend 按需使用 privileged/DMI 开关；P800 需要自身宿主权限，未验证的候选镜像另需 candidate 授权；PPU 每轮均须 `--allow-candidate-runtime`（锁定镜像保持 candidate）；容量 Benchmark 另需 `--allow-high-risk-case` |
 | OOM 或 timeout | 查看 Case 原始日志；普通 Case 可减小数据规模/迭代数；容量 Case 的 OOM 探测有专门语义，不应与普通测试混淆 |
 | 有性能数值但总体 `partial` | 检查独立的监控、测量及报告状态；数值存在不代表所请求证据已完整 |
-| P2P 提示 runtime/config 不满足 | Ascend 使用第 5.1 节专用通信配置与 allowlist；P800 使用第 5.2 节 profile；均需恰好两个 rank |
+| P2P 提示 runtime/config 不满足 | Ascend 使用第 5.1 节专用通信配置与 allowlist；P800 使用第 5.2 节 profile；PPU 使用第 5.3 节 profile 与钉扎 case-config；均需恰好两个 rank |
 | 报告缺失或生成失败 | 保留结果目录，检查原始证据是否齐全，再运行 `report`；报告重建不能修复原始测试失败 |
 
 ## 8. 入口与职责边界
@@ -721,6 +850,7 @@ Host
     ├─ BenchmarkExecutor -> Docker -> benchmark_worker.py -> torchrun -> 原 Case
     ├─ ToolkitExecutor   -> vendor executor -> Docker -> native runner
     │                    Ascend: DMI/npu-smi/HCCL; P800: XBLAS/XRE/xpu-smi
+    │                    PPU: acblas/sail/p2pBandwidthLatencyTest/ppu-smi
     └─ report            -> 已保存证据 -> Markdown/SVG
 ```
 
@@ -732,4 +862,5 @@ Host
 [`../docs/base/base-case-doc.md`](../docs/base/base-case-doc.md)。
 
 
-回归命令和验证边界见 [Ascend 验证](../docs/ascend/validation.md) 与 [P800 验证](../docs/kunlunxin/validation.md)。
+回归命令和验证边界见 [Ascend 验证](../docs/ascend/validation.md)、[P800 验证](../docs/kunlunxin/validation.md)
+与 [PPU 验证](../docs/thead/validation.md)。

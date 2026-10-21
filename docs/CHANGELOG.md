@@ -23,6 +23,17 @@
 - Base 的 ToolBox 路径改为通用示例，使用者通过自己的配置指定本机位置。
 - Generate 原有设备监控脚本移入自身 `monitoring/`，消除对旧 Inference 目录的依赖，保持监控行为。
 
+## 2026-10-15 — 平头哥 PPU Base 集成（待发布）
+
+- 接入平头哥 PPU（ZW810E）Base runtime：非特权有界容器、显式物理选卡、UUID 绑定、逐卡监控与清理；统一 `run.py` 入口与 Ascend/昆仑芯共享资格审计。
+- Base 覆盖 21 个 case×变体条目：18 项可执行（6 精度计算、H2D/D2H×锁页/非锁页×基线/跨 NUMA、带宽/容量、2–16 rank AllReduce 与恰好 2 rank P2P），3 项启动前跳过（FP8 算子路由失败、两个跨机 Case）。
+- INT8 经 `torch._int_mm` K-major 前置进入调优内核；行主序回退证据保留在受控结果根并建议上游跟进，不作为对外数字。AllReduce 单迭代用时对 rank 数非单调，高 rank 资格须在各自窗口内重校 ITERS。
+- 锁定镜像保持 `release_stage:candidate / validated:false`，每轮 run 显式 `--allow-candidate-runtime`；16 rank 资格与 validated 复评列为维护者后续动作，不自动晋级。
+- 补齐中文使用与验证文档及全部 15 个 case 目录的芯片 README；站点信息不入公开文档，原始测量保留在受控结果根，不随源码分发。
+
+本次文档整理与离线检查没有重跑硬件；历史测量、稳定性与项目例外见
+[PPU 验证说明](thead/validation.md)。
+
 ## 2026-10-10 — 昆仑芯 P800 Base 与 Toolkit 集成（待发布）
 
 - 接入 P800 runtime、显式物理选卡、PCI/UUID 绑定、监控和受限容器清理。
@@ -35,6 +46,15 @@
 锁定 runtime 经维护者确认设为 validated:true / partial，绑定明确验证范围与摘要哈希；
 当前版本无需 candidate opt-in，历史失败和单次资格状态保留。历史测量、稳定性和项目例外见
 [P800 验证说明](kunlunxin/validation.md)。本次文档整理与离线检查没有重跑硬件。
+
+## 2026-10-19 — 平头哥 PPU Base 首次集成（待发布）
+
+- 接入 PPU-ZW810E provider（16 卡候选 runtime）：显式物理选卡、UUID/BDF 绑定、`ppu-smi` 监控、有界容器与三层身份校验。
+- Base 覆盖 12 个可执行 Case 与 3 个提前跳过 Case：单卡计算/传输/内存、AllReduce 2–16 rank 契约、双 rank P2P；共享 day-6 契约双芯片化，P800 行为不变。
+- AllReduce 资格按部分完成条款以 8 rank 五次完成；16 rank 需独占窗口，迭代数不得跨 rank 数外推。
+- P2P 对标 ascend `p2p-single-node-v1` 扫点协议：单卡双芯拓扑按同卡两芯/跨卡 staged 两对 × 4 规格建矩阵，校准钉扎 ITERS；配置 sha256 名单强制显式 `--case-config`，计划与名单一致性由守卫测试保障。
+- 执行器 rank 证据按数字序收集，修复两位数 rank 运行的假失败；监控采样与 run 判定语义保持共享。
+- 公开文档 `docs/thead/`、公开分发检查、FP8 唯一跳过与 staged 路径口径均有独立证据；站点信息不入源码分发。
 
 ## 2026-09-12 — Ascend Base 与 Operation 集成（待发布）
 

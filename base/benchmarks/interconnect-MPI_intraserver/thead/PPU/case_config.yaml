@@ -1,0 +1,35 @@
+# thead PPU intraserver AllReduce bounded case (day-2 backend decision:
+# vendor NCCL via the cuda:nccl segment; FlagCX stays the P800 path).
+# Message keeps the P800 256 MiB qualification shape (Melements 64, R16
+# discipline: recalibrate the window, never shrink the message). Window
+# calibration (result root, run day6-mpi-calibration-01 on the
+# qualification path): 18.9 ms per iteration at two ranks = 14.2 GB/s
+# algbw, so the bounded two-rank window is ITERS=1000 (18.9 s >= 15 s
+# floor + 26% margin); the 16-rank window is recalibrated in its own
+# exclusive window (U13) before the group-C qualification runs.
+# Rank-sweep evidence (day6, result root): per-iteration time is NOT
+# monotonic in world size -- 2r 18.9 ms, 4r 24.8 ms, 8r 10.4 ms
+# (day6-mpi-window-01 / -r4-01 / -r8-01). ITERS=1000 therefore falls
+# below the 15 s floor at 8 ranks (window 10.4 s, duration gate false,
+# run verdict "partial" -- registered as a sweep data point, not a
+# qualification shape). Any >=8-rank qualification (day-7 degrade path
+# or the 16-rank runs) must recalibrate ITERS >= 1500 in its own window
+# before running; the change is registered here per the plan.
+# Day-7 R5 degrade (2026-10-15): the 16-card exclusive window is not
+# granted, so group C qualifies MPI at 8 ranks. In-window calibration
+# run day7-mpi8-calibration-01 (qualification path, 8 ranks) confirms
+# 10.374 ms/iter, so the qualification window is ITERS=1700
+# (17.6 s >= 15 s floor + 17.6%); a future 16-rank qualification still
+# recalibrates ITERS in its own window before running.
+# Measurement-environment note: the host is a 2-socket NUMA machine and the
+# framework binds one rank per selected card; cross-socket NIC/DRAM placement
+# is recorded by the run monitor, not pinned here.
+Melements: 64
+WARMUP: 10
+ITERS: 1700
+SEED: 519
+DTYPE: float32
+DIST_BACKEND: cpu:gloo,cuda:nccl
+IMPLEMENTATION: native-xpytorch
+MODE: qualification
+FAULT_MODE: none

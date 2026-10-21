@@ -1,0 +1,9 @@
+Melements: 64
+WARMUP: 1
+ITERS: 8
+SEED: 519
+DTYPE: float32
+DIST_BACKEND: cpu:gloo,cuda:nccl
+IMPLEMENTATION: native-xpytorch
+MODE: calibration
+FAULT_MODE: none
