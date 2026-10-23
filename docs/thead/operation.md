@@ -85,13 +85,13 @@ PipeUtilization、Memory、MemoryL0、MemoryUB、ResourceConflictRatio 不存在
 | 项目 | 当前证据 | 状态 |
 |---|---|---|
 | 起点 | 最新已取得主线 `4f50e1bd`，独立 `zhiyu/ppu-operation` | 已建立 |
-| 运行镜像 | 固定 Base ID 上增加官方 FlagGems `654e2a3a`；独立候选镜像 ID 写入 profile | 已构建，设备未验收 |
+| 运行镜像 | 固定 Base ID 上增加官方 FlagGems `654e2a3a`；独立候选镜像 ID 写入 profile | 已构建并完成设备 smoke |
 | PPU dry-run | abs/FP32/smoke 双路径成功生成计划 | 通过 |
 | CPU 参考隔离 | 锁定镜像，无设备映射，reference 退出 0；site hooks 未执行，CUDA 未初始化 | 通过 |
-| Operation CPU 回归 | 145 项通过，含 PPU 相关负例 | 通过 |
-| 公开分发 | 13 项通过，后续文档修订需复跑 | 阶段通过 |
+| Operation CPU 回归 | 149 项通过，含 PPU 相关负例和 driver-launch correlation 回归 | 通过 |
+| 公开分发 | 14 项通过 | 通过 |
 | Base 回归 | 381 项通过、1 项既有 skip，无设备映射 | 通过 |
-| Docker 最小设备运行 | 普通账号句柄不可见时拒绝；授权账号发现系统服务持有句柄后仍拒绝，未启动目标 | 门禁有真实拒绝证据，执行待验收 |
+| Docker 最小设备运行 | 卡 6 `abs/FP32` 原生与 FlagGems 均完成正确性、测量和首次/缓存路由；系统服务及其他进程句柄仍在，按授权共享运行 | 执行通过；性能资格 `partial-shared-host` |
 | Docker/local 完整 daily 矩阵 | 尚未执行；不能用计划分母代替运行数 | 未核实 |
 | 首次/缓存、前反向、输入/模块绑定 | 代码和合成负例已覆盖，实际设备执行待确认 | 未验收 |
 | allocator / timeline / 原生 counter | 接口已实现，尚无设备采集结论 | 未验收 |
@@ -100,3 +100,14 @@ PipeUtilization、Memory、MemoryL0、MemoryUB、ResourceConflictRatio 不存在
 
 验收必须在最终代码下逐项完成，保留所有失败和重新运行目录；只有完整矩阵尝试及能力项
 均有实测证据后，才可声明本适配达到完整交付状态。
+
+### 2026-10-23 设备 smoke 证据
+
+共享验证结果目录：
+
+- `ppu-operation-results/smoke-shared/operation-dc7ff4dd8132/`：首次设备运行。FlagGems 的 PPU `cuLaunchKernelEx` 尚未被旧解析器识别，保留为 partial。
+- `ppu-operation-results/smoke-driverfix/operation-3935a99aae77/`：修复后重跑。原生与 FlagGems 的 correctness、measurement、first/cached routing 均为 `passed`；FlagGems kernel `abs_func_kernel_rank_1` 通过 correlation=48 和 `ac2g` flow 关联。由于显式共享设备且 smoke 只有 1 轮，最终状态保持 `partial`，不构成独占性能资格。
+
+解析器现在严格接受两类 PPU launch 记录：原生常见的
+`cuda_runtime/cudaLaunchKernel` 和 FlagGems 常见的
+`cuda_driver/cuLaunchKernelEx`。两类记录都必须满足相同的窗口、correlation、`ac2g` flow、设备号和 kernel 关联门禁。

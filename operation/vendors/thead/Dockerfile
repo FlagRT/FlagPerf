@@ -1,6 +1,6 @@
-FROM flagtree-ppu-3.6-dev:202608 AS builde
+FROM flagtree-ppu-3.6-dev:202608 AS builder
 ENV PIP_CONFIG_FILE=/dev/null PIP_INDEX_URL=https://pypi.org/simple
-COPY flaggems-source.tar /tmp/flaggems-source.ta
+COPY flaggems-source.tar /tmp/flaggems-source.tar
 RUN echo 'cdca6e02ee2137c6dfa80ba446b3a709b130a2ef8eb901d906873255c6bba010  /tmp/flaggems-source.tar' | sha256sum -c - \
     && mkdir /tmp/flaggems \
     && tar xf /tmp/flaggems-source.tar -C /tmp/flaggems \

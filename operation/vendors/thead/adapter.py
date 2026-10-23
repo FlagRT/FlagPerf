@@ -6,7 +6,7 @@ from pathlib import Path
 import re
 import sys
 
-from vendors.compat import Adapter as CompatAdapte
+from vendors.compat import Adapter as CompatAdapter
 
 PROFILE = Path(__file__).parent / 'profiles/torch210-ppu.json'
 
@@ -131,7 +131,7 @@ class Adapter(CompatAdapter):
         return self.host_session.preflight(label)
 
     def cleanup_worker(self, worker, run_id):
-        from .host import cleanup_worke
+        from .host import cleanup_worker
         return cleanup_worker(worker, run_id)
 
     def cleanup_process(self, proc):
@@ -159,7 +159,7 @@ class Adapter(CompatAdapter):
         return route(probe, log)
 
     def route_observer(self, task, backward):
-        from .routing import Observe
+        from .routing import Observer
         return Observer(task, backward)
 
     def probe_window(self, root, observer, name):
