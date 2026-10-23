@@ -156,7 +156,7 @@ def collect_counters(root, task, timeout=None):
               'sections': list(ASIGHT_SECTIONS)}
     if not executable.is_file():
         return {**result, 'status': 'not-supported', 'reason': 'native Asight acu executable unavailable'}
-    command = [str(executable), '--devices', '0', '--profile-from-start', 'off',
+    command = [str(executable), '--devices', str(task['worker_device']), '--profile-from-start', 'off',
                '--kill', 'no', '--check-exit-code', 'yes', '--page', 'details', '--csv',
                '--export', str(folder / 'target')]
     for section in result['sections']:

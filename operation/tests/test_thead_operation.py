@@ -229,7 +229,7 @@ class CorrelationTests(unittest.TestCase):
         from vendors.thead.profiling import collect_counters, ASIGHT_SECTION_NAMES
         from types import SimpleNamespace
         identity = dict(vendor_runtime={}, packages={}, case_sha256='case', input_sha256='inputs',
-                        registration={}, runtime_config={}, device='cuda:0', input_devices=['cuda:0'])
+                        registration={}, runtime_config={}, device='cuda:2', input_devices=['cuda:2'])
         csv = '"ID","Kernel Name","Section Name","Metric Name","Metric Unit","Metric Value"\n'
         csv += ''.join('"0","abs","' + section + '","native metric","%","3.59"\n'
                        for section in ASIGHT_SECTION_NAMES.values())
@@ -241,6 +241,7 @@ class CorrelationTests(unittest.TestCase):
                 return str(path) == '/usr/local/PPU_SDK/asight/bin/acu' or original(path)
             def launch(command, **kwargs):
                 self.assertEqual(command[command.index('--page') + 1], 'details')
+                self.assertEqual(command[command.index('--devices') + 1], '2')
                 folder = root / 'profiling/native-counters'
                 kwargs['stdout'].write(csv)
                 kwargs['stdout'].flush()
@@ -250,7 +251,7 @@ class CorrelationTests(unittest.TestCase):
                 return SimpleNamespace(returncode=0, wait=lambda **kw: 0, poll=lambda: 0)
             with patch.object(Path, 'is_file', is_file), \
                     patch('vendors.thead.profiling.subprocess.Popen', side_effect=launch):
-                result = collect_counters(root, {})
+                result = collect_counters(root, {'worker_device': 2})
             self.assertEqual(result['status'], 'measured')
             self.assertEqual(result['metric_records'], 5)
             self.assertEqual(result['missing_sections_by_kernel'], {})
@@ -263,7 +264,7 @@ class CorrelationTests(unittest.TestCase):
             csv = '\n'.join(csv.splitlines()[:2]) + '\n'
             with patch.object(Path, 'is_file', is_file), \
                     patch('vendors.thead.profiling.subprocess.Popen', side_effect=launch):
-                result = collect_counters(root, {})
+                result = collect_counters(root, {'worker_device': 2})
             self.assertEqual(result['status'], 'partial')
             self.assertEqual(len(result['missing_sections_by_kernel']['0']), 4)
             root = Path(tmp) / 'identity-drift'
@@ -271,7 +272,7 @@ class CorrelationTests(unittest.TestCase):
             (root / 'measurement.json').write_text(json.dumps({**identity, 'packages': {'different': '1'}}))
             with patch.object(Path, 'is_file', is_file), \
                     patch('vendors.thead.profiling.subprocess.Popen', side_effect=launch):
-                result = collect_counters(root, {})
+                result = collect_counters(root, {'worker_device': 2})
             self.assertEqual(result['status'], 'partial')
             self.assertEqual(result['mismatches'], ['packages'])
 
