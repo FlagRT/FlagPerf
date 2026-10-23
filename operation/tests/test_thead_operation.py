@@ -136,6 +136,40 @@ class CorrelationTests(unittest.TestCase):
         launch['name'] = 'cuLaunchKernelEx'
         self.assertEqual(analyze_dispatch(events, rows)['status'], 'passed')
 
+    def test_large_cold_trace_joins_flows_without_rescanning_per_kernel(self):
+        from vendors.thead.trace import analyze_events
+        class CountedEvents(list):
+            scans = 0
+            def __iter__(self):
+                self.scans += 1
+                return super().__iter__()
+        events = CountedEvents([dict(ph='X', cat='user_annotation', name='operation_target_0',
+                                    pid=1, tid=2, ts=0, dur=10000)])
+        for corr in range(1, 257):
+            events.extend([
+                dict(ph='X', cat='cuda_driver', name='cuLaunchKernelEx', pid=1, tid=2,
+                     ts=corr * 2, dur=1, args={'correlation': corr}),
+                dict(ph='s', cat='ac2g', id=corr, pid=1, tid=2, ts=corr * 2),
+                dict(ph='X', cat='kernel', name='autotune', pid=4, tid=5, ts=10000 + corr * 2,
+                     dur=1, args={'correlation': corr, 'device': 0, 'stream': 1}),
+                dict(ph='f', cat='ac2g', id=corr, pid=4, tid=5, ts=10000 + corr * 2)])
+        result = analyze_events(events, count=1)
+        self.assertEqual(result['status'], 'measured')
+        self.assertEqual(result['kernel_count'], 256)
+        self.assertLess(events.scans, 20)
+
+    def test_indexed_flow_join_still_rejects_duplicate_and_wrong_timestamps(self):
+        from vendors.thead.dispatch import analyze_dispatch
+        for index in (3, 5):
+            with self.subTest(index=index, problem='duplicate'):
+                events, rows = self.fixture()
+                events.append(copy.deepcopy(events[index]))
+                self.assertEqual(analyze_dispatch(events, rows)['status'], 'partial')
+            with self.subTest(index=index, problem='timestamp'):
+                events, rows = self.fixture()
+                events[index]['ts'] += 1
+                self.assertEqual(analyze_dispatch(events, rows)['status'], 'partial')
+
     def test_missing_wrong_or_unattributed_device_evidence_stays_partial(self):
         from vendors.thead.dispatch import analyze_dispatch
         for index in (2, 3, 4, 5):
@@ -172,6 +206,135 @@ class CorrelationTests(unittest.TestCase):
         self.assertEqual(records[0]['Metric Unit'], 'byte')
         self.assertEqual(parse_counter_csv('no metrics'), [])
 
+    def test_asight_sections_use_sdk_identifiers_not_filenames(self):
+        from vendors.thead.profiling import ASIGHT_SECTIONS
+        self.assertEqual(ASIGHT_SECTIONS, (
+            'SpeedOfLight', 'MemoryWorkloadAnalysis', 'Occupancy',
+            'WarpStateStats', 'LaunchStats'))
 
+    def test_counter_capture_requests_unit_bearing_details_and_checks_identity(self):
+        from vendors.thead.profiling import collect_counters, ASIGHT_SECTION_NAMES
+        from types import SimpleNamespace
+        identity = dict(vendor_runtime={}, packages={}, case_sha256='case', input_sha256='inputs',
+                        registration={}, runtime_config={}, device='cuda:0', input_devices=['cuda:0'])
+        csv = '"ID","Kernel Name","Section Name","Metric Name","Metric Unit","Metric Value"\n'
+        csv += ''.join('"0","abs","' + section + '","native metric","%","3.59"\n'
+                       for section in ASIGHT_SECTION_NAMES.values())
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / 'measurement.json').write_text(json.dumps(identity))
+            original = Path.is_file
+            def is_file(path):
+                return str(path) == '/usr/local/PPU_SDK/asight/bin/acu' or original(path)
+            def launch(command, **kwargs):
+                self.assertEqual(command[command.index('--page') + 1], 'details')
+                folder = root / 'profiling/native-counters'
+                kwargs['stdout'].write(csv)
+                kwargs['stdout'].flush()
+                (folder / 'profile-target-identity.json').write_text(json.dumps(identity))
+                (folder / 'profile-window.json').write_text(json.dumps({'calls': 5}))
+                (folder / 'target.acurep').write_bytes(b'native evidence')
+                return SimpleNamespace(returncode=0, wait=lambda **kw: 0, poll=lambda: 0)
+            with patch.object(Path, 'is_file', is_file), \
+                    patch('vendors.thead.profiling.subprocess.Popen', side_effect=launch):
+                result = collect_counters(root, {})
+            self.assertEqual(result['status'], 'measured')
+            self.assertEqual(result['metric_records'], 5)
+            self.assertEqual(result['missing_sections_by_kernel'], {})
+            rows = json.loads((root / 'profiling/native-counters/metrics.json').read_text())
+            self.assertEqual(rows[0]['Metric Unit'], '%')
+            self.assertEqual(rows[0]['Section Name'], 'PPU Speed Of Light Throughput')
+            root = Path(tmp) / 'missing-sections'
+            root.mkdir()
+            (root / 'measurement.json').write_text(json.dumps(identity))
+            csv = '\n'.join(csv.splitlines()[:2]) + '\n'
+            with patch.object(Path, 'is_file', is_file), \
+                    patch('vendors.thead.profiling.subprocess.Popen', side_effect=launch):
+                result = collect_counters(root, {})
+            self.assertEqual(result['status'], 'partial')
+            self.assertEqual(len(result['missing_sections_by_kernel']['0']), 4)
+            root = Path(tmp) / 'identity-drift'
+            root.mkdir()
+            (root / 'measurement.json').write_text(json.dumps({**identity, 'packages': {'different': '1'}}))
+            with patch.object(Path, 'is_file', is_file), \
+                    patch('vendors.thead.profiling.subprocess.Popen', side_effect=launch):
+                result = collect_counters(root, {})
+            self.assertEqual(result['status'], 'partial')
+            self.assertEqual(result['mismatches'], ['packages'])
+
+    def test_cpu_workers_drop_device_node_creation_capability_without_device_mapping(self):
+        import subprocess
+        args = cli.parser().parse_args(['run', '--vendor', 'thead', '--device-ids', '6'])
+        with tempfile.TemporaryDirectory() as tmp:
+            pool = cli.Workers(Path(tmp), Adapter(), args, 'locked-image', 'run')
+            for phase in ('reference', 'reference-check', 'diagnose'):
+                with patch.object(cli.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, '', '')) as launch:
+                    pool.start({'device_id': 6, 'oplib': 'nativetorch'}, phase)
+                argv = launch.call_args.args[0]
+                self.assertIn('--cap-drop=ALL', argv)
+                self.assertIn('--security-opt=no-new-privileges', argv)
+                self.assertNotIn('--device', argv)
+
+    def test_full_profile_cleans_owned_workers_before_capture_and_stops_on_failure(self):
+        adapter = Adapter()
+        self.assertTrue(adapter.isolate_workers({'profiling_mode': 'full'}, 'profiling'))
+        self.assertFalse(adapter.isolate_workers({'profiling_mode': 'timeline'}, 'profiling'))
+        self.assertFalse(adapter.isolate_workers({'profiling_mode': 'full'}, 'measure'))
+        args = cli.parser().parse_args(['run', '--vendor', 'thead', '--device-ids', '6'])
+        with tempfile.TemporaryDirectory() as tmp:
+            pool = cli.Workers(Path(tmp), adapter, args, 'image', 'run')
+            with patch.object(pool, 'close', side_effect=cli.CleanupError('not confirmed')) as cleanup, \
+                    patch.object(pool, 'start') as start:
+                with self.assertRaises(cli.CleanupError):
+                    pool.phase(Path(tmp), {'profiling_mode': 'full'}, 'profiling')
+                cleanup.assert_called_once_with()
+                start.assert_not_called()
+
+    def test_asight_preload_requires_counter_phase_and_locked_mapped_library(self):
+        import hashlib
+        from vendors.thead.bootstrap import checked_preload
+        body = b'locked pthread'
+        locked = {'path': '/usr/lib/x86_64-linux-gnu/libpthread.so.0',
+                  'sha256': hashlib.sha256(body).hexdigest()}
+        profile = {'asight_preload': locked}
+        env = {'LD_PRELOAD': 'libpthread.so.0', 'FLAGPERF_PPU_COUNTER_TARGET': '1'}
+        maps = '0-1 r-xp 0 00:00 0 ' + locked['path'] + '\n'
+        with patch.dict('os.environ', env, clear=True), \
+                patch.object(Path, 'read_text', return_value=maps), \
+                patch.object(Path, 'read_bytes', return_value=body):
+            self.assertEqual(checked_preload('profile-target', profile)['sha256'], locked['sha256'])
+            for phase in ('reference', 'probe', 'measure', 'profiling'):
+                with self.assertRaises(RuntimeError):
+                    checked_preload(phase, profile)
+            with patch.dict('os.environ', {'LD_PRELOAD': 'libunknown.so'}):
+                with self.assertRaises(RuntimeError):
+                    checked_preload('profile-target', profile)
+            with patch.object(Path, 'read_text', return_value=maps.replace('/usr/lib/', '/tmp/')):
+                with self.assertRaises(RuntimeError):
+                    checked_preload('profile-target', profile)
+            with patch.object(Path, 'read_bytes', return_value=b'changed'):
+                with self.assertRaises(RuntimeError):
+                    checked_preload('profile-target', profile)
+            with patch.dict('os.environ', {'FLAGPERF_PPU_COUNTER_TARGET': '0'}):
+                with self.assertRaises(RuntimeError):
+                    checked_preload('profile-target', profile)
+
+    def test_reviewed_counter_preload_does_not_change_invariant_runtime_identity(self):
+        from types import SimpleNamespace
+        adapter = Adapter()
+        adapter.device = 'cuda:0'
+        adapter.framework_observation = {'uuid': 'locked'}
+        torch = SimpleNamespace(__version__='2.10.0',
+            cuda=SimpleNamespace(get_device_name=lambda device: 'PPU'),
+            backends=SimpleNamespace(cuda=SimpleNamespace(matmul=SimpleNamespace(allow_tf32=False))))
+        record = dict(executable='python', profile_sha256='profile', packages={}, hook_hashes={})
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'bootstrap.json'
+            with patch.dict('sys.modules', {'torch': torch}), \
+                    patch.dict('os.environ', {'PPU_OPERATION_BOOTSTRAP_RECORD': str(path)}):
+                path.write_text(json.dumps({**record, 'reviewed_preload': {}}))
+                measured = adapter.identity()
+                path.write_text(json.dumps({**record, 'reviewed_preload': {'name': 'libpthread.so.0'}}))
+                self.assertEqual(adapter.identity(), measured)
 if __name__ == '__main__':
     unittest.main()

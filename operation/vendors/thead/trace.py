@@ -1,5 +1,6 @@
 """Strict PPU host launch / flow / device event correlation."""
 from decimal import Decimal
+from collections import defaultdict
 
 
 def is_host_launch(event):
@@ -54,22 +55,35 @@ def analyze_events(events, device=0, *, count=5, marker='operation_target_'):
             ranges.append((e, lo, lo + dur))
         if any(ranges[i][2] > ranges[i+1][1] for i in range(count-1)):
             return partial('overlapping or unordered target ranges')
+        # Cold autotuning can emit thousands of launches in a large trace.
+        # Index candidate flows once; retain every duplicate and still match
+        # the exact timestamp below, rather than scanning all events per launch.
+        device_flows = defaultdict(list)
+        backward_flows = defaultdict(list)
+        for e in events:
+            if e.get('ph') not in ('s', 'f'):
+                continue
+            if e.get('cat') == 'ac2g':
+                device_flows[(e.get('ph'), e.get('id'), e.get('pid'), e.get('tid'))].append(e)
+            elif e.get('cat') == 'fwdbwd':
+                backward_flows[(e.get('ph'), e.get('id'), e.get('pid'))].append(e)
+        cpu_ops = defaultdict(list)
+        if any(e.get('cat') == 'fwdbwd' and e.get('ph') == 'f' for e in events):
+            for e in events:
+                if e.get('cat') == 'cpu_op' and e.get('ph') == 'X':
+                    cpu_ops[(e.get('pid'), e.get('tid'), number(e['ts']))].append(e)
         # Autograd may launch on a separate host thread. Require an explicit
         # fwdbwd flow from a CPU forward op inside the target to the containing
         # backward CPU op; temporal overlap alone is insufficient.
         backward_ranges = []
         for finish in events:
             if finish.get('cat') != 'fwdbwd' or finish.get('ph') != 'f':continue
-            sources = [e for e in events if e.get('cat') == 'fwdbwd' and e.get('ph') == 's'
-                       and e.get('id') == finish.get('id') and e.get('pid') == finish.get('pid')]
-            finishes = [e for e in events if e.get('cat') == 'fwdbwd' and e.get('ph') == 'f'
-                        and e.get('id') == finish.get('id') and e.get('pid') == finish.get('pid')]
+            sources = backward_flows[('s', finish.get('id'), finish.get('pid'))]
+            finishes = backward_flows[('f', finish.get('id'), finish.get('pid'))]
             if finish.get('id') is None or len(sources) != 1 or len(finishes) != 1:continue
             source = sources[0]
-            forwards = [e for e in events if e.get('cat') == 'cpu_op' and e.get('ph') == 'X'
-                        and (e.get('pid'),e.get('tid'),number(e['ts'])) == (source.get('pid'),source.get('tid'),number(source['ts']))]
-            backwards = [e for e in events if e.get('cat') == 'cpu_op' and e.get('ph') == 'X'
-                         and (e.get('pid'),e.get('tid'),number(e['ts'])) == (finish.get('pid'),finish.get('tid'),number(finish['ts']))]
+            forwards = cpu_ops[(source.get('pid'), source.get('tid'), number(source['ts']))]
+            backwards = cpu_ops[(finish.get('pid'), finish.get('tid'), number(finish['ts']))]
             if len(forwards) != 1 or len(backwards) != 1:continue
             f,b = forwards[0],backwards[0]
             sequence = f.get('args',{}).get('Sequence number')
@@ -96,9 +110,8 @@ def analyze_events(events, device=0, *, count=5, marker='operation_target_'):
             corr = e.get('args',{}).get('correlation')
             if not isinstance(corr, int) or isinstance(corr, bool) or corr in launches:
                 return partial('missing or ambiguous launch correlation')
-            flows = [f for f in events if f.get('cat') == 'ac2g' and f.get('ph') == 's'
-                     and f.get('id') == corr and (f.get('pid'),f.get('tid')) == (e.get('pid'),e.get('tid'))
-                     and number(f['ts']) == lo]
+            flows = [f for f in device_flows[('s', corr, e.get('pid'), e.get('tid'))]
+                     if number(f['ts']) == lo]
             if len(flows) != 1:
                 return partial('missing or ambiguous host-to-device flow source')
             launches[corr] = (matches[0], e)
@@ -113,9 +126,8 @@ def analyze_events(events, device=0, *, count=5, marker='operation_target_'):
             lo = number(e['ts']);dur = number(e['dur'])
             if dur <= 0:
                 return partial('invalid kernel duration')
-            flows = [f for f in events if f.get('cat') == 'ac2g' and f.get('ph') == 'f'
-                     and f.get('id') == corr and (f.get('pid'),f.get('tid')) == (e.get('pid'),e.get('tid'))
-                     and number(f['ts']) == lo]
+            flows = [f for f in device_flows[('f', corr, e.get('pid'), e.get('tid'))]
+                     if number(f['ts']) == lo]
             if len(flows) != 1:
                 return partial('missing or ambiguous host-to-device flow destination')
             key = (corr, e.get('pid'), e.get('tid'), lo)

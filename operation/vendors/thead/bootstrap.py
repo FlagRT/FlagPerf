@@ -12,6 +12,26 @@ PROFILE = Path(__file__).parent / 'profiles/torch210-ppu.json'
 CPU_PHASES = ('reference', 'reference-check', 'diagnose')
 
 
+def checked_preload(phase, profile):
+    """Only the locked Asight target may preload the image's glibc pthread."""
+    preload = os.environ.get('LD_PRELOAD', '')
+    if not preload:
+        return {}
+    expected = profile.get('asight_preload', {})
+    if (phase != 'profile-target' or os.environ.get('FLAGPERF_PPU_COUNTER_TARGET') != '1'
+            or preload != 'libpthread.so.0' or not expected.get('path')
+            or not expected.get('sha256')):
+        raise RuntimeError('PPU does not accept an unreviewed LD_PRELOAD')
+    paths = {line.split(maxsplit=5)[5] for line in Path('/proc/self/maps').read_text().splitlines()
+             if len(line.split(maxsplit=5)) == 6 and 'libpthread.so' in line.split(maxsplit=5)[5]}
+    if paths != {expected['path']}:
+        raise RuntimeError('Asight pthread preload mapped path differs from locked image')
+    observed = hashlib.sha256(Path(expected['path']).read_bytes()).hexdigest()
+    if observed != expected['sha256']:
+        raise RuntimeError('Asight pthread preload hash differs from locked image')
+    return {'name': preload, 'path': expected['path'], 'sha256': observed}
+
+
 def configure(phase):
     if not sys.flags.no_site:
         raise RuntimeError('PPU worker requires -S before site hooks')
@@ -22,8 +42,7 @@ def configure(phase):
         raise RuntimeError('PPU Python version differs from runtime profile')
     if any(os.environ.get(key, '0') != '0' for key in ('TRITON_INTERPRET', 'TRITON_ALWAYS_COMPILE')):
         raise RuntimeError('PPU requires real execution, not interpreted or compile-only overrides')
-    if os.environ.get('LD_PRELOAD'):
-        raise RuntimeError('PPU does not accept an unreviewed LD_PRELOAD')
+    preload = checked_preload(phase, profile)
     site_path = Path(sys.prefix) / ('lib/python%d.%d/site-packages' % sys.version_info[:2])
     search = [str(site_path)]
     for path in sorted(site_path.glob('*.pth')):
@@ -46,6 +65,7 @@ def configure(phase):
         site.main()
     return {'python': platform.python_version(), 'executable': str(Path(sys.executable).resolve()),
             'phase': phase, 'cpu_isolated': cpu, 'site_hooks_executed': not cpu,
+            'reviewed_preload': preload,
             'profile_sha256': hashlib.sha256(PROFILE.read_bytes()).hexdigest(),
             'packages': {k: packages[k] for k in profile['packages']},
             'hook_hashes': {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(site_path.glob('*.pth'))}}
@@ -59,7 +79,10 @@ def main():
     try:
         record = configure(phase)
     except Exception as exc:
-        (control / 'bootstrap-error.json').write_text(json.dumps({'type': type(exc).__name__, 'error': str(exc)}) + '\n')
+        error = {'type': type(exc).__name__, 'error': str(exc)}
+        if phase == 'profile-target' and os.environ.get('LD_PRELOAD'):
+            error['ld_preload'] = os.environ['LD_PRELOAD']
+        (control / 'bootstrap-error.json').write_text(json.dumps(error) + '\n')
         raise
     (control / 'bootstrap.json').write_text(json.dumps(record, indent=2) + '\n')
     os.environ['PPU_OPERATION_BOOTSTRAP_RECORD'] = str(control / 'bootstrap.json')

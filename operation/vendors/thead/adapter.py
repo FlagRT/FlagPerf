@@ -85,6 +85,8 @@ class Adapter(CompatAdapter):
                 'device': str(self.device), 'device_name': torch.cuda.get_device_name(self.device),
                 'framework_observation': self.framework_observation,
                 'torch': torch.__version__, 'cuda_compatibility_mode': True,
+                # Phase-specific reviewed preload remains in bootstrap.json.
+                # It is not an invariant of the measure/counter runtime identity.
                 **{k: record.get(k) for k in ('executable', 'profile_sha256', 'packages', 'hook_hashes')},
                 'fp32_matmul_allow_tf32': torch.backends.cuda.matmul.allow_tf32,
                 'hardware_validation': 'device/backend identity observed; runtime remains candidate'}
@@ -113,6 +115,11 @@ class Adapter(CompatAdapter):
     worker_environment = environment
     def worker_command(self, local=False): return [sys.executable if local else '/usr/local/bin/python3', '-B', '-S', '-X', 'faulthandler']
     worker_entry = 'vendors/thead/bootstrap.py'
+
+    def cpu_docker_options(self, args):
+        # CPU autograd can query the compiled-in device backend. Deny the
+        # SDK's attempt to create device nodes as well as any device mapping.
+        return ['--cap-drop=ALL', '--security-opt=no-new-privileges']
 
     def docker_options(self, device, args):
         if self.host_session is None: raise RuntimeError('PPU Docker mapping requires locked host session')
@@ -173,6 +180,11 @@ class Adapter(CompatAdapter):
     def collect_profile(self, root, task):
         from .profiling import collect
         collect(root, task)
+
+    def isolate_workers(self, task, mode):
+        # Asight cannot collect while this run's persistent probe/measure
+        # workers still own CUDA-compatible contexts on the same PPU.
+        return mode == 'profiling' and task.get('profiling_mode') == 'full'
 
     def measurement_fallback(self, log): return False
 

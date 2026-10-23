@@ -221,6 +221,8 @@ class Workers:
                         command += ['-e', f'{k}={v}']
                 for device in self.args.container_device: command += ['--device', device]
                 for mount in self.args.mount: command += ['-v', mount]
+            elif hasattr(self.adapter, 'cpu_docker_options'):
+                command += self.adapter.cpu_docker_options(self.args)
             prefix = self.adapter.worker_command(local=False) if hasattr(self.adapter, 'worker_command') else ['python3', '-X', 'faulthandler']
             if hasattr(self.adapter, 'worker_command'):
                 command += ['--entrypoint', prefix[0]]
@@ -251,6 +253,8 @@ class Workers:
         return worker
 
     def phase(self, root, task, mode):
+        if getattr(self.adapter, 'isolate_workers', lambda task, mode: False)(task, mode):
+            self.close()
         stage(self.args, mode, root / 'profiling-progress.json' if mode == 'profiling' else None)
         started = time.monotonic()
         last_liveness_check = started

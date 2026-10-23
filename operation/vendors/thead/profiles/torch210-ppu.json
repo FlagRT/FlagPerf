@@ -8,6 +8,10 @@
   "python": "3.12.3",
   "torch": "2.10.0",
   "sdk": "2.1.0-a5f865",
+  "asight_preload": {
+    "path": "/usr/lib/x86_64-linux-gnu/libpthread.so.0",
+    "sha256": "92dcea07a5b11d939c22a96131d3fbb995e0a84a4d02db7d799bf357689cd794"
+  },
   "base_image": "flagtree-ppu-3.6-dev:202608",
   "base_image_id": "sha256:be1606e81fb24ca3da57a6d4a990280369b89146c2999e88eb8cd07c661dcc79",
   "flaggems_commit": "654e2a3a7956cc675886d71defbc1ea5aa6f69ba",

@@ -10,6 +10,21 @@ import os
 from runtime.evidence import read, write, sha
 from .trace import analyze_events
 
+ASIGHT_SECTIONS = (
+    'SpeedOfLight',
+    'MemoryWorkloadAnalysis',
+    'Occupancy',
+    'WarpStateStats',
+    'LaunchStats',
+)
+ASIGHT_SECTION_NAMES = {
+    'SpeedOfLight': 'PPU Speed Of Light Throughput',
+    'MemoryWorkloadAnalysis': 'Memory Workload Analysis',
+    'Occupancy': 'Occupancy',
+    'WarpStateStats': 'Warp State Statistics',
+    'LaunchStats': 'Launch Statistics',
+}
+
 
 def target_window(adapter, root, task, call):
     import torch
@@ -131,11 +146,13 @@ def collect_counters(root, task, timeout=None):
     executable = Path('/usr/local/PPU_SDK/asight/bin/acu')
     result = {'status': 'partial', 'directory': 'profiling/native-counters',
               'boundary': 'PPU-native per-kernel metrics within five original target invocations; not Ascend L0/UB equivalents or clean timing',
-              'sections': ['SpeedOfLight', 'MemoryWorkloadAnalysis', 'Occupancy', 'WarpStateStatistics', 'LaunchStatistics']}
+              # Asight accepts section Identifiers, which differ from two SDK
+              # filenames: WarpStateStats and LaunchStats.
+              'sections': list(ASIGHT_SECTIONS)}
     if not executable.is_file():
         return {**result, 'status': 'not-supported', 'reason': 'native Asight acu executable unavailable'}
     command = [str(executable), '--devices', '0', '--profile-from-start', 'off',
-               '--kill', 'no', '--check-exit-code', 'yes', '--page', 'raw', '--csv',
+               '--kill', 'no', '--check-exit-code', 'yes', '--page', 'details', '--csv',
                '--export', str(folder / 'target')]
     for section in result['sections']:
         command += ['--section', section]
@@ -173,5 +190,12 @@ def collect_counters(root, task, timeout=None):
              'metrics': {row['Metric Name'] + ' [' + row['Metric Unit'] + ']': float(row['Metric Value'].replace(',', ''))}}
             for row in records]
     write(folder / 'counter-rows.json', {'rows': rows, 'protocol': 'ppu-asight-native-metrics-v1'})
-    return {**result, 'status': 'measured', 'metric_records': len(records),
+    sections = {}
+    for row in records:
+        sections.setdefault(row['ID'], set()).add(row.get('Section Name'))
+    expected = set(ASIGHT_SECTION_NAMES.values())
+    missing = {key: sorted(expected - present) for key, present in sections.items() if expected - present}
+    return {**result, 'status': 'partial' if missing else 'measured', 'metric_records': len(records),
+            'kernel_records': len(sections), 'missing_sections_by_kernel': missing,
+            'reason': 'requested section metrics missing for one or more kernels' if missing else None,
             'native_reports': {p.name: sha(p) for p in reports}, 'metrics_sha256': sha(folder / 'metrics.json')}
