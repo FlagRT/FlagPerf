@@ -13,7 +13,82 @@ METADATA = {'aten::view', 'aten::_unsafe_view', 'aten::reshape', 'aten::detach',
             'aten::expand', 'aten::squeeze', 'aten::unsqueeze', 'aten::slice',
             'aten::select', 'aten::permute', 'aten::lift_fresh', 'aten::_has_same_storage_numel'}
 PREPARATION = {'aten::empty', 'aten::empty_like', 'aten::empty_strided', 'aten::new_empty',
-               'aten::copy_', 'aten::_to_copy', 'aten::clone', 'aten::to'}
+               'aten::copy_', 'aten::_to_copy', 'aten::clone', 'aten::to', 'aten::zeros'}
+
+
+def reviewed_nll_computations(events, timeline, name, dtype):
+    """Correlate the locked SDK's opaque NLL C++ forward/backward pair.
+
+    NllLossForwardFunction bypasses TorchDispatchMode. Its exact CPU records,
+    input metadata, external IDs, backward flow and concrete kernels must all
+    agree. A broad cross_entropy_loss interval or nearby kernel is insufficient.
+    """
+    scalar = {'FP32': 'float', 'FP16': 'c10::Half', 'BF16': 'c10::BFloat16'}.get(dtype)
+    if scalar is None:
+        return []
+    def selected(category, event_name):
+        return [e for e in events if e.get('ph') == 'X' and e.get('cat') == category
+                and e.get('name') == event_name]
+    def contains(parent, child):
+        return ((parent.get('pid'), parent.get('tid')) == (child.get('pid'), child.get('tid'))
+                and number(parent['ts']) <= number(child['ts'])
+                < number(child['ts']) + number(child['dur'])
+                <= number(parent['ts']) + number(parent['dur']))
+    targets = selected('user_annotation', 'ppu_target_' + name + '_0')
+    parents = selected('cpu_op', 'aten::nll_loss_forward')
+    forward = selected('cpu_op', 'NllLossForwardFunction')
+    backward = selected('cpu_op', 'NllLossForwardFunctionBackward')
+    if not all(len(rows) == 1 for rows in (targets, parents, forward, backward)):
+        return []
+    target, parent, fwd, bwd = targets[0], parents[0], forward[0], backward[0]
+    if not contains(target, parent) or not contains(parent, fwd):
+        return []
+    args = fwd.get('args', {})
+    dims = args.get('Input Dims', [])
+    if (args.get('Input type', [])[:2] != [scalar, 'long int'] or len(dims) < 2
+            or len(dims[0]) != 2 or len(dims[1]) != 1 or dims[0][0] != dims[1][0]
+            or any(type(n) is not int or n <= 0 for shape in dims[:2] for n in shape)
+            or parent.get('args', {}).get('Input Dims') != dims):
+        return []
+    sequence = args.get('Sequence number')
+    backward_sequence = bwd.get('args', {}).get('Sequence number')
+    if type(sequence) is not int or type(backward_sequence) is not int or backward_sequence != sequence:
+        return []
+    # Autograd runs on another host thread; require its own exact fwdbwd edge.
+    sources = [e for e in events if e.get('cat') == 'fwdbwd' and e.get('ph') == 's'
+               and (e.get('pid'), e.get('tid')) == (fwd.get('pid'), fwd.get('tid'))
+               and number(e['ts']) == number(fwd['ts'])]
+    if len(sources) != 1 or sources[0].get('id') is None:
+        return []
+    flow_id = sources[0]['id']
+    finishes = [e for e in events if e.get('cat') == 'fwdbwd' and e.get('ph') == 'f'
+                and e.get('pid') == fwd.get('pid') and e.get('id') == flow_id]
+    all_sources = [e for e in events if e.get('cat') == 'fwdbwd' and e.get('ph') == 's'
+                   and e.get('pid') == fwd.get('pid') and e.get('id') == flow_id]
+    if (len(all_sources) != 1 or len(finishes) != 1
+            or (finishes[0].get('pid'), finishes[0].get('tid')) != (bwd.get('pid'), bwd.get('tid'))
+            or number(finishes[0]['ts']) != number(bwd['ts'])
+            or bwd.get('pid') != target.get('pid')
+            or not number(target['ts']) <= number(bwd['ts'])
+            < number(bwd['ts']) + number(bwd['dur']) <= number(target['ts']) + number(target['dur'])):
+        return []
+    result = []
+    for op, kernel in ((fwd, 'nll_loss_forward_kernel'), (bwd, 'nll_loss_backward_kernel')):
+        external = op.get('args', {}).get('External id')
+        if type(external) is not int:
+            return []
+        launches = [e for e in events if e.get('ph') == 'X' and is_host_launch(e)
+                    and contains(op, e) and e.get('args', {}).get('External id') == external]
+        if len(launches) != 1:
+            return []
+        corr = launches[0].get('args', {}).get('correlation')
+        kernels = [k for k in timeline['kernels'] if k['correlation'] == corr]
+        if len(kernels) != 1 or kernels[0]['name'] != kernel:
+            return []
+        result.append({'op': op['name'], 'case': 'cross_entropy_loss',
+                       'evidence': 'reviewed-cpp-nll-record-external-id-and-fwdbwd-flow',
+                       'correlations': [corr]})
+    return result
 
 
 def analyze_dispatch(events, rows, device=0, name='first', *, case=None, dtype=None):
@@ -77,6 +152,8 @@ def analyze_dispatch(events, rows, device=0, name='first', *, case=None, dtype=N
                                if e.get('ph') == 'X' and is_host_launch(e)
                                and (e.get('pid'), e.get('tid')) == (mark.get('pid'), mark.get('tid'))
                                and lo <= number(e['ts']) <= number(e['ts']) + number(e['dur']) <= hi)
+        if case == 'cross_entropy_loss':
+            computations.extend(reviewed_nll_computations(events, timeline, name, dtype))
         result['computations'] = computations
         result['missing_device_computations'] = missing
         covered = {corr for row in computations for corr in row['correlations']}
