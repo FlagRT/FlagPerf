@@ -126,8 +126,13 @@ def parse_counter_csv(text):
             rows = list(csv.DictReader(io.StringIO('\n'.join(lines[index:]))))
             records = []
             for row in rows:
+                # Live acu output appends progress/report messages after CSV.
+                # DictReader leaves absent columns as None for those lines.
+                raw_value = row.get('Metric Value')
+                if not isinstance(raw_value, str):
+                    continue
                 try:
-                    value = float(row['Metric Value'].replace(',', ''))
+                    value = float(raw_value.replace(',', ''))
                 except (ValueError, TypeError, KeyError):
                     continue
                 if not math.isfinite(value) or not all(row.get(k) for k in required - {'Metric Value'}):

@@ -206,6 +206,19 @@ class CorrelationTests(unittest.TestCase):
         self.assertEqual(records[0]['Metric Unit'], 'byte')
         self.assertEqual(parse_counter_csv('no metrics'), [])
 
+    def test_native_counter_parser_handles_live_acu_progress_and_report_footer(self):
+        from vendors.thead.profiling import parse_counter_csv
+        header = '"ID","Kernel Name","Section Name","Metric Name","Metric Unit","Metric Value"\n'
+        metric = '"0","abs","Occupancy","Active Warps","%","3.59"\n'
+        footer = 'Processing [> ] 0 %\rProcessing [===] 100 %\n[Asight]: Trace written into the output file: target.acurep\n'
+        malformed = '"1","abs","Occupancy","missing value"\n'
+        nonfinite = '"2","abs","Occupancy","invalid","%","inf"\n'
+        missing_unit = '"3","abs","Occupancy","no unit","","2"\n'
+        records = parse_counter_csv(header + metric + malformed + nonfinite + missing_unit + footer)
+        self.assertEqual(records, parse_counter_csv(header + metric))
+        self.assertEqual(len(records), 1)
+        self.assertEqual(parse_counter_csv(header + footer), [])
+
     def test_asight_sections_use_sdk_identifiers_not_filenames(self):
         from vendors.thead.profiling import ASIGHT_SECTIONS
         self.assertEqual(ASIGHT_SECTIONS, (
