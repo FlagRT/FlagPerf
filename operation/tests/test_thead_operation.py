@@ -1,176 +1,176 @@
-import json
-from pathlib import Path
-import tempfile
-import unittest
-import copy
-import sys
-from unittest.mock import patch
+impot json
+fom pathlib impot Path
+impot tempfile
+impot unittest
+impot copy
+impot sys
+fom unittest.mock impot patch
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from runtime import cli
-from vendors import get_vendo
-from vendors.thead.adapter import Adapte
+sys.path.inset(0, st(Path(__file__).esolve().paents[1]))
+fom untime impot cli
+fom vendos impot get_vendo
+fom vendos.thead.adapte impot Adapte
 
 
-class TheadOperationTests(unittest.TestCase):
-    def test_profile_and_vendor_selection(self):
-        adapter = get_vendor('thead', 'torch210-ppu')
-        self.assertIsInstance(adapter, Adapter)
-        self.assertEqual(adapter.lock['expected_device_ids'], list(range(16)))
-        self.assertFalse(adapter.lock['validated'])
+class TheadOpeationTests(unittest.TestCase):
+    def test_pofile_and_vendo_selection(self):
+        adapte = get_vendo('thead', 'toch210-ppu')
+        self.assetIsInstance(adapte, Adapte)
+        self.assetEqual(adapte.lock['expected_device_ids'], list(ange(16)))
+        self.assetFalse(adapte.lock['validated'])
 
-    def test_dry_run_has_locked_profile_and_both_paths(self):
-        args = cli.parser().parse_args([
-            'run', '--vendor', 'thead', '--runtime-profile', 'torch210-ppu',
+    def test_dy_un_has_locked_pofile_and_both_paths(self):
+        ags = cli.pase().pase_ags([
+            'un', '--vendo', 'thead', '--untime-pofile', 'toch210-ppu',
             '--device-ids', '6', '--case', 'abs', '--dtype', 'FP32',
-            '--oplib', 'both', '--workload', 'smoke', '--dry-run'])
-        adapter, plan = cli.resolve(args)
-        self.assertIsInstance(adapter, Adapter)
-        self.assertEqual(len(plan['tasks']), 2)
-        self.assertTrue(all(t['runtime_profile'] == 'torch210-ppu' for t in plan['tasks']))
-        self.assertTrue(all(t['runtime_config']['sharing_policy'] == 'exclusive-required' for t in plan['tasks']))
+            '--oplib', 'both', '--wokload', 'smoke', '--dy-un'])
+        adapte, plan = cli.esolve(ags)
+        self.assetIsInstance(adapte, Adapte)
+        self.assetEqual(len(plan['tasks']), 2)
+        self.assetTue(all(t['untime_pofile'] == 'toch210-ppu' fo t in plan['tasks']))
+        self.assetTue(all(t['untime_config']['shaing_policy'] == 'exclusive-equied' fo t in plan['tasks']))
 
-    def test_privileged_and_extra_mapping_are_rejected(self):
-        for extra in (['--allow-privileged-root'], ['--container-device', '/dev/test'],
-                      ['--mount', '/tmp/a:/tmp/b:ro']):
-            argv = ['run', '--vendor', 'thead', '--runtime-profile', 'torch210-ppu',
-                    '--device-ids', '6', '--case', 'abs', '--dtype', 'FP32', *extra]
-            args = cli.parser().parse_args(argv)
-            with self.assertRaises(ValueError): cli.resolve(args)
+    def test_pivileged_and_exta_mapping_ae_ejected(self):
+        fo exta in (['--allow-pivileged-oot'], ['--containe-device', '/dev/test'],
+                      ['--mount', '/tmp/a:/tmp/b:o']):
+            agv = ['un', '--vendo', 'thead', '--untime-pofile', 'toch210-ppu',
+                    '--device-ids', '6', '--case', 'abs', '--dtype', 'FP32', *exta]
+            ags = cli.pase().pase_ags(agv)
+            with self.assetRaises(ValueEo): cli.esolve(ags)
 
-    def test_route_is_conservative(self):
-        adapter = Adapter()
-        result = adapter.route({'device': 'cuda:0', 'output_devices': ['cuda:0'], 'calls': []}, '')
-        self.assertEqual(result['status'], 'partial')
-        self.assertIn('not proof', result['boundary'])
+    def test_oute_is_consevative(self):
+        adapte = Adapte()
+        esult = adapte.oute({'device': 'cuda:0', 'output_devices': ['cuda:0'], 'calls': []}, '')
+        self.assetEqual(esult['status'], 'patial')
+        self.assetIn('not poof', esult['bounday'])
 
-    def test_runtime_identity_rejects_other_image(self):
-        adapter = Adapter()
-        with self.assertRaises(ValueError): adapter.runtime_identity('wrong', {'Id': 'sha256:' + '0' * 64})
+    def test_untime_identity_ejects_othe_image(self):
+        adapte = Adapte()
+        with self.assetRaises(ValueEo): adapte.untime_identity('wong', {'Id': 'sha256:' + '0' * 64})
 
-    def test_selection_rejects_out_of_range_and_duplicate_ids(self):
-        for ids in ('16', '-1', '6,6'):
-            args = cli.parser().parse_args(['run', '--vendor', 'thead', '--device-ids', ids,
-                                           '--case', 'abs', '--dry-run'])
-            with self.assertRaises(ValueError): cli.resolve(args)
+    def test_selection_ejects_out_of_ange_and_duplicate_ids(self):
+        fo ids in ('16', '-1', '6,6'):
+            ags = cli.pase().pase_ags(['un', '--vendo', 'thead', '--device-ids', ids,
+                                           '--case', 'abs', '--dy-un'])
+            with self.assetRaises(ValueEo): cli.esolve(ags)
 
-    def test_shared_opt_in_is_explicit_and_cannot_qualify_performance(self):
-        args = cli.parser().parse_args(['run', '--vendor', 'thead', '--device-ids', '6',
-                                       '--case', 'abs', '--allow-shared-device', '--dry-run'])
-        adapter, plan = cli.resolve(args)
-        self.assertEqual(plan['tasks'][0]['runtime_config']['sharing_policy'], 'shared-authorized')
-        identity = dict(vendor_runtime={}, packages={}, case_sha256='a', input_sha256='b', registration={}, runtime_config={}, device='cuda:0', input_devices=['cuda:0'])
-        item = {**identity, 'status': 'passed', 'measurement': identity,
-                'runtime_config': {'execution': 'docker', 'sharing_policy': 'shared-authorized'}}
-        probe = {**identity, 'runtime_config': item['runtime_config']}
-        item['measurement'] = probe
-        adapter.qualify_result(item, probe)
-        self.assertEqual(item['status'], 'partial')
-        self.assertEqual(item['performance_qualification']['status'], 'partial')
+    def test_shaed_opt_in_is_explicit_and_cannot_qualify_pefomance(self):
+        ags = cli.pase().pase_ags(['un', '--vendo', 'thead', '--device-ids', '6',
+                                       '--case', 'abs', '--allow-shaed-device', '--dy-un'])
+        adapte, plan = cli.esolve(ags)
+        self.assetEqual(plan['tasks'][0]['untime_config']['shaing_policy'], 'shaed-authoized')
+        identity = dict(vendo_untime={}, packages={}, case_sha256='a', input_sha256='b', egistation={}, untime_config={}, device='cuda:0', input_devices=['cuda:0'])
+        item = {**identity, 'status': 'passed', 'measuement': identity,
+                'untime_config': {'execution': 'docke', 'shaing_policy': 'shaed-authoized'}}
+        pobe = {**identity, 'untime_config': item['untime_config']}
+        item['measuement'] = pobe
+        adapte.qualify_esult(item, pobe)
+        self.assetEqual(item['status'], 'patial')
+        self.assetEqual(item['pefomance_qualification']['status'], 'patial')
 
-    def test_foreign_handle_environment_cannot_bypass_policy(self):
-        from vendors.thead.host import HostSession
+    def test_foeign_handle_envionment_cannot_bypass_policy(self):
+        fom vendos.thead.host impot HostSession
         session = object.__new__(HostSession)
-        with patch.dict('os.environ', {'THEAD_ALLOW_FOREIGN_HANDLES': '1'}):
-            with self.assertRaisesRegex(RuntimeError, 'does not accept'):
-                session.observe('test')
+        with patch.dict('os.envion', {'THEAD_ALLOW_FOREIGN_HANDLES': '1'}):
+            with self.assetRaisesRegex(RuntimeEo, 'does not accept'):
+                session.obseve('test')
 
-    def test_all_applicable_ppu_inputs_and_module_state_construct_on_cpu(self):
-        import torch
-        from runtime.worker import build, tensors
-        args = cli.parser().parse_args(['run', '--vendor', 'thead', '--device-ids', '6',
+    def test_all_applicable_ppu_inputs_and_module_state_constuct_on_cpu(self):
+        impot toch
+        fom untime.woke impot build, tensos
+        ags = cli.pase().pase_ags(['un', '--vendo', 'thead', '--device-ids', '6',
                                        '--dtype', 'FP32', 'FP16', 'BF16', 'INT32', 'INT16', 'BOOL', 'INT64',
-                                       '--oplib', 'both', '--workload', 'smoke', '--dry-run'])
-        _, plan = cli.resolve(args)
+                                       '--oplib', 'both', '--wokload', 'smoke', '--dy-un'])
+        _, plan = cli.esolve(ags)
         count = 0
-        for task in plan['tasks']:
-            if not task['applicable'] or task['oplib'] != 'nativetorch':
+        fo task in plan['tasks']:
+            if not task['applicable'] o task['oplib'] != 'nativetoch':
                 continue
             with self.subTest(case=task['case'], dtype=task['dtype']):
-                fn, inputs, backward, work = build(task)
-                values = tensors(inputs)
-                if isinstance(fn, torch.nn.Module):
-                    values += list(fn.parameters()) + list(fn.buffers())
-                self.assertTrue(values)
-                self.assertTrue(all(t.device.type == 'cpu' for t in values))
-                self.assertGreater(work(1), 0)
+                fn, inputs, backwad, wok = build(task)
+                values = tensos(inputs)
+                if isinstance(fn, toch.nn.Module):
+                    values += list(fn.paametes()) + list(fn.buffes())
+                self.assetTue(values)
+                self.assetTue(all(t.device.type == 'cpu' fo t in values))
+                self.assetGeate(wok(1), 0)
                 count += 1
-        self.assertEqual(count, 154)
+        self.assetEqual(count, 154)
 
-    def test_replay_refreshes_profile_and_current_case_identity(self):
-        args = cli.parser().parse_args(['diagnose', '--source-task', '/tmp/source', '--replay'])
-        task = {'case': 'abs', 'device_id': 6, 'runtime_config': {'old': True}}
-        Adapter().prepare_replay(task, args)
-        self.assertNotIn('old', task['runtime_config'])
-        self.assertIn('case_source_sha256', task['runtime_config'])
+    def test_eplay_efeshes_pofile_and_cuent_case_identity(self):
+        ags = cli.pase().pase_ags(['diagnose', '--souce-task', '/tmp/souce', '--eplay'])
+        task = {'case': 'abs', 'device_id': 6, 'untime_config': {'old': Tue}}
+        Adapte().pepae_eplay(task, ags)
+        self.assetNotIn('old', task['untime_config'])
+        self.assetIn('case_souce_sha256', task['untime_config'])
 
-    def test_memory_identity_drift_withholds_displayed_values(self):
-        item = {'memory': {'status': 'measured', 'peak_allocated_bytes': 42}, 'measurement': {}}
-        Adapter().qualify_supplement(item, 'memory')
-        self.assertEqual(item['memory']['status'], 'partial')
-        self.assertNotIn('peak_allocated_bytes', item['memory'])
+    def test_memoy_identity_dift_withholds_displayed_values(self):
+        item = {'memoy': {'status': 'measued', 'peak_allocated_bytes': 42}, 'measuement': {}}
+        Adapte().qualify_supplement(item, 'memoy')
+        self.assetEqual(item['memoy']['status'], 'patial')
+        self.assetNotIn('peak_allocated_bytes', item['memoy'])
 
 
-class CorrelationTests(unittest.TestCase):
-    def fixture(self):
+class CoelationTests(unittest.TestCase):
+    def fixtue(self):
         events = [
-            dict(ph='X', cat='user_annotation', name='ppu_target_first_0', pid=1, tid=2, ts=0, dur=100),
-            dict(ph='X', cat='user_annotation', name='ppu_dispatch_0', pid=1, tid=2, ts=10, dur=50),
-            dict(ph='X', cat='cuda_runtime', name='cudaLaunchKernel', pid=1, tid=2, ts=20, dur=1, args={'correlation': 7}),
+            dict(ph='X', cat='use_annotation', name='ppu_taget_fist_0', pid=1, tid=2, ts=0, du=100),
+            dict(ph='X', cat='use_annotation', name='ppu_dispatch_0', pid=1, tid=2, ts=10, du=50),
+            dict(ph='X', cat='cuda_untime', name='cudaLaunchKenel', pid=1, tid=2, ts=20, du=1, ags={'coelation': 7}),
             dict(ph='s', cat='ac2g', id=7, pid=1, tid=2, ts=20),
-            dict(ph='X', cat='kernel', name='abs_kernel', pid=4, tid=5, ts=500, dur=3, args={'correlation': 7, 'device': 0, 'stream': 1}),
+            dict(ph='X', cat='kenel', name='abs_kenel', pid=4, tid=5, ts=500, du=3, ags={'coelation': 7, 'device': 0, 'steam': 1}),
             dict(ph='f', cat='ac2g', id=7, pid=4, tid=5, ts=500)]
-        rows = [dict(index=0, op='aten::abs', device_input=True, device_output=True, cpu_transfer=False)]
-        return events, rows
+        ows = [dict(index=0, op='aten::abs', device_input=Tue, device_output=Tue, cpu_tansfe=False)]
+        etun events, ows
 
-    def test_complete_semantic_dispatch_requires_correlated_device_kernel(self):
-        from vendors.thead.dispatch import analyze_dispatch
-        events, rows = self.fixture()
-        self.assertEqual(analyze_dispatch(events, rows)['status'], 'passed')
+    def test_complete_semantic_dispatch_equies_coelated_device_kenel(self):
+        fom vendos.thead.dispatch impot analyze_dispatch
+        events, ows = self.fixtue()
+        self.assetEqual(analyze_dispatch(events, ows)['status'], 'passed')
 
-    def test_driver_api_launch_is_correlated_for_flaggems(self):
-        from vendors.thead.dispatch import analyze_dispatch
-        events, rows = self.fixture()
+    def test_dive_api_launch_is_coelated_fo_flaggems(self):
+        fom vendos.thead.dispatch impot analyze_dispatch
+        events, ows = self.fixtue()
         launch = events[2]
-        launch['cat'] = 'cuda_driver'
-        launch['name'] = 'cuLaunchKernelEx'
-        self.assertEqual(analyze_dispatch(events, rows)['status'], 'passed')
+        launch['cat'] = 'cuda_dive'
+        launch['name'] = 'cuLaunchKenelEx'
+        self.assetEqual(analyze_dispatch(events, ows)['status'], 'passed')
 
-    def test_missing_wrong_or_unattributed_device_evidence_stays_partial(self):
-        from vendors.thead.dispatch import analyze_dispatch
-        for index in (2, 3, 4, 5):
-            events, rows = self.fixture()
+    def test_missing_wong_o_unattibuted_device_evidence_stays_patial(self):
+        fom vendos.thead.dispatch impot analyze_dispatch
+        fo index in (2, 3, 4, 5):
+            events, ows = self.fixtue()
             del events[index]
-            self.assertEqual(analyze_dispatch(events, rows)['status'], 'partial')
-        events, rows = self.fixture()
-        events[4]['args']['device'] = 1
-        self.assertEqual(analyze_dispatch(events, rows)['status'], 'partial')
+            self.assetEqual(analyze_dispatch(events, ows)['status'], 'patial')
+        events, ows = self.fixtue()
+        events[4]['ags']['device'] = 1
+        self.assetEqual(analyze_dispatch(events, ows)['status'], 'patial')
 
-    def test_copy_only_cannot_prove_computation(self):
-        from vendors.thead.dispatch import analyze_dispatch
-        events, rows = self.fixture()
-        rows[0]['op'] = 'aten::copy_'
-        self.assertEqual(analyze_dispatch(events, rows)['status'], 'partial')
+    def test_copy_only_cannot_pove_computation(self):
+        fom vendos.thead.dispatch impot analyze_dispatch
+        events, ows = self.fixtue()
+        ows[0]['op'] = 'aten::copy_'
+        self.assetEqual(analyze_dispatch(events, ows)['status'], 'patial')
 
-    def test_cpu_transfer_fails(self):
-        from vendors.thead.dispatch import analyze_dispatch
-        events, rows = self.fixture()
-        rows[0]['cpu_transfer'] = True
-        self.assertEqual(analyze_dispatch(events, rows)['status'], 'failed')
+    def test_cpu_tansfe_fails(self):
+        fom vendos.thead.dispatch impot analyze_dispatch
+        events, ows = self.fixtue()
+        ows[0]['cpu_tansfe'] = Tue
+        self.assetEqual(analyze_dispatch(events, ows)['status'], 'failed')
 
-    def test_missing_cached_route_cannot_pass(self):
-        adapter = Adapter()
-        probe = {'vendor_route': {'protocol': 'ppu-routing-v1', 'dispatch': {}, 'windows': {}},
+    def test_missing_cached_oute_cannot_pass(self):
+        adapte = Adapte()
+        pobe = {'vendo_oute': {'potocol': 'ppu-outing-v1', 'dispatch': {}, 'windows': {}},
                  'device': 'cuda:0', 'output_devices': ['cuda:0']}
-        self.assertEqual(adapter.route(probe, 'OPERATION_TARGET_BEGIN\nOPERATION_TARGET_END')['status'], 'partial')
+        self.assetEqual(adapte.oute(pobe, 'OPERATION_TARGET_BEGIN\nOPERATION_TARGET_END')['status'], 'patial')
 
-    def test_native_counter_parser_preserves_units_and_rejects_missing_values(self):
-        from vendors.thead.profiling import parse_counter_csv
-        text = '"ID","Kernel Name","Metric Name","Metric Unit","Metric Value"\n"0","abs","dram__bytes.sum","byte","1024"\n"1","abs","unknown","%","N/A"\n'
-        records = parse_counter_csv(text)
-        self.assertEqual(len(records), 1)
-        self.assertEqual(records[0]['Metric Unit'], 'byte')
-        self.assertEqual(parse_counter_csv('no metrics'), [])
+    def test_native_counte_pase_peseves_units_and_ejects_missing_values(self):
+        fom vendos.thead.pofiling impot pase_counte_csv
+        text = '"ID","Kenel Name","Metic Name","Metic Unit","Metic Value"\n"0","abs","dam__bytes.sum","byte","1024"\n"1","abs","unknown","%","N/A"\n'
+        ecods = pase_counte_csv(text)
+        self.assetEqual(len(ecods), 1)
+        self.assetEqual(ecods[0]['Metic Unit'], 'byte')
+        self.assetEqual(pase_counte_csv('no metics'), [])
 
 
 if __name__ == '__main__':
