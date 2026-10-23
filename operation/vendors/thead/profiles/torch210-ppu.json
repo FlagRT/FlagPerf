@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "vendor": "thead",
+  "chip": "PPU",
+  "runtime_profile": "torch210-ppu",
+  "image": "flagperf-ppu-operation:654e2a3a",
+  "image_id": "sha256:b3246f3fa6171007f66655aa5d5d1cfd679c1d4d94d34ce7e1ea08f087467b75",
+  "python": "3.12.3",
+  "torch": "2.10.0",
+  "sdk": "2.1.0-a5f865",
+  "base_image": "flagtree-ppu-3.6-dev:202608",
+  "base_image_id": "sha256:be1606e81fb24ca3da57a6d4a990280369b89146c2999e88eb8cd07c661dcc79",
+  "flaggems_commit": "654e2a3a7956cc675886d71defbc1ea5aa6f69ba",
+  "flaggems_source_sha256": "cdca6e02ee2137c6dfa80ba446b3a709b130a2ef8eb901d906873255c6bba010",
+  "packages": {
+    "torch": "2.10.0",
+    "flagtree": "0.6.1+ppu3.6",
+    "flag-gems": "0.0.0+g654e2a3a",
+    "pyyaml": "6.0.1",
+    "sqlalchemy": "2.0.48"
+  },
+  "hardware_model": "PPU-ZW810E",
+  "expected_device_ids": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+  "release_stage": "candidate",
+  "validated": false,
+  "registry_pull_verified": false
+}

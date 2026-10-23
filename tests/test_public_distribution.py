@@ -19,7 +19,7 @@ DOCS = [ROOT / p for p in (
     'README.md', 'docs/README.md', 'docs/CHANGELOG.md', 'docs/base/base-case-doc.md',
     'base/README.md', 'operation/README.md',
     'operation/vendors/ascend/README.md',
-    'operation/vendors/kunlunxin/README.md',
+    'operation/vendors/kunlunxin/README.md', 'operation/vendors/thead/README.md',
     'base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/README.md',
     'base/toolkits/_common/kunlunxin/P800/README.md',
 )] + list((ROOT / 'docs/ascend').glob('*.md')) + list((ROOT / 'docs/kunlunxin').glob('*.md')) + list((ROOT / 'docs/thead').glob('*.md'))
@@ -122,7 +122,7 @@ class PublicDistributionTests(unittest.TestCase):
 
     def test_operation_catalog_and_vendor_plans(self):
         self.assertEqual(len(run('operation/run.py', 'list')), 52)
-        for vendor in ('ascend', 'nvidia', 'cambricon', 'kunlunxin', 'iluvatar', 'metax'):
+        for vendor in ('ascend', 'nvidia', 'cambricon', 'kunlunxin', 'thead', 'iluvatar', 'metax'):
             with self.subTest(vendor=vendor):
                 argv = ['operation/run.py', 'run', '--vendor', vendor,
                         '--device-ids', '0', '--case', 'abs', '--dry-run']
@@ -131,6 +131,26 @@ class PublicDistributionTests(unittest.TestCase):
                 plan = run(*argv)
                 self.assertEqual(plan['vendor'], vendor)
                 self.assertEqual(len(plan['tasks']), 1)
+
+    def test_ppu_operation_documented_plans_need_only_stdlib(self):
+        paths = [ROOT / 'operation/vendors/thead/README.md', ROOT / 'operation/README.md']
+        plans = []
+        for path in paths:
+            blocks = re.findall(r'```bash\n(.*?)```', path.read_text(encoding='utf-8'), re.S)
+            for block in blocks:
+                for line in block.replace('\\\n', ' ').splitlines():
+                    if 'operation/run.py run ' not in line or '--vendor thead' not in line:
+                        continue
+                    argv = shlex.split(line)
+                    if '--dry-run' not in argv:
+                        argv.append('--dry-run')
+                    plan = run('-S', *argv[1:])
+                    self.assertEqual(plan['runtime_profile'], 'torch210-ppu')
+                    self.assertEqual(plan['vendor'], 'thead')
+                    self.assertTrue(all(t['runtime_config']['runtime_profile'] == 'torch210-ppu' for t in plan['tasks']))
+                    plans.append(plan['execution'])
+        self.assertIn('docker', plans)
+        self.assertIn('local', plans)
 
     def test_p800_operation_documented_plans_need_only_stdlib(self):
         paths = [ROOT / 'operation/vendors/kunlunxin/README.md',
@@ -237,7 +257,7 @@ class PublicDistributionTests(unittest.TestCase):
         for directory in (
             ROOT / 'base/vendors/ascend', CASE, ROOT / 'base/tests',
             ROOT / 'operation/runtime', ROOT / 'operation/vendors/ascend', ROOT / 'docs/ascend',
-            ROOT / 'operation/vendors/kunlunxin',
+            ROOT / 'operation/vendors/kunlunxin', ROOT / 'operation/vendors/thead',
         ):
             paths.update(p for p in directory.rglob('*') if p.suffix in ('.py', '.json', '.yaml', '.md'))
         paths.update((ROOT / 'base/configs').glob('ascend*.yaml'))

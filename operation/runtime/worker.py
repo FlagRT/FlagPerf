@@ -279,7 +279,7 @@ def device_phase(root, task, phase):
             print('OPERATION_TARGET_END', file=sys.stderr, flush=True)
         write(root / 'probe.json', {**identity,
              'output_devices': [str(t.device) for t in tensors(out)],
-             **({'p800_route':observer.record()} if observer else {}),
+             **({('p800_route' if task['vendor'] == 'kunlunxin' else 'vendor_route'): observer.record()} if observer else {}),
              'calls': [{'path': p, 'function': f, 'count': n, 'sha256': sha(p) if Path(p).is_file() else None,
                         **({'launcher_states': launcher_states[(p,f)]} if (p,f) in launcher_states else {})}
                        for (p,f),n in sorted(calls.items())]})

@@ -23,6 +23,7 @@
 当前 Inference 提供 Qwen3-Embedding-0.6B、DeepFM、DLRM、OneRec-8B；被测端支持 Ascend 单卡/单机 TP，NVIDIA A100 用于精度与性能参考采集。具体组合和限制见 Inference 指南。
 Base、Operation、Inference 的当前单机入口不要求 SSH。先阅读所选模块的环境准备，再执行其最小示例。
 昆仑芯 P800 的基础能力见 [Base/Toolkit 指南](docs/kunlunxin/README.md)，算子精度与性能见 [P800 Operation](operation/vendors/kunlunxin/README.md)。
+平头哥 PPU 的基础能力见 [PPU 适配指南](docs/thead/README.md)，算子入口、运行栈准备及待验收边界见 [PPU Operation](operation/vendors/thead/README.md)。
 完整导航见 [docs](docs/README.md)。
 
 ## 📣 FlagPerf评测亮点

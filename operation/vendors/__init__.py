@@ -4,14 +4,15 @@
 import importlib
 import importlib.util
 
-AVAILABLE = ('ascend', 'nvidia', 'cambricon', 'kunlunxin', 'iluvatar', 'metax')
+AVAILABLE = ('ascend', 'nvidia', 'cambricon', 'kunlunxin', 'thead', 'iluvatar', 'metax')
 
 
 def get_vendor(name, runtime_profile=None):
     if name not in AVAILABLE:
         raise ValueError(f'unsupported vendor: {name}; available: {", ".join(AVAILABLE)}')
     if runtime_profile is not None:
-        profiles = {('kunlunxin', 'p800-xpytorch29'): 'vendors.kunlunxin.p800'}
+        profiles = {('kunlunxin', 'p800-xpytorch29'): 'vendors.kunlunxin.p800',
+                    ('thead', 'torch210-ppu'): 'vendors.thead.adapter'}
         module = profiles.get((name, runtime_profile))
         if module is None:
             raise ValueError(f'unsupported runtime profile for {name}: {runtime_profile}')
@@ -19,7 +20,7 @@ def get_vendor(name, runtime_profile=None):
     module = f'vendors.{name}.adapter'
     if importlib.util.find_spec(module) is not None:
         return importlib.import_module(module).Adapter()
-    if name not in ('nvidia','cambricon','kunlunxin','iluvatar','metax'):
+    if name not in ('nvidia','cambricon','kunlunxin','thead','iluvatar','metax'):
         raise ValueError(f'vendor adapter is missing: {module}')
     from vendors.compat import Adapter
     return Adapter(name)

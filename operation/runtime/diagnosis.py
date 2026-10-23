@@ -30,7 +30,7 @@ def add_parser(sub):
     p.add_argument('--result-root', type=Path, default=catalog.ROOT / 'result')
     p.add_argument('--watchdog', type=float, default=300, help='per replay phase timeout')
     p.add_argument('--dry-run', action='store_true')
-    p.add_argument('--allow-shared-device', action='store_true', help='explicit shared P800 replay; performance remains unqualified')
+    p.add_argument('--allow-shared-device', action='store_true', help='explicit shared replay for supported vendor profiles; performance remains unqualified')
     p.add_argument('--allow-privileged-root', action='store_true')
     p.add_argument('--container-device', action='append', default=[])
     p.add_argument('--mount', action='append', default=[])

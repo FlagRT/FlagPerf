@@ -123,7 +123,7 @@ def parser():
     run.add_argument('--result-root', type=Path, default=ROOT / 'result')
     run.add_argument('--dry-run', action='store_true')
     run.add_argument('--allow-shared-device', action='store_true',
-                     help='explicitly allow shared P800 host devices; numerical results remain performance-partial')
+                     help='explicitly allow sharing for supported vendor profiles; numerical results remain performance-partial')
     run.add_argument('--diagnostics', choices=['off', 'failures'], default='failures')
     run.add_argument('--allow-privileged-root', action='store_true')
     run.add_argument('--container-device', action='append', default=[], help='explicit additional Docker device mapping')

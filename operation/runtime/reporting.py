@@ -214,7 +214,8 @@ def replay_command(root, task):
     ]
     if task.get('device_id') is not None:
         command += ['--device-ids', shlex.quote(str(task['device_id']))]
-    if task.get('vendor') == 'kunlunxin' and task.get('runtime_profile') == 'p800-xpytorch29':
+    if (task.get('vendor') == 'kunlunxin' and task.get('runtime_profile') == 'p800-xpytorch29'
+            or task.get('vendor') == 'thead'):
         if task.get('runtime_config', {}).get('sharing_policy') == 'shared-authorized':
             command += ['--allow-shared-device']
     else:

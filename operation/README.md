@@ -36,6 +36,23 @@ P800 probe 分别保存首次及缓存调用的 ATen 派发、主机 launch 与�
 只有复制、分配、设备输出或不完整关联不能判为路由通过。该观察不插入正式计时，
 也不构成覆盖 C++ 后端全部内部指令的通用 CPU fallback 证明。
 
+[平头哥 PPU](vendors/thead/README.md) 使用 `--runtime-profile torch210-ppu` 选择锁定的
+PyTorch 2.10 / PPU SDK CUDA 兼容运行栈。它的设备 API 是 `torch.cuda`，容器内 `cuda:0`
+只表示本次映射后的可见 ordinal；报告中的 PPU UUID、PCI BDF 和设备节点才是物理身份。
+最小命令如下，真实运行前必须确认 `ppu-smi` 中所选卡没有其他计算进程：
+
+```bash
+python3 operation/run.py run --vendor thead --runtime-profile torch210-ppu \
+  --device-ids 6 --case abs --dtype FP32 --workload smoke --dry-run
+python3 operation/run.py run --vendor thead --runtime-profile torch210-ppu \
+  --device-ids 6 --case abs --dtype FP32 --workload smoke
+```
+
+PPU 镜像为 candidate（`validated:false`）。适配器会执行设备身份、输入/模块状态、
+正确性、测量、显存和清理检查；首次/缓存设备路由关联及 Asight 原生计数器接口已实现，
+当前尚未完成 PPU 设备实测验收，不能据静态回归宣称这些能力通过。
+原生指标保留 PPU 的名称和单位，不冒充 Ascend 六组指标。PPU 编译、运行和数值失败保留原始记录。
+
 所有命令从 **FlagPerf 仓库根目录** 执行。先选当前获准使用的空闲设备，下面的 `0` 仅为示例；Docker/local 的编号含义见第 2 节。
 Ascend 镜像涉及的特权权限由 `--allow-privileged-root` 显式开启；只在获准使用的主机上运行。
 
@@ -190,7 +207,23 @@ python3 operation/run.py run --vendor metax --execution local --device-ids 0 \
 
 上述兼容入口保留真实失败和不充分的路由证据；给出命令不等于算子、dtype、FlagGems 或性能已经通过硬件验证。
 
-### 2.6 找到本次结果
+### 2.6 平头哥 PPU
+
+先按 [PPU Operation 说明](vendors/thead/README.md) 构建并核对独立镜像；Base 镜像未预装 FlagGems。
+Docker 中 `--device-ids` 指宿主物理卡，local 中指当前环境的可见设备编号。
+
+```bash
+python3 operation/run.py run --vendor thead --runtime-profile torch210-ppu \
+  --device-ids 6 --case abs --dtype FP32 --oplib both --workload smoke --dry-run
+python3 operation/run.py run --vendor thead --runtime-profile torch210-ppu \
+  --device-ids 6 --case abs --dtype FP32 --oplib both --workload smoke
+```
+
+默认要求可检查全部设备句柄且所选卡空闲；未获授权的系统服务持有者也会拒绝。
+`--allow-shared-device` 仅在已获共享授权时使用，原始持有者会留存，性能资格保持 partial。
+它不会停止外部进程，也不能把共享性能标成独占性能。
+
+### 2.7 找到本次结果
 
 实际执行后终端会打印 `Report:`、`Summary:` 和 `Results:`。打开 `Report:` 指向的 `report.md`，
 先看执行和正确性状态，再看路由与性能。输出默认保存在 `operation/result/operation-<id>/`，
