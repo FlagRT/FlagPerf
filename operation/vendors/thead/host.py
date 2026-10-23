@@ -165,8 +165,25 @@ def cleanup_worker(worker, run_id):
 
 def cleanup_process(proc, timeout=5):
     """Clean the session created by start_new_session, including surviving children."""
+    reaped_children = []
     def exists():
         proc.poll()  # Reap the leader before checking the remaining process group.
+        # A local CLI may be PID 1 (or a subreaper) and adopt compiler children
+        # after the worker exits. Zombies keep killpg(..., 0) alive until they
+        # are waited for. Reap only children in this owned process group;
+        # never waitpid(-1), which could consume another worker's exit status.
+        while True:
+            try:
+                child, status = os.waitpid(-proc.pid, os.WNOHANG)
+            except ChildProcessError:
+                break
+            if child == 0:
+                break
+            if child == proc.pid:
+                # The leader can exit between poll() and waitpid().
+                proc.returncode = os.waitstatus_to_exitcode(status)
+            else:
+                reaped_children.append(child)
         try:
             os.killpg(proc.pid, 0)
             return True
@@ -186,4 +203,5 @@ def cleanup_process(proc, timeout=5):
     if absent:
         proc.wait(timeout=timeout)
     return {'process_group': proc.pid, 'process_group_absent': absent,
+            'reaped_children': reaped_children,
             'status': 'passed' if absent else 'failed'}
