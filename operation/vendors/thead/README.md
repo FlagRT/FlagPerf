@@ -5,9 +5,14 @@ PPU 使用公共 Operation catalog、输入生成、CPU 参考、容差、前反
 `torch.cuda` / `cuda:N` 不表示 NVIDIA 硬件。Docker 的 `--device-ids` 是宿主物理编号，
 容器内 `cuda:0` 是本次所选卡的可见编号，必须结合 UUID、PCI BDF 和设备节点查看。
 
-**验收状态：**接口已实现，CPU 回归及参考阶段隔离已验证；PPU 设备双路径、全矩阵、
-设备时间线和原生计数器仍待实测。不能将 Base 验收或 CPU 测试当作本部分通过。
-运行栈保持 `candidate / validated:false`，运行不会自动晋级。
+**验收状态：**接口及 CPU 回归已验证；PPU 已完成少量共享条件下的 Docker/local 双路径 smoke。
+`abs/FP32` 与 `tanh/FP16` 在各自 smoke 输入上正确性、测量路径和设备 timeline 均有实测记录，
+但最终结果保持 `partial-shared-host`，不能作为性能资格或完整验收。全量 daily 矩阵尚未执行。
+Asight 原生计数器已在获准暂停监控的窗口采到 5 个 kernel 的原生报告，离线导出得到 205 条带单位指标；
+最终自动采集链路仍需复测。此前 `mm/BF16` FlagGems probe 超时暴露了 trace 解析的重复扫描问题，
+已修复并完成双路径复测；历史失败及其他验收边界见
+[Operation 机制与验收](../../../docs/thead/operation.md)。
+不能将 Base 验收或 CPU 测试当作本部分通过。运行栈保持 `candidate / validated:false`，运行不会自动晋级。
 
 ## 1. 运行栈准备
 
@@ -110,6 +115,13 @@ python3 operation/run.py run --vendor thead --runtime-profile torch210-ppu \
 kernel 关联检查。输出在设备上、复制内核或仅编译不能替代证明。
 显存来自 worker allocator，性能来自同步主机批计时，二者均不冒充整卡指标或设备计时器。
 原生 Asight 指标保留 PPU 的名称、单位和 kernel 归属，不伪装成 Ascend 的 L0/UB 等指标。
+`--profiling full` 使用 SDK 的 section Identifier 和 `--page details --csv`，
+保存 section 名称、指标单位及原生 `.acurep`；缺少请求 section 或阶段身份不一致保持 partial。
+SDK 的 raw CSV 是宽表，不作为带单位长表解析。Asight 重放指标不能替代独立计时结果。
+
+在当前验证站点，`pg-exporter` 会占用 Asight 所需的 PCM 资源。
+这是站点监控配置冲突；普通运行命令不会暂停服务，也不会将它自动列为只读白名单。
+维护者需另行取得管理员授权和安全采集窗口，采集后恢复监控并记录恢复证据。
 
 失败、超时、精度超差及证据不足均保留，不修改算子、不放宽容差、不缩小输入掩盖失败。
 详细状态、机制、待验收项及自定义 case 入口见 [运行与验收说明](../../../docs/thead/operation.md)。

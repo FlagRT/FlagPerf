@@ -50,7 +50,8 @@ python3 operation/run.py run --vendor thead --runtime-profile torch210-ppu \
 
 PPU 镜像为 candidate（`validated:false`）。适配器会执行设备身份、输入/模块状态、
 正确性、测量、显存和清理检查；首次/缓存设备路由关联及 Asight 原生计数器接口已实现，
-当前尚未完成 PPU 设备实测验收，不能据静态回归宣称这些能力通过。
+已有共享条件下的 Docker/local 设备 smoke 及原生计数器采集证据；完整矩阵、
+自动采集链路和性能资格的当前结论以 [PPU 验收记录](../docs/thead/operation.md) 为准，不能据静态回归宣称通过。
 原生指标保留 PPU 的名称和单位，不冒充 Ascend 六组指标。PPU 编译、运行和数值失败保留原始记录。
 
 所有命令从 **FlagPerf 仓库根目录** 执行。先选当前获准使用的空闲设备，下面的 `0` 仅为示例；Docker/local 的编号含义见第 2 节。

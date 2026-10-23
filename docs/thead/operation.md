@@ -53,15 +53,22 @@ operation/vendors/thead/
 
 `--profiling full` 在独立重放中额外调用 PPU SDK Asight `acu`。
 通过 profiler-start/stop 将采集限制到 warmup 后的五次原目标调用，不采输入搬运；
-采集 `SpeedOfLight`、`MemoryWorkloadAnalysis`、`Occupancy`、`WarpStateStatistics`、
-`LaunchStatistics` 原生 section，保存原生报告、原始输出与每 kernel 的 metric 名称、单位、数值。
+采集 `SpeedOfLight`、`MemoryWorkloadAnalysis`、`Occupancy`、`WarpStateStats`、
+`LaunchStats` 原生 section（其中后两个是 SDK 文件对应的 `Identifier`），保存原生报告、原始输出与每 kernel 的 metric 名称、单位、数值。
 失败、缺字段、无原生报告或身份不一致均不能作为采集成功。
 
 这些 section 的定义来自 PPU SDK 自带文件，和 Ascend 的 ArithmeticUtilization、
 PipeUtilization、Memory、MemoryL0、MemoryUB、ResourceConflictRatio 不存在已确认的一一对应。
 报告中的六组兼容字段因此不填伪值，独立的 `native_counters` 记录实际 PPU 指标。
-当前原生采集接口尚待设备实测，不能因发现工具和定义就宣称计数器已完成验收，
-也不能因尚未采成而断言硬件不支持。
+自动采集使用 `--page details --csv` 输出带单位的长表，SDK 的 raw 页宽表不用于该解析器。
+原生报告和导出的每 kernel / section / metric / unit / value 一并留存；缺少请求 section
+或阶段身份不一致保持 partial。Asight 专用 `libpthread.so.0` preload 仅在锁定镜像的
+计数器目标阶段允许，校验映射路径与 SHA-256，并保存在该阶段的 `bootstrap.json` 中；
+此阶段专用记录不混入 probe/measure/counter 必须相同的运行栈身份字段。
+
+当前验证站点的 `pg-exporter` 占用 PCM。已在管理员授权的临时监控暂停窗口获得原生报告，
+并恢复服务；这既不是硬件不支持，也不证明监控对普通计时完全无影响。
+适配器不会自动停止任何系统服务；其他环境应按实际工具、占用和授权核对。
 
 ## 状态与资格
 
@@ -88,15 +95,26 @@ PipeUtilization、Memory、MemoryL0、MemoryUB、ResourceConflictRatio 不存在
 | 运行镜像 | 固定 Base ID 上增加官方 FlagGems `654e2a3a`；独立候选镜像 ID 写入 profile | 已构建并完成设备 smoke |
 | PPU dry-run | abs/FP32/smoke 双路径成功生成计划 | 通过 |
 | CPU 参考隔离 | 锁定镜像，无设备映射，reference 退出 0；site hooks 未执行，CUDA 未初始化 | 通过 |
-| Operation CPU 回归 | 149 项通过，含 PPU 相关负例和 driver-launch correlation 回归 | 通过 |
+| Operation CPU 回归 | 当前运行代码完整 157 项通过；PPU provider 定向 26 项通过；包含大 trace、重复/错误 flow、CPU 隔离、preload 和 counter section/身份负例 | 通过 |
 | 公开分发 | 14 项通过 | 通过 |
 | Base 回归 | 381 项通过、1 项既有 skip，无设备映射 | 通过 |
-| Docker 最小设备运行 | 卡 6 `abs/FP32` 原生与 FlagGems 均完成正确性、测量和首次/缓存路由；系统服务及其他进程句柄仍在，按授权共享运行 | 执行通过；性能资格 `partial-shared-host` |
-| Docker/local 完整 daily 矩阵 | 尚未执行；不能用计划分母代替运行数 | 未核实 |
-| 首次/缓存、前反向、输入/模块绑定 | 代码和合成负例已覆盖，实际设备执行待确认 | 未验收 |
-| allocator / timeline / 原生 counter | 接口已实现，尚无设备采集结论 | 未验收 |
-| 中断/超时后的设备健康与租约释放 | 清理接口与公共回归覆盖；PPU 实际故障注入未做 | 未验收 |
+| Docker 设备 smoke | 卡 6 `abs/FP32`（`profiling-isolated-20261023/operation-c3da51580a6d`）、卡 7 `tanh/FP16`（`representatives-cpu-isolated-20261023/tanh/operation-7f3b92c4dc85`）两路径均有正确性、测量、路由与五窗口 timeline；allocator 另有采集。卡 6/7 以共享模式运行，持有者记录含 `pg-exporter`、`ai-stack-engine` | 功能证据已获得；最终状态 `partial-shared-host` |
+| local 设备 smoke | 外层复用宿主 Base 物理租约，在卡 8 容器内执行 Operation local `tanh/FP16` 双路径（`local-smoke-20261023/results/operation-edc759e7b6bf`）；输出正确性与测量已记录，外层租约释放且容器确认回收 | 功能尝试已记录；共享与 local 边界下不具备独占资格 |
+| PPU `mm/BF16` FlagGems smoke | 原 probe 超过 300 秒 watchdog 的记录保留。`mm-stacks-authorized-20261023` 证明先发生冷编译、随后停在框架 trace 的重复全表扫描；原始 824,457 事件 / 83,593 kernel 经索引解析约 2.15 秒。修复后 `mm-indexed-20261023/operation-d1d339284fe6` 双路径走完正确性、测量、路由与补充采集 | 框架解析缺陷已修复；旧失败保留；共享性能仍 partial |
+| Docker/local 完整 daily 矩阵 | `full-daily-20261023` 正在最终运行代码下分别执行；结束前不以计划分母代替运行数 | 运行中，未验收 |
+| 首次/缓存、前反向、输入/模块绑定 | `abs`、`tanh`、`group_norm` 等共享 smoke 有 payload、首次/缓存 trace 及正确性证据；完整 daily 组合仍在运行 | 代表输入已实测；全量未验收 |
+| allocator / timeline | allocator 和五目标窗口的 timeline 已在上述共享 smoke 采集；覆盖仅限记录中的 case/dtype/输入 | 部分实测；不等于全量验收 |
+| Asight 原生 counter | 历史 PCM 占用失败保留。`counter-monitor-window-20261023` 在获准暂停监控约 40 秒的窗口采到 `abs/FP32` 原生 5 kernel 报告，服务随后恢复 active。该次自动结果因 raw CSV 格式不匹配仍为 partial；`counter-offline-review-20261023` 只读导出 205 条带单位指标，覆盖全部 5 section。代码已改用 details 长表 | 原生采集和离线解析已实测；最终自动链路待复测 |
+| 中断/超时后的设备健康与租约释放 | 真实 `mm/BF16` probe watchdog 后自有容器回收、后检查和租约释放已有记录；主动中断场景尚未实测 | 超时路径有实测；主动中断待验收 |
 | Ascend/P800 | 公共 CPU 回归通过；无对应硬件回归 | 仅静态/CPU 范围 |
+
+共享模式的 `processes_empty=true` 只表示 `ppu-smi` 没有报告计算任务，不表示设备节点没有持有者；
+应同时检查同一记录中的 `holders`。卡 6 的 preflight 已列出 `pg-exporter`、`ai-stack-engine`，
+驱动日志还证明其中 `pg-exporter` 占用 Asight 需要的 PCM 资源。
+
+冷编译 trace 的解析改用 flow 与 CPU op 索引，保留重复候选及精确 timestamp、线程、
+correlation、设备和窗口核对；没有预热替代首次执行，也没有放宽路由门禁。
+小 trace 与旧实现输出逐项一致，大 trace 的离线解析和哈希记录见 `trace-index-review-20261023`。
 
 验收必须在最终代码下逐项完成，保留所有失败和重新运行目录；只有完整矩阵尝试及能力项
 均有实测证据后，才可声明本适配达到完整交付状态。
