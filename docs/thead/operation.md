@@ -34,7 +34,7 @@ operation/vendors/thead/
 | CPU 参考 | `-S`，先检查锁定包版本，不执行 `.pth` 代码，设备不可见 | 保存实际量化输入；CPU FP64 参考和非均匀上游梯度沿用公共协议 |
 | 设备准备 | `torch.cuda` 选可见 ordinal，核对所选物理 UUID | 输入、模块 state_dict 位级回传；设备不匹配立即失败；FP32 matmul TF32 关闭 |
 | 路径注册 | 原生不注册 Gems；Gems worker 显式 `enable()` | 记录实际包、注册和调用；注册成功本身不能证明目标由 Gems 执行 |
-| 路由 | 首次/缓存分别采集 ATen 窗口、runtime/driver launch、ac2g flow 和 device kernel | 原生路径通常为 `cudaLaunchKernel`，FlagGems 也可能为 `cuLaunchKernelEx`；两者须通过同一 correlation、flow、窗口和设备关联；排除 metadata、复制/分配，缺关联保持 partial |
+| 路由 | 首次/缓存分别采集 ATen 窗口、runtime/driver launch、ac2g flow 和 device kernel | 原生路径通常为 `cudaLaunchKernel` 或 `cuLaunchKernel`，FlagGems 也可能为 `cuLaunchKernelEx`；三者须通过同一 correlation、flow、窗口和设备关联；排除 metadata、复制/分配，缺关联保持 partial |
 | 计时 | 独立 measure worker，无 profiler | 公共同步主机批计时；冷/热前向和缓存零梯度反向规则均不变；无设备计时器则如实标不支持 |
 | 显存 | 独立 allocator 测量 | 保存 baseline/reset/peak，仅为该 worker 的 allocator 范围 |
 | Profiling | 独立子进程，原输入重放五次 | timeline 和原生 counter 与干净计时分开，核对阶段身份，不改变原任务失败 |
@@ -61,6 +61,7 @@ operation/vendors/thead/
 PipeUtilization、Memory、MemoryL0、MemoryUB、ResourceConflictRatio 不存在已确认的一一对应。
 报告中的六组兼容字段因此不填伪值，独立的 `native_counters` 记录实际 PPU 指标。
 自动采集使用 `--page details --csv` 输出带单位的长表，SDK 的 raw 页宽表不用于该解析器。
+SDK 在长表末尾输出的进度和报告路径不作为指标行；缺值、非有限数和无单位行不计入有效指标。
 原生报告和导出的每 kernel / section / metric / unit / value 一并留存；缺少请求 section
 或阶段身份不一致保持 partial。Asight 专用 `libpthread.so.0` preload 仅在锁定镜像的
 计数器目标阶段允许，校验映射路径与 SHA-256，并保存在该阶段的 `bootstrap.json` 中；
@@ -87,7 +88,7 @@ PipeUtilization、Memory、MemoryL0、MemoryUB、ResourceConflictRatio 不存在
 显式共享模式仍核对身份和实际持有者，但不把持有者自动列入白名单；原结果与性能资格保留 partial。
 外部任务可绕过 FlagPerf 锁，因此开始/结束观察不等于证明整个时间段都独占。
 
-## 验收记录（2026-10-23）
+## 验收记录（2026-10-24）
 
 | 项目 | 当前证据 | 状态 |
 |---|---|---|
@@ -95,17 +96,17 @@ PipeUtilization、Memory、MemoryL0、MemoryUB、ResourceConflictRatio 不存在
 | 运行镜像 | 固定 Base ID 上增加官方 FlagGems `654e2a3a`；独立候选镜像 ID 写入 profile | 已构建并完成设备 smoke |
 | PPU dry-run | abs/FP32/smoke 双路径成功生成计划 | 通过 |
 | CPU 参考隔离 | 锁定镜像，无设备映射，reference 退出 0；site hooks 未执行，CUDA 未初始化 | 通过 |
-| Operation CPU 回归 | 当前运行代码完整 157 项通过；PPU provider 定向 26 项通过；包含大 trace、重复/错误 flow、CPU 隔离、preload 和 counter section/身份负例 | 通过 |
+| Operation CPU 回归 | 路由和计数器窗口校验修复后完整 166 项通过，其中 PPU provider 定向测试通过；包含大 trace、标准 driver launch、重复/错误 flow、CPU 隔离、preload、counter section/身份/窗口及 CSV 末尾进度行负例 | 通过 |
 | 公开分发 | 14 项通过 | 通过 |
 | Base 回归 | 381 项通过、1 项既有 skip，无设备映射 | 通过 |
 | Docker 设备 smoke | 卡 6 `abs/FP32`（`profiling-isolated-20261023/operation-c3da51580a6d`）、卡 7 `tanh/FP16`（`representatives-cpu-isolated-20261023/tanh/operation-7f3b92c4dc85`）两路径均有正确性、测量、路由与五窗口 timeline；allocator 另有采集。卡 6/7 以共享模式运行，持有者记录含 `pg-exporter`、`ai-stack-engine` | 功能证据已获得；最终状态 `partial-shared-host` |
 | local 设备 smoke | 外层复用宿主 Base 物理租约，在卡 8 容器内执行 Operation local `tanh/FP16` 双路径（`local-smoke-20261023/results/operation-edc759e7b6bf`）；输出正确性与测量已记录，外层租约释放且容器确认回收 | 功能尝试已记录；共享与 local 边界下不具备独占资格 |
 | PPU `mm/BF16` FlagGems smoke | 原 probe 超过 300 秒 watchdog 的记录保留。`mm-stacks-authorized-20261023` 证明先发生冷编译、随后停在框架 trace 的重复全表扫描；原始 824,457 事件 / 83,593 kernel 经索引解析约 2.15 秒。修复后 `mm-indexed-20261023/operation-d1d339284fe6` 双路径走完正确性、测量、路由与补充采集 | 框架解析缺陷已修复；旧失败保留；共享性能仍 partial |
-| Docker/local 完整 daily 矩阵 | `full-daily-20261023` 正在最终运行代码下分别执行；结束前不以计划分母代替运行数 | 运行中，未验收 |
-| 首次/缓存、前反向、输入/模块绑定 | `abs`、`tanh`、`group_norm` 等共享 smoke 有 payload、首次/缓存 trace 及正确性证据；完整 daily 组合仍在运行 | 代表输入已实测；全量未验收 |
+| Docker/local 完整 daily 矩阵 | Docker 与 local 均已覆盖计划中的 308 个适用组合；Docker 728 项计划含 420 个不适用，local 通过 28 个独立补测 run 补齐首轮 watchdog 后的未尝试项。两种执行各保留 299 个 `partial`、9 个 `failed`，原始报告和重跑目录均未改写 | 尝试覆盖完成；共享条件下仍不具备性能资格 |
+| 首次/缓存、前反向、输入/模块绑定 | `abs`、`tanh`、`group_norm`、NLL/CrossEntropyLoss、`mv`、`prod` 等代表及补测组合保留 payload、首次/缓存 trace、输入/模块和路由证据；全矩阵结果按任务目录留存 | 功能证据已覆盖；失败和 partial 原样保留 |
 | allocator / timeline | allocator 和五目标窗口的 timeline 已在上述共享 smoke 采集；覆盖仅限记录中的 case/dtype/输入 | 部分实测；不等于全量验收 |
-| Asight 原生 counter | 历史 PCM 占用失败保留。`counter-monitor-window-20261023` 在获准暂停监控约 40 秒的窗口采到 `abs/FP32` 原生 5 kernel 报告，服务随后恢复 active。该次自动结果因 raw CSV 格式不匹配仍为 partial；`counter-offline-review-20261023` 只读导出 205 条带单位指标，覆盖全部 5 section。代码已改用 details 长表 | 原生采集和离线解析已实测；最终自动链路待复测 |
-| 中断/超时后的设备健康与租约释放 | 真实 `mm/BF16` probe watchdog 后自有容器回收、后检查和租约释放已有记录；主动中断场景尚未实测 | 超时路径有实测；主动中断待验收 |
+| Asight 原生 counter | 历史 PCM 占用、raw 页格式失配和 details 页尾部日志异常均保留。修复后的 `counter-details-fixed-20261023/operation-d414221c112c` 自动生成 `native_counters.status=measured`：`abs/FP32` 原生路径 5 kernel、205 指标、5 section、无缺失 section、身份一致；服务约 39.4 秒后恢复 active | 自动链路已在该输入实测；full 和共享资格整体仍 partial，未外推全部 case/路径 |
+| 中断/超时后的设备健康与租约释放 | 真实 watchdog 和 SIGINT 场景均完成自有 worker/容器回收、后检查和租约释放；失败记录保留 | 通过 |
 | Ascend/P800 | 公共 CPU 回归通过；无对应硬件回归 | 仅静态/CPU 范围 |
 
 共享模式的 `processes_empty=true` 只表示 `ppu-smi` 没有报告计算任务，不表示设备节点没有持有者；
@@ -115,6 +116,18 @@ PipeUtilization、Memory、MemoryL0、MemoryUB、ResourceConflictRatio 不存在
 冷编译 trace 的解析改用 flow 与 CPU op 索引，保留重复候选及精确 timestamp、线程、
 correlation、设备和窗口核对；没有预热替代首次执行，也没有放宽路由门禁。
 小 trace 与旧实现输出逐项一致，大 trace 的离线解析和哈希记录见 `trace-index-review-20261023`。
+
+### daily 首轮失败与定位边界
+
+| 组合 | 观察与证据 | 处理 |
+|---|---|---|
+| `addmm/FP32` 原生 / FlagGems | 两入口正确性均失败，最大绝对误差约 `6.46e-4` / `9.95e-5`，不匹配 `1457` / `13` 个；输入与模块回传、参考重算、首次/缓存路由均有通过证据 | 保留原容差与失败。CPU FP32 对同一 FP64 参考也存在少量超差，因此数值大小不单独证明实现缺陷；需结合算子团队的精度契约复核 |
+| `bmm/FP32` 原生 / FlagGems | local 首轮最大绝对误差约 `7.20e-4` / `8.82e-5`，不匹配 `3053` / `44` 个；参考重算、设备路由通过 | 同上，不将原生路径替代 CPU 真值，不修改 kernel |
+| `layer_norm/FP16、BF16` 原生 | local probe 报输入 Half/BFloat16 与 Float 不匹配；payload 证明输入为低精度、模块 weight/bias 为原 case 构造的 FP32，并未被 PPU worker 改写 | 混合 dtype 与主线 case 一致，CPU 可执行；当前 PPU 原生路径失败保留，兼容性根因待核实，不通过转换参数精度掩盖失败 |
+| `linear/FP32/FlagGems` | local probe 超过 300 秒。`linear-stacks-20261023` 用原保存输入、同模块状态和默认 probe 复现，周期堆栈落在 FlagGems 自动调优、Triton PPU 编译的 `make_hgbin` 子进程等待；300 秒结束仍未返回 | 只确认编译/调优阶段耗时超出预算；不等同编译器错误或正确性失败。原失败保留，诊断容器已回收、后检查通过、租约释放 |
+
+补测以新结果目录运行，不把原 `not-run` 改成已运行，也不抹除超时。跨 run 覆盖需要按
+case/dtype/oplib、输入配置与运行身份核对；单次报告仍只代表自己的任务和资格。
 
 验收必须在最终代码下逐项完成，保留所有失败和重新运行目录；只有完整矩阵尝试及能力项
 均有实测证据后，才可声明本适配达到完整交付状态。
@@ -126,6 +139,6 @@ correlation、设备和窗口核对；没有预热替代首次执行，也没有
 - `ppu-operation-results/smoke-shared/operation-dc7ff4dd8132/`：首次设备运行。FlagGems 的 PPU `cuLaunchKernelEx` 尚未被旧解析器识别，保留为 partial。
 - `ppu-operation-results/smoke-driverfix/operation-3935a99aae77/`：修复后重跑。原生与 FlagGems 的 correctness、measurement、first/cached routing 均为 `passed`；FlagGems kernel `abs_func_kernel_rank_1` 通过 correlation=48 和 `ac2g` flow 关联。由于显式共享设备且 smoke 只有 1 轮，最终状态保持 `partial`，不构成独占性能资格。
 
-解析器现在严格接受两类 PPU launch 记录：原生常见的
-`cuda_runtime/cudaLaunchKernel` 和 FlagGems 常见的
-`cuda_driver/cuLaunchKernelEx`。两类记录都必须满足相同的窗口、correlation、`ac2g` flow、设备号和 kernel 关联门禁。
+解析器现在严格接受三类 PPU launch 记录：原生常见的
+`cuda_runtime/cudaLaunchKernel`、原生库可能使用的 `cuda_driver/cuLaunchKernel`，以及 FlagGems 常见的
+`cuda_driver/cuLaunchKernelEx`。三类记录都必须满足相同的窗口、correlation、`ac2g` flow、设备号和 kernel 关联门禁。

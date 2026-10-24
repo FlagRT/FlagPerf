@@ -79,6 +79,7 @@ python3 operation/run.py list --case abs
 |---|---|---|---|
 | Ascend 910C / A3 | `ascend` | 不需要 | Docker；准备 CANN 9 / PyTorch 2.10 / Torch-FL 锁定镜像 |
 | 昆仑芯 P800 | `kunlunxin` | **必须带 `p800-xpytorch29`** | Docker；准备 P800 独立锁中的镜像和宿主权限 |
+| 平头哥 PPU-ZW810E | `thead` | **必须带 `torch210-ppu`** | Docker/local；准备 PPU 独立锁中的运行环境，见第 2.6 节 |
 | NVIDIA A100_40_SXM | `nvidia` | 不需要 | Docker；显式指定兼容镜像，宿主支持 Docker `--gpus` |
 | 寒武纪 MLU（旧目录未细分型号） | `cambricon` | 不需要 | local 兼容入口；环境提供 `torch_mlu` 和可用 MLU |
 | 昆仑芯 R300p（旧栈） | `kunlunxin` | 不带 | local 兼容入口；环境提供旧栈 `torch_xmlir` 及其 CUDA 兼容 API |
@@ -87,7 +88,8 @@ python3 operation/run.py list --case abs
 
 `--runtime-profile p800-xpytorch29` 选择 **P800 + XPyTorch 2.9 专用适配器和运行栈配置**，
 包括锁定镜像、包版本及设备初始化规则；它不选择测试规模，也不表示验证通过。
-当前只有 P800 注册了这个显式 profile。Ascend 直接由 `--vendor ascend` 选择专用适配器，不能加这个 P800 profile。
+P800 和 PPU 分别注册 `p800-xpytorch29` 和 `torch210-ppu`；两者不能互换。
+Ascend 直接由 `--vendor ascend` 选择专用适配器，不能加这两个 profile。
 **P800 若省略 profile，会进入旧昆仑芯兼容入口，不能只把 Ascend 示例中的 vendor 改成 kunlunxin。**
 
 | 参数 | 含义 | 默认值 |

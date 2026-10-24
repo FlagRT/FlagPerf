@@ -5,11 +5,12 @@ PPU 使用公共 Operation catalog、输入生成、CPU 参考、容差、前反
 `torch.cuda` / `cuda:N` 不表示 NVIDIA 硬件。Docker 的 `--device-ids` 是宿主物理编号，
 容器内 `cuda:0` 是本次所选卡的可见编号，必须结合 UUID、PCI BDF 和设备节点查看。
 
-**验收状态：**接口及 CPU 回归已验证；PPU 已完成少量共享条件下的 Docker/local 双路径 smoke。
-`abs/FP32` 与 `tanh/FP16` 在各自 smoke 输入上正确性、测量路径和设备 timeline 均有实测记录，
-但最终结果保持 `partial-shared-host`，不能作为性能资格或完整验收。全量 daily 矩阵尚未执行。
-Asight 原生计数器已在获准暂停监控的窗口采到 5 个 kernel 的原生报告，离线导出得到 205 条带单位指标；
-最终自动采集链路仍需复测。此前 `mm/BF16` FlagGems probe 超时暴露了 trace 解析的重复扫描问题，
+**验收状态：**接口及 CPU 回归已验证；Docker/local 已分别尝试计划中的 308 个适用组合，另有 420 个不适用组合按 catalog 保留。
+两种执行各保留 299 个 `partial`、9 个 `failed`，所有失败、超时和补测目录原样保留；shared-host 条件不具备独占性能资格。
+`abs/FP32`、`tanh/FP16`、NLL/CrossEntropyLoss、`mv`、`prod` 等代表输入的正确性、测量路径和设备 timeline 均有实测记录。
+local 首轮因 `linear/FP32/FlagGems` probe 超时停止，之后以独立 run 补齐未尝试组合，原报告保持不变。
+Asight 原生计数器自动采集已在获准暂停监控的窗口复测：5 个 kernel、205 条带单位指标、5 个请求 section，
+缺失 section 为空，采集与测量身份一致；监控已恢复。此前 `mm/BF16` FlagGems probe 超时暴露了 trace 解析的重复扫描问题，
 已修复并完成双路径复测；历史失败及其他验收边界见
 [Operation 机制与验收](../../../docs/thead/operation.md)。
 不能将 Base 验收或 CPU 测试当作本部分通过。运行栈保持 `candidate / validated:false`，运行不会自动晋级。
@@ -111,7 +112,7 @@ python3 operation/run.py run --vendor thead --runtime-profile torch210-ppu \
 首次/缓存调用分别保存 dispatch 和 trace；只有相应计算关联到 host launch、flow 和
 正确设备 kernel 才能通过路由门禁。PPU 原生 ATen 通常记录
 `cuda_runtime/cudaLaunchKernel`，FlagGems 可能记录
-`cuda_driver/cuLaunchKernelEx`；两者都必须通过相同的 correlation、`ac2g` flow、窗口和设备
+`cuda_driver/cuLaunchKernel` 或 `cuda_driver/cuLaunchKernelEx`；三者都必须通过相同的 correlation、`ac2g` flow、窗口和设备
 kernel 关联检查。输出在设备上、复制内核或仅编译不能替代证明。
 显存来自 worker allocator，性能来自同步主机批计时，二者均不冒充整卡指标或设备计时器。
 原生 Asight 指标保留 PPU 的名称、单位和 kernel 归属，不伪装成 Ascend 的 L0/UB 等指标。

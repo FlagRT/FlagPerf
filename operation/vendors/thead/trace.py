@@ -4,15 +4,17 @@ from collections import defaultdict
 
 
 def is_host_launch(event):
-    """Return true for the two PPU CUDA-compat launch records we can correlate.
+    """Return true for reviewed PPU CUDA-compat kernel launch records.
 
     Native ATen uses the CUDA runtime API while FlagGems on PPU commonly emits
-    the driver API's ``cuLaunchKernelEx``.  Both must still satisfy the same
+    the driver API's ``cuLaunchKernelEx``. Native library kernels may instead
+    emit ``cuLaunchKernel``. All three must still satisfy the same
     correlation and flow checks below; accepting the driver event does not
     weaken the routing gate.
     """
     return ((event.get('cat'), event.get('name')) in {
         ('cuda_runtime', 'cudaLaunchKernel'),
+        ('cuda_driver', 'cuLaunchKernel'),
         ('cuda_driver', 'cuLaunchKernelEx'),
     })
 

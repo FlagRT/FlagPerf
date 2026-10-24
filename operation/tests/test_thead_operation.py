@@ -158,6 +158,35 @@ class CorrelationTests(unittest.TestCase):
         self.assertEqual(result['kernel_count'], 256)
         self.assertLess(events.scans, 20)
 
+    def test_standard_driver_launch_requires_the_same_semantic_correlation(self):
+        from vendors.thead.dispatch import analyze_dispatch
+        for op in ('aten::mv', 'aten::prod'):
+            with self.subTest(op=op):
+                events, rows = self.fixture()
+                rows[0]['op'] = op
+                events[2].update(cat='cuda_driver', name='cuLaunchKernel')
+                self.assertEqual(analyze_dispatch(events, rows)['status'], 'passed')
+                for removed in (3, 5):
+                    incomplete = copy.deepcopy(events)
+                    del incomplete[removed]
+                    self.assertEqual(analyze_dispatch(incomplete, rows)['status'], 'partial')
+                events[4]['args']['device'] = 1
+                self.assertEqual(analyze_dispatch(events, rows)['status'], 'partial')
+
+    def test_driver_api_names_do_not_qualify_copies_or_misplaced_launches(self):
+        from vendors.thead.dispatch import analyze_dispatch
+        for category, name in (('cuda_driver', 'cuMemcpyDtoD'),
+                               ('cuda_runtime', 'cuLaunchKernel'),
+                               ('cuda_driver', 'cuLaunchKernelUnknown')):
+            with self.subTest(category=category, name=name):
+                events, rows = self.fixture()
+                events[2].update(cat=category, name=name)
+                self.assertEqual(analyze_dispatch(events, rows)['status'], 'partial')
+        events, rows = self.fixture()
+        events[2].update(cat='cuda_driver', name='cuLaunchKernel', tid=99)
+        events[3]['tid'] = 99
+        self.assertEqual(analyze_dispatch(events, rows)['status'], 'partial')
+
     def test_indexed_flow_join_still_rejects_duplicate_and_wrong_timestamps(self):
         from vendors.thead.dispatch import analyze_dispatch
         for index in (3, 5):
@@ -233,6 +262,7 @@ class CorrelationTests(unittest.TestCase):
         csv = '"ID","Kernel Name","Section Name","Metric Name","Metric Unit","Metric Value"\n'
         csv += ''.join('"0","abs","' + section + '","native metric","%","3.59"\n'
                        for section in ASIGHT_SECTION_NAMES.values())
+        window = {'calls': 5, 'device': 2, 'status': 'completed'}
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             (root / 'measurement.json').write_text(json.dumps(identity))
@@ -246,7 +276,7 @@ class CorrelationTests(unittest.TestCase):
                 kwargs['stdout'].write(csv)
                 kwargs['stdout'].flush()
                 (folder / 'profile-target-identity.json').write_text(json.dumps(identity))
-                (folder / 'profile-window.json').write_text(json.dumps({'calls': 5}))
+                (folder / 'profile-window.json').write_text(json.dumps(window))
                 (folder / 'target.acurep').write_bytes(b'native evidence')
                 return SimpleNamespace(returncode=0, wait=lambda **kw: 0, poll=lambda: 0)
             with patch.object(Path, 'is_file', is_file), \
@@ -258,6 +288,19 @@ class CorrelationTests(unittest.TestCase):
             rows = json.loads((root / 'profiling/native-counters/metrics.json').read_text())
             self.assertEqual(rows[0]['Metric Unit'], '%')
             self.assertEqual(rows[0]['Section Name'], 'PPU Speed Of Light Throughput')
+            for index, invalid in enumerate(({}, {'calls': 4}, {'device': 0}, {'device': True},
+                                             {'status': 'started'}, {'calls': 5.0})):
+                with self.subTest(window=invalid):
+                    root = Path(tmp) / ('bad-window-' + str(index))
+                    root.mkdir()
+                    (root / 'measurement.json').write_text(json.dumps(identity))
+                    window = {**{'calls': 5, 'device': 2, 'status': 'completed'}, **invalid} if invalid else {}
+                    with patch.object(Path, 'is_file', is_file), \
+                            patch('vendors.thead.profiling.subprocess.Popen', side_effect=launch):
+                        result = collect_counters(root, {'worker_device': 2})
+                    self.assertEqual(result['status'], 'partial')
+                    self.assertIn('target window', result['reason'])
+            window = {'calls': 5, 'device': 2, 'status': 'completed'}
             root = Path(tmp) / 'missing-sections'
             root.mkdir()
             (root / 'measurement.json').write_text(json.dumps(identity))

@@ -181,6 +181,11 @@ def collect_counters(root, task, timeout=None):
         return {**result, 'execution_error': True, 'reason': 'native counter target failed; original capture.log retained'}
     if not (folder / 'profile-target-identity.json').is_file() or not (folder / 'profile-window.json').is_file():
         return {**result, 'reason': 'native counter target completion/identity missing'}
+    window = read(folder / 'profile-window.json')
+    if (not isinstance(window, dict) or type(window.get('calls')) is not int or window['calls'] != 5
+            or type(window.get('device')) is not int or window['device'] != task['worker_device']
+            or window.get('status') != 'completed'):
+        return {**result, 'reason': 'native counter target window is incomplete or on the wrong device'}
     identity, measured = read(folder / 'profile-target-identity.json'), read(root / 'measurement.json')
     keys = ('vendor_runtime', 'packages', 'case_sha256', 'input_sha256', 'registration', 'runtime_config', 'device', 'input_devices')
     mismatches = [k for k in keys if k not in identity or k not in measured or identity[k] != measured[k]]

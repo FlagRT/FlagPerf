@@ -283,6 +283,7 @@ PPU Base 的完整 21 条目（18 项可执行、3 项启动前跳过）与 12 �
 |---|---|---|
 | Ascend 910C / A3 | 原生 PyTorch / FlagGems；[Ascend Operation](operation/vendors/ascend/README.md) | [历史覆盖与限制](docs/ascend/operation-coverage.json)，不是本轮 NPU 实机复测 |
 | 昆仑芯 P800 | 原生 PyTorch / FlagGems；[P800 Operation](operation/vendors/kunlunxin/README.md) | Docker/local 各完成 728 项规划中 308 个适用组合的尝试，另各有 420 个不适用；[结果及补测边界](docs/kunlunxin/operation-validation.md#2026-10-21-dockerlocal-完整矩阵与补测) |
+| 平头哥 PPU-ZW810E | 原生 PyTorch / FlagGems；[PPU Operation](operation/vendors/thead/README.md) | Docker/local 已尝试 308 个适用组合，保留 299 个 partial、9 个 failed；shared-host 不具备独占性能资格，完整矩阵与限制见 [PPU 验收记录](docs/thead/operation.md) |
 
 P800 Operation 独立运行栈保持 `validated:false`，不沿用 Base 的 `validated:true / partial`。
 完整覆盖不代表全算子通过；数值/编译/运行失败、间歇 trace 缺失、精确比较统计缺口和六组计数器限制均保留。
