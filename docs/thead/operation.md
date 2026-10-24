@@ -96,7 +96,7 @@ SDK 在长表末尾输出的进度和报告路径不作为指标行；缺值、�
 | 运行镜像 | 固定 Base ID 上增加官方 FlagGems `654e2a3a`；独立候选镜像 ID 写入 profile | 已构建并完成设备 smoke |
 | PPU dry-run | abs/FP32/smoke 双路径成功生成计划 | 通过 |
 | CPU 参考隔离 | 锁定镜像，无设备映射，reference 退出 0；site hooks 未执行，CUDA 未初始化 | 通过 |
-| Operation CPU 回归 | 路由和计数器窗口校验修复后完整 166 项通过，其中 PPU provider 定向测试通过；包含大 trace、标准 driver launch、重复/错误 flow、CPU 隔离、preload、counter section/身份/窗口及 CSV 末尾进度行负例 | 通过 |
+| Operation CPU 回归 | 路由和计数器窗口校验修复后完整 167 项通过，其中 PPU provider 定向测试通过；包含大 trace、标准 driver launch、重复/错误 flow、CPU 隔离、preload、counter section/身份/窗口及 CSV 末尾进度行负例 | 通过 |
 | 公开分发 | 14 项通过 | 通过 |
 | Base 回归 | 381 项通过、1 项既有 skip，无设备映射 | 通过 |
 | Docker 设备 smoke | 卡 6 `abs/FP32`（`profiling-isolated-20261023/operation-c3da51580a6d`）、卡 7 `tanh/FP16`（`representatives-cpu-isolated-20261023/tanh/operation-7f3b92c4dc85`）两路径均有正确性、测量、路由与五窗口 timeline；allocator 另有采集。卡 6/7 以共享模式运行，持有者记录含 `pg-exporter`、`ai-stack-engine` | 功能证据已获得；最终状态 `partial-shared-host` |
