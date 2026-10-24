@@ -22,13 +22,23 @@ class TheadOperationTests(unittest.TestCase):
     def test_dry_run_has_locked_profile_and_both_paths(self):
         args = cli.parser().parse_args([
             'run', '--vendor', 'thead', '--runtime-profile', 'torch210-ppu',
-            '--device-ids', '6', '--case', 'abs', '--dtype', 'FP32',
+            '--device-ids', '6', '--case', 'abs', '--dtype', 'FP32', '--allow-candidate-runtime',
             '--oplib', 'both', '--workload', 'smoke', '--dry-run'])
         adapter, plan = cli.resolve(args)
         self.assertIsInstance(adapter, Adapter)
         self.assertEqual(len(plan['tasks']), 2)
         self.assertTrue(all(t['runtime_profile'] == 'torch210-ppu' for t in plan['tasks']))
         self.assertTrue(all(t['runtime_config']['sharing_policy'] == 'exclusive-required' for t in plan['tasks']))
+
+    def test_candidate_runtime_requires_explicit_authorization(self):
+        argv = ['run', '--vendor', 'thead', '--runtime-profile', 'torch210-ppu',
+                '--device-ids', '6', '--case', 'abs', '--dtype', 'FP32', '--dry-run']
+        args = cli.parser().parse_args(argv)
+        with self.assertRaises(ValueError):
+            cli.resolve(args)
+        authorized = cli.parser().parse_args(argv + ['--allow-candidate-runtime'])
+        adapter, plan = cli.resolve(authorized)
+        self.assertEqual(plan['runtime_profile'], 'torch210-ppu')
 
     def test_privileged_and_extra_mapping_are_rejected(self):
         for extra in (['--allow-privileged-root'], ['--container-device', '/dev/test'],
@@ -50,12 +60,12 @@ class TheadOperationTests(unittest.TestCase):
 
     def test_selection_rejects_out_of_range_and_duplicate_ids(self):
         for ids in ('16', '-1', '6,6'):
-            args = cli.parser().parse_args(['run', '--vendor', 'thead', '--device-ids', ids,
+            args = cli.parser().parse_args(['run', '--vendor', 'thead', '--allow-candidate-runtime', '--device-ids', ids,
                                            '--case', 'abs', '--dry-run'])
             with self.assertRaises(ValueError): cli.resolve(args)
 
     def test_shared_opt_in_is_explicit_and_cannot_qualify_performance(self):
-        args = cli.parser().parse_args(['run', '--vendor', 'thead', '--device-ids', '6',
+        args = cli.parser().parse_args(['run', '--vendor', 'thead', '--allow-candidate-runtime', '--device-ids', '6',
                                        '--case', 'abs', '--allow-shared-device', '--dry-run'])
         adapter, plan = cli.resolve(args)
         self.assertEqual(plan['tasks'][0]['runtime_config']['sharing_policy'], 'shared-authorized')
@@ -78,7 +88,7 @@ class TheadOperationTests(unittest.TestCase):
     def test_all_applicable_ppu_inputs_and_module_state_construct_on_cpu(self):
         import torch
         from runtime.worker import build, tensors
-        args = cli.parser().parse_args(['run', '--vendor', 'thead', '--device-ids', '6',
+        args = cli.parser().parse_args(['run', '--vendor', 'thead', '--allow-candidate-runtime', '--device-ids', '6',
                                        '--dtype', 'FP32', 'FP16', 'BF16', 'INT32', 'INT16', 'BOOL', 'INT64',
                                        '--oplib', 'both', '--workload', 'smoke', '--dry-run'])
         _, plan = cli.resolve(args)
@@ -321,7 +331,7 @@ class CorrelationTests(unittest.TestCase):
 
     def test_cpu_workers_drop_device_node_creation_capability_without_device_mapping(self):
         import subprocess
-        args = cli.parser().parse_args(['run', '--vendor', 'thead', '--device-ids', '6'])
+        args = cli.parser().parse_args(['run', '--vendor', 'thead', '--allow-candidate-runtime', '--device-ids', '6'])
         with tempfile.TemporaryDirectory() as tmp:
             pool = cli.Workers(Path(tmp), Adapter(), args, 'locked-image', 'run')
             for phase in ('reference', 'reference-check', 'diagnose'):
@@ -337,7 +347,7 @@ class CorrelationTests(unittest.TestCase):
         self.assertTrue(adapter.isolate_workers({'profiling_mode': 'full'}, 'profiling'))
         self.assertFalse(adapter.isolate_workers({'profiling_mode': 'timeline'}, 'profiling'))
         self.assertFalse(adapter.isolate_workers({'profiling_mode': 'full'}, 'measure'))
-        args = cli.parser().parse_args(['run', '--vendor', 'thead', '--device-ids', '6'])
+        args = cli.parser().parse_args(['run', '--vendor', 'thead', '--allow-candidate-runtime', '--device-ids', '6'])
         with tempfile.TemporaryDirectory() as tmp:
             pool = cli.Workers(Path(tmp), adapter, args, 'image', 'run')
             with patch.object(pool, 'close', side_effect=cli.CleanupError('not confirmed')) as cleanup, \

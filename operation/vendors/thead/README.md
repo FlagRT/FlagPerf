@@ -13,7 +13,7 @@ Asight 原生计数器自动采集已在获准暂停监控的窗口复测：5 �
 缺失 section 为空，采集与测量身份一致；监控已恢复。此前 `mm/BF16` FlagGems probe 超时暴露了 trace 解析的重复扫描问题，
 已修复并完成双路径复测；历史失败及其他验收边界见
 [Operation 机制与验收](../../../docs/thead/operation.md)。
-不能将 Base 验收或 CPU 测试当作本部分通过。运行栈保持 `candidate / validated:false`，运行不会自动晋级。
+不能将 Base 验收或 CPU 测试当作本部分通过。运行栈保持 `candidate / validated:false`，每次 `run` 都必须显式带 `--allow-candidate-runtime`，运行不会自动晋级。
 
 ## 1. 运行栈准备
 
@@ -62,12 +62,12 @@ python3 operation/run.py list --case abs
 
 # 只生成计划，不访问 Docker 或设备。
 python3 operation/run.py run --vendor thead --runtime-profile torch210-ppu \
-  --device-ids 6 --case abs --dtype FP32 --oplib both --workload smoke --dry-run
+  --device-ids 6 --case abs --dtype FP32 --oplib both --workload smoke --allow-candidate-runtime --dry-run
 
 # 确认镜像、权限和空闲卡后执行。结果应写到持久盘。
 python3 operation/run.py run --vendor thead --runtime-profile torch210-ppu \
   --device-ids 6 --case abs --dtype FP32 --oplib both --workload smoke \
-  --result-root operation/result
+  --allow-candidate-runtime --result-root operation/result
 ```
 
 默认要求独占，执行前后读取 SMI 与进程句柄，使用与 Base 相同的物理资源锁，
@@ -82,7 +82,7 @@ local 入口需在已准备相同 Python/包版本、可见卡已预留的环境
 
 ```bash
 python3 operation/run.py run --vendor thead --runtime-profile torch210-ppu \
-  --execution local --device-ids 0 --case abs --dtype FP32 --oplib both --workload smoke
+  --execution local --device-ids 0 --case abs --dtype FP32 --oplib both --workload smoke --allow-candidate-runtime
 ```
 
 local 不会替调用者启动容器、安装依赖或预留宿主设备；其逻辑锁只保护当前命名空间，
@@ -97,11 +97,11 @@ local 不会替调用者启动容器、安装依赖或预留宿主设备；其�
 # 全 catalog、全 dtype、双路径 daily 计划；先审查分母和资源再去掉 --dry-run。
 python3 operation/run.py run --vendor thead --runtime-profile torch210-ppu \
   --device-ids 6 --dtype FP32 FP16 BF16 INT32 INT16 BOOL INT64 \
-  --oplib both --workload daily --dry-run
+  --oplib both --workload daily --allow-candidate-runtime --dry-run
 
 # 正式计时外，独立重放采集五次目标时间线及 PPU 原生 Asight 指标。
 python3 operation/run.py run --vendor thead --runtime-profile torch210-ppu \
-  --device-ids 6 --case abs --dtype FP32 --workload smoke --profiling full --dry-run
+  --device-ids 6 --case abs --dtype FP32 --workload smoke --profiling full --allow-candidate-runtime --dry-run
 ```
 
 输出结构与 Ascend/P800 相同：`operation/result/operation-<ID>/report.md`、`summary.json`、

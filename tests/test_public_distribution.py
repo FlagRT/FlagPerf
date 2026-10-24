@@ -128,6 +128,8 @@ class PublicDistributionTests(unittest.TestCase):
                         '--device-ids', '0', '--case', 'abs', '--dry-run']
                 if vendor != 'ascend':
                     argv += ['--image', 'example-vendor-runtime']
+                if vendor == 'thead':
+                    argv += ['--allow-candidate-runtime']
                 plan = run(*argv)
                 self.assertEqual(plan['vendor'], vendor)
                 self.assertEqual(len(plan['tasks']), 1)

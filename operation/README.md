@@ -43,12 +43,12 @@ PyTorch 2.10 / PPU SDK CUDA 兼容运行栈。它的设备 API 是 `torch.cuda`�
 
 ```bash
 python3 operation/run.py run --vendor thead --runtime-profile torch210-ppu \
-  --device-ids 6 --case abs --dtype FP32 --workload smoke --dry-run
+  --device-ids 6 --case abs --dtype FP32 --workload smoke --allow-candidate-runtime --dry-run
 python3 operation/run.py run --vendor thead --runtime-profile torch210-ppu \
-  --device-ids 6 --case abs --dtype FP32 --workload smoke
+  --device-ids 6 --case abs --dtype FP32 --workload smoke --allow-candidate-runtime
 ```
 
-PPU 镜像为 candidate（`validated:false`）。适配器会执行设备身份、输入/模块状态、
+PPU 镜像为 candidate（`validated:false`），每次 PPU `run` 必须显式带 `--allow-candidate-runtime`。适配器会执行设备身份、输入/模块状态、
 正确性、测量、显存和清理检查；首次/缓存设备路由关联及 Asight 原生计数器接口已实现，
 已有共享条件下的 Docker/local 设备 smoke 及原生计数器采集证据；完整矩阵、
 自动采集链路和性能资格的当前结论以 [PPU 验收记录](../docs/thead/operation.md) 为准，不能据静态回归宣称通过。
@@ -217,9 +217,9 @@ Docker 中 `--device-ids` 指宿主物理卡，local 中指当前环境的可见
 
 ```bash
 python3 operation/run.py run --vendor thead --runtime-profile torch210-ppu \
-  --device-ids 6 --case abs --dtype FP32 --oplib both --workload smoke --dry-run
+  --device-ids 6 --case abs --dtype FP32 --oplib both --workload smoke --allow-candidate-runtime --dry-run
 python3 operation/run.py run --vendor thead --runtime-profile torch210-ppu \
-  --device-ids 6 --case abs --dtype FP32 --oplib both --workload smoke
+  --device-ids 6 --case abs --dtype FP32 --oplib both --workload smoke --allow-candidate-runtime
 ```
 
 默认要求可检查全部设备句柄且所选卡空闲；未获授权的系统服务持有者也会拒绝。

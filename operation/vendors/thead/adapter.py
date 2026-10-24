@@ -16,6 +16,7 @@ class Adapter(CompatAdapter):
     strict_worker_lifecycle = True
     postflight_after_preflight = True
     supports_shared_device = True
+    requires_candidate_runtime_authorization = True
 
     def __init__(self):
         super().__init__('thead')

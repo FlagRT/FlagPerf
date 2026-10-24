@@ -122,6 +122,8 @@ def parser():
     run.add_argument('--watchdog', type=float, default=300, help='per-phase hang safeguard, independent of the 120s soft target')
     run.add_argument('--result-root', type=Path, default=ROOT / 'result')
     run.add_argument('--dry-run', action='store_true')
+    run.add_argument('--allow-candidate-runtime', action='store_true',
+                     help='explicitly authorize a vendor runtime marked release_stage=candidate')
     run.add_argument('--allow-shared-device', action='store_true',
                      help='explicitly allow sharing for supported vendor profiles; numerical results remain performance-partial')
     run.add_argument('--diagnostics', choices=['off', 'failures'], default='failures')
@@ -147,6 +149,9 @@ def resolve(args):
         if args.dtype and len(args.dtype) != 1:
             raise ValueError('a peak requires a single explicit dtype')
     adapter = get_vendor(args.vendor, args.runtime_profile)
+    if (getattr(adapter, 'requires_candidate_runtime_authorization', False)
+            and not args.allow_candidate_runtime):
+        raise ValueError('candidate runtime requires --allow-candidate-runtime')
     if args.allow_shared_device and not getattr(adapter, 'supports_shared_device', False):
         raise ValueError('--allow-shared-device is supported only by an explicit shared-device vendor profile')
     if hasattr(adapter, 'validate_options'):
