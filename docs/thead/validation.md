@@ -190,6 +190,20 @@ Toolkit 结果保持 not-qualified。
 | FP8 | `final-acceptance-20261026/fp8-probe-20261026/`，torch 2.10 有 dtype/API，PPU 上 `mm/matmul` 为 `NotImplementedError`，`_scaled_mm` 被 compute-capability 门禁拒绝 | 当前锁定 runtime `unsupported-by-runtime`；未伪造 FP8 case 或用其他 dtype 替代 |
 | Asight 计数器 | `final-acceptance-20261026/counter-matrix-20261026/`，7 个可进入 profiling 的 native/FlagGems 组合各 5 kernel、205 metric records，五个 PPU section 均存在且无缺失；`mm/FP32/FlagGems` 因 probe 失败跳过 | PPU 原生计数器在代表矩阵可采；不映射为 Ascend 六组指标；所有结果因共享设备保持 partial |
 
+### 九个失败组合责任分流
+
+| 组合 | 已确认事实 | 当前责任结论 |
+|---|---|---|
+| `addmm/FP32` native、FlagGems | 输入/模块状态、设备绑定、参考重算及首次/缓存路由证据完整；最大绝对误差约 `6.46e-4`/`9.95e-5` | 不是已发现的 FlagPerf 绑定或调用错误；CPU FP32 对同一 FP64 参考也有少量超差，精度契约仍需算子组复核，原始 failed 保留 |
+| `bmm/FP32` native、FlagGems | 同上；最大绝对误差约 `7.20e-4`/`8.82e-5`，输入和路由门通过 | 不改容差、不改算子；责任未完全闭合，交算子/精度规则复核 |
+| `layer_norm/FP16` native | 原 case 输入为 Half，LayerNorm 默认 weight/bias 为 Float；worker 未改写模块状态，PPU 返回 dtype mismatch | 框架未注入错误 dtype；当前归为 PPU/runtime 对混合 dtype 的兼容性失败，保持 failed |
+| `layer_norm/BF16` native | 与 FP16 相同，输入 BFloat16、模块参数 Float，失败发生在 dtype 检查 | 同上；不以强制转换参数掩盖失败 |
+| `linear/FP32` FlagGems | 原始输入重放 300 秒仍停在 FlagGems autotuning/Triton PPU `make_hgbin` 子进程等待 | 只确认阶段超时，不能直接断言编译器根因；外部路径待责任团队继续定位 |
+| `mm/FP32` FlagGems | `mm-fp32-stacks-20261024` 使用原始输入和参考，probe 300 秒超时，容器及租约清理通过 | 框架生命周期已完成；根因未闭合，保留 failed，不自动豁免 |
+
+以上 9 个任务的原始报告、stderr、输入哈希和补测目录均未覆盖。责任分流只说明当前证据
+能排除的框架环节，不把数值失败、编译等待或外部 runtime 行为改写为通过。
+
 ## 维护边界
 
 更换镜像、驱动或依赖版本后，对应范围的资格结论全部失效，须重新验证；
