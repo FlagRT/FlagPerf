@@ -218,7 +218,7 @@ stdout/stderr、returncode、sha256）。
 |---|---|---|---|
 | ① | `addmm/FP32` native+FlagGems、`bmm/FP32` native+FlagGems、`mm/FP32` nativetorch（5 项） | 原始输入重放默认设置即逐位复现原始失败（mm `6.495e-4`/1500、addmm `6.461e-4`/1457、bmm `7.195e-4`/3053；atol 1e-5/rtol 1e-4）；runtime 自报 `allow_tf32=False`、`float32_matmul_precision='highest'` 但显式设置后结果逐位不变（旋钮无效）；误差签名介于 CPU FP32（`5.46e-5`/14）与 TF32 输入仿真（`8.70e-2`/253223）、BF16 仿真（`2.94e-1`/254962）之间且与任一不符 ⇒ 设备 FP32 matmul 使用未声明的内部降精度格式 | PPU runtime/算子（BLAS）团队 |
 | ② | `layer_norm/FP16`、`/BF16` native（2 项） | 输入 half/bf16 + `nn.LayerNorm` 默认 float32 参数：同版本 torch 在 CPU 正常、PPU 拒绝（`expected scalar type Half but found Float`）；参数与输入同 dtype 时 PPU 正常；上游 CPU 与 CUDA（NVIDIA 同 case 标准路径）均支持混合 dtype ⇒ PPU runtime 缺混合 dtype layer_norm kernel | PPU runtime 团队 |
-| ③ | `mm/FP32`、`linear/FP32` FlagGems（2 项） | FlagPerf 之外最小复现（512³，`flag_gems.enable()`，锁定镜像）：FP16/BF16 mm 分别 60.0s/60.0s 完成（rc=0，含启动墙钟 60s/69s）；FP32 mm 620 秒观察窗无 DONE（矩阵实际窗口 300 秒）；独立复跑（`flaggems-hang-terminal/`，1500 秒硬上限）在采集时（20:51，已运行 10.6 分钟）仍无 DONE，到点由服务器侧脚本收尾；FP32 linear 310 秒 stdout 停在 start 行、stderr 停在初始化告警，无 DONE（steps.log 记录 rc=0 与无 DONE 标记矛盾，原样保留）⇒ FlagGems/Triton-PPU 的 FP32 matmul 编译/执行病态 | FlagGems/Triton-PPU 团队 |
+| ③ | `mm/FP32`、`linear/FP32` FlagGems（2 项） | FlagPerf 之外最小复现（512³，`flag_gems.enable()`，锁定镜像）：FP16/BF16 mm 分别 60.0s/60.0s 完成（rc=0，含启动墙钟 60s/69s）；FP32 mm 620 秒观察窗无 DONE（矩阵实际窗口 300 秒），独立复跑 1500 秒硬上限仍未完成（`flaggems-hang-terminal/`，20:40:37→21:05:47，rc=137、DONE=0，收尾记录与容器清理见该目录 README）；FP32 linear 310 秒 stdout 停在 start 行、stderr 停在初始化告警，无 DONE（steps.log 记录 rc=0 与无 DONE 标记矛盾，原样保留）⇒ FlagGems/Triton-PPU 的 FP32 matmul 编译/执行病态 | FlagGems/Triton-PPU 团队 |
 
 计数对账 5+2+2=9，与分流表一一对应。框架侧（case 构造、输入完整性、设备绑定、
 首次/缓存路由、容差）在重放中逐一排除；FlagGems 路径 addmm/bmm 超差较小

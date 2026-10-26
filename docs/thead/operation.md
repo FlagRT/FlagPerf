@@ -137,6 +137,32 @@ correlation、设备和窗口核对；没有预热替代首次执行，也没有
 补测以新结果目录运行，不把原 `not-run` 改成已运行，也不抹除超时。跨 run 覆盖需要按
 case/dtype/oplib、输入配置与运行身份核对；单次报告仍只代表自己的任务和资格。
 
+### 根因定位收口（2026-10-26 对照实验）
+
+九个首轮失败的根因已用锁定镜像一次性容器在空闲卡上完成对照定位（不改 case、
+不放宽容差）；完整表与证据见 `validation.md`「九个失败根因定位」，证据目录
+`final-acceptance-20261026/failure-rootcause-20261026/`。要点：
+
+- `mm/addmm/bmm FP32`（5 项）：设备 FP32 matmul 未达自报 IEEE FP32 契约——原始输入
+  重放逐位复现原始失败，`allow_tf32=False`/`float32_matmul_precision='highest'`
+  显式设置后结果逐位不变（旋钮无效），误差签名介于 CPU FP32 与 TF32 仿真之间
+  ⇒ 责任方 PPU runtime/算子（BLAS）团队。
+- `layer_norm/FP16、BF16`（2 项）：PPU runtime 缺混合 dtype layer_norm——同一构造
+  （低精度输入 + float32 参数）CPU 正常、PPU 拒绝，参数同 dtype 时 PPU 正常
+  ⇒ 责任方 PPU runtime 团队。
+- `mm/linear FP32 FlagGems`（2 项）：FlagGems/Triton-PPU 的 FP32 matmul 编译病态，
+  FlagPerf 之外最小复现成立（fp16/bf16 60.0s 完成；fp32 mm 两次独立运行未完成——
+  620 秒观察窗与 1500 秒硬上限，`flaggems-hang-terminal/README.md` 收尾记录
+  rc=137、DONE=0、容器已清理）⇒ 责任方 FlagGems/Triton-PPU 团队。
+
+上节「处理」列中「兼容性根因待核实」「不等同编译器错误」等表述由本节收口；原失败
+记录保持不变，9 项全部保持 `failed`。
+
+**runtime 晋级前置条件**（`operation/vendors/thead/adapter.py` `runtime_identity` 的
+`validated` 标志，当前 `False`）：① 厂商对上述三类缺陷修复并按原协议复测通过，或经
+用户明示的正式豁免入档；② U13 整机独占窗口完成 16 rank 五次资格与 16 target 监控
+门禁；③ 前两项完成后由维护者显式修改标志并附新证据提交。生成报告不自动晋级。
+
 验收必须在最终代码下逐项完成，保留所有失败和重新运行目录；只有完整矩阵尝试及能力项
 均有实测证据后，才可声明本适配达到完整交付状态。
 
