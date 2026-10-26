@@ -200,6 +200,7 @@ Toolkit 结果保持 not-qualified。
 | `layer_norm/BF16` native | 与 FP16 相同，输入 BFloat16、模块参数 Float，失败发生在 dtype 检查 | 同上；不以强制转换参数掩盖失败 |
 | `linear/FP32` FlagGems | 原始输入重放 300 秒仍停在 FlagGems autotuning/Triton PPU `make_hgbin` 子进程等待 | 只确认阶段超时，不能直接断言编译器根因；外部路径待责任团队继续定位 |
 | `mm/FP32` FlagGems | `mm-fp32-stacks-20261024` 使用原始输入和参考，probe 300 秒超时，容器及租约清理通过 | 框架生命周期已完成；根因未闭合，保留 failed，不自动豁免 |
+| `mm/FP32` nativetorch | Docker 矩阵与 local 续跑均为 correctness failed（`numerical-mismatch`）；Docker 记录最大绝对误差约 `6.50e-4`、1500 mismatch（atol 1e-5/rtol 1e-4），输入、设备绑定与路由门通过 | 与 addmm/bmm 同属 FP32 matmul 精度契约问题，一并交算子组复核；原始 failed 保留，不放宽容差 |
 
 以上 9 个任务的原始报告、stderr、输入哈希和补测目录均未覆盖。责任分流只说明当前证据
 能排除的框架环节，不把数值失败、编译等待或外部 runtime 行为改写为通过。
