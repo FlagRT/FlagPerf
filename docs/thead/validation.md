@@ -6,7 +6,9 @@
 PPU 的 validated 复评条件是 16 rank 同机通信资格在独占窗口补齐后进行；在那之前，
 候选状态如实保留，不因文档或例外自动晋级。
 
-锁定镜像为 `flagtree-ppu-3.6-dev:202608`
+Operation 锁定镜像为 `flagperf-ppu-operation:654e2a3a`
+（image ID `sha256:b3246f3fa6171007f66655aa5d5d1cfd679c1d4d94d34ce7e1ea08f087467b75`），
+其 Base image 是 `flagtree-ppu-3.6-dev:202608`
 （image ID `sha256:be1606e81fb24ca3da57a6d4a990280369b89146c2999e88eb8cd07c661dcc79`）。
 每轮有界 run 都在容器预检查中核对 image ID，并在容器内回读设备 UUID 完成
 三层身份验证；历史 run 的 `case_assets_sha256` 与 `context_sha256` 原样保留，
@@ -156,9 +158,9 @@ Toolkit 结果保持 not-qualified。
 
 ## 已知限制与边界
 
-1. **16 rank 同机 AllReduce 资格未执行**：需要 16 卡独占窗口（协调未获批）。
-   已按部分完成条款以 8 rank 完成组 C 通信资格；窗口迭代数必须在目标 rank 数的
-   实测窗口内重定——AllReduce 单次迭代耗时对 rank 数**非单调**
+1. **16 rank 同机 AllReduce 独占资格未执行**：已完成共享功能 smoke，16 个 rank 的
+   绑定、正确性和清理通过，但计时窗口不足 15 秒且没有独占条件。窗口迭代数必须在目标
+   rank 数的实测窗口内重定——AllReduce 单次迭代耗时对 rank 数**非单调**
    （2r 18.9 ms / 4r 24.8 ms / 8r 10.4 ms @256 MiB），不能外推。
 2. **FP8 唯一跳过**：`torch.mm` 与 `_scaled_mm` 路由均失败（算子未实现 /
    compute-capability 门），有探针异常证据；不代表芯片其他栈无此能力。
@@ -172,15 +174,21 @@ Toolkit 结果保持 not-qualified。
    须重新测量，不能沿用本文数字。
 6. **D2H pageable 对主机 CPU 竞争敏感**：首跑曾在主机高负载下不稳定
    （CV 5.1% / 50.2%），同身份整组重跑通过；首跑组保留为证据。
-7. **16 target 监控轮询未实测**：监控协议在 ≤8 target 下验证
-   （单次 `ppu-smi -q` 全量解析，每 target ≥10 样本）；16 卡窗口落实后补验。
-8. **全设备对 P2P 带宽/时延扫点未执行**：单机协议只覆盖两对代表性设备对
-   （同卡 14→15、跨卡 7→8，见 [P2P 协议](p2p.md)）。补齐全矩阵扫点
-   （16×15 有向 pair 的带宽与时延）目前缺少厂商工具路径：
-   `p2pBandwidthLatencyTest` 为单进程单 pair 工具，sail 无互联扫描入口，
-   Base harness 是恰好两 rank 的 send/recv 协议。全矩阵还需要整机独占窗口
-   与新的扫描编排。补齐条件：厂商发布对应工具，或整机独占窗口内以新计划
-   补做并重走验证记录；在此之前不得用已测 pair 的数字推断未测 pair。
+7. **16 target 的 ≥10 监控样本门禁未实测**：16 rank 共享 smoke 已绑定全部设备，
+   但计时窗口不足 15 秒；现有计数器矩阵为单卡 profiling，不能替代 16 target 轮询。
+8. **官方 P2P 全设备工具矩阵已完成**：`official-p2p-20261026` 覆盖 16×15=240
+   有向 pair 的 CE 单向读/写、并发双向和 GPU/CPU 时延矩阵，原始输出与解析摘要可追溯。
+   运行条件是共享宿主，不能外推独占性能；工具输出注明无 P2P 路径时回退 memcopy，
+   结果不与 Base staged/直连口径混合。
+
+## 2026-10-26 能力补验
+
+| 项目 | 新证据 | 结论 |
+|---|---|---|
+| 16 rank 同机通信 | `final-acceptance-20261026/16rank-shared-run1/`，16 个唯一 UUID/BDF、AllReduce 初始化/正确性/清理通过；20 ITERS 计时窗口不足 15 秒 | 共享功能通过；`partial-shared-host`，不构成 16 rank 独占性能资格 |
+| 官方全设备 P2P | `final-acceptance-20261026/official-p2p-20261026/`，官方 `p2pBandwidthLatencyTest` 在 16 卡上完成 uni-write、uni-read、biBw 和 GPU/CPU latency 矩阵；每个矩阵 240 个非对角 cell，全部 `data matched`，BDF 身份完整 | 工具和拓扑覆盖完成；运行期间存在外部句柄，仍不构成独占性能资格；数字按 CE、4 MiB（时延 64 KiB）工具口径解释 |
+| FP8 | `final-acceptance-20261026/fp8-probe-20261026/`，torch 2.10 有 dtype/API，PPU 上 `mm/matmul` 为 `NotImplementedError`，`_scaled_mm` 被 compute-capability 门禁拒绝 | 当前锁定 runtime `unsupported-by-runtime`；未伪造 FP8 case 或用其他 dtype 替代 |
+| Asight 计数器 | `final-acceptance-20261026/counter-matrix-20261026/`，7 个可进入 profiling 的 native/FlagGems 组合各 5 kernel、205 metric records，五个 PPU section 均存在且无缺失；`mm/FP32/FlagGems` 因 probe 失败跳过 | PPU 原生计数器在代表矩阵可采；不映射为 Ascend 六组指标；所有结果因共享设备保持 partial |
 
 ## 维护边界
 

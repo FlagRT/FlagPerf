@@ -68,8 +68,16 @@ SDK 在长表末尾输出的进度和报告路径不作为指标行；缺值、�
 此阶段专用记录不混入 probe/measure/counter 必须相同的运行栈身份字段。
 
 当前验证站点的 `pg-exporter` 占用 PCM。已在管理员授权的临时监控暂停窗口获得原生报告，
-并恢复服务；这既不是硬件不支持，也不证明监控对普通计时完全无影响。
+并恢复服务；这既不是硬件不支持，也不证明监控对普通计时完全无影响。2026-10-26
+扩展矩阵中 7 个可进入 profiling 的组合均获得 5 个 kernel、205 条指标和五个完整
+PPU section；`mm/FP32/FlagGems` 在 probe 阶段失败，因此 profiling 明确 skipped。
 适配器不会自动停止任何系统服务；其他环境应按实际工具、占用和授权核对。
+
+## 2026-10-26 能力补验结果
+
+- 16 rank AllReduce 共享 smoke 绑定 16 个唯一物理身份，初始化、正确性、清理通过；20 ITERS 窗口不足 15 秒，状态为 `partial-shared-host`，不构成独占性能资格。
+- 官方 `p2pBandwidthLatencyTest` 在锁定镜像内完成 16 卡 CE uni-write、uni-read、biBw 及 GPU/CPU latency 矩阵；每个非对角矩阵均为 240 个 cell、输出 `data matched`，原始 stdout 和解析摘要位于 `final-acceptance-20261026/official-p2p-20261026/`。共享条件下不形成独占性能资格。
+- FP8 探针确认 torch 2.10 dtype/API 存在，但 PPU 设备 `mm/matmul` 未实现，`_scaled_mm` 被 compute-capability 门禁拒绝；记录为 `unsupported-by-runtime`，没有新增伪实现。
 
 ## 状态与资格
 
