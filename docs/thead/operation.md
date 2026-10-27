@@ -100,7 +100,7 @@ PPU section；`mm/FP32/FlagGems` 在 probe 阶段失败，因此 profiling 明�
 
 | 项目 | 当前证据 | 状态 |
 |---|---|---|
-| 起点 | 最新已取得主线 `4f50e1bd`，独立 `zhiyu/ppu-operation` | 已建立 |
+| 起点 | 基于主线 `4f50e1bd`（origin/dev-1.0），独立分支 `zhiyu/ppu-operation` | 已建立 |
 | 运行镜像 | 固定 Base ID 上增加官方 FlagGems `654e2a3a`；独立候选镜像 ID 写入 profile | 已构建并完成设备 smoke |
 | PPU dry-run | abs/FP32/smoke 双路径成功生成计划 | 通过 |
 | CPU 参考隔离 | 锁定镜像，无设备映射，reference 退出 0；site hooks 未执行，CUDA 未初始化 | 通过 |
@@ -124,6 +124,17 @@ PPU section；`mm/FP32/FlagGems` 在 probe 阶段失败，因此 profiling 明�
 冷编译 trace 的解析改用 flow 与 CPU op 索引，保留重复候选及精确 timestamp、线程、
 correlation、设备和窗口核对；没有预热替代首次执行，也没有放宽路由门禁。
 小 trace 与旧实现输出逐项一致，大 trace 的离线解析和哈希记录见 `trace-index-review-20261023`。
+
+### 2026-10-23 设备 smoke 证据
+
+共享验证结果目录：
+
+- `ppu-operation-results/smoke-shared/operation-dc7ff4dd8132/`：首次设备运行。FlagGems 的 PPU `cuLaunchKernelEx` 尚未被旧解析器识别，保留为 partial。
+- `ppu-operation-results/smoke-driverfix/operation-3935a99aae77/`：修复后重跑。原生与 FlagGems 的 correctness、measurement、first/cached routing 均为 `passed`；FlagGems kernel `abs_func_kernel_rank_1` 通过 correlation=48 和 `ac2g` flow 关联。由于显式共享设备且 smoke 只有 1 轮，最终状态保持 `partial`，不构成独占性能资格。
+
+解析器现在严格接受三类 PPU launch 记录：原生常见的
+`cuda_runtime/cudaLaunchKernel`、原生库可能使用的 `cuda_driver/cuLaunchKernel`，以及 FlagGems 常见的
+`cuda_driver/cuLaunchKernelEx`。三类记录都必须满足相同的窗口、correlation、`ac2g` flow、设备号和 kernel 关联门禁。
 
 ### daily 首轮失败与定位边界
 
@@ -160,19 +171,9 @@ case/dtype/oplib、输入配置与运行身份核对；单次报告仍只代表�
 
 **runtime 晋级前置条件**（`operation/vendors/thead/adapter.py` `runtime_identity` 的
 `validated` 标志，当前 `False`）：① 厂商对上述三类缺陷修复并按原协议复测通过，或经
-用户明示的正式豁免入档；② U13 整机独占窗口完成 16 rank 五次资格与 16 target 监控
-门禁；③ 前两项完成后由维护者显式修改标志并附新证据提交。生成报告不自动晋级。
+用户明示的正式豁免入档；② 整机独占窗口内完成 16 rank 五次资格与 16 target 监控
+门禁（现有共享 smoke 不构成资格形态）；③ 前两项完成后由维护者显式修改标志并附新
+证据提交。生成报告不自动晋级。
 
 验收必须在最终代码下逐项完成，保留所有失败和重新运行目录；只有完整矩阵尝试及能力项
 均有实测证据后，才可声明本适配达到完整交付状态。
-
-### 2026-10-23 设备 smoke 证据
-
-共享验证结果目录：
-
-- `ppu-operation-results/smoke-shared/operation-dc7ff4dd8132/`：首次设备运行。FlagGems 的 PPU `cuLaunchKernelEx` 尚未被旧解析器识别，保留为 partial。
-- `ppu-operation-results/smoke-driverfix/operation-3935a99aae77/`：修复后重跑。原生与 FlagGems 的 correctness、measurement、first/cached routing 均为 `passed`；FlagGems kernel `abs_func_kernel_rank_1` 通过 correlation=48 和 `ac2g` flow 关联。由于显式共享设备且 smoke 只有 1 轮，最终状态保持 `partial`，不构成独占性能资格。
-
-解析器现在严格接受三类 PPU launch 记录：原生常见的
-`cuda_runtime/cudaLaunchKernel`、原生库可能使用的 `cuda_driver/cuLaunchKernel`，以及 FlagGems 常见的
-`cuda_driver/cuLaunchKernelEx`。三类记录都必须满足相同的窗口、correlation、`ac2g` flow、设备号和 kernel 关联门禁。

@@ -1,5 +1,12 @@
 # 适配与文档变更记录
 
+## 2026-10-27 — 平头哥 PPU Operation 适配与九失败根因收口（未发布）
+
+- 新增 `operation/vendors/thead` 适配器与 `torch210-ppu` 候选运行栈：锁定镜像身份、固定源码 FlagGems 构建、候选授权门禁与设备身份校验；公共 Operation catalog、输入、容差与报告协议不设 PPU 例外。
+- Docker/local 各完成 308 个适用组合尝试（各保留 299 个 `partial`、9 个 `failed`，原始记录不改写）；FP8 探针记为 `unsupported-by-runtime`；官方 P2P 全设备矩阵与 16 rank 共享 smoke 补验入档。
+- 九个失败完成根因定位：FP32 matmul 精度契约（PPU runtime/算子）、layer_norm 混合 dtype 缺失（PPU runtime）、FlagGems FP32 编译病态（FlagGems/Triton-PPU）；原失败保留，runtime 保持 `validated:false` 并登记晋级前置条件。
+- 文档面：根 README 支持矩阵、docs 导航、Operation 入门 PPU 小节、`docs/thead/operation.md` 与 `validation.md` 机制/验收/根因记录；新增 lifecycle、opaque-NLL 与 provider 定向测试，Operation 167、公开分发 14、Base 381+1 skip 全绿。
+
 ## 2026-10-21 — P800 Operation 完整矩阵与文档复核（未发布）
 
 - Docker/local 各完成 728 项规划中的 308 个适用组合尝试；保留数值、编译和运行失败，干扰与独立补测分列，不宣称原 Docker 整轮持续独占。
