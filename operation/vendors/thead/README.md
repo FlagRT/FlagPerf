@@ -6,16 +6,21 @@ PPU 使用公共 Operation catalog、输入生成、CPU 参考、容差、前反
 容器内 `cuda:0` 是本次所选卡的可见编号，必须结合 UUID、PCI BDF 和设备节点查看。
 
 **验收状态：**接口及 CPU 回归已验证；Docker/local 已分别尝试计划中的 308 个适用组合，另有 420 个不适用组合按 catalog 保留。
-两种执行各保留 299 个 `partial`、9 个 `failed`，所有失败、超时和补测目录原样保留；shared-host 条件不具备独占性能资格。
+两种执行各保留 299 个 `partial`、9 个 `failed`；299 项正确性通过、计时和 allocator 有记录，
+其中各有 9 项缓存调用路由证据不足，其余也不具备共享宿主下的独占性能资格。
+完整计数见 [矩阵与路由缺口](../../../docs/thead/operation.md#daily-矩阵覆盖与路由缺口)，
+失败事实及归因局限见 [失败记录](../../../docs/thead/validation.md#九个失败的对照实验与归因边界)。
+所有失败、超时、中断和补测目录原样保留。
 `abs/FP32`、`tanh/FP16`、NLL/CrossEntropyLoss、`mv`、`prod` 等代表输入的正确性、测量路径和设备 timeline 均有实测记录。
 local 首轮因 `linear/FP32/FlagGems` probe 超时停止，之后以独立 run 补齐未尝试组合，原报告保持不变。
 Asight 原生计数器自动采集已在获准暂停监控的窗口复测：7 个可进入 profiling 的 native/FlagGems 组合各有 5 个 kernel、205 条带单位指标、5 个请求 section，
 缺失 section 为空，采集与测量身份一致；监控已恢复。`mm/FP32/FlagGems` 在 probe 阶段失败，profiling 明确 skipped。此前 `mm/BF16` FlagGems probe 超时暴露了 trace 解析的重复扫描问题，
 已修复并完成双路径复测；历史失败及其他验收边界见
 [Operation 机制与验收](../../../docs/thead/operation.md)。
-官方 P2P 工具全设备补验、FP8 能力探针和 16 rank 共享 smoke 的原始证据位于
+补充的 Base/官方工具 P2P 和 16 rank 共享 smoke，以及独立 FP8 探针的原始证据位于
 `ppu-operation-results/final-acceptance-20261026/`；P2P 结果覆盖 240 个有向 pair，FP8
-当前锁定 runtime 标记为 `unsupported-by-runtime`，16 rank 共享窗口不足以形成独占资格。
+当前锁定 runtime 所测路径标记为 `unsupported-by-runtime`（不代表硬件无 FP8），
+16 rank 共享窗口不足以形成独占资格；这些补充结果不计入 Operation 算子矩阵。
 不能将 Base 验收或 CPU 测试当作本部分通过。运行栈保持 `candidate / validated:false`，每次 `run` 都必须显式带 `--allow-candidate-runtime`，运行不会自动晋级。
 
 ## 1. 运行栈准备

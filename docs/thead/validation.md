@@ -205,26 +205,71 @@ Toolkit 结果保持 not-qualified。
 以上 9 个任务的原始报告、stderr、输入哈希和补测目录均未覆盖。责任分流只说明当前证据
 能排除的框架环节，不把数值失败、编译等待或外部 runtime 行为改写为通过。
 
-### 九个失败根因定位（2026-10-26 对照实验）
+### 九个失败的对照实验与归因边界
 
-在不改 case、不改 runtime、不放宽容差的前提下，用锁定镜像
-`flagperf-ppu-operation:654e2a3a` 一次性容器（`--network=none --cap-drop=ALL`、空闲卡）
-做最小对照实验。证据
-`final-acceptance-20261026/failure-rootcause-20261026/`（`mm-precision/`、
-`layernorm-dtype/`、`flaggems-hang/`、`flaggems-hang-terminal/`，各含脚本副本、
-stdout/stderr、returncode、sha256）。
+2026-10-26 在锁定镜像 `flagperf-ppu-operation:654e2a3a` 中执行对照实验，
+2026-10-27 直接复读原始输出及探针源码。证据相对结果根目录位于
+`final-acceptance-20261026/failure-rootcause-20261026/`：`mm-precision/`、
+`layernorm-dtype/`、`flaggems-hang/` 和 `flaggems-hang-terminal/`。脚本和原始记录保留；
+本节修正早先超出证据的归因，不改写任何任务状态。
 
-| 组 | 组合 | 根因结论 | 责任方 |
+| 组 | 组合 | 实测观察 | 待复核方向 |
 |---|---|---|---|
-| ① | `addmm/FP32` native+FlagGems、`bmm/FP32` native+FlagGems、`mm/FP32` nativetorch（5 项） | 原始输入重放默认设置即逐位复现原始失败（mm `6.495e-4`/1500、addmm `6.461e-4`/1457、bmm `7.195e-4`/3053；atol 1e-5/rtol 1e-4）；runtime 自报 `allow_tf32=False`、`float32_matmul_precision='highest'` 但显式设置后结果逐位不变（旋钮无效）；误差签名介于 CPU FP32（`5.46e-5`/14）与 TF32 输入仿真（`8.70e-2`/253223）、BF16 仿真（`2.94e-1`/254962）之间且与任一不符 ⇒ 设备 FP32 matmul 使用未声明的内部降精度格式 | PPU runtime/算子（BLAS）团队 |
-| ② | `layer_norm/FP16`、`/BF16` native（2 项） | 输入 half/bf16 + `nn.LayerNorm` 默认 float32 参数：同版本 torch 在 CPU 正常、PPU 拒绝（`expected scalar type Half but found Float`）；参数与输入同 dtype 时 PPU 正常；上游 CPU 与 CUDA（NVIDIA 同 case 标准路径）均支持混合 dtype ⇒ PPU runtime 缺混合 dtype layer_norm kernel | PPU runtime 团队 |
-| ③ | `mm/FP32`、`linear/FP32` FlagGems（2 项） | FlagPerf 之外最小复现（512³，`flag_gems.enable()`，锁定镜像）：FP16/BF16 mm 分别 60.0s/60.0s 完成（rc=0，含启动墙钟 60s/69s）；FP32 mm 620 秒观察窗无 DONE（矩阵实际窗口 300 秒），独立复跑 1500 秒硬上限仍未完成（`flaggems-hang-terminal/`，20:40:37→21:05:47，rc=137、DONE=0，收尾记录与容器清理见该目录 README）；FP32 linear 310 秒 stdout 停在 start 行、stderr 停在初始化告警，无 DONE（steps.log 记录 rc=0 与无 DONE 标记矛盾，原样保留）⇒ FlagGems/Triton-PPU 的 FP32 matmul 编译/执行病态 | FlagGems/Triton-PPU 团队 |
+| ① | `addmm/FP32` native+FlagGems、`bmm/FP32` native+FlagGems、`mm/FP32` native（5 项） | 原生重放最大绝对误差/不匹配数为 mm `6.495e-4`/1500、addmm `6.461e-4`/1457、bmm `7.195e-4`/3053（atol 1e-5、rtol 1e-4）；Gems addmm/bmm 原矩阵超差约 `9.95e-5`/13、`8.82e-5`/44 | 后端/算子团队联合复核精度约定、累加方式及公共判定规则；尚不能确定内部格式或排除所有框架因素 |
+| ② | `layer_norm/FP16、BF16` native（2 项） | PPU functional 调用对 half/bf16 输入+FP32 参数报 dtype mismatch；同 dtype 参数可执行；CPU FP16 混合 dtype 调用可执行 | 所测 PPU 原生路径的混合 dtype 兼容性差异，交 runtime 团队复核；未直接测试 CPU BF16 混合对照或本轮 CUDA 对照，不据此断言缺失某个 kernel |
+| ③ | `mm/FP32`、`linear/FP32` FlagGems（2 项） | 原矩阵 300 秒 probe 超时；外部最小 mm 脚本在 620 秒观察窗及独立 1500 秒上限均无 DONE。**linear 最小脚本已完成**：`DONE linear_fp32 in 301.2s`，rc=0，启动至退出墙钟 310 秒 | FlagGems/Triton-PPU 团队继续定位首次调用的编译、调优与执行阶段；最小脚本未验正确性，完成不构成原任务通过，超时也不单独证明编译器缺陷或永久死锁 |
 
-计数对账 5+2+2=9，与分流表一一对应。框架侧（case 构造、输入完整性、设备绑定、
-首次/缓存路由、容差）在重放中逐一排除；FlagGems 路径 addmm/bmm 超差较小
-（`9.95e-5`/`8.82e-5`），与 native 同属 FP32 matmul 精度家族，交算子团队按 kernel
-分别复核。FlagGems 路径 layer_norm/FP16 在矩阵中通过，可作过渡路径，native API
-契约仍需厂商补齐。9 项全部保持 failed，不放宽容差、不绕过执行。
+**精度探针局限。** `mm-precision/signature.json` 记录的默认 `allow_tf32=False`、
+`float32_matmul_precision='highest'` 是 API 可见设置，不是内部实现证明。
+`probe_mm_precision.py` 只重复设置了已经为 False 的 `allow_tf32`，没有调用
+`set_float32_matmul_precision('highest')`，也未保存逐元素结果用于位级比较。因此
+重复设置后误差统计相同不能称为“旋钮无效”或“逐位不变”。CPU FP32 mm 对同一 FP64
+参考也有 `5.46e-5`/14 的超差；简化的 TF32 输入截断与 BF16 输入量化实验是诊断对照，
+不是硬件格式识别器，不能推出“未知降精度格式”或“违反 IEEE FP32”。原始输入重放能
+证明失败可复现，不能独立证明 case 构造或数值判定绝无问题。
+
+**LayerNorm 探针局限。** 有效的 PPU functional 测试将输入与参数都放在设备上；
+CPU 控制实验只覆盖 FP16。`ppu_module_call_half_input` 因模块仍在 CPU 而报跨设备错误，
+`accuracy_err` 也来自跨设备比较，均不能作为混合 dtype 或正确性证据。
+同 dtype 调用成功仅说明该调用可执行，不能替代原混合 dtype case 的数值验收；本适配
+不通过强制转换参数精度来消除原失败。
+
+**超时探针局限。** `flaggems-hang/steps.log` 与 stdout 一致：FP16/BF16 mm 均记录
+60.0 秒脚本内部耗时，启动至退出墙钟分别为 70/69 秒；FP32 linear 有 DONE，先前文档
+“rc=0 但无 DONE”的描述有误。独立 mm 记录 `20:40:37→21:05:47`、rc=137、DONE=0，
+反映 `timeout -k 10 1500` 的超时/强杀边界，不是 kernel 最终状态。`cleanup.txt` 只是
+收尾脚本时间戳，不能单独证明容器删除成功；原始 stdout、stderr 和 README 均不改写。
+
+计数为 5+2+2=9，全部保持 `failed`，不放宽容差、不绕过执行。现有输入回传、绑定及
+路由记录未发现相应门禁错误，但“有证据的失败分流”不能写成“全部根因已闭合”或
+“九项均已证明与框架无关”。后续修复或补验必须使用新的结果目录并关联原任务。
+
+### 复现入口与证据分发
+
+以下命令从仓库根目录执行，先只生成计划。实际复现须准备同一锁定运行栈、取得空闲
+设备授权并去掉 `--dry-run`，使用新的结果目录；不要改原输入、公共容差或覆盖历史报告。
+卡号仅为示例。每条命令独立运行，不因上一条失败而把后续任务标为已尝试。
+
+```bash
+python3 operation/run.py run --vendor thead --runtime-profile torch210-ppu \
+  --device-ids 6 --case mm --case addmm --case bmm --dtype FP32 --oplib both \
+  --workload daily --allow-candidate-runtime --dry-run
+
+python3 operation/run.py run --vendor thead --runtime-profile torch210-ppu \
+  --device-ids 6 --case layer_norm --dtype FP16 BF16 --oplib nativetorch \
+  --workload daily --allow-candidate-runtime --dry-run
+
+python3 operation/run.py run --vendor thead --runtime-profile torch210-ppu \
+  --device-ids 6 --case linear --dtype FP32 --oplib flaggems \
+  --workload daily --allow-candidate-runtime --dry-run
+```
+
+报错定位依据任务目录的 `task.json`、保存输入/模块状态、`correctness.json`、阶段
+stdout/stderr、首次/缓存 trace 和运行身份，而非仅看汇总 failed。上述根因对照实验的
+原始结果目录、张量和站点日志**不随源码仓库分发**；文档中的相对证据目录是保管索引，
+不是 checkout 中可直接读取的文件。对照实验脚本及完整 artifacts 的公开分发尚未纳入
+本 PR；外部读者可使用上述公共入口重新生成自己的记录，不能据文档摘要独立验真全部
+历史实验。FP8 探针只证明已测 runtime 路径不可用，不替代厂商硬件能力规格。
 
 ## 维护边界
 

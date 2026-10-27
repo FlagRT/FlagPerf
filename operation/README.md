@@ -52,7 +52,11 @@ PPU 镜像为 candidate（`validated:false`），每次 PPU `run` 必须显式�
 正确性、测量、显存和清理检查；首次/缓存设备路由关联及 Asight 原生计数器接口已实现，
 已有共享条件下的 Docker/local 设备 smoke 及原生计数器采集证据；完整矩阵、
 自动采集链路和性能资格的当前结论以 [PPU 验收记录](../docs/thead/operation.md) 为准，不能据静态回归宣称通过。
-原生指标保留 PPU 的名称和单位，不冒充 Ascend 六组指标。PPU 编译、运行和数值失败保留原始记录。
+原生指标保留 PPU 的名称和单位，不冒充 Ascend 六组指标。Docker 与 local 首轮+续跑
+各尝试 308 个适用组合，各保留 299 个 partial、9 个 failed；partial 中各有 9 项缓存
+调用路由证据不足，其余仍无共享宿主下的独占资格。数值超差、混合 dtype 拒绝与首次调用
+超时的事实及归因局限见 [失败记录](../docs/thead/validation.md#九个失败的对照实验与归因边界)，
+原失败与重跑记录均保留，不能据此宣称完整认证。
 
 所有命令从 **FlagPerf 仓库根目录** 执行。先选当前获准使用的空闲设备，下面的 `0` 仅为示例；Docker/local 的编号含义见第 2 节。
 Ascend 镜像涉及的特权权限由 `--allow-privileged-root` 显式开启；只在获准使用的主机上运行。

@@ -1,11 +1,12 @@
 # 适配与文档变更记录
 
-## 2026-10-27 — 平头哥 PPU Operation 适配与九失败根因收口（未发布）
+## 2026-10-27 — 平头哥 PPU Operation 候选适配与验收文档（未发布）
 
-- 新增 `operation/vendors/thead` 适配器与 `torch210-ppu` 候选运行栈：锁定镜像身份、固定源码 FlagGems 构建、候选授权门禁与设备身份校验；公共 Operation catalog、输入、容差与报告协议不设 PPU 例外。
-- Docker/local 各完成 308 个适用组合尝试（各保留 299 个 `partial`、9 个 `failed`，原始记录不改写）；FP8 探针记为 `unsupported-by-runtime`；官方 P2P 全设备矩阵与 16 rank 共享 smoke 补验入档。
-- 九个失败完成根因定位：FP32 matmul 精度契约（PPU runtime/算子）、layer_norm 混合 dtype 缺失（PPU runtime）、FlagGems FP32 编译病态（FlagGems/Triton-PPU）；原失败保留，runtime 保持 `validated:false` 并登记晋级前置条件。
-- 文档面：根 README 支持矩阵、docs 导航、Operation 入门 PPU 小节、`docs/thead/operation.md` 与 `validation.md` 机制/验收/根因记录；新增 lifecycle、opaque-NLL 与 provider 定向测试，Operation 167、公开分发 14、Base 381+1 skip 全绿。
+- 新增 `operation/vendors/thead` 与 `torch210-ppu`：锁定镜像、固定源码 FlagGems 构建、候选授权及设备身份校验；复用公共 catalog、输入、容差与报告协议。
+- Docker 及 local 首轮+28 个续跑各尝试 308 个适用组合，各保留 299 个 `partial`、9 个 `failed`；partial 中各有 9 项缓存路由证据不足，原始 local 首轮的 390 个 not-run（166 适用、224 类型不适用）不改写。原失败、中断与重跑独立保留。
+- 如实记录 FP32 数值超差、LayerNorm 混合 dtype 拒绝、FlagGems FP32 首次调用超时，区分复现事实与未确认根因；修正“未知降精度格式”“开关无效”及“linear 最小脚本无 DONE”等过度或错误结论。运行栈保持 `validated:false`。
+- FP8 所测 runtime 路径不可用；代表性 Asight 采集和补充 Base/P2P 证据不替代完整 Operation 验收，原生 PPU 指标不映射为 Ascend 六组计数器。
+- 根 README、docs 导航和各级 PPU/Operation 入口同步状态、失败与晋级条件。CPU 回归历史结果为 Operation 167、公开分发 14；Base 共 381（380 通过、1 skipped）。无 Ascend 硬件，本轮未做 Ascend 实机回归。
 
 ## 2026-10-21 — P800 Operation 完整矩阵与文档复核（未发布）
 
