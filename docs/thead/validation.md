@@ -6,7 +6,9 @@
 PPU 的 validated 复评条件是 16 rank 同机通信资格在独占窗口补齐后进行；在那之前，
 候选状态如实保留，不因文档或例外自动晋级。
 
-锁定镜像为 `flagtree-ppu-3.6-dev:202608`
+Operation 锁定镜像为 `flagperf-ppu-operation:654e2a3a`
+（image ID `sha256:b3246f3fa6171007f66655aa5d5d1cfd679c1d4d94d34ce7e1ea08f087467b75`），
+其 Base image 是 `flagtree-ppu-3.6-dev:202608`
 （image ID `sha256:be1606e81fb24ca3da57a6d4a990280369b89146c2999e88eb8cd07c661dcc79`）。
 每轮有界 run 都在容器预检查中核对 image ID，并在容器内回读设备 UUID 完成
 三层身份验证；历史 run 的 `case_assets_sha256` 与 `context_sha256` 原样保留，
@@ -156,9 +158,9 @@ Toolkit 结果保持 not-qualified。
 
 ## 已知限制与边界
 
-1. **16 rank 同机 AllReduce 资格未执行**：需要 16 卡独占窗口（协调未获批）。
-   已按部分完成条款以 8 rank 完成组 C 通信资格；窗口迭代数必须在目标 rank 数的
-   实测窗口内重定——AllReduce 单次迭代耗时对 rank 数**非单调**
+1. **16 rank 同机 AllReduce 独占资格未执行**：已完成共享功能 smoke，16 个 rank 的
+   绑定、正确性和清理通过，但计时窗口不足 15 秒且没有独占条件。窗口迭代数必须在目标
+   rank 数的实测窗口内重定——AllReduce 单次迭代耗时对 rank 数**非单调**
    （2r 18.9 ms / 4r 24.8 ms / 8r 10.4 ms @256 MiB），不能外推。
 2. **FP8 唯一跳过**：`torch.mm` 与 `_scaled_mm` 路由均失败（算子未实现 /
    compute-capability 门），有探针异常证据；不代表芯片其他栈无此能力。
@@ -172,15 +174,102 @@ Toolkit 结果保持 not-qualified。
    须重新测量，不能沿用本文数字。
 6. **D2H pageable 对主机 CPU 竞争敏感**：首跑曾在主机高负载下不稳定
    （CV 5.1% / 50.2%），同身份整组重跑通过；首跑组保留为证据。
-7. **16 target 监控轮询未实测**：监控协议在 ≤8 target 下验证
-   （单次 `ppu-smi -q` 全量解析，每 target ≥10 样本）；16 卡窗口落实后补验。
-8. **全设备对 P2P 带宽/时延扫点未执行**：单机协议只覆盖两对代表性设备对
-   （同卡 14→15、跨卡 7→8，见 [P2P 协议](p2p.md)）。补齐全矩阵扫点
-   （16×15 有向 pair 的带宽与时延）目前缺少厂商工具路径：
-   `p2pBandwidthLatencyTest` 为单进程单 pair 工具，sail 无互联扫描入口，
-   Base harness 是恰好两 rank 的 send/recv 协议。全矩阵还需要整机独占窗口
-   与新的扫描编排。补齐条件：厂商发布对应工具，或整机独占窗口内以新计划
-   补做并重走验证记录；在此之前不得用已测 pair 的数字推断未测 pair。
+7. **16 target 的 ≥10 监控样本门禁未实测**：16 rank 共享 smoke 已绑定全部设备，
+   但计时窗口不足 15 秒；现有计数器矩阵为单卡 profiling，不能替代 16 target 轮询。
+8. **官方 P2P 全设备工具矩阵已完成**：`official-p2p-20261026` 覆盖 16×15=240
+   有向 pair 的 CE 单向读/写、并发双向和 GPU/CPU 时延矩阵，原始输出与解析摘要可追溯。
+   运行条件是共享宿主，不能外推独占性能；工具输出注明无 P2P 路径时回退 memcopy，
+   结果不与 Base staged/直连口径混合。
+
+## 2026-10-26 能力补验
+
+| 项目 | 新证据 | 结论 |
+|---|---|---|
+| 16 rank 同机通信 | `final-acceptance-20261026/16rank-shared-run1/`，16 个唯一 UUID/BDF、AllReduce 初始化/正确性/清理通过；20 ITERS 计时窗口不足 15 秒 | 共享功能通过；`partial-shared-host`，不构成 16 rank 独占性能资格 |
+| 官方全设备 P2P | `final-acceptance-20261026/official-p2p-20261026/`，官方 `p2pBandwidthLatencyTest` 在 16 卡上完成 uni-write、uni-read、biBw 和 GPU/CPU latency 矩阵；每个矩阵 240 个非对角 cell，全部 `data matched`，BDF 身份完整 | 工具和拓扑覆盖完成；运行期间存在外部句柄，仍不构成独占性能资格；数字按 CE、4 MiB（时延 64 KiB）工具口径解释 |
+| FP8 | `final-acceptance-20261026/fp8-probe-20261026/`，torch 2.10 有 dtype/API，PPU 上 `mm/matmul` 为 `NotImplementedError`，`_scaled_mm` 被 compute-capability 门禁拒绝 | 当前锁定 runtime `unsupported-by-runtime`；未伪造 FP8 case 或用其他 dtype 替代 |
+| Asight 计数器 | `final-acceptance-20261026/counter-matrix-20261026/`，7 个可进入 profiling 的 native/FlagGems 组合各 5 kernel、205 metric records，五个 PPU section 均存在且无缺失；`mm/FP32/FlagGems` 因 probe 失败跳过 | PPU 原生计数器在代表矩阵可采；不映射为 Ascend 六组指标；所有结果因共享设备保持 partial |
+
+### 九个失败组合责任分流
+
+| 组合 | 已确认事实 | 当前责任结论 |
+|---|---|---|
+| `addmm/FP32` native、FlagGems | 输入/模块状态、设备绑定、参考重算及首次/缓存路由证据完整；最大绝对误差约 `6.46e-4`/`9.95e-5` | 不是已发现的 FlagPerf 绑定或调用错误；CPU FP32 对同一 FP64 参考也有少量超差，精度契约仍需算子组复核，原始 failed 保留 |
+| `bmm/FP32` native、FlagGems | 同上；最大绝对误差约 `7.20e-4`/`8.82e-5`，输入和路由门通过 | 不改容差、不改算子；责任未完全闭合，交算子/精度规则复核 |
+| `layer_norm/FP16` native | 原 case 输入为 Half，LayerNorm 默认 weight/bias 为 Float；worker 未改写模块状态，PPU 返回 dtype mismatch | 框架未注入错误 dtype；当前归为 PPU/runtime 对混合 dtype 的兼容性失败，保持 failed |
+| `layer_norm/BF16` native | 与 FP16 相同，输入 BFloat16、模块参数 Float，失败发生在 dtype 检查 | 同上；不以强制转换参数掩盖失败 |
+| `linear/FP32` FlagGems | 原始输入重放 300 秒仍停在 FlagGems autotuning/Triton PPU `make_hgbin` 子进程等待 | 只确认阶段超时，不能直接断言编译器根因；外部路径待责任团队继续定位 |
+| `mm/FP32` FlagGems | `mm-fp32-stacks-20261024` 使用原始输入和参考，probe 300 秒超时，容器及租约清理通过 | 框架生命周期已完成；根因未闭合，保留 failed，不自动豁免 |
+| `mm/FP32` nativetorch | Docker 矩阵与 local 续跑均为 correctness failed（`numerical-mismatch`）；Docker 记录最大绝对误差约 `6.50e-4`、1500 mismatch（atol 1e-5/rtol 1e-4），输入、设备绑定与路由门通过 | 与 addmm/bmm 同属 FP32 matmul 精度契约问题，一并交算子组复核；原始 failed 保留，不放宽容差 |
+
+以上 9 个任务的原始报告、stderr、输入哈希和补测目录均未覆盖。责任分流只说明当前证据
+能排除的框架环节，不把数值失败、编译等待或外部 runtime 行为改写为通过。
+
+### 九个失败的对照实验与归因边界
+
+2026-10-26 在锁定镜像 `flagperf-ppu-operation:654e2a3a` 中执行对照实验，
+2026-10-27 直接复读原始输出及探针源码。证据相对结果根目录位于
+`final-acceptance-20261026/failure-rootcause-20261026/`：`mm-precision/`、
+`layernorm-dtype/`、`flaggems-hang/` 和 `flaggems-hang-terminal/`。脚本和原始记录保留；
+本节修正早先超出证据的归因，不改写任何任务状态。
+
+| 组 | 组合 | 实测观察 | 待复核方向 |
+|---|---|---|---|
+| ① | `addmm/FP32` native+FlagGems、`bmm/FP32` native+FlagGems、`mm/FP32` native（5 项） | 原生重放最大绝对误差/不匹配数为 mm `6.495e-4`/1500、addmm `6.461e-4`/1457、bmm `7.195e-4`/3053（atol 1e-5、rtol 1e-4）；Gems addmm/bmm 原矩阵超差约 `9.95e-5`/13、`8.82e-5`/44 | 后端/算子团队联合复核精度约定、累加方式及公共判定规则；尚不能确定内部格式或排除所有框架因素 |
+| ② | `layer_norm/FP16、BF16` native（2 项） | PPU functional 调用对 half/bf16 输入+FP32 参数报 dtype mismatch；同 dtype 参数可执行；CPU FP16 混合 dtype 调用可执行 | 所测 PPU 原生路径的混合 dtype 兼容性差异，交 runtime 团队复核；未直接测试 CPU BF16 混合对照或本轮 CUDA 对照，不据此断言缺失某个 kernel |
+| ③ | `mm/FP32`、`linear/FP32` FlagGems（2 项） | 原矩阵 300 秒 probe 超时；外部最小 mm 脚本在 620 秒观察窗及独立 1500 秒上限均无 DONE。**linear 最小脚本已完成**：`DONE linear_fp32 in 301.2s`，rc=0，启动至退出墙钟 310 秒 | FlagGems/Triton-PPU 团队继续定位首次调用的编译、调优与执行阶段；最小脚本未验正确性，完成不构成原任务通过，超时也不单独证明编译器缺陷或永久死锁 |
+
+**精度探针局限。** `mm-precision/signature.json` 记录的默认 `allow_tf32=False`、
+`float32_matmul_precision='highest'` 是 API 可见设置，不是内部实现证明。
+`probe_mm_precision.py` 只重复设置了已经为 False 的 `allow_tf32`，没有调用
+`set_float32_matmul_precision('highest')`，也未保存逐元素结果用于位级比较。因此
+重复设置后误差统计相同不能称为“旋钮无效”或“逐位不变”。CPU FP32 mm 对同一 FP64
+参考也有 `5.46e-5`/14 的超差；简化的 TF32 输入截断与 BF16 输入量化实验是诊断对照，
+不是硬件格式识别器，不能推出“未知降精度格式”或“违反 IEEE FP32”。原始输入重放能
+证明失败可复现，不能独立证明 case 构造或数值判定绝无问题。
+
+**LayerNorm 探针局限。** 有效的 PPU functional 测试将输入与参数都放在设备上；
+CPU 控制实验只覆盖 FP16。`ppu_module_call_half_input` 因模块仍在 CPU 而报跨设备错误，
+`accuracy_err` 也来自跨设备比较，均不能作为混合 dtype 或正确性证据。
+同 dtype 调用成功仅说明该调用可执行，不能替代原混合 dtype case 的数值验收；本适配
+不通过强制转换参数精度来消除原失败。
+
+**超时探针局限。** `flaggems-hang/steps.log` 与 stdout 一致：FP16/BF16 mm 均记录
+60.0 秒脚本内部耗时，启动至退出墙钟分别为 70/69 秒；FP32 linear 有 DONE，先前文档
+“rc=0 但无 DONE”的描述有误。独立 mm 记录 `20:40:37→21:05:47`、rc=137、DONE=0，
+反映 `timeout -k 10 1500` 的超时/强杀边界，不是 kernel 最终状态。`cleanup.txt` 只是
+收尾脚本时间戳，不能单独证明容器删除成功；原始 stdout、stderr 和 README 均不改写。
+
+计数为 5+2+2=9，全部保持 `failed`，不放宽容差、不绕过执行。现有输入回传、绑定及
+路由记录未发现相应门禁错误，但“有证据的失败分流”不能写成“全部根因已闭合”或
+“九项均已证明与框架无关”。后续修复或补验必须使用新的结果目录并关联原任务。
+
+### 复现入口与证据分发
+
+以下命令从仓库根目录执行，先只生成计划。实际复现须准备同一锁定运行栈、取得空闲
+设备授权并去掉 `--dry-run`，使用新的结果目录；不要改原输入、公共容差或覆盖历史报告。
+卡号仅为示例。每条命令独立运行，不因上一条失败而把后续任务标为已尝试。
+
+```bash
+python3 operation/run.py run --vendor thead --runtime-profile torch210-ppu \
+  --device-ids 6 --case mm --case addmm --case bmm --dtype FP32 --oplib both \
+  --workload daily --allow-candidate-runtime --dry-run
+
+python3 operation/run.py run --vendor thead --runtime-profile torch210-ppu \
+  --device-ids 6 --case layer_norm --dtype FP16 BF16 --oplib nativetorch \
+  --workload daily --allow-candidate-runtime --dry-run
+
+python3 operation/run.py run --vendor thead --runtime-profile torch210-ppu \
+  --device-ids 6 --case linear --dtype FP32 --oplib flaggems \
+  --workload daily --allow-candidate-runtime --dry-run
+```
+
+报错定位依据任务目录的 `task.json`、保存输入/模块状态、`correctness.json`、阶段
+stdout/stderr、首次/缓存 trace 和运行身份，而非仅看汇总 failed。上述根因对照实验的
+原始结果目录、张量和站点日志**不随源码仓库分发**；文档中的相对证据目录是保管索引，
+不是 checkout 中可直接读取的文件。对照实验脚本及完整 artifacts 的公开分发尚未纳入
+本 PR；外部读者可使用上述公共入口重新生成自己的记录，不能据文档摘要独立验真全部
+历史实验。FP8 探针只证明已测 runtime 路径不可用，不替代厂商硬件能力规格。
 
 ## 维护边界
 

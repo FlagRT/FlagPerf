@@ -22,6 +22,7 @@ python3 base/run.py toolkit run \
 python3 base/run.py toolkit run \
   --config base/configs/thead_ppu_torch210.yaml \
   --physical-device-ids 14 --case main_memory-capacity \
+  --allow-candidate-runtime \
   --result-root base/result/thead-toolkit
 
 # 双卡全量：五次独立重复，监控默认同窗开启。
@@ -71,7 +72,7 @@ python3 base/run.py toolkit run \
 | `--dry-run` | 默认关闭 | 只输出静态 JSON 计划 |
 
 P800 专属参数（`--samples`、`--payload-bytes`、`--p2p-payload-bytes`、`--pinned-api`、
-`--async-chunk-bytes`、`--minimum-seconds`、`--allow-busy-devices`）对 PPU 无效，
+`--async-chunk-bytes`、`--allow-busy-devices`）对 PPU 无效，
 显式给出即报错，不静默忽略。PPU 不接受 Ascend 的 `--latency-sizes`、HCCL 范围、
 legacy、privileged 或 DMI 开关；`THEAD_ALLOW_FOREIGN_HANDLES` 由 toolkit 永不设置，
 被占用卡一律拒绝（含 uncorrectable ECC 证据的卡 fail-closed）。
@@ -89,7 +90,7 @@ legacy、privileged 或 DMI 开关；`THEAD_ALLOW_FOREIGN_HANDLES` 由 toolkit �
 | interconnect-P2P_intraserver | 每有序 pair 3 | p2pBandwidthLatencyTest uni-write / uni-read / biBw，GB/s |
 | interconnect-P2P_intraserver-latency | 每有序 pair 1 | p2pBandwidthLatencyTest GPU 时延矩阵，us→ns |
 
-载荷与点结构以 [toolkit-contract.json](toolkit-contract.json) 和 [contract.py](contract.py) 为准。
+载荷与点结构以 [contract.py](contract.py) 为准。
 完整计划的逻辑点数是 `12*n + 4*n*(n-1)`；目标数再乘 repeat。
 双卡五次是 32 点／160 目标；四卡五次是 80 点／400 目标。
 P2P 点按有序对展开（每个无序对的正反两个方向都实测，day-9 矩阵显示真实不对称，

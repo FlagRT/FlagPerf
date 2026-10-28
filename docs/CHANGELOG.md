@@ -1,5 +1,13 @@
 # 适配与文档变更记录
 
+## 2026-10-27 — 平头哥 PPU Operation 候选适配与验收文档（未发布）
+
+- 新增 `operation/vendors/thead` 与 `torch210-ppu`：锁定镜像、固定源码 FlagGems 构建、候选授权及设备身份校验；复用公共 catalog、输入、容差与报告协议。
+- Docker 及 local 首轮+28 个续跑各尝试 308 个适用组合，各保留 299 个 `partial`、9 个 `failed`；partial 中各有 9 项缓存路由证据不足，原始 local 首轮的 390 个 not-run（166 适用、224 类型不适用）不改写。原失败、中断与重跑独立保留。
+- 如实记录 FP32 数值超差、LayerNorm 混合 dtype 拒绝、FlagGems FP32 首次调用超时，区分复现事实与未确认根因；修正“未知降精度格式”“开关无效”及“linear 最小脚本无 DONE”等过度或错误结论。运行栈保持 `validated:false`。
+- FP8 所测 runtime 路径不可用；代表性 Asight 采集和补充 Base/P2P 证据不替代完整 Operation 验收，原生 PPU 指标不映射为 Ascend 六组计数器。
+- 根 README、docs 导航和各级 PPU/Operation 入口同步状态、失败与晋级条件。CPU 回归历史结果为 Operation 167、公开分发 14；Base 共 381（380 通过、1 skipped）。无 Ascend 硬件，本轮未做 Ascend 实机回归。
+
 ## 2026-10-21 — P800 Operation 完整矩阵与文档复核（未发布）
 
 - Docker/local 各完成 728 项规划中的 308 个适用组合尝试；保留数值、编译和运行失败，干扰与独立补测分列，不宣称原 Docker 整轮持续独占。

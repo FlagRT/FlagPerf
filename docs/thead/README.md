@@ -2,6 +2,12 @@
 
 本适配提供 FlagPerf Base 的 PyTorch Benchmark 和独立官方工具 Toolkit。所有命令从 FlagPerf 仓库根目录执行；
 完整运行步骤见 [Base 使用指南](../../base/README.md)。
+PPU 算子评测使用独立的 Operation 镜像和运行栈，见 [Operation 入口](../../operation/vendors/thead/README.md)；
+其验收状态与 Base/Toolkit 分开维护，不能将本页已有 Base 结果当作算子实测。
+Operation 当前保持 `candidate / validated:false`：Docker 及 local 首轮+续跑各覆盖 308 个
+适用组合，均保留 299 个 partial、9 个 failed；共享条件与缓存路由证据缺口独立记录。
+覆盖明细见 [Operation 验收](operation.md#daily-矩阵覆盖与路由缺口)，失败事实、
+复现方式及归因边界见 [失败记录](validation.md#九个失败的对照实验与归因边界)。
 
 ## 入口和支持范围
 

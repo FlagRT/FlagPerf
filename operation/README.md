@@ -36,6 +36,28 @@ P800 probe 分别保存首次及缓存调用的 ATen 派发、主机 launch 与�
 只有复制、分配、设备输出或不完整关联不能判为路由通过。该观察不插入正式计时，
 也不构成覆盖 C++ 后端全部内部指令的通用 CPU fallback 证明。
 
+[平头哥 PPU](vendors/thead/README.md) 使用 `--runtime-profile torch210-ppu` 选择锁定的
+PyTorch 2.10 / PPU SDK CUDA 兼容运行栈。它的设备 API 是 `torch.cuda`，容器内 `cuda:0`
+只表示本次映射后的可见 ordinal；报告中的 PPU UUID、PCI BDF 和设备节点才是物理身份。
+最小命令如下，真实运行前必须确认 `ppu-smi` 中所选卡没有其他计算进程：
+
+```bash
+python3 operation/run.py run --vendor thead --runtime-profile torch210-ppu \
+  --device-ids 6 --case abs --dtype FP32 --workload smoke --allow-candidate-runtime --dry-run
+python3 operation/run.py run --vendor thead --runtime-profile torch210-ppu \
+  --device-ids 6 --case abs --dtype FP32 --workload smoke --allow-candidate-runtime
+```
+
+PPU 镜像为 candidate（`validated:false`），每次 PPU `run` 必须显式带 `--allow-candidate-runtime`。适配器会执行设备身份、输入/模块状态、
+正确性、测量、显存和清理检查；首次/缓存设备路由关联及 Asight 原生计数器接口已实现，
+已有共享条件下的 Docker/local 设备 smoke 及原生计数器采集证据；完整矩阵、
+自动采集链路和性能资格的当前结论以 [PPU 验收记录](../docs/thead/operation.md) 为准，不能据静态回归宣称通过。
+原生指标保留 PPU 的名称和单位，不冒充 Ascend 六组指标。Docker 与 local 首轮+续跑
+各尝试 308 个适用组合，各保留 299 个 partial、9 个 failed；partial 中各有 9 项缓存
+调用路由证据不足，其余仍无共享宿主下的独占资格。数值超差、混合 dtype 拒绝与首次调用
+超时的事实及归因局限见 [失败记录](../docs/thead/validation.md#九个失败的对照实验与归因边界)，
+原失败与重跑记录均保留，不能据此宣称完整认证。
+
 所有命令从 **FlagPerf 仓库根目录** 执行。先选当前获准使用的空闲设备，下面的 `0` 仅为示例；Docker/local 的编号含义见第 2 节。
 Ascend 镜像涉及的特权权限由 `--allow-privileged-root` 显式开启；只在获准使用的主机上运行。
 
@@ -61,6 +83,7 @@ python3 operation/run.py list --case abs
 |---|---|---|---|
 | Ascend 910C / A3 | `ascend` | 不需要 | Docker；准备 CANN 9 / PyTorch 2.10 / Torch-FL 锁定镜像 |
 | 昆仑芯 P800 | `kunlunxin` | **必须带 `p800-xpytorch29`** | Docker；准备 P800 独立锁中的镜像和宿主权限 |
+| 平头哥 PPU-ZW810E | `thead` | **必须带 `torch210-ppu`** | Docker/local；准备 PPU 独立锁中的运行环境，见第 2.6 节 |
 | NVIDIA A100_40_SXM | `nvidia` | 不需要 | Docker；显式指定兼容镜像，宿主支持 Docker `--gpus` |
 | 寒武纪 MLU（旧目录未细分型号） | `cambricon` | 不需要 | local 兼容入口；环境提供 `torch_mlu` 和可用 MLU |
 | 昆仑芯 R300p（旧栈） | `kunlunxin` | 不带 | local 兼容入口；环境提供旧栈 `torch_xmlir` 及其 CUDA 兼容 API |
@@ -69,7 +92,8 @@ python3 operation/run.py list --case abs
 
 `--runtime-profile p800-xpytorch29` 选择 **P800 + XPyTorch 2.9 专用适配器和运行栈配置**，
 包括锁定镜像、包版本及设备初始化规则；它不选择测试规模，也不表示验证通过。
-当前只有 P800 注册了这个显式 profile。Ascend 直接由 `--vendor ascend` 选择专用适配器，不能加这个 P800 profile。
+P800 和 PPU 分别注册 `p800-xpytorch29` 和 `torch210-ppu`；两者不能互换。
+Ascend 直接由 `--vendor ascend` 选择专用适配器，不能加这两个 profile。
 **P800 若省略 profile，会进入旧昆仑芯兼容入口，不能只把 Ascend 示例中的 vendor 改成 kunlunxin。**
 
 | 参数 | 含义 | 默认值 |
@@ -190,7 +214,23 @@ python3 operation/run.py run --vendor metax --execution local --device-ids 0 \
 
 上述兼容入口保留真实失败和不充分的路由证据；给出命令不等于算子、dtype、FlagGems 或性能已经通过硬件验证。
 
-### 2.6 找到本次结果
+### 2.6 平头哥 PPU
+
+先按 [PPU Operation 说明](vendors/thead/README.md) 构建并核对独立镜像；Base 镜像未预装 FlagGems。
+Docker 中 `--device-ids` 指宿主物理卡，local 中指当前环境的可见设备编号。
+
+```bash
+python3 operation/run.py run --vendor thead --runtime-profile torch210-ppu \
+  --device-ids 6 --case abs --dtype FP32 --oplib both --workload smoke --allow-candidate-runtime --dry-run
+python3 operation/run.py run --vendor thead --runtime-profile torch210-ppu \
+  --device-ids 6 --case abs --dtype FP32 --oplib both --workload smoke --allow-candidate-runtime
+```
+
+默认要求可检查全部设备句柄且所选卡空闲；未获授权的系统服务持有者也会拒绝。
+`--allow-shared-device` 仅在已获共享授权时使用，原始持有者会留存，性能资格保持 partial。
+它不会停止外部进程，也不能把共享性能标成独占性能。
+
+### 2.7 找到本次结果
 
 实际执行后终端会打印 `Report:`、`Summary:` 和 `Results:`。打开 `Report:` 指向的 `report.md`，
 先看执行和正确性状态，再看路由与性能。输出默认保存在 `operation/result/operation-<id>/`，
