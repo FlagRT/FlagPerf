@@ -9,7 +9,7 @@
 | PPU 算子最小运行、运行栈准备与验收边界 | [运行入口](../operation/vendors/thead/README.md)、[机制与验收](thead/operation.md)、[失败与归因边界](thead/validation.md#九个失败的对照实验与归因边界) |
 | 基础算力、内存、传输与厂商诊断 | [Base 使用指南](../base/README.md) |
 | 算子正确性、路由、性能与失败诊断 | [Operation 使用指南](../operation/README.md) |
-| 模型输出差异、A100 参考、性能与监控 | [Inference 使用指南](../inference/README.md) |
+| 推理进程观测、性能/通信与数值差分 | [Inference 使用指南](../inference/README.md)、[协作框架 00–12](../inference/docs/README.md) |
 | Ascend 单机双 rank 通信资格验证 | [P2P 协议](ascend/p2p.md) |
 | 适配维护、离线回归与发布检查 | [Ascend 验证](ascend/validation.md)、[P800 验证](kunlunxin/validation.md)、[PPU 验证](thead/validation.md) |
 | 正式功能与文档更新记录 | [变更记录](CHANGELOG.md) |

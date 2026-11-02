@@ -16,11 +16,11 @@
 |---|---|
 | 基础算力、内存、互连及厂商诊断 | [Base 入门](base/README.md) |
 | 一个算子的正确性、性能与失败原因 | [Operation 入门](operation/README.md) |
-| 模型输出差异、整体/逐层性能及组件开关影响 | [Inference 入门](inference/README.md) |
+| 推理进程观测、设备/逐层性能、通信与数值差分 | [Inference 入门](inference/README.md) |
 | 模型训练 | [Training 文档](training/README.md) |
 | 生成式服务评测 | [Generate 文档](docs/generate/generate-case-doc.md) |
 
-当前 Inference 提供 Qwen3-Embedding-0.6B、DeepFM、DLRM、OneRec-8B；被测端支持 Ascend 单卡/单机 TP，NVIDIA A100 用于精度与性能参考采集。具体组合和限制见 Inference 指南。
+当前 Inference 采用 flagprof v2：通过 Python 进程接入 NVIDIA / Ascend profiler，提供封存导入、Store、性能/显存/通信分析与 Oracle 数值差分；内置 Hugging Face embedding/generation runner，支持登记范围内的单机双 rank。使用方式和范围见 [Inference 指南](inference/README.md)，协作框架见 [00–12 文档导航](inference/docs/README.md)。
 Base、Operation、Inference 的当前单机入口不要求 SSH。先阅读所选模块的环境准备，再执行其最小示例。
 昆仑芯 P800 的基础能力见 [Base/Toolkit 指南](docs/kunlunxin/README.md)，算子精度与性能见 [P800 Operation](operation/vendors/kunlunxin/README.md)。
 平头哥 PPU 的基础能力见 [PPU 适配指南](docs/thead/README.md)，算子入口、运行栈准备及待验收边界见 [PPU Operation](operation/vendors/thead/README.md)。
@@ -44,7 +44,7 @@ Base、Operation、Inference 的当前单机入口不要求 SSH。先阅读所�
 
    **在训练任务场景中**，除了支持 PyTorch、TensorFlow，FlagPerf 还在积极与 PaddlePaddle、MindSpore 研发团队密切配合。作为国产训练框架的领军者，百度 Paddle团队、华为昇思MindSpore 团队正在将 Llama、GPT3 等明星模型集成至 FlagPerf 测试样例集。
 
-   **在推理任务场景中**，当前 Inference 使用 PyTorch/Transformers eager，提供模型输出与模块输出比较、整体性能及 FlagGems/FlagTree/FlagCX 组件比较。原编译引擎案例见 [旧版恢复说明](docs/inference/migration.md)。
+   **在推理任务场景中**，当前 Inference 使用独立的 flagprof 观测框架，将主机探针和厂商官方 profiler 数据关联后生成报告。旧四模型评测和编译引擎案例见 [旧版恢复说明](inference/docs/migration.md)。
 
 4. **支持多测试环境，综合考察单卡、单机、多机性能**
 
@@ -302,11 +302,10 @@ P800 Operation 独立运行栈保持 `validated:false`，不沿用 Base 的 `val
 
 | 模型 | 执行方式 | 主要能力 | 入口 |
 |---|---|---|---|
-| Qwen3-Embedding-0.6B | PyTorch/Transformers eager | 模型/模块精度、整体与逐层性能、TP 通信采样、组件比较、报告筛选与图导出 | [Inference](inference/README.md) |
-| DeepFM / DLRM | PyTorch eager、封存合成资产 | 模型/模块差分、single/TP2 性能、A100 比较、FX 图导出；不提供 CTR/AUC | [模型准备](docs/inference/models.md) |
-| OneRec-8B | PyTorch/Transformers eager | 生成前缀精度、prefill/decode/完整生成性能、single/TP2、A100 比较 | [模型准备](docs/inference/models.md) |
+| 被测 Python 推理程序 | PyTorch 与厂商官方 profiler | 采集、封存导入、设备/主机/通信/显存分析 | [Inference](inference/README.md) |
+| Hugging Face embedding / generation | 本地模型与匹配的 Transformers 运行环境 | 内置 runner、数值差分、登记范围内的单机双 rank | [使用说明](inference/docs/usage.md) |
 
-支持与限制以 [能力清单](inference/support.json) 为准；旧模型和编译引擎不属于当前支持范围。
+支持与限制以 [当前能力](inference/README.md#当前能力) 为准；旧四模型评测入口通过 [历史版本](inference/docs/migration.md) 恢复。
 
 ## 如何使用FlagPerf进行AI硬件评测
 
@@ -399,8 +398,8 @@ nvidia_monitor.log  rank1.out.log    rank4.out.log  rank7.out.log
 
 ### 推理评测启动说明
 
-按 [Inference 入门](inference/README.md) 准备兼容镜像和本地权重，先运行原生路径，再进行组件比较。
-配置、TP、preview 续探和结果含义均从该入口下钻。旧版启动方式见 [迁移说明](docs/inference/migration.md)。
+按 [Inference 入门](inference/README.md) 准备设备环境与被测程序，先完成采集、导入和报告的最小闭环。
+进程接入、单机双 rank、数值诊断与结果含义见 [使用说明](inference/docs/usage.md)。旧版启动方式见 [迁移说明](inference/docs/migration.md)。
 
 ### 生成式推理评测启动说明
 

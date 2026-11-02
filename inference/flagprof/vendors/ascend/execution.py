@@ -1,0 +1,9 @@
+"""NPU worker setup, imported only inside an executing worker."""
+
+
+def initialize(rank):
+    import torch
+    import torch_npu
+    device = 'npu:' + str(rank)
+    torch.npu.set_device(device)
+    return device
