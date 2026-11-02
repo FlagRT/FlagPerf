@@ -5,13 +5,8 @@
 __pycache__/
 .pytest_cache
 .runtime/
-.venv-inference/
 training/result/*
-inference/result/*
-inference/runtime_assets/
-inference/config/local.yaml
 base/result/*
 operation/result/*
 operation/Note.md
-inference/onnxs/*
 base/vendors/kunlunxin/xpytorch_2.9_p800_candidate/evidence/

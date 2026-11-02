@@ -4,6 +4,3 @@ __pycache__/
 build/
 dist/
 .venv/
-result/
-runtime_assets/
-config/local*.yaml

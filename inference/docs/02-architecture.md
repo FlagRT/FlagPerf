@@ -1,8 +1,8 @@
-> 本文从 v2 设计工作区迁入，保留设计、阶段裁决与历史状态。当前代码入口及两人协作方式见 [文档导航](README.md)，可执行命令见 [使用说明](usage.md)。未发布的本地实验与任务书链接转入 [历史引用索引](history-references.md)，其出处保留。
+> 本文从 v2 设计工作区迁入，保留设计、阶段裁决与历史状态。当前代码入口及两人协作方式见 [文档导航](README.md)，可执行命令见 [使用说明](usage.md)。未发布的本地实验与任务书链接转入 [历史引用索引](history/history-references.md)，其出处保留。
 
 # 02 总体架构
 
-> 上游：[00 需求](00-requirements.md)、[01 诊断](01-diagnosis.md)、[DECISIONS](DECISIONS.md) D1–D5、D22–D24
+> 上游：[00 需求](00-requirements.md)、[01 诊断](history/01-diagnosis.md)、[DECISIONS](DECISIONS.md) D1–D5、D22–D24
 > 下游：[03 schema](03-event-schema.md)、[04 关联](04-correlation.md)、[05 探针](05-probes-and-vendors.md)、[06 模型接入](06-model-onboarding.md)、[07 分析器](07-analyzers-and-reports.md)、[08 在线/故障](08-online-and-fault.md)、[09 CLI](09-cli-and-campaign.md)
 
 ## 1. 设计原则
@@ -10,11 +10,11 @@
 | # | 原则 | 针对的 v1 问题 / 需求 |
 |---|---|---|
 | P1 | **契约是唯一不可替换的资产**。契约 = 规范事件 schema + 来源身份 + 版本化派生证据（原生关系、来源账本、证据索引）+ 公共只读接口。探针、分析器、报告都可替换，契约冻结后只做兼容演进（2026-10-15 按 [D23](DECISIONS.md#d23--原生关系作为一等证据与项目绑定分立)、[D24](DECISIONS.md#d24--导入契约身份分层来源账本完成标记证据索引) 的落地结果改写，原文为「schema 是唯一不可替换的资产」） | nsys 的经验：采集与分析之间有一份公开、带版本、自描述的契约，两侧各自换代只需遵守它的当前版本（[D1](DECISIONS.md#d1--参照-nsys-的schema-即产品但扩展为三合一)；原写「`.nsys-rep` 的表没变」是事实错误，2026-10-14 补改） |
-| P2 | **探针挂进程，不挂模型**。任何探针都不得 import 模型相关代码 | [01 §2.2](01-diagnosis.md)；R92–R97 的 500 模型 |
-| P3 | **分析是 store 上的纯函数**。分析器只经 store 的公共只读接口读取（事件 + 版本化只读元数据与派生视图），不直接读运行目录里的文件、不读 `ext`、不解析厂商原件（[D23](DECISIONS.md#d23--原生关系作为一等证据与项目绑定分立)） | [01 §2.3](01-diagnosis.md) |
+| P2 | **探针挂进程，不挂模型**。任何探针都不得 import 模型相关代码 | [01 §2.2](history/01-diagnosis.md)；R92–R97 的 500 模型 |
+| P3 | **分析是 store 上的纯函数**。分析器只经 store 的公共只读接口读取（事件 + 版本化只读元数据与派生视图），不直接读运行目录里的文件、不读 `ext`、不解析厂商原件（[D23](DECISIONS.md#d23--原生关系作为一等证据与项目绑定分立)） | [01 §2.3](history/01-diagnosis.md) |
 | P4 | **语义可选、逐级增强**。没有任何模型配置时也必须产出有用结果（Tier 0） | 500 模型接入成本 |
 | P5 | **关联靠 id，不靠时间**。关联不上就如实标注，覆盖率对用户可见 | v1 原则继承；N6 可审计 |
-| P6 | **厂商差异只在 `vendors/<v>/`**。schema、关联规则框架、分析器以及 `vendors/` 下的公共模块中，不出现厂商名分支或厂商类型字符串；厂商分类表带版本号，由 `vendors/<v>/` 注入（[D25](DECISIONS.md#d25--冻结语义与输出不冻结厂商分类表)）。[T8.1](history-references.md#ref-5fcd4691137d) 已把这些白名单移入 `vendors/<v>/format.py`，经 `SourceFormat` 注入，CI 以字面量检索断言保证；格式指纹须覆盖全部注入钩子（[D27](DECISIONS.md#d27--格式解释的身份覆盖全部钩子兼容验收到连接键)） | 5 家厂商 |
+| P6 | **厂商差异只在 `vendors/<v>/`**。schema、关联规则框架、分析器以及 `vendors/` 下的公共模块中，不出现厂商名分支或厂商类型字符串；厂商分类表带版本号，由 `vendors/<v>/` 注入（[D25](DECISIONS.md#d25--冻结语义与输出不冻结厂商分类表)）。[T8.1](history/history-references.md#ref-5fcd4691137d) 已把这些白名单移入 `vendors/<v>/format.py`，经 `SourceFormat` 注入，CI 以字面量检索断言保证；格式指纹须覆盖全部注入钩子（[D27](DECISIONS.md#d27--格式解释的身份覆盖全部钩子兼容验收到连接键)） | 5 家厂商 |
 | P7 | **观察（attach）与实验（seal）并存不合并**。两者共享全部探针与 schema，只在"输入与环境是否被封存校验"上不同 | D2 |
 | P8 | **设备采集复用官方 profiler，不自研、不 fork**。工具负责会话（谁启停、采哪个窗口、产物是否有效）与采集之后的读取、关联、记账 | 5 厂商 × 版本矩阵；[D22](DECISIONS.md#d22--采集层复用官方-profiler不做源码级融合) |
 
@@ -54,7 +54,7 @@
 
 Reader 默认 retain=True 保持快照；retain=False 的 stream 逐条交付普通在线事件，生成器耗尽后更新 report。提前关闭保留进度，同一 Reader 只允许一个活动 stream。T9.6 消除了登记画像下普通在线事件的全量常驻；随后 D33 将完整 B 链路的导入、finalize、默认 inspect 与设备分页/迭代接入有界路径，工作区显式准入实际 ext4。
 
-T9.6 的 M1/M2 三次峰值均低于 128 MiB，见 [验收](history-references.md#ref-318933687dbe)，该数字绑定当时的读取画像。显式列表 API、原生关系整读、签名/控制状态及 compact 仍有随规模增长的部分。T10.2 已按 D48 为分析与报告交付有界读取、磁盘索引与流式导出，见 [P1 交接](history-references.md#ref-f4f11a91c40b)。T12.2 合并重复 prepare 工作，T12.3 合并校验遍历并通过 Store 外的身份绑定凭据复用成功校验；文件或校验器身份变化时重验，Reader 仍校验实际事件分片，见 [读取复用](history-references.md#ref-4921dede4be3)。P0 的退出结论沿用 [D45](DECISIONS.md#d45)。
+T9.6 的 M1/M2 三次峰值均低于 128 MiB，见 [验收](history/history-references.md#ref-318933687dbe)，该数字绑定当时的读取画像。显式列表 API、原生关系整读、签名/控制状态及 compact 仍有随规模增长的部分。T10.2 已按 D48 为分析与报告交付有界读取、磁盘索引与流式导出，见 [P1 交接](history/history-references.md#ref-f4f11a91c40b)。T12.2 合并重复 prepare 工作，T12.3 合并校验遍历并通过 Store 外的身份绑定凭据复用成功校验；文件或校验器身份变化时重验，Reader 仍校验实际事件分片，见 [读取复用](history/history-references.md#ref-4921dede4be3)。P0 的退出结论沿用 [D45](DECISIONS.md#d45)。
 
 ## 3. 目标接入：attach / wrap / launch
 
@@ -64,9 +64,9 @@ T9.6 的 M1/M2 三次峰值均低于 128 MiB，见 [验收](history-references.m
 | wrap | `flagprof record --store <dir> --vendor <id> -- python serve.py ...` | 默认 final 由目标包装入口调用 attach；显式 windowed 使用 sitecustomize/bootstrap。自动接入限 wrapper 直接启动的 Python 目标（D32 已确认） | 用户推理脚本；多进程接入方案在 P5 |
 | runner | `flagprof record ... -- python -m flagprof.runner hf:<dir> --task embedding` | 已实现 HF embedding 运行器，在预热前登记根模型；独立 runner 支持无探针执行及组件开关 | 登记的单模型场景；generate 待接入，批量调度在 P5 |
 
-> **当前实现（2026-10-30）**：默认 final 在关闭时导出，目标无需调用 `step()`；显式 windowed 保留。`record-config.json` 向 final 目标传入生效配置，runner 与普通脚本共用 attachment。module／dispatch／route／compile 以及 P4 tensor 采集已交付；`perf`／`perf-lite` 默认不启用逐调用 dispatch，精确项目调用连接可显式选择 `each-window`。具体默认值与参数见 [P1 使用说明](history-references.md#ref-0a9e456a7414) 和 [设备／显存／replay 使用说明](history-references.md#ref-5ef59ff0c610)。自动接入范围仍遵循 D32 的直接 Python 目标。
+> **当前实现（2026-10-30）**：默认 final 在关闭时导出，目标无需调用 `step()`；显式 windowed 保留。`record-config.json` 向 final 目标传入生效配置，runner 与普通脚本共用 attachment。module／dispatch／route／compile 以及 P4 tensor 采集已交付；`perf`／`perf-lite` 默认不启用逐调用 dispatch，精确项目调用连接可显式选择 `each-window`。具体默认值与参数见 [P1 使用说明](history/history-references.md#ref-0a9e456a7414) 和 [设备／显存／replay 使用说明](history/history-references.md#ref-5ef59ff0c610)。自动接入范围仍遵循 D32 的直接 Python 目标。
 >
-> 官方显存通过显式 `--profile-memory` 启用；分析侧经公共 StoreView 读取设备与显存证据。replay 通过冻结输入包产生新的标准 Store，再与独立性能 run 按精确签名连接。导入与查询使用 ext4；D52 的 A100 独立 overlay 采集例外须显式 `--capture-only --capture-filesystem overlay`，传输校验后仍在 ext4 消费。工程验收与 P2／P4 阶段状态见 [联合交付](history-references.md#ref-9596bcfb2a96)。
+> 官方显存通过显式 `--profile-memory` 启用；分析侧经公共 StoreView 读取设备与显存证据。replay 通过冻结输入包产生新的标准 Store，再与独立性能 run 按精确签名连接。导入与查询使用 ext4；D52 的 A100 独立 overlay 采集例外须显式 `--capture-only --capture-filesystem overlay`，传输校验后仍在 ext4 消费。工程验收与 P2／P4 阶段状态见 [联合交付](history/history-references.md#ref-9596bcfb2a96)。
 
 <details>
 <summary>2026-10-27 P1 实施前的实现快照（原文）</summary>
@@ -81,7 +81,7 @@ T9.6 的 M1/M2 三次峰值均低于 128 MiB，见 [验收](history-references.m
 
 </details>
 
-**P1 接入机制（已实现）**：runner 与普通脚本共用 attachment。runner 在模型准备完成后显式 `register_model`；普通脚本由 module 调用入口惰性发现。根前向计数独立于 user scope，并固定在各线程/Task 的根帧上；组件启停与探针观察分开。具体契约与反例见 [T10.1 §3](history-references.md#ref-ccef0d040b8c)。登记的 HF embedding 已完成 P1 验收，批量模型与服务引擎接入按 P5 排期。
+**P1 接入机制（已实现）**：runner 与普通脚本共用 attachment。runner 在模型准备完成后显式 `register_model`；普通脚本由 module 调用入口惰性发现。根前向计数独立于 user scope，并固定在各线程/Task 的根帧上；组件启停与探针观察分开。具体契约与反例见 [T10.1 §3](history/history-references.md#ref-ccef0d040b8c)。登记的 HF embedding 已完成 P1 验收，批量模型与服务引擎接入按 P5 排期。
 
 `flagprof` 为暂定包名，见 [DECISIONS](DECISIONS.md) Q1。
 
@@ -136,30 +136,41 @@ seal 不是第二套代码路径：它 = observe + input recipe + 身份校验 +
 
 ## 6. 目录布局
 
+当前 `FlagPerf/inference` 的实际结构（2026-11-02）：
+
 ```text
-inference_v2/
-  docs/PLAN/          本设计文档集
-  flagprof/           主包（暂定名）
-    store/            schema.py  writer.py  reader.py  manifest.py  compact.py  view.py（公共只读接口，D23）
-    correlate/        context.py（TLS corr/scope；当前实现：在 flagprof/context.py）  linker.py（项目归属）  native.py（原生关系，D23）  coverage.py
-    probes/           dispatch.py module.py route.py compile.py comm.py tensor.py counter.py health.py
-    vendors/          base.py  session.py  import_common.py  ascend/  nvidia/
-                      （厂商适配：官方 profiler 会话、trace 导入器与来源账本、项目/原生关联规则、遥测）
-    semantics/        profile.py（Tier-1 YAML）  plugin.py（Tier-2 接口）  inputs.py（input recipe）
-    runner/           launch.py（内置运行器）  inject/sitecustomize.py（当前实现：flagprof/_bootstrap.py，由 record 的临时 sitecustomize 调用）  seal.py
-    analyzers/        perf.py route.py layer.py oracle.py comm.py memory.py fault.py coverage.py
-    report/           shell.py  panels/
-    campaign/         matrix.py  index.py  scheduler.py
-    online/           supervisor.py  rules.py  responder.py
-    registry/         probes/ analyzers/ vendors/ components/   （descriptor JSON；设计目标，当前实现：flagprof/registry.py，BUILTINS + --plugins，见 05 §5）
-    cli.py
-  profiles/           <model>.yaml   Tier-1 模型声明
-  plugins/            <model>/       Tier-2 插件
-  spikes/             一次性验证代码（不进入主包），首个为 cann_correlation/
-  tests/
+inference/
+  run.py  pyproject.toml   统一脚本入口与安装元数据（console script: flagprof）
+  docs/                    本文档集；history/ 存放解释由来的历史资料
+  tests/                   CPU 冒烟测试（无设备、无 torch）
+  flagprof/
+    cli.py  __main__.py    命令入口（record/launch/import/inspect/page/seal/analyse/report/replay/delivery）
+    record.py  runtime.py  launch.py  _bootstrap.py  _import_worker.py
+                           进程接入（record 注入、attach、两 rank launch）与生命周期
+    context.py             TLS corr/scope
+    registry.py            内置组件描述符 BUILTINS 与 --plugins（05 §5）
+    replay.py  tensor_data.py  devices.py  delivery.py
+                           算子重放、张量数据、设备身份、证据归档
+    probes/                manager base config dispatch modules route compile communication tensor user argtree
+    components/            flaggems
+    vendors/               session final_session prepare format fingerprint chrome inventory logs evidence disposition
+                           import_common native_common rules_common contracts legacy_fixture
+      ascend/  nvidia/     session importer format native_rules rules disposition evidence memory execution analysis
+                           contracts/*.json（格式契约与 revisions.lock）；ascend/registry.json
+    offline/               封存、Plan B 导入流水线、检查点、校验缓存、时钟桥接、设备分析派生（含 README）
+    correlate/             linker（项目归属） native（原生关系，D23） coverage
+    store/                 schema writer reader view（公共只读接口，D23） manifest compact lineage evidence status
+                           captures analysis_read native_read proxy 及 _online/_offline writer、_proxy_* 内部模块
+    analyzers/             core（perf.op/perf.layer/route.coverage/compile.health） device gap memory generation
+                           oracle forwards perf_links workspace
+    report/                单 run / oracle / compare 报告（__init__） group（多 rank 组报告）
+    runner/                内置运行器：fixed generate onerec parallel（python -m flagprof.runner）
+    tools/                 op_kinds（在运行环境生成算子类别表）
 ```
 
-依赖方向：`cli → runner/campaign/online → probes/vendors → correlate → store`；`report → analyzers → store`。`analyzers/`、`report/`、`store/` 三个子包必须在无 torch 环境中可导入。
+设计中规划、当前尚未建立的目录：`semantics/`（Tier-1/2 模型声明，见 06）与 `campaign/`（批量编排，见 09）属于 P5；`online/`（在线监督与响应，见 08）属于 P3；`profiles/`、`plugins/` 随 06 的 Tier-1/2 接入建立。一次性验证代码和完整回归套件保存在维护者的私有开发目录，不进入本目录。
+
+依赖方向：`cli → record/launch/runtime/runner → probes/vendors → correlate → store`；`report → analyzers → store`。`analyzers/`、`report/`、`store/` 三个子包必须在无 torch 环境中可导入（由 `tests/test_smoke.py` 检查）。
 
 ## 7. 模型接入阶梯（概要）
 
@@ -185,7 +196,7 @@ inference_v2/
 
 | 风险 | 影响 | 应对 |
 |---|---|---|
-| CANN 上算子级 host→device 关联可能不可行（尤其 FlagGems 的 Triton kernel） | R53 的"关联 Backend"降级为 layer 级 | 已做 [Spike-C](11-spike-cann-correlation.md)，结论决定 [04](04-correlation.md) 与 [03](03-event-schema.md) 的冻结内容。**2026-10-15 更新**：已验证场景下可行——历史 eager 样本与 T8 新采集（T8.2 之后）两种主线设备都能逐调用原生归属。FlagGems Triton kernel 的项目归属仍待 P1/P2 |
+| CANN 上算子级 host→device 关联可能不可行（尤其 FlagGems 的 Triton kernel） | R53 的"关联 Backend"降级为 layer 级 | 已做 [Spike-C](history/11-spike-cann-correlation.md)，结论决定 [04](04-correlation.md) 与 [03](03-event-schema.md) 的冻结内容。**2026-10-15 更新**：已验证场景下可行——历史 eager 样本与 T8 新采集（T8.2 之后）两种主线设备都能逐调用原生归属。FlagGems Triton kernel 的项目归属仍待 P1/P2 |
 | 厂商格式或采集配置变化让解释静默失效（T8 分类、T8.1 默认值、T8.2 主机身份三次出现） | 数据进来了，某个结论静默为 0，或设备分母 R 自己缩小，导入仍是 `complete` | 格式指纹覆盖全部钩子（[D27](DECISIONS.md#d27--格式解释的身份覆盖全部钩子兼容验收到连接键)）；采集配置显式化、格式契约与导入适用性判定、轨道角色审计（[D28](DECISIONS.md#d28--格式适用范围显式化采集配置入身份导入判定适用性静默失败转显式)，T8.3）；与关联可行性分开看待 |
 | Python dispatch 探针开销大（生成式模型每 token 数千次 aten 调用） | 性能数字失真 | perf 场景改用官方 profiler 自带的算子记录，`dispatch(each)` 按需开启（[D22](DECISIONS.md#d22--采集层复用官方-profiler不做源码级融合)）；探针分级（`summary`/`each`）；开销实测写入报告，见 [05 §2.1](05-probes-and-vendors.md) |
 | 官方 profiler 自身开销不可忽略（2026-10 实验：同步前向 +36% 到 +116%） | 诊断采集的计时不代表无 profiler 时的性能 | 性能基准 run 与诊断采集分开；诊断按窗口采集；开销按采集配置实测登记，不跨 workload 外推（[D14](DECISIONS.md#d14--扰动按指标类分流不是整份-run-的布尔标签)、D22） |

@@ -61,6 +61,7 @@ P0/P1/P2/P4 的历史退出以 [决策记录](docs/DECISIONS.md) 中登记的范
 | `flagprof/offline/`、`correlate/` | 封存导入、可恢复检查点、关联与派生证据 |
 | `flagprof/store/` | schema、Writer、Reader、只读 StoreView 与完整性校验 |
 | `flagprof/analyzers/`、`report/` | 有界分析、数值差分及离线报告 |
-| `docs/00-*.md` 至 `docs/12-*.md` | 需求、总体框架、接口契约与阶段计划 |
+| `docs/` | 需求、总体框架、接口契约、阶段计划与决策记录；`docs/history/` 为历史资料 |
+| `tests/` | CPU 冒烟测试（无设备、无 torch），PR 时由 GitHub Actions 运行 |
 
-测试、实验原件和验证记录由本地开发仓库保留。本目录的运行代码可独立使用，不依赖相邻开发仓库。
+本目录的运行代码可独立使用，不依赖其他仓库。设备上的验收方式见 [设备最小验收](docs/usage.md#设备最小验收)。

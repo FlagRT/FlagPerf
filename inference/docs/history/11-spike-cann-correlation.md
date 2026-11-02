@@ -1,10 +1,10 @@
-> 本文从 v2 设计工作区迁入，保留设计、阶段裁决与历史状态。当前代码入口及两人协作方式见 [文档导航](README.md)，可执行命令见 [使用说明](usage.md)。未发布的本地实验与任务书链接转入 [历史引用索引](history-references.md)，其出处保留。
+> 本文从 v2 设计工作区迁入，保留设计、阶段裁决与历史状态。当前代码入口及两人协作方式见 [文档导航](../README.md)，可执行命令见 [使用说明](../usage.md)。未发布的本地实验与任务书链接转入 [历史引用索引](history-references.md)，其出处保留。
 
 # 11 Spike-C：CANN 算子级关联验证
 
-> 状态：**partial：单卡与 A100 完成，TP2 HCCL/FlagCX 18 次完成、8 卡暂缓、schema 待确认**；[报告与证据](history-references.md#ref-e1bd695b52c5)。是 [10 阶段计划](10-roadmap.md) 的 S1，**早于一切主包代码**
+> 状态：**partial：单卡与 A100 完成，TP2 HCCL/FlagCX 18 次完成、8 卡暂缓、schema 待确认**；[报告与证据](history-references.md#ref-e1bd695b52c5)。是 [10 阶段计划](../10-roadmap.md) 的 S1，**早于一切主包代码**
 > 回答的问题：在腾昇 + CANN 9.0 上，一次 ATen 算子调用能否唯一地关联到它触发的设备 kernel？**尤其是 FlagGems 经 Triton 生成的 kernel。**
-> 结论的去向：[04 §3.3](04-correlation.md) 的规则表、[04 §6](04-correlation.md) 的降级级别、[05 §4.1](05-probes-and-vendors.md) 的 `host_device_link` 能力值、[03](03-event-schema.md) 的 `ext` 键集合与冻结
+> 结论的去向：[04 §3.3](../04-correlation.md) 的规则表、[04 §6](../04-correlation.md) 的降级级别、[05 §4.1](../05-probes-and-vendors.md) 的 `host_device_link` 能力值、[03](../03-event-schema.md) 的 `ext` 键集合与冻结
 
 ## 1. 为什么必须先做这件事
 
@@ -12,7 +12,7 @@ R53 要求"关联图节点、**Backend** 和运行时状态定位瓶颈"。如�
 
 - 无法回答"FlagGems 的这个算子实现在腾昇上比 aten 快还是慢"；
 - 无法把设备耗时归因到层；
-- 给 FlagGems 开发组的 `op_perf.jsonl`（[07 §4](07-analyzers-and-reports.md)）就只能是空的或聚合的。
+- 给 FlagGems 开发组的 `op_perf.jsonl`（[07 §4](../07-analyzers-and-reports.md)）就只能是空的或聚合的。
 
 v1 只验证到**模块级**（`vendors/ascend/trace.py:attribute` 用 flow 端点与 `Node@launch` 的 `connection_id` 把设备事件归到主机线程的 scope 区间），且 HCCL 通信链路已验证（`implementation_3.md §4`）。**算子级、尤其是 Triton kernel 的路径从未验证过。** 如果在冻结 schema 之后才发现做不到，`kernel.link`、`ext` 键、分析器的归因口径都要返工。
 
@@ -34,7 +34,7 @@ v1 只验证到**模块级**（`vendors/ascend/trace.py:attribute` 用 flow 端�
 
 两段同时闭合且三次重复稳定 → **级别 A**；仅后段闭合 → **级别 B+**；两段均不闭合但 H-F（kname）成立 → **级别 B**；均不成立 → **级别 C**。
 
-> **原判据"H-A/H-B/H-C 任一成立即 A 级"已作废。** H-A/H-B 只闭合后段，H-C 只闭合前段，任一单独成立都推不出逐调用归因。级别按两段分别记录，见 [04 §6](04-correlation.md)。
+> **原判据"H-A/H-B/H-C 任一成立即 A 级"已作废。** H-A/H-B 只闭合后段，H-C 只闭合前段，任一单独成立都推不出逐调用归因。级别按两段分别记录，见 [04 §6](../04-correlation.md)。
 
 ## 3. 环境
 
@@ -112,7 +112,7 @@ v1 强制 `TASK_QUEUE_ENABLE=0`，这是一个**重大限制**：它改变了被
 
 - 单卡多流：构造并发的算子流（多个 Python 线程或显式多 stream），检查 `connection_id` 是否跨流冲突；
 - 多卡：2 卡与 8 卡的 TP 场景，加入 HCCL 通信，检查 `connection_id` 的唯一性范围是进程内、设备内还是全局；
-- 同时验证 [04 §3.5](04-correlation.md) 的 `(group, group_seq)` 跨 rank 对齐在真实 HCCL trace 上可还原（v1 已验证 marker→Enqueue/Dequeue→`Node@launch`→`connection_id` 链路，这里是复核 + 扩展到 FlagCX）。
+- 同时验证 [04 §3.5](../04-correlation.md) 的 `(group, group_seq)` 跨 rank 对齐在真实 HCCL trace 上可还原（v1 已验证 marker→Enqueue/Dequeue→`Node@launch`→`connection_id` 链路，这里是复核 + 扩展到 FlagCX）。
 
 ### 5.6 E6：NVIDIA 基线
 
@@ -145,7 +145,7 @@ codex 完成 S1 时交付以下内容，放在 `FlagPerf_advance/inference_v2/sp
 | `run_e1.py` … `run_e6.py` | 各实验的可重跑脚本，参数化（`TASK_QUEUE_ENABLE`、FlagGems 开关、模型、卡数） |
 | `parse_trace.py` | trace 解析与统计脚本，输出 §5.2 的统计表 |
 | `data/<exp>-<config>/` | 每组实验的原始 trace（或其最小可复现子集）+ 统计 CSV |
-| `fixtures/` | 挑选出的**真实 trace 片段**，供 P2 的 linker 单元测试直接使用（[04 §7](04-correlation.md) 要求用真实片段而非人造数据） |
+| `fixtures/` | 挑选出的**真实 trace 片段**，供 P2 的 linker 单元测试直接使用（[04 §7](../04-correlation.md) 要求用真实片段而非人造数据） |
 | `env.json` | 全部环境身份信息 |
 
 ## 8. REPORT.md 必须回答的问题
@@ -159,15 +159,15 @@ codex 完成 S1 时交付以下内容，放在 `FlagPerf_advance/inference_v2/sp
 5. 推荐的关联规则有哪几条？优先级？每条的 `via` id、输入字段、判定逻辑、已知失效条件？
 6. `TASK_QUEUE_ENABLE=1` 下能否工作？若不能，失效的确切环节在哪？是否有 workaround（如在入队点传递 corr）？若无，我们是否必须把"要求 `=0`"写成工具的硬性前提并在报告中向用户声明这一偏差？
 7. 多流/多卡下 `connection_id` 的唯一性范围？
-8. [03 §5](03-event-schema.md) 的 `ext` 应包含哪些 `cann.*` 键？
+8. [03 §5](../03-event-schema.md) 的 `ext` 应包含哪些 `cann.*` 键？
 9. `kernel.link` 的 `status` 判定在实测中的分布（linked/ambiguous/unlinked 各占多少，按时间加权）？
 10. 与 NVIDIA 基线相比，差距在哪？哪些差距是机制性的、哪些是我们方法可改进的？
-11. 对 [03](03-event-schema.md) 和 [04](04-correlation.md) 的**具体修改建议**（哪一节、改成什么）。
+11. 对 [03](../03-event-schema.md) 和 [04](../04-correlation.md) 的**具体修改建议**（哪一节、改成什么）。
 12. 有没有发现任何**当前设计未考虑**的情况？（这一条最容易被忽略，但往往最有价值）
 
 ## 9. 完成判据
 
 - §8 的 12 个问题全部有数据支撑的回答；
 - `fixtures/` 中的真实片段可被独立使用；
-- [04](04-correlation.md) 与 [03](03-event-schema.md) 完成回填，[DECISIONS](DECISIONS.md) 新增一条记录 schema 冻结；
-- 结论在 [10 §9](10-roadmap.md) 的状态表中登记。
+- [04](../04-correlation.md) 与 [03](../03-event-schema.md) 完成回填，[DECISIONS](../DECISIONS.md) 新增一条记录 schema 冻结；
+- 结论在 [10 §9](../10-roadmap.md) 的状态表中登记。

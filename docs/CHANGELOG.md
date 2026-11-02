@@ -1,5 +1,12 @@
 # 适配与文档变更记录
 
+## 2026-11-02 — Inference 迁移后整理
+
+- 新增 `inference/tests` CPU 冒烟测试（无 torch 导入检查；假厂商插件走通 record → import → inspect → report）及 `inference-smoke` GitHub Actions（Python 3.9 / 3.11）。
+- 删除 `docs/inference` 下 13 个跳转页，入口改指 `inference/README.md` 与 `inference/docs`；修正 Ascend 指南中的 v1 Inference 命令。
+- `inference/docs` 分为框架文档与 `history/`；02 §6 改为实际目录结构；migration 增加 v1 未实现项，来源改为逐字节对应的开发仓库提交；usage 增加设备最小验收与冒烟测试。
+- `delivery publish` 不再要求特定文件系统；源码增加许可证头；清理 `.gitignore` 中的 v1 条目。
+
 ## 2026-11-02 — Inference 迁入 flagprof v2
 
 - 以进程探针、厂商采集、封存导入、Store、分析器和报告替换旧模型评测入口；增加脚本与可安装 CLI 入口。
