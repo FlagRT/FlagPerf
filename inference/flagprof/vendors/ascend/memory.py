@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Official torch_npu CSV memory fields, measured in binary MB/KB by the SDK."""
 import csv
 from decimal import Decimal

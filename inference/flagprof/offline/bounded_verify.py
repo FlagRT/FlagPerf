@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Independent bounded import validation, with production Reader.stream.
 
 Large JSON documents are parsed into a bounded-cache SQLite tree. This avoids

@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Front-door budgets for optional bounded import and views."""
 from pathlib import Path
 import json

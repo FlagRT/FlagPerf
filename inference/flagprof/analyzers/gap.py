@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Interval occupancy on one explicitly sourced clock and window at a time."""
 import math
 import json

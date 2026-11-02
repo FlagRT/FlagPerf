@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Exact per-side accuracy/performance links; layouts stay in the frozen sid."""
 import json
 from pathlib import Path

@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Bounded validation plans, derived from the reviewed B2X mechanism.
 
 Values are checked on every call. Unusual shapes (including link) use the

@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Thin recorded CUDA import; launch/correlation data remains raw evidence."""
 
 from __future__ import annotations

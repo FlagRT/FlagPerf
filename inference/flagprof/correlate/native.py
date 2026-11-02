@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Native ownership over source identities, independent of project corr.
 
 Vendor adapters supply already prepared host/direct rules and node classes.

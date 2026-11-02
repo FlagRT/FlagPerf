@@ -1,6 +1,6 @@
 # 使用 flagprof
 
-命令从 `FlagPerf/inference` 执行，先设置 `PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"`。`python -m flagprof --help` 是当前已实现命令的入口；00–12 文档同时包含设计方案和历史阶段记录。
+命令从 `FlagPerf/inference` 执行，先设置 `PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"`。`python -m flagprof --help` 是当前已实现命令的入口；编号框架文档同时包含设计方案和历史阶段记录。
 
 ## 准备输出目录
 
@@ -89,3 +89,51 @@ python3 -B -S -m flagprof replay prepare \
 ```
 
 算子重放需要两侧完整张量 blob，生成包后在相应设备环境执行 `replay run --side ref|cmp --device ... --store ...`。输出误差、传播误差和 replay 新引入误差按各自证据读取。详细契约见 [分析器与报告](07-analyzers-and-reports.md)。
+
+## 设备最小验收
+
+改动涉及采集、厂商适配、导入或报告口径时，在对应设备环境运行一次最小样本全流程，并在 PR 中附上命令、被测 commit 与下列检查结果。以下用两条输入、batch 1 的 embedding 样本：
+
+```bash
+printf '%s\n' '"FlagPerf inference sample one."' '"FlagPerf inference sample two."' \
+  > "$FP_WORKSPACE/accept-inputs.jsonl"
+python3 -B -m flagprof record \
+  --vendor ascend --preset perf \
+  --store "$FP_WORKSPACE/accept" --work "$FP_WORKSPACE/accept-work" \
+  --scratch "$FP_WORKSPACE/scratch" \
+  -- python3 -m flagprof.runner hf:/absolute/path/to/Qwen3-Embedding-0.6B \
+     --inputs "$FP_WORKSPACE/accept-inputs.jsonl" --batch-size 1 \
+     --device npu:0 --dtype bfloat16 --outputs "$FP_WORKSPACE/accept-runner"
+```
+
+NVIDIA 环境把 `--vendor ascend` 换成 `--vendor nvidia`，`--device npu:0` 换成 `--device cuda:0`。将 record 输出中的 `run` 写入 `FP_RUN` 后读取并生成报告：
+
+```bash
+python3 -B -S -m flagprof inspect "$FP_RUN" --verify --json \
+  --work "$FP_WORKSPACE/accept-query"
+python3 -B -S -m flagprof report "$FP_RUN" \
+  --out "$FP_WORKSPACE/accept-report" --work "$FP_WORKSPACE/accept-report-work"
+```
+
+| 检查点 | 预期 |
+|---|---|
+| record 输出（最后一行 JSON，同时写入 capture 下的 `record-status.json`） | `status` 与 `import_completion` 为 `complete`，`exit_code` 为 0 |
+| `inspect --verify --json` | 每条 trace 的 `import_status` 为 `complete`，`integrity` 为 `verified` |
+| `report` 的 `result.json` | `perf.device` 为 `ok` 或 `partial`；其余 panel 为 `unavailable` 时附带原因（`notes`） |
+| `report.html` | 可离线打开，设备头条与覆盖率与 `result.json` 一致 |
+
+`partial`、`unknown`、`unlinked` 是带原因的有效结论；验收记录写明原因，不改写为通过。
+
+## CPU 冒烟测试
+
+无设备、无 torch 的环境中，在 `inference/` 下执行：
+
+```bash
+python3 -B -S -m unittest discover -s tests -v
+```
+
+测试检查离线读取层（`store`、`analyzers`、`report`）不加载 torch 与厂商模块，并用假厂商插件走通 record → import → inspect → report。PR 修改 `inference/**` 时由 GitHub Actions 自动运行。它确认链路与状态字段，不替代设备最小验收。
+
+## 归档与恢复（可选）
+
+`flagprof delivery publish|verify|restore` 把 Store、capture 等目录打包成带逐文件摘要的归档，并在新目录恢复相对依赖。发布目录不限文件系统；`restore` 的目标必须是 ext4 上的新目录。

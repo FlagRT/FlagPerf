@@ -7,15 +7,14 @@
 1. [02 总体架构](02-architecture.md)：目标进程 → 探针 / 厂商采集 → Store → 分析器 → 报告。
 2. [03 事件 schema](03-event-schema.md) 与 [04 关联脊梁](04-correlation.md)：理解事件、身份、时钟、来源、关联和公共读取接口。
 3. [05 探针与厂商](05-probes-and-vendors.md)、[06 模型接入](06-model-onboarding.md)、[07 分析器与报告](07-analyzers-and-reports.md)：按负责模块深入。
-4. [10 路线图](10-roadmap.md)、[12 交接约束](12-codex-handoff.md)、[DECISIONS](DECISIONS.md)：核对阶段范围和已经决定的接口。
+4. [10 路线图](10-roadmap.md)、[DECISIONS](DECISIONS.md)：核对阶段范围和已经决定的接口。
 
 ## 框架文档
 
 | 编号 | 文档 | 主要问题 |
 |---|---|---|
 | 00 | [需求追溯](00-requirements.md) | 项目要解决哪些问题 |
-| 01 | [v1 诊断](01-diagnosis.md) | 原有耦合与重构原因 |
-| 02 | [总体架构](02-architecture.md) | 分层、数据流和接入模式 |
+| 02 | [总体架构](02-architecture.md) | 分层、数据流、接入模式和目录布局 |
 | 03 | [事件 schema](03-event-schema.md) | 公共数据契约与演进 |
 | 04 | [关联脊梁](04-correlation.md) | 算子、主机、设备、layer 的证据关联 |
 | 05 | [探针与厂商](05-probes-and-vendors.md) | 采集边界和厂商适配职责 |
@@ -24,23 +23,36 @@
 | 08 | [在线与故障](08-online-and-fault.md) | 在线通道、恢复与热加载设计 |
 | 09 | [CLI 与批量运行](09-cli-and-campaign.md) | 用户入口和批量编排设计 |
 | 10 | [路线图](10-roadmap.md) | 阶段、依赖、范围和退出条件 |
-| 11 | [CANN 关联 Spike](11-spike-cann-correlation.md) | 架构关键假设及其验证设计 |
-| 12 | [交接约束](12-codex-handoff.md) | 实现、验证和文档维护规则 |
+| — | [决策记录](DECISIONS.md) | 接口与阶段判断依据的已登记决定 |
 
-[决策记录](DECISIONS.md) 与以上文档一同迁入，因为接口和阶段判断依赖其中的决定。[设计历史入口](design-history.md) 保留原 PLAN 索引和带日期的状态记录。
+## 历史资料（`history/`）
+
+以下文档解释 v2 的由来和原开发流程，不描述当前接口：
+
+| 编号 | 文档 | 内容 |
+|---|---|---|
+| 01 | [v1 诊断](history/01-diagnosis.md) | v1 的耦合与重构原因 |
+| 11 | [CANN 关联 Spike](history/11-spike-cann-correlation.md) | 架构关键假设的验证设计 |
+| 12 | [交接约束](history/12-codex-handoff.md) | 原设计者与实现方之间的交接规则 |
+| — | [设计历史入口](history/design-history.md) | 原 PLAN 索引和带日期的状态记录 |
+| — | [出处索引](history/history-references.md) | 正文引用的本地实验、任务单与报告的原路径 |
 
 ## 当前状态与文档读法
 
-截至本次 2026-11-02 来源快照，P0/P1/P2/P4 已按各自登记范围退出；P2 的最新裁决见 [D55](DECISIONS.md#d55)。这描述原开发阶段的裁决。迁移本身完成代码发布与入口整合，设备覆盖、性能和长期运行结论仍以对应记录为依据。
+截至 2026-11-02，P0/P1/P2/P4 已按各自登记范围退出；P2 的最新裁决见 [D55](DECISIONS.md#d55)。设备覆盖、性能和长期运行结论以对应记录为依据，v1 中尚未实现的能力见 [版本迁移](migration.md#未实现项)。
 
-00–12 是持续演进的框架材料，其中保留计划、历史状态、曾提议的命令以及开发工作区路径。当前可执行参数以 `python -m flagprof --help` 和 [使用说明](usage.md) 为准；P3 在线恢复 / 热加载、P5 与其他后续内容按路线图推进。正文中的历史实验链接指向 [出处索引](history-references.md)，本次发布保留引用身份，原件继续存于本地。
+框架文档是持续演进的材料，其中保留计划、历史状态和曾提议的命令。当前可执行参数以 `python -m flagprof --help` 和 [使用说明](usage.md) 为准；P3 在线恢复 / 热加载、P5 与其他后续内容按路线图推进。正文中的实验链接指向 [出处索引](history/history-references.md)，原件保存在维护者的本地开发仓库。
 
 ## 两人如何协作
 
-可以沿数据接口拆分工作：一人负责采集与导入（`probes/`、`vendors/`、`offline/`），另一人负责读取与消费（`store/view.py`、`analyzers/`、`report/`）。`store/schema.py`、身份、时钟、关联规则、`registry.py` 和 CLI 配置是共同接口，相关修改由双方先确认契约，再分别实现。
+`FlagPerf/inference` 是公开的生产代码，按本仓库的规范单独进行版本管理。维护者另有私有的开发和测试目录（`FlagPerf_advance/inference_v2`），用于实验、完整回归和验收取证；该目录不公开，也不是本目录的上游分支。两边的生产代码通过 PR 同步，`flagprof/` 的逐字节来源记录在 [版本迁移](migration.md)。
 
-每人使用自己的功能分支，通过 PR 合入 `dev-1.0`；`main` 保留上游同步职责。PR 说明触发条件、改变后的行为、验证方式和适用范围。相同的公共事实由一个模块提供，消费者通过 StoreView 或注册入口读取。
+可以沿数据接口拆分工作：一人负责采集与导入（`probes/`、`vendors/`、`offline/`），另一人负责读取与消费（`store/view.py`、`analyzers/`、`report/`）。`store/schema.py`、身份、时钟、关联规则、`registry.py` 和 CLI 配置是共同接口，相关修改由双方先确认契约，再分别实现。相同的公共事实由一个模块提供，消费者通过 StoreView 或注册入口读取。
 
-本次按交付范围保留生产代码与文档，回归套件和实验记录留在本地验证工作区。提交前由验证负责人运行匹配版本的本地套件，记录被测 commit 和结果；设备相关改动再运行对应环境中的小样本完整链路。公开仓库可独立执行 CLI、采集、导入与报告。
+每人使用自己的功能分支，通过 PR 合入 `dev-1.0`；`main` 保留上游同步职责。每个 PR：
 
-功能或契约变化同步更新使用说明、相应编号文档和决策记录。公共目录的当前协作说明以本页为入口；编号文档中的旧 `personal/` 同步路径用于解释原开发流程。
+1. 通过 CPU 冒烟测试 `tests/test_smoke.py`（PR 触发 GitHub Actions，也可在 `inference/` 下执行 `python3 -B -S -m unittest discover -s tests -v`）；
+2. 涉及采集、厂商适配、导入或报告口径的改动，附上 [设备最小验收](usage.md#设备最小验收) 的命令、被测 commit 与结果；
+3. 在说明中写明触发条件、改变后的行为、验证方式和适用范围。
+
+功能或契约变化同步更新使用说明、相应编号文档和决策记录。编号文档中的 `personal/` 路径指维护者本地的同步文档，用于解释原开发流程。

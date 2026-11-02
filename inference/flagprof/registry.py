@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Lazy component descriptors, separate from project binding registries."""
 from copy import deepcopy
 import hashlib

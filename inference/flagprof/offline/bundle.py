@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Immutable final capture envelope and independent source registration."""
 from pathlib import Path
 import os

@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Source disposition delegates activity and category facts to the format."""
 from __future__ import annotations
 

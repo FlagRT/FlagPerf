@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Version-bound Kineto self-description producer; no SDK import."""
 from ..evidence import FLAGS
 KINETO_SOURCE='https://github.com/pytorch/pytorch/blob/v2.8.0/torch/profiler/profiler.py#L192-L232'

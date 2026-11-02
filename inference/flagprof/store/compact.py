@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Derived merge only: no mutation of writer fragments or original events."""
 
 from __future__ import annotations

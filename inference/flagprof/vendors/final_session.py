@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """One public SDK start/stop; sealing and analysis belong to the exited-owner worker."""
 import os
 from pathlib import Path

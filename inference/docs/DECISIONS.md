@@ -1,4 +1,4 @@
-> 本文从 v2 设计工作区迁入，保留设计、阶段裁决与历史状态。当前代码入口及两人协作方式见 [文档导航](README.md)，可执行命令见 [使用说明](usage.md)。未发布的本地实验与任务书链接转入 [历史引用索引](history-references.md)，其出处保留。
+> 本文从 v2 设计工作区迁入，保留设计、阶段裁决与历史状态。当前代码入口及两人协作方式见 [文档导航](README.md)，可执行命令见 [使用说明](usage.md)。未发布的本地实验与任务书链接转入 [历史引用索引](history/history-references.md)，其出处保留。
 
 # 决策记录（DECISIONS）
 
@@ -27,8 +27,8 @@
 
 **日期**：2026-10-09
 **决策**：v1 的 `oracles/`、`performance_baselines/`、`result/` 不迁移、不做格式转换。需要的数据在 v2 中重跑。
-**理由**：v1 产物的形状与分析代码耦合（[01 §2.3](01-diagnosis.md)），做兼容层等于把旧结构带进新地基。重跑的成本远低于维护兼容层的长期成本。
-**影响**：[01 §4](01-diagnosis.md)；`retention.py`、`report_replay.py`、`repack-reference` 不迁移。
+**理由**：v1 产物的形状与分析代码耦合（[01 §2.3](history/01-diagnosis.md)），做兼容层等于把旧结构带进新地基。重跑的成本远低于维护兼容层的长期成本。
+**影响**：[01 §4](history/01-diagnosis.md)；`retention.py`、`report_replay.py`、`repack-reference` 不迁移。
 
 ### D4 — schema v1 一次性包含全部事件类型，不分期冻结
 
@@ -43,7 +43,7 @@
 **决策**：不在 `inference/` 内原地重构，新建 `inference_v2/`。v1 保持可用直到 P6 的退役条件满足。
 **理由**：v1 在当前 4 模型 2 设备范围内是可用的生产工具，原地重构会有较长的不可用期；并行演进允许随时对比两者结论以验证 v2 的正确性。
 **代价**：一段时间内两套代码并存。
-**影响**：[10 P6](10-roadmap.md) 的退役条件；[12 §1](12-codex-handoff.md) 禁止修改 v1。
+**影响**：[10 P6](10-roadmap.md) 的退役条件；[12 §1](history/12-codex-handoff.md) 禁止修改 v1。
 
 ### D6 — 新增 `opsum` 聚合事件类型
 
@@ -65,21 +65,21 @@
 **日期**：2026-10-09
 **决策**：取消独立的 preview 搜索流程（v1 的 5 个模块）。FlagGems 不可用算子清单由一次普通 run 的 `route.coverage` 分析器给出；隔离验证作为分析器驱动的二次 run。
 **理由**：有了 `route` 事件后，一次 run 即可得到全部回退项与原因，不再需要逐算子开关搜索。
-**影响**：[01 §4](01-diagnosis.md)、[07 §3.2](07-analyzers-and-reports.md)、[09](09-cli-and-campaign.md)（少一个顶层命令）。
+**影响**：[01 §4](history/01-diagnosis.md)、[07 §3.2](07-analyzers-and-reports.md)、[09](09-cli-and-campaign.md)（少一个顶层命令）。
 
 ### D9 — CLI 按动词扩展，固定 5 个顶层命令
 
 **日期**：2026-10-09
 **决策**：`record` / `report` / `campaign` / `watch` / `inspect`。新增分析能力只增加分析器名或预设，不增加顶层命令。
-**理由**：v1 的 10 个命令是按分析种类长出来的，命令数随能力线性增长（[01 §2.4](01-diagnosis.md)）。
+**理由**：v1 的 10 个命令是按分析种类长出来的，命令数随能力线性增长（[01 §2.4](history/01-diagnosis.md)）。
 **影响**：[09](09-cli-and-campaign.md)。
 
 ### D10 — 先做 Spike-C，再冻结 schema
 
 **日期**：2026-10-09
-**决策**：在任何主包代码之前执行 CANN 算子级关联验证（[11](11-spike-cann-correlation.md)），其结论回填 [03](03-event-schema.md)/[04](04-correlation.md) 后才冻结 schema。
+**决策**：在任何主包代码之前执行 CANN 算子级关联验证（[11](history/11-spike-cann-correlation.md)），其结论回填 [03](03-event-schema.md)/[04](04-correlation.md) 后才冻结 schema。
 **理由**：host→device 关联是架构的最大未知（[02 §9](02-architecture.md)）。v1 只验证到模块级与 HCCL，Triton kernel 路径从未验证。若冻结后才发现做不到，`kernel.link`、`ext` 键、分析器归因口径全部返工。
-**影响**：[10 S1](10-roadmap.md)、[12 §8](12-codex-handoff.md)。
+**影响**：[10 S1](10-roadmap.md)、[12 §8](history/12-codex-handoff.md)。
 
 ### D11 — schema 分三层冻结，不是一次性整体冻结
 
@@ -92,16 +92,16 @@
 | **L-字段** | 各事件类型的具体字段集与枚举值 | P0 结束时定为 `1.0` | 加字段/加枚举值走 minor；**不删、不改已有字段语义** |
 | **L-厂商** | `ext` 键、厂商关联规则 id、能力矩阵取值 | **不冻结** | 随厂商接入自由增加，不影响 schema 版本 |
 
-**理由**：[D4](#d4--schema-v1-一次性包含全部事件类型不分期冻结)"类型齐全"的判断成立，但"类型齐全"不等于"字段已验证"。截至本日，只有 CANN 一家的 `op→launch→kernel` 链路有实测证据（[Spike-C](11-spike-cann-correlation.md)），`tensor`/`health`/`compile` 三类**尚无任何实测**。若把三层一起冻结，第二家厂商（[Q3](#q3--第二家厂商选哪个) = 平头哥）接入时必然触发 major，而真正该稳定的只是 L-核心。反过来，若因为"还没全验证"而推迟冻结 L-核心，关联语义会在 P0 期间反复漂移，这正是 [D10](#d10--先做-spike-c再冻结-schema) 要避免的。
-**影响**：[03 §8](03-event-schema.md)、[10 S1/P0](10-roadmap.md)、[12 §8](12-codex-handoff.md)。
-**约束**：L-核心的任何改动都必须先改 PLAN 正文再改代码（[12 §7–8](12-codex-handoff.md)）；codex 不得自行变更 L-核心。
+**理由**：[D4](#d4--schema-v1-一次性包含全部事件类型不分期冻结)"类型齐全"的判断成立，但"类型齐全"不等于"字段已验证"。截至本日，只有 CANN 一家的 `op→launch→kernel` 链路有实测证据（[Spike-C](history/11-spike-cann-correlation.md)），`tensor`/`health`/`compile` 三类**尚无任何实测**。若把三层一起冻结，第二家厂商（[Q3](#q3--第二家厂商选哪个) = 平头哥）接入时必然触发 major，而真正该稳定的只是 L-核心。反过来，若因为"还没全验证"而推迟冻结 L-核心，关联语义会在 P0 期间反复漂移，这正是 [D10](#d10--先做-spike-c再冻结-schema) 要避免的。
+**影响**：[03 §8](03-event-schema.md)、[10 S1/P0](10-roadmap.md)、[12 §8](history/12-codex-handoff.md)。
+**约束**：L-核心的任何改动都必须先改 PLAN 正文再改代码（[12 §7–8](history/12-codex-handoff.md)）；codex 不得自行变更 L-核心。
 
 ### D12 — 关联降级是二维的（主机归因 × 设备链接）
 
 **日期**：2026-10-10
 **决策**：取消一维的 A/B/C 级别。降级状态为 `link.segments = {host_attr, device_link}`，各取 `ok`/`broken`/`not_applicable`，映射为 A（ok/ok）、B+（broken/ok）、B（ok/broken，仅 kernel 名可用）、C（broken/broken）。完整定义见 [04 §6](04-correlation.md)。
-**理由**：`op→launch`（前段）与 `launch→kernel`（后段）由**不同机制**保证，可以独立失效。[Spike-C](11-spike-cann-correlation.md) 实测的 `TASK_QUEUE_ENABLE=1` 且无 Enqueue/Dequeue 桥的情形恰好落在"前段断、后段通"：设备侧 8,016 个 kernel 的耗时完全可用，只是无法归因到层。一维级别会把这种情形与"两段全断"一起判成 C 而丢弃可用数据。原 [11 §2](11-spike-cann-correlation.md) 的"H-A/H-B/H-C 任一成立即 A 级"判据在逻辑上不成立（H-A/H-B 只闭合后段，H-C 只闭合前段），已作废。
-**影响**：[03 §4.8](03-event-schema.md)、[04 §6](04-correlation.md)、[07 §2](07-analyzers-and-reports.md)、[11 §2](11-spike-cann-correlation.md)。
+**理由**：`op→launch`（前段）与 `launch→kernel`（后段）由**不同机制**保证，可以独立失效。[Spike-C](history/11-spike-cann-correlation.md) 实测的 `TASK_QUEUE_ENABLE=1` 且无 Enqueue/Dequeue 桥的情形恰好落在"前段断、后段通"：设备侧 8,016 个 kernel 的耗时完全可用，只是无法归因到层。一维级别会把这种情形与"两段全断"一起判成 C 而丢弃可用数据。原 [11 §2](history/11-spike-cann-correlation.md) 的"H-A/H-B/H-C 任一成立即 A 级"判据在逻辑上不成立（H-A/H-B 只闭合后段，H-C 只闭合前段），已作废。
+**影响**：[03 §4.8](03-event-schema.md)、[04 §6](04-correlation.md)、[07 §2](07-analyzers-and-reports.md)、[11 §2](history/11-spike-cann-correlation.md)。
 **约束**：**C 级不得按主机 span 窗口切分设备时间**（实测 20 个 fixture 中有 511 个 kernel 的起始时刻晚于其主机标记的结束时刻），该情形下层耗时报"不可得"。
 **修订（2026-10-11 第二轮，[D15](#d15--t1t3-之后的契约回填r1r8)）**：段状态与级别**逐事件**判定，不是 run 级标签；`ok` 要求归属唯一，两个候选各有完整链仍是 ambiguous。设备事件只有 A / B+ / C 三种，B 是主机侧 launch 记录的级别；run 级报 `level_distribution` 与 `launch_attr_ratio`。H4 为独立能力位 `kname_aggregate`。
 
@@ -109,21 +109,21 @@
 
 **日期**：2026-10-10
 **决策**：`VendorAdapter.required_env()` 必须返回空。采集不得为了让自己好关联而修改被测进程的运行时开关；实际生效的开关值记入 `meta.env`，并据此选择关联规则。v1 草案中"强制 `TASK_QUEUE_ENABLE=0`"的要求**取消**。
-**理由**：被测配置是被测对象的一部分，改了它测的就不是用户要测的系统（与 [D2](#d2--attach-为第一优先而非后置) 的 attach 第一优先直接冲突 —— attach 根本没有改环境的机会）。[Spike-C](11-spike-cann-correlation.md) 证明强制关闭并无必要：queue=1 下通过 `Enqueue → Dequeue` 的 `correlation_id` 桥，8,016 个 kernel 全部关联成功。另：`TASK_QUEUE_ENABLE` 与 `TRITON_ENABLE_TASKQUEUE` 是两个互相独立的开关，必须分别记录实际值。
+**理由**：被测配置是被测对象的一部分，改了它测的就不是用户要测的系统（与 [D2](#d2--attach-为第一优先而非后置) 的 attach 第一优先直接冲突 —— attach 根本没有改环境的机会）。[Spike-C](history/11-spike-cann-correlation.md) 证明强制关闭并无必要：queue=1 下通过 `Enqueue → Dequeue` 的 `correlation_id` 桥，8,016 个 kernel 全部关联成功。另：`TASK_QUEUE_ENABLE` 与 `TRITON_ENABLE_TASKQUEUE` 是两个互相独立的开关，必须分别记录实际值。
 **影响**：[05 §4.1](05-probes-and-vendors.md)、[04 §3](04-correlation.md)。
 
 ### D14 — 扰动按指标类分流，不是整份 run 的布尔标签
 
 **日期**：2026-10-10
 **决策**：`coverage.perturbed: bool` 改为 `coverage.perturbation` 结构，分别标注设备侧与主机侧指标。设备侧时长单次 run 即可报告；主机侧时长须有同配置无标记基线。详见 [07 §2.1](07-analyzers-and-reports.md)。
-**理由**：[Spike-C](11-spike-cann-correlation.md) 的 17 组配对实测，单 kernel 设备时长之比 0.926–1.034，而端到端之比 0.97–3.86。把两者绑在一个布尔上，要么让可用的设备数据被判为不可信，要么让被放大 3.9 倍的端到端数字被当作可信。另：采集开销是 per-workload 的（微基准 M1 高达 3.9×，真实模型 M3 为 1.13×），不是工具常数，禁止跨 workload 外推校正。
+**理由**：[Spike-C](history/11-spike-cann-correlation.md) 的 17 组配对实测，单 kernel 设备时长之比 0.926–1.034，而端到端之比 0.97–3.86。把两者绑在一个布尔上，要么让可用的设备数据被判为不可信，要么让被放大 3.9 倍的端到端数字被当作可信。另：采集开销是 per-workload 的（微基准 M1 高达 3.9×，真实模型 M3 为 1.13×），不是工具常数，禁止跨 workload 外推校正。
 **影响**：[05 §3](05-probes-and-vendors.md)、[07 §2.1](07-analyzers-and-reports.md)、[09](09-cli-and-campaign.md) 的配对调度。
 **修订（2026-10-11 第二轮，[D15](#d15--t1t3-之后的契约回填r1r8) R7）**：上文「设备侧时长单次 run 即可报告」只成立于「报告观测值」这一层。17 组对照只证明**那些配置**下的设备时长稳定，不能推出设备指标天然无扰动 —— tensor 探针、通信等待、并发调度都可能改变设备侧行为。现规定：设备时长是「该采集配置下的观测值」；`perturbation.host`/`device` 各取 `present`（有扰动证据）/ `controlled`（有同配置对照）/ `not_evaluated`（默认），**不设「无扰动」值**；分析器 `status` 只看数据完整性，不由扰动标注推出。
 
 ### D15 — T1–T3 之后的契约回填（R1–R8）
 
 **日期**：2026-10-11（第二轮）
-**背景**：codex 执行了 [T1–T3](history-references.md#ref-e29c4a8c676e) 并提交 [review](history-references.md#ref-1bb29bac8d48)。设计者审核结论：
+**背景**：codex 执行了 [T1–T3](history/history-references.md#ref-e29c4a8c676e) 并提交 [review](history/history-references.md#ref-1bb29bac8d48)。设计者审核结论：
 
 | 任务 | 审核结论 |
 |---|---|
@@ -141,8 +141,8 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 | R2 | 「分片头部写全部 sig」做不到；`seq` 只在取号时有序，落盘可乱序；尾读用 `last_ts` 判断读完 | **可解码不变式**（同一分片内 sig 先于引用它的事件），由写盘线程惰性写出；字典有预算。`seq` 取号与入队/丢弃计数同一临界区；控制记录不带 `seq`。`drop_report` 累计、周期写出，未正常关闭时报下界 + `tail_unknown`。尾读按 `records` 判断读完 | [03 §2](03-event-schema.md#2-事件信封)、[03 §4.2](03-event-schema.md#42-sig--算子调用签名字典)、[03 §6.3–6.4](03-event-schema.md#63-写入丢弃与崩溃)、[08 §3](08-online-and-fault.md#3-在线尾读协议)；附录 A #2、#16–#18 |
 | R3 | 多机时 `writer_id` 取 rank，同 rank 的被测进程与 counter 进程冲突，重启后复用；多 writer 同改 manifest 会互相覆盖 | writer = 进程实例，`writer_id` run 内唯一、不复用、与 rank 无关；分片按 writer 分目录；**每个文件只有一个写者** | [03 §3](03-event-schema.md#3-corr关联-id)、[03 §6.1–6.2](03-event-schema.md#61-目录布局)、[05 §2.2](05-probes-and-vendors.md#22-counter-探针为什么是独立进程)；附录 A #1、#19 |
 | R4 | 信封要求 `ts` 必填，§5.2 又要求时钟不成立时不写 `ts` | `ts` 为 `int\|null`，信封新增 `clk`；`ts=null` 的事件照常写出、留在一切分母中、不参与时间排除 | [03 §2](03-event-schema.md#2-事件信封)、[03 §5.2](03-event-schema.md#52-时钟来源)、[04 §3.6](04-correlation.md#36-linker-算法候选并集与判定)；附录 A #5 |
-| R5 | 51.7% 被当成单 run 的时间覆盖率；`marked_scope_ratio` 本身不可算 | 关联指标按集合 R/E/X/A/L 定义（`linked_count_ratio`、`linked_time_ratio`、`import_completeness`、`dur_missing`）；**取消 `marked_scope_ratio`**，采集范围报 `profiled_window`；跨 run 统计量一律带 `campaign_` 前缀 | [04 §2](04-correlation.md#2-关联状态)、[07 §2](07-analyzers-and-reports.md#2-coverage每个结论自带的可信度)；附录 A #12；[T6](history-references.md#ref-19c0f007c655) |
-| R6 | sig 没有容器递归规则（TensorList 漏采会重演）；`sid` 去了设备，sig 记录却仍含设备 | **规范参数树**（参数路径 + 节点类型，容器递归，`None` 也是节点），`sid` 算法冻结；签名中不含任何设备信息，设备记在 `op.dev` | [03 §4.2](03-event-schema.md#42-sig--算子调用签名字典)、[03 §4.3](03-event-schema.md#43-op--aten-算子调用)；附录 A #20；[T5](history-references.md#ref-dd13c52d9c06) |
+| R5 | 51.7% 被当成单 run 的时间覆盖率；`marked_scope_ratio` 本身不可算 | 关联指标按集合 R/E/X/A/L 定义（`linked_count_ratio`、`linked_time_ratio`、`import_completeness`、`dur_missing`）；**取消 `marked_scope_ratio`**，采集范围报 `profiled_window`；跨 run 统计量一律带 `campaign_` 前缀 | [04 §2](04-correlation.md#2-关联状态)、[07 §2](07-analyzers-and-reports.md#2-coverage每个结论自带的可信度)；附录 A #12；[T6](history/history-references.md#ref-19c0f007c655) |
+| R6 | sig 没有容器递归规则（TensorList 漏采会重演）；`sid` 去了设备，sig 记录却仍含设备 | **规范参数树**（参数路径 + 节点类型，容器递归，`None` 也是节点），`sid` 算法冻结；签名中不含任何设备信息，设备记在 `op.dev` | [03 §4.2](03-event-schema.md#42-sig--算子调用签名字典)、[03 §4.3](03-event-schema.md#43-op--aten-算子调用)；附录 A #20；[T5](history/history-references.md#ref-dd13c52d9c06) |
 | R7 | D14、05 §3、07 §2.1 把设备时长写成天然无扰动；accuracy 预设不开 vendor profiler 却承诺设备时长 | 设备时长是「该采集配置下的观测值」；`perturbation.host/device` 取 `present` / `controlled` / `not_evaluated`（默认），**没有「无扰动」这个值**；分析器 `status` 与扰动标注相互独立；未启用的来源对应指标为 `unavailable` | 本文件 D14 修订、[05 §2.3、§3](05-probes-and-vendors.md#3-预设preset)、[07 §2.1](07-analyzers-and-reports.md#21-扰动按指标类单独标注不自动判定为无扰动) |
 | R8 | 证据引用跨不过 compact 与精简 | 事件身份 `(run_id, writer_id, seq)`、来源身份 `(trace_uid, loc)`；compact 不删除、不重编号；精简是显式步骤，记入 `manifest.retention`，之后分析器降级 | [03 §6.5](03-event-schema.md#65-事件身份)、[03 §7](03-event-schema.md#7-保留与压缩策略)；附录 A #24（新增） |
 
@@ -153,12 +153,12 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 | 04 §5 图回放 | 回放期 kernel 标 `not_applicable`。这违反附录 A #13（`not_applicable` 只能来自白名单），还把真实计算从分母中拿掉，关联率被虚高 | 标 `unlinked`，`reason=graph_replay`；03 §4.8 的 reason 枚举同步增加 |
 | 04 §7 第 2 条 | 「可插拔函数 + 优先级」，与 04 §8 第 3 条已建议的「flow/connection 冲突保留为 ambiguous」相互矛盾 | 规则全部求值取并集；优先级只决定检查顺序，不决定结果 |
 | 03 §5.1 | `cann.connection_id` 曾写作 run 内唯一 | 它由 CANN decoder 自增合成，只在单次导出会话内有意义，命名空间到 `trace_uid` |
-| spike 的 `queue_owner` | 与 `direct` 分支同样是 `len(...) == 1` 才接纳，多候选被静默丢弃 | 列入 [T4](history-references.md#ref-3f0433ab6328) 的修复范围 |
+| spike 的 `queue_owner` | 与 `direct` 分支同样是 `len(...) == 1` 才接纳，多候选被静默丢弃 | 列入 [T4](history/history-references.md#ref-3f0433ab6328) 的修复范围 |
 
-**对 T2 裁决请求的答复**：T2 提议「确认误归因时增加独立核验失败字段，不伪造多候选」。**采纳前半句的原则，不加到 `link` 上。** `link` 只表达显式 ID 证据的结论；形状一致与否是独立核验，属于分析器结论，由 P1 的归因核验分析器输出（字段属 L-字段，P1 定义）。核验失败**不改写** `link.status`，但该调用的设备时间在性能报告中须单列为「归因未通过独立核验」。形状一致也不是归属的充分条件：相邻两次同形状调用互换，形状检查仍会通过（[T5](history-references.md#ref-dd13c52d9c06) 要把它记为已知盲区）。
+**对 T2 裁决请求的答复**：T2 提议「确认误归因时增加独立核验失败字段，不伪造多候选」。**采纳前半句的原则，不加到 `link` 上。** `link` 只表达显式 ID 证据的结论；形状一致与否是独立核验，属于分析器结论，由 P1 的归因核验分析器输出（字段属 L-字段，P1 定义）。核验失败**不改写** `link.status`，但该调用的设备时间在性能报告中须单列为「归因未通过独立核验」。形状一致也不是归属的充分条件：相邻两次同形状调用互换，形状检查仍会通过（[T5](history/history-references.md#ref-dd13c52d9c06) 要把它记为已知盲区）。
 
 **理由**：R1–R4、R6、R8 若按原文进入 L-核心，日后修复就必须改语义或重写已落盘数据，这正是 [D11](#d11--schema-分三层冻结不是一次性整体冻结) 要避免的 major 变更。R5、R7 是口径错误，会直接产出误导性的数字。
-**影响**：附录 A 由 23 条增至 24 条，其中 #1、#2、#5、#6、#9、#10、#12、#13、#16–#21 改写；[10](10-roadmap.md) P0 验收扩为 9 项；[12 §8](12-codex-handoff.md#8-当前待办) 的当前任务为 T4–T7。
+**影响**：附录 A 由 23 条增至 24 条，其中 #1、#2、#5、#6、#9、#10、#12、#13、#16–#21 改写；[10](10-roadmap.md) P0 验收扩为 9 项；[12 §8](history/12-codex-handoff.md#8-当前待办) 的当前任务为 T4–T7。
 **不变**：review 第 5 节列出的无需重议事项（包名、首轮框架范围、第二家厂商、blob 二次重跑、vLLM 延后）维持原裁决。
 
 ### D16 — 封口分片的压缩编码记在分片条目上，默认 gzip
@@ -166,14 +166,14 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 **日期**：2026-10-11
 **决策**：writer 片段的每个分片条目增加 `codec`（`none` / `gzip` / `zstd`）。读取方**按 `codec` 选择解码方式，不按文件后缀猜测**。默认 `gzip`（Python 标准库）。`zstd` 仅在写入环境可用时作为可选项；读取环境不支持某个分片的 `codec` 时，该分片报告为不可读并计入 `truncated`，不得静默跳过。
 **理由**：上一版把封口分片定为 `.zst`。设计者核对已验证镜像 `flagperf/inference-ascend:20260922`：Python 3.11.15，**未安装 `zstandard`**，3.11 的标准库也没有 zstd。若坚持 zstd，`store/` 就要依赖一个 C 扩展包，与 N3（无 torch、只用标准库的环境也能读 store）冲突，还要改镜像（违反项目规则「基于已验证的镜像」）。gzip 的压缩率与速度不如 zstd，但封口压缩在后台线程完成，不在被测进程的关键路径上。
-**影响**：[03 §6.1–§6.4、§7](03-event-schema.md#61-目录布局)、[08 §3](08-online-and-fault.md#3-在线尾读协议)、[12 §4](12-codex-handoff.md#4-代码规范)。附录 A #18 的措辞与编码无关，不受影响；本条属 L-字段。
+**影响**：[03 §6.1–§6.4、§7](03-event-schema.md#61-目录布局)、[08 §3](08-online-and-fault.md#3-在线尾读协议)、[12 §4](history/12-codex-handoff.md#4-代码规范)。附录 A #18 的措辞与编码无关，不受影响；本条属 L-字段。
 
 ### D17 — `sid` 写为十六进制字符串
 
 **日期**：2026-10-11
 **决策**：`sid` 由「SHA-256 前 64 位按无符号整数写出」改为「前 8 字节写为 16 位小写十六进制字符串」。哈希算法与规范 JSON 不变。`corr` 仍是整数，但导出到不能精确表示 64 位整数的环境时必须转成十进制字符串。
-**理由**：`sid` 是纯身份，从不参与运算；一个随机 64 位值几乎必然超过 2⁵³，报告页面中的 JS 一旦按数字解析就会静默丢精度，不同签名被合并而不报错。十六进制字符串与 `trace_uid`（[T4](history-references.md#ref-3f0433ab6328) §3.4）的写法一致，也便于人读和 grep。`corr` 的位结构有意义（高位是 writer），保留整数，只约束导出。现在 P0 尚未开工，改动没有存量数据。
-**影响**：[03 §3、§4.2](03-event-schema.md#42-sig--算子调用签名字典)；附录 A #20 措辞（L-核心，冻结前修订）；[T5](history-references.md#ref-dd13c52d9c06) 的 sid 黄金向量按本条生成。
+**理由**：`sid` 是纯身份，从不参与运算；一个随机 64 位值几乎必然超过 2⁵³，报告页面中的 JS 一旦按数字解析就会静默丢精度，不同签名被合并而不报错。十六进制字符串与 `trace_uid`（[T4](history/history-references.md#ref-3f0433ab6328) §3.4）的写法一致，也便于人读和 grep。`corr` 的位结构有意义（高位是 writer），保留整数，只约束导出。现在 P0 尚未开工，改动没有存量数据。
+**影响**：[03 §3、§4.2](03-event-schema.md#42-sig--算子调用签名字典)；附录 A #20 措辞（L-核心，冻结前修订）；[T5](history/history-references.md#ref-dd13c52d9c06) 的 sid 黄金向量按本条生成。
 
 ### D18 — 关联在导入时完成，厂商主机侧记录不转成 store 事件
 
@@ -181,17 +181,17 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 **决策**：
 1. 导入器是 `kernel`、`memop` 与 `comm(phase=device)` 的唯一产生者。导入一份厂商 trace 的步骤固定为：枚举原始清单 R（写进 `traces/<trace_uid>.json` 的 `inventory`）→ 规范化 → 调用 linker → 写出带 `link` 的设备事件。`link` 随事件**一次写出**，之后不再改写 `events/` 中的设备事件。
 2. 厂商主机侧记录（launch API、Enqueue/Dequeue、`Node@launch`、marker 等）**不转成 store 事件**。它们留在 `vendor_raw/`，由 `link.evidence` 以 `{trace_uid, loc}` 引用。13 类事件中没有它们的位置，转写一份只会多出第二套身份。
-3. linker 的主机侧输入有两类：`vendor_raw/` 中的厂商主机侧记录，以及同一 run 中探针写出的 `op` 事件（从 store 读）。`link.corr` 取归属源（marker、`record_function`）中携带的 id；attach 模式下它就是探针注入的 corr（[11 §5.1](11-spike-cann-correlation.md#51-e1marker-注入与-launch-归属h-c)）。只导入 fixture、没有探针的 run 中，这个 corr 在 store 中找不到对应的 `op`，这是预期的；追溯经 `evidence` 走到原始记录。
+3. linker 的主机侧输入有两类：`vendor_raw/` 中的厂商主机侧记录，以及同一 run 中探针写出的 `op` 事件（从 store 读）。`link.corr` 取归属源（marker、`record_function`）中携带的 id；attach 模式下它就是探针注入的 corr（[11 §5.1](history/11-spike-cann-correlation.md#51-e1marker-注入与-launch-归属h-c)）。只导入 fixture、没有探针的 run 中，这个 corr 在 store 中找不到对应的 `op`，这是预期的；追溯经 `evidence` 走到原始记录。
 4. 同一 run 中同一 `trace_uid` 只导入一次：`traces/<trace_uid>.json` 以 `O_EXCL` 创建。它记录本次关联所用的 `linker`：`{rules_version, registry_sha256}`。
 5. 规则或白名单变更后的**重新关联**不在 P0 范围。届时作为派生输出设计（与 compact 一样不修改 `events/`），不得改写已写出的设备事件。
 
-**理由**：[T7](history-references.md#ref-9e5e65bd1a6f) Stage B 需要决定 `link` 写在哪里。03 §4.8 已规定设备事件由导入器离线产出、`link` 必填，04 §7 已规定 linker 是离线的；把两者接在导入这一步，既不需要新的事件类型，也不违反单写者。另一种做法是先写不带 `link` 的设备事件，再由另一个 writer 写「关联结果」：那需要第 14 类事件，并且每次读取都要做一次连接。
+**理由**：[T7](history/history-references.md#ref-9e5e65bd1a6f) Stage B 需要决定 `link` 写在哪里。03 §4.8 已规定设备事件由导入器离线产出、`link` 必填，04 §7 已规定 linker 是离线的；把两者接在导入这一步，既不需要新的事件类型，也不违反单写者。另一种做法是先写不带 `link` 的设备事件，再由另一个 writer 写「关联结果」：那需要第 14 类事件，并且每次读取都要做一次连接。
 **影响**：[03 §4.8、§6.2](03-event-schema.md#48-kernel--memop--设备执行)、[04 §7](04-correlation.md#7-实现要点给-codex)、T7 Stage B。本条属 L-字段；它依赖的「事件身份不变」「文件单写者」已在附录 A。
 
 ### D19 — 需求文档是参考，不绑定设计
 
 **日期**：2026-10-13
-**背景**：当日新增两份项目文档：`/home/kzhang520/fgw/docs/实施方案_运行时+模型适配工具链-0902.md`（运行时与模型适配工具链的实施方案，含招标技术指标）、`/home/kzhang520/fgw/docs/功能拆分表-运行.xlsx`（运行时模块的建设内容拆分；工具链部分尚未补入）。设计者对照后发现，其中有一部分要点 v2 尚未覆盖（登记在 [00 §6](00-requirements.md#6-需求池参考文档补充)）。
+**背景**：当日新增两份项目文档：`<私有开发工作区>/docs/实施方案_运行时+模型适配工具链-0902.md`（运行时与模型适配工具链的实施方案，含招标技术指标）、`<私有开发工作区>/docs/功能拆分表-运行.xlsx`（运行时模块的建设内容拆分；工具链部分尚未补入）。设计者对照后发现，其中有一部分要点 v2 尚未覆盖（登记在 [00 §6](00-requirements.md#6-需求池参考文档补充)）。
 **决策**：
 1. 项目文档（`功能模块拆分_批注V4.xlsx`、上述两份新文档、任务拆分表）是**需求参考**。v2 的义务是**实现其中的能力**，不是复刻其结构。
 2. 不照搬参考文档的组件划分、采集分档、命名与分类枚举。例如：
@@ -201,7 +201,7 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 4. 判断标准：一项设计如果只能用"参考文档这么写"来解释，而追溯不到一项需求能力，就视为过度绑定。
 
 **理由**：参考文档服务于招标和跨团队分工，它的划分方式和 v2 的抽象不在同一层次。v2 的抽象是：事件账本、显式关联、纯函数分析器、带证据的 Finding。按文档结构设计，v2 会随文档版本变化而改结构，还会把文档里设计得不好的划分带进地基。
-**影响**：[00](00-requirements.md) 头部与 §6、[README](design-history.md) 的上游约束。
+**影响**：[00](00-requirements.md) 头部与 §6、[README](history/design-history.md) 的上游约束。
 
 ### D20 — 分阶段推进：主线先行
 
@@ -248,8 +248,8 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 
 **日期**：2026-10-14
 **背景**：以下审查结论一致：
-- codex 的三份 review：[profiler 复用实验](history-references.md#ref-5c3f718c65c0)、[自研与复用边界](history-references.md#ref-268394df660f)、[cross_vendor 复核](history-references.md#ref-47afb6f332f8)；
-- 两份独立审查：[GPT](history-references.md#ref-d3460fd97571)、[GLM](history-references.md#ref-c0a14c121a60)。
+- codex 的三份 review：[profiler 复用实验](history/history-references.md#ref-5c3f718c65c0)、[自研与复用边界](history/history-references.md#ref-268394df660f)、[cross_vendor 复核](history/history-references.md#ref-47afb6f332f8)；
+- 两份独立审查：[GPT](history/history-references.md#ref-d3460fd97571)、[GLM](history/history-references.md#ref-c0a14c121a60)。
 
 一致的结论有两条：
 - 腾昇、A100、P800、PPU 四家的官方 profiler 已能逐调用给出 op→launch→kernel 关系。v2 生产 linker 在四家样本上，device→launch 段已全部打通（B+）。
@@ -265,7 +265,7 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 2. **单一会话所有者。**
    - 同一进程内、同一设备活动源，同一时刻只有一个由工具启停的采集会话。
    - 检测到用户已自行开启 profiler 时不叠加，并记录冲突状态。检测不了的组合在能力声明中标 `not_detectable`，不假设无冲突。
-   - 会话守卫是 [12 §4](12-codex-handoff.md#4-代码规范)「不新增全局单例」的**第二个例外**（第一个是 writer 的 attach 守卫）。两者同构：只记录本进程已开的会话，fork 后在子进程中清空。
+   - 会话守卫是 [12 §4](history/12-codex-handoff.md#4-代码规范)「不新增全局单例」的**第二个例外**（第一个是 writer 的 attach 守卫）。两者同构：只记录本进程已开的会话，fork 后在子进程中清空。
 3. **按窗口采集、分段导出。**
    - 使用官方 schedule 机制。每个窗口独立导出、校验、封存；窗口 k 的有效性记录落盘之后，才开始窗口 k+1。
    - 采集是否成功由退出状态、日志与预期产物内容共同判定；exit 0 不等于有效产物。
@@ -294,7 +294,7 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 - 官方 profiler 的固有开销不由我们控制（本轮各固定栈下同步前向约 +36% 到 +116%），只能通过窗口与配置来控制。
 - 采集能力随厂商版本变化，须按版本登记能力。
 
-**影响**：[02 §1/§2/§6](02-architecture.md)、[05 §2/§3/§4](05-probes-and-vendors.md)、[10 P0/P2](10-roadmap.md)、[12 §4](12-codex-handoff.md#4-代码规范)、任务单 [T8](history-references.md#ref-24a77204cd82)。
+**影响**：[02 §1/§2/§6](02-architecture.md)、[05 §2/§3/§4](05-probes-and-vendors.md)、[10 P0/P2](10-roadmap.md)、[12 §4](history/12-codex-handoff.md#4-代码规范)、任务单 [T8](history/history-references.md#ref-24a77204cd82)。
 
 ### D23 — 原生关系作为一等证据，与项目绑定分立
 
@@ -331,7 +331,7 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 **理由**：
 - 保留项目 corr 的语义，CANN / NVIDIA 上已建立的关联契约不需要推翻。
 - 原生关系以引用而非复制的方式进入公共层，不产生第二套身份。
-- 各分析器不必各自重解析厂商 JSON，否则就回到了 v1 的问题（[01 §2.3](01-diagnosis.md)）。
+- 各分析器不必各自重解析厂商 JSON，否则就回到了 v1 的问题（[01 §2.3](history/01-diagnosis.md)）。
 
 **影响**：附录 A 新增 #25、#28；[02 §1/§2/§5/§6](02-architecture.md)、[03 §5/§6/§7](03-event-schema.md)、[04 §2/§3.7](04-correlation.md)、[07 §1/§2](07-analyzers-and-reports.md)、[10 P0](10-roadmap.md)。
 
@@ -376,7 +376,7 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
    - 公共只读接口按"索引 → 字节区间 → SHA 校验"回查。一次会话内，同一原件只校验一次 SHA，结果与逐条回查逐字节相同。
    - 索引只是加速结构，不是身份（#24）。
 5. **表示形式属 L-字段。**
-   - 以下内容由 [T8](history-references.md#ref-24a77204cd82) 的 Gate 1 定稿：旁路文件的目录、文件名、格式，descriptor 新字段名，处置原因枚举。
+   - 以下内容由 [T8](history/history-references.md#ref-24a77204cd82) 的 Gate 1 定稿：旁路文件的目录、文件名、格式，descriptor 新字段名，处置原因枚举。
    - 定稿后标为 L-字段 `1.0-rc`，随 P0 退出转为 `1.0`。
    - 旁路文件不得匹配 `traces/*.json`，因为 finalizer 按这个模式读取 trace 登记。
 
@@ -392,12 +392,12 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 
 **日期**：2026-10-15
 **背景**：T8 用当前官方 profiler 在腾昇上采集了新样本，导入结果如下：
-- 每个有效窗口 154,163 条来源记录中，9,980 条设备记录处置为 `unknown`，项目侧 compute 的 R 为 0，只有 140 条搬运被导入（[capture-format-coverage](history-references.md#ref-d29bc2e5e896)）。
+- 每个有效窗口 154,163 条来源记录中，9,980 条设备记录处置为 `unknown`，项目侧 compute 的 R 为 0，只有 140 条搬运被导入（[capture-format-coverage](history/history-references.md#ref-d29bc2e5e896)）。
 - 原因是 Task Type 改名。当前 SDK 写的是 `KERNEL_AIVEC`（8,150 条）、`KERNEL_AICORE`（1,260）、`KERNEL_MIX_AIV`（565）、`KERNEL_AICPU`（5）；历史样本中是 `AI_VECTOR_CORE` / `AI_CORE` / `MIX_AIC` / `AI_CPU`。
 - 公共模块 `vendors/inventory.py:25` 与 `vendors/chrome.py:44` 把旧名写成了白名单。这两个文件又被 T4 门禁按源码锁定（`tests/correlate/test_linker_gate.py:47-53`：前者逐字节，后者除 import 外 AST 一致），T8 不得修改。
 - 结果是：主线设备刚采到的数据，事务 `complete`、账本守恒，但计算轨整体不可分析。系统没有报错，问题要人工复核才能发现。
 
-**这是设计者的错误。** [T4–T7 review](history-references.md#ref-bbf196da3f4f) 的 R4 已经指出："生产代码与历史实验代码逐字节相同"适合作为一次性提升证明，不适合作为长期门禁，否则今后任何修复都会让 CI 失败。当时没有裁决采纳，T8 又沿用了这把锁。
+**这是设计者的错误。** [T4–T7 review](history/history-references.md#ref-bbf196da3f4f) 的 R4 已经指出："生产代码与历史实验代码逐字节相同"适合作为一次性提升证明，不适合作为长期门禁，否则今后任何修复都会让 CI 失败。当时没有裁决采纳，T8 又沿用了这把锁。
 
 同一轮还暴露了两处同类问题：
 - **实验命名进入了生产默认值。**
@@ -439,12 +439,12 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 
 **代价**：输出锁依赖样本覆盖面。对没有样本覆盖的代码路径，源码锁能挡住"无意修改"，输出锁挡不住。所以历史样本集（T8 的 55 份、T4 的 417 用例）不得缩减，只能追加。
 
-**影响**：附录 A.6 新增一条（L-核心 28 条不变，不构成 major）；[02 §1](02-architecture.md#1-设计原则)、[05 §4](05-probes-and-vendors.md#4-厂商契约)、[12 §8](12-codex-handoff.md#8-当前待办)、任务单 [T8.1](history-references.md#ref-5fcd4691137d)。
+**影响**：附录 A.6 新增一条（L-核心 28 条不变，不构成 major）；[02 §1](02-architecture.md#1-设计原则)、[05 §4](05-probes-and-vendors.md#4-厂商契约)、[12 §8](history/12-codex-handoff.md#8-当前待办)、任务单 [T8.1](history/history-references.md#ref-5fcd4691137d)。
 
 ### D26 — 采集成本的验收口径
 
 **日期**：2026-10-15
-**背景**：T8 A6 按预登记协议，比较"会话包装"相对"裸官方 profiler"的同步前向耗时（[开销协议](history-references.md#ref-436337a69d27)）：
+**背景**：T8 A6 按预登记协议，比较"会话包装"相对"裸官方 profiler"的同步前向耗时（[开销协议](history/history-references.md#ref-436337a69d27)）：
 
 | 条件 | 区组 | session/bare 中位数 | 95% CI 半宽 | bare/none 中位数 | 结论 |
 |---|---:|---:|---:|---:|---|
@@ -456,7 +456,7 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 - **包装层在每一步几乎不做事。** `vendors/session.py:186-202` 的 `step()` 只做一次计数、调用一次官方 `step()`，再检查回调错误；窗口边界之外，没有 I/O，也没有同步。
 - **用户真正感知的成本在别处。**
   - 官方 profiler 本身：bare/none 为 1.7–2.0 倍。
-  - 窗口导出与校验：发生在 `on_trace_ready` 回调内，会阻塞被测进程（[collection-costs](history-references.md#ref-1144b6d12790)）。
+  - 窗口导出与校验：发生在 `on_trace_ready` 回调内，会阻塞被测进程（[collection-costs](history/history-references.md#ref-1144b6d12790)）。
     - 腾昇复测：导出中位数约 5.55 s，校验约 0.92 s；
     - A100：导出约 0.29 s，校验约 0.79 s；
     - 导出时长主要是官方导出本身的成本，裸 profiler 的导出同样约 5.59 s / 0.29 s；会话额外增加的是校验时间。
@@ -481,16 +481,16 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 - 窗口停顿才影响在线 attach 的可用性，却不在原协议的计时范围内。
 - "保留未通过 + 显式豁免"比"改写为通过"更诚实：读者能同时看到原始结论和豁免理由。
 
-**影响**：[10 P0 ⑩](10-roadmap.md#2-p0--store-与-schema)、[12 §8](12-codex-handoff.md#8-当前待办)（T9 编写备忘）。
+**影响**：[10 P0 ⑩](10-roadmap.md#2-p0--store-与-schema)、[12 §8](history/12-codex-handoff.md#8-当前待办)（T9 编写备忘）。
 
-> **适用范围说明（2026-10-18，T9.0–T9.3 设计者审核）**：本条的腾昇豁免只覆盖当时原 Session 的普通 step，属历史适用，不延伸到后来新增的 attach 路径。当前 attach 的包装开销以 T9.3 实测为准（[p0-exit ⑩](history-references.md#ref-e0872549b0c8)）：腾昇首 8 block 半宽 0.138902 保留为不可判定，唯一 16 block 复测 attach/bare 中位数 0.974147、95% CI [0.88791, 1.03694]、半宽 0.074512，按预登记判据（中位数 ≤ 1.03 且半宽 ≤ 0.10）通过，**不沿用本条豁免**。该判据能排除的是约 10% 以上的包装增量，不是 3%（审核 §1.4，【复核】）。原 A6 的"不可判定"记录仍保留，不改写。
+> **适用范围说明（2026-10-18，T9.0–T9.3 设计者审核）**：本条的腾昇豁免只覆盖当时原 Session 的普通 step，属历史适用，不延伸到后来新增的 attach 路径。当前 attach 的包装开销以 T9.3 实测为准（[p0-exit ⑩](history/history-references.md#ref-e0872549b0c8)）：腾昇首 8 block 半宽 0.138902 保留为不可判定，唯一 16 block 复测 attach/bare 中位数 0.974147、95% CI [0.88791, 1.03694]、半宽 0.074512，按预登记判据（中位数 ≤ 1.03 且半宽 ≤ 0.10）通过，**不沿用本条豁免**。该判据能排除的是约 10% 以上的包装增量，不是 3%（审核 §1.4，【复核】）。原 A6 的"不可判定"记录仍保留，不改写。
 
 ### D27 — 格式解释的身份覆盖全部钩子，兼容验收到连接键
 
 **日期**：2026-10-15
 **背景**：
-- T8.1 用分类表 v2 导入腾昇当前 capture 后，每个有效窗口 compute R = E = 9,980，但 10,120 条原生关系全部为 unowned / `no_bridge`（[Gate 输入](history-references.md#ref-9c18be5c00da) §3）。
-- 原因（[codex 复盘](history-references.md#ref-c29eb5d75a76) §4，[设计者审核](history-references.md#ref-573c75ba342e) §0.1、§2.1）：HostToDevice flow 起点的 pid 是编码值（1279 = (1 << 10) | 255），厂商层只在进程名为 `CANN` 时还原；当前格式不再写出这条进程名。flow 起点于是留在编码后的进程组里，同线程嵌套找不到对应的 Dequeue。
+- T8.1 用分类表 v2 导入腾昇当前 capture 后，每个有效窗口 compute R = E = 9,980，但 10,120 条原生关系全部为 unowned / `no_bridge`（[Gate 输入](history/history-references.md#ref-9c18be5c00da) §3）。
+- 原因（[codex 复盘](history/history-references.md#ref-c29eb5d75a76) §4，[设计者审核](history/history-references.md#ref-573c75ba342e) §0.1、§2.1）：HostToDevice flow 起点的 pid 是编码值（1279 = (1 << 10) | 255），厂商层只在进程名为 `CANN` 时还原；当前格式不再写出这条进程名。flow 起点于是留在编码后的进程组里，同线程嵌套找不到对应的 Dequeue。
 - 这与 [D25](#d25--冻结语义与输出不冻结厂商分类表) 的起因同类：厂商格式中的一个标签被当成连接条件，标签变化后连接静默归零，导入事务仍是 `complete`。D25 规定了厂商知识放在哪里、带版本，没有规定它变化时怎样被看见。
 - 另外，`SourceFormat.identity()` 的指纹只覆盖分类表，不覆盖 `host_pid` 与 `is_launch`。只改这两个钩子时，解析身份不变，原生结果却会改变。
 
@@ -518,22 +518,22 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 
 **代价**：每次格式变化多一份连接键清单与逐跳统计。指纹范围扩大后，历史 trace 的解析身份会变化一次，登记为允许变化的字段；其余输出仍逐字节锁定。
 
-**影响**：[04 §3.7](04-correlation.md#37-原生归属原生调用关系)、[05 §4.2](05-probes-and-vendors.md#42-接入一家新厂商的验收清单) 第 10、11 条、任务单 [T8.2](history-references.md#ref-3d910d3fb495)、[12 §8](12-codex-handoff.md#8-当前待办)。
+**影响**：[04 §3.7](04-correlation.md#37-原生归属原生调用关系)、[05 §4.2](05-probes-and-vendors.md#42-接入一家新厂商的验收清单) 第 10、11 条、任务单 [T8.2](history/history-references.md#ref-3d910d3fb495)、[12 §8](history/12-codex-handoff.md#8-当前待办)。
 
-> **更正（2026-10-16，T8.3 返工复审）**：第 1 条"格式指纹覆盖全部注入钩子"的范围，实际只定义到 `SourceFormat` 协议的 9 个方法。账本处置（`disposition.classifier`，由 `prepare.py` 单独加载）、规则、原生规则，以及共享的 chrome、inventory、prepare 判定代码，不在任何代码哈希身份内：给这些文件加注释或改判断常量，持久化的身份都不变（复核实测，唯一例外是手工改版本字符串）。这是本决策的范围缺口，属设计者错误：只列了注入协议的钩子，没有要求"导入路径上所有做判定的代码都进某个身份闭包"。它不影响 T8.3 返工的输出，不阻塞 Gate，转 T9.0 §0.5（[复审 §3.5](history-references.md#ref-5067078b07e5)）。
+> **更正（2026-10-16，T8.3 返工复审）**：第 1 条"格式指纹覆盖全部注入钩子"的范围，实际只定义到 `SourceFormat` 协议的 9 个方法。账本处置（`disposition.classifier`，由 `prepare.py` 单独加载）、规则、原生规则，以及共享的 chrome、inventory、prepare 判定代码，不在任何代码哈希身份内：给这些文件加注释或改判断常量，持久化的身份都不变（复核实测，唯一例外是手工改版本字符串）。这是本决策的范围缺口，属设计者错误：只列了注入协议的钩子，没有要求"导入路径上所有做判定的代码都进某个身份闭包"。它不影响 T8.3 返工的输出，不阻塞 Gate，转 T9.0 §0.5（[复审 §3.5](history/history-references.md#ref-5067078b07e5)）。
 
 ---
 
 ### D28 — 格式适用范围显式化：采集配置入身份，导入判定适用性，静默失败转显式
 
 **日期**：2026-10-15（第四轮）
-**状态**：已定。第 1–3 条由设计者裁决；第 4 条改变 E 的含义，2026-10-15 由用户确认采纳。承接任务 [T8.3](history-references.md#ref-18cd774a5eb9) 同日由用户批准下发，排在 T9 之前。
+**状态**：已定。第 1–3 条由设计者裁决；第 4 条改变 E 的含义，2026-10-15 由用户确认采纳。承接任务 [T8.3](history/history-references.md#ref-18cd774a5eb9) 同日由用户批准下发，排在 T9 之前。
 **背景**：
-- T8.2 Gate 通过，但根因与 D27 背景所写不同：`CANN` 进程名消失是我们的腾昇采集会话未声明 profiler level、torch_npu 默认 Level0 裁剪所致（[T8.2 设计者审核](history-references.md#ref-dc425489f08c) §2.1）。05 §4.1 早已把"采集配置"列为能力取值的绑定条件，但会话不声明、验收不比较。
-- 格式指纹（D27 第 1 条）回答"本次用了哪套解释"；没有任何机制回答"这份输入在不在这套解释的适用范围内"。`prepare_import()` 只按 vendor 和可选版本选解释器（[codex 格式兼容评审](history-references.md#ref-6da71915530e) §2.2）。
+- T8.2 Gate 通过，但根因与 D27 背景所写不同：`CANN` 进程名消失是我们的腾昇采集会话未声明 profiler level、torch_npu 默认 Level0 裁剪所致（[T8.2 设计者审核](history/history-references.md#ref-dc425489f08c) §2.1）。05 §4.1 早已把"采集配置"列为能力取值的绑定条件，但会话不声明、验收不比较。
+- 格式指纹（D27 第 1 条）回答"本次用了哪套解释"；没有任何机制回答"这份输入在不在这套解释的适用范围内"。`prepare_import()` 只按 vendor 和可选版本选解释器（[codex 格式兼容评审](history/history-references.md#ref-6da71915530e) §2.2）。
 - 腾昇设备轨改名或其元数据缺失时，R = 0、unknown = 0、账本仍守恒、导入状态 `complete`（同上 §2.3，变异实测）。这是已知唯一可能给出错误肯定结论的路径。
 - 标签依赖清单此前按任务写（T8.2 `join-keys.json` 的"同类风险"），任务结束即不再维护；T8.2 的 v3 又引入了一处新依赖（还原目标进程名须为 `Python`）。
-- 两份格式评审（[设计者](history-references.md#ref-00e0b6f3ed11)、[codex](history-references.md#ref-6da71915530e)）的综合裁决见 T8.2 设计者审核 §4。
+- 两份格式评审（[设计者](history/history-references.md#ref-00e0b6f3ed11)、[codex](history/history-references.md#ref-6da71915530e)）的综合裁决见 T8.2 设计者审核 §4。
 
 **决策**：
 1. **影响导出结构的采集配置必须显式声明，并进入采集身份。**
@@ -563,17 +563,17 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 
 **代价**：每个格式版本多维护一份契约；导入摘要新增适用性判定与归并计数（L-字段，1.0-rc 期内可加）；第 4 条改变 E 的实际内容与 14 条历史记录的输出，测试预期随之更新（T8.1 负控制 `KERNEL_FUTURE` 从"在 R、不在 E"改为"在 R、在 E、类别 unknown"）。
 
-**影响**：[05 §4 / §4.1 / §4.2](05-probes-and-vendors.md#4-厂商契约) 第 12 条、[07 §1](07-analyzers-and-reports.md)、[10 P0](10-roadmap.md)、[12 §8](12-codex-handoff.md#8-当前待办)、任务单 [T8.3](history-references.md#ref-18cd774a5eb9)。不改 L-核心，不改 `linker.py`、原生关联算法与 reason 枚举。
+**影响**：[05 §4 / §4.1 / §4.2](05-probes-and-vendors.md#4-厂商契约) 第 12 条、[07 §1](07-analyzers-and-reports.md)、[10 P0](10-roadmap.md)、[12 §8](history/12-codex-handoff.md#8-当前待办)、任务单 [T8.3](history/history-references.md#ref-18cd774a5eb9)。不改 L-核心，不改 `linker.py`、原生关联算法与 reason 枚举。
 
-> **执行进展（2026-10-16，T8.3 审核）**：第 1–4 条已在 T8.3 实现，Gate 未通过（[设计者审核](history-references.md#ref-ed6a5f5f7031)）。背景第三条说设备轨改名是"已知唯一"可能给出错误肯定结论的路径；T8.3 又证实了两条：C7 的同值异域字段连接（已修复），以及设备轨整条缺失时判 within（B3，交返工）。本条决策内容不变，补充规则见 [D29](#d29--判定一致性结构证据优先于名称契约条目须被执行或被测试)。
+> **执行进展（2026-10-16，T8.3 审核）**：第 1–4 条已在 T8.3 实现，Gate 未通过（[设计者审核](history/history-references.md#ref-ed6a5f5f7031)）。背景第三条说设备轨改名是"已知唯一"可能给出错误肯定结论的路径；T8.3 又证实了两条：C7 的同值异域字段连接（已修复），以及设备轨整条缺失时判 within（B3，交返工）。本条决策内容不变，补充规则见 [D29](#d29--判定一致性结构证据优先于名称契约条目须被执行或被测试)。
 
 ---
 
 ### D29 — 判定一致性：结构证据优先于名称，契约条目须被执行或被测试
 
 **日期**：2026-10-16
-**状态**：已定（设计者裁决）。不改 L-核心，不改 E 的含义；承接 [T8.3 返工轮](history-references.md#ref-eeed26a375af)。
-**背景**（[T8.3 设计者审核](history-references.md#ref-ed6a5f5f7031) §0、§2）：
+**状态**：已定（设计者裁决）。不改 L-核心，不改 E 的含义；承接 [T8.3 返工轮](history/history-references.md#ref-eeed26a375af)。
+**背景**（[T8.3 设计者审核](history/history-references.md#ref-ed6a5f5f7031) §0、§2）：
 - **B1**：轨道角色表先比主机进程名，后看设备结构。Kineto 的设备 pid 与主机 pid 进程名都是 `python`，于是 NVIDIA 设备执行轨全部被判为 host：21 份 Kineto 规则历史来源中有 20 份，加上 A100 两个当前窗口。codex 在自己的 Gate 审查中发现，设计者复核扩大了范围。这是"厂商标签被当作判别依据"第四次出现（前三次见 D25、D27、T8.2 的 `Python` 目标名）。
 - **B2**：D28 第 4 条要求 unknown 入选的前提是"轨道角色是设备执行轨"，但入选判断与角色判断是两套独立代码，没有一致性约束。角色审计只报告、无下游消费，出错时没有任何反馈。
 - **B3**：设备轨整条缺失、身份齐全时判 within，R = E = 0，无告警；条件列表为空也判 within。D28 第 2 条列了"必需的结构特征"，契约中没有。
@@ -590,7 +590,7 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
    - 某格式的名称不区分角色时（如 Kineto 的进程名），契约不把它声明为角色依据。
 3. **每份契约至少有一条必需结构条件**：存在至少一条设备执行轨，且其上有完整事件。不满足时判契约外并告警；确无设备负载的窗口由采集侧显式声明，不由导入器猜测。条件列表为空的契约无效，加载时校验结构。
 4. **契约条目须被执行或被测试绑定。** 每个条目要么由判定代码读取，要么有一致性测试把它与执行代码绑定（如每条声明的标签依赖对应一个审计钩子和一个变异用例）。两者都不满足的内容移到契约外的说明部分。厂商格式模块中不另写契约已声明的名称常量。
-5. **新增判定的验收写法**（同时写进 [12 §5](12-codex-handoff.md#5-测试要求) 与 [codex-tasks README §3](history-references.md#ref-88ac2cdff8ad)）：
+5. **新增判定的验收写法**（同时写进 [12 §5](history/12-codex-handoff.md#5-测试要求) 与 [codex-tasks README §3](history/history-references.md#ref-88ac2cdff8ad)）：
    - 写出必须成立的性质，在全部真实样本上以门禁检查，不只断言计数；
    - "预期无告警"必须配同类输入上的阳性对照；
    - 把新增判定改为常值或交换分支时，至少一项测试失败（变异杀伤），Gate 输入附变异结果。
@@ -604,9 +604,9 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 
 **代价**：修改公共角色判定会改变全部六份格式契约的解析身份（判定模块在每个版本的指纹闭包中），格式评估摘要随之变化，须预登记；R、E、原生关系、已知类别覆盖与证据索引预期不变。每个新判定多写性质门禁与变异用例。
 
-**影响**：[05 §4 / §4.2](05-probes-and-vendors.md#4-厂商契约) 第 12 条、[12 §5 / §8](12-codex-handoff.md#8-当前待办)、[codex-tasks README §3](history-references.md#ref-88ac2cdff8ad)、[T8.3 §9](history-references.md#ref-eeed26a375af)。
+**影响**：[05 §4 / §4.2](05-probes-and-vendors.md#4-厂商契约) 第 12 条、[12 §5 / §8](history/12-codex-handoff.md#8-当前待办)、[codex-tasks README §3](history/history-references.md#ref-88ac2cdff8ad)、[T8.3 §9](history/history-references.md#ref-eeed26a375af)。
 
-> **执行进展（2026-10-16，T8.3 返工复审）**：第 1–5 条已在 T8.3 返工轮落地，返工轮 Gate 通过，附遗留 L1–L6 转 T9 §0（[复审](history-references.md#ref-81d74b957ee6)）。复审对本决策的补充：
+> **执行进展（2026-10-16，T8.3 返工复审）**：第 1–5 条已在 T8.3 返工轮落地，返工轮 Gate 通过，附遗留 L1–L6 转 T9 §0（[复审](history/history-references.md#ref-81d74b957ee6)）。复审对本决策的补充：
 > - 第二信号（Kineto `pid == args.device`）原定只放在验收与 CI，生产对 `pid ≠ args.device` 仍静默判 within。**补充裁决**：把它做成**支持范围条件**（`pid ≠ args.device` → 范围失败），**不做**角色判据。这样它不改变 R/E（避免"共同失效使 E 归零"），只让状态显式变为 outside。转 T9.0 §0.4（复审 §3.4）。
 > - 第 1 条的"同一事实的多个判断须同源"，经谓词清点仍有不同源位置（复审 §3.1）；第 4 条在契约条件行的集合上没有被钉住（契约数据变异，复审 §3.2），字段绑定粒度也只到顶层键（复审 §3.3）。均转 T9.0。
 
@@ -615,8 +615,8 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 ### D30 — 契约条件的证据先查产物自述；每个必需条件登记生产者
 
 **日期**：2026-10-16
-**状态**：已确认（用户 2026-10-16）（此前为设计者提议）。不改 L-核心，不改 E 的含义，不改 D28、D29 的条目；承接 T9（T9.0–T9.3 拆分已确认（用户 2026-10-16），见[复审 §6.4](history-references.md#ref-a2621015cf7c)；T9.0 任务单已编写，待下发：[T9.0](history-references.md#ref-3e7f0f466f04)）。
-**背景**（[T8.3 返工复审](history-references.md#ref-81d74b957ee6) §2、§5）：
+**状态**：已确认（用户 2026-10-16）（此前为设计者提议）。不改 L-核心，不改 E 的含义，不改 D28、D29 的条目；承接 T9（T9.0–T9.3 拆分已确认（用户 2026-10-16），见[复审 §6.4](history/history-references.md#ref-a2621015cf7c)；T9.0 任务单已编写，待下发：[T9.0](history/history-references.md#ref-3e7f0f466f04)）。
+**背景**（[T8.3 返工复审](history/history-references.md#ref-81d74b957ee6) §2、§5）：
 - 当前五窗均为 `indeterminate`。codex 返工复盘 §5.3 与设计者都接受了"NVIDIA 会话没有独立实际配置来源"，12 §8 上一版据此写入了 T9 备忘。
 - 复核实测推翻了这个前提的宽义：Kineto 导出顶层有 `schemaVersion`、`cupti_version`、`cuda_runtime_version`、`cuda_driver_version` 与为真的采集开关等，生产代码不读这些键，`nvidia/session.py` 把实际配置写死为 unknown。腾昇封存的 `profiler_info.json` 经 `AscendProfiler().validate()` 得到实际配置，连同 collector.version、exporter.version 喂给 index 55，结果 within（16/16 条件 pass）；现在的 indeterminate 是因为验收喂入的是 T8.2 时期的旧身份。
 - "没读到"被当成"没有"，与 D25、D27、D29 记录的"名称当判别依据"同族：用方便的假设代替查看生产者产物。
@@ -635,23 +635,23 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 
 **代价**：每个必需条件多一行登记；派生事实写新 run 后，旧 store 与新 run 并存，须按完整解析身份区分。NVIDIA 的 `exporter.version`、`execution.mode` 仍无导出来源，由设计者逐条裁决：保留 required 并接受 indeterminate，或改为 conditional 并写明理由；不得为了 within 下调要求。
 
-**影响**：[05 §4](05-probes-and-vendors.md#4-厂商契约)、[12 §8](12-codex-handoff.md#8-当前待办)（证据生产者表、完整性证据）、[10 P0](10-roadmap.md)、[T8.3 §9.9](history-references.md#ref-4c7c9713f7d1)、T9 任务单（[T9.0](history-references.md#ref-3e7f0f466f04) 已编写，待下发；T9.1–T9.3 待编写，各在前一段 Gate 后编写）。
+**影响**：[05 §4](05-probes-and-vendors.md#4-厂商契约)、[12 §8](history/12-codex-handoff.md#8-当前待办)（证据生产者表、完整性证据）、[10 P0](10-roadmap.md)、[T8.3 §9.9](history/history-references.md#ref-4c7c9713f7d1)、T9 任务单（[T9.0](history/history-references.md#ref-3e7f0f466f04) 已编写，待下发；T9.1–T9.3 待编写，各在前一段 Gate 后编写）。
 
 
-**2026-10-18 执行补充（不改决策）**：T9.0–T9.2 已通过独立Gate。T9.1从封存产物读取配置/schema/版本并写新run；完整五窗重放证明旧窗仍缺有来源的execution.mode，NVIDIA另缺独立exporter.version，因此不将背景中的单窗16/16复现推广为五窗within。T9.3新Ascend模型窗口具有工作负载源码声明的eager来源，正常两窗within；官方modules档超出perf配置范围则outside。旧store、必需条件和历史未知均不回写。详见[T9.1执行](history-references.md#ref-bb2b957b04aa)与[T9.3执行](history-references.md#ref-61e29505d51c)。
+**2026-10-18 执行补充（不改决策）**：T9.0–T9.2 已通过独立Gate。T9.1从封存产物读取配置/schema/版本并写新run；完整五窗重放证明旧窗仍缺有来源的execution.mode，NVIDIA另缺独立exporter.version，因此不将背景中的单窗16/16复现推广为五窗within。T9.3新Ascend模型窗口具有工作负载源码声明的eager来源，正常两窗within；官方modules档超出perf配置范围则outside。旧store、必需条件和历史未知均不回写。详见[T9.1执行](history/history-references.md#ref-bb2b957b04aa)与[T9.3执行](history/history-references.md#ref-61e29505d51c)。
 
-**2026-10-18 设计者裁决（补充）**（[设计者审核](history-references.md#ref-79d0492278f2) §6、§1.5）：本条代价条款把 NVIDIA `exporter.version`、`execution.mode` 的取舍留给设计者逐条裁决，[T9.1 任务单](history-references.md#ref-6bda9d9f5ed8)却已先行写定。本轮由设计者裁决并追认其写法：
+**2026-10-18 设计者裁决（补充）**（[设计者审核](history/history-references.md#ref-79d0492278f2) §6、§1.5）：本条代价条款把 NVIDIA `exporter.version`、`execution.mode` 的取舍留给设计者逐条裁决，[T9.1 任务单](history/history-references.md#ref-6bda9d9f5ed8)却已先行写定。本轮由设计者裁决并追认其写法：
 - 两项**保留 required，接受 indeterminate**。理由：NVIDIA 导出里没有这两项的来源，不得为了 within 下调要求。
 - 腾昇新窗靠 workload 源码声明的 eager 来源达到 within 的做法保留；通用 record 没有这类来源，不得套用。
-- 流程更正：此类保留给设计者的裁决，今后须先在本文件提议（见 [12 §7](12-codex-handoff.md#7-提交与汇报) 2026-10-18 新增规则）。
+- 流程更正：此类保留给设计者的裁决，今后须先在本文件提议（见 [12 §7](history/12-codex-handoff.md#7-提交与汇报) 2026-10-18 新增规则）。
 
 ---
 
 ### D31 — P0 吞吐验收改为三项并报，退役单一 accepted 速率
 
 **日期**：2026-10-18
-**状态**：**已确认（用户 2026-10-19）**（此前为设计者提议，2026-10-18）。2026-10-19 用户采纳：[P0 ③](10-roadmap.md#2-p0--store-与-schema) 改为 ③a/③b/③c 三项并报，500k accepted/s 退役为历史基准（T7 18.0 万/s、T9.3 20.5–21.3 万/s 的 failed 记录保留不改）；据此编写 [T9.5 任务单](history-references.md#ref-06e993298ce0)。历史：裁决前 ③ 的现行文字与门槛未改、③ 维持 failed、P0 不退出。承接 [Q9](#q9--p0-吞吐门槛在原生优先路径下如何推导)（Q9 随本条关闭，2026-10-19）。
-**背景**（[设计者审核](history-references.md#ref-79d0492278f2) §1.3。可信度沿用审核标注：【已核实】= 设计者亲自重跑或 grep；【复核】= 复核代理实测，设计者未逐条重跑；【推断】= 未实测）：
+**状态**：**已确认（用户 2026-10-19）**（此前为设计者提议，2026-10-18）。2026-10-19 用户采纳：[P0 ③](10-roadmap.md#2-p0--store-与-schema) 改为 ③a/③b/③c 三项并报，500k accepted/s 退役为历史基准（T7 18.0 万/s、T9.3 20.5–21.3 万/s 的 failed 记录保留不改）；据此编写 [T9.5 任务单](history/history-references.md#ref-06e993298ce0)。历史：裁决前 ③ 的现行文字与门槛未改、③ 维持 failed、P0 不退出。承接 [Q9](#q9--p0-吞吐门槛在原生优先路径下如何推导)（Q9 随本条关闭，2026-10-19）。
+**背景**（[设计者审核](history/history-references.md#ref-79d0492278f2) §1.3。可信度沿用审核标注：【已核实】= 设计者亲自重跑或 grep；【复核】= 复核代理实测，设计者未逐条重跑；【推断】= 未实测）：
 - 现行 ③ 为"单 writer ≥ 50 万事件/秒入队，同时报告持续落盘速率、积压与丢弃"。T7 实测 18.0 万/s，T9.3 实测 accepted 20.5–21.3 万/s，均为 failed。
 - **该指标测到的是"填满队列的速度"**【复核】：accepted/s ≈ 队列容量 ÷ 循环耗时。100k heartbeat 中 accepted ≈ 65,595 ≈ 65,536 + 填满期间排空；同一循环 10 万次 14.9 万/s、100 万次 1.5 万/s、300 万次 7.4 千/s，随测试长度漂移，对"长时间采集不丢数据"几乎无信息量。
 - **budget.json 的"持续排空 2.32–2.38 万/s"不是并发速率**【复核】：它是生产者停止后的独占尾部排空（尾部 flush 约 2.4 s 排 65.5k 条）。dispatch 画像生产期 10 s 内只落盘 1,918–1,928 条（约 192/s）。
@@ -667,7 +667,7 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
    - **③b 并发无损持续速率**：生产者与排空并发，生产者持 GIL 繁忙（预登记一个 GIL 繁忙画像）；节拍扫描 ≥ 60 s，取 drop = 0 的最大供给。对每个登记的在线画像（默认 perf；dispatch(each) 按窗口）要求 drop = 0 且 flush 完成。
    - **③c 突发吸收**：报告 C/(λ−μ) 与队列容量；窗口画像的峰值事件数须 ≤ 可吸收量。
 2. **500k accepted/s 作为历史基准保留**：T7（18.0 万/s）与 T9.3（20.5–21.3 万/s）的 failed 记录不改，不再作为门槛。
-3. **裁决前 ③ 维持 failed，P0 不退出。**（历史，至 2026-10-19。采纳后 ③ 按上述三项并报判定，P0 仍未退出，待 [T9.4](history-references.md#ref-e525188761b6)、T9.5 与 P0 退出复审。）
+3. **裁决前 ③ 维持 failed，P0 不退出。**（历史，至 2026-10-19。采纳后 ③ 按上述三项并报判定，P0 仍未退出，待 [T9.4](history/history-references.md#ref-e525188761b6)、T9.5 与 P0 退出复审。）
 
 **理由**：
 - 单一 accepted 速率随循环长度漂移，也不反映丢失（背景第 2、3 条）：通过与否取决于测试写多长，而不是 store 能否无损承载。
@@ -680,11 +680,11 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 
 **代价**：
 - ③ 的验收由一个数变为三项，需新增预登记一个 GIL 繁忙画像并做 ≥ 60 s 的节拍扫描；③a 在 P1 前只有"已报告"，没有通过线。
-- 并发无损要求预计推动 Writer 消费端重构（T9.5：消费者移出 GIL、校验后移或每签名一次、导入器改为 Writer 端阻塞背压等，见[设计者审核](history-references.md#ref-79d0492278f2) §7 第 3 步）。
+- 并发无损要求预计推动 Writer 消费端重构（T9.5：消费者移出 GIL、校验后移或每签名一次、导入器改为 Writer 端阻塞背压等，见[设计者审核](history/history-references.md#ref-79d0492278f2) §7 第 3 步）。
 
-**影响**：[10 P0 验收 ③](10-roadmap.md#2-p0--store-与-schema)（2026-10-19 已改写，旧文字保留为历史）、[12 §8](12-codex-handoff.md#8-当前待办)、任务单 [T9.5](history-references.md#ref-06e993298ce0)（2026-10-19 设计者编写，待下发；按 ③a/③b/③c 预登记）、[Q9](#q9--p0-吞吐门槛在原生优先路径下如何推导)（由本条承接，已关闭）。
+**影响**：[10 P0 验收 ③](10-roadmap.md#2-p0--store-与-schema)（2026-10-19 已改写，旧文字保留为历史）、[12 §8](history/12-codex-handoff.md#8-当前待办)、任务单 [T9.5](history/history-references.md#ref-06e993298ce0)（2026-10-19 设计者编写，待下发；按 ③a/③b/③c 预登记）、[Q9](#q9--p0-吞吐门槛在原生优先路径下如何推导)（由本条承接，已关闭）。
 
-**补充（设计者提议，用户 2026-10-19 采纳）**（来源：[T9.4/T9.5 下发前审核](history-references.md#ref-47315ffad958)；不改 D31 的三项结构与"P1 前 ③a 不设门槛"）：
+**补充（设计者提议，用户 2026-10-19 采纳）**（来源：[T9.4/T9.5 下发前审核](history/history-references.md#ref-47315ffad958)；不改 D31 的三项结构与"P1 前 ③a 不设门槛"）：
 1. **③a 报告两部分**：emit 调用成本（受控协议）与被测线程进度比 R(r)。理由：D31 原文“含为把事件交给消费端所做的全部工作”应包含同进程消费端占用 GIL 的时间，只测 emit 调用会漏掉约 90%（主机实测 3013/s 下 13.1% 进度损失）。P1 前仍只报告，不设门槛。Stage 1 回归门由“emit ×1.10”改为“R(3013/s) 成对比值中位数 ≥ 1 − δ/R_baseline”（R_baseline = 基线 ≥ 5 次 R 的中位数，δ = 同组极差；见 T9.5 §4.4）。
 2. **③c 的“可吸收量”以实测倍数扫描确定**，公式只作交叉检查，冲突以实测为准（[D29](#d29--判定一致性结构证据优先于名称契约条目须被执行或被测试) 第 1 条）。
 3. **T9.5 P-dispatch-window 重定义**：由“×4、同一窗口时长内发出”（不可达：50–72 万/s）改为“计数框、`aten::` 计数较大一家的真实算子序列回放、实测窗口间隔、≥ 10 窗”，原 ×4 余量改为倍数扫描报告。这是在下发前修正一个不可达参数，不是看到结果后调低画像。同步第二、三轮修订：窗间隔内被测线程保持忙（持 GIL，不 sleep）；窗口间隔取与 N 同负载的 `nvidia-v5-restored/data/b00–b07-attach` 中窗口边界停顿的最小值（1.2496 s）；加积压条件（每窗起点 `pending()` 不随窗序上升，且任一窗起点 ≤ 0.5 C）；③b 对全部登记画像每个 3 次全过（比 D31 原文“预登记一个 GIL 繁忙画像”更严）。
@@ -696,10 +696,10 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 
 **日期**：2026-10-18
 **状态**：**已确认（用户 2026-10-27，见 [D45](#d45) 第 6 条）。** 原状态：设计者追认，待用户确认。范围收窄由实现方在 T9.3 中完成（最终生产提交 `92de361d`），事先未进本文件。
-**背景**（[设计者审核](history-references.md#ref-79d0492278f2) §1.5、§4.2 第 4 条）：
+**背景**（[设计者审核](history/history-references.md#ref-79d0492278f2) §1.5、§4.2 第 4 条）：
 - T9.3 真机暴露：腾昇 SDK 的分析 Python 子进程继承了注入环境，造成额外的失败附件（fake 后端测不到）。
-- 实现方据此把自动注入收窄到 wrapper 直接启动的 Python 目标。时序：首见 `preregistration-sdk-rework.json`（16:30），16:31 codex 内部设计复核（[design-review.md](history-references.md#ref-138275b467e3)），代码 `92de361d`（16:35）。
-- 该变更未进 DECISIONS，审核时 [02 §3](02-architecture.md#3-目标接入attach--wrap--launch) 仍写"子进程继承"，违反 [12 §7](12-codex-handoff.md#7-提交与汇报) "不要自行改设计，先在 DECISIONS 提出并等待确认"。依据只有 T9.0 头部"用户授权修订任务单、顺序完成 T9.0–T9.3"的概括授权；授权顺序执行不等于授权改设计。
+- 实现方据此把自动注入收窄到 wrapper 直接启动的 Python 目标。时序：首见 `preregistration-sdk-rework.json`（16:30），16:31 codex 内部设计复核（[design-review.md](history/history-references.md#ref-138275b467e3)），代码 `92de361d`（16:35）。
+- 该变更未进 DECISIONS，审核时 [02 §3](02-architecture.md#3-目标接入attach--wrap--launch) 仍写"子进程继承"，违反 [12 §7](history/12-codex-handoff.md#7-提交与汇报) "不要自行改设计，先在 DECISIONS 提出并等待确认"。依据只有 T9.0 头部"用户授权修订任务单、顺序完成 T9.0–T9.3"的概括授权；授权顺序执行不等于授权改设计。
 
 **决策**：
 1. record 只自动注入 wrapper **直接启动**的 Python 目标，以**完整 proc_key**（不是进程名）匹配父身份。
@@ -721,7 +721,7 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 **状态**：**用户主动提出**
 **决策**：
 - 用户接受官方 profiler 固有扰动作为采集代价。显式调用 `handle.step()` 推进窗口的方案只作为一种可选项，不作为默认模式。 默认情况下还是保持“attach 不改被测代码”的设计。
-- 不过路线细化必须正视两个与性能无关的**数据完整性边界**，它们的处置不属于“用户接受扰动”的范围：单个 trace 超约 65,536 设备事件导入为 partial（丢按位置排序的连续尾部，[T9.3 设计者审核发现 5](history-references.md#ref-79d0492278f2)）；导入耗时与内存随事件量线性增长（6 万设备事件约 110 s / 2.5 GiB，合成 trace）。所选路线须给出超限行为或窗口上限的显式设计.
+- 不过路线细化必须正视两个与性能无关的**数据完整性边界**，它们的处置不属于“用户接受扰动”的范围：单个 trace 超约 65,536 设备事件导入为 partial（丢按位置排序的连续尾部，[T9.3 设计者审核发现 5](history/history-references.md#ref-79d0492278f2)）；导入耗时与内存随事件量线性增长（6 万设备事件约 110 s / 2.5 GiB，合成 trace）。所选路线须给出超限行为或窗口上限的显式设计.
 
 <a id="d33-performance-acceptance-20261026"></a>
 
@@ -739,13 +739,13 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 
 **历史与并行任务**：原S4超时及其他失败记录、冻结候选、机器核验结论保持原样；本决定记录用户的性能验收处置，不改写历史实验为成功。单独登记的04续验按其原登记管理，本次文档变更不启动、停止或修改任何任务。不替代Writer Gate、Stage 1、P0等独立裁决，也不执行默认切换或自动发布。
 
-**依据与记录**：[独立验收意见](history-references.md#ref-192b849c99ce)、[性能处置JSON](history-references.md#ref-d4ffaf4ba943)、[原分段实测](history-references.md#ref-b6ebe951d920)。
+**依据与记录**：[独立验收意见](history/history-references.md#ref-192b849c99ce)、[性能处置JSON](history/history-references.md#ref-d4ffaf4ba943)、[原分段实测](history/history-references.md#ref-b6ebe951d920)。
 
 <a id="d33-default-integration-20261026"></a>
 
 #### D33 补充 — 完整 B 链路生产默认
 
-**日期**：2026-10-26。**状态**：用户明确要求实施；整合检查通过，提交与复核见[生产交付](history-references.md#ref-dbcab1a14471)。
+**日期**：2026-10-26。**状态**：用户明确要求实施；整合检查通过，提交与复核见[生产交付](history/history-references.md#ref-dbcab1a14471)。
 
 **决定**：以 04 轮冻结候选逐项整合当前 dev-zkm。CLI/Python record/attach 默认 final；windowed 显式保留。Plan B 的 inspect/finalize/StoreView 分页迭代默认有界，旧全量 API 维持返回语义。正常退出、封存、身份绑定、原件守恒与失败后新 run 恢复均保留。
 
@@ -764,7 +764,7 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 - T9.4 扩展 M8 公共读取校验/错误传播与 M9 质量、身份/lineage、分阶段风险关闭；M7 明确首次屏障及空队列前提。导入 completion 与当前 read_integrity 分开；旧原件/派生/事件语义不改。
 - T9.5 按 §4.7 补窗口减速门、完整 A/B 比较、噪声上限、供给/节流分因、字节预算与退出有界；候选不能用自报时间上界放大 kill 允许损失。D31 三项结构与 P1 前无绝对热路径门槛保持。
 - P0 退出须关闭 M9 中的 P0 项，不能由两项任务测试通过替代；P1/P2/P4/P3 的成熟度各自验收。代理写者裁决与设计者选型 Gate 保留。本轮不实施 D33 默认步进改造，不改变 D32 注入范围。
-- 具体生产入口、反例及预登记以 [T9.4](history-references.md#ref-e525188761b6) 与 [T9.5](history-references.md#ref-06e993298ce0) 2026-10-20 补充为准。
+- 具体生产入口、反例及预登记以 [T9.4](history/history-references.md#ref-e525188761b6) 与 [T9.5](history/history-references.md#ref-06e993298ce0) 2026-10-20 补充为准。
 
 ---
 
@@ -782,7 +782,7 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 
 **日期**：2026-10-20。**状态**：用户明确采纳，先修订任务单并预登记，再继续。
 
-单窗时间改为每组 32 个独立新 Writer 窗口、5 组，组内总 Writer 时间 / 总 empty 时间；保留全部原始样本。R 每次 60 s；5% 噪声上限保持；先同版本 A/A 对照再 A/B。两臂各自独立 empty，顺序平衡且固定；正式环境沿用原亲和性，D35 不转为正式环境。详见 [新协议](history-references.md#ref-7b84ef188a50)。统计无效即停止，不自动追加样本或容差；旧失败证据不覆盖。
+单窗时间改为每组 32 个独立新 Writer 窗口、5 组，组内总 Writer 时间 / 总 empty 时间；保留全部原始样本。R 每次 60 s；5% 噪声上限保持；先同版本 A/A 对照再 A/B。两臂各自独立 empty，顺序平衡且固定；正式环境沿用原亲和性，D35 不转为正式环境。详见 [新协议](history/history-references.md#ref-7b84ef188a50)。统计无效即停止，不自动追加样本或容差；旧失败证据不覆盖。
 
 用户同时授权组织独立代理复核并提交裁决依据，覆盖 T9.4 A7 与 T9.5 协议/选型审查安排；不预先批准 Gate、不取消 B 代理写者裁决、真机验收或 P0 退出条件。
 
@@ -790,7 +790,7 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 
 ### D37 — T9.5 Gate 裁决：在线 emit 按模式分契约，弃用以现行 Writer 为参照的时间比较（设计者提议，待用户确认）
 
-**日期**：2026-10-21。**状态**：设计者提议，**待用户确认**。**2026-10-22**：第 1、2 条撤回，第 4 条按 [D39](#d39--t95b-gate-裁决选-b2x-类不保留-astage-1-前插-t95creader-流式化t96为-p0-退出前置) 第 4 条处置。**2026-10-21 晚修订**：第 1 条（背压）**暂缓**。设计者重做的 B 类原型 B2X 在不阻塞的前提下，P-dispatch-window G1/G2 的 k=1/2 都零丢（smoke，见[审核 §8](history-references.md#ref-fe14eae2f1ea)），选型重新打开；第 4 条仍然成立。依据：[T9.5 Stage 0 Gate 设计者审核](history-references.md#ref-44739a19cd50)。Gate 已选定同进程候选 A、淘汰候选 B（原型形态）；Stage 1 待本决策确认后放行。
+**日期**：2026-10-21。**状态**：设计者提议，**待用户确认**。**2026-10-22**：第 1、2 条撤回，第 4 条按 [D39](#d39--t95b-gate-裁决选-b2x-类不保留-astage-1-前插-t95creader-流式化t96为-p0-退出前置) 第 4 条处置。**2026-10-21 晚修订**：第 1 条（背压）**暂缓**。设计者重做的 B 类原型 B2X 在不阻塞的前提下，P-dispatch-window G1/G2 的 k=1/2 都零丢（smoke，见[审核 §8](history/history-references.md#ref-fe14eae2f1ea)），选型重新打开；第 4 条仍然成立。依据：[T9.5 Stage 0 Gate 设计者审核](history/history-references.md#ref-44739a19cd50)。Gate 已选定同进程候选 A、淘汰候选 B（原型形态）；Stage 1 待本决策确认后放行。
 
 1. **在线 emit 按模式分契约**：常驻语义事件（module / route / compile / health / counter，P-perf）保持“永不阻塞”。按需开启的 `dispatch(each)` 改为**完整性优先的有界背压**：积压达高水位时 emit 有界等待排空；等待时间累计并作为事件落盘，使扰动可见；超时（消费者死亡或挂死）则按类型计 drop 并记 `writer_failure`，不无限阻塞（T9.5 不变量 9a）。理由：在“永不阻塞 + 同进程纯 Python 消费 + G1/G2”下，P-dispatch-window 结构上过不了（A 实测排空约 1.25 万/s，需求约 2.4 万/s）；而 dispatch(each) 按 [D22](#d22--采集层复用官方-profiler不做源码级融合) 只用于精度采集或指定缺口，其扰动（+34% 到 +263%）本就不产出性能数字，在这个模式下丢数据的代价大于阻塞的代价。
 2. **③b 的 P-dispatch-window 判定**：N = 37,850、间隔 1.2496 s、G1/G2、≥10 窗 ×3 均不变（不调低画像）。在背压模式下要求 drop = 0、flush 完成、Reader 内容一致；另报背压等待总时长 / 周期与周期级进度比 R_cycle。倍数扫描 k = 1/2/4/8 照旧只报告。背压下 ③c 的可吸收量记为“背压，不适用”，只报余量。
@@ -843,11 +843,11 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 
 ### D39 — T9.5b Gate 裁决：选 B2X 类、不保留 A；Stage 1 前插 T9.5c；Reader 流式化（T9.6）为 P0 退出前置
 
-**日期**：2026-10-22。**状态**：第 1–3 条由用户 2026-10-22 裁决；第 4–10 条为设计者配套修订，用户已于 2026-10-23 按 D41 批准实施；当前定义按 D41 修订，旧核查记录保持历史含义。依据：[T9.5b 设计者审核](history-references.md#ref-2a47357d5a94)、T9.5c / T9.6 下发前核查（同审核证据目录）。
+**日期**：2026-10-22。**状态**：第 1–3 条由用户 2026-10-22 裁决；第 4–10 条为设计者配套修订，用户已于 2026-10-23 按 D41 批准实施；当前定义按 D41 修订，旧核查记录保持历史含义。依据：[T9.5b 设计者审核](history/history-references.md#ref-2a47357d5a94)、T9.5c / T9.6 下发前核查（同审核证据目录）。
 
 1. **选型**：进程外候选 B2X 类（无锁 SPSC mmap 环、生产端成批 marshal、独立消费进程校验编码写盘）是唯一 Writer 方向。**不保留 A**：同进程成批候选不做启动回退，也不再作为任何比较的参照。
-2. **Stage 1 前插入 T9.5c**（[任务单](history-references.md#ref-cdbf854eab27)）：修复复核发现的 B2X 语义缺陷，收紧契约，CI 活跑，并做缩减的确认测量。Stage 1 依赖 B2X，在 T9.5c Gate 通过、T9.6 合入后开工。
-3. **Reader 流式化 T9.6**（[任务单](history-references.md#ref-6d7e83e32eee)）是 P0 退出前的独立任务，验收从简：一个 500 万事件的 store、绝对内存门加阳性对照。生产 record 路径中的三处整读（finalize、finalize 内与导入子进程中的 `StoreView.traces()`）都要在登记画像下消除普通在线事件对象全量常驻并满足内存预算；签名、控制记录、分片、缺口、错误、设备及导入数据仍可增长（D41）。
+2. **Stage 1 前插入 T9.5c**（[任务单](history/history-references.md#ref-cdbf854eab27)）：修复复核发现的 B2X 语义缺陷，收紧契约，CI 活跑，并做缩减的确认测量。Stage 1 依赖 B2X，在 T9.5c Gate 通过、T9.6 合入后开工。
+3. **Reader 流式化 T9.6**（[任务单](history/history-references.md#ref-6d7e83e32eee)）是 P0 退出前的独立任务，验收从简：一个 500 万事件的 store、绝对内存门加阳性对照。生产 record 路径中的三处整读（finalize、finalize 内与导入子进程中的 `StoreView.traces()`）都要在登记画像下消除普通在线事件对象全量常驻并满足内存预算；签名、控制记录、分片、缺口、错误、设备及导入数据仍可增长（D41）。
 4. **D37 处置**：
    - 第 1 条（dispatch(each) 有界背压）与第 2 条（背压下的 P-dispatch-window 判定）**撤回**：B2X 在永不阻塞下已过 ③b；
    - 第 3 条不变；
@@ -889,16 +889,16 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 
 **日期**：2026-10-23。**状态**：已确认，用户审核七处文档修改稿后授权落盘。适用于后续实验；历史环境、证据与判定按原日期保留。
 
-1. **默认执行环境**：后续实验默认使用新工作区 `/home/kzhang520/kzhang520_data/fgw/runtime-team` 下的 dtfs 共享目录。每轮记录实际输出路径、文件系统、挂载及资源配置；工作目录和输出目录分别登记，不能只根据代码所在位置推断输出盘。
+1. **默认执行环境**：后续实验默认使用新工作区 `<私有开发工作区>` 下的 dtfs 共享目录。每轮记录实际输出路径、文件系统、挂载及资源配置；工作目录和输出目录分别登记，不能只根据代码所在位置推断输出盘。
 2. **历史与比较边界**：历史 ext4 数值、环境身份、原始证据及通过／失败结论保持不变。后续代码性能比较在同一登记环境内进行，跨环境数值只作并列观察。
-3. **本次归因**：小规模对照中，生产 Writer 在 ext4 与 dtfs 上分别约为 27,683 与 5,516 op/s。主要原因是逐条文件 flush 触发大量小块 write，放大了 dtfs 路径的小写成本；tell、fsync 和元数据发布不是主要因素。实验没有分离底层硬件、文件系统及服务各自的贡献，不能据此认定为物理硬件固有上限。依据见工作区内的[存储对照报告](history-references.md#ref-8ab56ac39cf9)与[归因报告](history-references.md#ref-fe8a6411ea16)。
+3. **本次归因**：小规模对照中，生产 Writer 在 ext4 与 dtfs 上分别约为 27,683 与 5,516 op/s。主要原因是逐条文件 flush 触发大量小块 write，放大了 dtfs 路径的小写成本；tell、fsync 和元数据发布不是主要因素。实验没有分离底层硬件、文件系统及服务各自的贡献，不能据此认定为物理硬件固有上限。依据见工作区内的[存储对照报告](history/history-references.md#ref-8ab56ac39cf9)与[归因报告](history/history-references.md#ref-fe8a6411ea16)。
 4. **当前处置**：接受这项环境相关性能差异，暂不修改生产 Writer 的 flush 策略，也不增加 dtfs 专项优化任务。已有 B2X 语义修复、生产集成及 Reader 有界内存任务继续按各自范围推进。
 5. **产品底线**：优先保证约定在线负载下的数据完整性、错误可观测性、资源边界与被测进程扰动要求。目标退出后的离线导入、导出和整理耗时允许增加，继续记录耗时并验证完成性；运行期间的采集、导出或同步等待仍计入扰动评估。异常退出沿用持久化及尾部损失契约。允许离线变慢不放宽已有在线无损、内存、故障检测、flush/close 期限与扰动回归要求。
-6. **容量门槛调整**：T9.5c 原要求 `μ ≥ 70,000/s` 调整为历史容量参考，不再作为新环境的硬性通过门槛；具体测量与判定按[修订任务单](history-references.md#ref-cdbf854eab27)执行。S3 各档原始结果与未通过事实仍须报告；S2 在线负载、I5b 等语义约束与资源预算继续验收。此次说明和 smoke 结果不构成新环境正式验收或 P0 退出。
+6. **容量门槛调整**：T9.5c 原要求 `μ ≥ 70,000/s` 调整为历史容量参考，不再作为新环境的硬性通过门槛；具体测量与判定按[修订任务单](history/history-references.md#ref-cdbf854eab27)执行。S3 各档原始结果与未通过事实仍须报告；S2 在线负载、I5b 等语义约束与资源预算继续验收。此次说明和 smoke 结果不构成新环境正式验收或 P0 退出。
 
 **影响**：T9.5c 的环境登记、S3 用途与 Gate 口径；T9.6 的环境与历史预演耗时说明；T9.5、10-roadmap、12-codex-handoff 与 `personal/FlagPerf-advance.md` 的执行入口。此次只修改文档，生产代码、测试脚本和历史实验包保持不变。
 
-**适用范围回填（2026-10-26）**：T9.5d 正式验收与 S9 收口按用户授权在登记 ext4 范围执行（[T9.5d](history-references.md#ref-de1a85316545) §8.7、§9；[D42](#d42) 第 4 条）。据此，第 1 条的 dtfs 默认不再作为在线 Writer 验收环境的统一要求；在线 Writer 的 Store 位置由 Stage 1 任务单下发时另行决定（已由 [D43](#d43) 第 1 条决定）。第 2–6 条及此前按 dtfs 登记的历史结果、失败与环境记录保持不变。
+**适用范围回填（2026-10-26）**：T9.5d 正式验收与 S9 收口按用户授权在登记 ext4 范围执行（[T9.5d](history/history-references.md#ref-de1a85316545) §8.7、§9；[D42](#d42) 第 4 条）。据此，第 1 条的 dtfs 默认不再作为在线 Writer 验收环境的统一要求；在线 Writer 的 Store 位置由 Stage 1 任务单下发时另行决定（已由 [D43](#d43) 第 1 条决定）。第 2–6 条及此前按 dtfs 登记的历史结果、失败与环境记录保持不变。
 
 ---
 
@@ -916,9 +916,9 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 6. 管理操作与 ack 接收串行、期限含锁等待，emit 不等管理锁。死亡立即失败，有效 failed ack 可细化泛化死亡原因且不改首次失败时间；具体错误不被普通退出覆盖。正常关闭须匹配 closed ack 与正常退出，closing 不能屏蔽异常死亡。
 7. Stage 1 前处置内存可见性/同步与支持平台范围、大 payload 字节预算；本轮登记环境压力观察不构成通用正确性或任意 payload 内存证明。
 
-具体机制、反例与保留的测量矩阵以 [T9.6](history-references.md#ref-6d7e83e32eee) 和 [T9.5c](history-references.md#ref-cdbf854eab27) 为准。旧证据、失败与前轮自检保留历史含义。
+具体机制、反例与保留的测量矩阵以 [T9.6](history/history-references.md#ref-6d7e83e32eee) 和 [T9.5c](history/history-references.md#ref-cdbf854eab27) 为准。旧证据、失败与前轮自检保留历史含义。
 
-**实施证据回填（2026-10-23，不是新增 Gate 裁决）**：T9.6 登记验收通过；T9.5c 实现与取证已交付，候选硬条件未通过。145 个登记 case 全部执行、155 个观测；V2 有 9 次 I3a 失败，S2 仅 8/15；S7 70k 有效覆盖不足，S5 参照不合格。最终 CI 292/79/21 全部通过不覆盖这些反证。Stage 1 与 P0 未放行。 T9.6 已于 `9cc96709` 先行验收，T9.5c 由 `912f7c99` 冻结后执行。S3 最高全过观察档 op50k/span70k；S1 最大 PSS 增量22,024,192 B，在预算内。原件与未通过边界见 [T9.5c Gate 输入](history-references.md#ref-3124ca1c1b92)。
+**实施证据回填（2026-10-23，不是新增 Gate 裁决）**：T9.6 登记验收通过；T9.5c 实现与取证已交付，候选硬条件未通过。145 个登记 case 全部执行、155 个观测；V2 有 9 次 I3a 失败，S2 仅 8/15；S7 70k 有效覆盖不足，S5 参照不合格。最终 CI 292/79/21 全部通过不覆盖这些反证。Stage 1 与 P0 未放行。 T9.6 已于 `9cc96709` 先行验收，T9.5c 由 `912f7c99` 冻结后执行。S3 最高全过观察档 op50k/span70k；S1 最大 PSS 增量22,024,192 B，在预算内。原件与未通过边界见 [T9.5c Gate 输入](history/history-references.md#ref-3124ca1c1b92)。
 
 ---
 
@@ -934,9 +934,9 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 4. **环境与范围**：沿已授权的登记镜像、资源和 ext4 环境；不重跑正式 129 项矩阵、G1 配对或 V2/S7 死亡矩阵。S9 原有故障单测仍随全套执行。原 a01–a03 与 dtfs 失败保留。
 5. **完成口径**：S9 成功后当前状态为“**S9 已收口；G1 极差与 F11 已由用户接受为非阻塞项，可继续后续生产推进。**”历史正式验收不追溯改判；生产接入实现属于后续工作，P0 不自动退出。剩余正确性、资源和平台/字节预算等要求继续适用。
 
-执行协议及后续结果见 [S9 收口登记](history-references.md#ref-03666bd620b7)。此条是用户推进决定，不冒称设计者已经完成新一轮技术审核。
+执行协议及后续结果见 [S9 收口登记](history/history-references.md#ref-03666bd620b7)。此条是用户推进决定，不冒称设计者已经完成新一轮技术审核。
 
-**实施回填**：a04 的 Store/conformance 与 a05 的 correlate 构成完整通过证据；a04 证明落盘失败保留，全部冻结输入相等后仅重跑该失败套件。store 329、correlate 79、conformance 21 全过，417-case/50,040 次比较与最终字节相等完成，独立审计通过。S9 已收口；G1/F11 非阻塞，可继续后续生产推进。[交付](history-references.md#ref-03dff9b5e6ad)。
+**实施回填**：a04 的 Store/conformance 与 a05 的 correlate 构成完整通过证据；a04 证明落盘失败保留，全部冻结输入相等后仅重跑该失败套件。store 329、correlate 79、conformance 21 全过，417-case/50,040 次比较与最终字节相等完成，独立审计通过。S9 已收口；G1/F11 非阻塞，可继续后续生产推进。[交付](history/history-references.md#ref-03dff9b5e6ad)。
 
 ---
 
@@ -944,7 +944,7 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 
 ### D43 — Writer Stage 1 下发前的五项决定
 
-**日期**：2026-10-26。**状态**：设计者提议；用户 2026-10-26 指示按设计者建议写成 codex 执行文档并交 codex 执行，视为批准。执行文档为 [T9.7](history-references.md#ref-418019448c44)（Stage 1 生产接入、验收套件合并与验证预算）与 [T9.8](history-references.md#ref-104a0f28ea18)（真实推理闭环校准）。依据：T9.5d 正式验收与 S9 收口、[D42](#d42)、[2026-10-26 进展与复盘](history-references.md#ref-2647f73386ec)。
+**日期**：2026-10-26。**状态**：设计者提议；用户 2026-10-26 指示按设计者建议写成 codex 执行文档并交 codex 执行，视为批准。执行文档为 [T9.7](history/history-references.md#ref-418019448c44)（Stage 1 生产接入、验收套件合并与验证预算）与 [T9.8](history/history-references.md#ref-104a0f28ea18)（真实推理闭环校准）。依据：T9.5d 正式验收与 S9 收口、[D42](#d42)、[2026-10-26 进展与复盘](history/history-references.md#ref-2647f73386ec)。
 
 1. **Store 权威位置**：在线 Writer 的权威 Store 写在推理节点本地文件系统。aarch64 的 Stage 1 验收沿用 T9.5d 登记的 ext4（`/dev/sda5` 上新建目录）；x86_64 的 A100 主机登记其实际本地文件系统类型。每轮登记实际文件系统、挂载与资源身份；网络或共享文件系统拒跑。共享 dtfs 不作为在线 Writer 的验收或承诺目标，历史 dtfs 失败按原结论保留。“本地 Store → 共享存储异步归档”不在 Stage 1 范围，需要时另立任务并先定义权威副本、容量满策略、恢复与归档完成语义。[D40](#d40) 第 1 条的 dtfs 默认继续适用于不依赖在线 Writer 时延的实验（离线导入、报告等）。
 2. **Stage 1 的 R 回归门**：
@@ -959,7 +959,7 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 6. **D38 第 4 条的落地澄清（不修订 D38）**：finalizer 仍须先等登记代理退出或超时，期限计入 record 的等待期限。超时后由 record 终止代理再 finalize。D38 所说的“run 记为 incomplete”用现有表示：该 writer 未正常关闭，按现行规则判 `lost`、`tail_unknown` 为 True，record 以非零码退出；原因只出现在 record-status / inspect 的计算结果里，不写入 manifest，不新增 `manifest.status` 取值。按属主存活判 `lost` 的位置（`manifest.py` 的 finalize 与 `status.py` 未 finalize 的分支）须共用同一个“writer 有效状态”函数，并配一致性测试。
 7. **与 D33 的先后次序**：D33 的 latency-fix 候选改动了 `runtime.py`、`record.py`、`_bootstrap.py`、`_import_worker.py`、`store/view.py`、`store/manifest.py`、`cli.py`、`vendors/ascend|nvidia/session.py`，新增 `vendors/final_session.py` 与若干 `offline/*`（以其提交时的实际清单为准），与 T9.7 的落点重叠。D33 先按路径提交 latency-fix，或由其负责人明确排除，T9.7 才开始改这些共享文件；在此之前，T9.7 只做不碰共享文件的阶段 0（验收套件合并、迁移设计）。T9.7、T9.8 的正式运行一律从干净的 git worktree 冻结，不在含他人未提交改动的共享工作树中执行。D33 的 final 采集模式合入后，代理写者须在该模式下重新验证。
 
-不变的部分：D38 的唯一代理写者、D39 的 B2X 方向与语义不变量、D41 第 7 条的 Stage 1 前置义务、D42 对 G1/F11 的处置。协作纪律（一个任务一个提交、D33 不另开分支、状态块只替换不叠加）见 [12 交接约束](12-codex-handoff.md) 的 2026-10-26 补充。
+不变的部分：D38 的唯一代理写者、D39 的 B2X 方向与语义不变量、D41 第 7 条的 Stage 1 前置义务、D42 对 G1/F11 的处置。协作纪律（一个任务一个提交、D33 不另开分支、状态块只替换不叠加）见 [12 交接约束](history/12-codex-handoff.md) 的 2026-10-26 补充。
 
 **影响**：新增 T9.7、T9.8；T9.5 的 Stage 1 部分由 T9.7 承接；10-roadmap、12 交接、codex-tasks 索引同步。
 
@@ -980,15 +980,15 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 
 **执行协调补充（2026-10-26）**：用户再次明确“尚未交接，等待 D33 提交”。重叠生产文件继续冻结；仅推进独立工作，不将本次实施授权解释成 D33 负责人交接。
 
-**接续授权（2026-10-26）**：D33 已提交 `9164e171` 并交接；用户批准继续完成 T9.8/T9.7。源码等待条件解除，T9.8 基线与原停止门保持；执行细化见 [接续预登记](history-references.md#ref-3e69ce6238db)。
+**接续授权（2026-10-26）**：D33 已提交 `9164e171` 并交接；用户批准继续完成 T9.8/T9.7。源码等待条件解除，T9.8 基线与原停止门保持；执行细化见 [接续预登记](history/history-references.md#ref-3e69ce6238db)。
 
-**执行检查点（2026-10-27，非新增授权）**：用户专门批准的 O2 memop 审计定向修复已完成，八格通过。T9.8 原始正式链完成；T9.7 接线、O2/O3、83+51 定向变异与两平台最小链完成。在线三轮预演未达门，按第 6 条停止；[额外一轮提案](history-references.md#ref-9251da263900)及 [W1 40→65 分钟提案](history-references.md#ref-69819afb641d)仍待用户决定，不视为已批准。旧 A/A 未固定／采集 mems=0，不能转作最终环境资格；已补守卫，正式前重新校准。完整矩阵、最终双解释器及整合后小闭环待完成，Gate/P0 未通过。
+**执行检查点（2026-10-27，非新增授权）**：用户专门批准的 O2 memop 审计定向修复已完成，八格通过。T9.8 原始正式链完成；T9.7 接线、O2/O3、83+51 定向变异与两平台最小链完成。在线三轮预演未达门，按第 6 条停止；[额外一轮提案](history/history-references.md#ref-9251da263900)及 [W1 40→65 分钟提案](history/history-references.md#ref-69819afb641d)仍待用户决定，不视为已批准。旧 A/A 未固定／采集 mems=0，不能转作最终环境资格；已补守卫，正式前重新校准。完整矩阵、最终双解释器及整合后小闭环待完成，Gate/P0 未通过。
 
 **用户接续处置（2026-10-27）**：用户 2026-10-27 决定：W1 分项上限批准为 65 分钟（3900 秒），T9.7 八小时／合计十二小时不变；在线回归暂不修复并作为非阻塞项继续其余验收。生产字节冻结于 76617010，不执行第四轮性能修复；原负结果、0.963973 门限、十对正式 W7、四对完整资源 A/A、其余正确性／资源要求与 Gate 边界均保留。 之前检查点的“待决定”描述只表示当时状态；不再等待这两项答复。
 
-**W8 分项预算处置（2026-10-27）**：用户批准 W8 从 20 调整到 30 分钟；保留工具截止失败与全部费用，补齐原定 k=8／op-span 70k 观察，不改生产代码、原门限、次数或总八小时／十二小时。见 [预算备忘](history-references.md#ref-5b67608b15ee)。
+**W8 分项预算处置（2026-10-27）**：用户批准 W8 从 20 调整到 30 分钟；保留工具截止失败与全部费用，补齐原定 k=8／op-span 70k 观察，不改生产代码、原门限、次数或总八小时／十二小时。见 [预算备忘](history/history-references.md#ref-5b67608b15ee)。
 
-**执行回填（2026-10-27，非新裁决）**：T9.8 两种独立身份闭环已交付；T9.7 生产接线和本轮执行交付，正式 W7 十对有效失败保留非阻塞。W9 aarch64 A5 供给 94.44%＜98%，原五分钟分项余量不足重验，按既有停止规则保留 blocker；未延长预算或降低速率。P0③及退出未确认，见 [复审输入](history-references.md#ref-a1968734253f)。
+**执行回填（2026-10-27，非新裁决）**：T9.8 两种独立身份闭环已交付；T9.7 生产接线和本轮执行交付，正式 W7 十对有效失败保留非阻塞。W9 aarch64 A5 供给 94.44%＜98%，原五分钟分项余量不足重验，按既有停止规则保留 blocker；未延长预算或降低速率。P0③及退出未确认，见 [复审输入](history/history-references.md#ref-a1968734253f)。
 
 **影响**：T9.7/T9.8、T9.5 在线/离线范围、路线图/交接/任务索引及项目指南。预登记见 `docs/validation/t9.7/`、`docs/validation/t9.8/`；不追溯改写既有证据，不自动批准 P0 退出。
 
@@ -998,7 +998,7 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 
 ### D45 — P0 收尾：③ 按登记低负载范围判定，W7/W9/③c 一次性处置，P0 退出
 
-**日期**：2026-10-27。**状态**：设计者提议，用户 2026-10-27 明确批准（“同意分析和处置，收尾 P0”）。本条即 P0 退出复审结论，复审材料为现有 [T9.7 Gate 输入](history-references.md#ref-a1968734253f)、[T9.7 报告](history-references.md#ref-0ffd66d1ab4a)与 [T9.8 报告](history-references.md#ref-e93d1c4566d0)，未追加实验。分析过程见 [2026-10-27 进展与复盘](history-references.md#ref-e14683bf70cc)。
+**日期**：2026-10-27。**状态**：设计者提议，用户 2026-10-27 明确批准（“同意分析和处置，收尾 P0”）。本条即 P0 退出复审结论，复审材料为现有 [T9.7 Gate 输入](history/history-references.md#ref-a1968734253f)、[T9.7 报告](history/history-references.md#ref-0ffd66d1ab4a)与 [T9.8 报告](history/history-references.md#ref-e93d1c4566d0)，未追加实验。分析过程见 [2026-10-27 进展与复盘](history/history-references.md#ref-e14683bf70cc)。
 
 **背景**：项目初期的应用场景是低负载 profiling。T9.8 的真实负载（Qwen3-Embedding-0.6B，910C 单 die）给出：
 - 真实轻量记录约 70 条/s，而 W5 已验证无损的速率是 3,013 条/s；
@@ -1049,17 +1049,17 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 
 **不变**：所有原始失败、无效样本和 0.963973 门限下的历史判定、T9.5c 原失败、D42 处置都保留，不改写历史证据。本决定是用户在完整证据上做的范围取舍，不是证据改判。
 
-**影响**：[P0 退出矩阵](history-references.md#ref-e0872549b0c8)（含 json 与 `blockers.json`）、[10 路线图](10-roadmap.md) P0 状态与 §9、PLAN README、codex-tasks README、[12 交接](12-codex-handoff.md) 状态块、T9.7/T9.8 任务单状态块、[03 §8](03-event-schema.md#8-版本与演进规则) L-字段行、04 指标名注、Report_for_human_reading（README、02、新进展页）、`docs/writer-stage1-status.md`、`personal/FlagPerf-advance.md` 与 `personal/guides/`。
+**影响**：[P0 退出矩阵](history/history-references.md#ref-e0872549b0c8)（含 json 与 `blockers.json`）、[10 路线图](10-roadmap.md) P0 状态与 §9、PLAN README、codex-tasks README、[12 交接](history/12-codex-handoff.md) 状态块、T9.7/T9.8 任务单状态块、[03 §8](03-event-schema.md#8-版本与演进规则) L-字段行、04 指标名注、Report_for_human_reading（README、02、新进展页）、`docs/writer-stage1-status.md`、`personal/FlagPerf-advance.md` 与 `personal/guides/`。
 
 <a id="d46"></a>
 
 ### D46 — P1 首批：预设组成、两级 dispatch、route 判定、选层折叠、主机桥接与分析集
 
-**日期**：2026-10-27。**状态**：设计者提议；用户 2026-10-27 批准 P1 首批规划（内容即本条），随任务单 [T10.1](history-references.md#ref-29067dfd8983)、[T10.2](history-references.md#ref-51d0d35bc759)、[T10.3](history-references.md#ref-d60f95337bf0) 一并下发。
+**日期**：2026-10-27。**状态**：设计者提议；用户 2026-10-27 批准 P1 首批规划（内容即本条），随任务单 [T10.1](history/history-references.md#ref-29067dfd8983)、[T10.2](history/history-references.md#ref-51d0d35bc759)、[T10.3](history/history-references.md#ref-d60f95337bf0) 一并下发。
 
 > **后续修订**：[D47](#d47) 修订 summary 字段与 route 判定；[D48](#d48) 替换第 2 条以“scope 栈为空”识别根前向的定义，并补充接入时机、组件依赖、公共读取接口及验收方法。执行以两条修订和对应任务书为准。
 
-**背景**：P0 已按 [D45](#d45) 退出。P1 的交付与验收见 [10 §3](10-roadmap.md#3-p1--python-侧关联链)。下列语义如果留给实现方，会出现两种以上互不兼容的做法（[codex-tasks README §5](history-references.md#ref-6fe64a9751e0) Q10），因此由设计者先定。依据都是当前代码与已有数据：
+**背景**：P0 已按 [D45](#d45) 退出。P1 的交付与验收见 [10 §3](10-roadmap.md#3-p1--python-侧关联链)。下列语义如果留给实现方，会出现两种以上互不兼容的做法（[codex-tasks README §5](history/history-references.md#ref-6fe64a9751e0) Q10），因此由设计者先定。依据都是当前代码与已有数据：
 - **拦截成本**：Python `TorchDispatchMode` 每次调用都付拦截费，T9.8 每步 5,079 次 `aten::` 调用；[D22](#d22--采集层复用官方-profiler不做源码级融合) 实测 each 的配对增量为 +34% 到 +263%。没有 C++ 扩展时，summary 只省写盘，不省拦截。
 - **已登记的写入范围**：W5 无损速率 3,013 条/s；③c 名义单窗 37,850 条；在途上限 65,536 条或 16 MiB（[D45](#d45) 第 3、4 条）。
 - **桥接现状**：导入器已能识别项目 marker，见 `flagprof/vendors/chrome.py:51` 与 `rules_common.same_thread`（`flagprof/vendors/rules_common.py:66`）。腾昇的 Enqueue/Dequeue 桥见 `vendors/ascend/rules.py:26-49`。导入管线也接受 `calls`（`flagprof/offline/service.py:92`）。T9.8 的 linked=0，是因为生产路径没有写 marker，也没有传 calls。
@@ -1162,13 +1162,13 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
     - 日历时限：T10.1 为 2026-11-03，T10.2 为 2026-11-05，T10.3 为 2026-11-07；超时即上报。
 
 12. **探针降级与无 scope 调用的记录位置**：
-    - [05 §1](05-probes-and-vendors.md#1-探针的定义与硬约束) 第 6 条、[12 §3](12-codex-handoff.md#3-不可违反的设计约束) 第 6 条要求安装失败“写 `health(sev=warn)`”，[04 §3.1](04-correlation.md#31-h0op--scopetls-scope-栈) 要求无 scope 线程写 `health(kind=info)`。但 `health.kind` 的枚举里没有对应值（`flagprof/store/schema.py:63`，只有 heartbeat/hang/oom/comm_timeout/device_error/process_exit/ecc/link_down），`info` 也只是 `sev` 的取值。
+    - [05 §1](05-probes-and-vendors.md#1-探针的定义与硬约束) 第 6 条、[12 §3](history/12-codex-handoff.md#3-不可违反的设计约束) 第 6 条要求安装失败“写 `health(sev=warn)`”，[04 §3.1](04-correlation.md#31-h0op--scopetls-scope-栈) 要求无 scope 线程写 `health(kind=info)`。但 `health.kind` 的枚举里没有对应值（`flagprof/store/schema.py:63`，只有 heartbeat/hang/oom/comm_timeout/device_error/process_exit/ecc/link_down），`info` 也只是 `sev` 的取值。
     - 本批不扩充枚举，按以下方式处理：探针安装失败、运行中降级时，记入 attachment `state.json` 的 `capabilities.unavailable`（带 `reason`）与 `errors`，并经 `inspect` 显示；run 照常继续。无 scope 的调用由分析器从 `op` 缺 `scope` 加 `tid` 统计，写入 coverage。
     - `health.kind` 是否新增 `probe_degraded` 等值，留到 P3 设计 health 探针与规则引擎时按 [03 §8](03-event-schema.md#8-版本与演进规则) 走 minor。上述三处文字各加当前实现注记。
 
 **不变**：L-核心与 L-字段 `1.0` 不变（本条没有新增字段或枚举；2026-10-27 起 [D47](#d47) 为 opsum 新增两个可选字段，L-字段升为 `1.1`）；T4 门禁锁定的文件不变；P0 的已知限制（D45 第 8 条）照旧适用。
 
-**影响**：[05 §3](05-probes-and-vendors.md#3-预设preset) 预设表与 §1 第 6 条注记、04 §3.1 注记、[04 §3.8](04-correlation.md#38-p1-设计输入两跳归属与连接键域借鉴-nsys2026-10-16) 状态行、[10 路线图](10-roadmap.md) P1 状态与 §9、PLAN README、codex-tasks README、[12 交接](12-codex-handoff.md) §3 第 6 条注记与 §8、`personal/FlagPerf-advance.md`。
+**影响**：[05 §3](05-probes-and-vendors.md#3-预设preset) 预设表与 §1 第 6 条注记、04 §3.1 注记、[04 §3.8](04-correlation.md#38-p1-设计输入两跳归属与连接键域借鉴-nsys2026-10-16) 状态行、[10 路线图](10-roadmap.md) P1 状态与 §9、PLAN README、codex-tasks README、[12 交接](history/12-codex-handoff.md) §3 第 6 条注记与 §8、`personal/FlagPerf-advance.md`。
 
 <a id="d47"></a>
 
@@ -1218,7 +1218,7 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 
 **代价**：L-字段升一次 minor。summary 的写出条数最多增至约 4 倍（`dev` 通常只有 `cpu` 与一个加速器两种，`nested` 两种）；D46 的预期是每秒几百条，增加后仍低于 W5 的 3,013 条/s。attachment 状态多一张表，大小随 FlagGems 全量配置而定，T10.1 登记字节数。
 
-**影响**：[03 §4.3、§4.3b、§8](03-event-schema.md#43b-opsum--算子聚合低开销模式)；D46 第 2、3 条与“不变”注记；[T10.1](history-references.md#ref-29067dfd8983) §1、§3.3、§3.6、§3.12、§4、§5、§6 与自检；[T10.2](history-references.md#ref-51d0d35bc759) §2、§3.5、§3.7、§5、§6 与自检；[T10.3](history-references.md#ref-d60f95337bf0) §3.3、§4.2、§5；`docs/P0-store-notes.md` 的 opsum 字段表（T10.1 实现时回填）；10 路线图、PLAN README、codex-tasks README、12 交接状态块、`personal/FlagPerf-advance.md`。
+**影响**：[03 §4.3、§4.3b、§8](03-event-schema.md#43b-opsum--算子聚合低开销模式)；D46 第 2、3 条与“不变”注记；[T10.1](history/history-references.md#ref-29067dfd8983) §1、§3.3、§3.6、§3.12、§4、§5、§6 与自检；[T10.2](history/history-references.md#ref-51d0d35bc759) §2、§3.5、§3.7、§5、§6 与自检；[T10.3](history/history-references.md#ref-d60f95337bf0) §3.3、§4.2、§5；`docs/P0-store-notes.md` 的 opsum 字段表（T10.1 实现时回填）；10 路线图、PLAN README、codex-tasks README、12 交接状态块、`personal/FlagPerf-advance.md`。
 
 ---
 
@@ -1242,7 +1242,7 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 
 **与已有决策的关系**：D47 的 opsum `dev/nested`、`route_table`、判定范围与 L-字段 `1.1` 保持原方案。D48 替换 D46 第 2 条“scope 栈为空”的根前向定义，并细化第 1、3、6、7、8、9 条的接线、接口与验收；其余约定沿用。T4 冻结文件、P0 原始结论与证据保持原状。
 
-**影响**：[T10.1](history-references.md#ref-29067dfd8983)、[T10.2](history-references.md#ref-51d0d35bc759)、[T10.3](history-references.md#ref-d60f95337bf0)；02 当前接入说明、05 预设依赖、10 阶段范围与 PLAN/任务索引/12 交接状态。此次只修订任务与设计文档，生产实现仍由三张任务单交付。
+**影响**：[T10.1](history/history-references.md#ref-29067dfd8983)、[T10.2](history/history-references.md#ref-51d0d35bc759)、[T10.3](history/history-references.md#ref-d60f95337bf0)；02 当前接入说明、05 预设依赖、10 阶段范围与 PLAN/任务索引/12 交接状态。此次只修订任务与设计文档，生产实现仍由三张任务单交付。
 
 ---
 
@@ -1250,7 +1250,7 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 
 ### D49 — P1 退出复审：功能链路通过，报告口径由 P1.1 修补，非阻塞项一次处置
 
-**日期**：2026-10-28。**状态**：设计者提议；用户 2026-10-28 批准（“我同意D49和D50”）。复审材料为 [P1 退出矩阵](history-references.md#ref-567cd9829d3a)、[T10.3 报告](history-references.md#ref-86ccff91a5b8)、T10.1/T10.2 报告，以及设计者对封存 R1–R3 导出文件的重读，未追加实验。分析过程见 [2026-10-28 复盘页](history-references.md#ref-8578565fdbb8)。
+**日期**：2026-10-28。**状态**：设计者提议；用户 2026-10-28 批准（“我同意D49和D50”）。复审材料为 [P1 退出矩阵](history/history-references.md#ref-567cd9829d3a)、[T10.3 报告](history/history-references.md#ref-86ccff91a5b8)、T10.1/T10.2 报告，以及设计者对封存 R1–R3 导出文件的重读，未追加实验。分析过程见 [2026-10-28 复盘页](history/history-references.md#ref-8578565fdbb8)。
 
 **背景**：
 - **站住的部分**【实测】：C1–C8 全部通过。真实设备事件中项目 linked 1,692 条，抽样如 `aten::cat → aclnnCat`；探针开/关输出逐值相等；FlagGems 命中函数与 v1 的 23 个一致，`route_table_mismatch=0`；真机闭环抓到两个会改变结论的缺陷（嵌套路由覆盖外层归属、Reader 误拒有效数据）。P1 生产代码约 1.9k 行，T4 冻结文件未改。
@@ -1269,7 +1269,7 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 **决策**：
 
 1. **P1 退出**：验收 ①②④ 与 D45 第 7 条的三个缺口（主机桥接、seal 身份、开销口径）在登记范围内通过，判为 `passed_registered_small_scope`。登记范围是 Qwen3-Embedding-0.6B、910C 单 die、P1 镜像 `1147704d…`。**P1 退出**，附第 4 条已知限制。
-   - 面向使用者的两类结论（耗时面板、回退清单）以 P1.1（[T10.4](history-references.md#ref-3f47daaaa459)）修补后的版本为准。P1.1 完成前，这两类产出不交给 FlagGems 开发组。
+   - 面向使用者的两类结论（耗时面板、回退清单）以 P1.1（[T10.4](history/history-references.md#ref-3f47daaaa459)）修补后的版本为准。P1.1 完成前，这两类产出不交给 FlagGems 开发组。
    - P1.1 不阻塞 P4、P2 开工。
 2. **P1.1 范围**（T10.4；实现只用 CPU，验收含一次 ≤ 20 min 的 NPU 短跑）：
    - a. **耗时按根前向分开**。`perf.layer`、`perf.op` 增加根前向序号维度。有编译事件经 corr→op→scope 归到某次前向的，该前向标 `compile_in_forward`。头条（HTML Top-N 与 JSON 摘要）只取没有归属编译的前向；全部前向都有编译时，头条照常给出并标明。corr=0 的编译单列总量。
@@ -1318,8 +1318,8 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
    - a. **读报告检查**。凡产出面向使用者结论的任务，验收增加一项：打开 HTML/JSON 头条，拿至少两个已知事实核对 Top-3 结论，记录不超过 10 行。已知事实可以是无探针前向耗时、编译次数、v1 清单等。不一致即为发现，修正后再交付。
    - b. **预登记写端到端耗时估算**。每个 run 用已测速率估算采集与导入总耗时，即每次前向记录数 × 前向数 ÷ 导入速率，再加前向耗时。估算超过预算一半时，先缩小再跑。
    - c. **限制说明单一出处**。阶段的已知限制只写在阶段决策与退出矩阵，其他文档链接过去，不重复固定句式。
-   - d. **任务单篇幅**：单张不超过约 200 行；下发前自检表每问一行。用户要求不启动子代理时，[codex-tasks README §5](history-references.md#ref-6fe64a9751e0) 第 1、3 步由设计者内联核查，并在自检表中注明。
-   - e. **用户操作**：给 P1 镜像打 tag 防清理，命令见 [p1-exit](history-references.md#ref-776843daad9e)。
+   - d. **任务单篇幅**：单张不超过约 200 行；下发前自检表每问一行。用户要求不启动子代理时，[codex-tasks README §5](history/history-references.md#ref-6fe64a9751e0) 第 1、3 步由设计者内联核查，并在自检表中注明。
+   - e. **用户操作**：给 P1 镜像打 tag 防清理，命令见 [p1-exit](history/history-references.md#ref-776843daad9e)。
 7. **后续次序**：
    - P1.1（T10.4）与 P4 首批（[D50](#d50)，T11.1/T11.2）并行。
    - P2 拆为 P2a（导入可用性 + 显存视图）与 P2b（通信、时钟、跨 rank，需多卡）；P2a 排在 P4 首批之后，或在资源允许时并行。
@@ -1327,7 +1327,7 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 
 **不变**：L-核心与 L-字段 `1.1` 不变（`op_kinds` 是 attachment 状态，不是事件字段）；T4 冻结文件不变；P1 的全部原始证据、未覆盖记录与历史失败保留，不改写。
 
-**影响**：[p1-exit](history-references.md#ref-567cd9829d3a)、D46 第 1 条与 D47 第 3 条注记、[05 §3](05-probes-and-vendors.md#3-预设preset) 预设表注记、[10 路线图](10-roadmap.md) P1/P2 状态与 §9、PLAN README、codex-tasks README、[12 交接](12-codex-handoff.md) 状态块、`docs/P1-usage.md`（T10.4 回填）、Report_for_human_reading（README、新复盘页）、`personal/FlagPerf-advance.md`。
+**影响**：[p1-exit](history/history-references.md#ref-567cd9829d3a)、D46 第 1 条与 D47 第 3 条注记、[05 §3](05-probes-and-vendors.md#3-预设preset) 预设表注记、[10 路线图](10-roadmap.md) P1/P2 状态与 §9、PLAN README、codex-tasks README、[12 交接](history/12-codex-handoff.md) 状态块、`docs/P1-usage.md`（T10.4 回填）、Report_for_human_reading（README、新复盘页）、`personal/FlagPerf-advance.md`。
 
 ---
 
@@ -1335,7 +1335,7 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 
 ### D50 — P4 首批：Q10 裁决、固定输入、张量记录、算子级下钻与 oracle 分析器
 
-**日期**：2026-10-28。**状态**：设计者提议；用户 2026-10-28 批准（“我同意D49和D50”），含 [Q10](#q10--p4-的张量采集与数值比对是否复用-msprobe) 的裁决。任务单 [T11.1](history-references.md#ref-6deef0520efd)、[T11.2](history-references.md#ref-97b0743ec8d6) 随之下发。
+**日期**：2026-10-28。**状态**：设计者提议；用户 2026-10-28 批准（“我同意D49和D50”），含 [Q10](#q10--p4-的张量采集与数值比对是否复用-msprobe) 的裁决。任务单 [T11.1](history/history-references.md#ref-6deef0520efd)、[T11.2](history/history-references.md#ref-97b0743ec8d6) 随之下发。
 
 **背景**：
 - **需求与验收**：R52 要求逐层比对英伟达与国产芯片的结果，定位浮点顺序、舍入及敏感算子；R86/R88 要求 A100 与国产芯片用同一份 schema 与探针代码；X5 要求失配只报告。[10 §5](10-roadmap.md#5-p4--精度差分) 的验收为 ①–④。
@@ -1348,7 +1348,7 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
   - sig/sid 与 `route_table`；
   - runner 已支持 `cuda`；
   - `tensor` 事件已在 schema 中（`flagprof/store/schema.py:28,43`），但没有生产者。
-- **10-13 msprobe 实验**【实测，[复用实验 §5](history-references.md#ref-50ebce818e0e)】：
+- **10-13 msprobe 实验**【实测，[复用实验 §5](history/history-references.md#ref-50ebce818e0e)】：
   - 跨芯片首个非零差异在 `layers.0`，embedding 输出一致；API 级定位到 RMSNorm 中的 `pow`/`mean`。
   - 删除张量后仍报 pass；跨版本 `Tensor.expand.2` 一边是 `repeat_kv(key)`、另一边是 `repeat_kv(value)`，却被配成一对。
   - L0 dump 约 300 MB；910C 开 Gems 时单次采集 129 s；P800/PPU 镜像中没有该包。
@@ -1395,7 +1395,7 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
      - `chunks`：按展平元素序切成 K=64 块，余数并入最后一块；
      - `probe`：M=min(256, N) 个原值，`step = N // M`，`phase = int(sha256(call_key)[:16], 16) % step`，下标为 `phase + k·step`；
      - `probe_alg = "p4v1"`，标识上述 K、M、下标公式、FP64 与摘要算法。
-   - **`digest` 用 `sha256:<hex>`**，对象是有效区域原 dtype 的小端连续字节。[03 §4.9](03-event-schema.md#49-tensor--张量引用与统计oracledevice-差分的载体) 原写 `xxh3_64`，但镜像没有 xxhash，且不安装新包（[12 §4](12-codex-handoff.md#4-代码规范)）。`digest` 此前没有生产者，不影响历史数据。语义仍按附录 A #21：只用于判等，字节不等不单独构成数值结论。
+   - **`digest` 用 `sha256:<hex>`**，对象是有效区域原 dtype 的小端连续字节。[03 §4.9](03-event-schema.md#49-tensor--张量引用与统计oracledevice-差分的载体) 原写 `xxh3_64`，但镜像没有 xxhash，且不安装新包（[12 §4](history/12-codex-handoff.md#4-代码规范)）。`digest` 此前没有生产者，不影响历史数据。语义仍按附录 A #21：只用于判等，字节不等不单独构成数值结论。
    - **blob**：
      - `--tensor-blob all|none|<call_key 前缀列表>`，默认 `none`。
      - 内容为有效区域原 dtype 字节，由探针在目标进程内顺序写入 `<run>/blobs/`。`blob` 字段为 `{path, offset, nbytes, hash, fmt}`，`fmt` 写作 `raw-le:<dtype>:<shape>`。
@@ -1482,7 +1482,7 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 
 ### D51 — P4 首批复审：登记范围内通过；P4.1 修订 oracle 误差口径与页面；P2a 从导入定点分析开工
 
-**日期**：2026-10-28。**状态**：**已批准（用户 2026-10-29）**，T11.3、T12.1 同日下发；T12.1 已交付真实场景成本与热点，导入门限由用户给出，目标负载确认为 v1 OneRec-8B 生成 32 个新 token。复审材料为 [T10.4](history-references.md#ref-c6b5dc8115ca)、[T11.1](history-references.md#ref-739103c01a44)、[T11.2](history-references.md#ref-549afbe0c21d) 报告，[P4 首批矩阵](history-references.md#ref-2214b2c18032)，六份正式 oracle 报告的 HTML／result.json／JSONL 导出，以及设计者用 flagprof 自带纯 Python 解码器对 A1、N1、AD、ND、NDg 真实 blob 的只读重算。分析见[复审页](history-references.md#ref-ea4d5679df2b)。
+**日期**：2026-10-28。**状态**：**已批准（用户 2026-10-29）**，T11.3、T12.1 同日下发；T12.1 已交付真实场景成本与热点，导入门限由用户给出，目标负载确认为 v1 OneRec-8B 生成 32 个新 token。复审材料为 [T10.4](history/history-references.md#ref-c6b5dc8115ca)、[T11.1](history/history-references.md#ref-739103c01a44)、[T11.2](history/history-references.md#ref-549afbe0c21d) 报告，[P4 首批矩阵](history/history-references.md#ref-2214b2c18032)，六份正式 oracle 报告的 HTML／result.json／JSONL 导出，以及设计者用 flagprof 自带纯 Python 解码器对 A1、N1、AD、ND、NDg 真实 blob 的只读重算。分析见[复审页](history/history-references.md#ref-ea4d5679df2b)。
 
 **背景**：
 - **站住的部分**【实测】：块级三组各 372/372 配对，下钻各 129/129，来源未知 0；三组首差异均为 `layers.0`；A100 vs 910C-off 首个 introduced 为 `mean.dim`，开 FlagGems 的两组为 `pow.Tensor_Scalar`；透明性三组字节全等；A100 采集与 v1 参考包 360/360 逐字节相等；NP 82/82 行按 sid 连接、路由一致。P1.1 的 R2/R3 主表各 5 键，L1/L0 吞吐比 1.0032。
@@ -1498,14 +1498,14 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 **决策**：
 
 1. **P4 首批复审通过**：路线图 P4 验收 ①–③ 与块内 `introduced` 定位在登记范围内通过，判为 `passed_registered_small_scope`。登记范围是 Qwen3-Embedding-0.6B、固定参考包 `c6aa029e…`、A100 v1 venv、910C 单 die 与 P1 镜像 `1147704d…`。P4 退出仍按 D50 第 10 条需要第二批。面向使用者的 oracle 页面以 P4.1 修订后的版本为准；`pow` 发现可以先由用户按复审页 §2.4 转交 FlagGems 组。
-2. **P4.1 范围**（[T11.3](history-references.md#ref-3c84559c539d)；只改分析器与报告，CPU 重出六份报告，不用设备）：
+2. **P4.1 范围**（[T11.3](history/history-references.md#ref-3c84559c539d)；只改分析器与报告，CPU 重出六份报告，不用设备）：
    - a. **成对哨兵**：同一位置两侧值相同、绝对值等于该 dtype 最大有限值的元素记为 `paired_sentinel`，与非有限值同样单独计数，不进入任何误差与范数；不相等且涉及有限极值的有限配对计入新增 `finite_extreme_pair_mismatches` 并照常计算有限值误差，真实非有限值计数保留原含义（本轮修订）。规则只看 dtype 的表示极值，不设阈值。
    - b. **ULP 统计**：full 等级的浮点配对按原 dtype 的位表示计算逐元素 ULP 距离，输出不同元素数与占比、ULP 分布（1、2、3–4、5–16、17–256、>256）与最大值；`+0` 与 `−0` 距离为 0。分桶只用于展示，不是判定门。
    - c. **头条指标**：HTML 的层表与算子表展示 `relative_l2`、cosine、`max_abs`、不同元素占比与 ULP 分布；`relative_mean`、`relative_max` 继续按 v1 公式计算，只保留在 result.json 与 JSONL。
    - d. **布局属性**：`ext.call_config` 中张量节点的 `contiguous`、`stride` 不参与调用配置比较，两侧不同时以 `layout_differs` 单独展示，归入设备侧差异，不需要另行声明。其余配置比较不变。
    - e. **页面**：每个面板一张横向行表，列见 T11.3；首屏为身份结论、首差异、introduced 表及其 ULP 读法。完整字段留在 JSONL。
    - f. **实现结构**：`oracle.analyze` 按面板拆分函数，语义不变，为第二批扩展 op_sensitivity 做准备。
-3. **P2a 开工**：[T12.1](history-references.md#ref-6ce6c9c166a0) 在 S/M 两份封存采集（97,275／522,183 条来源记录）上测量真实场景导入成本与 prepare 热点；L（2,401,518 条）按本轮代表性条件执行，交付阶段与函数级热点、候选改进及各自的实测或推算收益；不改生产导入实现。独立校验在生产导入中的必要性与耗时一并报告，是否保留另行决定。导入门限沿用 D49 第 5 条的形式，N 与 X 由用户在 T12.1 交付后给出；目标负载为 v1 的 OneRec-8B 默认性能负载（生成 32 个新 token，用户 2026-10-29 确认）。
+3. **P2a 开工**：[T12.1](history/history-references.md#ref-6ce6c9c166a0) 在 S/M 两份封存采集（97,275／522,183 条来源记录）上测量真实场景导入成本与 prepare 热点；L（2,401,518 条）按本轮代表性条件执行，交付阶段与函数级热点、候选改进及各自的实测或推算收益；不改生产导入实现。独立校验在生产导入中的必要性与耗时一并报告，是否保留另行决定。导入门限沿用 D49 第 5 条的形式，N 与 X 由用户在 T12.1 交付后给出；目标负载为 v1 的 OneRec-8B 默认性能负载（生成 32 个新 token，用户 2026-10-29 确认）。
 4. **P4 第二批的位置**：排在 T12.1 之后。候选范围为 replay（只对输入已不同的算子）、`layers.27` 下钻（解释最终 output 误差的主要来源）与跨 run sid 对齐，第二批规划时另行决定。P4.1 的 ULP 描述差异量级与分布，introduced 定位同输入下发生差异的调用；运算顺序、舍入或实现成因需要实现证据或定点实验，不能由 ULP 单独判定（本轮修订）。
 5. **流程调整**（D49 第 6 条的补充，适用于此后全部任务单）：
    - a. 读报告检查增加一问：每个面板的最大值与最小值在物理上是否可能，例如 10³⁸ 倍放大、10¹² 的相对误差、超出 ULP 解释范围的 `max_abs`。记录仍不超过 10 行。
@@ -1514,7 +1514,7 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 
 **不变**：L-核心与 L-字段 `1.2` 不变（ULP、哨兵与布局都是分析器输出，不是事件字段）；tensor 事件、digest、call_key 与 `introduced` 规则不变；v1 指标公式照常计算；T4 冻结文件不变；P1/P4 的原始证据、失败与六份原报告保留，不改写。
 
-**影响**：[T11.3](history-references.md#ref-3c84559c539d)、[T12.1](history-references.md#ref-6ce6c9c166a0)、[07 §3.3](07-analyzers-and-reports.md#33-精度r52r86r88) 注记、[10 路线图](10-roadmap.md) P4／P2 状态、[P4 首批矩阵](history-references.md#ref-2214b2c18032)、PLAN README、codex-tasks README、Report_for_human_reading（README、复审页）、`docs/P1-usage.md` 的 oracle 读法、`personal/FlagPerf-advance.md`。批准后由设计者同步状态块，实现回填由 codex 完成。
+**影响**：[T11.3](history/history-references.md#ref-3c84559c539d)、[T12.1](history/history-references.md#ref-6ce6c9c166a0)、[07 §3.3](07-analyzers-and-reports.md#33-精度r52r86r88) 注记、[10 路线图](10-roadmap.md) P4／P2 状态、[P4 首批矩阵](history/history-references.md#ref-2214b2c18032)、PLAN README、codex-tasks README、Report_for_human_reading（README、复审页）、`docs/P1-usage.md` 的 oracle 读法、`personal/FlagPerf-advance.md`。批准后由设计者同步状态块，实现回填由 codex 完成。
 
 **批准记录（2026-10-29）**：用户批准本条全部五项并下发 T11.3、T12.1；同意门限在 T12.1 交付后再定，目标负载为 OneRec-8B 生成 32 个新 token；同时裁决 [Q12](#q12--p5-之前是否按-v1-能力清单排序) 为建立 v1 能力清单。设计者同日同步任务单状态、[10 路线图](10-roadmap.md) P2／P4 状态与 v1 能力清单、codex-tasks README、Report_for_human_reading。`docs/P1-usage.md` 的 oracle 读法与 `personal/FlagPerf-advance.md` 在 T11.3 实现落地后同步（只有代码与功能变化时才改）。
 
@@ -1528,9 +1528,9 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 - 本轮单主会话、零设备；性能测量与 CI／报告重出串行使用 CPU。工程完成不代替设计者复审、P4 退出或 T12.2 门限裁决。
 
 
-**本轮工程进展**：T11.3 在 `3410daac` 完成六报告、字段映射、四项变异与双解释器完整 CI，见 [T11.3 报告](history-references.md#ref-4ea9cd3ce263)。设计者复审及完整 P4 退出保持各自边界。T12.1 已在同提交上完成 S/M 测量、profile 与页缓存单参数对照，见 [T12.1 报告](history-references.md#ref-a103fc7f312b)。256 MiB 页缓存未观察到提速，后续优先研究重复 marker 映射与 BIGINT 比较回调；L 条件未满足而不执行。OneRec 数量／耗时为明确假设下的敏感性区间，门限仍由用户给出。生产导入未改。
+**本轮工程进展**：T11.3 在 `3410daac` 完成六报告、字段映射、四项变异与双解释器完整 CI，见 [T11.3 报告](history/history-references.md#ref-4ea9cd3ce263)。设计者复审及完整 P4 退出保持各自边界。T12.1 已在同提交上完成 S/M 测量、profile 与页缓存单参数对照，见 [T12.1 报告](history/history-references.md#ref-a103fc7f312b)。256 MiB 页缓存未观察到提速，后续优先研究重复 marker 映射与 BIGINT 比较回调；L 条件未满足而不执行。OneRec 数量／耗时为明确假设下的敏感性区间，门限仍由用户给出。生产导入未改。
 
-**T12.2 用户追加授权与交付（2026-10-29）**：用户直接批准并要求实施 prepare 提速计划，采用 M 约 200 s / 外层 300 s 的软目标、4 CPU / 16 GiB、零设备、总墙钟 ≤4 h，常规 smoke 迭代连续执行。本单完成映射复用与精确整数索引；M prepare 中位数 320.59→204.19 s（−36.31%），公共导入外层 407.92→323.75 s（−20.63%）。三对 M、S、Reader 全遍历/重开和 Python 3.9/3.11 各 496/79/21 项通过。两个软目标未完全达到；更新 prepare-only profile 后未发现明确 ≥5% 的局部完整收益方案，按收益收敛收尾。原始 CI 日志目录失败和复测保留。OneRec 32 token 的真实门限仍待匹配导出，P2/P4 退出各按原条件。见 [T12.2](history-references.md#ref-c7d5393110c1)。
+**T12.2 用户追加授权与交付（2026-10-29）**：用户直接批准并要求实施 prepare 提速计划，采用 M 约 200 s / 外层 300 s 的软目标、4 CPU / 16 GiB、零设备、总墙钟 ≤4 h，常规 smoke 迭代连续执行。本单完成映射复用与精确整数索引；M prepare 中位数 320.59→204.19 s（−36.31%），公共导入外层 407.92→323.75 s（−20.63%）。三对 M、S、Reader 全遍历/重开和 Python 3.9/3.11 各 496/79/21 项通过。两个软目标未完全达到；更新 prepare-only profile 后未发现明确 ≥5% 的局部完整收益方案，按收益收敛收尾。原始 CI 日志目录失败和复测保留。OneRec 32 token 的真实门限仍待匹配导出，P2/P4 退出各按原条件。见 [T12.2](history/history-references.md#ref-c7d5393110c1)。
 
 ---
 
@@ -1539,7 +1539,7 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 
 **日期**：2026-10-30。**状态**：用户已批准完整计划并要求实施。
 
-1. 下发 [T12.4](history-references.md#ref-d8bb934896dc)、[T12.5](history-references.md#ref-adf34abaf4ad)、[T11.4](history-references.md#ref-2c6767077801)、[T11.5](history-references.md#ref-05864a1ccb76)。基线 ff5e2547，Qwen3-Embedding-0.6B、既有参考包、910C 固定镜像 1147704d 与 A100 venv。先最小完整链路，随后冻结正式矩阵，单主会话连续执行。
+1. 下发 [T12.4](history/history-references.md#ref-d8bb934896dc)、[T12.5](history/history-references.md#ref-adf34abaf4ad)、[T11.4](history/history-references.md#ref-2c6767077801)、[T11.5](history/history-references.md#ref-05864a1ccb76)。基线 ff5e2547，Qwen3-Embedding-0.6B、既有参考包、910C 固定镜像 1147704d 与 A100 venv。先最小完整链路，随后冻结正式矩阵，单主会话连续执行。
 2. 官方显存记录优先，显式 profile_memory 默认关闭；使用现有 counter/memop 与公共 StoreView。allocated/reserved/设备占用/搬运分列，峰值为窗口内观测值，归属须有明确证据；不开展旁路遥测或跨时钟校准。
 3. replay 支持 mean.dim、softmax.int、rsqrt、pow.Tensor_Scalar；三组既有 layers.0 对照各最多两目标，只选输入已不同且配置/来源/布局可重建者。参考和比较输入各在两侧执行，同侧复现后方算有效。跨 run 性能连接遵守冻结签名；不近似合并布局或配置。
 4. layers.27 固定 zh-short、batch 1、A100/910C off/on；现象未复现保留，不扩成干预实验。OneRec、P2b、主线之外的规模化和导入专项精修不在本批。
@@ -1600,7 +1600,7 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 
 ### Q7 — Spike-C 实测回填与冻结边界
 
-**来源**：2026-10-10 [Spike-C 报告](history-references.md#ref-e1bd695b52c5)、[03 实测回填](03-event-schema.md#9-spike-c-实测回填2026-10-10已裁决多数已并入正文)、[04 实测回填](04-correlation.md#8-spike-c-实测回填2026-10-10已裁决规范部分已并入正文)。
+**来源**：2026-10-10 [Spike-C 报告](history/history-references.md#ref-e1bd695b52c5)、[03 实测回填](03-event-schema.md#9-spike-c-实测回填2026-10-10已裁决多数已并入正文)、[04 实测回填](04-correlation.md#8-spike-c-实测回填2026-10-10已裁决规范部分已并入正文)。
 
 **实测建议**：已测 CANN 9.0 / torch_npu 2.10 / FlagTree cendAs eager 配置支持 `per_call`；queue=1 需显式 Enqueue/Dequeue 桥。修订 A 级的判据为完整 op→launch→kernel 链路；补原生 ID 的 trace/rank 命名空间、时钟来源、compile 逻辑名与多 ELF entry、多特化候选及关联证据引用。
 
@@ -1619,7 +1619,7 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 **口径修正（须随数字一同传播，不得只报好数）**：
 
 1. **100% 关联是"已标记范围内"的口径。** 全量 89,312 个 kernel 中落在标记范围内的是 46,145 个（51.7%）；`acceptance.json` 的 `compute_kernels` 须补上范围限定词。
-   > **更正（2026-10-11 第二轮，[D15](#d15--t1t3-之后的契约回填r1r8) R5）**：本条的「落在标记范围内」是设计者的误读。[T3](history-references.md#ref-3e9f24f98cfd) 复算表明：46,145 是 63 条 **marked 记录**的计算 kernel 数，43,167 是 57 条 **plain 记录**（不开标记的对照 run）的计算 kernel 数，51.7% 是这两类记录之间的条数比，不是任何单个 run 的范围覆盖率，也不是时间比。「范围内 100% 不等于整体 100%」的教训仍然成立，单 run 上的正确量是 `import_completeness` 与 `profiled_window`（[04 §2](04-correlation.md#2-关联状态)）。原文保留，不改写。
+   > **更正（2026-10-11 第二轮，[D15](#d15--t1t3-之后的契约回填r1r8) R5）**：本条的「落在标记范围内」是设计者的误读。[T3](history/history-references.md#ref-3e9f24f98cfd) 复算表明：46,145 是 63 条 **marked 记录**的计算 kernel 数，43,167 是 57 条 **plain 记录**（不开标记的对照 run）的计算 kernel 数，51.7% 是这两类记录之间的条数比，不是任何单个 run 的范围覆盖率，也不是时间比。「范围内 100% 不等于整体 100%」的教训仍然成立，单 run 上的正确量是 `import_completeness` 与 `profiled_window`（[04 §2](04-correlation.md#2-关联状态)）。原文保留，不改写。
 2. **M3 的形状回查有 90 处不一致**（`exact 913 / flattened_numel 734 / mismatch 90 / unavailable 151`，即唯一真实模型上 4.8% 不符）。REPORT §183/§219 已如实披露，但 [04 §8](04-correlation.md)、[05 §6](05-probes-and-vendors.md)、本条原文与 `personal/FlagPerf-advance.md` 四处回填都只写了"100%"。形状回查是**唯一不依赖关联机制本身**的独立验证，它的不一致必须跟着 100% 一起出现。
 3. **"18 次正式启动全部完成"应写明共 24 次尝试**（18 成功 + 5 incomplete + 1 incomplete_decode；HCCL r0 试了 5 次）。失败次数是 P0 稳定性预算的输入。
 
@@ -1627,29 +1627,29 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 
 ### Q8 — 导入期解析与索引是否复用 Perfetto trace_processor
 
-**来源**：[D22](#d22--采集层复用官方-profiler不做源码级融合) 的复用原则。[自研与复用边界审查](history-references.md#ref-268394df660f) §4 把 Perfetto 列为候选，但没有验证。
+**来源**：[D22](#d22--采集层复用官方-profiler不做源码级融合) 的复用原则。[自研与复用边界审查](history/history-references.md#ref-268394df660f) §4 把 Perfetto 列为候选，但没有验证。
 
 **问题**：原生关系视图与证据索引，需要对模型级 trace（数万到数十万条记录）做解析、嵌套与 flow 查询。两个选项：
 - 沿用标准库路径，即冻结的 `chrome.adapt` 加 `Intervals`；
 - 把 trace_processor 作为导入期的解析与索引引擎。
 
 **约束**：
-- 规范化继续走冻结的 `chrome.adapt`（由 [T4](history-references.md#ref-3f0433ab6328) 门禁锁定）。
+- 规范化继续走冻结的 `chrome.adapt`（由 [T4](history/history-references.md#ref-3f0433ab6328) 门禁锁定）。
 - 若采纳，trace_processor 只用于导入期构建派生索引与关系：
   - 以固定版本的独立可执行文件提供；
   - 不进被测镜像，也不进 store 的读取路径。
 - store 的读取始终是纯标准库。
 
 **裁决规则（预登记）**：
-- [T8](history-references.md#ref-24a77204cd82) Stage B 的硬条件全部通过，才采纳。
+- [T8](history/history-references.md#ref-24a77204cd82) Stage B 的硬条件全部通过，才采纳。
 - 任一硬条件不通过，就保留标准库路径，并把不通过项登记为"此处需自研"的证据。
 - 不允许两套后端并存。
 
-**影响**：若采纳，需修订 [12 §4](12-codex-handoff.md#4-代码规范) 的依赖约束。
+**影响**：若采纳，需修订 [12 §4](history/12-codex-handoff.md#4-代码规范) 的依赖约束。
 
 **状态**：**已关闭（2026-10-15）：采纳 REJECT（当前接入方式），只保留标准库这一套后端。**
 
-依据是 T8 Stage B 的限时 pilot（[pilot.json](history-references.md#ref-812eb23b3beb)）：
+依据是 T8 Stage B 的限时 pilot（[pilot.json](history/history-references.md#ref-812eb23b3beb)）：
 - 固定 Perfetto v58.2 的现行接入方式下，在 P800 与 PPU 的真实 M0 样本上，只找回 50/128 与 59/148 个来源 loc。未保留的元素包括 metadata 与 flow。
 - 硬条件 B2（逐来源身份）不通过，B1（记录守恒）未能证明；B5（部署）通过。
 - B3（关系等价）与 B4（反例）**未运行**，不得写成通过。
@@ -1662,7 +1662,7 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 
 ### Q9 — P0 吞吐门槛在原生优先路径下如何推导
 
-**来源**：[D22](#d22--采集层复用官方-profiler不做源码级融合) 第 5 条；[GLM 审查](history-references.md#ref-c0a14c121a60) 冲突 F。
+**来源**：[D22](#d22--采集层复用官方-profiler不做源码级融合) 第 5 条；[GLM 审查](history/history-references.md#ref-c0a14c121a60) 冲突 F。
 
 **问题**：
 - P0 验收 ③ 要求单 writer ≥ 50 万事件/秒入队。依据是"自回归生成每个 token 触发数千次 aten 调用，逐次写 `op`"的负载画像（[02 §9](02-architecture.md#9-已知的架构风险)、[D6](#d6--新增-opsum-聚合事件类型)）。
@@ -1670,10 +1670,10 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 - 待定的是：门槛保持不变、按场景拆分，还是改为按在线事件来源的实测画像推导？
 
 **现状**：
-- 历史基线：门槛**不变**，P0 ③ 仍未通过。见 [throughput.json](history-references.md#ref-a85475325554)：1 线程入队 18.0 万/秒，持续落盘 3.3 万/秒。
+- 历史基线：门槛**不变**，P0 ③ 仍未通过。见 [throughput.json](history/history-references.md#ref-a85475325554)：1 线程入队 18.0 万/秒，持续落盘 3.3 万/秒。
 - 不得因数据路径变化宣布 ③ 通过。
 
-**输入**：T8 Stage D 产出的"在线事件来源清单"（[P0-store-notes §8.4/§9.5](history-references.md#ref-9b1f35e3598c)）。
+**输入**：T8 Stage D 产出的"在线事件来源清单"（[P0-store-notes §8.4/§9.5](history/history-references.md#ref-9b1f35e3598c)）。
 
 **状态**：**已关闭（2026-10-19）**：由 [D31](#d31--p0-吞吐验收改为三项并报退役单一-accepted-速率) 承接。以下为历史状态：方法已定（2026-10-15），2026-10-18实测已归档；原门槛未修改，P0③未通过（2026-10-18 设计者审核：由 D31 提议承接，用户裁决后关闭）。门槛按三组预算分别推导，不再用一个入队速率代表 store 能力：
 
@@ -1685,15 +1685,15 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 
 约束：
 - 在 T9 按此方法给出实测之前，现行门槛与未通过结论继续有效，不得因数据路径变化宣布 ③ 通过。
-- T8 已有离线消费的初步数据：最大 P800 样本原件 53.1 MiB，worker 峰值 RSS 约 2.7 GB。该 RSS 含查询、等价检查与第二次导入，不是导入器单独的峰值（[stage-d-costs](history-references.md#ref-c6a6040131ae)）。T9 须把导入、首次打开、重复查询、分页与完整核验拆开测量。
+- T8 已有离线消费的初步数据：最大 P800 样本原件 53.1 MiB，worker 峰值 RSS 约 2.7 GB。该 RSS 含查询、等价检查与第二次导入，不是导入器单独的峰值（[stage-d-costs](history/history-references.md#ref-c6a6040131ae)）。T9 须把导入、首次打开、重复查询、分页与完整核验拆开测量。
 
-**2026-10-18 实测回填（不构成降门槛裁决）**：固定镜像三次默认perf合成画像各40130业务记录全部落盘；dispatch(each)目标20万/s存在供给欠账和大量丢弃。单writer真实draining条件下accepted约20.46–21.28万/s、持续排空约2.32–2.38万/s，未达50万/s。离线固定三样本分别记录导入/RSS、首次与重复读取、分页、完整verify；P800兼容样本导入峰值约1000MiB。此预算未实现自动探针，不能用合成画像替代实际模型事件产生率，也不能用原件单文件预算替代新capture工作+sealed双份目录复制成本。[预算](history-references.md#ref-f07fc39a4dfa)、[独立复算](history-references.md#ref-16fd7476c3e0)、[解释与限制](history-references.md#ref-61e29505d51c)。
+**2026-10-18 实测回填（不构成降门槛裁决）**：固定镜像三次默认perf合成画像各40130业务记录全部落盘；dispatch(each)目标20万/s存在供给欠账和大量丢弃。单writer真实draining条件下accepted约20.46–21.28万/s、持续排空约2.32–2.38万/s，未达50万/s。离线固定三样本分别记录导入/RSS、首次与重复读取、分页、完整verify；P800兼容样本导入峰值约1000MiB。此预算未实现自动探针，不能用合成画像替代实际模型事件产生率，也不能用原件单文件预算替代新capture工作+sealed双份目录复制成本。[预算](history/history-references.md#ref-f07fc39a4dfa)、[独立复算](history/history-references.md#ref-16fd7476c3e0)、[解释与限制](history/history-references.md#ref-61e29505d51c)。
 
 > **更正（2026-10-18，T9.0–T9.3 设计者审核，上段原文不改）**：上段 budget.json 的"持续排空约2.32–2.38万/s"是**生产者停止后的独占尾部排空**（尾部 flush 约 2.4 s 排 65.5k 条），不是与生产者并发时的速率。并发时排空在 GIL 竞争下塌缩：dispatch 画像生产期 10 s 内只落盘 1,918–1,928 条（约 192/s）；设计者重跑无竞争 3.25–3.28 万/s，纯 Python 忙线程（switchinterval = 5 ms）下 0.36–0.45 万/s。accepted 速率这一口径本身也随循环长度漂移，不反映持续能力（见 D31 背景）。详见 [D31](#d31--p0-吞吐验收改为三项并报退役单一-accepted-速率) 背景（审核 §1.3，【复核】；a3b2_contention 重跑为【已核实】）。
 
 ### Q10 — P4 的张量采集与数值比对是否复用 msprobe
 
-**来源**：[profiler 复用实验](history-references.md#ref-5c3f718c65c0) §5.2、§5.3、§7；[自研与复用边界审查](history-references.md#ref-268394df660f) §2、§4；[跨厂商复核](history-references.md#ref-47afb6f332f8) §2。汇总见 [复用边界登记表](history-references.md#ref-0d2ad63869ea) U9。
+**来源**：[profiler 复用实验](history/history-references.md#ref-5c3f718c65c0) §5.2、§5.3、§7；[自研与复用边界审查](history/history-references.md#ref-268394df660f) §2、§4；[跨厂商复核](history/history-references.md#ref-47afb6f332f8) §2。汇总见 [复用边界登记表](history/history-references.md#ref-0d2ad63869ea) U9。
 
 **问题**：P4 的 tensor 探针与 `oracle.*` 分析器（[07](07-analyzers-and-reports.md)），是自研张量捕获与误差计算，还是把 MindStudio Probe（msprobe）的 dump/compare 结果作为全部或部分来源，由 v2 补上完整性与可比性？
 
@@ -1718,7 +1718,7 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 4. 采集是否改变被测配置（[D13](#d13--工具不改变被测系统的运行配置)）？许可是否允许按预期方式集成？
 5. 与自研方案相比，省下的是哪一部分（采集、存储、指标计算），以及换来哪些长期维护面？
 
-**影响**：若采纳，需修订 [05 §2](05-probes-and-vendors.md#2-探针目录) 的 tensor 探针、[07](07-analyzers-and-reports.md) 的 oracle 输入、[12 §4](12-codex-handoff.md#4-代码规范) 的依赖约束，以及 [10 P4](10-roadmap.md#5-p4--精度差分) 的交付项。
+**影响**：若采纳，需修订 [05 §2](05-probes-and-vendors.md#2-探针目录) 的 tensor 探针、[07](07-analyzers-and-reports.md) 的 oracle 输入、[12 §4](history/12-codex-handoff.md#4-代码规范) 的依赖约束，以及 [10 P4](10-roadmap.md#5-p4--精度差分) 的交付项。
 
 ### Q11 — P3（故障检测与热加载）是否提前
 
@@ -1750,7 +1750,7 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 > 2026-10-14 按 [D23](#d23--原生关系作为一等证据与项目绑定分立)、[D24](#d24--导入契约身份分层来源账本完成标记证据索引) 扩充为 28 条（A.5 #25–#28）：
 > - 新增条目约束的是导入、来源记账与派生文件，不改任何事件字段的名称、语义或单位，所以 `schema_version` 不变（[03 §8](03-event-schema.md#8-版本与演进规则)）。
 > - T7 时期写出的 store 没有这些派生文件。读取方按 legacy 处理，相关视图报 `unavailable`，不报错。
-> 清单内的任何改动都是 **major**，必须先改 PLAN 正文、在本文件新增条目，然后才能动代码（[12 §7–8](12-codex-handoff.md)）。
+> 清单内的任何改动都是 **major**，必须先改 PLAN 正文、在本文件新增条目，然后才能动代码（[12 §7–8](history/12-codex-handoff.md)）。
 > 清单**外**的一切（字段增删、枚举扩充、`ext` 键、厂商规则）按 D11 走 minor 或不计版本，codex 可在 P0 期间按实测自行推进。
 
 ### A.1 身份与时钟
@@ -1830,80 +1830,80 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 | 2026-10-10 | Spike-C 实测回填 03/04/05；登记 Q7，明确待确认而非冻结；147 次单进程与 18 次 TP2 完成；NSS 修复与跨 rank ID 重用有实测证据，8 卡暂缓。 |
 | 2026-10-10 | 设计者审核 Spike-C：修订 D1 理由（原"nsys 表结构稳定"为事实错误）；新增 D11 分层冻结、D12 二维降级、D13 不改被测配置、D14 扰动分流；Q7 结论化并列出三处口径修正。正文改动见 03 §2/§4.2/§4.8/§5、04 §2/§6、05 §3/§4.1、07 §2、11 §2。 |
 | 2026-10-11 | P0 契约评审完成，产出**附录 A（L-核心冻结清单，23 条）**。评审修掉 19 处冻结前缺陷，其中 3 处是 10-10 修订自身引入的矛盾：`sig` 不可丢弃与"绝不阻塞被测进程"冲突（改为分片头部重写）、降级级别因 `host_attr=任意` 而不是函数（H4 拆为能力位）、`sid` 去设备只去了顶层而漏了 `args` 内的 `device`。正文改动见 03 §2/§3/§4.1/§4.2/§4.3/§4.6/§4.8/§4.9/§5.1/§6/§8、04 §1/§2/§3.2/§4/§6、07 §2、08 §2/§3。 |
-| 2026-10-11（第二轮） | 审核 codex 的 T1–T3 交付与 [review](history-references.md#ref-1bb29bac8d48)，新增 **D15**，附录 A 修订为 24 条，D12/D14 加修订说明，Q7 第 1 条加更正注记。**本轮修正的设计者自身错误**：① 把 51.7%（campaign 中 marked/plain 两类记录的 kernel 条数比）误读为单 run 的范围覆盖率，并据此定义了不可算的 `marked_scope_ratio`；② D14、05 §3、07 §2.1 越过 17 组对照能支持的范围，把设备时长写成天然无扰动；③ 第一轮给出的「分片头部重写 sig」机制做不到（写头部时不知道之后的新签名，崩溃时补写不会发生）；④ 图回放 kernel 标 `not_applicable`，违反白名单规则并虚高关联率；⑤ 04 §7 的「优先级」措辞与 04 §8 的冲突保留建议矛盾；⑥ `cann.connection_id` 曾写作 run 内唯一。正文改动见 03 §2/§3/§4.2/§4.3/§4.8/§6/§7/§8、04 §1/§2/§3.3–§3.6/§5/§6/§7、05 §2.2/§2.3/§3、07 §1/§2/§2.1/§3.2/§3.3/§4/§5、08 §2/§3/§6、10、12。任务单 T4–T7。 |
+| 2026-10-11（第二轮） | 审核 codex 的 T1–T3 交付与 [review](history/history-references.md#ref-1bb29bac8d48)，新增 **D15**，附录 A 修订为 24 条，D12/D14 加修订说明，Q7 第 1 条加更正注记。**本轮修正的设计者自身错误**：① 把 51.7%（campaign 中 marked/plain 两类记录的 kernel 条数比）误读为单 run 的范围覆盖率，并据此定义了不可算的 `marked_scope_ratio`；② D14、05 §3、07 §2.1 越过 17 组对照能支持的范围，把设备时长写成天然无扰动；③ 第一轮给出的「分片头部重写 sig」机制做不到（写头部时不知道之后的新签名，崩溃时补写不会发生）；④ 图回放 kernel 标 `not_applicable`，违反白名单规则并虚高关联率；⑤ 04 §7 的「优先级」措辞与 04 §8 的冲突保留建议矛盾；⑥ `cann.connection_id` 曾写作 run 内唯一。正文改动见 03 §2/§3/§4.2/§4.3/§4.8/§6/§7/§8、04 §1/§2/§3.3–§3.6/§5/§6/§7、05 §2.2/§2.3/§3、07 §1/§2/§2.1/§3.2/§3.3/§4/§5、08 §2/§3/§6、10、12。任务单 T4–T7。 |
 | 2026-10-11（第三轮） | 编写 T5–T7 时核对已验证镜像与 dispatcher 行为，新增 **D16**（封口分片压缩编码按分片条目的 `codec` 解码，默认 gzip：镜像无 `zstandard`）与 **D17**（`sid` 写为十六进制字符串，避免 JS 按数字解析丢精度）；附录 A #20 措辞随之修订。另澄清 03 两处会让实现者卡住的空白：控制记录带哪些信封字段（`sig` 不带 `ts`/`seq` 等，`meta` 控制记录带 `ts`）；writer 的 `lost` 状态由 finalizer 记在 `manifest.writers`，不写回片段（原文让 finalizer 改写他人的片段，违反单写者）。03 §6.2 的 `traces/<trace_uid>.json` 增加 `inventory`，作为原始清单 R 的落盘位置（04 §2 原文只说「导入器独立产出」，没有说放在哪里）。编写 T7 Stage B 时新增 **D18**（关联在导入时完成，`link` 随设备事件一次写出；厂商主机侧记录留在 `vendor_raw/`，不转成 store 事件）。改动见 03 §2/§3/§4.2/§4.8/§6.1–§6.4/§7、04 §2/§7、08 §3、12 §4/§5。 |
-| 2026-10-13 | 新增两份项目参考文档（`/home/kzhang520/fgw/docs/` 下的实施方案与运行时功能拆分表），设计者完成对照。按用户裁决新增 **D19**（需求文档是参考，不绑定设计）、**D20**（主线先行：S1→P0→P1→P2→P4，之后 P5→P6→P3；阶段编号不变）、**D21**（范围边界 B1–B9 的唯一出处，新增 B1「不承担运行时监控诊断模块本体」、B2「不做精度修正/自动调优/自动修复」、B4「roadmap 不锚定外部日期」）。新文档中 V4 未覆盖的要点登记为 00 §6 需求池。正文改动见 00 §0/§1/§2/§4/§6、07 §3.3/§4、08 头部/§1/§4、09 §5、10 §0、各阶段「层级」行、P3/P5/P6 三节、§9 与 §10（各阶段节按执行顺序重排，P3 移到 P6 之后，编号随之变化）、README。 |
+| 2026-10-13 | 新增两份项目参考文档（`<私有开发工作区>/docs/` 下的实施方案与运行时功能拆分表），设计者完成对照。按用户裁决新增 **D19**（需求文档是参考，不绑定设计）、**D20**（主线先行：S1→P0→P1→P2→P4，之后 P5→P6→P3；阶段编号不变）、**D21**（范围边界 B1–B9 的唯一出处，新增 B1「不承担运行时监控诊断模块本体」、B2「不做精度修正/自动调优/自动修复」、B4「roadmap 不锚定外部日期」）。新文档中 V4 未覆盖的要点登记为 00 §6 需求池。正文改动见 00 §0/§1/§2/§4/§6、07 §3.3/§4、08 头部/§1/§4、09 §5、10 §0、各阶段「层级」行、P3/P5/P6 三节、§9 与 §10（各阶段节按执行顺序重排，P3 移到 P6 之后，编号随之变化）、README。 |
 | 2026-10-14 | 审核 codex 的三份 review（profiler 复用实验、自研与复用边界、cross_vendor 复核）与 GPT、GLM 的独立审查。按用户裁决（复用优先、不做源码级融合；自底向上、主线先行；先冻结基座）新增：<br>• **D22**：采集层复用官方 profiler；单一会话所有者；窗口分段导出；采集前置条件与执行策略开关分列；`dispatch(each)` 降为按需。<br>• **D23**：原生关系作为派生证据，与项目绑定分立；store 提供公共只读接口；修订 D18 第 1/3/4/5 条与 02 P3、07 §1 规则 1。<br>• **D24**：导入契约，含身份三层、来源账本、完成标记、证据索引；表示形式为 L-字段 1.0-rc。<br>• **Q8**：trace_processor 是否复用。**Q9**：P0 吞吐门槛如何推导，现行门槛不变。<br>附录 A 扩充为 28 条：新增 A.5 #25–#28，不改事件字段，`schema_version` 不变；原 A.5 改为 A.6。<br>**本轮修正的设计者自身错误**：10-10 修订 D1 理由时漏改了 02 P1 的 nsys 依据，本轮补改；本文件与 codex-tasks 中指向 `codex_reviews/` 的链接已失效，本轮修复。<br>正文改动见 02 §1/§2/§5/§6/§9、03 §5/§5.1/§6.1/§6.2/§6.5/§7/§8、04 §2/§3.7/§7、05 §2/§3/§4/§4.1/§4.2、07 §1/§2、10 P0/P2/§9/跨厂商节、12 §2/§3/§4/§8、codex-tasks/README。任务单 T8。 |
-| 2026-10-15 | 审核 codex 的 T8 交付与 [自评](history-references.md#ref-30a5e4c5b678)，设计者审核见 [claude review](history-references.md#ref-b6ab26ea7cbc)。按用户裁决（审核判断由设计者决定；T9 不提供人可见输出），新增和修订：<br>• **D25**：冻结语义与输出，不冻结厂商分类表。源码锁转为一次性提升证明，长期门禁改为输出锁（`linker.py` 的字节锁保留）；公共模块不出现厂商类型字符串；生产默认值不带实验命名；新增永久验收"当前采集器 → 当前导入器"。<br>• **D26**：采集成本的验收口径。腾昇 A6 保留"不可判定"，P0 ⑩ 的包装开销项以结构论证豁免；成本分三层报告；窗口停顿与无效窗口策略列为 T9 必做。<br>• **Q8 关闭**：采纳 REJECT（当前接入方式）。**Q9**：方法定为三组预算，数值待 T9。<br>• 附录 A.6 增加"厂商分类表属 L-厂商"一条，L-核心 28 条不变。<br>**本轮修正的设计者自身错误**：① 10-11 review R4 已指出"源码字节锁不宜作长期门禁"，当时未裁决，T8 又沿用这把锁，导致腾昇新格式进不了规范路径（新采集的 compute 为 0）；② T8 的 `validity-criteria` 只要求设备轨非空，不要求导入器能识别，验收矩阵缺"当前采集器 → 当前导入器"贯通项；③ T8 任务单把模型级 B2 样本的锚点链与作用域覆盖当作原生优先路径的代表，没有要求在无实验注释的新采集上报告作用域覆盖，98.6% 这一数字因此容易被误读。[GPT 审查](history-references.md#ref-d3460fd97571)冲突 6 已经指出 B2 的模块锚点依赖预先知道 Qwen 的模块命名，当时没有转成验收项；④ 02 §5 第 4 点写"没有项目探针时性能诊断仍可到模块作用域一级"，高估了能力，本轮改正；⑤ 05 §4.1 的冲突检测与前置条件两行停留在"待 T8"，本轮回填。<br>正文改动见 02 §1/§5、05 §4/§4.1/§4.2、07 §1、10 P0/P2/§9、12 §8、README、codex-tasks/README。任务单 T8.1。 |
-| 2026-10-15（第二轮） | 按用户要求「推进到哪个阶段再决定」，新增 **Q10**（P4 的张量采集与数值比对是否复用 msprobe）：登记已知事实与裁决时需要回答的问题，状态为待定，P4 进入时裁决；在此之前不接入、不预留。[10 P4](10-roadmap.md#5-p4--精度差分) 增加「进入时裁决」行。同时在 [Report_for_human_reading](history-references.md#ref-0d2ad63869ea) 新增复用边界登记表，汇总 D3/D18/D22–D25、Q8、Q10 与 01 §4 中的复用内容。没有新增或修改任何 D 条目。 |
-| 2026-10-15（第三轮） | 审核 codex 的 T8.1 交付与[自评](history-references.md#ref-c29eb5d75a76)，设计者审核见 [claude review](history-references.md#ref-573c75ba342e)。**T8.1 Gate 通过。** 新增：<br>• **D27**：格式指纹覆盖全部注入钩子；主机身份还原须有格式依据，证据不足时保留原值；格式兼容验收报告逐跳命中数，0 必须指出断点（扩展 D25 第 5 条）。<br>• 任务单 **T8.2**（腾昇主机进程身份还原，离线，一个 Gate），列为 T9 前置，用户批准下发；P0 退出条件增加 T8.2。<br>**本轮修正的设计者自身错误**：① T8.1 §4.1 只要求"分类表版本写进解析身份"，没有要求覆盖全部格式解释，导致 `host_pid`、`is_launch` 不在指纹内；② T8.1 的 E2 与 Stage 0 只要求登记主机链"在不在"，没有要求解释到连接键，Gate 输入因此只给出 `no_bridge` 计数而没有断点；③ Stage 0 要求把全部基线放进 `docs/validation/t8.1/`，使 7.3 MB 的 `output-lock-baseline.json` 入库，CI 实际只用其中一小部分。<br>正文改动见 02 §1 P6、04 §3.7、05 §4/§4.1/§4.2/§5、07 §1、10 P0/P6/§9、12 §8、README、codex-tasks/README。 |
-| 2026-10-15（第四轮） | 审核 codex 的 T8.2 交付与[自评](history-references.md#ref-651c40aea958)，设计者审核见 [claude review](history-references.md#ref-dc425489f08c)；同时综合用户点名的两份格式评审（[codex](history-references.md#ref-6da71915530e)、[设计者](history-references.md#ref-00e0b6f3ed11)）。**T8.2 Gate 通过**：腾昇当前采集三窗各 10,120 条设备记录原生 owned（格式 v3），历史与 A100 输出不变。新增：<br>• **D28**：采集配置显式化并入身份；每个格式版本带契约，导入时判定适用性；静默失败（轨道角色审计、unknown 归并）转显式；第 4 条开放式导入待用户确认。<br>• D27 背景加更正注记。<br>• 承接任务 T8.3（待用户批准），排在 T9 前。<br>**本轮修正的设计者自身错误**：① T8.1 审核与 D27 背景把 `CANN` 进程名消失归因于格式漂移，实际是我们的会话未声明 profiler level（默认 Level0 裁剪）；05 §4.1 已列"采集配置"为绑定条件，却没有要求会话声明、验收比较；② T8.2 任务单 §4.3 只要求逐跳计数"改动前后各一份"，未要求同一调用/注释配置并登记，导致 F1；③ 同类风险清单按任务编写，不随格式版本维护，v3 新增的 `Python` 进程名依赖无处登记。<br>正文改动见 04 §3.7、05 §4/§4.1/§4.2、07 §1、10 P0/§9、12 §8、00 §6、README、codex-tasks/README。 |
-| 2026-10-15（第五轮） | 用户批准 T8.3 排在 T9 之前，并确认 D28 第 4 条（已证实的设备活动在类别未知时进入 E）。D28 状态改为已定；第 4 条补写适用边界（不改 `allreduceAicpuKernel`，契约登记的重复表示不进入）。编写任务单 [T8.3](history-references.md#ref-18cd774a5eb9)。正文改动见 10 P0/§9、12 §8、README、codex-tasks/README。 |
-| 2026-10-16 | 审核 codex 的 T8.3 交付、[交付复盘](history-references.md#ref-d94c86bbac29)与 [Gate 审查](history-references.md#ref-6d89220407b3)，设计者审核见 [claude review](history-references.md#ref-ed6a5f5f7031)；源码复核与测试由独立复核子代理执行两轮，关键项经设计者抽查。**T8.3 Gate 未通过**：配置贯通、三值判定、C7 队列键修复、F1、版本回归与保全成立；阻塞项为 NVIDIA 设备执行轨被判为 host（B1，codex 自查发现，复核扩大到 20/21 份 Kineto 历史来源）、unknown 入选未检查轨道角色（B2）、设备轨整条缺失仍判契约内（B3）、契约约一半字段未被执行（B4）。新增：<br>• **D29**：同一事实的多个判断须同源或有一致性门禁；结构证据优先于名称，冲突显式；每份契约至少一条必需结构条件；契约条目须被执行或被测试绑定；新增判定以性质门禁、阳性对照与变异杀伤验收。<br>• D28 追加执行进展注记（另两条错误肯定路径：C7 已修，B3 交返工）。<br>• T8.3 任务单追加 §9 返工轮，用户 2026-10-16 批准下发；12 §5 新增"新增判定"测试要求，codex-tasks README §3 新增第 11 条；12 §8 T9 备忘加证据生产者表与 inspect 状态区分。<br>**本轮修正的设计者自身错误**：① T8.3 §4.3 把角色审计定义为只报告的旁路，§4.4 要求入选前提为设备执行轨，验收表却没有要求两者一致的不变量；② E5 的预期写成"无未识别轨道、无 unknown 组"，检测器坏掉时照样成立；③ §4.2 强调"合法缺项不当异常"、§4.3 第二条告警要求"设备轨缺失**且**存在未识别轨道"，把"至少存在设备执行轨"这一最基本的结构前提也放掉了；④ E3 只要求契约进入指纹闭包，没要求契约条目驱动判定或被测试绑定；⑤ 任务单给每个新能力写了"要有什么"，没写"怎样证明它对"，验收材料偏重"其他东西没变"。<br>正文改动见 05 §4/§4.2、07 §1 第 10 条、10 P0/§9、12 §5/§8、README、codex-tasks/README、Report_for_human_reading（README、02 中期更新、glossary）。 |
-| 2026-10-16（第二轮，T8.3 返工复审） | 审核 codex 的 T8.3 返工交付与[返工复盘](history-references.md#ref-711fa68dfd18)，设计者复审见 [claude review](history-references.md#ref-81d74b957ee6)；复核与调研由两个子代理执行，关键项经设计者抽查。**T8.3 返工轮 Gate 通过**（2026-10-16，附遗留 L1–L6 转 T9 §0）：R1–R5、R8 成立，R6 成立但薄，R7 部分成立；独立复核没有发现错误输出。P0 未退出，五窗仍 indeterminate，主要原因是证据没有喂进判定链路，不是格式判不了。新增和修订：<br>• **D30**（设计者提议；已于 2026-10-16 第三轮确认）：契约的每个必需条件登记证据生产者；判定"不可观察"之前先清点产物自述；已封存采集的派生事实写进新 run，不就地改旧 store；完整性的认证只来自采集端，导入端只做精确 ID 的单向负证据。<br>• D29 追加执行进展注记：返工轮通过；第二信号作为支持范围条件（不做角色判据）的补充裁决转 T9.0。<br>• D27 追加更正注记：钩子范围只覆盖 `SourceFormat` 协议，账本处置、规则与共享判定代码不在任何代码哈希身份内，转 T9.0。<br>• codex-tasks README 第 12 条加"契约数据变异"；12 §8 的 T9 备忘改为 T9.0–T9.3 拆分建议（设计者建议；已于 2026-10-16 第三轮确认）；T8.3 任务单追加 §9.9。<br>**本轮修正的设计者自身错误**：① T8.3 §9.2 第 6 条把第二信号只放在验收与 CI，生产对 `pid ≠ args.device` 仍静默；② §9.5 R7 的契约字段映射停在字段级，没要求条件行集合与预登记逐项比较，导致"通过"掩盖了条件删除存活；③ §9.3 允许六份格式身份变化，却没要求说明版本标签与内容修订的关系；④ 12 §8 上一版未核对原件就采纳了"NVIDIA 没有独立实际配置"；⑤ D27 把"钩子"限定为 `SourceFormat` 协议，账本处置与规则代码落在身份闭包之外。<br>正文改动见 04 §3.8、05 §4、07 §1 第 6、10 条、10 P0/§9、12 §5/§8、README、codex-tasks/README、T8.3 任务单 §9.9。 |
-| 2026-10-16（第三轮，用户确认） | 用户确认 D30 与 T9 拆分为 T9.0–T9.3；编写 T9.0 任务单（[T9.0](history-references.md#ref-3e7f0f466f04)，离线，一个 Gate，待下发）。D30 状态由"设计者提议，待用户确认"改为已确认（用户 2026-10-16）；T9.1–T9.3 待编写，各在前一段 Gate 后编写。T9.0 的设计者裁决（契约修订号、第二信号做成范围条件、身份闭包 `parser.closure`、格式一致性套件等）写在任务单 §4。归档复核方变异清单至 [`2026-10-16-t8.3-rework-mutations/`](history-references.md#ref-48cf730576e3)。同步改动见 [复审 §8](history-references.md#ref-16641a9481fa)。 |
-| 2026-10-18 | 审核 codex 的 T9.0–T9.3 交付与[自评](history-references.md#ref-1a5b874163ee)，设计者审核见 [claude review](history-references.md#ref-79d0492278f2)；复核由子代理执行，关键项经设计者抽查。**Gate 结论**：T9.0 通过；T9.1 通过（附测试缺口）；T9.2 有条件通过（record 自动注入范围由实现方收窄而未进 DECISIONS，本轮以 D32 追认）；T9.3 工程/测量闭环成立，但 ⑩ 的日志项与 ② 的 truncated/lost 只在验收 harness 路径成立，生产入口未贯通，开收口轮 T9.4。P0 未退出，L-字段保持 1.0-rc。新增和修订：<br>• D30 追加设计者裁决（补充）：NVIDIA `exporter.version`、`execution.mode` 保留 required，接受 indeterminate，追认 T9.1 任务单写法。<br>• **D31**（设计者提议，**待用户裁决**）：P0 ③ 改为 ③a 热路径成本 / ③b 并发无损持续速率 / ③c 突发吸收三项并报，退役单一 accepted 速率；500k 作为历史基准保留；裁决前 ③ 维持 failed。<br>• **D32**（设计者追认，**待用户确认**）：record 只自动注入 wrapper 直接启动的 Python 目标，以完整 proc_key 匹配父身份；后代与 worker 显式 attach；含流程更正。<br>• Q9：状态段注明由 D31 承接；实测回填段后加更正（"持续排空约 2.32–2.38 万/s"是生产者停止后的独占尾部排空，并发时在 GIL 竞争下塌缩），原回填文字不改。<br>• D26：加适用范围说明（腾昇豁免只覆盖原 Session 普通 step，当前 attach 以 T9.3 实测为准）。<br>• [12 §7](12-codex-handoff.md#7-提交与汇报) 新增 6 条交接规则（流程，无 D 号）：Gate 的 reviewed_input 必须是已提交的 blob；改设计范围、动用设计者保留裁决须先在 DECISIONS 提议；每条验收写明验证所经的生产入口；复核脚本进 tests/ 或 CI；多 case 工具的退出码由逐 case 状态汇总、零 case 非零退出；沿用 codex 自评 §5.2 的任务单六段大纲。<br>**本轮修正的设计者自身错误**：① P0 ③ 的测量协议从 T7 起没定义清楚（只写"单 writer ≥ 50 万事件/秒入队，同时报告持续落盘"，没规定循环长度、生产者是否并发、排空在什么条件下测），T9.3 又预登记"仍按 accepted ≥ 500000/s 判定"，测到的是"填满 65,536 队列的速度"；Q9 在 10-15 已定"不再用一个入队速率代表 store 能力"，却没有改 ③ 本身，同一事实两处表述不一致，是 D29 第 1 条在设计文本上的再犯；② P0 ⑩、② 的验收没写"经哪个生产入口验证"：⑩ 的日志项在验收 harness 里接了 log_reader 就算通过，生产 record 没接；② 只要求 store 标 truncated，没要求公共读取接口暴露；与 T8 "validity 只要求设备轨非空"同族，同族第三例是验收工具给导入器传 `queue_capacity=262144` 而生产 worker 用默认 65,536。新原则：每条 P0 条件写明验证所经的生产入口，验收工具不得使用生产入口没有的配置；store 记录的每种失败状态都必须经公共只读接口可见（D29"静默转显式"延伸到读取侧）。其余反思（变异杀伤率第二次出现"实现方清单 100%、复核方自设约 50%"、任务单预登记与 Gate 流程、验证成本与用户价值失衡、attach/none ≈ 2.0 的使用限制）见设计者审核 §4。<br>正文改动见 02 §3/§5/§6、03（sealed 术语区分）、04（:114/:118/:367）、05（§1/§2/§3/§4/§4.3/§5）、09（§1/§2）、10 P0/§9、12 §7/§8、README、codex-tasks/README；reviews（[设计者审核](history-references.md#ref-79d0492278f2)、[复核证据归档](history-references.md#ref-86904147c1b4)）；Report_for_human_reading（README、01、02、03、glossary、[progress/2026-10-18-t9-delivery-and-p0-boundary.md](history-references.md#ref-47f0f924820e)、`tools/foundation_showcase.py` 加 t9.3 预设、[progress/assets/2026-10-18-t9.3-foundation-showcase.json](history-references.md#ref-b893de3b23de)）。与实现不符之处的清单见设计者审核 §1.7、§8.4。任务单 [T9.4](history-references.md#ref-e525188761b6)（生产入口收口；待用户确认后下发）。 |
-| 2026-10-19 | 用户采纳 [D31](#d31--p0-吞吐验收改为三项并报退役单一-accepted-速率)：P0 ③ 改为 ③a 热路径成本 / ③b 并发无损持续速率 / ③c 突发吸收三项并报，500k accepted/s 退役为历史基准（T7 18.0 万/s、T9.3 20.5–21.3 万/s 的 failed 记录保留不改）。D31 状态由“设计者提议，待用户裁决”改为已确认（用户 2026-10-19）；[Q9](#q9--p0-吞吐门槛在原生优先路径下如何推导) 关闭，由 D31 承接。据此改写 [10 P0 验收 ③](10-roadmap.md#2-p0--store-与-schema)（旧文字保留为“历史（至 2026-10-19）”），编写任务单 [T9.5](history-references.md#ref-06e993298ce0)（Writer 消费端移出 GIL 与 ③ 三项验收；待下发，Stage 0 可与 T9.4 并行）。仍待用户：[D32](#d32--record-自动注入范围只注入-wrapper-直接启动的-python-目标) 确认、T9.4/T9.5 下发、提交当前工作树文档。<br>正文改动见本文件 D31、Q9，10 P0 验收 ③/依赖/状态/§9，12 §8，README、codex-tasks/README；reviews（[设计者审核](history-references.md#ref-79d0492278f2) §6、§7 加注记，原文不改）；Report_for_human_reading（README、02、[progress/2026-10-18-t9-delivery-and-p0-boundary.md](history-references.md#ref-47f0f924820e)、glossary）。 |
-| 2026-10-19（第二轮，下发前核查） | T9.4/T9.5 下发前核查（审核见 [claude review](history-references.md#ref-47315ffad958)）：设计者失误目录 F01–F30 的复发分析显示，规则只写给实现方、写任务单时没有检查环节。新增和修订：<br>• **流程规则“设计者下发前自检”**（无 D 号）：设计者编写或修订任务单时，下发前先派只读复核代理做前提核查，再逐条回答 Q1–Q12 并附自检记录表（同日晚改为三步流程、Q1–Q13（修订后复核））；没有该表的任务单不得请用户确认下发。见 [codex-tasks/README §5](history-references.md#ref-6fe64a9751e0)、[12 §7](12-codex-handoff.md#7-提交与汇报) 第 7 条。<br>• [T9.4](history-references.md#ref-e525188761b6)、[T9.5](history-references.md#ref-06e993298ce0) 下发前核查后修订，仍待用户确认后下发。<br>• [D31](#d31--p0-吞吐验收改为三项并报退役单一-accepted-速率) 补充（设计者提议，**待用户确认**）：③a 纳入被测线程进度比 R，③c 可吸收量以实测确定；不改 D31 的三项结构与“P1 前 ③a 不设门槛”。<br>正文改动见本文件 D31 补充，12 §7/§8.3，codex-tasks/README §2.0/§5；reviews（[下发前审核](history-references.md#ref-47315ffad958)）。 |
+| 2026-10-15 | 审核 codex 的 T8 交付与 [自评](history/history-references.md#ref-30a5e4c5b678)，设计者审核见 [claude review](history/history-references.md#ref-b6ab26ea7cbc)。按用户裁决（审核判断由设计者决定；T9 不提供人可见输出），新增和修订：<br>• **D25**：冻结语义与输出，不冻结厂商分类表。源码锁转为一次性提升证明，长期门禁改为输出锁（`linker.py` 的字节锁保留）；公共模块不出现厂商类型字符串；生产默认值不带实验命名；新增永久验收"当前采集器 → 当前导入器"。<br>• **D26**：采集成本的验收口径。腾昇 A6 保留"不可判定"，P0 ⑩ 的包装开销项以结构论证豁免；成本分三层报告；窗口停顿与无效窗口策略列为 T9 必做。<br>• **Q8 关闭**：采纳 REJECT（当前接入方式）。**Q9**：方法定为三组预算，数值待 T9。<br>• 附录 A.6 增加"厂商分类表属 L-厂商"一条，L-核心 28 条不变。<br>**本轮修正的设计者自身错误**：① 10-11 review R4 已指出"源码字节锁不宜作长期门禁"，当时未裁决，T8 又沿用这把锁，导致腾昇新格式进不了规范路径（新采集的 compute 为 0）；② T8 的 `validity-criteria` 只要求设备轨非空，不要求导入器能识别，验收矩阵缺"当前采集器 → 当前导入器"贯通项；③ T8 任务单把模型级 B2 样本的锚点链与作用域覆盖当作原生优先路径的代表，没有要求在无实验注释的新采集上报告作用域覆盖，98.6% 这一数字因此容易被误读。[GPT 审查](history/history-references.md#ref-d3460fd97571)冲突 6 已经指出 B2 的模块锚点依赖预先知道 Qwen 的模块命名，当时没有转成验收项；④ 02 §5 第 4 点写"没有项目探针时性能诊断仍可到模块作用域一级"，高估了能力，本轮改正；⑤ 05 §4.1 的冲突检测与前置条件两行停留在"待 T8"，本轮回填。<br>正文改动见 02 §1/§5、05 §4/§4.1/§4.2、07 §1、10 P0/P2/§9、12 §8、README、codex-tasks/README。任务单 T8.1。 |
+| 2026-10-15（第二轮） | 按用户要求「推进到哪个阶段再决定」，新增 **Q10**（P4 的张量采集与数值比对是否复用 msprobe）：登记已知事实与裁决时需要回答的问题，状态为待定，P4 进入时裁决；在此之前不接入、不预留。[10 P4](10-roadmap.md#5-p4--精度差分) 增加「进入时裁决」行。同时在 [Report_for_human_reading](history/history-references.md#ref-0d2ad63869ea) 新增复用边界登记表，汇总 D3/D18/D22–D25、Q8、Q10 与 01 §4 中的复用内容。没有新增或修改任何 D 条目。 |
+| 2026-10-15（第三轮） | 审核 codex 的 T8.1 交付与[自评](history/history-references.md#ref-c29eb5d75a76)，设计者审核见 [claude review](history/history-references.md#ref-573c75ba342e)。**T8.1 Gate 通过。** 新增：<br>• **D27**：格式指纹覆盖全部注入钩子；主机身份还原须有格式依据，证据不足时保留原值；格式兼容验收报告逐跳命中数，0 必须指出断点（扩展 D25 第 5 条）。<br>• 任务单 **T8.2**（腾昇主机进程身份还原，离线，一个 Gate），列为 T9 前置，用户批准下发；P0 退出条件增加 T8.2。<br>**本轮修正的设计者自身错误**：① T8.1 §4.1 只要求"分类表版本写进解析身份"，没有要求覆盖全部格式解释，导致 `host_pid`、`is_launch` 不在指纹内；② T8.1 的 E2 与 Stage 0 只要求登记主机链"在不在"，没有要求解释到连接键，Gate 输入因此只给出 `no_bridge` 计数而没有断点；③ Stage 0 要求把全部基线放进 `docs/validation/t8.1/`，使 7.3 MB 的 `output-lock-baseline.json` 入库，CI 实际只用其中一小部分。<br>正文改动见 02 §1 P6、04 §3.7、05 §4/§4.1/§4.2/§5、07 §1、10 P0/P6/§9、12 §8、README、codex-tasks/README。 |
+| 2026-10-15（第四轮） | 审核 codex 的 T8.2 交付与[自评](history/history-references.md#ref-651c40aea958)，设计者审核见 [claude review](history/history-references.md#ref-dc425489f08c)；同时综合用户点名的两份格式评审（[codex](history/history-references.md#ref-6da71915530e)、[设计者](history/history-references.md#ref-00e0b6f3ed11)）。**T8.2 Gate 通过**：腾昇当前采集三窗各 10,120 条设备记录原生 owned（格式 v3），历史与 A100 输出不变。新增：<br>• **D28**：采集配置显式化并入身份；每个格式版本带契约，导入时判定适用性；静默失败（轨道角色审计、unknown 归并）转显式；第 4 条开放式导入待用户确认。<br>• D27 背景加更正注记。<br>• 承接任务 T8.3（待用户批准），排在 T9 前。<br>**本轮修正的设计者自身错误**：① T8.1 审核与 D27 背景把 `CANN` 进程名消失归因于格式漂移，实际是我们的会话未声明 profiler level（默认 Level0 裁剪）；05 §4.1 已列"采集配置"为绑定条件，却没有要求会话声明、验收比较；② T8.2 任务单 §4.3 只要求逐跳计数"改动前后各一份"，未要求同一调用/注释配置并登记，导致 F1；③ 同类风险清单按任务编写，不随格式版本维护，v3 新增的 `Python` 进程名依赖无处登记。<br>正文改动见 04 §3.7、05 §4/§4.1/§4.2、07 §1、10 P0/§9、12 §8、00 §6、README、codex-tasks/README。 |
+| 2026-10-15（第五轮） | 用户批准 T8.3 排在 T9 之前，并确认 D28 第 4 条（已证实的设备活动在类别未知时进入 E）。D28 状态改为已定；第 4 条补写适用边界（不改 `allreduceAicpuKernel`，契约登记的重复表示不进入）。编写任务单 [T8.3](history/history-references.md#ref-18cd774a5eb9)。正文改动见 10 P0/§9、12 §8、README、codex-tasks/README。 |
+| 2026-10-16 | 审核 codex 的 T8.3 交付、[交付复盘](history/history-references.md#ref-d94c86bbac29)与 [Gate 审查](history/history-references.md#ref-6d89220407b3)，设计者审核见 [claude review](history/history-references.md#ref-ed6a5f5f7031)；源码复核与测试由独立复核子代理执行两轮，关键项经设计者抽查。**T8.3 Gate 未通过**：配置贯通、三值判定、C7 队列键修复、F1、版本回归与保全成立；阻塞项为 NVIDIA 设备执行轨被判为 host（B1，codex 自查发现，复核扩大到 20/21 份 Kineto 历史来源）、unknown 入选未检查轨道角色（B2）、设备轨整条缺失仍判契约内（B3）、契约约一半字段未被执行（B4）。新增：<br>• **D29**：同一事实的多个判断须同源或有一致性门禁；结构证据优先于名称，冲突显式；每份契约至少一条必需结构条件；契约条目须被执行或被测试绑定；新增判定以性质门禁、阳性对照与变异杀伤验收。<br>• D28 追加执行进展注记（另两条错误肯定路径：C7 已修，B3 交返工）。<br>• T8.3 任务单追加 §9 返工轮，用户 2026-10-16 批准下发；12 §5 新增"新增判定"测试要求，codex-tasks README §3 新增第 11 条；12 §8 T9 备忘加证据生产者表与 inspect 状态区分。<br>**本轮修正的设计者自身错误**：① T8.3 §4.3 把角色审计定义为只报告的旁路，§4.4 要求入选前提为设备执行轨，验收表却没有要求两者一致的不变量；② E5 的预期写成"无未识别轨道、无 unknown 组"，检测器坏掉时照样成立；③ §4.2 强调"合法缺项不当异常"、§4.3 第二条告警要求"设备轨缺失**且**存在未识别轨道"，把"至少存在设备执行轨"这一最基本的结构前提也放掉了；④ E3 只要求契约进入指纹闭包，没要求契约条目驱动判定或被测试绑定；⑤ 任务单给每个新能力写了"要有什么"，没写"怎样证明它对"，验收材料偏重"其他东西没变"。<br>正文改动见 05 §4/§4.2、07 §1 第 10 条、10 P0/§9、12 §5/§8、README、codex-tasks/README、Report_for_human_reading（README、02 中期更新、glossary）。 |
+| 2026-10-16（第二轮，T8.3 返工复审） | 审核 codex 的 T8.3 返工交付与[返工复盘](history/history-references.md#ref-711fa68dfd18)，设计者复审见 [claude review](history/history-references.md#ref-81d74b957ee6)；复核与调研由两个子代理执行，关键项经设计者抽查。**T8.3 返工轮 Gate 通过**（2026-10-16，附遗留 L1–L6 转 T9 §0）：R1–R5、R8 成立，R6 成立但薄，R7 部分成立；独立复核没有发现错误输出。P0 未退出，五窗仍 indeterminate，主要原因是证据没有喂进判定链路，不是格式判不了。新增和修订：<br>• **D30**（设计者提议；已于 2026-10-16 第三轮确认）：契约的每个必需条件登记证据生产者；判定"不可观察"之前先清点产物自述；已封存采集的派生事实写进新 run，不就地改旧 store；完整性的认证只来自采集端，导入端只做精确 ID 的单向负证据。<br>• D29 追加执行进展注记：返工轮通过；第二信号作为支持范围条件（不做角色判据）的补充裁决转 T9.0。<br>• D27 追加更正注记：钩子范围只覆盖 `SourceFormat` 协议，账本处置、规则与共享判定代码不在任何代码哈希身份内，转 T9.0。<br>• codex-tasks README 第 12 条加"契约数据变异"；12 §8 的 T9 备忘改为 T9.0–T9.3 拆分建议（设计者建议；已于 2026-10-16 第三轮确认）；T8.3 任务单追加 §9.9。<br>**本轮修正的设计者自身错误**：① T8.3 §9.2 第 6 条把第二信号只放在验收与 CI，生产对 `pid ≠ args.device` 仍静默；② §9.5 R7 的契约字段映射停在字段级，没要求条件行集合与预登记逐项比较，导致"通过"掩盖了条件删除存活；③ §9.3 允许六份格式身份变化，却没要求说明版本标签与内容修订的关系；④ 12 §8 上一版未核对原件就采纳了"NVIDIA 没有独立实际配置"；⑤ D27 把"钩子"限定为 `SourceFormat` 协议，账本处置与规则代码落在身份闭包之外。<br>正文改动见 04 §3.8、05 §4、07 §1 第 6、10 条、10 P0/§9、12 §5/§8、README、codex-tasks/README、T8.3 任务单 §9.9。 |
+| 2026-10-16（第三轮，用户确认） | 用户确认 D30 与 T9 拆分为 T9.0–T9.3；编写 T9.0 任务单（[T9.0](history/history-references.md#ref-3e7f0f466f04)，离线，一个 Gate，待下发）。D30 状态由"设计者提议，待用户确认"改为已确认（用户 2026-10-16）；T9.1–T9.3 待编写，各在前一段 Gate 后编写。T9.0 的设计者裁决（契约修订号、第二信号做成范围条件、身份闭包 `parser.closure`、格式一致性套件等）写在任务单 §4。归档复核方变异清单至 [`2026-10-16-t8.3-rework-mutations/`](history/history-references.md#ref-48cf730576e3)。同步改动见 [复审 §8](history/history-references.md#ref-16641a9481fa)。 |
+| 2026-10-18 | 审核 codex 的 T9.0–T9.3 交付与[自评](history/history-references.md#ref-1a5b874163ee)，设计者审核见 [claude review](history/history-references.md#ref-79d0492278f2)；复核由子代理执行，关键项经设计者抽查。**Gate 结论**：T9.0 通过；T9.1 通过（附测试缺口）；T9.2 有条件通过（record 自动注入范围由实现方收窄而未进 DECISIONS，本轮以 D32 追认）；T9.3 工程/测量闭环成立，但 ⑩ 的日志项与 ② 的 truncated/lost 只在验收 harness 路径成立，生产入口未贯通，开收口轮 T9.4。P0 未退出，L-字段保持 1.0-rc。新增和修订：<br>• D30 追加设计者裁决（补充）：NVIDIA `exporter.version`、`execution.mode` 保留 required，接受 indeterminate，追认 T9.1 任务单写法。<br>• **D31**（设计者提议，**待用户裁决**）：P0 ③ 改为 ③a 热路径成本 / ③b 并发无损持续速率 / ③c 突发吸收三项并报，退役单一 accepted 速率；500k 作为历史基准保留；裁决前 ③ 维持 failed。<br>• **D32**（设计者追认，**待用户确认**）：record 只自动注入 wrapper 直接启动的 Python 目标，以完整 proc_key 匹配父身份；后代与 worker 显式 attach；含流程更正。<br>• Q9：状态段注明由 D31 承接；实测回填段后加更正（"持续排空约 2.32–2.38 万/s"是生产者停止后的独占尾部排空，并发时在 GIL 竞争下塌缩），原回填文字不改。<br>• D26：加适用范围说明（腾昇豁免只覆盖原 Session 普通 step，当前 attach 以 T9.3 实测为准）。<br>• [12 §7](history/12-codex-handoff.md#7-提交与汇报) 新增 6 条交接规则（流程，无 D 号）：Gate 的 reviewed_input 必须是已提交的 blob；改设计范围、动用设计者保留裁决须先在 DECISIONS 提议；每条验收写明验证所经的生产入口；复核脚本进 tests/ 或 CI；多 case 工具的退出码由逐 case 状态汇总、零 case 非零退出；沿用 codex 自评 §5.2 的任务单六段大纲。<br>**本轮修正的设计者自身错误**：① P0 ③ 的测量协议从 T7 起没定义清楚（只写"单 writer ≥ 50 万事件/秒入队，同时报告持续落盘"，没规定循环长度、生产者是否并发、排空在什么条件下测），T9.3 又预登记"仍按 accepted ≥ 500000/s 判定"，测到的是"填满 65,536 队列的速度"；Q9 在 10-15 已定"不再用一个入队速率代表 store 能力"，却没有改 ③ 本身，同一事实两处表述不一致，是 D29 第 1 条在设计文本上的再犯；② P0 ⑩、② 的验收没写"经哪个生产入口验证"：⑩ 的日志项在验收 harness 里接了 log_reader 就算通过，生产 record 没接；② 只要求 store 标 truncated，没要求公共读取接口暴露；与 T8 "validity 只要求设备轨非空"同族，同族第三例是验收工具给导入器传 `queue_capacity=262144` 而生产 worker 用默认 65,536。新原则：每条 P0 条件写明验证所经的生产入口，验收工具不得使用生产入口没有的配置；store 记录的每种失败状态都必须经公共只读接口可见（D29"静默转显式"延伸到读取侧）。其余反思（变异杀伤率第二次出现"实现方清单 100%、复核方自设约 50%"、任务单预登记与 Gate 流程、验证成本与用户价值失衡、attach/none ≈ 2.0 的使用限制）见设计者审核 §4。<br>正文改动见 02 §3/§5/§6、03（sealed 术语区分）、04（:114/:118/:367）、05（§1/§2/§3/§4/§4.3/§5）、09（§1/§2）、10 P0/§9、12 §7/§8、README、codex-tasks/README；reviews（[设计者审核](history/history-references.md#ref-79d0492278f2)、[复核证据归档](history/history-references.md#ref-86904147c1b4)）；Report_for_human_reading（README、01、02、03、glossary、[progress/2026-10-18-t9-delivery-and-p0-boundary.md](history/history-references.md#ref-47f0f924820e)、`tools/foundation_showcase.py` 加 t9.3 预设、[progress/assets/2026-10-18-t9.3-foundation-showcase.json](history/history-references.md#ref-b893de3b23de)）。与实现不符之处的清单见设计者审核 §1.7、§8.4。任务单 [T9.4](history/history-references.md#ref-e525188761b6)（生产入口收口；待用户确认后下发）。 |
+| 2026-10-19 | 用户采纳 [D31](#d31--p0-吞吐验收改为三项并报退役单一-accepted-速率)：P0 ③ 改为 ③a 热路径成本 / ③b 并发无损持续速率 / ③c 突发吸收三项并报，500k accepted/s 退役为历史基准（T7 18.0 万/s、T9.3 20.5–21.3 万/s 的 failed 记录保留不改）。D31 状态由“设计者提议，待用户裁决”改为已确认（用户 2026-10-19）；[Q9](#q9--p0-吞吐门槛在原生优先路径下如何推导) 关闭，由 D31 承接。据此改写 [10 P0 验收 ③](10-roadmap.md#2-p0--store-与-schema)（旧文字保留为“历史（至 2026-10-19）”），编写任务单 [T9.5](history/history-references.md#ref-06e993298ce0)（Writer 消费端移出 GIL 与 ③ 三项验收；待下发，Stage 0 可与 T9.4 并行）。仍待用户：[D32](#d32--record-自动注入范围只注入-wrapper-直接启动的-python-目标) 确认、T9.4/T9.5 下发、提交当前工作树文档。<br>正文改动见本文件 D31、Q9，10 P0 验收 ③/依赖/状态/§9，12 §8，README、codex-tasks/README；reviews（[设计者审核](history/history-references.md#ref-79d0492278f2) §6、§7 加注记，原文不改）；Report_for_human_reading（README、02、[progress/2026-10-18-t9-delivery-and-p0-boundary.md](history/history-references.md#ref-47f0f924820e)、glossary）。 |
+| 2026-10-19（第二轮，下发前核查） | T9.4/T9.5 下发前核查（审核见 [claude review](history/history-references.md#ref-47315ffad958)）：设计者失误目录 F01–F30 的复发分析显示，规则只写给实现方、写任务单时没有检查环节。新增和修订：<br>• **流程规则“设计者下发前自检”**（无 D 号）：设计者编写或修订任务单时，下发前先派只读复核代理做前提核查，再逐条回答 Q1–Q12 并附自检记录表（同日晚改为三步流程、Q1–Q13（修订后复核））；没有该表的任务单不得请用户确认下发。见 [codex-tasks/README §5](history/history-references.md#ref-6fe64a9751e0)、[12 §7](history/12-codex-handoff.md#7-提交与汇报) 第 7 条。<br>• [T9.4](history/history-references.md#ref-e525188761b6)、[T9.5](history/history-references.md#ref-06e993298ce0) 下发前核查后修订，仍待用户确认后下发。<br>• [D31](#d31--p0-吞吐验收改为三项并报退役单一-accepted-速率) 补充（设计者提议，**待用户确认**）：③a 纳入被测线程进度比 R，③c 可吸收量以实测确定；不改 D31 的三项结构与“P1 前 ③a 不设门槛”。<br>正文改动见本文件 D31 补充，12 §7/§8.3，codex-tasks/README §2.0/§5；reviews（[下发前审核](history/history-references.md#ref-47315ffad958)）。 |
 | 2026-10-19（第三轮，用户裁决） | 用户采纳 [D31 补充](#d31--p0-吞吐验收改为三项并报退役单一-accepted-速率)（③a 加被测线程进度比 R、③c 可吸收量改实测、P-dispatch-window 改为计数框与同负载窗口间隔 1.2496 s）；[10 P0 ③](10-roadmap.md#2-p0--store-与-schema) 按补充改写；T9.4 / T9.5 经三轮修订后确认下发，待用户提交工作树后开工。D32 仍待确认。 |
-| 2026-10-20（用户裁决） | 用户主动提出并确认 **[D33](#d33--恢复attach-不改被测代码)**（恢复"attach 不改被测代码"为默认设计；显式 `handle.step()` 推进窗口降为可选项；用户接受官方 profiler 固有扰动作为采集代价；路线细化须给出超限行为或窗口上限的显式设计，边界为单个 trace 超约 65,536 设备事件导入 partial（丢按位置排序的连续尾部）与导入耗时/内存随事件量线性增长（6 万设备事件约 110 s / 2.5 GiB））。同步改动：[02 §3](02-architecture.md#3-目标接入attach--wrap--launch) 当前实现、[09 §2](09-cli-and-campaign.md#2-record-的三种形态) record、[README](design-history.md) 术语表 attach 模式行、[12 §8](12-codex-handoff.md#8-当前待办)（2026-10-20 更新注记 + 新增待办第 6 条：D33 默认接入路线细化，任务单待编写）；Report_for_human_reading（README、02 风险表与决策表、progress/2026-10-18 补注）。10-roadmap 与 personal/FlagPerf-advance.md 经用户确认本次不改（D33 不改变 P0 退出条件；personal 文档留待代码/功能落地时同步）。仍待用户：D32 确认（T9.4/T9.5 已于同日按 [D34](#d34--t94t95-读取批次与测量边界补充) 授权修订任务单并实现，"下发"不再待办）。 |
-| 2026-10-21（T9.5 Stage 0 Gate） | 设计者审核 T9.5 Stage 0 证据包（[审核](history-references.md#ref-44739a19cd50)）：接受证据；选定同进程候选 A，淘汰 B（原型形态）；kill 前三档预算可判定（A 以 ≥100 倍余量满足），15 项未执行接受关闭；5% A/A 失败保留、不重跑，其服务的单窗耗时门撤下。新增 **[D37](#d37--t95-gate-裁决在线-emit-按模式分契约弃用以现行-writer-为参照的时间比较设计者提议待用户确认)**（设计者提议，待用户确认）：dispatch(each) 改为有界背压，时间/进度比较不再以现行 Writer 为参照，R 回归门改为对原型 A，G2 改报全线程进度比，新增自检 Q14。Stage 1 待 D37 确认后放行；进入 Stage 1 前须先对主机 CI 的压缩期尾读失败分因。正文改动：本文件 D37；T9.5 任务单头部注记；12 §8 注记。10-roadmap 待确认后改。 |
-| 2026-10-21 晚（T9.5 B 类重做 smoke） | 应用户要求，设计者在 scratchpad 重做 B 类原型（无锁 SPSC 环、生产端成批 marshal、普通子进程、快速校验器），在登记镜像跑 smoke（[审核 §8](history-references.md#ref-fe14eae2f1ea)）：B2X 十窗 G1/G2 的 k=1/2 均零丢，emit 1.65 µs，G1 R(3013)=1.00，μ≥7 万/s，内存在预算内，6 个故障反例符合预期。修订：选型重新打开（B 类领先，A 为退路），D37 第 1 条暂缓、第 4 条保留；建议 codex 在登记协议下对 B2X 补充取证，设计者起草附录 A #19 代理写者澄清（均待用户确认）。 |
-| 2026-10-21 晚（用户确认补充取证） | 用户同意让 codex 在登记协议下对 B2X 补充取证，并要求起草 #19 澄清。新增任务单 [T9.5b](history-references.md#ref-34cf6c3c0cce)（B2X Stage 0 补充取证，用户已确认下发，待用户提交工作树后开工）与 **[D38](#d38--附录-a-19-澄清写者--writer-实例的唯一物理写盘进程允许登记代理设计者提议待用户确认)**（附录 A #19 澄清：写者 = writer 实例的唯一物理写盘进程，允许登记的唯一代理；设计者提议，待用户确认，只在选 B 类时生效）。另在 [Gate 审核 §8.6](history-references.md#ref-a3f79201c99c) 补充 A 方案上限的推断。 |
-| 2026-10-22（T9.5b Gate 与 T9.5c/T9.6 下发准备） | 设计者审核 T9.5b 证据包（[审核](history-references.md#ref-2a47357d5a94)；三个复核子代理并行，设计者抽查 4 处代码与原件）：codex 取证可信，容量与内存全面支持 B2X；复核另发现 4 处候选语义缺陷（均源自设计者 10-21 原型）、"≤100 ms 死亡检测"在规定轮询机制下结构不可达（设计者任务单失误）、测试面 22 个空洞且最终 CI 不执行候选代码，以及 Reader 全量常驻与 finalize 整读、登记镜像缺失。用户裁决：方向选 B2X 类、不保留 A；Stage 1 前插 T9.5c；Reader 流式化 T9.6 为 P0 退出前置。新增 **[D39](#d39--t95b-gate-裁决选-b2x-类不保留-astage-1-前插-t95creader-流式化t96为-p0-退出前置)**（第 1–3 条用户裁决，第 4–10 条为设计者配套修订，随 T9.5c / T9.6 下发、用户提交即视为采纳）；[D37](#d37--t95-gate-裁决在线-emit-按模式分契约弃用以现行-writer-为参照的时间比较设计者提议待用户确认) 状态行补"第 1、2 条撤回，第 4 条按 D39 第 4 条处置"；[D38](#d38--附录-a-19-澄清写者--writer-实例的唯一物理写盘进程允许登记代理设计者提议用户已确认) 标题按状态行同步为"用户已确认"（保留旧锚点，原链接仍可用）。新增任务单 [T9.5c](history-references.md#ref-cdbf854eab27)、[T9.6](history-references.md#ref-6d7e83e32eee)（下发前核查中）。仍待用户：D38 第 3 条与"不保留 A"的取舍（Stage 1 任务单提案时确认）、T9.5c 第 0 步的镜像方案、提交设计者文档。正文改动：本文件 D37/D38/D39；T9.5、T9.5b 任务单头部注记；codex-tasks/README §2 索引与 §5（Q14、Q15，Q1/Q11 补充）；12 §8 的 P0 退出条件；Report_for_human_reading（README、02）；reviews（[设计者审核](history-references.md#ref-2a47357d5a94)、[证据目录](history-references.md#ref-d0fe59db20d3)）。10-roadmap 未改（P0 ③ 中没有背压表述）。 |
+| 2026-10-20（用户裁决） | 用户主动提出并确认 **[D33](#d33--恢复attach-不改被测代码)**（恢复"attach 不改被测代码"为默认设计；显式 `handle.step()` 推进窗口降为可选项；用户接受官方 profiler 固有扰动作为采集代价；路线细化须给出超限行为或窗口上限的显式设计，边界为单个 trace 超约 65,536 设备事件导入 partial（丢按位置排序的连续尾部）与导入耗时/内存随事件量线性增长（6 万设备事件约 110 s / 2.5 GiB））。同步改动：[02 §3](02-architecture.md#3-目标接入attach--wrap--launch) 当前实现、[09 §2](09-cli-and-campaign.md#2-record-的三种形态) record、[README](history/design-history.md) 术语表 attach 模式行、[12 §8](history/12-codex-handoff.md#8-当前待办)（2026-10-20 更新注记 + 新增待办第 6 条：D33 默认接入路线细化，任务单待编写）；Report_for_human_reading（README、02 风险表与决策表、progress/2026-10-18 补注）。10-roadmap 与 personal/FlagPerf-advance.md 经用户确认本次不改（D33 不改变 P0 退出条件；personal 文档留待代码/功能落地时同步）。仍待用户：D32 确认（T9.4/T9.5 已于同日按 [D34](#d34--t94t95-读取批次与测量边界补充) 授权修订任务单并实现，"下发"不再待办）。 |
+| 2026-10-21（T9.5 Stage 0 Gate） | 设计者审核 T9.5 Stage 0 证据包（[审核](history/history-references.md#ref-44739a19cd50)）：接受证据；选定同进程候选 A，淘汰 B（原型形态）；kill 前三档预算可判定（A 以 ≥100 倍余量满足），15 项未执行接受关闭；5% A/A 失败保留、不重跑，其服务的单窗耗时门撤下。新增 **[D37](#d37--t95-gate-裁决在线-emit-按模式分契约弃用以现行-writer-为参照的时间比较设计者提议待用户确认)**（设计者提议，待用户确认）：dispatch(each) 改为有界背压，时间/进度比较不再以现行 Writer 为参照，R 回归门改为对原型 A，G2 改报全线程进度比，新增自检 Q14。Stage 1 待 D37 确认后放行；进入 Stage 1 前须先对主机 CI 的压缩期尾读失败分因。正文改动：本文件 D37；T9.5 任务单头部注记；12 §8 注记。10-roadmap 待确认后改。 |
+| 2026-10-21 晚（T9.5 B 类重做 smoke） | 应用户要求，设计者在 scratchpad 重做 B 类原型（无锁 SPSC 环、生产端成批 marshal、普通子进程、快速校验器），在登记镜像跑 smoke（[审核 §8](history/history-references.md#ref-fe14eae2f1ea)）：B2X 十窗 G1/G2 的 k=1/2 均零丢，emit 1.65 µs，G1 R(3013)=1.00，μ≥7 万/s，内存在预算内，6 个故障反例符合预期。修订：选型重新打开（B 类领先，A 为退路），D37 第 1 条暂缓、第 4 条保留；建议 codex 在登记协议下对 B2X 补充取证，设计者起草附录 A #19 代理写者澄清（均待用户确认）。 |
+| 2026-10-21 晚（用户确认补充取证） | 用户同意让 codex 在登记协议下对 B2X 补充取证，并要求起草 #19 澄清。新增任务单 [T9.5b](history/history-references.md#ref-34cf6c3c0cce)（B2X Stage 0 补充取证，用户已确认下发，待用户提交工作树后开工）与 **[D38](#d38--附录-a-19-澄清写者--writer-实例的唯一物理写盘进程允许登记代理设计者提议待用户确认)**（附录 A #19 澄清：写者 = writer 实例的唯一物理写盘进程，允许登记的唯一代理；设计者提议，待用户确认，只在选 B 类时生效）。另在 [Gate 审核 §8.6](history/history-references.md#ref-a3f79201c99c) 补充 A 方案上限的推断。 |
+| 2026-10-22（T9.5b Gate 与 T9.5c/T9.6 下发准备） | 设计者审核 T9.5b 证据包（[审核](history/history-references.md#ref-2a47357d5a94)；三个复核子代理并行，设计者抽查 4 处代码与原件）：codex 取证可信，容量与内存全面支持 B2X；复核另发现 4 处候选语义缺陷（均源自设计者 10-21 原型）、"≤100 ms 死亡检测"在规定轮询机制下结构不可达（设计者任务单失误）、测试面 22 个空洞且最终 CI 不执行候选代码，以及 Reader 全量常驻与 finalize 整读、登记镜像缺失。用户裁决：方向选 B2X 类、不保留 A；Stage 1 前插 T9.5c；Reader 流式化 T9.6 为 P0 退出前置。新增 **[D39](#d39--t95b-gate-裁决选-b2x-类不保留-astage-1-前插-t95creader-流式化t96为-p0-退出前置)**（第 1–3 条用户裁决，第 4–10 条为设计者配套修订，随 T9.5c / T9.6 下发、用户提交即视为采纳）；[D37](#d37--t95-gate-裁决在线-emit-按模式分契约弃用以现行-writer-为参照的时间比较设计者提议待用户确认) 状态行补"第 1、2 条撤回，第 4 条按 D39 第 4 条处置"；[D38](#d38--附录-a-19-澄清写者--writer-实例的唯一物理写盘进程允许登记代理设计者提议用户已确认) 标题按状态行同步为"用户已确认"（保留旧锚点，原链接仍可用）。新增任务单 [T9.5c](history/history-references.md#ref-cdbf854eab27)、[T9.6](history/history-references.md#ref-6d7e83e32eee)（下发前核查中）。仍待用户：D38 第 3 条与"不保留 A"的取舍（Stage 1 任务单提案时确认）、T9.5c 第 0 步的镜像方案、提交设计者文档。正文改动：本文件 D37/D38/D39；T9.5、T9.5b 任务单头部注记；codex-tasks/README §2 索引与 §5（Q14、Q15，Q1/Q11 补充）；12 §8 的 P0 退出条件；Report_for_human_reading（README、02）；reviews（[设计者审核](history/history-references.md#ref-2a47357d5a94)、[证据目录](history/history-references.md#ref-d0fe59db20d3)）。10-roadmap 未改（P0 ③ 中没有背压表述）。 |
 | 2026-10-23（共享目录迁移与存储性能处置） | 用户审核七处文档修改稿并授权落盘，新增 [D40](#d40)：后续默认使用新工作区的 dtfs 共享目录，保留历史 ext4 数值与结论；记录逐条 flush 放大小写成本的归因，暂不修改生产 flush 或新增 dtfs 专项优化。T9.5c 的 70,000/s 改为历史容量参考与扫描观察，规定在线负载、语义、资源及扰动要求继续验收；接受离线处理耗时增加。同步 T9.5c、T9.6、T9.5、10-roadmap、12-codex-handoff 与 personal/FlagPerf-advance.md。此次仅修改文档，未改代码或历史实验包，不构成新环境正式验收或 P0 退出。 |
 | 2026-10-27（P0 收尾） | 设计者对照 T9.7 交付、T9.8 真实闭环与项目阶段（初期为低负载 profiling）完成 P0 退出复审，用户 2026-10-27 批准，新增 **[D45](#d45)**：W7 有效失败处置为已知回归并降为跟踪基准；W9 以 94.44% 供给下的零回退观察作为 aarch64 A5 证据；③c 以名义窗口无损为准，不承诺 2 倍余量；③ 判为登记低负载范围达标并附已知限制清单；**P0 退出，L-字段由 `1.0-rc` 定为 `1.0`**；一并确认 D32；登记交给 P1 的设计约束与流程调整。历史失败与无效样本不改写。同步 p0-exit（md/json）、blockers.json、10 路线图、PLAN/codex-tasks README、12 交接、T9.7/T9.8 任务单、03 §8、04、人读文档与使用说明。 |
-| 2026-10-27（P1 首批下发） | 设计者编写 P1 首批规划，用户 2026-10-27 批准：新增 **[D46](#d46)**（预设组成、两级 dispatch、route 判定、选层折叠、主机桥接、分析集、seal 身份传播、N1 只报告、首批的门与不做项）与任务单 [T10.1](history-references.md#ref-29067dfd8983)、[T10.2](history-references.md#ref-51d0d35bc759)、[T10.3](history-references.md#ref-d60f95337bf0)。同步 05 §3 预设表、04 §3.8 状态行、10 路线图、PLAN README、codex-tasks README、12 交接。只改文档，未改代码。D50 第 6、7 条的实现口径已作为注记回填 03 §4.9/§8、05 §2/§3、06 §5.2–§5.3、07 §3.3；D49 第 2 条 c 回填 05 §3。 |
+| 2026-10-27（P1 首批下发） | 设计者编写 P1 首批规划，用户 2026-10-27 批准：新增 **[D46](#d46)**（预设组成、两级 dispatch、route 判定、选层折叠、主机桥接、分析集、seal 身份传播、N1 只报告、首批的门与不做项）与任务单 [T10.1](history/history-references.md#ref-29067dfd8983)、[T10.2](history/history-references.md#ref-51d0d35bc759)、[T10.3](history/history-references.md#ref-d60f95337bf0)。同步 05 §3 预设表、04 §3.8 状态行、10 路线图、PLAN README、codex-tasks README、12 交接。只改文档，未改代码。D50 第 6、7 条的实现口径已作为注记回填 03 §4.9/§8、05 §2/§3、06 §5.2–§5.3、07 §3.3；D49 第 2 条 c 回填 05 §3。 |
 | 2026-10-27（P1 首批修订） | 用户指出 summary 丢失的信息与 T10.2 要回答的问题没有对齐。设计者核对后确认：opsum 缺设备与嵌套信息、reason 与 impl 只剩 decision、只在 summary 出现的行没有层与 corr；另有 route 判定没有排除 CPU 调用、嵌套耗时重复计入、`perf-lite` 没有 each 窗口三处缺口。用户 2026-10-27 批准方案 B，新增 **[D47](#d47)**：opsum 增加 `dev`、`nested` 两个可选字段（L-字段 `1.1`）；route 探针写静态判定表；route 判定范围为深度 0 且加速器调用；只在 summary 出现的行按 `summary_only` 降级。同步 D46 注记、03 §4.3/§4.3b/§8、T10.1–T10.3 与各状态块。仅改文档，未改代码。 |
 | 2026-10-27（P1 执行契约补齐） | 用户要求保留 D47，并按本轮审阅修订其余任务书。新增 **[D48](#d48)**：关联问题归入少量开发验收反例；补齐根模型发现与前向计数、组件与探针分工、final 配置、C0-G 无探针基线、缓存、公共只读接口和有界分析，修正控制记录身份、时间口径、seal 绑定与报告测试。同步 T10.1–T10.3、02/05/10 和入口索引；范围、总预算与最终一次 Gate 沿用。仅改文档，未执行 P1 实现或实验。 |
-| 2026-10-28（P1 退出复审与 P4 首批） | 设计者完成 P1 退出复审并起草 P4 首批；用户 2026-10-28 批准 D49、D50（含 Q10 裁决），并裁决 Q11 为 P3 不提前（当前目标是先实现 v1 已有功能，再让 v1 退休）：新增 **[D49](#d49)**（P1 退出，判为登记小范围通过；耗时口径与回退清单由 P1.1 修补；`perf-lite` 去掉 dispatch；加速器判定排除 `meta`；算子类别表；非阻塞项一次处置；导入速度转 P2 入口；流程调整）、**[D50](#d50)**（Q10 提议裁决不复用 msprobe；固定输入复用 v1 A100 参考包；`accuracy` 预设；张量记录与 `src` 字段，L-字段拟升 `1.2`；算子级下钻与 `introduced` 判定；oracle 四个分析器）与 **[Q11](#q11--p3故障检测与热加载是否提前)**（P3 是否提前，已裁决不提前）。新任务单 [T10.4](history-references.md#ref-3f47daaaa459)、[T11.1](history-references.md#ref-6deef0520efd)、[T11.2](history-references.md#ref-97b0743ec8d6)。只改文档，未改代码。D50 第 6、7 条的实现口径已作为注记回填 03 §4.9/§8、05 §2/§3、06 §5.2–§5.3、07 §3.3；D49 第 2 条 c 回填 05 §3。 |
-| 2026-10-28（P4 首批复审） | 设计者完成 T10.4、T11.1、T11.2 的复审，重读六份正式报告的导出并用 flagprof 自带解码器只读重算真实 blob。新增 **[D51](#d51)**（设计者提议，待用户批准）：P4 首批在登记范围内通过；P4.1 修订 oracle 误差口径（成对哨兵、ULP 统计、v1 相对误差退出头条、布局属性）与页面；P2a 以导入 prepare 定点分析开工；P4 第二批排在其后；读报告检查加问量级是否物理上可能。新增 **[Q12](#q12--p5-之前是否按-v1-能力清单排序)**。任务单草案 [T11.3](history-references.md#ref-3c84559c539d)、[T12.1](history-references.md#ref-6ce6c9c166a0)。复审页见 [10-28 复审](history-references.md#ref-ea4d5679df2b)。仅改文档。 |
-| 2026-10-29（用户批准 D51、裁决 Q12） | 用户批准 **[D51](#d51)** 并下发 [T11.3](history-references.md#ref-3c84559c539d)、[T12.1](history-references.md#ref-6ce6c9c166a0)；导入门限待 T12.1 规模曲线后再定，目标负载确认为 OneRec-8B 生成 32 个新 token。[Q12](#q12--p5-之前是否按-v1-能力清单排序) 裁决为建立 v1 能力清单，写入 [10 路线图 §0.1](10-roadmap.md#01-v1-能力清单p5-之前的排序依据)。同步两张任务单状态、10 路线图 P2／P4 状态、codex-tasks README、Report_for_human_reading（README、复审页 §7）。仅改文档。 |
-| 2026-10-31（T13 之后设计者复审） | 设计者只读复审 T13 之后的状态并对照项目实施方案，抽查 T12.4 两份证据 JSON，发现设备工作量头条混入 A100 载入期 H2D。新增 **[D54](#d54)**（设计者提议，待用户批准）：P2 退出范围（8 卡移出、counter 移至 P3）、P6-0 昆仑芯 P800 契约探针、交付前读报告检查、下发 T14.1/T14.2 草案。复审页见 [2026-10-31 设计者复审](history-references.md#ref-4921efdeb1c3)。仅改文档。 |
-| 2026-10-31 晚（用户批准 D54、下发 T14） | 四个只读复核代理核对 T13 交付与设计者复审的数字（31 项一致）、补做 T14 下发前自检、对照项目目标、检查工程健康，并在 profile 窗口内实测设备忙闲（[复核](history-references.md#ref-3b5745cc81f4)）。复核发现 T14.1e 草案拿 profile 窗口拆无诊断增量（跨窗口），以及 T12.4 更正页、T13 交付页、设计者复审中的计数与出处问题。用户批准 **[D54](#d54)** 全部五条及复核修订（2 卡 A100 TP2 采集、忙闲读法、导出窗口身份、14.1e 窗口内拆分、14.2b 只测），下发 T14.1、T14.2。同步两张任务单、T12.4 报告、T13 交付页、设计者复审、10 路线图 §0.1 与 P2、PLAN README、12 交接、codex-tasks README、Report_for_human_reading（README、02）、personal 指南。另在工作树修改 `ci/quick.sh`、`ci/no_site.sh` 的环境预检与 `flagprof/cli.py` 的帮助文本（解析行为不变）。 |
+| 2026-10-28（P1 退出复审与 P4 首批） | 设计者完成 P1 退出复审并起草 P4 首批；用户 2026-10-28 批准 D49、D50（含 Q10 裁决），并裁决 Q11 为 P3 不提前（当前目标是先实现 v1 已有功能，再让 v1 退休）：新增 **[D49](#d49)**（P1 退出，判为登记小范围通过；耗时口径与回退清单由 P1.1 修补；`perf-lite` 去掉 dispatch；加速器判定排除 `meta`；算子类别表；非阻塞项一次处置；导入速度转 P2 入口；流程调整）、**[D50](#d50)**（Q10 提议裁决不复用 msprobe；固定输入复用 v1 A100 参考包；`accuracy` 预设；张量记录与 `src` 字段，L-字段拟升 `1.2`；算子级下钻与 `introduced` 判定；oracle 四个分析器）与 **[Q11](#q11--p3故障检测与热加载是否提前)**（P3 是否提前，已裁决不提前）。新任务单 [T10.4](history/history-references.md#ref-3f47daaaa459)、[T11.1](history/history-references.md#ref-6deef0520efd)、[T11.2](history/history-references.md#ref-97b0743ec8d6)。只改文档，未改代码。D50 第 6、7 条的实现口径已作为注记回填 03 §4.9/§8、05 §2/§3、06 §5.2–§5.3、07 §3.3；D49 第 2 条 c 回填 05 §3。 |
+| 2026-10-28（P4 首批复审） | 设计者完成 T10.4、T11.1、T11.2 的复审，重读六份正式报告的导出并用 flagprof 自带解码器只读重算真实 blob。新增 **[D51](#d51)**（设计者提议，待用户批准）：P4 首批在登记范围内通过；P4.1 修订 oracle 误差口径（成对哨兵、ULP 统计、v1 相对误差退出头条、布局属性）与页面；P2a 以导入 prepare 定点分析开工；P4 第二批排在其后；读报告检查加问量级是否物理上可能。新增 **[Q12](#q12--p5-之前是否按-v1-能力清单排序)**。任务单草案 [T11.3](history/history-references.md#ref-3c84559c539d)、[T12.1](history/history-references.md#ref-6ce6c9c166a0)。复审页见 [10-28 复审](history/history-references.md#ref-ea4d5679df2b)。仅改文档。 |
+| 2026-10-29（用户批准 D51、裁决 Q12） | 用户批准 **[D51](#d51)** 并下发 [T11.3](history/history-references.md#ref-3c84559c539d)、[T12.1](history/history-references.md#ref-6ce6c9c166a0)；导入门限待 T12.1 规模曲线后再定，目标负载确认为 OneRec-8B 生成 32 个新 token。[Q12](#q12--p5-之前是否按-v1-能力清单排序) 裁决为建立 v1 能力清单，写入 [10 路线图 §0.1](10-roadmap.md#01-v1-能力清单p5-之前的排序依据)。同步两张任务单状态、10 路线图 P2／P4 状态、codex-tasks README、Report_for_human_reading（README、复审页 §7）。仅改文档。 |
+| 2026-10-31（T13 之后设计者复审） | 设计者只读复审 T13 之后的状态并对照项目实施方案，抽查 T12.4 两份证据 JSON，发现设备工作量头条混入 A100 载入期 H2D。新增 **[D54](#d54)**（设计者提议，待用户批准）：P2 退出范围（8 卡移出、counter 移至 P3）、P6-0 昆仑芯 P800 契约探针、交付前读报告检查、下发 T14.1/T14.2 草案。复审页见 [2026-10-31 设计者复审](history/history-references.md#ref-4921efdeb1c3)。仅改文档。 |
+| 2026-10-31 晚（用户批准 D54、下发 T14） | 四个只读复核代理核对 T13 交付与设计者复审的数字（31 项一致）、补做 T14 下发前自检、对照项目目标、检查工程健康，并在 profile 窗口内实测设备忙闲（[复核](history/history-references.md#ref-3b5745cc81f4)）。复核发现 T14.1e 草案拿 profile 窗口拆无诊断增量（跨窗口），以及 T12.4 更正页、T13 交付页、设计者复审中的计数与出处问题。用户批准 **[D54](#d54)** 全部五条及复核修订（2 卡 A100 TP2 采集、忙闲读法、导出窗口身份、14.1e 窗口内拆分、14.2b 只测），下发 T14.1、T14.2。同步两张任务单、T12.4 报告、T13 交付页、设计者复审、10 路线图 §0.1 与 P2、PLAN README、12 交接、codex-tasks README、Report_for_human_reading（README、02）、personal 指南。另在工作树修改 `ci/quick.sh`、`ci/no_site.sh` 的环境预检与 `flagprof/cli.py` 的帮助文本（解析行为不变）。 |
 
 ### D52 执行回填（2026-10-30）
 
-四任务登记范围工程验收完成，见 [联合报告](history-references.md#ref-9596bcfb2a96) 与 [验收矩阵](history-references.md#ref-6b80c36d9df2)。A100 采集位置例外沿用户明确批准，所有消费继续 ext4；没有改变冻结契约、签名或误差归因口径。P2a 设备／显存成立；完整 P2 的 P2b 与后续 OneRec 匹配门限保留。P4 第二批证据齐备，退出状态为待设计者复审，本回填不是退出裁决。原失败与资源计账完整保留。
+四任务登记范围工程验收完成，见 [联合报告](history/history-references.md#ref-9596bcfb2a96) 与 [验收矩阵](history/history-references.md#ref-6b80c36d9df2)。A100 采集位置例外沿用户明确批准，所有消费继续 ext4；没有改变冻结契约、签名或误差归因口径。P2a 设备／显存成立；完整 P2 的 P2b 与后续 OneRec 匹配门限保留。P4 第二批证据齐备，退出状态为待设计者复审，本回填不是退出裁决。原失败与资源计账完整保留。
 
-D52 资源处置补充：用户明确批准校验归档后释放本批中间目录。按原登记清单重新逐文件核验后释放 14 个 scratch/work，共约 1.64 GiB；原始采集、Store、输出、日志和失败状态保留。归档与删除前身份见 [释放回执](history-references.md#ref-ded9f5a8ed36)，未扩大设备或时间预算。
+D52 资源处置补充：用户明确批准校验归档后释放本批中间目录。按原登记清单重新逐文件核验后释放 14 个 scratch/work，共约 1.64 GiB；原始采集、Store、输出、日志和失败状态保留。归档与删除前身份见 [释放回执](history/history-references.md#ref-ded9f5a8ed36)，未扩大设备或时间预算。
 
 
 <a id="d53"></a>
 ## D53 — T13 连续交付（用户已批准，2026-10-30）
 
-用户明确下发 [T13 任务书](history-references.md#ref-a272319ae7a0)：集中复审 P4，OneRec-8B 单卡生成及匹配 A100 基线，昇腾 TP2 HCCL／FlagCX。采用独立 rank Store 和相对组清单，生成首分歧步纳入比较；根执行覆盖完整生成步；schema 1.2 与四段式 call_key 保持。来源默认 1 GiB、OneRec 显式 8 GiB；长期数据全部 dtfs，ext4 只做可归属的临时消费并验证恢复。预算、四条件覆盖与排除项见任务书。常规工程可自主推进；契约、诊断含义、实验类型或资源范围变化再决策。本条是实施授权，未预判 P4 或本批验收结果。
+用户明确下发 [T13 任务书](history/history-references.md#ref-a272319ae7a0)：集中复审 P4，OneRec-8B 单卡生成及匹配 A100 基线，昇腾 TP2 HCCL／FlagCX。采用独立 rank Store 和相对组清单，生成首分歧步纳入比较；根执行覆盖完整生成步；schema 1.2 与四段式 call_key 保持。来源默认 1 GiB、OneRec 显式 8 GiB；长期数据全部 dtfs，ext4 只做可归属的临时消费并验证恢复。预算、四条件覆盖与排除项见任务书。常规工程可自主推进；契约、诊断含义、实验类型或资源范围变化再决策。本条是实施授权，未预判 P4 或本批验收结果。
 
 ### D53 执行回填：T13.1 P4 集中复审
 
-用户下发的退出复审完成，结论为 `passed_registered_small_scope`，P4 在登记范围退出。逐项理由与未满足项见 [裁决](history-references.md#ref-49da047de8fe) 和 [当前核验](history-references.md#ref-601b45a4e9bd)。保留首批、T11.3、第二批原判定、失败及 layers.27 未复现记录。本条不将 OneRec、TP2 或完整 P2 判为通过；数据恢复交付由 T13.2 另验。
+用户下发的退出复审完成，结论为 `passed_registered_small_scope`，P4 在登记范围退出。逐项理由与未满足项见 [裁决](history/history-references.md#ref-49da047de8fe) 和 [当前核验](history/history-references.md#ref-601b45a4e9bd)。保留首批、T11.3、第二批原判定、失败及 layers.27 未复现记录。本条不将 OneRec、TP2 或完整 P2 判为通过；数据恢复交付由 T13.2 另验。
 
 
 <a id="d54"></a>
 ## D54 — T13 之后：P2 退出范围、P6-0 契约探针、交付前读报告检查与 T14 下发（用户已批准，2026-10-31）
 
-**背景**：T13 后 P0、P1、P4 均在登记小范围退出，完整 P2 未退出。[设计者复审](history-references.md#ref-4921efdeb1c3)对照项目实施方案：验证面为 2 个模型 × 1 家国产芯片（A100 作参照）；指标 (9) 中通信开销、Kernel 利用率、Host 与 Device 传输仍缺设备侧证据。只读抽查 T12.4 证据发现，设备工作量头条中 A100 合计的 89.7% 是载入期 H2D（234.77 / 261.86 ms），只比测量前向时 910C 19.89 ms、A100 12.84 ms（已关联事件的下界），与直接读合计的方向相反；FlagGems 合计的 96.4% 在测量前向之外。数据守恒与复算不受影响，[T12.4 报告](history-references.md#ref-dccf909d6621)头条已于 2026-10-31 按此更正，HTML 与导出待 T14.2 重出。
+**背景**：T13 后 P0、P1、P4 均在登记小范围退出，完整 P2 未退出。[设计者复审](history/history-references.md#ref-4921efdeb1c3)对照项目实施方案：验证面为 2 个模型 × 1 家国产芯片（A100 作参照）；指标 (9) 中通信开销、Kernel 利用率、Host 与 Device 传输仍缺设备侧证据。只读抽查 T12.4 证据发现，设备工作量头条中 A100 合计的 89.7% 是载入期 H2D（234.77 / 261.86 ms），只比测量前向时 910C 19.89 ms、A100 12.84 ms（已关联事件的下界），与直接读合计的方向相反；FlagGems 合计的 96.4% 在测量前向之外。数据守恒与复算不受影响，[T12.4 报告](history/history-references.md#ref-dccf909d6621)头条已于 2026-10-31 按此更正，HTML 与导出待 T14.2 重出。
 
 **提议**：
 
 1. **P2 退出范围。** 完整 P2 退出 = 已登记 TP2 + 设备通信明确 ID 连接或显式不可用原因 + 时钟来源判定 + 设备忙闲（`perf.gap`）。[10 P2](10-roadmap.md#4-p2--设备侧与通信) 验收 ⑤ 中的 8 卡移出当前退出，改为按需扩展（出现 8 卡模型需求时另行登记）；交付中的 counter 探针与验收 ④ 移至 P3 在线监控。P2 退出提议在 T14.1 交付后由设计者起草。
 2. **P6-0 契约探针。** P5 之前、与 T14.1 并行，用昆仑芯 P800 对 [05 §4.2](05-probes-and-vendors.md#42-接入一家新厂商的验收清单) 清单做最小链路检查（单卡、Qwen3-Embedding-0.6B、coverage 与块级 accuracy）。只登记适配缺口和对 `store/`、`correlate/`、`analyzers/` 的改动需求，不做完整 P6，不改变 D20 中 P6 的位置。理由：项目验收按国产芯片家数计（效果验证 ≥3 家、接口 ≥5 家），P6 验收 ① 若不成立，越晚发现返工越大；dev-1.0 已有 P800 环境与通信准备。任务单在批准并与 P800 环境维护者确认可用窗口后编写。
 3. **交付前读报告检查。** 实现方的工程自验收保持不变。报告交给组件团队或其他外部读者之前，设计者对每类报告做一次读报告检查：每类不超过 1 小时，必问“量级是否物理上可能”“并列比较是否同类别、同窗口”。不恢复每个阶段的全量设计者复审。首批范围：T12.4/T12.5、T11.4/T11.5、T13 各报告。
-4. **下发** [T14.1](history-references.md#ref-7271dc8d7c92)、[T14.2](history-references.md#ref-1fa80036fb14)，两单并行，文件边界见各任务单 §6。批准后设计者在 [§0.1 能力表](10-roadmap.md#01-v1-能力清单p5-之前的排序依据)增加“验证面（模型 × 芯片 × 规模）”一列。
+4. **下发** [T14.1](history/history-references.md#ref-7271dc8d7c92)、[T14.2](history/history-references.md#ref-1fa80036fb14)，两单并行，文件边界见各任务单 §6。批准后设计者在 [§0.1 能力表](10-roadmap.md#01-v1-能力清单p5-之前的排序依据)增加“验证面（模型 × 芯片 × 规模）”一列。
 5. **登记待答问题，本条不决定。** P5 进入前须给出分层验收（框架变动走完整协议，模型接入走轻量剖面），以及实施方案指标 (9) 中“缓存命中率”的口径。
 
 **不变**：D20 主线顺序（P6-0 是探针，不是 P6）、Q11（P3 不提前）、Q12 排序，D45、D49、D51–D53 的既有裁决与历史记录。
 
-**用户裁决（2026-10-31）**：批准第 1–5 条。T14.1、T14.2 按 [T13 之后复核](history-references.md#ref-3b5745cc81f4)修订后下发，并一并批准复核中的以下修订：
+**用户裁决（2026-10-31）**：批准第 1–5 条。T14.1、T14.2 按 [T13 之后复核](history/history-references.md#ref-3b5745cc81f4)修订后下发，并一并批准复核中的以下修订：
 
 - a. **一次登记的 2 卡 A100 TP2（NCCL）profile 采集**，回答 T14.1 Q1 的 A100 一半（冻结 A100 采集为单卡，没有集合通信记录）。环境由用户准备；配置对齐昇腾 TP2 HCCL profile smoke；设备上限与暂停规则见 T14.1。环境就绪前只暂停该分支。
-- b. **设备忙闲读法**：头条用 compute（+memcpy）忙时间并集；通信任务占用单列为“跨 rank 下界 + 超出部分”；`NOTIFY_*` 不计忙，单列为等待；每个并集旁给出时长和。依据是 profile 窗口实测：`NOTIFY_*` 的归属只改变总忙 0.32 ms/步，通信任务计不计忙则让 rank 0 的忙比例在 7.7% 与 62.2% 之间变化，rank 1 在 7.7% 与 15.9% 之间（[忙闲 spike](history-references.md#ref-324784a4241b)）。
+- b. **设备忙闲读法**：头条用 compute（+memcpy）忙时间并集；通信任务占用单列为“跨 rank 下界 + 超出部分”；`NOTIFY_*` 不计忙，单列为等待；每个并集旁给出时长和。依据是 profile 窗口实测：`NOTIFY_*` 的归属只改变总忙 0.32 ms/步，通信任务计不计忙则让 rank 0 的忙比例在 7.7% 与 62.2% 之间变化，rank 1 在 7.7% 与 15.9% 之间（[忙闲 spike](history/history-references.md#ref-324784a4241b)）。
 - c. **导出携带窗口身份**（warmup、forwards、profiler 开关、dispatch 模式、窗口类型），跨窗口并列由代码检查，落在 T14.2a。`link_status` 是同一窗口内的归属维度，不属于窗口身份。起因：本轮复核在 T12.4 头条、T14.1e 草案和设计者复审中共查到同类跨窗口比较。
 - d. T14.1e 改为在 profile 条件内部拆分（设备侧每步 167.3 vs 103.2 ms），与无诊断增量（+39.795／+37.908 ms）并报，不互相替代。
 - e. T14.2b 冷读／热读只测不优化。
 - f. P6-0 与 T14 同批启动；任务单仍按第 2 条，在与 P800 环境维护者确认可用窗口后编写。
 
-**状态**：用户已批准（2026-10-31），含上述修订。下发前自检第 1 步由只读复核代理完成，记录在两张任务单末尾；第 3 步修订后复核见 [复核证据目录](history-references.md#ref-74fab6d12386)。P2 退出提议在 T14.1 交付后起草；P6-0 任务单待 P800 窗口确认。
+**状态**：用户已批准（2026-10-31），含上述修订。下发前自检第 1 步由只读复核代理完成，记录在两张任务单末尾；第 3 步修订后复核见 [复核证据目录](history/history-references.md#ref-74fab6d12386)。P2 退出提议在 T14.1 交付后起草；P6-0 任务单待 P800 窗口确认。
 
 ### D54 执行修订（用户批准，2026-11-01）
 
@@ -1911,21 +1911,21 @@ D52 资源处置补充：用户明确批准校验归档后释放本批中间目�
 
 ### D54 执行回填（2026-11-01）
 
-T14.1/T14.2 工程任务完成，已保留失败证据、旧报告与来源身份；[最终样本](history-references.md#ref-a3dc58763b96)、[读取耗时](history-references.md#ref-f3955146e837)、[恢复证明](history-references.md#ref-e551f42b719d)已登记。完整 P2 退出与对组件团队交付前的设计者阅读检查分别保留，不由工程完成自动替代。
+T14.1/T14.2 工程任务完成，已保留失败证据、旧报告与来源身份；[最终样本](history/history-references.md#ref-a3dc58763b96)、[读取耗时](history/history-references.md#ref-f3955146e837)、[恢复证明](history/history-references.md#ref-e551f42b719d)已登记。完整 P2 退出与对组件团队交付前的设计者阅读检查分别保留，不由工程完成自动替代。
 
 ### D54 请求时钟补充（用户批准，2026-11-01）
 
-用户批准 [请求时钟任务](history-references.md#ref-8dfa5acb2efe)：同 capture 的 RAW 到官方导出轴映射、完整生成请求窗口及八 rank 验证；误差界与映射可用性独立记录。优先复用封存证据，必要时在登记预算内补采单个最小条件。事件 schema 1.2 不变，普通工程问题自主修复；完整 P2 裁决仍单列。
+用户批准 [请求时钟任务](history/history-references.md#ref-8dfa5acb2efe)：同 capture 的 RAW 到官方导出轴映射、完整生成请求窗口及八 rank 验证；误差界与映射可用性独立记录。优先复用封存证据，必要时在登记预算内补采单个最小条件。事件 schema 1.2 不变，普通工程问题自主修复；完整 P2 裁决仍单列。
 
 ### D54 请求时钟执行回填（2026-11-01）
 
-[八 rank 验收、双解释器回归和可恢复交付](history-references.md#ref-aaa05675a16c)完成，新增设备使用为零。项目请求边界对应关系及完整请求窗口已可用；硬件同步误差上界仍未知，原事件时钟字段保持原含义。完整 P2 退出仍由设计者裁决。
+[八 rank 验收、双解释器回归和可恢复交付](history/history-references.md#ref-aaa05675a16c)完成，新增设备使用为零。项目请求边界对应关系及完整请求窗口已可用；硬件同步误差上界仍未知，原事件时钟字段保持原含义。完整 P2 退出仍由设计者裁决。
 
 
 <a id="d55"></a>
 ## D55 — P2 退出与收尾（2026-11-02，用户授权本次复核）
 
-用户明确表示“我同意做P2退出和收尾”。按该授权核对 D54 登记证据，结论为 **`passed_registered_small_scope`，P2 在登记范围通过并退出**。本次退出理由、逐项矩阵和未覆盖能力见 [P2 退出记录](history-references.md#ref-0bb32f584712)，本轮源码/证据身份与汇总复核见 [机器核验](history-references.md#ref-4f9059d43723)。
+用户明确表示“我同意做P2退出和收尾”。按该授权核对 D54 登记证据，结论为 **`passed_registered_small_scope`，P2 在登记范围通过并退出**。本次退出理由、逐项矩阵和未覆盖能力见 [P2 退出记录](history/history-references.md#ref-0bb32f584712)，本轮源码/证据身份与汇总复核见 [机器核验](history/history-references.md#ref-4f9059d43723)。
 
 T14 的 10 条件、13 rank 核验通过；HCCL/FlagCX/NCCL 三组各对齐 2,336 次模型通信，控制调用缺设备表示按原因保留。请求时钟补充的五条件八 rank 完整窗口成立，135 个生产文件与最终快照一致。两解释器回归、定向修复和归档公共重开沿用原验收记录，本次未新增设备实验。
 

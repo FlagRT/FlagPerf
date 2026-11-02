@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Supplemental official memory import with sealed sources and a bounded ledger."""
 import importlib
 from contextlib import nullcontext

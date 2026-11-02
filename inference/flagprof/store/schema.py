@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Declarative PLAN/03 field contracts, shared by writing and reading.
 
 Conditional requirements come from the text immediately following the tables:

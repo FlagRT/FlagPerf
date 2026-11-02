@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Attachment-owned probe lifecycle and safe metadata callbacks."""
 import os
 import time

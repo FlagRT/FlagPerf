@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Small verb-based CLI. Inspect consumes stored facts only."""
 from __future__ import annotations
 import argparse
@@ -8,10 +10,10 @@ import sys
 def main(argv=None):
     parser=argparse.ArgumentParser(prog='flagprof')
     verbs=parser.add_subparsers(dest='verb',required=True)
-    delivery=verbs.add_parser('delivery',help='publish dtfs archives and restore portable evidence trees')
-    delivery.add_argument('action',choices=['publish','verify','restore'],help='publish source trees to a new dtfs delivery, verify a delivery, or restore it to a new ext4 directory')
+    delivery=verbs.add_parser('delivery',help='publish portable evidence archives and restore evidence trees')
+    delivery.add_argument('action',choices=['publish','verify','restore'],help='publish source trees to a new delivery directory, verify a delivery, or restore it to a new ext4 directory')
     delivery.add_argument('paths',nargs='+',help='publish: one or more source trees; verify/restore: exactly one delivery directory')
-    delivery.add_argument('--out',help='publish: new dtfs delivery directory; restore: new ext4 directory (required for both)')
+    delivery.add_argument('--out',help='publish: new delivery directory on any writable filesystem; restore: new ext4 directory (required for both)')
     delivery.add_argument('--max-bytes',type=int,help='byte budget (default 200 GiB for publish, 40 GiB for restore)')
     inspect=verbs.add_parser('inspect',help='read stored identities and evidence states')
     inspect.add_argument('run',help='Store run directory');inspect.add_argument('--verify',action='store_true',help='verify every derived and raw artifact')

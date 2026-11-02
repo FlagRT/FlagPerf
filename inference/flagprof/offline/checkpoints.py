@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Immutable stage publication for the optional offline importer. No old Store run is resumed."""
 from pathlib import Path
 import hashlib

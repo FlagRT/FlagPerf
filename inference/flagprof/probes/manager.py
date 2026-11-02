@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Attachment owner; optional torch imports happen only during installation."""
 import os
 from .base import clock

@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Build a versioned device projection during the existing normalization pass."""
 import importlib
 import json

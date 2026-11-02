@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Owned disk indexes and replayable result tables for analysis consumers."""
 from dataclasses import dataclass, asdict
 import json

@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Frozen, device-free signature encoding (03 section 4.2 and D17).
 
 Only the standard library is imported. Truncation belongs to the stored sig

@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Device work and attribution, without treating overlap as wall time."""
 import json
 from . import Analyzer, Need, Requires, Result

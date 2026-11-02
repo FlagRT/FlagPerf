@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """OneRec request-local greedy semantics ported from v1 benchmarks/onerec/model.py.
 
 The model is inference-only. The same advance boundary covers backbone, LM head,

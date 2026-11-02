@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Internal importer factory; no proxy process or public Writer default change."""
 from ._buffered import BufferedWriter
 

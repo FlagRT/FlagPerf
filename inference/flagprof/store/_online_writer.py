@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Single production configuration and construction point for Context writers."""
 from .writer import WriterConfig
 from .proxy import ProxyWriter

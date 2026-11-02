@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Wrap a target with explicit handshake and distinct offline import."""
 import json
 import os

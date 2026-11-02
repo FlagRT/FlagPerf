@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Chrome fragments to normalized records; all source time stays in ext."""
 from __future__ import annotations
 

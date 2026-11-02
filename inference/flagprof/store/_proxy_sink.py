@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Consumer-owned synchronous sink sharing importer disk mechanics."""
 import threading
 

@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Streaming taxonomy context and format assessment, preserving source order."""
 from collections import Counter
 from decimal import Decimal,InvalidOperation

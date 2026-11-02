@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Bounded UTF-8 JSON framing, hashing and verified JSONL pagination."""
 from pathlib import Path
 import codecs

@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Source ledger: enumerate before normalization; reconcile after preparation."""
 from __future__ import annotations
 from collections import Counter

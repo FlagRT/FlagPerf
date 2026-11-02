@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Strict, disk-backed analysis reader; the snapshot Reader API stays intact."""
 from collections.abc import MutableMapping
 import ast

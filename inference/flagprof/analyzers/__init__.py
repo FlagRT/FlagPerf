@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Standard-library analyzers over public stored evidence."""
 from dataclasses import dataclass, field
 from typing import Any

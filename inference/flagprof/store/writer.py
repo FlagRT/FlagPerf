@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """One process owns its fragment, queue, and shard files.
 
 emit() never waits for queue space or disk I/O. Closing/flush are explicit

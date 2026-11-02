@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Bounded persisted native evidence, completion and source-name lookup."""
 import json
 from pathlib import Path

@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Describe dispatcher values without reading tensor data or storing devices.
 
 Dispatcher normalization is authoritative: no defaults are inserted and no

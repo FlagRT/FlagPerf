@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Device predicates shared by producers and offline consumers; no torch import."""
 
 

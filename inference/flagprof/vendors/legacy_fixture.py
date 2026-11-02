@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Compatibility for historical communication fixtures without project corr."""
 from __future__ import annotations
 from typing import Any, Mapping, Sequence

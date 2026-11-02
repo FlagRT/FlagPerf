@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Production process Writer with cached wire encoding and bounded admission."""
 from collections import Counter, deque
 from contextlib import contextmanager

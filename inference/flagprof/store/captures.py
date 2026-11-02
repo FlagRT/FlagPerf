@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Read-only capture inspection shared by sessions, views and finalization."""
 from __future__ import annotations
 

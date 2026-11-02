@@ -1,9 +1,9 @@
-> 本文从 v2 设计工作区迁入，保留设计、阶段裁决与历史状态。当前代码入口及两人协作方式见 [文档导航](README.md)，可执行命令见 [使用说明](usage.md)。未发布的本地实验与任务书链接转入 [历史引用索引](history-references.md)，其出处保留。
+> 本文从 v2 设计工作区迁入，保留设计、阶段裁决与历史状态。当前代码入口及两人协作方式见 [文档导航](../README.md)，可执行命令见 [使用说明](../usage.md)。未发布的本地实验与任务书链接转入 [历史引用索引](history-references.md)，其出处保留。
 
 # 01 v1 现状诊断
 
 > 对象：`FlagPerf_advance/inference`（截至 2026-10-09，提交 `79e8840e` "cendAs Inference V4.1"）
-> 上游：[00 需求](00-requirements.md) ｜ 下游：[02 架构](02-architecture.md)、[10 阶段计划 P6](10-roadmap.md)
+> 上游：[00 需求](../00-requirements.md) ｜ 下游：[02 架构](../02-architecture.md)、[10 阶段计划 P6](../10-roadmap.md)
 
 v1 在"4 个模型、2 家设备、FlagGems/FlagTree/FlagCX 对照"的范围内是严谨可用的：身份校验、partial 语义、不按时间邻近关联等原则都做得很好。问题不在质量，而在**扩展方向**：它的扩展单位是"模型"，而目标需求的扩展单位是"厂商 × 模型 × 算子"。
 
@@ -57,20 +57,20 @@ v1 在"4 个模型、2 家设备、FlagGems/FlagTree/FlagCX 对照"的范围内�
 
 | 原则 | v1 出处 | v2 落点 |
 |---|---|---|
-| 时间邻近绝不作为关联依据；关联缺失/多义即 partial | `vendors/ascend/trace.py` 文件头、`implementation_7.md` | [04 §1](04-correlation.md) |
-| CANN：flow 起止端点或唯一 `connection_id` → 同主机线程 scope 归属 | `vendors/ascend/trace.py:attribute` | [04 §3.3](04-correlation.md)、[11](11-spike-cann-correlation.md) 的基线 |
-| CANN HCCL：marker → Enqueue/Dequeue `correlation_id` → `Node@launch` → `connection_id` → 设备事件 | `implementation_3.md §4` | [04 §3.5](04-correlation.md) |
-| CUDA：CUPTI `correlation` 唯一关联 launch，必要时 Kineto `External id` | `implementation_7.md` | [04 §3.3](04-correlation.md) |
-| 设备 kernel 时间不必落在主机 marker 窗口内 | `implementation_14.md` | [04 §3](04-correlation.md) |
-| worker 级身份校验（包版本、环境变量、源码哈希、输入哈希） | `runtime/worker.py:identity` | seal 模式 manifest，见 [03 §6](03-event-schema.md) |
-| 监控是独立进程，profiler 冲突区间屏蔽而非删除，缺失不填零 | `implementation_15.md` | counter 探针，见 [05 §2](05-probes-and-vendors.md) |
-| 精度只报指标、不设阈值 | `plan.md` | [07 §3.3](07-analyzers-and-reports.md) |
-| 适配器 descriptor + 源码闭包校验 | `runtime/adapters.py` | v2 registry，见 [05 §5](05-probes-and-vendors.md) |
+| 时间邻近绝不作为关联依据；关联缺失/多义即 partial | `vendors/ascend/trace.py` 文件头、`implementation_7.md` | [04 §1](../04-correlation.md) |
+| CANN：flow 起止端点或唯一 `connection_id` → 同主机线程 scope 归属 | `vendors/ascend/trace.py:attribute` | [04 §3.3](../04-correlation.md)、[11](11-spike-cann-correlation.md) 的基线 |
+| CANN HCCL：marker → Enqueue/Dequeue `correlation_id` → `Node@launch` → `connection_id` → 设备事件 | `implementation_3.md §4` | [04 §3.5](../04-correlation.md) |
+| CUDA：CUPTI `correlation` 唯一关联 launch，必要时 Kineto `External id` | `implementation_7.md` | [04 §3.3](../04-correlation.md) |
+| 设备 kernel 时间不必落在主机 marker 窗口内 | `implementation_14.md` | [04 §3](../04-correlation.md) |
+| worker 级身份校验（包版本、环境变量、源码哈希、输入哈希） | `runtime/worker.py:identity` | seal 模式 manifest，见 [03 §6](../03-event-schema.md) |
+| 监控是独立进程，profiler 冲突区间屏蔽而非删除，缺失不填零 | `implementation_15.md` | counter 探针，见 [05 §2](../05-probes-and-vendors.md) |
+| 精度只报指标、不设阈值 | `plan.md` | [07 §3.3](../07-analyzers-and-reports.md) |
+| 适配器 descriptor + 源码闭包校验 | `runtime/adapters.py` | v2 registry，见 [05 §5](../05-probes-and-vendors.md) |
 | 同条件开关对照确认开销 | `implementation_15.md` | 非功能需求 N1 |
 
 ## 4. v1 资产处置
 
-按决策 D3（历史产物不兼容，见 [DECISIONS](DECISIONS.md)），以下只处置**代码与方法**，不迁移 `oracles/`、`performance_baselines/`、`result/` 中的历史数据。
+按决策 D3（历史产物不兼容，见 [DECISIONS](../DECISIONS.md)），以下只处置**代码与方法**，不迁移 `oracles/`、`performance_baselines/`、`result/` 中的历史数据。
 
 | 处置 | v1 位置 | v2 去向 |
 |---|---|---|
@@ -84,10 +84,10 @@ v1 在"4 个模型、2 家设备、FlagGems/FlagTree/FlagCX 对照"的范围内�
 | | `runtime/trace_utils.py:ScopeIndex` | `correlate/` 中的区间索引 |
 | | `runtime/worker.py:identity` | seal 模式身份采集 |
 | | `runtime/adapters.py` 的 descriptor 与源码闭包校验 | v2 registry |
-| **降级** | `benchmarks/*` 与 `ModelAdapter` | Tier-2 插件；只保留执行语义与观测语义两类方法，见 [06 §4](06-model-onboarding.md) |
+| **降级** | `benchmarks/*` 与 `ModelAdapter` | Tier-2 插件；只保留执行语义与观测语义两类方法，见 [06 §4](../06-model-onboarding.md) |
 | | 14 个报告/分析模块 | 拆为分析器 + 报告面板，按需重写 |
 | | `runtime/preview*.py`（5 个模块） | route 分析器 + 可选的隔离验证 run |
 | **不迁移** | `retention.py`、`report_replay.py`、`repack-reference` 等面向历史产物格式的代码 | 由 store 的保留策略与 manifest 取代 |
 | | `legacy/` | 保持原样，不进入 v2 |
 
-v1 在 v2 能够替代之前保持可用（决策 D5），退役条件见 [10 P6](10-roadmap.md)。
+v1 在 v2 能够替代之前保持可用（决策 D5），退役条件见 [10 P6](../10-roadmap.md)。

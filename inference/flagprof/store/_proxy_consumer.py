@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Single registered physical disk owner; no SDK or experimental imports."""
 from collections import Counter
 import json

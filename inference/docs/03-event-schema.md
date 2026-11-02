@@ -1,4 +1,4 @@
-> 本文从 v2 设计工作区迁入，保留设计、阶段裁决与历史状态。当前代码入口及两人协作方式见 [文档导航](README.md)，可执行命令见 [使用说明](usage.md)。未发布的本地实验与任务书链接转入 [历史引用索引](history-references.md)，其出处保留。
+> 本文从 v2 设计工作区迁入，保留设计、阶段裁决与历史状态。当前代码入口及两人协作方式见 [文档导航](README.md)，可执行命令见 [使用说明](usage.md)。未发布的本地实验与任务书链接转入 [历史引用索引](history/history-references.md)，其出处保留。
 
 # 03 事件 schema v1 与 store
 
@@ -72,7 +72,7 @@ corr: u64 = [ writer_id : 16 bits ][ counter : 48 bits ]
 
 **分配规则**：corr 由**最外层知情者**分配并通过线程局部存储（TLS）向内传递。详见 [04 §3](04-correlation.md)。一条关联链上的 `op`、`route`、`compile` 事件共享同一 `corr`；`kernel` 事件则通过 **`link` 字段**（§4.8，单数）**引用** `corr` 而非共享，因为一次 op 可能对应多个 kernel。
 
-**跨线程/跨进程**：TLS 不跨线程。若框架把算子派发到后台线程（如 ACL 的 task queue 线程），Python 层记录的 corr 会在线程边界处断开 —— 这正是 [Spike-C](11-spike-cann-correlation.md) 要测的核心问题。
+**跨线程/跨进程**：TLS 不跨线程。若框架把算子派发到后台线程（如 ACL 的 task queue 线程），Python 层记录的 corr 会在线程边界处断开 —— 这正是 [Spike-C](history/11-spike-cann-correlation.md) 要测的核心问题。
 
 ## 4. 事件类型
 
@@ -138,9 +138,9 @@ corr: u64 = [ writer_id : 16 bits ][ counter : 48 bits ]
 规则：
 
 - **参数形式以 dispatcher 层看到的为准**（`__torch_dispatch__` 收到的 `args`/`kwargs`，PyTorch 已按算子 schema 规范化），探针不自行重排或补默认值。两颗芯片上同一次调用经过同一套 schema，得到同一棵树。
-  > 设计者在已验证镜像的 torch 2.10.0（CPU）上核对过这一层的规范化：`cat([a,b], dim=1)` 与 `cat([a,b], 1)` 到达时都是 `args=([a,b], 1)`；取默认值的参数被去掉（`cat([a,b], dim=0)` 到达时只有 `([a,b],)`，`sum(a, 1, keepdim=False)` 只有 `(a, [1])`）；tuple 实参变成 list；只有 keyword-only 参数（如 `add` 的 `alpha`）留在 `kwargs`。所以「去掉默认值」是 dispatcher 已经做好的，探针若再补回默认值，反而会让 schema 新增带默认值的参数时 `sid` 跨 torch 版本漂移。跨 torch 版本是否完全一致尚未验证，由 [T5](history-references.md#ref-dd13c52d9c06) 记录。
+  > 设计者在已验证镜像的 torch 2.10.0（CPU）上核对过这一层的规范化：`cat([a,b], dim=1)` 与 `cat([a,b], 1)` 到达时都是 `args=([a,b], 1)`；取默认值的参数被去掉（`cat([a,b], dim=0)` 到达时只有 `([a,b],)`，`sum(a, 1, keepdim=False)` 只有 `(a, [1])`）；tuple 实参变成 list；只有 keyword-only 参数（如 `add` 的 `alpha`）留在 `kwargs`。所以「去掉默认值」是 dispatcher 已经做好的，探针若再补回默认值，反而会让 schema 新增带默认值的参数时 `sid` 跨 torch 版本漂移。跨 torch 版本是否完全一致尚未验证，由 [T5](history/history-references.md#ref-dd13c52d9c06) 记录。
 - **容器一律递归**，不限深度。`None` 也是一个节点，不能省略 —— 省略会让 `f(x, None, y)` 与 `f(x, y)` 得到同一棵树。
-  > [T2](history-references.md#ref-d3abef3c723a) 的 151 条 unavailable 中有 143 条来自 `aten::cat`：历史采集器只遍历顶层 Tensor 参数，`TensorList` 整个被跳过，cat 的输入形状全部丢失。没有路径的扁平参数列表还无法区分「第 0 个参数是含两个张量的列表」与「两个张量参数」。
+  > [T2](history/history-references.md#ref-d3abef3c723a) 的 151 条 unavailable 中有 143 条来自 `aten::cat`：历史采集器只遍历顶层 Tensor 参数，`TensorList` 整个被跳过，cat 的输入形状全部丢失。没有路径的扁平参数列表还无法区分「第 0 个参数是含两个张量的列表」与「两个张量参数」。
 - **签名中没有任何设备信息。** `tensor` 节点不含 `device`；参数本身是 device 对象时只记 `k=device_obj`。设备记在调用上（§4.3 的 `op.dev`），不记在签名上。
   > R52/R86/R88 要求同一个算子调用在英伟达与国产芯片之间能对齐。设备若进签名，同一次调用在两边得到不同 `sid`，`tensor.boundary` 的 `op:<sid>` 形式就无法跨芯片 join，精度差分直接失效。上一版把设备从哈希中剔除、却仍留在签名记录里，结果是**同一 `sid` 在一个 run 中可能对应两份内容不同的定义**（同一逻辑签名在两张卡上被调用），读取方按 `sid` 建表时后写的会覆盖先写的。把设备挪到调用上，两个问题一起消除。
 - **`stride` 仅在 `contiguous=false` 时记录**。连续张量的 stride 由 shape 唯一决定，写入只会引入厂商差异。
@@ -302,7 +302,7 @@ scope、phase、batch、generation step、模型生命周期全部统一为 span
 
 一次 op 对应**多个** kernel 是合法的 `linked`（原生 LayerNorm 实测一次调用产出 5 个 kernel）；只有反向关系 —— 一个 kernel 存在多个不同的有效 op 候选 —— 才构成 `ambiguous`。
 
-**候选取并集，不按优先级短路。** linker 对每条适用的规则求出候选集合，再取并集；规则优先级只决定检查顺序，**不允许**某条规则先成功就跳过其余规则。一个键在原始记录中命中多条 launch 时全部计入，不得因「不唯一」而整体跳过。[T1](history-references.md#ref-867dfc27c4dd) 的 X7 正是在这两处把人为制造的冲突报成了 `linked`。完整算法见 [04 §3.6](04-correlation.md#36-linker-算法候选并集与判定)。
+**候选取并集，不按优先级短路。** linker 对每条适用的规则求出候选集合，再取并集；规则优先级只决定检查顺序，**不允许**某条规则先成功就跳过其余规则。一个键在原始记录中命中多条 launch 时全部计入，不得因「不唯一」而整体跳过。[T1](history/history-references.md#ref-867dfc27c4dd) 的 X7 正是在这两处把人为制造的冲突报成了 `linked`。完整算法见 [04 §3.6](04-correlation.md#36-linker-算法候选并集与判定)。
 
 `memop`：`{kind: h2d/d2h/d2d/alloc/free, bytes, dev, stream, ts, dur, link}`。显存峰值由 `counter` 承担，`memop` 承担搬运归因。
 
@@ -408,7 +408,7 @@ scope、phase、batch、generation step、模型生命周期全部统一为 span
 
 `capture_id`（§6.5）与 `trace_uid` 分立：前者标识一次采集窗口，后者标识一份原始文件（#27）。
 
-`cann.connection_id` 的实测事实（[Spike-C](11-spike-cann-correlation.md)）：它由 CANN decoder 的 `ApiEventParser.connection_id` **从 0 自增合成**，不是硬件自带的调用号。TP2 实测中两个 rank 的裸值集合交集达 300/300；而**同一次** `all_reduce` 在两个 rank 上的 `connection_id` 反而不同（600 对中仅 189 对恰好相同）。因此：
+`cann.connection_id` 的实测事实（[Spike-C](history/11-spike-cann-correlation.md)）：它由 CANN decoder 的 `ApiEventParser.connection_id` **从 0 自增合成**，不是硬件自带的调用号。TP2 实测中两个 rank 的裸值集合交集达 300/300；而**同一次** `all_reduce` 在两个 rank 上的 `connection_id` 反而不同（600 对中仅 189 对恰好相同）。因此：
 
 > **裸值相等既不足以证明是同一次调用，也不是同一次调用的必要条件。** 跨 rank/跨 trace 一律先隔离命名空间，再按逻辑键（[04 §3.5](04-correlation.md) 的 `(run, group, group_seq, op)`）对齐。
 
@@ -604,7 +604,7 @@ L-核心的改动一律走上表的 major，并需在 [DECISIONS](DECISIONS.md) 
 
 > L-字段的 minor 记录：`1.1` 由 [D47](DECISIONS.md#d47) 引入（opsum `dev`/`nested`）；`1.2` 由 [D50](DECISIONS.md#d50) 批准（tensor 可选字段 `src`），T11.1 实现时生效。
 
-**导入解释的版本与旧数据读法**（2026-10-16，[T8.3 返工复审](history-references.md#ref-81d74b957ee6) §3.5、§6.1）：
+**导入解释的版本与旧数据读法**（2026-10-16，[T8.3 返工复审](history/history-references.md#ref-81d74b957ee6) §3.5、§6.1）：
 - **旧 store**：T8.3 之前导入的 run 没有 `format_assessment`，`StoreView.format_assessment()` 返回 `unavailable`，读作"未记录"，不得显示为"无异常"。
 - **采用新解释**：新的角色规则或契约只对**原件导入新 run** 生效，保留旧 run 并比较完整解析身份；不就地改写旧 store 的评估或派生文件（[D30](DECISIONS.md#d30--契约条件的证据先查产物自述每个必需条件登记生产者) 第 3 条，已确认（用户 2026-10-16））。
 - **版本 + 指纹**：`device_taxonomy` 的版本标签（腾昇 v1–v4、NVIDIA v1–v2）是厂商格式代际，不是内容修订号；同一标签下内容可以改变，修订前后只靠解析身份的 sha 区分。判断两次导入是否用了同一套解释，须同时看版本与 sha。当前 sha 只覆盖 `SourceFormat` 协议的闭包，账本处置、规则与共享判定代码不在任何代码哈希身份内，这一缺口转 T9.0 §0.5（[D27](DECISIONS.md#d27--格式解释的身份覆盖全部钩子兼容验收到连接键) 更正注记）。
@@ -622,7 +622,7 @@ L-核心的改动一律走上表的 major，并需在 [DECISIONS](DECISIONS.md) 
 > | **compile 多 ELF entry 与逻辑名** | **未并入**：`compile` 类本轮无实测，按 [D11](DECISIONS.md#d11--schema-分三层冻结不是一次性整体冻结) 属 L-字段，P0 期间按实测补 |
 > | **JIT/autotune 首次迭代额外 kernel** | **未并入**：须在 P0 设计 `phase`（warmup/steady）标注后落字段 |
 
-证据：[实验报告](history-references.md#ref-e1bd695b52c5)、[字段清单与逐事件统计](history-references.md#ref-59546a5ca33d)。TP2 已验证跨 rank 裸 ID 重用及 group/seq 对齐；8 卡仍暂缓。
+证据：[实验报告](history/history-references.md#ref-e1bd695b52c5)、[字段清单与逐事件统计](history/history-references.md#ref-59546a5ca33d)。TP2 已验证跨 rank 裸 ID 重用及 group/seq 对齐；8 卡仍暂缓。
 
 - §5 的 `cann.connection_id` 是 CANN decoder 合成的导出局部 ID，须补 `cann.trace_uid`、主机 pid/tid、device 命名空间，不能跨 trace 裸值 join。
 - queue=1 的计算路径需要 `cann.enqueue_correlation_id`；保留 flow 类别/id、task/stream/batch/context、globalTaskId 及原始事件引用。完整候选键与缺失语义见报告 §8。

@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """SQL lookups preserve full rule unions; per-device sets spill to scratch."""
 from .disk import Rows,key,unpack
 from flagprof.correlate.linker import ref,registry_match

@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Internal shared disk sink. Public Writer defaults remain unchanged.
 
 BufferedFile and BufferedWriter serve in-process importers and the proxy sink.

@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Explicit scopes; no implicit thread, task, or fork propagation."""
 from contextlib import contextmanager
 from dataclasses import dataclass

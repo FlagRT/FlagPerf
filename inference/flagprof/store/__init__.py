@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Standard-library-only, append-only event storage."""
 
 from .manifest import create_run, finalize

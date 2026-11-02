@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Single-model inference runner; imports torch only when executing."""
 import hashlib
 from collections.abc import Mapping

@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Bounded official final configuration evidence, derived from sealed artifacts."""
 from pathlib import Path
 from copy import deepcopy

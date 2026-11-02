@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Registered proxy identity, shared waiting deadlines and read-only status."""
 from contextlib import contextmanager
 from contextvars import ContextVar

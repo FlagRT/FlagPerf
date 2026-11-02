@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Two-rank model/control groups; pinned FlagCX owner survives until process exit."""
 from datetime import timedelta
 import os

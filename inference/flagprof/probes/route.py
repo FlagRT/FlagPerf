@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Lifecycle of an observer over an independently owned FlagGems component."""
 from .base import Probe
 

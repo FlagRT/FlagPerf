@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Observe configured log bytes after the session baseline, source by source."""
 from __future__ import annotations
 import hashlib

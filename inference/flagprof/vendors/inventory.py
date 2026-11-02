@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Independent raw-device inventory. Does not import adapter or linker."""
 from __future__ import annotations
 

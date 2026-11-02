@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Pure production import preparation; writes no files and acquires no writer.
 """
 from __future__ import annotations

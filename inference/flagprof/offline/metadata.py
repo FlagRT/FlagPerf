@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Second candidate: metadata cardinality also spills to disk."""
 from decimal import Decimal,InvalidOperation
 import json

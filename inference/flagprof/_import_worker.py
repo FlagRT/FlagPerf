@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 from .store._offline_writer import offline_writer
 """Separate owner-exit handoff; never injected into the target process."""
 import json

@@ -20,7 +20,7 @@
 | 模型训练 | [Training 文档](training/README.md) |
 | 生成式服务评测 | [Generate 文档](docs/generate/generate-case-doc.md) |
 
-当前 Inference 采用 flagprof v2：通过 Python 进程接入 NVIDIA / Ascend profiler，提供封存导入、Store、性能/显存/通信分析与 Oracle 数值差分；内置 Hugging Face embedding/generation runner，支持登记范围内的单机双 rank。使用方式和范围见 [Inference 指南](inference/README.md)，协作框架见 [00–12 文档导航](inference/docs/README.md)。
+当前 Inference 采用 flagprof v2：通过 Python 进程接入 NVIDIA / Ascend profiler，提供封存导入、Store、性能/显存/通信分析与 Oracle 数值差分；内置 Hugging Face embedding/generation runner，支持登记范围内的单机双 rank。使用方式和范围见 [Inference 指南](inference/README.md)，协作框架见 [框架与协作导航](inference/docs/README.md)。
 Base、Operation、Inference 的当前单机入口不要求 SSH。先阅读所选模块的环境准备，再执行其最小示例。
 昆仑芯 P800 的基础能力见 [Base/Toolkit 指南](docs/kunlunxin/README.md)，算子精度与性能见 [P800 Operation](operation/vendors/kunlunxin/README.md)。
 平头哥 PPU 的基础能力见 [PPU 适配指南](docs/thead/README.md)，算子入口、运行栈准备及待验收边界见 [PPU Operation](operation/vendors/thead/README.md)。
@@ -407,7 +407,7 @@ Generate 使用独立的环境与配置。请先阅读 [Generate 部署说明](g
 
 ## 参与共建FlagPerf
 
-如需参与共建FlagPerf基础规格、训练、推理评测，请参考详细文档，依次位于[基础规格文档目录](https://github.com/shh2000/FlagPerf/tree/ud0401/docs/base)、[训练文档目录](https://github.com/shh2000/FlagPerf/tree/ud0401/docs/training)、[推理文档目录](docs/inference)。
+如需参与共建FlagPerf基础规格、训练、推理评测，请参考详细文档，依次位于[基础规格文档目录](https://github.com/shh2000/FlagPerf/tree/ud0401/docs/base)、[训练文档目录](https://github.com/shh2000/FlagPerf/tree/ud0401/docs/training)、[推理文档目录](inference/docs/README.md)。
 
 为了更直观的展示厂商参与共建的实际工作量，下面给出6个已经合并进FlagPerf，面向不同特征厂商的Pull Request。
 
@@ -420,8 +420,7 @@ Generate 使用独立的环境与配置。请先阅读 [Generate 部署说明](g
 
 2. 模型推理适配
 
-   当前模型适配、设备边界及目录职责见 [Inference 扩展说明](docs/inference/inference-case-doc.md)。
-   新模型需明确输入、输出、padding 与 TP 分片语义；当前工具不会自动发现原框架的旧案例。
+   被测程序通过进程采集或 `flagprof.attach()` 接入，模型语义按 [模型接入](inference/docs/06-model-onboarding.md) 声明；设备适配的职责边界见 [探针与厂商](inference/docs/05-probes-and-vendors.md)。
 
 ## FlagPerf合作伙伴
 

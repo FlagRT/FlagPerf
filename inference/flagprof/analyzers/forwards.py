@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Forward ownership and presentation derived from stored structural identities."""
 from functools import lru_cache
 import json

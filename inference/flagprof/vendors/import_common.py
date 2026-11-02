@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Offline import transaction: prepare, reserve, persist, barrier, completion."""
 from __future__ import annotations
 
