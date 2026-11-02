@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Classify observed operator keys using the run's torch registration tables."""
 import argparse
 import json

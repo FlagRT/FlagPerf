@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Group reports validate identities and collective sequence through StoreView."""
 from html import escape
 import json

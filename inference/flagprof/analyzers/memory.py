@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Source-clock occupancy and transfer summaries over public Store events."""
 import json
 from . import Analyzer, Need, Requires, Result

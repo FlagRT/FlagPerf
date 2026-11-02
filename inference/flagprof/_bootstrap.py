@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Called only by record's temporary sitecustomize."""
 import importlib.machinery
 import json

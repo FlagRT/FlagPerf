@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Default bounded sealed import; each retry gets a new run."""
 from pathlib import Path
 from contextlib import contextmanager

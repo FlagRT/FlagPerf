@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Stream immutable delivery trees to an archive and restore their relative graph.
 
 Absolute original paths are provenance in the index. Payload member names retain
@@ -11,7 +13,7 @@ import tarfile
 import uuid
 
 from .offline.checkpoints import fileinfo, identity, publish, syncdir
-from .offline.workspace import check_disk, filesystem_type
+from .offline.workspace import check_disk
 
 
 CHUNK = 65536
@@ -71,8 +73,6 @@ class _HashedReader:
 
 def publish_tree(sources, destination, *, max_bytes=200 << 30):
     destination = Path(destination).absolute()
-    if filesystem_type(destination) != 'dtfs':
-        raise ValueError('delivery publication requires dtfs')
     if destination.exists():
         raise ValueError('delivery destination already exists')
     roots, rows, links = _inventory(sources, max_bytes)

@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Official torch.profiler backend. Importing this module does not load torch."""
 from __future__ import annotations
 import platform

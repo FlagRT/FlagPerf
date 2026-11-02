@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Portable pure-operator replay. Preparation/reporting never imports torch."""
 import hashlib
 import json

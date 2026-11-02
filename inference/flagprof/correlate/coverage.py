@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Single-trace collection ratios derived from stored fields and raw inventory."""
 
 from __future__ import annotations

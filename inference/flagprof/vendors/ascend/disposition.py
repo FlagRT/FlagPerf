@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """CANN source roles, preserving legacy raw categories verbatim."""
 from __future__ import annotations
 from .format import queue_key_valid

@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Offline and live readers share decoding, signature checks, and identities."""
 
 from __future__ import annotations

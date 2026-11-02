@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Public standard-library read-only view over persisted import facts.
 
 No parsing rules run here. Project links and native relations stay separate;

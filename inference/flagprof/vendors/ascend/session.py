@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Official torch_npu.profiler backend; SDK imports are lazy."""
 from __future__ import annotations
 import platform

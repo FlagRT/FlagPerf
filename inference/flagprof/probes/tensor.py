@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Opt-in accuracy snapshots; device work is limited to selected boundaries."""
 from collections import defaultdict
 import hashlib

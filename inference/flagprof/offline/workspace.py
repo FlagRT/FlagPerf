@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Owned ephemeral indexes, durable checkpoints, and explicit disk placement."""
 from contextlib import contextmanager
 import os

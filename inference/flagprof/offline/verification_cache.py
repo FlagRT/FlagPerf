@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Reusable verification of unchanged, closed local Plan B stores.
 
 Receipts are rebuildable work data, never Store evidence. Content is checked on

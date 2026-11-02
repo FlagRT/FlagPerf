@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Deterministic self-contained reporting from replayable result sources."""
 from dataclasses import asdict
 from html import escape

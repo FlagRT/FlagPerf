@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Versioned source-format data, independent of SDKs and vendor names."""
 from __future__ import annotations
 import json

@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """CUDA-compatible native host rules; hardware identity is supplied separately."""
 from __future__ import annotations
 from .format import NATIVE_CALL_CATEGORIES, ANNOTATION_CATEGORIES

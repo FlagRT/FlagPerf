@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Thin recorded CANN import; physical mappings are never inferred from pid."""
 
 from __future__ import annotations

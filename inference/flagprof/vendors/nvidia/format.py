@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Versioned Kineto device taxonomy used by the CUDA rule family."""
 from __future__ import annotations
 from dataclasses import dataclass

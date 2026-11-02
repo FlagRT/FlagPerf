@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Standard-library official-profiler session orchestration.
 
 Capture files are independent of run/store layout until T8 Gate 1. The session

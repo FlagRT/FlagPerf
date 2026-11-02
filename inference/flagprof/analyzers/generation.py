@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Generation trajectories and inclusive first-divergence plans from Store events."""
 from . import Result
 

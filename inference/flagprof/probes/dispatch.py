@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Per-call windows and disjoint summary aggregation."""
 from contextlib import nullcontext
 import json

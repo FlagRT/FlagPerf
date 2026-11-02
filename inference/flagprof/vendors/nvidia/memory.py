@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Kineto memory instant records. Totals are occupancy, Bytes is an event delta."""
 from decimal import Decimal
 from flagprof.offline.streaming import JSONStream

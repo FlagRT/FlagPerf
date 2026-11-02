@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Paired accuracy analysis over public StoreView data; no torch dependency."""
 import json
 from . import Result

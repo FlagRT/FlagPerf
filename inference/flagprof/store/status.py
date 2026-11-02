@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Run status from recorded facts and the shared live capture inspector."""
 from pathlib import Path
 import signal

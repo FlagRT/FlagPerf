@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Bounded optional finalizer and verified paged query.
 
 One-trace smoke contract; caps writer/shard/file cardinality before Reader opens.

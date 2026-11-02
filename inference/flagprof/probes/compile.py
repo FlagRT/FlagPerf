@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Structural JIT observations; no latency-based cache classification."""
 from .base import Probe
 import importlib.metadata

@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Attachment-owned enablement for the public optional scope API."""
 from .base import Probe
 

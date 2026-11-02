@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Read the existing Qwen reference inputs and record effective run identity."""
 import hashlib
 import importlib.metadata

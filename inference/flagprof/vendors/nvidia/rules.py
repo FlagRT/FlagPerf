@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """CUDA fixture rules; no vendor-specific decisions in the core."""
 from __future__ import annotations
 

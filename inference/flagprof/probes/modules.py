@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Structural selection; the discovery hooks also cover the first forward."""
 from .base import Probe, clock
 

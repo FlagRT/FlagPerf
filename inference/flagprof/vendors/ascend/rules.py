@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """CANN explicit-key rules. Multiplicity always reaches the union core."""
 from __future__ import annotations
 from .format import queue_key_valid

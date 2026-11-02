@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Injected source-format contract; no SDK or vendor-specific classification."""
 from __future__ import annotations
 import importlib

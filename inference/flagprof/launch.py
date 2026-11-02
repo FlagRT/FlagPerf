@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Explicit single-host TP workers, each owning its attachment and Store."""
 import json
 from contextlib import contextmanager

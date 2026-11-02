@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Derive facts only from artifacts sealed for this capture window (D30).
 
 No requested option is an actual observation. This verifies provenance within

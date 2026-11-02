@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Isolated full importer prototype, using the unmodified production Writer."""
 from __future__ import annotations
 from collections import Counter

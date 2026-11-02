@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Own a Writer and official session; importing remains a separate process."""
 import os
 import atexit

@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """One official session around a direct Python target, without business steps."""
 from pathlib import Path
 import json

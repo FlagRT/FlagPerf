@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Complete generation requests, with optional attachment-owned observations."""
 from contextlib import contextmanager
 import hashlib

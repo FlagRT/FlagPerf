@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """CANN native ownership, including the explicit Enqueue/Dequeue bridge."""
 from __future__ import annotations
 from .format import NATIVE_CALL_CATEGORIES, ANNOTATION_CATEGORIES

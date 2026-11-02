@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Chrome host classification shared by vendor adapters (not the core)."""
 from __future__ import annotations
 from dataclasses import dataclass, replace

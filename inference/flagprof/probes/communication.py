@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Explicit collective call identity; host duration never claims device duration."""
 from collections import defaultdict
 import functools

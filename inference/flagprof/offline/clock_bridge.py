@@ -1,3 +1,5 @@
+# Copyright 2026 FlagOS Contributors
+# Licensed under the Apache License, Version 2.0.
 """Project RAW clock to an already exported trace domain (derived evidence only)."""
 from decimal import Decimal, localcontext
 
