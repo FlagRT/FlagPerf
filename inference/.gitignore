@@ -1,7 +1,9 @@
-/result/
-/runtime_assets/
-/oracles/
-/performance_baselines/
-/config/local*.yaml
 __pycache__/
-.pytest_cache/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+result/
+runtime_assets/
+config/local*.yaml

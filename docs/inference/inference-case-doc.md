@@ -1,27 +1,5 @@
-# Inference 目录与扩展边界
+# Inference：框架与扩展
 
-从[入门指南](../../inference/README.md)开始。当前功能按模型语义、厂商能力、可选组件和通用流程分层。
+当前 Inference 已迁入 flagprof v2。请阅读 [框架与扩展](../../inference/docs/README.md)，首次使用从 [模块首页](../../inference/README.md) 开始。
 
-| 位置 | 职责 |
-|---|---|
-| run.py / run_inference.py | Ascend 宿主 Docker 入口 / 已准备环境内入口 |
-| benchmarks/ | 四模型加载、输入、数值边界、TP 与资产准备；recommendation 提供共享推荐适配 |
-| inference_engine/ | PyTorch 执行与候选调用清单 |
-| vendors/ | 设备初始化、运行栈约束、profiler 解析、通信与遥测 provider |
-| components/ | FlagGems、编译器与 FlagCX 的可选参与和审计 |
-| registry/ | 仓库内适配器工厂、能力及执行/分析源码闭包 |
-| runtime/ | 配置、生命周期、测量、preview、参考协议、离线分析、报告与保存策略 |
-| config/ / inputs/ | 默认及模型/TP/参考配置 / 小型文本示例 |
-| tools/ | 编译器与 A100 环境准备、封存报告重绘 |
-
-一次运行：解析配置 → 宿主解析镜像 ID → 封存源码及固定输入 → 独立 worker 采集 → 分析与比较 → 报告 → 满足条件时精简现场。
-性能的主计时、路由取证、profiler、层计时和显存独立采样。管理面监控为独立采集进程，状态不覆盖执行或分析状态。
-
-新增模型先明确输入、完整前向、数值边界、吞吐、计时与 TP 语义，再实现 ModelAdapter 并注册能力与源码闭包。
-新增厂商在 vendors 实现 VendorAdapter 及可选遥测 provider，声明依赖、配置、trace 格式与版本；通用流程按能力调用。
-新增组件声明参与条件与源码，不让原生路径隐式依赖可选包。registry 工厂只允许仓库内来源，描述读取不初始化设备。
-
-执行与分析身份分别记录，选定适配器及实际组件决定执行闭包；完整源码仍封存。新文件和描述变更必须纳入源码扫描与身份检查。
-不能通过移动文件绕过策略失配。纯分析更新按分析身份处理，执行变化必须重新 preview。
-
-源码整理不改变误差公式、模型边界、固定输入、计时窗口和工作量计数。旧执行框架的历史恢复见[迁移说明](migration.md)。
+本页原有 v1 命令、配置和结果说明可从 [迁移说明中的历史版本](../../inference/docs/migration.md#恢复旧版) 恢复。

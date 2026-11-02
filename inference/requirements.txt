@@ -1,2 +1,0 @@
-# Host CLI only. Device dependencies belong to the selected container.
-PyYAML>=6.0,<7

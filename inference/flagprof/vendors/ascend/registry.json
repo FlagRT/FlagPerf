@@ -1,0 +1,45 @@
+{
+  "entries": [
+    {
+      "basis": "Explicit profiler-control task, not user compute or graph replay.",
+      "evidence": [
+        {
+          "loc": 17665,
+          "trace_uid": "ea79a8daf85078bf"
+        }
+      ],
+      "id": "profiler_enable",
+      "match": {
+        "task_type": "PROFILING_ENABLE"
+      }
+    },
+    {
+      "basis": "Explicit profiler-control task, not user compute or graph replay.",
+      "evidence": [
+        {
+          "loc": 21442,
+          "trace_uid": "ea79a8daf85078bf"
+        }
+      ],
+      "id": "profiler_disable",
+      "match": {
+        "task_type": "PROFILING_DISABLE"
+      }
+    }
+  ],
+  "investigation": {
+    "candidate_task_types": [
+      "PROFILING_ENABLE",
+      "PROFILING_DISABLE"
+    ],
+    "full_trace": "data/rt2-m3-q0-tfalse-marked-r0/profiler/npu1-27_1_20261010081033883_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+    "not_whitelisted": [
+      "SDMA_SQE",
+      "allreduceAicpuKernel",
+      "graph_replay",
+      "unknown"
+    ],
+    "original_fixture_count": 28
+  },
+  "version": 1
+}

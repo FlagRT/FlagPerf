@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
-"""Host container entrypoint."""
-from runtime.host import main
+"""Repository entry point for the flagprof inference CLI."""
+from flagprof.cli import main
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     raise SystemExit(main())
