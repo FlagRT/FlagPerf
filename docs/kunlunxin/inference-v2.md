@@ -97,6 +97,15 @@ python -B -S -m flagprof report "$FP_WORKSPACE/onerec-tp2/group.json" \
 测试结果与尚未满足的资格见下表。任何失败、中止、unknown 和 partial 均保留，不能据命令退出 0 或候选适配提交宣称完整性能资格。
 
 
+
+### 最终源码与回归（2026-11-03）
+
+分支为 `zhiyu/p800-inference-v2`，基于 `dev-1.0@41ab2dce`。提交 `af1b8e9c` 下完成以下回归；随后仅修正多窗口通信摘要的来源时钟字段并同步文档。固定镜像内 Inference 19 项测试通过、1 项可选依赖跳过；Python 3.10 与 3.12 均通过。Base 381 项（1 个既有 skip）、Operation 167 项、公开分发 14 项通过。
+
+Qwen 与 OneRec 的单卡基线、perf、accuracy 输出逐字节相同；OneRec TP2 的 NCCL 兼容层和 FlagCX 均独立完成 32 步、每 rank 2304 次 AllReduce 与 32 次 AllGather。windowed Qwen 设备 gap projection 为 `available`，但 scheduled window 不等于完整请求。
+
+性能开销专门测量：加载后同步四次前向、三轮顺序样本，perf-lite 中位耗时为基线 1.1321 倍，裸 profiler 1.2634 倍，封装 profiler 1.2600 倍，coverage 18.7500 倍；该结果只用于 N1 观测，不构成硬件性能资格。SIGKILL 验收返回 137，两个窗口分别为 `valid` 和 `lost`，目标进程消失且存活事件可读。
+
 ## 已登记实测（2026-11-03）
 
 固定镜像与独立模型文件 SHA 下，在两台 P800 主机分别验证。Qwen 使用公开合成文本，
@@ -112,7 +121,7 @@ BF16/eager、max-length 32；OneRec 使用公开合成单样本、BF16/eager、b
 | 多批次 | Qwen 三样本按 2+1 两批，warmup 1、forwards 2；4 份输出与无采集基线逐字节相同 |
 | 组件与编译 | 真实 Qwen SiLU 路由命中；独立 SiLU 冷缓存 1 miss、热缓存 1 hit，注册器卸载恢复。失败、缓存失效、进程内复用不可观察，compile 仍 partial |
 | 内存 | Qwen 官方 allocator 轨迹有原始/规范化/排除计数与校验；不是整卡 HBM 或硬件 counter |
-| TP2 | FlagCX OneRec accuracy/perf-lite/perf group complete；每 rank 32 步、2304 AllReduce、32 AllGather，复制边界/token/序列一致。NCCL 兼容与 FlagCX 的独立 collective 均测过，不能把它们当成同一模型测试 |
+| TP2 | NCCL 兼容层与 FlagCX 各自完成 OneRec accuracy/perf-lite/perf group complete；每 rank 32 步、2304 AllReduce、32 AllGather，复制边界/token/序列一致；独立 collective smoke 另外保存 |
 | 故障与恢复 | timeout 124、异常 1、SIGTERM 143；自有进程回收、独立 profiler 冲突拒绝、设备 postflight、delivery 跨主机恢复与 verify |
 | 回归 | Linux 固定镜像中 Inference 标准库与真实 Gloo 检查；Base 381 项（含 1 既有 skip）、Operation 167 项、公开分发 14 项通过 |
 
@@ -120,7 +129,21 @@ BF16/eager、max-length 32；OneRec 使用公开合成单样本、BF16/eager、b
 
 - P800 exporter 没有提供可信的 capture loss 计数，完整性保持 unknown；时钟映射独立验证不产生硬件同步误差上界，`clock_valid:false` 保留。
 - BKCL 后台线程 launch 与调用线程 collective 标记间缺因果键；通信逻辑计数完整，设备调用关联 unavailable。仅识别设备通信类别不能消除这个缺口。
-- 显式 windowed 的公共导入路径尚不提供 final 路径的 device-analysis projection；可读原始事件与主机报告，但完整请求 gap 不据此宣称可用。
+- 显式 windowed 的公共导入路径现在会持久化每个窗口自己的 device-analysis projection，并按 source_clock 隔离区间；实测报告可读设备 gap，但窗口通常只覆盖 scheduled window，未完整覆盖请求时，request gap 仍保持 partial/unavailable，不据此宣称完整请求资格。
 - 大 trace 导入/读取成本高。P800 `performance_disposition=not_qualified`，不继承其他平台历史用户豁免；耗时是本轮观察值，不作为性能达标声明。
 - 单个 trace 的适用范围为一个所选设备（ordinal 0 或 1），TP2 为两份独立 trace。8 卡、跨机、服务热加载、通用外部算子导入及硬件计数器不在当前实现交付范围。
 - 本轮没有 NVIDIA/Ascend 实机回归；公共 CPU 回归和历史代码入口保留不能替代跨设备实测。
+
+
+### 缺陷与复测索引
+
+| 编号 | 触发与处理 | 当前状态 |
+|---|---|---|
+| P800-INF-001 | 未在导入 torch 前设置两个 XPU tracing 变量：报错或没有设备轨；适配器验证逻辑卡号并拒绝缺失配置 | 已加门禁；空轨/截断轨负例已测 |
+| P800-INF-002 | 镜像 CPython 缺 pidfd/memfd 包装，旧路径无法创建进程代理；用受限 Linux syscall 保持相同内核原语 | 固定镜像、Python 3.12 和 SIGTERM/SIGKILL 复测通过 |
+| P800-INF-003 | 显式 windowed CLI 的 timeout 未转交；设备 projection 未写入，报告 gap unavailable | 已修复并实测 1.5 秒超时、Qwen 两窗口、OneRec 32 步；原结果保留 |
+| P800-INF-004 | wheel 漏打包 P800 JSON 格式契约 | 已修复；独立构建/安装后无 torch 读取通过 |
+| P800-INF-005 | modules trace 超出默认 1 GiB，或导入/空间预算不足 | 使用显式预算和 ext4、新恢复目录；原预算失败保留。不能保证任意规模低延迟 |
+| P800-INF-006 | BKCL 后台 launch 缺调用线程因果键；exporter 缺 loss 计数和设备同步误差上界 | 开放的采集证据限制；通信关联 unavailable、完整性 unknown、性能 not_qualified |
+
+离线包恢复、来源账本未知字段、stream 缺失、correlation 缺失、UUID 错配、blob 零预算、collector 日志错误均有独立负例。严格区分命令退出、导入完成、面板可用和资格达标四层状态。

@@ -97,7 +97,7 @@ def gap(work,params):
         first=json.loads(source[0]);call=first['communication']['call']
         stats=interval_stats(work.db.execute('select a,b from activity where call_key=? order by a,b',(callkey,)),-(1<<63),(1<<63)-1)
         sources=[json.loads(r[0])['source'] for r in work.db.execute('select payload from activity where call_key=? limit ?',(callkey,work.limits.evidence_samples))]
-        work.row('communication.device_calls',callkey,dict(call,device_link_status='linked',device_union_ns=stats['union_ns'],device_sum_ns=stats['sum_ns'],device_records=stats['records'],clock=clock,source_clock=context['source_clock'],evidence=sources,association=first['communication']['evidence']))
+        work.row('communication.device_calls',callkey,dict(call,device_link_status='linked',device_union_ns=stats['union_ns'],device_sum_ns=stats['sum_ns'],device_records=stats['records'],clock=clock,source_clock=first['source_clock'],evidence=sources,association=first['communication']['evidence']))
     counts['linked_logical_calls']=len(work.table('communication.device_calls'))
     grouped={};partial=bool(counts['classification_conflicts'])
     for index,window in enumerate(context.get('windows',[])):
