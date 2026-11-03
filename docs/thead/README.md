@@ -18,12 +18,15 @@ Operation 当前保持 `candidate / validated:false`：Docker 及 local 首轮+�
 | PPU Toolkit | `python3 base/run.py toolkit run ...` | 12 项官方工具/acblas 微基准（sailbandwidth、p2pBandwidthLatencyTest、ppu-smi 静态容量）；可重复指定 `--case`；候选镜像须显式 `--allow-candidate-runtime` |
 | 报告重建 | `python3 base/run.py report ...` | 读取已有证据，重建 Markdown/SVG，不重新测量硬件 |
 | 重复性检查 | `python3 base/qualification.py ...` | 五次独立 run 的严格资格检查，与单 run passed 分开 |
+| Inference（flagprof v2） | `python3 -m flagprof record --vendor thead ...`（锁定容器内） | 候选适配：单卡端到端与 CPU 回归已实测；身份、镜像、最小命令与边界见 [PPU Inference 指南](inference-v2.md) |
 
 厂商名为 `thead`，芯片名为 `PPU`。Benchmark 中计算、传输和内存为单 rank；
 同机 AllReduce 接受 2–16 rank（本轮实测资格完成于 8 rank，16 rank 见验证说明），
 P2P 恰好 2 rank。FP8（算子路由失败）和两个跨机 Case（单机执行器与目标机未上线）
 在当前锁定栈下提前跳过，不产生性能值。该范围不代表芯片在其他软件栈下没有相应能力。
-本次适配不扩大 Operation、Training、Inference 或 Generate 的验证范围。
+本次 Base/Toolkit 适配不扩大 Operation、Training、Inference 或 Generate 的验证范围；
+Inference 的 PPU 适配单独维护（[PPU Inference 指南](inference-v2.md)），验收状态与
+Base/Toolkit 分开判定。
 
 Toolkit 覆盖 FP32/FP64/FP16/BF16/TF32 算力、H2D/D2H 带宽（CE/SM 双通道）、设备内存带宽、
 主机-设备访问时延、显存容量与单机 P2P 带宽/时延；computation-INT8 在当前 SDK 构建上排除

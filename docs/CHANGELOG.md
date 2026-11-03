@@ -1,5 +1,18 @@
 # 适配与文档变更记录
 
+## 2026-11-03 — 平头哥 PPU Inference（flagprof v2）候选适配
+
+- 新增 `inference/flagprof/vendors/thead`（会话、格式契约、分析、证据、导入与执行）并把
+  `thead` 接入 record/launch/seal/import/report 共享路径；身份经 `FLAGPROF_THEAD_IDENTITY`
+  sourced JSON 注入并做 ppu-smi/torch UUID 交叉核验，契约钉住 PPU-ZW810E、驱动
+  1.5.1-1d747a/1.5.3-5239a4、torch.profiler 2.10.0、schemaVersion 1。
+- thead 采集的 `performance_disposition` 固定 `not_qualified`；集合通信只采信 exporter
+  显式元数据，通信 kernel 名字族待隔离 dist 实测后再钉住；多窗口时钟按窗口独立投影。
+- 新增 `inference/tests/test_thepad.py` 负例回归与真实 PPU exporter 片段 fixture
+  （含 provenance 与 `.gitattributes` 行尾锁定），并接入通信探针测试；thead1 单卡
+  record → import → inspect → report 实测通过（2026-11-03）。
+- 新增 [PPU Inference 指南](thead/inference-v2.md)，更新文档导航与 Inference 使用说明。
+
 ## 2026-11-03 — 移除 Inference 历史资料目录
 
 - 删除 `inference/docs/history/` 全部 5 个文件，更新模块入口和文档导航。

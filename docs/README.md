@@ -7,6 +7,7 @@
 | P800 算子最小运行、完整矩阵与已知问题 | [运行入口](../operation/vendors/kunlunxin/README.md)、[验证与限制](kunlunxin/operation-validation.md) |
 | 平头哥 PPU 环境、支持范围与验证记录 | [PPU 适配指南](thead/README.md) |
 | PPU 算子最小运行、运行栈准备与验收边界 | [运行入口](../operation/vendors/thead/README.md)、[机制与验收](thead/operation.md)、[失败与归因边界](thead/validation.md#九个失败的对照实验与归因边界) |
+| PPU Inference（flagprof v2）身份、镜像、最小命令与边界 | [PPU Inference 指南](thead/inference-v2.md) |
 | 基础算力、内存、传输与厂商诊断 | [Base 使用指南](../base/README.md) |
 | 算子正确性、路由、性能与失败诊断 | [Operation 使用指南](../operation/README.md) |
 | 推理进程观测、性能/通信与数值差分 | [Inference 使用指南](../inference/README.md)、[框架与协作导航](../inference/docs/README.md) |

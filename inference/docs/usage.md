@@ -32,6 +32,8 @@ python3 -B -m flagprof record \
 
 NVIDIA 环境使用 `--vendor nvidia`。默认 `final` 采集完整会话，目标正常退出后独立导入；窗口模式需显式选择并推进 step。包装 shell、服务进程或自行再启动的子进程，需要在真正执行推理的进程使用 `flagprof.attach()`；接口见 [总体架构](02-architecture.md)。
 
+平头哥 PPU 环境使用 `--vendor thead`（设备名为 CUDA 兼容的 `cuda:N`），需先经 `ppu-smi` 生成 sourced 身份并以 `FLAGPROF_THEAD_IDENTITY` 注入；锁定镜像、最小命令、集合通信识别边界与验收状态见 [PPU Inference 适配](../../docs/thead/inference-v2.md)。
+
 `--preset perf` 采集设备与主机性能；`modules` 面向模块；`perf-lite` 使用轻量主机探针；`coverage` 面向路由覆盖；`accuracy` 用于张量数值诊断。`--profile-memory` 增加官方显存记录；`--dispatch each-window` 为逐调用关联提供主机记录。探针对运行的扰动应通过匹配的无采集运行测量。
 
 ## 使用内置运行器
