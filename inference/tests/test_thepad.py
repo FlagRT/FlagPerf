@@ -183,6 +183,16 @@ class TheadTests(unittest.TestCase):
         failures = {x['id'] for x in evaluate_conditions(thead.contract['conditions'], facts) if x['state'] == 'fail'}
         self.assertEqual(failures, {'hardware.model', 'collector.version'})
 
+    def test_interpreter_display_names_are_contract_allowed(self):
+        tax = Taxonomy()
+        events = [dict(ph='M', name='process_name', pid=93, args={'name': 'python3'}),
+                  dict(ph='M', name='process_name', pid=0, args={'name': 'python'})]
+        self.assertEqual(tax.audit_dependencies(events, None), [])
+        events.append(dict(ph='M', name='process_name', pid=5, args={'name': 'bash'}))
+        result = tax.audit_dependencies(events, None)
+        self.assertEqual(result[0]['id'], 'device_process_label')
+        self.assertEqual(result[0]['pids'], ['5'])
+
     def test_missing_exporter_flags_are_unknown(self):
         config = {}
         exporter = {}

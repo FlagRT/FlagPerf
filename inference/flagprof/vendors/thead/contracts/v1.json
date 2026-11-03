@@ -80,7 +80,8 @@
     "device_identity_signal": "category_or_device_stream",
     "device_process_names": [],
     "expected_process_names": [
-      "python"
+      "python",
+      "python3"
     ],
     "host_categories": [
       "cpu_op",
