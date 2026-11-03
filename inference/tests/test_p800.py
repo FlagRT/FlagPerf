@@ -32,15 +32,16 @@ class P800Tests(unittest.TestCase):
         fixture=json.loads((Path(__file__).parent/'fixtures/p800/silu-fragment.json').read_bytes())
         with tempfile.TemporaryDirectory() as work:
             work=Path(work);run=create_run(work/'store')
-            for index in range(2):
-                doc=json.loads(json.dumps(fixture));doc['window_test_identity']=index
-                doc['traceEvents']=[e for e in doc['traceEvents'] if e.get('cat')!='kernel']+[
-                    dict(ph='X',cat='kernel',name='isolated',pid=0,tid=1,ts=2,dur=3,args=dict(device=0,stream=1)),
-                    dict(ph='X',cat='Trace',name='PyTorch Profiler window',pid=1,tid=1,ts=0,dur=10,args={})]
-                source=work/('source'+str(index)+'.json');source.write_text(json.dumps(doc))
-                prepared=prepare(source,work/('prepared'+str(index)),vendor='kunlunxin',analysis_input=dict(
-                    capture_normal_close=False,clock=dict(clock_valid=False)))
-                with offline_writer(run) as writer:import_prepared(source,writer,prepared,vendor='kunlunxin')
+            with offline_writer(run) as writer:
+                for index in range(2):
+                    doc=json.loads(json.dumps(fixture));doc['window_test_identity']=index
+                    doc['traceEvents']=[e for e in doc['traceEvents'] if e.get('cat')!='kernel']+[
+                        dict(ph='X',cat='kernel',name='isolated',pid=0,tid=1,ts=2,dur=3,args=dict(device=0,stream=1)),
+                        dict(ph='X',cat='Trace',name='PyTorch Profiler window',pid=1,tid=1,ts=0,dur=10,args={})]
+                    source=work/('source'+str(index)+'.json');source.write_text(json.dumps(doc))
+                    prepared=prepare(source,work/('prepared'+str(index)),vendor='kunlunxin',analysis_input=dict(
+                        capture_normal_close=False,clock=dict(clock_valid=False)))
+                    import_prepared(source,writer,prepared,vendor='kunlunxin')
             with StoreView(run) as view:
                 workspace=Workspace(view,work/'analysis')
                 try:
