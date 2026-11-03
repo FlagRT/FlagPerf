@@ -2,9 +2,25 @@
 # Licensed under the Apache License, Version 2.0.
 """HF embedding entrypoint, also usable as a no-probe component baseline."""
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import time
+
+
+def model_files_identity(model_path):
+    """Weight-file digests so accuracy runs can prove they used the same model."""
+    files={}
+    for path in sorted(Path(model_path).iterdir()):
+        if path.suffix in ('.safetensors','.bin'):
+            digest=hashlib.sha256()
+            with path.open('rb') as handle:
+                for chunk in iter(lambda: handle.read(1<<22), b''):
+                    digest.update(chunk)
+            files[path.name]=digest.hexdigest()
+    if not files:
+        raise ValueError('accuracy identity needs safetensors/bin weights under '+str(model_path))
+    return files
 
 
 def main():
@@ -94,13 +110,22 @@ def main():
             texts=[r if isinstance(r,str) else r.get('text',r.get('query',r.get('input'))) for r in rows[:args.batch_size]]
             if len(texts)!=args.batch_size or not all(isinstance(t,str) for t in texts):raise ValueError('inputs need batch-size text rows')
             batches=[([str(i) for i in range(args.batch_size)],dict(tokenizer(texts,padding=True,truncation=True,max_length=args.max_length,return_tensors='pt')))]
-            input_identity={}
+            input_identity=dict(inputs_sha256=hashlib.sha256(Path(args.inputs).read_bytes()).hexdigest(),
+                model_files=model_files_identity(model_path),probe_alg='p4v1')
         import inspect
         if hasattr(model.config,'use_cache'):model.config.use_cache=False
         from . import run_prepared, pool_embedding
         if handle:handle.register_model(model)
         input_identity.update(dtype=args.dtype,attention=args.attention,pooling='mean-fp32-l2' if args.pooling=='mean' else 'last-valid-token-fp32-l2',
             device=args.device,software=software(),numerics=numeric_settings,flaggems=effective['flaggems'],include=effective['flaggems_include'])
+        # Direct inputs carry the same oracle identity contract as prepared packages
+        # (runner/fixed.load): model plus input digest pin the must_equal fields.
+        input_identity.setdefault('samples',[s for ids,_ in batches for s in ids])
+        input_identity.setdefault('batches',[dict(samples=ids,shape=list(v['input_ids'].shape),valid_tokens=v['attention_mask'].sum(1).tolist()) for ids,v in batches])
+        if 'oracle_id' not in input_identity:
+            input_identity['oracle_id']=hashlib.sha256(json.dumps(
+                {k:input_identity[k] for k in ('model_files','inputs_sha256','dtype','attention','pooling')},
+                sort_keys=True).encode()).hexdigest()
         input_prepare_s=time.perf_counter()-input_started
         load_s=time.perf_counter()-start
         out=Path(args.outputs);runs=[]
