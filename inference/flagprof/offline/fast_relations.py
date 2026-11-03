@@ -63,7 +63,7 @@ def native(db,event,vendor,registry,single_pid):
             for n in extra:b.add(proof,n)
         chosen=innermost(list(owners.values()));unknown|=not chosen
         for n in chosen:b.add(candidates,n)
-    if vendor=='nvidia' and single_pid[0]:
+    if vendor in ('nvidia','kunlunxin') and single_pid[0]:
         ext=event['ext']['chrome.args'].get('External id')
         if ext is not None:
             for i in db.ids('native_external',(single_pid[1],str(ext))):

@@ -1,5 +1,7 @@
 # 昆仑芯 P800 适配指南
 
+Inference v2 候选适配正在验收，独立入口见 [P800 推理观测与诊断](inference-v2.md)；其状态不继承 Base/Operation 的验证结果。
+
 本适配提供 FlagPerf Base 的 PyTorch Benchmark、独立原生 Toolkit，以及 Operation 算子评测适配。
 所有命令从 FlagPerf 仓库根目录执行。Base 与 Operation 分别声明运行栈验证范围，不能互相沿用资格。
 

@@ -1,0 +1,11 @@
+{
+  "source_sha256": "d38dd72bcafe8bf4a9f710502f773fecd1d10898e2af3375dc9947c3ce4c7a5c",
+  "source_records": 203,
+  "selection": "verbatim events: first SiLU kernel and exact correlation/External id keys; partial sample, not complete capture",
+  "fragment_sha256": "f8ef8f5058d0753758b96117531d040c5b65b1aba6666ea0404e7162275c035f",
+  "image_id": "sha256:cac5ddae5f62b356622858dd4f0ea0f82d489cf0cb71e7230f0f97797c25605a",
+  "collector": "torch.profiler 2.9.0+cu129",
+  "hardware": "P800",
+  "session": "2026-11-03 compile-warm",
+  "scope": "parser regression; no project ownership or capture completeness claim"
+}

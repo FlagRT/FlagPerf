@@ -137,3 +137,7 @@ python3 -B -S -m unittest discover -s tests -v
 ## 归档与恢复（可选）
 
 `flagprof delivery publish|verify|restore` 把 Store、capture 等目录打包成带逐文件摘要的归档，并在新目录恢复相对依赖。发布目录不限文件系统；`restore` 的目标必须是 ext4 上的新目录。
+
+## P800 候选运行栈
+
+使用 `--vendor kunlunxin`；固定镜像、采集前置变量、SMI/UUID 身份、TP2 依赖及命令见 [P800 指南](../../docs/kunlunxin/inference-v2.md)。NVIDIA/Ascend 的资格、时钟和历史豁免不转移到 P800。

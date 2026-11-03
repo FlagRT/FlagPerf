@@ -20,9 +20,11 @@
 | 模型训练 | [Training 文档](training/README.md) |
 | 生成式服务评测 | [Generate 文档](docs/generate/generate-case-doc.md) |
 
-当前 Inference 采用 flagprof v2：通过 Python 进程接入 NVIDIA / Ascend profiler，提供封存导入、Store、性能/显存/通信分析与 Oracle 数值差分；内置 Hugging Face embedding/generation runner，支持登记范围内的单机双 rank。使用方式和范围见 [Inference 指南](inference/README.md)，协作框架见 [框架与协作导航](inference/docs/README.md)。
+当前 Inference 采用 flagprof v2：通过 Python 进程接入 NVIDIA / Ascend / 昆仑芯 P800 profiler，提供封存导入、Store、性能/显存/通信分析与 Oracle 数值差分；内置 Hugging Face embedding/generation runner，支持登记范围内的单机双 rank。使用方式和范围见 [Inference 指南](inference/README.md)，协作框架见 [框架与协作导航](inference/docs/README.md)。
 Base、Operation、Inference 的当前单机入口不要求 SSH。先阅读所选模块的环境准备，再执行其最小示例。
 昆仑芯 P800 的基础能力见 [Base/Toolkit 指南](docs/kunlunxin/README.md)，算子精度与性能见 [P800 Operation](operation/vendors/kunlunxin/README.md)。
+
+P800 的 Inference v2 候选适配与验证进度见 [P800 Inference](docs/kunlunxin/inference-v2.md)，完整验收进行中。
 平头哥 PPU 的基础能力见 [PPU 适配指南](docs/thead/README.md)，算子入口、运行栈准备及待验收边界见 [PPU Operation](operation/vendors/thead/README.md)。
 完整导航见 [docs](docs/README.md)。
 

@@ -15,6 +15,8 @@ flowchart LR
 
 先阅读 [快速使用](docs/usage.md)，参与开发时从 [框架与协作导航](docs/README.md) 开始。旧版配置、命令和结果格式的迁移方式见 [版本迁移](docs/migration.md)。
 
+昆仑芯 P800 候选适配的镜像、设备身份、采集前置条件、实测范围与限制见 [P800 Inference v2](../docs/kunlunxin/inference-v2.md)。完整验收仍在进行。
+
 ## 环境与最小入口
 
 离线导入、读取和报告使用 Python 3.9+ 标准库。采集在已经准备好的设备环境内运行：NVIDIA 使用 PyTorch profiler；Ascend 使用匹配的 PyTorch、torch_npu 与 CANN。内置 Hugging Face runner 另需 Transformers 和本地模型、输入。环境由使用者准备。
@@ -42,7 +44,7 @@ python3 -B -S -m flagprof.runner --help
 | 能力 | 生产入口与范围 |
 |---|---|
 | 进程采集 | `record`、`flagprof.attach()`；默认完整会话 `final`，显式 `windowed` 可选 |
-| 设备分析 | NVIDIA / Ascend 适配器；设备区间、官方显存、通信关联、请求窗口与 `perf.gap` |
+| 设备分析 | NVIDIA / Ascend / P800 适配器；设备区间、官方显存、通信关联、请求窗口与 `perf.gap` |
 | 主机分析 | dispatch、module、user、route、tensor 和 communication 探针；FlagGems 组件开关 |
 | 数值诊断 | accuracy capture、`report oracle`、单算子 `replay prepare/run` |
 | 单机双进程 | `launch --nproc-per-node 2`；NCCL、HCCL、FlagCX，逐 rank Store 与 group 报告 |
@@ -62,6 +64,6 @@ P0/P1/P2/P4 的历史退出以 [决策记录](docs/DECISIONS.md) 中登记的范
 | `flagprof/store/` | schema、Writer、Reader、只读 StoreView 与完整性校验 |
 | `flagprof/analyzers/`、`report/` | 有界分析、数值差分及离线报告 |
 | `docs/` | 需求、总体框架、接口契约、阶段计划与决策记录 |
-| `tests/` | CPU 冒烟测试（无设备、无 torch），PR 时由 GitHub Actions 运行 |
+| `tests/` | CPU 冒烟与适配负例；可选 torch/Gloo 检查，PR 时由 GitHub Actions 运行 |
 
 本目录的运行代码可独立使用，不依赖其他仓库。设备上的验收方式见 [设备最小验收](docs/usage.md#设备最小验收)。

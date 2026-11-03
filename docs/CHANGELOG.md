@@ -1,5 +1,11 @@
 # 适配与文档变更记录
 
+## 2026-11-03 — P800 Inference v2 候选适配（未发布）
+
+- 新增独立 kunlunxin 采集/格式契约与真实 SMI/UUID 身份接入；复用公共 Store、参考、导入和报告，不继承 NVIDIA 硬件资格。
+- 兼容固定 FlagRT 镜像的 Linux pidfd/memfd 包装、FlagGems 注册接口与 Transformers TP 计划；补齐 runner 分窗口 step、functional collective 观测与子进程超时回收。
+- 增加候选使用指南与 CPU/真实 Gloo 回归。模型实测、失败与未闭合边界以指南为准，不自动声明性能资格。
+
 ## 2026-11-03 — 移除 Inference 历史资料目录
 
 - 删除 `inference/docs/history/` 全部 5 个文件，更新模块入口和文档导航。

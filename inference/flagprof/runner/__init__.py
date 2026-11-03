@@ -44,6 +44,10 @@ def run_prepared(model, inputs, *, warmup=0, forwards=3, outputs=None, sync=None
                 value = transform(value)
             sync()
             duration = time.perf_counter_ns()-start
+            if handle:
+                # Windowed collection advances once per completed forward.
+                # Keep export/validation outside the measured envelope.
+                handle.step()
             if i < warmup:
                 continue
             times.append(duration)

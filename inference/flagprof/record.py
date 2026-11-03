@@ -8,6 +8,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import math
 from .runtime import configuration
 from .registry import Registry
 from .store import create_run, finalize
@@ -16,6 +17,8 @@ from .store.manifest import atomic_json, proc_key
 
 def record(command, *, store, vendor, preset='perf', config=None, descriptors=None,
            identity=None, backend_options=None,capture_mode='final',work=None,scratch=None,timeout=1800):
+    if not math.isfinite(timeout) or timeout <= 0:
+        raise ValueError('positive finite record timeout required')
     if preset in ('coverage', 'perf-lite', 'accuracy'):
         capture_mode = 'windowed'
     if capture_mode=='final':
@@ -50,13 +53,12 @@ def record(command, *, store, vendor, preset='perf', config=None, descriptors=No
         env['PYTHONPATH'] = os.pathsep.join([directory, root] + ([original['PYTHONPATH']] if original.get('PYTHONPATH') else []))
         env['FLAGPROF_RECORD_CONFIG'] = str(run/'record-config.json')
         try:
-            target = subprocess.Popen(command, env=env)
-            try:
-                target_key = proc_key(target.pid)
-            except OSError:
-                target_key = None
-            code = target.wait()
-            state['target_exit'] = dict(pid=target.pid, process=target_key, returncode=code, source='subprocess.wait')
+            from .offline.process import run_owned
+            target = run_owned(command, env=env, timeout=timeout)
+            code = target.returncode
+            target_key = target.process_key
+            state['target_exit'] = dict(pid=target.pid, process=target_key, returncode=code,
+                                       timed_out=target.timed_out, signal=target.signal, source='owned subprocess.wait')
         except OSError as error:
             code = 127
             state['target_exit'] = dict(returncode=code, error=repr(error))

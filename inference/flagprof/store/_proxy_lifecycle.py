@@ -10,6 +10,7 @@ import signal
 import time
 
 from .manifest import load_json, process_alive, writer_fragments
+from ._pidfd import open_pidfd, send_signal
 
 PROXY_WAIT_SECONDS = 10
 _DEADLINE = ContextVar('flagprof_proxy_deadline', default=None)
@@ -90,10 +91,10 @@ def terminate_proxies(run):
         identity = load_json(Path(run)/'attachments'/proxy['attachment_id']/'proxy-identity.json')
         if identity['instance'] != proxy['instance'] or identity['fragment']['writer_id'] != proxy['writer_id']:
             raise ValueError('proxy instance registration mismatch')
-        fd = os.pidfd_open(key['pid'])
+        fd = open_pidfd(key['pid'])
         try:
             if process_alive(key) is not True: continue
-            signal.pidfd_send_signal(fd, signal.SIGKILL)
+            send_signal(fd, signal.SIGKILL)
         except ProcessLookupError: pass
         finally: os.close(fd)
     until = time.monotonic()+1

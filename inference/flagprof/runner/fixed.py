@@ -66,7 +66,7 @@ def numerics(device,mode):
 
 def software():
     result={}
-    for name in ('torch','torch-npu','transformers','flag-gems','triton'):
+    for name in ('torch','torch-npu','transformers','accelerate','flag-gems','triton'):
         try:result[name]=importlib.metadata.version(name)
         except importlib.metadata.PackageNotFoundError:result[name]=None
     return result

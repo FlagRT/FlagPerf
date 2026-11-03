@@ -2,6 +2,8 @@
 
 当前生产根目录是 `FlagPerf/inference`，Python 包名保持 `flagprof`。首次使用读 [模块首页](../README.md) 与 [使用说明](usage.md)；接手开发按“数据从哪来、如何落盘、如何消费”的顺序阅读。
 
+P800 候选适配见 [环境、命令与验证边界](../../docs/kunlunxin/inference-v2.md)，不沿用 NVIDIA/Ascend 的硬件资格结论。
+
 ## 阅读顺序
 
 1. [02 总体架构](02-architecture.md)：目标进程 → 探针 / 厂商采集 → Store → 分析器 → 报告。

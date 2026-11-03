@@ -101,11 +101,11 @@ def build_context(db,taxonomy):
 def scope(db,tax,vendor):
     missing=0;examples=[];selected=0;mismatch=False;missing_arg=False
     for i,e in enumerate(db.raws()):
-        if e.get('ph')=='X' and e.get('cat') in (tax.contract['roles']['host_categories'] if vendor=='nvidia' else ['cpu_op']):db.put('scope_host',e.get('pid'),True)
+        if e.get('ph')=='X' and e.get('cat') in (tax.contract['roles']['host_categories'] if vendor in ('nvidia','kunlunxin') else ['cpu_op']):db.put('scope_host',e.get('pid'),True)
         if not tax.is_device(e,tax.ctx):continue
         db.put('scope_device_pid',e.get('pid'),True)
         if len(examples)<3:examples.append(e['_linker_loc'])
-        if vendor=='nvidia':v=e.get('args',{}).get('device')
+        if vendor in ('nvidia','kunlunxin'):v=e.get('args',{}).get('device')
         else:
             m=re.fullmatch(r'NPU (\d+)',db.get('labels',e.get('pid'),''));v=int(m.group(1)) if m else None
         valid=type(v) is int and v>=0
@@ -121,13 +121,13 @@ def scope(db,tax,vendor):
     # Kept small in normal captures, independently challenged by metadata-scale tests.
     tracks=Counter(db.stage('scope_track'))
     collision=bool(db.c.execute("SELECT 1 FROM stage a JOIN stage b ON a.k=b.k WHERE a.kind='scope_host' AND b.kind='scope_device_pid' LIMIT 1").fetchone())
-    fields=['args.device','pid','cat'] if vendor=='nvidia' else ['process_labels.args.labels','pid','cat']
+    fields=['args.device','pid','cat'] if vendor in ('nvidia','kunlunxin') else ['process_labels.args.labels','pid','cat']
     facts=dict(device_count=len(known) if not missing else None,device_ordinals=known if not missing else None,
        observed_devices=known,missing_device_identity=missing,host_device_pid_collision=collision,
        source=dict(kind='raw_trace',fields=fields,examples=examples),
        execution_track_count=sum(t['role']=='device' and bool(t['complete_events']) for t in tax.ctx.tracks),
        tracks_per_device=dict(sorted(tracks.items())))
-    if vendor=='nvidia':facts['device_pid_matches_device_arg']=False if mismatch else None if missing_arg or not selected else True
+    if vendor in ('nvidia','kunlunxin'):facts['device_pid_matches_device_arg']=False if mismatch else None if missing_arg or not selected else True
     return facts
 
 
