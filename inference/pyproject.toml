@@ -22,3 +22,4 @@ namespaces = false
 [tool.setuptools.package-data]
 "flagprof.vendors.ascend" = ["registry.json", "contracts/*.json"]
 "flagprof.vendors.nvidia" = ["contracts/*.json"]
+"flagprof.vendors.kunlunxin" = ["contracts/*.json"]
