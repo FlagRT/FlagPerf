@@ -7,10 +7,20 @@
   sourced JSON 注入并做 ppu-smi/torch UUID 交叉核验，契约钉住 PPU-ZW810E、驱动
   1.5.1-1d747a/1.5.3-5239a4、torch.profiler 2.10.0、schemaVersion 1。
 - thead 采集的 `performance_disposition` 固定 `not_qualified`；集合通信只采信 exporter
-  显式元数据，通信 kernel 名字族待隔离 dist 实测后再钉住；多窗口时钟按窗口独立投影。
+  显式元数据（kernel 名字族不作判据，见下方实测定案）；多窗口时钟按窗口独立投影。
+- 通用修复两处：契约 `expected_process_names` 接受解释器显示名 `python`/`python3`
+  （PPU Kineto 以 argv[0] 派生显示名，非工作身份）；内置运行器直连 `--inputs` 时补齐
+  oracle 身份（model_files/inputs_sha256/oracle_id/samples/batches/probe_alg），
+  使 accuracy 预设不经 prepared 包也能做 A/A。
 - 新增 `inference/tests/test_thepad.py` 负例回归与真实 PPU exporter 片段 fixture
-  （含 provenance 与 `.gitattributes` 行尾锁定），并接入通信探针测试；thead1 单卡
-  record → import → inspect → report 实测通过（2026-11-03）。
+  （含 provenance 与 `.gitattributes` 行尾锁定），并接入通信探针测试。
+- 真机实测（2026-11-03）：单卡端到端 record → import → inspect → report；预设矩阵
+  perf / perf-lite / accuracy A/A oracle（逐位一致）/ modules / perf+memory / coverage
+  （gems 镜像）全通过；TP2 双 rank（nccl）group complete，并据隔离实测定案集合通信
+  识别：PPU 通信 kernel 均带显式 `Collective name` 元数据，`pcclKernel_AllReduce_RING_LL_Sum_float`
+  名含 AllReduce 而元数据为 barrier——维持只认显式元数据、不钉名字族；delivery
+  publish→verify→restore 跨容器通过。同型第二台主机（契约允许的另一驱动版本）复制
+  CPU 套件、单卡冒烟与 TP2，结果一致。
 - 新增 [PPU Inference 指南](thead/inference-v2.md)，更新文档导航与 Inference 使用说明。
 
 ## 2026-11-03 — 移除 Inference 历史资料目录

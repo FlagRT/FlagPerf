@@ -18,7 +18,7 @@ Operation 当前保持 `candidate / validated:false`：Docker 及 local 首轮+�
 | PPU Toolkit | `python3 base/run.py toolkit run ...` | 12 项官方工具/acblas 微基准（sailbandwidth、p2pBandwidthLatencyTest、ppu-smi 静态容量）；可重复指定 `--case`；候选镜像须显式 `--allow-candidate-runtime` |
 | 报告重建 | `python3 base/run.py report ...` | 读取已有证据，重建 Markdown/SVG，不重新测量硬件 |
 | 重复性检查 | `python3 base/qualification.py ...` | 五次独立 run 的严格资格检查，与单 run passed 分开 |
-| Inference（flagprof v2） | `python3 -m flagprof record --vendor thead ...`（锁定容器内） | 候选适配：单卡端到端与 CPU 回归已实测；身份、镜像、最小命令与边界见 [PPU Inference 指南](inference-v2.md) |
+| Inference（flagprof v2） | `python3 -m flagprof record --vendor thead ...`（锁定容器内） | 候选适配：单卡端到端、预设矩阵（perf/perf-lite/accuracy/modules/memory/coverage）、TP2 双卡与 delivery 已实测，CPU 回归通过，第二台同型主机复制一致；身份、镜像、最小命令与边界见 [PPU Inference 指南](inference-v2.md) |
 
 厂商名为 `thead`，芯片名为 `PPU`。Benchmark 中计算、传输和内存为单 rank；
 同机 AllReduce 接受 2–16 rank（本轮实测资格完成于 8 rank，16 rank 见验证说明），
