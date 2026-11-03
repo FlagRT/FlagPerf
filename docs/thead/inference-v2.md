@@ -11,7 +11,8 @@ PyTorch profiler 采集设备事件，经封存导入进入公共 Store，再由
 - 适配状态：candidate（候选适配）。2026-11-03 已在 thead1 真机完成：单卡端到端
   （record → import → inspect → report）、Qwen3-Embedding-0.6B 上 perf / perf-lite /
   accuracy A/A oracle / modules / perf+memory / coverage（gems 镜像）全部预设、
-  TP2 双 rank（nccl 后端）与 delivery publish→verify→restore。多机、TP>2 与长期
+  TP2 双 rank（nccl 后端）与 delivery publish→verify→restore；同日在 thead2 复制
+  核心链路（套件 / 单卡冒烟 / TP2，见验证一节末条）。多机、TP>2 与长期
   运行不在此范围。
 - `performance_disposition` 对 thead 采集固定为 `not_qualified`：PPU 时钟一致性未完成
   验收，报告中的性能数字只作观测，不作资格判定。
@@ -125,6 +126,11 @@ docker run --rm -v "$PWD":/work -w /work $IMG \
   restore 映射保持原路径结构）。
 - 模型权重可追溯：ModelScope `Qwen/Qwen3-Embedding-0.6B`（2026-11-03 master 快照），
   逐文件 sha256 记录在 `download-provenance.json`；两台 thead 使用同一镜像 ID。
+- 复制验证（thead2，2026-11-03）：同一分支与镜像 ID（`1ba7ead15378`，宿主 driver
+  `1.5.3-5239a4` 在契约允许集内）重放——CPU 套件 17 passed；Qwen3-Embedding-0.6B
+  smoke perf `complete + within`（61914 源记录，perf.op/layer/device/gap = ok）；
+  TP2 nccl（卡0+1）group complete、双 rank returncode 0、分类 comm=5/memcpy=106/
+  compute=4 与 thead1 一致。gems 镜像未复制到 thead2，coverage 面板按因 unavailable。
 
 ### 运维注意（实测踩坑）
 
