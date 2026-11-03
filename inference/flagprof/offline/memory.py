@@ -11,7 +11,7 @@ from flagprof.store._offline_writer import offline_writer
 
 
 def adapter(vendor):
-    if vendor not in ('ascend','nvidia'):
+    if vendor not in ('ascend','nvidia','thead'):
         raise ValueError('unsupported memory vendor')
     return importlib.import_module('flagprof.vendors.'+vendor+'.memory')
 
@@ -37,7 +37,7 @@ def import_memory(directory, run, capture, *, writer=None, prepared=None):
         publish(run/'memory.json', state)
         return state
     root = Path(directory)/'sealed-trace/data'
-    names = ['trace.json'] if capture['vendor']=='nvidia' else capture.get('memory_files',[])
+    names = ['trace.json'] if capture['vendor'] in ('nvidia','thead') else capture.get('memory_files',[])
     state['sources'] = [dict(path='sealed-trace/data/'+name, **fileinfo(root/name)) for name in names]
     state['status'] = 'incomplete'
     atomic_json(run/'memory.json', state)
@@ -117,7 +117,7 @@ class MemoryVerifier:
         registration=run/'plan-b-capture.json'
         if registration.exists():
             capture=read_json(registration)['capture']
-            expected=({'trace.json':{k:capture['trace'][k] for k in ('bytes','sha256')}} if capture['vendor']=='nvidia'
+            expected=({'trace.json':{k:capture['trace'][k] for k in ('bytes','sha256')}} if capture['vendor'] in ('nvidia','thead')
                       else capture.get('memory_sources',{}))
             if self.sources!={'sealed-trace/data/'+name:dict(path='sealed-trace/data/'+name,**info) for name,info in expected.items()}:
                 raise ValueError('memory source/capture mismatch')

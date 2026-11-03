@@ -102,6 +102,9 @@ class Attachment:
                 if capture_mode=='final':self.session.meta['source_run_id']=self.writer.run_id
                 self.state['status'] = 'running' if self.session.start() else 'failed'
             else:
+                if descriptor['format_vendor']=='thead':
+                    from .vendors.thead.session import hardware_identity
+                    self.state['hardware_identity']=hardware_identity()
                 self.state.update(status='running', collector_status='not_requested', capture_status='not_requested')
                 self.state['capabilities']['enabled'].remove('official_session')
             from .probes.manager import ProbeManager

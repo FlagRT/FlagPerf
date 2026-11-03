@@ -41,13 +41,19 @@ class FlagGems:
             return self
         import torch
         import flag_gems
-        from flag_gems.runtime.op_registrar import GeneralOpRegistrar
+        import importlib.util
+        if importlib.util.find_spec('flag_gems.runtime.op_registrar') is not None:
+            from flag_gems.runtime.op_registrar import GeneralOpRegistrar
+            registrar_api='op_registrar.GeneralOpRegistrar'
+        else:
+            from flag_gems.runtime.register import Register as GeneralOpRegistrar
+            registrar_api='register.Register'
         owner = self
         self.module = flag_gems
         self.previous_registrar = flag_gems.current_work_registrar
         registered = {}
         class Registrar(GeneralOpRegistrar):
-            def register_impl(self, key, fn, extra_dispatch_keys=()):
+            def register_impl(self, key, fn, *extra, **kwargs):
                 if owner.observer is None:
                     wrapped = fn
                 else:
@@ -61,7 +67,7 @@ class FlagGems:
                             raise
                         finally:
                             owner.notify('exit', key, fn.__name__, token)
-                super().register_impl(key, wrapped, extra_dispatch_keys)
+                super().register_impl(key, wrapped, *extra, **kwargs)
                 registered[key] = fn.__name__
         self.lib = torch.library.Library('aten', 'IMPL')
         try:
@@ -76,7 +82,9 @@ class FlagGems:
                 self.table[canonical] = dict(name='aten::'+name, overload=overload if dot else '',
                     registered=key in registered, impl=registered.get(key),
                     policy_excluded=fn.__name__ not in self.include,
-                    device_unsupported=fn.__name__ in unused or key in unused or not registrar._config_enabled(item))
+                    device_unsupported=fn.__name__ in unused or key in unused or
+                        not (registrar._config_enabled(item) if hasattr(registrar,'_config_enabled') else
+                             len(item)<3 or bool(item[2]())))
             if not registered or not set(self.include) <= set(registered.values()):
                 raise RuntimeError('requested FlagGems functions did not all register')
             root = Path(flag_gems.__file__).parent
@@ -85,7 +93,7 @@ class FlagGems:
                 source.update(str(path.relative_to(root)).encode())
                 source.update(hashlib.sha256(path.read_bytes()).digest())
             data = json.dumps(self.table, sort_keys=True, separators=(',', ':')).encode()
-            self.identity = dict(source_sha256=source.hexdigest(), include=self.include,
+            self.identity = dict(source_sha256=source.hexdigest(), include=self.include,registrar_api=registrar_api,
                 unused=sorted(unused), route_table_sha256=hashlib.sha256(data).hexdigest(), route_table_bytes=len(data))
             return self
         except BaseException:

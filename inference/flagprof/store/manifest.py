@@ -87,6 +87,15 @@ def process_alive(key: Mapping[str, Any] | None) -> bool | None:
     if key["boot_id"] != current["boot_id"] or key["pid_ns"] != current["pid_ns"]:
         return None
     try:
+        # An unreaped child cannot execute or write. Its namespace link may
+        # already be inaccessible, so inspect its state and start time before
+        # resolving namespace metadata. Never treat a recycled PID as alive.
+        stat = Path(f"/proc/{int(key['pid'])}/stat").read_text()
+        fields = stat[stat.rfind(")") + 2:].split()
+        if int(fields[19]) != key['proc_start_ticks']:
+            return False
+        if fields[0] in {'Z', 'X'}:
+            return False
         actual = proc_key(int(key["pid"]))
     except (FileNotFoundError, ProcessLookupError):
         return False

@@ -65,11 +65,17 @@ def worker(settings, rank):
 
 def launch(command, *, store, nproc_per_node=2, comm_backend='hccl', preset='perf',
            config=None, timeout=1800, source_max_bytes=1 << 30,
-           capture_only=False, capture_filesystem='ext4'):
+           capture_only=False, capture_filesystem='ext4', vendor=None):
     vendors = {'hccl':'ascend','flagcx':'ascend','nccl':'nvidia'}
     if nproc_per_node != 2 or comm_backend not in vendors:
         raise ValueError('launch supports single-host TP2 HCCL/FlagCX/NCCL')
-    vendor = vendors[comm_backend]
+    vendor = vendor or vendors[comm_backend]
+    if vendor not in ('ascend','nvidia','thead'):
+        raise ValueError('unsupported launch vendor')
+    if vendor=='thead' and comm_backend not in ('flagcx','nccl'):
+        raise ValueError('PPU TP2 requires the NCCL-compatible or FlagCX backend')
+    if vendor!='thead' and vendor!=vendors[comm_backend]:
+        raise ValueError('launch vendor/backend mismatch')
     if capture_only and preset not in ('perf','modules'):
         raise ValueError('capture-only requires an official profiler preset')
     if capture_filesystem != 'ext4' and not capture_only:

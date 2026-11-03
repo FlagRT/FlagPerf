@@ -29,7 +29,7 @@ def copy_checked(source, destination, *, max_bytes=1<<30):
         raise ValueError('source changed while snapshotting')
 
 def make_bundle(raw, trace, destination, *, vendor, metadata, occurrence=None):
-    if vendor not in ('nvidia', 'ascend'):
+    if vendor not in ('nvidia', 'ascend', 'thead'):
         raise ValueError('unsupported final vendor')
     if metadata.get('normal_close') is not True or metadata.get('target_returncode') != 0:
         raise ValueError('normal producer close required')
@@ -86,7 +86,7 @@ def load_bundle(directory):
     capture = read_json(directory/'capture.json')
     if capture.get('schema') != 'plan-b-capture/1' or capture.get('normal_close') is not True:
         raise ValueError('capture protocol/normal close')
-    if capture['vendor'] not in ('nvidia', 'ascend') or not isinstance(capture['occurrence'], str) or not capture['occurrence']:
+    if capture['vendor'] not in ('nvidia', 'ascend', 'thead') or not isinstance(capture['occurrence'], str) or not capture['occurrence']:
         raise ValueError('capture identity')
     meta = capture['metadata']
     if meta.get('normal_close') is not True or meta.get('target_returncode') != 0:

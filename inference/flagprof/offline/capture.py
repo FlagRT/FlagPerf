@@ -165,7 +165,7 @@ def record_final(command, *, store, work=None, scratch=None, vendor, preset='per
     store=Path(store).resolve()
     capture_id='capture-'+uuid.uuid4().hex
     if capture_only:
-        if vendor not in ('nvidia','ascend') or work is not None or scratch is not None:
+        if vendor not in ('nvidia','ascend','thead') or work is not None or scratch is not None:
             raise ValueError('capture-only requires a supported vendor without import work/scratch')
         from .workspace import check_capture_disk
         check_capture_disk(store,vendor,capture_filesystem)
