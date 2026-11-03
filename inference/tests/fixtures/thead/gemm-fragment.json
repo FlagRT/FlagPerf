@@ -1,0 +1,83 @@
+{
+ "schemaVersion": 1,
+ "record_shapes": 1,
+ "baseTimeNanoseconds": 1790857026000000000,
+ "traceEvents": [
+  {
+   "ph": "X",
+   "cat": "kernel",
+   "name": "gemm_ktype0_aiu1_mtype1_dtypeFP32xFP32xFP32xFP32xFP32_tile64x128x32x32x32x3_layout0x0x0x0_align1x1x4x4_splitk0_fusion0_prefetch0_fp32tc1_ptrhost1_schedule0",
+   "pid": 0,
+   "tid": 1,
+   "ts": 2837156547160.298,
+   "dur": 15.28,
+   "args": {
+    "External id": 6,
+    "queued": 0,
+    "device": 0,
+    "context": 1,
+    "stream": 1,
+    "correlation": 53797,
+    "registers per thread": 64,
+    "shared memory": 73728,
+    "blocks per SM": 0.5,
+    "warps per SM": 4.0,
+    "grid": [
+     8,
+     4,
+     1
+    ],
+    "block": [
+     256,
+     1,
+     1
+    ],
+    "est. achieved occupancy %": 6
+   }
+  },
+  {
+   "ph": "X",
+   "cat": "user_annotation",
+   "name": "thead::smoke_marker",
+   "pid": 7,
+   "tid": 7,
+   "ts": 2837155992493.634,
+   "dur": 554801.622,
+   "args": {
+    "External id": 4,
+    "Record function id": 0,
+    "Ev Idx": 3
+   }
+  },
+  {
+   "name": "process_name",
+   "ph": "M",
+   "ts": 2837155924649.671,
+   "pid": 0,
+   "tid": 0,
+   "args": {
+    "name": "python"
+   }
+  },
+  {
+   "name": "process_labels",
+   "ph": "M",
+   "ts": 2837155924649.671,
+   "pid": 0,
+   "tid": 0,
+   "args": {
+    "labels": "GPU 0"
+   }
+  },
+  {
+   "name": "thread_name",
+   "ph": "M",
+   "ts": 2837155924649.671,
+   "pid": 0,
+   "tid": 1,
+   "args": {
+    "name": "stream 1 "
+   }
+  }
+ ]
+}
