@@ -35,7 +35,7 @@ v2 按 [10 路线图 §0.1](10-roadmap.md#01-v1-能力清单p5-之前的排序�
 
 本目录是公开的生产代码，按本仓库规范单独进行版本管理；`FlagPerf_advance/inference_v2` 是维护者私有的开发与测试目录，保留完整回归套件、验收工具和实验原件，不合并其 Git 历史。两边的生产代码通过 PR 同步，同步后在本节更新来源提交。模型权重、镜像和运行产物留在各自原位置。
 
-框架文档保留设计与历史语境，仅补充迁移阅读说明并调整链接；解释由来的资料放在 [history/](README.md#历史资料history)。指向已迁入文件的链接在公开目录内解析，其余历史引用进入 [出处索引](history/history-references.md)，索引记录原路径和引用页。协作方式见 [文档导航](README.md#两人如何协作)。
+框架文档保留设计与历史语境。2026-11-03 移除 `docs/history/` 目录；正文中的历史引用改为删除前固定 Git 提交中的链接，[出处索引](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md)保留原路径和引用页。协作方式见 [文档导航](README.md#两人如何协作)。
 
 ## 恢复旧版
 

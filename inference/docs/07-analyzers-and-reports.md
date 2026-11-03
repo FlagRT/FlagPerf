@@ -1,4 +1,4 @@
-> 本文从 v2 设计工作区迁入，保留设计、阶段裁决与历史状态。当前代码入口及两人协作方式见 [文档导航](README.md)，可执行命令见 [使用说明](usage.md)。未发布的本地实验与任务书链接转入 [历史引用索引](history/history-references.md)，其出处保留。
+> 本文从 v2 设计工作区迁入，保留设计、阶段裁决与历史状态。当前代码入口及两人协作方式见 [文档导航](README.md)，可执行命令见 [使用说明](usage.md)。未发布的本地实验与任务书出处见删除前固定 Git 提交中的 [历史引用索引](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md)，其出处保留。
 
 # 07 分析器与报告
 
@@ -53,11 +53,11 @@ class Result:
 3. 部分满足（如 kernel 事件存在但关联率低）→ `status="partial"`，结论照出但 `notes` 说明限制。
 4. 任何结论都能追溯到原始事件（N6）：`data` 中的行携带定位信息（corr、sid、call_key、ts 区间），以及事件身份 `{w, seq}` / `{trace_uid, loc}`（[03 §6.5](03-event-schema.md)）。
 5. **依赖的逐事件数据已被精简时降级**：分析器读 `manifest.retention`（[03 §7](03-event-schema.md#7-保留与压缩策略)），所需事件类型已被精简时输出 `unavailable`/`partial` 并说明原因，不在聚合数据上给出逐调用结论。
-6. **时间轴类结论要求有来源的时钟**：导入的设备事件在没有可信时钟换算时 `ts=null`（附录 A #5，T8 导入结果即如此）。此时设备**时长**可用，但不得给出跨来源时间轴、设备空闲归因、wall-clock 占比等结论，这类分析器在 `requires` 中声明 `capabilities=["clock_valid"]`。`ts=null` 说的是我方导入尚未做换算，不等于来源没有时钟信息：Kineto 的主机与 GPU 已在同一 `ts` 轴上（生产者统一，文档），腾昇的时钟锚点齐全；T9 登记时钟来源证据，P2 决定"生产者统一时基"的有效档位（[复审 §6.3](history/history-references.md#ref-fda8bbc0b9b5)）。在此之前仍按 `ts=null` 处理。
+6. **时间轴类结论要求有来源的时钟**：导入的设备事件在没有可信时钟换算时 `ts=null`（附录 A #5，T8 导入结果即如此）。此时设备**时长**可用，但不得给出跨来源时间轴、设备空闲归因、wall-clock 占比等结论，这类分析器在 `requires` 中声明 `capabilities=["clock_valid"]`。`ts=null` 说的是我方导入尚未做换算，不等于来源没有时钟信息：Kineto 的主机与 GPU 已在同一 `ts` 轴上（生产者统一，文档），腾昇的时钟锚点齐全；T9 登记时钟来源证据，P2 决定"生产者统一时基"的有效档位（[复审 §6.3](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-fda8bbc0b9b5)）。在此之前仍按 `ts=null` 处理。
 7. **设备时长之和不是层的耗时**：按原生调用或模块作用域把设备时长求和，得到的是"该范围发起的设备工作量"，不是该层的独占墙钟时间（多流并发、主机侧开销、同步等待都不在其中）。报告中两者必须分开命名。
 8. **导入状态与持久化范围要一起读**：公共接口的 coverage 当前以 `scope=prepared_events` 计算。导入为 `partial` 时，派生视图可能完整而设备事件只落盘了一部分，分析器须同时检查导入状态，不得用准备阶段的覆盖率描述已持久化的事件全集。
 9. **路径"有数据"不等于"可用"**（2026-10-15，T8.1 审核）：`any_of` 选路时，一条路径的视图存在但其中没有有效关系（例如 `native_relations` 存在、owned 为 0），不能算满足，也不能因此挡住后面真正可用的路径。每条路径须声明自己的**可用条件**（如"至少一条 owned"），按条件选路，并在 `notes` 中写明为什么选这条、其余路径缺什么。T8.1 的腾昇当前采集正是这种情况：设备清单可用，按原生调用聚合不可用。字段级的降级规则在 P1 任务单中细化。
-10. **导入完整、格式适用、分析可用是三件事**（2026-10-16，T8.3 审核；[D28](DECISIONS.md#d28--格式适用范围显式化采集配置入身份导入判定适用性静默失败转显式)、[D29](DECISIONS.md#d29--判定一致性结构证据优先于名称契约条目须被执行或被测试)）：`complete` 只说明落盘完整；`StoreView.format_assessment()` 的内层判定（契约内 / 契约外 / 无法判定）说明解释前提是否成立，旧 store 返回 `unavailable`，不等于"无异常"。契约外时不得把 R = 0 读成"没有设备负载"，不得给出无条件的全量占比；无法判定时，只在所需字段与关系不受缺项影响的范围内给出 `partial` 结论。unknown 组按原生类型名分开报告：profiler 自身的控制任务（如腾昇 `PROFILING_ENABLE/DISABLE`）单列，不混入"未知的模型计算"。逐结论的消费矩阵以 [codex T8.3 复盘](history/history-references.md#ref-d94c86bbac29) §4.2 与[返工复盘](history/history-references.md#ref-711fa68dfd18) §5.4 为输入，在 P1 任务单中定稿；§5.4 把"统一时间轴"一行写成"不可提供"过于保守，见第 6 条（[复审 §7](history/history-references.md#ref-3f7249ef335c)）。
+10. **导入完整、格式适用、分析可用是三件事**（2026-10-16，T8.3 审核；[D28](DECISIONS.md#d28--格式适用范围显式化采集配置入身份导入判定适用性静默失败转显式)、[D29](DECISIONS.md#d29--判定一致性结构证据优先于名称契约条目须被执行或被测试)）：`complete` 只说明落盘完整；`StoreView.format_assessment()` 的内层判定（契约内 / 契约外 / 无法判定）说明解释前提是否成立，旧 store 返回 `unavailable`，不等于"无异常"。契约外时不得把 R = 0 读成"没有设备负载"，不得给出无条件的全量占比；无法判定时，只在所需字段与关系不受缺项影响的范围内给出 `partial` 结论。unknown 组按原生类型名分开报告：profiler 自身的控制任务（如腾昇 `PROFILING_ENABLE/DISABLE`）单列，不混入"未知的模型计算"。逐结论的消费矩阵以 [codex T8.3 复盘](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-d94c86bbac29) §4.2 与[返工复盘](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-711fa68dfd18) §5.4 为输入，在 P1 任务单中定稿；§5.4 把"统一时间轴"一行写成"不可提供"过于保守，见第 6 条（[复审 §7](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-3f7249ef335c)）。
 
 ## 2. coverage：每个结论自带的可信度
 
@@ -115,7 +115,7 @@ class Result:
 
 v1 的 `perturbed: bool` 把"这份数据被探针污染了"当成整份 run 的属性，开了任何探针就整份不可信。按指标类拆开是对的：主机侧时长（`op.dur`/`span.dur`/端到端）与设备侧时长（`kernel`/`memop`/`comm` 设备段）受到的扰动来源不同，强度也不同。
 
-但拆开之后，**每一类仍然需要证据**，不能从「这是设备时间」直接推出「没有扰动」。[Spike-C](history/11-spike-cann-correlation.md) 在同配置、同 kernel 数的 17 组"有标记 / 无标记"配对中，测得单 kernel 设备时长之比 0.926–1.034，端到端耗时之比 0.97–3.86（3.0–3.9 倍只出现在 M1 这类 kernel 极短的微基准上，真实模型 M3 为 +13%）。它支持的结论是：**在这些配置下，标记对设备时长的影响落在这个范围内**。它不覆盖 tensor 探针（会同步设备、改变并发）、通信等待、并发调度，也不能外推到别的 workload。
+但拆开之后，**每一类仍然需要证据**，不能从「这是设备时间」直接推出「没有扰动」。[Spike-C](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/11-spike-cann-correlation.md) 在同配置、同 kernel 数的 17 组"有标记 / 无标记"配对中，测得单 kernel 设备时长之比 0.926–1.034，端到端耗时之比 0.97–3.86（3.0–3.9 倍只出现在 M1 这类 kernel 极短的微基准上，真实模型 M3 为 +13%）。它支持的结论是：**在这些配置下，标记对设备时长的影响落在这个范围内**。它不覆盖 tensor 探针（会同步设备、改变并发）、通信等待、并发调度，也不能外推到别的 workload。
 
 > **规范**：
 > - 任何时长都按「**该采集配置下观察到的值**」报告，单次 run 即可报告，并附采集配置。
@@ -156,7 +156,7 @@ v1 用独立的 preview 阶段（5 个模块、专门的搜索流程）找出 Fl
 
 ### 3.3 精度（R52、R86/R88）
 
-> **P4.1 实现口径（2026-10-29）**：full 浮点配对按原 dtype 单次读取数值与 ULP；相等极值作为成对哨兵排除，有限极值失配另计。层级直方图与分母累加；max_abs／ULP／样本／位置同源。张量 stride/contiguous 单列，ULP 描述量级，具体成因结合实现或定点实验。[T11.3 验收](history/history-references.md#ref-4ea9cd3ce263)。
+> **P4.1 实现口径（2026-10-29）**：full 浮点配对按原 dtype 单次读取数值与 ULP；相等极值作为成对哨兵排除，有限极值失配另计。层级直方图与分母累加；max_abs／ULP／样本／位置同源。张量 stride/contiguous 单列，ULP 描述量级，具体成因结合实现或定点实验。[T11.3 验收](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-4ea9cd3ce263)。
 
 
 > **2026-10-28 按 [D50](DECISIONS.md#d50) 第 8 条（P4 首批，T11.2 实现）**：

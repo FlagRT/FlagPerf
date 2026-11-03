@@ -1,8 +1,8 @@
-> 本文从 v2 设计工作区迁入，保留设计、阶段裁决与历史状态。当前代码入口及两人协作方式见 [文档导航](README.md)，可执行命令见 [使用说明](usage.md)。未发布的本地实验与任务书链接转入 [历史引用索引](history/history-references.md)，其出处保留。
+> 本文从 v2 设计工作区迁入，保留设计、阶段裁决与历史状态。当前代码入口及两人协作方式见 [文档导航](README.md)，可执行命令见 [使用说明](usage.md)。未发布的本地实验与任务书出处见删除前固定 Git 提交中的 [历史引用索引](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md)，其出处保留。
 
 # 09 CLI 与批量运行
 
-> **当前实现更新（2026-10-26，D33）**：已落地动词为 record/inspect/import/page/seal/analyse。record 默认 final，窗口模式须显式 --capture-mode windowed；B run 的 inspect 自动有界。report/campaign/watch 仍为后续目标。生产目录与命令见[默认 B 使用说明](history/history-references.md#ref-e854eaa4d4fc)，整合证据见[交付记录](history/history-references.md#ref-dbcab1a14471)。下文 2026-10-18 状态保留历史语境。
+> **当前实现更新（2026-10-26，D33）**：已落地动词为 record/inspect/import/page/seal/analyse。record 默认 final，窗口模式须显式 --capture-mode windowed；B run 的 inspect 自动有界。report/campaign/watch 仍为后续目标。生产目录与命令见[默认 B 使用说明](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-e854eaa4d4fc)，整合证据见[交付记录](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-dbcab1a14471)。下文 2026-10-18 状态保留历史语境。
 
 > 上游：[02 架构](02-architecture.md) §3/§4、[05 预设](05-probes-and-vendors.md) §3、[07 分析器](07-analyzers-and-reports.md)
 
@@ -10,7 +10,7 @@
 
 > **当前实现（T9，2026-10-18）**：CLI 目前只有两个动词——**`record`** 与 **`inspect`**（`python3 -m flagprof --help`）。下文的 `report`、`campaign`、`watch` 均为**设计目标（未实现）**：`campaign` 属 P5，`watch` 属 P3，`report` 随分析器落地（阶段见 [10 路线图](10-roadmap.md)）。目前的"campaign"只是 `tools/acceptance/` 下的验收脚本（如 `t93_campaign.py`），不是产品命令，也不读写下文的 `_index/`。
 
-v1 的 10 个顶层命令是按"分析种类"长出来的（accuracy / performance / preview / oracle / performance-baseline / repack-reference…），能力增加则命令增加（[01 §2.4](history/01-diagnosis.md)）。
+v1 的 10 个顶层命令是按"分析种类"长出来的（accuracy / performance / preview / oracle / performance-baseline / repack-reference…），能力增加则命令增加（[01 §2.4](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/01-diagnosis.md)）。
 
 v2 固定为 **5 个动词**，新增能力只增加 `report` 的分析器名或 `record` 的预设，不增加顶层命令。
 

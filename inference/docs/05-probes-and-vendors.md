@@ -1,8 +1,8 @@
-> 本文从 v2 设计工作区迁入，保留设计、阶段裁决与历史状态。当前代码入口及两人协作方式见 [文档导航](README.md)，可执行命令见 [使用说明](usage.md)。未发布的本地实验与任务书链接转入 [历史引用索引](history/history-references.md)，其出处保留。
+> 本文从 v2 设计工作区迁入，保留设计、阶段裁决与历史状态。当前代码入口及两人协作方式见 [文档导航](README.md)，可执行命令见 [使用说明](usage.md)。未发布的本地实验与任务书出处见删除前固定 Git 提交中的 [历史引用索引](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md)，其出处保留。
 
 # 05 探针与厂商适配
 
-> **当前采集默认（2026-10-26，D33）**：CLI/Python record/attach 使用 final 官方 start→正常 stop/export；handle.step() 仅兼容、不驱动 SDK。显式 windowed 保留原窗口采集。所有者退出后由 worker 分析/导入，裸 attach 的 atexit 保持 unknown/partial。部署、恢复及已验收边界见[默认 B 使用说明](history/history-references.md#ref-e854eaa4d4fc)。
+> **当前采集默认（2026-10-26，D33）**：CLI/Python record/attach 使用 final 官方 start→正常 stop/export；handle.step() 仅兼容、不驱动 SDK。显式 windowed 保留原窗口采集。所有者退出后由 worker 分析/导入，裸 attach 的 atexit 保持 unknown/partial。部署、恢复及已验收边界见[默认 B 使用说明](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-e854eaa4d4fc)。
 
 > 上游：[02 架构](02-architecture.md) L1、[03 schema](03-event-schema.md)、[D22](DECISIONS.md#d22--采集层复用官方-profiler不做源码级融合)–[D24](DECISIONS.md#d24--导入契约身份分层来源账本完成标记证据索引) ｜ 下游：[06 模型接入](06-model-onboarding.md)、[07 分析器](07-analyzers-and-reports.md)
 
@@ -68,13 +68,13 @@
 
 > **2026-10-28 按 [D50](DECISIONS.md#d50) 第 5 条**：P4 首批尚无 profile YAML，`accuracy` 预设的默认边界按结构规则给出：输入嵌入模块、最大同类型 `ModuleList` 的每个元素、runner 的 `pooled` 与 `output`。这仍是有限的边界集合，不是全抓；`--tensor-boundaries <json>` 可替换默认集合。
 
-> **2026-11-02 用户批准的边界选择入口**：`--tensor-boundaries model` 关闭模块边界张量、保留 runner 提交的模型终点；`layer` 与省略参数一致，沿用默认边界。JSON 路径列表保持兼容。`--tensor-ops-in` 独立增加指定模块内部算子采集；`layer` 加下钻时保留其他层边界，`model` 加下钻时其他层不采张量。完整值仍由 `--tensor-blob` 控制。CLI 与 Python API 共用配置归一化，使用示例见 [P1 accuracy](history/history-references.md#ref-a7ee45133ae2)。
+> **2026-11-02 用户批准的边界选择入口**：`--tensor-boundaries model` 关闭模块边界张量、保留 runner 提交的模型终点；`layer` 与省略参数一致，沿用默认边界。JSON 路径列表保持兼容。`--tensor-ops-in` 独立增加指定模块内部算子采集；`layer` 加下钻时保留其他层边界，`model` 加下钻时其他层不采张量。完整值仍由 `--tensor-blob` 控制。CLI 与 Python API 共用配置归一化，使用示例见 [P1 accuracy](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-a7ee45133ae2)。
 
 ## 3. 预设（preset）
 
 用户不直接勾选探针，而是选预设。预设是 registry 中的 JSON，可被用户覆盖。
 
-> **2026-10-27 按 [D46](DECISIONS.md#d46) 第 1 条修订**（P1 首批；当前实现待 [T10.1](history/history-references.md#ref-29067dfd8983) 交付，之前以下方 T9 的“当前实现”为准）。修订前的表原文保留在本节末尾。
+> **2026-10-27 按 [D46](DECISIONS.md#d46) 第 1 条修订**（P1 首批；当前实现待 [T10.1](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-29067dfd8983) 交付，之前以下方 T9 的“当前实现”为准）。修订前的表原文保留在本节末尾。
 
 | preset | 官方 profiler | dispatch | module | route | compile | 目的 |
 |---|---|---|---|---|---|---|
@@ -87,7 +87,7 @@
 
 comm、counter 属 P2，health 探针属 P3，P1 首批的预设不含这三者。FlagGems 是组件开关（`--flaggems off|on`，`on` 时必须给 include 列表），默认 `off`。
 
-**2026-10-27 按 [D48](DECISIONS.md#d48) 补充依赖**：FlagGems 组件与 route 观察者分别管理。默认 perf/modules 的 dispatch 关闭时，组件仍按配置启用，route 为 `unavailable/dispatch_disabled`；打开 each-window 后才具备 route 调用判定所需的帧。`--probes none` 关闭项目探针，组件开关独立生效。根模型登记、惰性发现与首轮窗口由 [T10.1 §3.2–§3.4](history/history-references.md#ref-e14e5516d9b9) 规定。
+**2026-10-27 按 [D48](DECISIONS.md#d48) 补充依赖**：FlagGems 组件与 route 观察者分别管理。默认 perf/modules 的 dispatch 关闭时，组件仍按配置启用，route 为 `unavailable/dispatch_disabled`；打开 each-window 后才具备 route 调用判定所需的帧。`--probes none` 关闭项目探针，组件开关独立生效。根模型登记、惰性发现与首轮窗口由 [T10.1 §3.2–§3.4](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-e14e5516d9b9) 规定。
 
 > **当前实现（T9，2026-10-18）**：`record --preset` 只有 **`perf`、`modules`** 两个预设（`flagprof/runtime.py` 的 `configuration()` 解析，其他名字报 `unsupported preset`）；它们不是上表意义的"探针组合"，只决定向官方 profiler 请求哪些选项。
 >
@@ -103,7 +103,7 @@ comm、counter 属 P2，health 探针属 P3，P1 首批的预设不含这三者�
 
 分开的理由要说准：精度探针（tensor 取数、逐 op 同步）**同时扰动主机与设备两侧** —— 取张量要同步设备、分配主机内存，会改变 kernel 的排队与并发；性能探针的标记与计时则主要拉长主机侧时间。两者叠加时，任何一侧的计时都不再代表被测系统。
 
-至于「标记是否扰动设备时长」，[Spike-C](history/11-spike-cann-correlation.md) 只给出一组有限的证据：17 组 marker/plain 对照中，单 kernel 设备时长之比为 0.926–1.034。它说明**在这些配置下**标记对设备时长的影响落在这个范围内，不说明「设备时长天然不受扰动」，也不覆盖 tensor 探针、通信等待、并发调度或以后的 workload。因此：
+至于「标记是否扰动设备时长」，[Spike-C](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/11-spike-cann-correlation.md) 只给出一组有限的证据：17 组 marker/plain 对照中，单 kernel 设备时长之比为 0.926–1.034。它说明**在这些配置下**标记对设备时长的影响落在这个范围内，不说明「设备时长天然不受扰动」，也不覆盖 tensor 探针、通信等待、并发调度或以后的 workload。因此：
 
 - **预设能报告哪些指标，由它实际启用的来源决定。** `accuracy` 不开 vendor profiler，所以**没有** kernel/memop/comm 设备事件，设备性能指标一律 `unavailable`；它的产出是张量、路由与主机侧的调用结构。
 - 任何 run 的设备时长都按「**该采集配置下观察到的值**」报告，并附上采集配置。扰动是否受控由 [07 §2.1](07-analyzers-and-reports.md) 的 `perturbation` 单独标注：没有对应的对照 run 时标 `not_evaluated`，**不自动视为无扰动**。
@@ -177,7 +177,7 @@ class SourceFormat(Protocol):      # 厂商格式解释，由 vendors/<v>/format
 |---|---|---|---|
 | `kernel_trace` | yes/no | yes | yes |
 | `host_device_link` | `per_call` / `per_kernel_name` / `interval_only` | `per_call`（queue=1 经 Enqueue/Dequeue 桥，Spike-C 已验证） | `per_call` |
-| `native_owner` | `per_call` / `scope_only` / `none` —— 不加项目探针时，官方 profiler 能否把设备记录归到原生调用（04 §3.7） | 历史格式（2026-10 实验，eager）：`per_call`。**当前格式**（torch_npu 2.10.0 / CANN 9.0.0，**Level0 + 数据精简**，格式 **v3**，T8 新采集三窗）：**`per_call`**，每窗 10,120 条全部 owned，30,360 条经独立原始链路证明（[T8.2](history/history-references.md#ref-3d910d3fb495)，2026-10-15 Gate 通过）。同一采集在格式 v2 下为 `none`（每窗 10,120 unowned / `no_bridge`，主机进程编号未还原），v2 可显式重放 | 历史格式（2026-10 实验，eager）：`per_call`。**当前格式**（torch.profiler 2.8.0+cu126，分类表 v1，T8 新采集两窗）：`per_call`，每窗 9,265 条全部 owned |
+| `native_owner` | `per_call` / `scope_only` / `none` —— 不加项目探针时，官方 profiler 能否把设备记录归到原生调用（04 §3.7） | 历史格式（2026-10 实验，eager）：`per_call`。**当前格式**（torch_npu 2.10.0 / CANN 9.0.0，**Level0 + 数据精简**，格式 **v3**，T8 新采集三窗）：**`per_call`**，每窗 10,120 条全部 owned，30,360 条经独立原始链路证明（[T8.2](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-3d910d3fb495)，2026-10-15 Gate 通过）。同一采集在格式 v2 下为 `none`（每窗 10,120 unowned / `no_bridge`，主机进程编号未还原），v2 可显式重放 | 历史格式（2026-10 实验，eager）：`per_call`。**当前格式**（torch.profiler 2.8.0+cu126，分类表 v1，T8 新采集两窗）：`per_call`，每窗 9,265 条全部 owned |
 | `session_conflict_detect` | `detectable` / `not_detectable` —— 能否检测用户已自行开启的 profiler（D22 第 2 条） | `not_detectable`（T8 实测：当前 torch_npu 没有可靠的活动会话查询接口；不以启动重叠 profiler 的方式探测） | `detectable`（T8 实测；经私有符号 `torch.autograd.profiler._is_profiler_enabled`，已在 capture 清单登记） |
 | `memop_trace` | yes/no | yes | yes |
 | `comm_device_trace` | yes/no | yes（HCCL） | yes（NCCL） |
@@ -187,29 +187,29 @@ class SourceFormat(Protocol):      # 厂商格式解释，由 vendors/<v>/format
 | `graph_mode_visibility` | none/partial/full | none | none |
 | `required_env` | dict | **空**（见下） | **空** |
 | `collector_prerequisites` | list | **空**（T8 实测） | **空**（T8 实测） |
-| `device_taxonomy` | 版本号 + 覆盖状态 —— 当前采集格式能否被分类表识别（D25） | 代码默认 **v4**（T8.3，2026-10-16；分类与 v3 相同，另含格式契约与 unknown 入选；返工轮设计者 Gate 通过，2026-10-16）；v3 是 T8.2 通过 Gate 的版本（分类表与 v2 相同，另含主机身份还原）；标签与内容修订的关系见下方"版本标签与内容修订"；v2 起当前格式已覆盖（[T8.1](history/history-references.md#ref-5fcd4691137d)，2026-10-15 Gate 通过）：T8 新采集每窗 compute R = E = 9,980、memcpy R = E = 140、unknown 0；`KERNEL_AIVEC/AICORE/MIX_AIV/AICPU` 的映射依据见 [taxonomy-ascend-v2](history/history-references.md#ref-44bc5a296b18)。v1 可显式重放，历史输出逐字节不变 | 代码默认 **v2**（T8.3；分类与 v1 相同，另含格式契约与 unknown 入选；返工轮 Gate 通过，见下方"格式契约"）；**v1** 当前格式已覆盖：T8 新采集每窗 compute R = E = 9,260、memcpy R = E = 5 |
+| `device_taxonomy` | 版本号 + 覆盖状态 —— 当前采集格式能否被分类表识别（D25） | 代码默认 **v4**（T8.3，2026-10-16；分类与 v3 相同，另含格式契约与 unknown 入选；返工轮设计者 Gate 通过，2026-10-16）；v3 是 T8.2 通过 Gate 的版本（分类表与 v2 相同，另含主机身份还原）；标签与内容修订的关系见下方"版本标签与内容修订"；v2 起当前格式已覆盖（[T8.1](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-5fcd4691137d)，2026-10-15 Gate 通过）：T8 新采集每窗 compute R = E = 9,980、memcpy R = E = 140、unknown 0；`KERNEL_AIVEC/AICORE/MIX_AIV/AICPU` 的映射依据见 [taxonomy-ascend-v2](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-44bc5a296b18)。v1 可显式重放，历史输出逐字节不变 | 代码默认 **v2**（T8.3；分类与 v1 相同，另含格式契约与 unknown 入选；返工轮 Gate 通过，见下方"格式契约"）；**v1** 当前格式已覆盖：T8 新采集每窗 compute R = E = 9,260、memcpy R = E = 5 |
 
 **格式契约**（2026-10-15，[D28](DECISIONS.md#d28--格式适用范围显式化采集配置入身份导入判定适用性静默失败转显式) 第 2 条）：指纹只回答"用了哪套解释"。每个格式版本另带一份契约，放在 `vendors/<v>/` 旁，写明适用条件（含采集配置）、依赖的厂商标签及失效类型、每项解释的依据等级；导入时据此给出"契约内 / 契约外 / 无法判定"。契约外照常导入，不被当作已验证。
 
-> **现状（2026-10-16，T8.3 返工轮 Gate 通过，附遗留 L1–L6 转 T9 §0）**：T8.3 已实现六份契约（腾昇 v1–v4、NVIDIA v1–v2）、三值判定与只读入口 `StoreView.format_assessment()`。首轮 Gate 未通过时的四个阻塞项（[首轮审核](history/history-references.md#ref-ed6a5f5f7031) B1–B4：NVIDIA 设备执行轨被判为 host；unknown 入选不看轨道角色；设备轨整条缺失仍判契约内；契约约一半字段未被执行）**已在返工轮修复**，75 个来源路径（67 份唯一原件）上的修复经独立复核确认（[复审](history/history-references.md#ref-81d74b957ee6) §0 R1–R8，[返工 Gate 输入](history/history-references.md#ref-7e2e7910cbbf)）。返工遵循 [D29](DECISIONS.md#d29--判定一致性结构证据优先于名称契约条目须被执行或被测试)：结构证据优先于名称、冲突显式；每份契约至少一条必需结构条件（存在有完整事件的设备执行轨）；契约条目须被执行或被测试绑定。T8 当前五窗仍为"无法判定"（腾昇每窗 10 项、A100 每窗 7 项必需条件缺证据），主要是证据没有喂进判定链路，不是格式判不了（复审 §2；[D30](DECISIONS.md#d30--契约条件的证据先查产物自述每个必需条件登记生产者)，已确认（用户 2026-10-16））。
+> **现状（2026-10-16，T8.3 返工轮 Gate 通过，附遗留 L1–L6 转 T9 §0）**：T8.3 已实现六份契约（腾昇 v1–v4、NVIDIA v1–v2）、三值判定与只读入口 `StoreView.format_assessment()`。首轮 Gate 未通过时的四个阻塞项（[首轮审核](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-ed6a5f5f7031) B1–B4：NVIDIA 设备执行轨被判为 host；unknown 入选不看轨道角色；设备轨整条缺失仍判契约内；契约约一半字段未被执行）**已在返工轮修复**，75 个来源路径（67 份唯一原件）上的修复经独立复核确认（[复审](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-81d74b957ee6) §0 R1–R8，[返工 Gate 输入](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-7e2e7910cbbf)）。返工遵循 [D29](DECISIONS.md#d29--判定一致性结构证据优先于名称契约条目须被执行或被测试)：结构证据优先于名称、冲突显式；每份契约至少一条必需结构条件（存在有完整事件的设备执行轨）；契约条目须被执行或被测试绑定。T8 当前五窗仍为"无法判定"（腾昇每窗 10 项、A100 每窗 7 项必需条件缺证据），主要是证据没有喂进判定链路，不是格式判不了（复审 §2；[D30](DECISIONS.md#d30--契约条件的证据先查产物自述每个必需条件登记生产者)，已确认（用户 2026-10-16））。
 >
-> **T9 关闭结果（2026-10-18；上文"每窗缺 10/7 项"保留为 10-16 的历史口径，不再代表现状）**：L1–L6 由 T9.0 关闭（证据：[T9 退出矩阵](history/history-references.md#ref-e0872549b0c8)、[T9.3 执行记录](history/history-references.md#ref-61e29505d51c)）。**旧五窗**（T8 采集）仍判"无法判定"，缺口已收窄为缺少有来源的 `execution.mode`，NVIDIA 另缺独立的 `exporter.version`——二者保留 required，无导出来源就不得为判 `within` 而下调要求（D30 补充，设计者裁决 2026-10-18）。T9.3 新采集：腾昇窗 `within`（`execution.mode` 取自 workload 源码声明的 eager 来源；通用 `record` 没有这类来源，不得套用）；A100 窗 `indeterminate`，缺 `exporter.version` 精确解释了这一点。
+> **T9 关闭结果（2026-10-18；上文"每窗缺 10/7 项"保留为 10-16 的历史口径，不再代表现状）**：L1–L6 由 T9.0 关闭（证据：[T9 退出矩阵](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-e0872549b0c8)、[T9.3 执行记录](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-61e29505d51c)）。**旧五窗**（T8 采集）仍判"无法判定"，缺口已收窄为缺少有来源的 `execution.mode`，NVIDIA 另缺独立的 `exporter.version`——二者保留 required，无导出来源就不得为判 `within` 而下调要求（D30 补充，设计者裁决 2026-10-18）。T9.3 新采集：腾昇窗 `within`（`execution.mode` 取自 workload 源码声明的 eager 来源；通用 `record` 没有这类来源，不得套用）；A100 窗 `indeterminate`，缺 `exporter.version` 精确解释了这一点。
 >
 > **连接键的语义域**（T8.3 C7）：腾昇 queue 键只接受官方 `correlation_id` 字段，键为（`torch_npu.queue` 域，trace，主机进程，值）。字段名含 `correlation`、或数值相同，都不足以连接。修复适用于全部格式版本，旧版本选择不恢复不安全的连接路径。
 
-**返工后的读法**（2026-10-16，[T8.3 返工复审](history/history-references.md#ref-81d74b957ee6) §3、§4）：
+**返工后的读法**（2026-10-16，[T8.3 返工复审](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-81d74b957ee6) §3、§4）：
 
 1. **轨道角色与活动记录分层。** 轨道角色（设备执行轨 / 主机 / 元数据 / 未识别）与"轨道上的每条记录是否设备活动"分开判断。主机事件类别、设备活动判据、设备轨上允许的非设备类别分开声明：例如 Kineto 把 GPU 侧的 `ProfilerStep#N` 等用户注释写在设备轨上（`cat=gpu_user_annotation`），契约登记为"设备轨上允许的非设备类别"，不进 R/E、不算主机冲突、单独计数。设备轨上出现主机类完整事件、或主机轨上出现 kernel，按冲突告警并判契约外。角色索引由原件与契约构建，不由已导入的 E 倒推。
 2. **腾昇的结构见证影响角色，不影响 R/E。** 腾昇的设备判据仍是已登记的进程名依据；`Task Type` 与 `Physic Stream Id` 的结构见证用于冲突审计：`witnessed_conflict` 把该轨角色写回为 device，所以它进角色索引，不进 R/E。设备进程被改名为 Python 时，该轨 role=device，必需结构条件 pass，status 由 `name_structure_conflict` 判 outside。行为正确，但读者须知道角色与 R/E 的依据不同源。
 3. **`process_labels`、`process_name` 不作设备存在证据。** 本机实测 Kineto 给 GPU 0..15 全部发出 `process_labels`，实际只有 GPU 0 有活动。进程元数据只能说明"声明了"，设备存在只由设备执行事件与轨道结构证明。
 4. **两家支持范围不对称。** `device_count` 数的是不同编号的个数，不是编号值。NVIDIA 契约有 `scope.device_ordinals`，单个编号 1 判 outside；腾昇契约（v4）没有这一条，单个 NPU 编号 1 判 within（5 份唯一腾昇来源的编号为 1）。同一设备有 2 条设备执行轨时仍是 count=1、within；Kineto `pid ≠ args.device` 时生产静默判 within，第二信号目前只在测试侧。补法已裁决（复审 §3.4）：第二信号做成支持范围条件、不做角色判据；腾昇补 `device_ordinals` 或登记不对称理由；统计设备执行轨条数与每个编号的轨数。转 T9.0 §0.4。
-5. **版本标签与内容修订。** 版本标签（腾昇 v1–v4、NVIDIA v1–v2）是厂商格式代际，不是内容修订号：返工中标签不变而内容大改（例如腾昇 v4 的格式身份 sha `88ede396…` → `f6798be2…`；磁盘上旧 store 与新 run 的 sha 确实不同），目前只有解析身份的 sha 能区分修订前后，没有 contract revision 字段。解析身份也只覆盖 `SourceFormat` 协议的闭包，账本处置、规则与共享判定代码不在任何代码哈希身份内（[D27](DECISIONS.md#d27--格式解释的身份覆盖全部钩子兼容验收到连接键) 更正注记，复审 §3.5）。是否加内容修订号已在 T9.0 任务单裁决：每份契约加整数 `revision`，并以 `revisions.lock.json` 钉住（[T9.0 §4.5](history/history-references.md#ref-1fb43a35144d)）。
+5. **版本标签与内容修订。** 版本标签（腾昇 v1–v4、NVIDIA v1–v2）是厂商格式代际，不是内容修订号：返工中标签不变而内容大改（例如腾昇 v4 的格式身份 sha `88ede396…` → `f6798be2…`；磁盘上旧 store 与新 run 的 sha 确实不同），目前只有解析身份的 sha 能区分修订前后，没有 contract revision 字段。解析身份也只覆盖 `SourceFormat` 协议的闭包，账本处置、规则与共享判定代码不在任何代码哈希身份内（[D27](DECISIONS.md#d27--格式解释的身份覆盖全部钩子兼容验收到连接键) 更正注记，复审 §3.5）。是否加内容修订号已在 T9.0 任务单裁决：每份契约加整数 `revision`，并以 `revisions.lock.json` 钉住（[T9.0 §4.5](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-1fb43a35144d)）。
 
 `host_device_link` 的取值直接映射到 [04 §6](04-correlation.md) 的降级级别。
 
 **能力取值绑定什么**（2026-10-15，[D25](DECISIONS.md#d25--冻结语义与输出不冻结厂商分类表)）：表中每个取值只对一组具体条件成立，即（硬件，采集器及版本，分类表版本，采集配置，样本范围）。它不是厂商的永久属性。T8.1 给出了实例：同一台腾昇机器上，历史格式的 `native_owner` 是 `per_call`，当前格式在分类补齐之后仍是 `none`。T8.2 进一步表明，这次差异的成因是**采集配置**（会话未声明 profiler level，默认 Level0 裁掉了 `CANN` 记录），而不是 SDK 版本（[D28](DECISIONS.md#d28--格式适用范围显式化采集配置入身份导入判定适用性静默失败转显式) 第 1 条）。所以本表按条件分行填写，能力不跨采集条件继承；根因分析先比较配置，再归因于版本。registry 登记能力时，须同时登记这组条件。
 
-> **`required_env` 必须为空 —— 工具不得为提高关联率而改变被测系统的运行配置。** v1 强制 `TASK_QUEUE_ENABLE=0`，代价是测的不是用户生产环境的真实形态。[Spike-C](history/11-spike-cann-correlation.md) 已证明 `TASK_QUEUE_ENABLE=1` 下经 `Enqueue → Dequeue` 显式桥仍可逐调用关联（8,016 个 kernel 经此路径关联，无歧义），该强制前提**取消**。`TASK_QUEUE_ENABLE` 与 `TRITON_ENABLE_TASKQUEUE` 是两个独立开关，其**实际取值**必须原样记入 `meta.env`，不得由工具设定。若某厂商某配置确实无法关联，正确做法是按 §4.1 降级并如实声明，不是改配置。
+> **`required_env` 必须为空 —— 工具不得为提高关联率而改变被测系统的运行配置。** v1 强制 `TASK_QUEUE_ENABLE=0`，代价是测的不是用户生产环境的真实形态。[Spike-C](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/11-spike-cann-correlation.md) 已证明 `TASK_QUEUE_ENABLE=1` 下经 `Enqueue → Dequeue` 显式桥仍可逐调用关联（8,016 个 kernel 经此路径关联，无歧义），该强制前提**取消**。`TASK_QUEUE_ENABLE` 与 `TRITON_ENABLE_TASKQUEUE` 是两个独立开关，其**实际取值**必须原样记入 `meta.env`，不得由工具设定。若某厂商某配置确实无法关联，正确做法是按 §4.1 降级并如实声明，不是改配置。
 
 ### 4.2 接入一家新厂商的验收清单
 
@@ -224,7 +224,7 @@ class SourceFormat(Protocol):      # 厂商格式解释，由 vendors/<v>/format
 9. **身份**：在 store 中只读登记表就能得到真实硬件、采集器与解析身份，不依赖外层报告补救（#27）；
 10. **当前采集器 → 当前导入器贯通**（[D25](DECISIONS.md#d25--冻结语义与输出不冻结厂商分类表) 第 5 条）：用该厂商**当前版本**官方 profiler 的新采集产物走一遍当前导入器，compute 的 R 与 E 大于 0，原生关系有明确数值。只验证"采集产物有效"或只用历史样本验证导入，都不算通过。每次采集器或 SDK 版本变化都要重做，并把抽取的小片段加入 CI。**逐跳解释**（[D27](DECISIONS.md#d27--格式解释的身份覆盖全部钩子兼容验收到连接键) 第 3 条）：预登记每条关联规则用到的连接键；验收报告设备 → launch → 主机线程组 → 桥接 → 原生调用各跳的命中数，任一跳为 0 须指出断在哪个键。逐跳计数须同时登记格式身份、调用/注释选择配置（ScopeConfig）与统计单位（设备条数 / 唯一 launch 数）；前后对照必须同配置，替代路径不得按相邻列相除成覆盖率（T8.2 F1）；
 11. **格式解释版本化**：`device_taxonomy()` 返回的格式对象带版本号，指纹覆盖全部注入钩子（D27 第 1 条，以变异测试保证）；新版本附新旧解释在全部已有样本上的差异预期，历史样本的项目 link、原生关系与处置逐字节不变（输出锁）；
-12. **适用范围与静默失败**（[D28](DECISIONS.md#d28--格式适用范围显式化采集配置入身份导入判定适用性静默失败转显式)）：会话显式声明影响导出结构的采集配置并写进采集身份；格式契约随版本维护；导入报告给出适用性判定、轨道角色审计（未识别轨道上的完整事件计数并告警）与 unknown 归并。至少用两个变异片段验收：设备轨改名、删除设备轨元数据——R 可以变化，但必须出现告警并判为契约外，不得以 `complete` 且无任何异常的形式通过。另须（[D29](DECISIONS.md#d29--判定一致性结构证据优先于名称契约条目须被执行或被测试)）：在全部真实样本上，每条规范设备事件所在轨道的角色为设备执行轨；设备执行轨整条缺失时判契约外；对角色判定与适用性判定做变异，至少一项测试失败。验收写法（复审 [§3.2](history/history-references.md#ref-a9b975fef97b)、[§3.5](history/history-references.md#ref-5067078b07e5)）：性质门禁加同类输入上的阳性对照；**代码变异与契约数据变异**（删条件行、改值，条件 id 集合与 `requirement` 与预登记逐项比较并进 CI）并列，复核方另设计一批、不预先告知；导入时实际加载的判定模块须全部落在某个身份闭包内（身份层面的谓词清点）；每个必需条件登记证据生产者（[D30](DECISIONS.md#d30--契约条件的证据先查产物自述每个必需条件登记生产者)，已确认（用户 2026-10-16））。
+12. **适用范围与静默失败**（[D28](DECISIONS.md#d28--格式适用范围显式化采集配置入身份导入判定适用性静默失败转显式)）：会话显式声明影响导出结构的采集配置并写进采集身份；格式契约随版本维护；导入报告给出适用性判定、轨道角色审计（未识别轨道上的完整事件计数并告警）与 unknown 归并。至少用两个变异片段验收：设备轨改名、删除设备轨元数据——R 可以变化，但必须出现告警并判为契约外，不得以 `complete` 且无任何异常的形式通过。另须（[D29](DECISIONS.md#d29--判定一致性结构证据优先于名称契约条目须被执行或被测试)）：在全部真实样本上，每条规范设备事件所在轨道的角色为设备执行轨；设备执行轨整条缺失时判契约外；对角色判定与适用性判定做变异，至少一项测试失败。验收写法（复审 [§3.2](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-a9b975fef97b)、[§3.5](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-5067078b07e5)）：性质门禁加同类输入上的阳性对照；**代码变异与契约数据变异**（删条件行、改值，条件 id 集合与 `requirement` 与预登记逐项比较并进 CI）并列，复核方另设计一批、不预先告知；导入时实际加载的判定模块须全部落在某个身份闭包内（身份层面的谓词清点）；每个必需条件登记证据生产者（[D30](DECISIONS.md#d30--契约条件的证据先查产物自述每个必需条件登记生产者)，已确认（用户 2026-10-16））。
 
 ### 4.3 生命周期义务（当前实现，T9，2026-10-18）
 
@@ -280,5 +280,5 @@ class SourceFormat(Protocol):      # 厂商格式解释，由 vendors/<v>/format
 
 > **读法**：本节保留为证据索引。"queue=1 用显式入队/出队桥"的规范表述已并入 [§4.1](#41-能力矩阵) 与 §4 的 `VendorAdapter` 协议，并据此**取消** `required_env` 强制项（[D13](DECISIONS.md#d13--工具不改变被测系统的运行配置)）。`per_call` 声明的适用边界由 [04 §6](04-correlation.md) 的二维 segments 表达（[D12](DECISIONS.md#d12--关联降级是二维的主机归因--设备链接)），不再是单一能力值。正文与本节冲突时以正文为准。
 
-[实测报告](history/history-references.md#ref-e1bd695b52c5)建议：已测 CANN 9.0 / torch_npu 2.10 / FlagTree cendAs eager 配置声明 `host_device_link=per_call`，附版本、队列配置和逐 run 覆盖率；queue=1 使用显式入队/出队桥。
+[实测报告](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-e1bd695b52c5)建议：已测 CANN 9.0 / torch_npu 2.10 / FlagTree cendAs eager 配置声明 `host_device_link=per_call`，附版本、队列配置和逐 run 覆盖率；queue=1 使用显式入队/出队桥。
 这不替代导入时的丢失/冲突检查，不扩大到厂商 Triton 3.2 失败环境或未执行的 8 卡/图回放场景；TP2 已完成两后端三重复。此处为实测建议，规范性确认见 DECISIONS Q7。
