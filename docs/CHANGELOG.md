@@ -1,5 +1,10 @@
 # 适配与文档变更记录
 
+## 2026-11-03 — 移除 Inference 历史资料目录
+
+- 删除 `inference/docs/history/` 全部 5 个文件，更新模块入口和文档导航。
+- 正文历史引用改指删除前的固定 Git 提交，保留原有出处与锚点。
+
 ## 2026-11-02 — Inference 迁移后整理
 
 - 新增 `inference/tests` CPU 冒烟测试（无 torch 导入检查；假厂商插件走通 record → import → inspect → report）及 `inference-smoke` GitHub Actions（Python 3.9 / 3.11）。

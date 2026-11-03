@@ -1,4 +1,4 @@
-> 本文从 v2 设计工作区迁入，保留设计、阶段裁决与历史状态。当前代码入口及两人协作方式见 [文档导航](README.md)，可执行命令见 [使用说明](usage.md)。未发布的本地实验与任务书链接转入 [历史引用索引](history/history-references.md)，其出处保留。
+> 本文从 v2 设计工作区迁入，保留设计、阶段裁决与历史状态。当前代码入口及两人协作方式见 [文档导航](README.md)，可执行命令见 [使用说明](usage.md)。未发布的本地实验与任务书出处见删除前固定 Git 提交中的 [历史引用索引](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md)，其出处保留。
 
 # 06 语义层与模型接入
 
@@ -62,7 +62,7 @@
 
 ## 4. Tier 2 插件：从 35 个方法瘦身到 5 个
 
-v1 的 `ModelAdapter` 有 35 个方法（[01 §2.1](history/01-diagnosis.md)）。其中资产校验、输入编码、模型加载、参考包契约、报告文案五类职责全部上移到框架。插件只保留**框架真的猜不到**的部分：
+v1 的 `ModelAdapter` 有 35 个方法（[01 §2.1](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/01-diagnosis.md)）。其中资产校验、输入编码、模型加载、参考包契约、报告文案五类职责全部上移到框架。插件只保留**框架真的猜不到**的部分：
 
 ```python
 class ModelPlugin(Protocol):

@@ -25,23 +25,11 @@
 | 10 | [路线图](10-roadmap.md) | 阶段、依赖、范围和退出条件 |
 | — | [决策记录](DECISIONS.md) | 接口与阶段判断依据的已登记决定 |
 
-## 历史资料（`history/`）
-
-以下文档解释 v2 的由来和原开发流程，不描述当前接口：
-
-| 编号 | 文档 | 内容 |
-|---|---|---|
-| 01 | [v1 诊断](history/01-diagnosis.md) | v1 的耦合与重构原因 |
-| 11 | [CANN 关联 Spike](history/11-spike-cann-correlation.md) | 架构关键假设的验证设计 |
-| 12 | [交接约束](history/12-codex-handoff.md) | 原设计者与实现方之间的交接规则 |
-| — | [设计历史入口](history/design-history.md) | 原 PLAN 索引和带日期的状态记录 |
-| — | [出处索引](history/history-references.md) | 正文引用的本地实验、任务单与报告的原路径 |
-
 ## 当前状态与文档读法
 
 截至 2026-11-02，P0/P1/P2/P4 已按各自登记范围退出；P2 的最新裁决见 [D55](DECISIONS.md#d55)。设备覆盖、性能和长期运行结论以对应记录为依据，v1 中尚未实现的能力见 [版本迁移](migration.md#未实现项)。
 
-框架文档是持续演进的材料，其中保留计划、历史状态和曾提议的命令。当前可执行参数以 `python -m flagprof --help` 和 [使用说明](usage.md) 为准；P3 在线恢复 / 热加载、P5 与其他后续内容按路线图推进。正文中的实验链接指向 [出处索引](history/history-references.md)，原件保存在维护者的本地开发仓库。
+框架文档是持续演进的材料，其中保留计划、历史状态和曾提议的命令。当前可执行参数以 `python -m flagprof --help` 和 [使用说明](usage.md) 为准；P3 在线恢复 / 热加载、P5 与其他后续内容按路线图推进。历史资料已从当前目录移除；正文中的历史引用指向删除前的固定 Git 提交，实验出处见 [出处索引](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md)，原件保存在维护者的本地开发仓库。
 
 ## 两人如何协作
 

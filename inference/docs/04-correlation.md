@@ -1,9 +1,9 @@
-> 本文从 v2 设计工作区迁入，保留设计、阶段裁决与历史状态。当前代码入口及两人协作方式见 [文档导航](README.md)，可执行命令见 [使用说明](usage.md)。未发布的本地实验与任务书链接转入 [历史引用索引](history/history-references.md)，其出处保留。
+> 本文从 v2 设计工作区迁入，保留设计、阶段裁决与历史状态。当前代码入口及两人协作方式见 [文档导航](README.md)，可执行命令见 [使用说明](usage.md)。未发布的本地实验与任务书出处见删除前固定 Git 提交中的 [历史引用索引](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md)，其出处保留。
 
 # 04 关联脊梁（correlation spine）
 
-> 状态：**草案；§3.3/§3.4 的 CANN 部分依赖 [Spike-C](history/11-spike-cann-correlation.md) 的实测结论**
-> 上游：[02 架构](02-architecture.md) P5、[03 schema](03-event-schema.md) §3 ｜ 下游：[07 分析器](07-analyzers-and-reports.md)、[11 Spike-C](history/11-spike-cann-correlation.md)
+> 状态：**草案；§3.3/§3.4 的 CANN 部分依赖 [Spike-C](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/11-spike-cann-correlation.md) 的实测结论**
+> 上游：[02 架构](02-architecture.md) P5、[03 schema](03-event-schema.md) §3 ｜ 下游：[07 分析器](07-analyzers-and-reports.md)、[11 Spike-C](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/11-spike-cann-correlation.md)
 
 R53 的原话是"**关联图节点、Backend 和运行时状态**定位瓶颈"。本文件定义这条关联链怎么建立、建立不了时怎么说实话。这是整个工具最难、也最有价值的部分。
 
@@ -85,7 +85,7 @@ R53 的原话是"**关联图节点、Backend 和运行时状态**定位瓶颈"�
 
 > **更正（2026-10-11 第二轮，[D15](DECISIONS.md#d15--t1t3-之后的契约回填r1r8)）。** 上一版在此定义了 `marked_scope_ratio`（分母 = 本 run 全部设备事件时间，分子 = 落在标记范围内的设备事件时间），并用 Spike-C 的 46,145/89,312 = 51.7% 说明「整段 run 有近一半的设备时间没进过分母」。这有两处错误：
 >
-> 1. 这个比例是 **campaign 中 63 条 marked 记录与 57 条 plain 记录之间的计算 kernel 条数比**。plain 是不开标记的对照 run。它既不是单个 run 的量，也不是时间比（[T3 派生统计](history/history-references.md#ref-a58ea01614ea)）。
+> 1. 这个比例是 **campaign 中 63 条 marked 记录与 57 条 plain 记录之间的计算 kernel 条数比**。plain 是不开标记的对照 run。它既不是单个 run 的量，也不是时间比（[T3 派生统计](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-a58ea01614ea)）。
 > 2. 「落在标记范围内的设备时间」本身就不可算：用设备时间是否落入主机窗口来判定范围，正是 §6 已经否定的做法。
 >
 > 「范围内 100% 不等于整体 100%」这条教训仍然成立；表达它的正确量是 `import_completeness` 与 `profiled_window`。
@@ -139,7 +139,7 @@ CUPTI 为每次 kernel launch 分配 `correlationId`，runtime API 记录与 con
 
 #### CANN（Spike-C 已验证，2026-10-10）
 
-v1 只验证到**模块级**（`vendors/ascend/trace.py:attribute`）：flow 事件的起止端点配对 + `Node@launch` 的 `connection_id`。[Spike-C](history/11-spike-cann-correlation.md) 把三个未知项逐一测掉：
+v1 只验证到**模块级**（`vendors/ascend/trace.py:attribute`）：flow 事件的起止端点配对 + `Node@launch` 的 `connection_id`。[Spike-C](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/11-spike-cann-correlation.md) 把三个未知项逐一测掉：
 
 | 原未知项 | 实测结论 |
 |---|---|
@@ -185,7 +185,7 @@ rank1: comm(phase=enqueue, group=G, group_seq=17, corr=B) ──► comm(phase=d
 
 ### 3.6 linker 算法：候选并集与判定
 
-H3 的各条规则不是「按优先级找到第一条成立的」，而是**每条都算、结果取并集**。[T1](history/history-references.md#ref-867dfc27c4dd) 的 X7 证明了前一种做法的问题：人为让两个不同调用的 launch 共享同一个 `connection_id` 后，spike 的 linker 因为「候选不唯一」整体跳过了 connection 规则，flow 规则先成功，冲突就此消失，结果报成 `linked`。
+H3 的各条规则不是「按优先级找到第一条成立的」，而是**每条都算、结果取并集**。[T1](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-867dfc27c4dd) 的 X7 证明了前一种做法的问题：人为让两个不同调用的 launch 共享同一个 `connection_id` 后，spike 的 linker 因为「候选不唯一」整体跳过了 connection 规则，flow 规则先成功，冲突就此消失，结果报成 `linked`。
 
 对每个设备事件 e：
 
@@ -294,7 +294,7 @@ Dequeue (pid 1, tid 102)  ⊃?  flow 起点 (pid 1279 = (1 << 10) | 255, tid 102
 
 > **状态（2026-10-27，[D46](DECISIONS.md#d46)）**：P1 首批用项目 module 探针加 each 窗口内的项目桥接，做设备时间到层的归属（kernel.link → op.scope → span 树）。第 1 点的原生两跳路径、第 3 点“消费官方 profiler 的模块作用域”、第 2、5、6 点都转 P2。第 4 点：T10.1 不改 linker，桥接靠带前缀的 marker 事件名与同线程包含关系（腾昇另经 Enqueue/Dequeue 桥），不用流事件。
 >
-> **原状态**：设计输入，不是规范；**规范细节在 P1 任务单定稿**。来源：[T8.3 返工复审 §6.3](history/history-references.md#ref-fda8bbc0b9b5)。nsys 的做法来自官方文档（本机没有 nsys）；"本机"数据来自设计者会话对 A100 与腾昇原件的实测。
+> **原状态**：设计输入，不是规范；**规范细节在 P1 任务单定稿**。来源：[T8.3 返工复审 §6.3](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-fda8bbc0b9b5)。nsys 的做法来自官方文档（本机没有 nsys）；"本机"数据来自设计者会话对 A100 与腾昇原件的实测。
 
 §3.7 的作用域链由同线程严格嵌套得到。P1 要把设备工作归到作用域（cpu_op、user_annotation、module）时，借鉴 nsys 的 GPU 区间投影（`nvtx_gpu_proj_*`）：
 
@@ -330,7 +330,7 @@ Dequeue (pid 1, tid 102)  ⊃?  flow 起点 (pid 1279 = (1 << 10) | 255, tid 102
 
 ## 6. 降级与可信度：两段链路，四个级别
 
-（原标题"若 H3 在 CANN 上不可行：三级降级"已不适用：[Spike-C](history/11-spike-cann-correlation.md) 已证明 H3 在 CANN 上可行；本节现在定义的是**各种失效组合下仍能说什么**，而非备用方案。）
+（原标题"若 H3 在 CANN 上不可行：三级降级"已不适用：[Spike-C](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/11-spike-cann-correlation.md) 已证明 H3 在 CANN 上可行；本节现在定义的是**各种失效组合下仍能说什么**，而非备用方案。）
 
 **四个级别都必须能产出对 FlagGems 开发组有用的结论**，区别只在精细度与可归因的维度。
 
@@ -347,7 +347,7 @@ Dequeue (pid 1, tid 102)  ⊃?  flow 起点 (pid 1279 = (1 << 10) | 255, tid 102
 - **B 是主机侧 launch 记录的级别**：launch 的归属唯一，但没有匹配到任何设备事件 —— 设备 trace 未导入、被截断、或设备侧键缺失时出现。run 级报告 `launch_attr_ratio`（归属唯一的 launch / 全部 launch）与 launch 记录按两段的分布。
 - `not_applicable` 的事件没有级别，不进任何分布。
 
-**run 不贴单一级别标签。** 同一个 run 里不同事件的级别可以不同：[T1](history/history-references.md#ref-867dfc27c4dd) 的 X1 在 queue=1 的 M3 片段上去掉 queue 桥之后，仍有 1,316 个 kernel 经直接路径归属，另 572 个经队列的 kernel 降为未关联。给整个 run 贴 A 会掩盖局部断链，贴 B+ 会丢掉本来完整的部分。run 级输出的是**级别分布**：每个事件类别下各级别的条数与设备时长（`level_distribution`，[07 §2](07-analyzers-and-reports.md)）。分析器按自己实际用到的那些事件的级别，决定能说什么。
+**run 不贴单一级别标签。** 同一个 run 里不同事件的级别可以不同：[T1](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-867dfc27c4dd) 的 X1 在 queue=1 的 M3 片段上去掉 queue 桥之后，仍有 1,316 个 kernel 经直接路径归属，另 572 个经队列的 kernel 降为未关联。给整个 run 贴 A 会掩盖局部断链，贴 B+ 会丢掉本来完整的部分。run 级输出的是**级别分布**：每个事件类别下各级别的条数与设备时长（`level_distribution`，[07 §2](07-analyzers-and-reports.md)）。分析器按自己实际用到的那些事件的级别，决定能说什么。
 
 > **修订（2026-10-11 第二轮，[D12 修订](DECISIONS.md#d12--关联降级是二维的主机归因--设备链接)）**：上一版把级别写成 run 级的单一标签，[03](03-event-schema.md) 又允许每段取 `not_applicable`。这留下两个漏洞：两个候选各自都有完整链时，「两段都存在」会把 ambiguous 包装成 A；混合路径的 run 该贴哪个标签无从定义。现在 ok 要求归属唯一，级别逐事件判定，run 级只报分布。
 
@@ -379,7 +379,7 @@ H4（kname → 编译单元）**不参与级别判定**，它是一个独立的�
    - 只复用现有规则中 `side=device` 的部分求 S(e)；
    - 不调用 `link()`（它以 corr 为 owner 键）；
    - 不修改 T4 门禁锁定的文件（`linker.py`、`inventory.py`、`chrome.py`、`rules_common.py`、各厂商 `rules.py`）；
-   - `kernel.link` 的输出逐字节不变（[T8](history/history-references.md#ref-24a77204cd82)）。
+   - `kernel.link` 的输出逐字节不变（[T8](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-24a77204cd82)）。
 
 ## 8. Spike-C 实测回填（2026-10-10；**已裁决，规范部分已并入正文**）
 
@@ -387,7 +387,7 @@ H4（kname → 编译单元）**不参与级别判定**，它是一个独立的�
 >
 > **口径**：下文"闭合 op→launch→kernel"指 campaign 中 63 条 marked 记录的 46,145 个计算 kernel；另 57 条 plain 记录（43,167 个）是不开标记的对照 run，不在关联统计内。46,145/89,312 = 51.7% 只是这两类记录之间的条数比，不是任何单个 run 的覆盖率（§2 更正）；M3 的形状回查另有 90 处不一致（4.8%），见 [DECISIONS Q7](DECISIONS.md#q7--spike-c-实测回填与冻结边界) 的口径修正。
 
-[报告](history/history-references.md#ref-e1bd695b52c5)与[真实 fixtures](history/history-references.md#ref-975e3ad0fde3)支持以下范围内的修订建议，不自动构成全版本能力保证或 schema 冻结：
+[报告](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-e1bd695b52c5)与[真实 fixtures](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-975e3ad0fde3)支持以下范围内的修订建议，不自动构成全版本能力保证或 schema 冻结：
 
 1. §3.3：CANN 9.0 / torch_npu 2.10 / FlagTree cendAs 下，M1/M2/M3 的 Triton 与 aclnn 均可闭合 op→launch→kernel；M2 覆盖 TASK_QUEUE_ENABLE=0/1 × TRITON_ENABLE_TASKQUEUE=false/true。
 2. queue=1 时 Node 不直接嵌套在 op 所在线程，需 `Enqueue(correlation_id) → Dequeue → Node@launch → connection_id/HostToDevice → kernel`。不能因直接包含为 0 就判定整条链不可用，亦不必强制 queue=0。
