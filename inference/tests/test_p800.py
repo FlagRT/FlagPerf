@@ -20,6 +20,36 @@ from flagprof.store import _pidfd
 
 
 class P800Tests(unittest.TestCase):
+    @unittest.skipUnless(sys.platform=='linux','Linux persisted Store')
+    def test_window_projection_is_persisted_and_tampering_is_rejected(self):
+        import tempfile
+        from flagprof.offline.pipeline import prepare, import_prepared
+        from flagprof.store.manifest import create_run
+        from flagprof.store._offline_writer import offline_writer
+        from flagprof.store import StoreView
+        root=Path(__file__).parent/'fixtures/p800'
+        with tempfile.TemporaryDirectory() as work:
+            work=Path(work)
+            prepared=prepare(root/'silu-fragment.json',work/'prepared',vendor='kunlunxin',
+                analysis_input=dict(capture_normal_close=False,
+                    capture_scope='scheduled_window_not_complete_request',
+                    clock=dict(clock_valid=False),window_identity=dict(window_kind='scheduled_window')))
+            run=create_run(work/'store')
+            with offline_writer(run) as writer:
+                imported=import_prepared(root/'silu-fragment.json',writer,prepared,vendor='kunlunxin')
+            self.assertEqual(imported['status'],'complete')
+            with StoreView(run) as view:
+                list(view.iter_native_relations())
+                context=view.device_analysis_context()
+                self.assertEqual(context['status'],'available')
+                self.assertFalse(context['capture_normal_close'])
+                rows=list(view.iter_device_events(projection='analysis'))
+                self.assertEqual(len(rows),1)
+                self.assertEqual(rows[0]['category'],'compute')
+                path=next((Path(run)/'derived').glob('*/analysis_intervals.jsonl'))
+                path.write_bytes(path.read_bytes()+b'\n')
+                with self.assertRaises(ValueError):list(view.iter_device_events(projection='analysis'))
+
     def test_windowed_cli_forwards_requested_timeout(self):
         from flagprof.cli import main
         from unittest.mock import Mock

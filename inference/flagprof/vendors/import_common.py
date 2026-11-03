@@ -237,7 +237,39 @@ def import_capture(directory: str | Path, writer: Writer, *, vendor: str,
                 from .format import load_adapter
                 registry = load_adapter(vendor).default_registry()
             supplied=dict(options,registry=registry,identities=identities,capture=capture)
-            results.append(import_fixture(source,writer,vendor=vendor,**supplied))
+            if vendor == 'kunlunxin':
+                # The P800 window path needs the same persisted device projection
+                # as final captures. Keep the window registration and never
+                # claim that a scheduled window covers a complete request.
+                from tempfile import TemporaryDirectory
+                from flagprof.offline.pipeline import prepare, import_prepared
+                from flagprof.offline.device_analysis import capture_context
+                from flagprof.offline.project import calls_from
+                manifest=json.loads((writer.run_dir/'manifest.json').read_bytes())
+                context_capture=dict(vendor=vendor,normal_close=False,occurrence=window['capture_id'],
+                    trace=dict(sha256=hashlib.sha256(source.read_bytes()).hexdigest()),
+                    metadata=dict(collection_run='.',source_run_id=manifest['run_id'],
+                        process=data.get('process'),identities=identities,
+                        requested_configuration=data.get('config',{})))
+                analysis=capture_context(writer.run_dir,context_capture)
+                analysis['clock']['sources']=[dict(path=str(source.relative_to(writer.run_dir)),
+                    sha256=context_capture['trace']['sha256'])]
+                for transform in analysis['clock'].get('project_transforms',[]):
+                    transform['sources']=analysis['clock']['sources']
+                analysis['window_identity']['window_kind']='scheduled_window'
+                analysis['capture_scope']='scheduled_window_not_complete_request'
+                calls=options.get('calls')
+                if calls is None:calls=calls_from(writer.run_dir,manifest['run_id'])
+                with TemporaryDirectory(prefix='p800-window-import-') as work:
+                    prepared=prepare(source,Path(work)/'prepared',vendor=vendor,
+                        registry=registry,identities=identities,calls=calls,
+                        marker_prefix=options.get('marker_prefix','flagprof::op#'),
+                        kind=options.get('kind'),scope_config=options.get('scope_config'),
+                        taxonomy_version=options.get('taxonomy_version'),analysis_input=analysis)
+                    results.append(import_prepared(source,writer,prepared,vendor=vendor,
+                        registry=registry,calls_supplied=True,capture=capture))
+            else:
+                results.append(import_fixture(source,writer,vendor=vendor,**supplied))
     return results
 
 
