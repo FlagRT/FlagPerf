@@ -21,6 +21,38 @@ from flagprof.store import _pidfd
 
 class P800Tests(unittest.TestCase):
     @unittest.skipUnless(sys.platform=='linux','Linux persisted Store')
+    def test_two_window_clocks_do_not_double_count_overlapping_timestamps(self):
+        import tempfile
+        from flagprof.offline.pipeline import prepare, import_prepared
+        from flagprof.store.manifest import create_run
+        from flagprof.store._offline_writer import offline_writer
+        from flagprof.store import StoreView
+        from flagprof.analyzers.workspace import Workspace
+        from flagprof.analyzers.gap import gap
+        fixture=json.loads((Path(__file__).parent/'fixtures/p800/silu-fragment.json').read_bytes())
+        with tempfile.TemporaryDirectory() as work:
+            work=Path(work);run=create_run(work/'store')
+            for index in range(2):
+                doc=json.loads(json.dumps(fixture));doc['window_test_identity']=index
+                doc['traceEvents']=[e for e in doc['traceEvents'] if e.get('cat')!='kernel']+[
+                    dict(ph='X',cat='kernel',name='isolated',pid=0,tid=1,ts=2,dur=3,args=dict(device=0,stream=1)),
+                    dict(ph='X',cat='Trace',name='PyTorch Profiler window',pid=1,tid=1,ts=0,dur=10,args={})]
+                source=work/('source'+str(index)+'.json');source.write_text(json.dumps(doc))
+                prepared=prepare(source,work/('prepared'+str(index)),vendor='kunlunxin',analysis_input=dict(
+                    capture_normal_close=False,clock=dict(clock_valid=False)))
+                with offline_writer(run) as writer:import_prepared(source,writer,prepared,vendor='kunlunxin')
+            with StoreView(run) as view:
+                workspace=Workspace(view,work/'analysis')
+                try:
+                    workspace.ingest();result=gap(workspace,{})
+                    rows=list(workspace.table('perf.gap'))
+                    self.assertEqual(len(rows),2)
+                    self.assertEqual([r['all_activity_union_ns'] for r in rows],[3000,3000])
+                    self.assertEqual([r['categories']['compute']['sum_ns'] for r in rows],[3000,3000])
+                    self.assertEqual(view.device_analysis_context()['source_clock'],'per_window')
+                finally:workspace.db.close()
+
+    @unittest.skipUnless(sys.platform=='linux','Linux persisted Store')
     def test_window_projection_is_persisted_and_tampering_is_rejected(self):
         import tempfile
         from flagprof.offline.pipeline import prepare, import_prepared

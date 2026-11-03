@@ -72,7 +72,7 @@ def gap(work,params):
     context=work.view.device_analysis_context()
     if context.get('status')!='available':
         return Result('perf.gap','unavailable',work.table('perf.gap'),context,['设备区间派生证据尚未记录。'])
-    work.db.executescript('''create table activity(category text,dev integer,stream text,a integer,b integer,call_key text,payload text);
+    work.db.executescript('''create table activity(category text,dev integer,stream text,a integer,b integer,call_key text,payload text,source_clock text);
         create index activity_start on activity(a,b);
         create index activity_stream on activity(dev,stream,a,b);
         create index activity_call on activity(call_key,a);''')
@@ -86,10 +86,13 @@ def gap(work,params):
         if a is None or d is None or d<0:
             counts['invalid_intervals']+=1;continue
         comm=row.get('communication',{});call=comm.get('call');key=encode((call['group'],call['group_seq'],call.get('rank'))) if call else None
-        work.db.execute('insert into activity values(?,?,?,?,?,?,?)',(row['category'],row['dev'],encode(row.get('stream')),a,a+d,key,encode(row)))
+        work.db.execute('insert into activity values(?,?,?,?,?,?,?,?)',(row['category'],row['dev'],encode(row.get('stream')),a,a+d,key,encode(row),row['source_clock']))
         if ordinal%256==0:work.db.commit()
     work.db.commit()
     for callkey, in work.db.execute('select distinct call_key from activity where call_key is not null'):
+        if work.db.execute('select count(distinct source_clock) from activity where call_key=?',(callkey,)).fetchone()[0]!=1:
+            counts['ambiguous_multi_window_calls']+=1
+            continue
         source=work.db.execute('select payload from activity where call_key=? order by a limit 1',(callkey,)).fetchone()
         first=json.loads(source[0]);call=first['communication']['call']
         stats=interval_stats(work.db.execute('select a,b from activity where call_key=? order by a,b',(callkey,)),-(1<<63),(1<<63)-1)
@@ -100,7 +103,8 @@ def gap(work,params):
     for index,window in enumerate(context.get('windows',[])):
         a,b=window['start_ns'],window['end_ns']
         if b<=a:continue
-        filt='a<? and b>?';args=[b,a]
+        source_clock=window.get('source_clock',context['source_clock'])
+        filt='a<? and b>? and source_clock=?';args=[b,a,source_clock]
         if window.get('dev') is not None:filt+=' and dev=?';args.append(window['dev'])
         def stats(category=None):
             suffix=' and category=?' if category else ''
@@ -111,7 +115,7 @@ def gap(work,params):
                  all_activity_union_ns=all_stats['union_ns'],blank_ns=length-all_stats['union_ns'],
                  all_activity_ratio=all_stats['union_ns']/length,blank_ratio=(length-all_stats['union_ns'])/length,
                  blank_segments_ns=all_stats['blank_segments_ns'],
-                 denominator='explicit_window_length_ns',source_clock=context['source_clock'])
+                 denominator='explicit_window_length_ns',source_clock=source_clock)
         duration_sum=sum(value['sum_ns'] for value in categories.values())
         row['unknown_duration_ratio']=categories['unknown']['sum_ns']/duration_sum if duration_sum else 0
         partial |= row['unknown_duration_ratio']>.01
@@ -119,10 +123,10 @@ def gap(work,params):
             for metric in ('union_ns','sum_ns'):row[category+'_'+metric]=categories[category][metric]
         work.row('perf.gap',str(index).zfill(8),row)
         for dev,stream in work.db.execute('select distinct dev,stream from activity where '+filt,args):
-            selected='dev is ? and stream=? and a<? and b>?';values=[dev,stream,b,a]
+            selected='dev is ? and stream=? and a<? and b>? and source_clock=?';values=[dev,stream,b,a,source_clock]
             stream_categories={category:interval_stats(work.db.execute('select a,b from activity where '+selected+' and category=? order by a,b',values+[category]),a,b) for category in CATEGORIES}
             occupied=interval_stats(work.db.execute('select a,b from activity where '+selected+' order by a,b',values),a,b,gaps=True)
-            work.row('perf.gap.streams',encode((index,dev,stream)),dict(window_id=str(index),kind=window['kind'],step=window.get('step'),dev=dev,stream=json.loads(stream),window_ns=length,categories=stream_categories,all_activity_union_ns=occupied['union_ns'],blank_ns=length-occupied['union_ns'],blank_segments_ns=occupied['blank_segments_ns'],source_clock=context['source_clock']))
+            work.row('perf.gap.streams',encode((index,dev,stream)),dict(window_id=str(index),kind=window['kind'],step=window.get('step'),dev=dev,stream=json.loads(stream),window_ns=length,categories=stream_categories,all_activity_union_ns=occupied['union_ns'],blank_ns=length-occupied['union_ns'],blank_segments_ns=occupied['blank_segments_ns'],source_clock=source_clock))
         grouped.setdefault(window['kind'],[]).append(row)
     distributions={kind:{field:distribution([r[field] for r in rows]) for field in ('window_ns','all_activity_union_ns','blank_ns')} for kind,rows in grouped.items()}
     for kind,rows in grouped.items():
