@@ -1,0 +1,2 @@
+# Recorded trace fragments keep exact bytes across Windows/Linux checkouts.
+inference/tests/fixtures/p800/silu-fragment.json -text
