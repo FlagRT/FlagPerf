@@ -20,6 +20,16 @@ from flagprof.store import _pidfd
 
 
 class P800Tests(unittest.TestCase):
+    def test_windowed_cli_forwards_requested_timeout(self):
+        from flagprof.cli import main
+        from unittest.mock import Mock
+        target=Mock(return_value=124)
+        with patch('flagprof.record.record',target):
+            result=main(['record','--vendor','kunlunxin','--capture-mode','windowed',
+                         '--timeout','1.25','--store','unused','--',sys.executable,'target.py'])
+        self.assertEqual(result,124)
+        self.assertEqual(target.call_args.kwargs['timeout'],1.25)
+
     def test_real_exporter_fragment_keeps_device_and_missing_project_link(self):
         import hashlib
         from flagprof.vendors.prepare import prepare_import

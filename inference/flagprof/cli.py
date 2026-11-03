@@ -237,6 +237,7 @@ def main(argv=None):
                           log_files=tuple(str(Path(p).resolve()) for p in args.log_file))
             return record(command,store=args.store,vendor=args.vendor,preset=args.preset,
                 capture_mode='windowed',
+                timeout=args.timeout,
                 config=config,
                 descriptors=json.loads(Path(args.plugins).read_bytes()) if args.plugins else None)
         except (ValueError,OSError) as error:
