@@ -79,6 +79,18 @@ PY
 
 继续使用原 BF16/eager、相同生成协议进行比较；第一层起的 hidden 差异及首次算子分歧仍待定位。不能通过改变 dtype、argmax、分片协议或容差取得通过。P800-INF-007 保持开放。
 
+## 扩展模型前的复核（2026-11-04）
+
+本轮被测源码为 `1f2eadf52a68f1181962385b5a665f3f8913f941`，两台 P800 主机工作树干净，固定镜像身份一致；`runner/generate.py` 与 FP32 策略实验前的 `d753fb8d` 字节相同。两机分别重新执行 Inference 标准库 19 项（18 通过、1 可选跳过）、真实 Gloo 1 项、Base 381 项（380 通过、1 既有跳过）、Operation 167 项、公开分发 14 项，均无失败；宿主 Python 的 Inference 19 项亦为 18 通过、1 跳过。上述回归未映射设备。
+
+使用当前代码只读消费历史产物：两机单卡 Qwen accuracy、OneRec perf，TP2 两 rank perf，以及 Qwen 双窗口共 7 份 Store，分别完成校验和报告重建（14 条命令全部退出 0）。Qwen accuracy 的单运行报告没有性能面板，这是现行报告行为；精度差分需使用 `report oracle --ref ... --cmp ...`。不能把空面板报告当作模型精度通过。
+
+24 份 Qwen 输出再次通过 SHA 和有限值检查，共 28,672 个 float32 元素（含重复基线）；OneRec 单卡两份及 TP2 两 rank accuracy 共 5,120 个张量 blob 全部通过哈希检查，保存的 BF16/FP32 值没有 NaN/Inf。单卡 A/A 的 oracle 重建后 1,280 个边界 digest 相同、max_abs=0。这些仍是历史执行数据的重新核验，不是本轮新生成或独立数学参考。
+
+本轮所有候选空闲卡均未通过设备占用预检：部分显存为零的卡仍有未获准的进程句柄；没有启动模型设备复测。因此当前结论为“软件回归和选定历史分析链路正常，尚不能声明无问题或完整验收”。P800-INF-006/007、性能 `not_qualified`、历史失败和未测范围继续保留。BF16 分片和归约顺序通常会产生差异，但本例上游首个算子尚未归因，不能直接将 INF-007 关闭为正常舍入。
+
+扩展前须区分两类接口：embedding 使用 `AutoModel` 和 `last_hidden_state` 加项目 pooling；generate 当前只登记 OneRec 的 `qwen3 / hidden 4096 / 36 层 / vocab 176384`、batch 1、固定输入包、FlagGems off，TP 仅两 rank。任意其他生成模型、rerank、多模态、CTR 不能只换模型路径便声称已适配。新增模型应先核对作者推荐的输入、forward/generation、pooling 和停止语义，再按统一协议依次验证无采集基线、各预设输出、oracle 差分、报告和故障回收；每种 dtype、attention、并行度及后端单独登记证据，不能从现有模型推导通过。
+
 ## 固定输入包生成
 
 以下为 OneRec 的**公开合成诊断输入包**示例，不是业务数据或独立 oracle 真值。先自行取得权重并核验来源、revision、使用条款与文件哈希；权重不随仓库分发。用固定镜像解释器执行，模型只读位于 `/models/OneRec-8B`，输出包目录须不存在：

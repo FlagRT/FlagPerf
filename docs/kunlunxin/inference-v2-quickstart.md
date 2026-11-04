@@ -94,6 +94,8 @@ export FP_RUN=/absolute/path/printed/by/record
 | coverage | 窗口生命周期，dispatch/route | 开销大，诊断耗时不作纯性能结论 |
 | accuracy | 窗口生命周期，全层数值探针 | dispatch 必须 off；完整误差比较显式加 `--tensor-blob all`，默认不存 blob |
 
+accuracy Store 单独运行 `report RUN` 可能不含性能面板；这不是精度差分结论。数值比较使用 `report oracle --ref REF_RUN --cmp CMP_RUN --out NEW_DIR`，先核对身份和 alignment，再读取实际误差与首次差异。`ok` 表示分析可用，不表示数值相同。
+
 显式 `perf --capture-mode windowed --active 1 --windows 2` 需要目标调用 `handle.step()`。内置 Qwen 在前向间推进，OneRec 在完整生成请求后推进；不能将其 32 个 decode 步当作 32 次 profiler window step。scheduled window 不能自动代表完整请求。
 
 modules 默认源预算 1 GiB，按实际大小设置 `--source-max-bytes`（例如 8 GiB 为 8589934592），该值不是总磁盘预算或任意规模保证。capture-only/analyse/import 分离采集与离线处理，适用选项见 CLI 帮助；P800 不沿用 NVIDIA 的 overlay capture 例外。
