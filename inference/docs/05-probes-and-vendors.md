@@ -289,7 +289,7 @@ class SourceFormat(Protocol):      # 厂商格式解释，由 vendors/<v>/format
 }
 ```
 
-> **当前实现（T9，2026-10-18）**：`flagprof/registry.py` 的 `Registry` 目前只做**懒加载的组件描述符**，字段为 `id`、`kind`、`version`、`module`、`factory`、`requires`、`format_vendor`。`kind` 取 `vendor`/`probe`/`analyzer`/`component`/`responder`；`requires` 是模块名字符串列表（不是上例的 `{framework, min_version}` 对象）；`format_vendor` 只对 `kind=vendor` 必需，取 `ascend` 或 `nvidia`。来源有两个：内置 `BUILTINS`（`ascend`、`nvidia` 两个 vendor）与 `record --plugins <JSON>` 传入的描述符列表（传入后**取代**而不是追加 `BUILTINS`）。`create()` 按 `module` + `factory` 延迟导入，并把实现文件 sha256 与厂商源码闭包身份写入实现身份（外部依赖不在认证范围）。上例的 `emits`、`cost`、`levels`、`sources`、`code_closure` 字段、`registry/` 目录下按类别分文件的 JSON，以及下面"作用"中的指标来源矩阵自动生成、`list` 子命令，均为**设计目标（未实现）**。
+> **当前实现（T9，2026-10-18）**：`flagprof/registry.py` 的 `Registry` 目前只做**懒加载的组件描述符**，字段为 `id`、`kind`、`version`、`module`、`factory`、`requires`、`format_vendor`。`kind` 取 `vendor`/`probe`/`analyzer`/`component`/`responder`；`requires` 是模块名字符串列表（不是上例的 `{framework, min_version}` 对象）；`format_vendor` 只对 `kind=vendor` 必需；当前取 `ascend`、`nvidia` 或候选 `kunlunxin`。来源有两个：内置 `BUILTINS`（三个 vendor）与 `record --plugins <JSON>` 传入的描述符列表（传入后**取代**而不是追加 `BUILTINS`）。`create()` 按 `module` + `factory` 延迟导入，并把实现文件 sha256 与厂商源码闭包身份写入实现身份（外部依赖不在认证范围）。上例的 `emits`、`cost`、`levels`、`sources`、`code_closure` 字段、`registry/` 目录下按类别分文件的 JSON，以及下面"作用"中的指标来源矩阵自动生成、`list` 子命令，均为**设计目标（未实现）**。
 
 作用：
 

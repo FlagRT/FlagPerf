@@ -1,6 +1,8 @@
 # P800 Inference v2 适配与验证
 
-当前为候选适配，登记模型与当前生产功能已开展完整链路验证；尚不具备完整性能资格。使用 `--vendor kunlunxin`；CUDA 兼容设备名 `GPU` 不代表 NVIDIA 硬件。Base、Operation 的资格不自动转移到 Inference。
+当前为候选适配，主要已测运行链路可完成；**OneRec 单卡与 TP2 第 14 个 token 不同（P800-INF-007），根因未确认，TP2 精度尚未通过，性能保持 `not_qualified`。**使用 `--vendor kunlunxin`；CUDA 兼容设备名 `GPU` 不代表 NVIDIA 硬件。Base、Operation 的资格不自动转移到 Inference。
+
+先读 [从空工作区到报告](inference-v2-quickstart.md)（容器、输入、基线、采集、结果判读），再读 [验证结果与开放缺陷](inference-v2-validation.md)（历史实测、证据可得性、P800-INF-001–007）。本文说明固定栈与适配机制。
 
 ## 运行环境
 
@@ -27,7 +29,7 @@ export OPENBLAS_NUM_THREADS=4
 
 ## 设备身份与隔离
 
-使用宿主 `xpu-smi -m`、`xpu-smi -i PHYSICAL_ID -q` 核对 P800 OAM、PCI BDF、UUID、minor、占用和健康状态。按查询得到的 `/dev/xpuN` 和 `/dev/xpuctrl` 映射选定卡，不能根据 SMI 编号猜 minor。运行前获取设备租约，运行后核对进程表与显存回收。其他用户的容器与进程不能作为清理对象。
+使用宿主 `xpu-smi -m`、`xpu-smi -i PHYSICAL_ID -q` 核对 P800 OAM、PCI BDF、UUID、minor、占用和健康状态。按查询得到的 `/dev/xpuN` 和 `/dev/xpuctrl` 映射选定卡，不能根据 SMI 编号猜 minor。运行前通过调度器或站点租约机制保留设备，运行后核对进程表与显存回收；Inference CLI 不会自动获取 Base 的 DeviceLease。其他用户的容器与进程不能作为清理对象。
 
 将宿主查询所得身份写入 JSON 并只读挂载到容器，设置 `FLAGPROF_P800_IDENTITY` 为容器内路径。接口结构如下；字段值必须来自本机查询：
 
@@ -39,13 +41,13 @@ export OPENBLAS_NUM_THREADS=4
 
 ## 最小运行
 
-从 `inference/` 执行，按 [公共使用说明](../../inference/docs/usage.md) 准备有足够空间的 ext4 输出盘、TMPDIR 和 scratch。模型权重单独准备，不随仓库分发。以下命令中的路径由使用者替换：
+从 `inference/` 执行，按 [公共使用说明](../../inference/docs/usage.md) 准备有足够空间的 ext4 输出盘、TMPDIR 和 scratch。模型权重单独准备，不随仓库分发。以下是命令接口速查，路径、环境变量和输入文件需先按 [快速开始](inference-v2-quickstart.md) 准备：
 
 ```bash
 python -B -m flagprof record --vendor kunlunxin --preset perf \
   --timeout 600 --store "$FP_WORKSPACE/qwen-perf" --dispatch each-window \
   -- python -B -m flagprof.runner hf:/models/Qwen3-Embedding-0.6B \
-  --inputs /inputs/texts.jsonl --batch-size 1 --max-length 32 \
+  --inputs /fp/texts.jsonl --batch-size 1 --max-length 32 \
   --dtype bfloat16 --attention eager --device cuda:0 --warmup 0 --forwards 2 \
   --outputs "$FP_WORKSPACE/qwen-output"
 python -B -S -m flagprof inspect /absolute/path/to/run --verify --json
@@ -65,20 +67,22 @@ python -B -S -m flagprof report /absolute/path/to/run --out "$FP_WORKSPACE/qwen-
 - TP2 使用 `launch --vendor kunlunxin --comm-backend nccl|flagcx --nproc-per-node 2`，模型组与 Gloo 控制组分别记录。容器需要可用的网络接口、足够共享内存和 memlock 配置；`--network=none` 已实测导致 BKCL 初始化失败。双卡 collective smoke 不代替 OneRec TP2 模型验收。
 
 
-固定镜像缺少 Transformers TP 所需的 `accelerate`。已测独立依赖目录为 `accelerate==1.11.0`，wheel SHA-256 `a628fa6beb069b8e549460fc449135d5bd8d73e7a11fd09f0bc9fc4ace7f06f1`；只读挂载该目录并在目标进程 `PYTHONPATH` 加入其 `site` 目录。Transformers 4.57.1 通过模型 `tp_plan` 属性接入显式计划，词表头使用 `colwise_rep`（列分片并汇聚完整输出），每 rank 核验本地权重形状 `[88192,4096]`。其他版本保留原显式计划接口。
+**TP2 为候选诊断路径，P800-INF-007 未闭合前不声明其精度通过。** 固定镜像缺少 Transformers TP 所需的 `accelerate`。已测独立依赖目录为 `accelerate==1.11.0`，wheel SHA-256 `a628fa6beb069b8e549460fc449135d5bd8d73e7a11fd09f0bc9fc4ace7f06f1`；可用固定解释器 `pip install --no-deps --target /path/to/overlay /path/to/verified.whl` 在独立目录准备，先核对其余依赖；只读挂载为 `/overlay`，设置 `PYTHONPATH=/code/inference:/overlay`，不覆盖镜像内 torch。TP2 容器另需第二张已保留卡及身份 JSON 第二项。Transformers 4.57.1 通过模型 `tp_plan` 属性接入显式计划，词表头使用 `colwise_rep`（列分片并汇聚完整输出），每 rank 核验本地权重形状 `[88192,4096]`。这证明分片实际发生，不证明单卡与 TP2 精度等价。其他版本保留原显式计划接口。
+
+P800-INF-007 的 BF16 logits 并列舍入已从历史 blob 定位；显式候选选项 `FLAGPROF_P800_ONEREC_LOGITS=fp32` 的机制、额外内存、CPU 验证及设备未验证边界统一见 [缺陷记录](inference-v2-validation.md)。默认仍保持原 BF16 执行，不自动应用该策略。
 
 ```bash
 python -B -m flagprof launch --vendor kunlunxin --comm-backend flagcx \
   --nproc-per-node 2 --preset accuracy --timeout 1500 --store "$FP_WORKSPACE/onerec-tp2" \
   -- python -B -m flagprof.runner hf:/models/OneRec-8B --task generate \
-  --inputs-from /inputs/onerec-package --batch-size 1 --max-length 256 \
+  --inputs-from /fp/onerec-package --batch-size 1 --max-length 256 \
   --max-new-tokens 32 --dtype bfloat16 --attention eager --device cuda:0 \
   --warmup 0 --forwards 1 --generation-mode accuracy --outputs "$FP_WORKSPACE/onerec-output"
 python -B -S -m flagprof report "$FP_WORKSPACE/onerec-tp2/group.json" \
   --out "$FP_WORKSPACE/onerec-tp2-report"
 ```
 
-输入包须带文件哈希、模型架构与生成协议，见 [模型接入](../../inference/docs/06-model-onboarding.md)。检查 `group.json` 执行状态和报告 `result.json` 语义状态；报告命令退出 0 也可能保存 `partial`。32 步 OneRec TP2 预期每 rank 2304 次模型 AllReduce、32 次词表 AllGather；控制组独立计数。
+输入包须带文件哈希、模型架构与生成协议，可执行生成示例见 [固定输入包生成](inference-v2-validation.md#固定输入包生成)，语义设计见 [模型接入](../../inference/docs/06-model-onboarding.md)。检查 `group.json` 执行状态和报告 `result.json` 语义状态；报告命令退出 0 也可能保存 `partial`。32 步 OneRec TP2 预期每 rank 2304 次模型 AllReduce、32 次词表 AllGather；控制组独立计数。
 
 ## 时钟验证
 
@@ -94,56 +98,10 @@ python -B -S -m flagprof report "$FP_WORKSPACE/onerec-tp2/group.json" \
 
 固定镜像采用旧 FlagGems `runtime.register.Register` 接口，组件兼容该接口并保留新接口路径。只注册明确 include，分别记录实际 route hit、fallback/excluded/error；启用标志或命令退出 0 不代表算子已经走 FlagGems。编译探针只声明结构 listener 能观察到的 cache hit/miss，无法据耗时推断内存缓存复用或编译失败。
 
-测试结果与尚未满足的资格见下表。任何失败、中止、unknown 和 partial 均保留，不能据命令退出 0 或候选适配提交宣称完整性能资格。
+测试结果与尚未满足的资格见验证记录。任何失败、中止、unknown 和 partial 均保留，不能据命令退出 0 或候选适配提交宣称完整性能资格。
 
+## 验证、缺陷与维护
 
+统一在 [验证结果与开放缺陷](inference-v2-validation.md) 维护实测范围、回归计数、P800-INF-001–007、单卡/TP2 分歧及证据可得性，避免多份状态表漂移。`status=ok` 表示分析可用；数值是否相同必须读取具体误差，group complete 只说明组执行完成。
 
-### 最终源码与回归（2026-11-03）
-
-分支为 `zhiyu/p800-inference-v2`，基于 `dev-1.0@41ab2dce`。提交 `af1b8e9c` 下完成以下回归；随后仅修正多窗口通信摘要的来源时钟字段并同步文档。固定镜像内 Inference 19 项测试通过、1 项可选依赖跳过；Python 3.10 与 3.12 均通过。Base 381 项（1 个既有 skip）、Operation 167 项、公开分发 14 项通过。
-
-Qwen 与 OneRec 的单卡基线、perf、accuracy 输出逐字节相同；OneRec TP2 的 NCCL 兼容层和 FlagCX 均独立完成 32 步、每 rank 2304 次 AllReduce 与 32 次 AllGather。windowed Qwen 设备 gap projection 为 `available`，但 scheduled window 不等于完整请求。
-
-性能开销专门测量：加载后同步四次前向、三轮顺序样本，perf-lite 中位耗时为基线 1.1321 倍，裸 profiler 1.2634 倍，封装 profiler 1.2600 倍，coverage 18.7500 倍；该结果只用于 N1 观测，不构成硬件性能资格。SIGKILL 验收返回 137，两个窗口分别为 `valid` 和 `lost`，目标进程消失且存活事件可读。
-
-## 已登记实测（2026-11-03）
-
-固定镜像与独立模型文件 SHA 下，在两台 P800 主机分别验证。Qwen 使用公开合成文本，
-BF16/eager、max-length 32；OneRec 使用公开合成单样本、BF16/eager、batch 1、
-32 步 greedy。验证包有独立 oracle ID，不是历史跨硬件 reference。
-
-| 功能 | 实测与判读 |
-|---|---|
-| 五预设与模型 | Qwen/OneRec 均完成 coverage/perf-lite/accuracy/perf/modules 的真实执行；模块大轨迹另用封存 capture 恢复导入，原预算失败保留 |
-| 采集与离线 | final/windowed、capture-only/analyse/import、inspect verify/page/report/compare、外部 trace seal 有实测；每次重试使用新目录 |
-| 模块规模 | Qwen 模块 trace 4,126,414 条源记录；OneRec 8,215,086 条。1 GiB 默认源预算不够、系统盘空间不足和 800 秒导入超时均保留 |
-| 精度诊断 | Qwen 固定输入 A/A、64 blob 含 SiLU 下钻；OneRec 32 步 A/A、token/hidden/KV 释放；独立 rsqrt 扰动 fixture 验证双侧 replay。未做跨硬件精度认证 |
-| 多批次 | Qwen 三样本按 2+1 两批，warmup 1、forwards 2；4 份输出与无采集基线逐字节相同 |
-| 组件与编译 | 真实 Qwen SiLU 路由命中；独立 SiLU 冷缓存 1 miss、热缓存 1 hit，注册器卸载恢复。失败、缓存失效、进程内复用不可观察，compile 仍 partial |
-| 内存 | Qwen 官方 allocator 轨迹有原始/规范化/排除计数与校验；不是整卡 HBM 或硬件 counter |
-| TP2 | NCCL 兼容层与 FlagCX 各自完成 OneRec accuracy/perf-lite/perf group complete；每 rank 32 步、2304 AllReduce、32 AllGather，复制边界/token/序列一致；独立 collective smoke 另外保存 |
-| 故障与恢复 | timeout 124、异常 1、SIGTERM 143；自有进程回收、独立 profiler 冲突拒绝、设备 postflight、delivery 跨主机恢复与 verify |
-| 回归 | Linux 固定镜像中 Inference 标准库与真实 Gloo 检查；Base 381 项（含 1 既有 skip）、Operation 167 项、公开分发 14 项通过 |
-
-### 仍然保留的能力边界
-
-- P800 exporter 没有提供可信的 capture loss 计数，完整性保持 unknown；时钟映射独立验证不产生硬件同步误差上界，`clock_valid:false` 保留。
-- BKCL 后台线程 launch 与调用线程 collective 标记间缺因果键；通信逻辑计数完整，设备调用关联 unavailable。仅识别设备通信类别不能消除这个缺口。
-- 显式 windowed 的公共导入路径现在会持久化每个窗口自己的 device-analysis projection，并按 source_clock 隔离区间；实测报告可读设备 gap，但窗口通常只覆盖 scheduled window，未完整覆盖请求时，request gap 仍保持 partial/unavailable，不据此宣称完整请求资格。
-- 大 trace 导入/读取成本高。P800 `performance_disposition=not_qualified`，不继承其他平台历史用户豁免；耗时是本轮观察值，不作为性能达标声明。
-- 单个 trace 的适用范围为一个所选设备（ordinal 0 或 1），TP2 为两份独立 trace。8 卡、跨机、服务热加载、通用外部算子导入及硬件计数器不在当前实现交付范围。
-- 本轮没有 NVIDIA/Ascend 实机回归；公共 CPU 回归和历史代码入口保留不能替代跨设备实测。
-
-
-### 缺陷与复测索引
-
-| 编号 | 触发与处理 | 当前状态 |
-|---|---|---|
-| P800-INF-001 | 未在导入 torch 前设置两个 XPU tracing 变量：报错或没有设备轨；适配器验证逻辑卡号并拒绝缺失配置 | 已加门禁；空轨/截断轨负例已测 |
-| P800-INF-002 | 镜像 CPython 缺 pidfd/memfd 包装，旧路径无法创建进程代理；用受限 Linux syscall 保持相同内核原语 | 固定镜像、Python 3.12 和 SIGTERM/SIGKILL 复测通过 |
-| P800-INF-003 | 显式 windowed CLI 的 timeout 未转交；设备 projection 未写入，报告 gap unavailable | 已修复并实测 1.5 秒超时、Qwen 两窗口、OneRec 32 步；原结果保留 |
-| P800-INF-004 | wheel 漏打包 P800 JSON 格式契约 | 已修复；独立构建/安装后无 torch 读取通过 |
-| P800-INF-005 | modules trace 超出默认 1 GiB，或导入/空间预算不足 | 使用显式预算和 ext4、新恢复目录；原预算失败保留。不能保证任意规模低延迟 |
-| P800-INF-006 | BKCL 后台 launch 缺调用线程因果键；exporter 缺 loss 计数和设备同步误差上界 | 开放的采集证据限制；通信关联 unavailable、完整性 unknown、性能 not_qualified |
-
-离线包恢复、来源账本未知字段、stream 缺失、correlation 缺失、UUID 错配、blob 零预算、collector 日志错误均有独立负例。严格区分命令退出、导入完成、面板可用和资格达标四层状态。
+更换镜像、驱动、模型、输入、采集器或源码后，记录新身份并复测受影响范围，保留旧失败与新目录。设备或输入不一致时拒绝比较，不修改容差/原始证据使其通过；新公开输入包使用独立 oracle ID。capture loss、设备时钟误差和 BKCL 关联缺口须有新证据才可改变状态，不自动晋级。

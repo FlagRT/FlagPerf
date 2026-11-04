@@ -24,7 +24,7 @@
 Base、Operation、Inference 的当前单机入口不要求 SSH。先阅读所选模块的环境准备，再执行其最小示例。
 昆仑芯 P800 的基础能力见 [Base/Toolkit 指南](docs/kunlunxin/README.md)，算子精度与性能见 [P800 Operation](operation/vendors/kunlunxin/README.md)。
 
-P800 的 Inference v2 候选适配与验证进度见 [P800 Inference](docs/kunlunxin/inference-v2.md)，完整验收进行中。
+P800 的环境与复现命令见 [P800 Inference](docs/kunlunxin/inference-v2.md)，[验证结果与开放缺陷](docs/kunlunxin/inference-v2-validation.md) 单独登记。当前为候选适配：OneRec 单卡与 TP2 存在未解释的 token 差异（P800-INF-007），TP2 精度和完整性能资格尚未通过。
 平头哥 PPU 的基础能力见 [PPU 适配指南](docs/thead/README.md)，算子入口、运行栈准备及待验收边界见 [PPU Operation](operation/vendors/thead/README.md)。
 完整导航见 [docs](docs/README.md)。
 
