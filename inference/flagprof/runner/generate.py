@@ -181,10 +181,6 @@ def execute(args):
         if (model.config.model_type, model.config.hidden_size, model.config.num_hidden_layers,
                 model.config.vocab_size) != ('qwen3', 4096, 36, 176384):
             raise ValueError('OneRec architecture mismatch')
-        p800_logits = None
-        if os.environ.get('FLAGPROF_P800_ONEREC_LOGITS'):
-            from flagprof.vendors.kunlunxin.onerec import configure_logits
-            p800_logits = configure_logits(model)
         model._flagperf_generation = dict(max_new_tokens=args.max_new_tokens)
         step_model = wrapper(model)
         boundaries = ['<root>.model.layers.'+str(i) for i in range(36)] + ['<root>.model.norm', '<root>.lm_head']
@@ -199,8 +195,6 @@ def execute(args):
                         device=args.device, software=software(), numerics=numeric, flaggems='off', include=None,
                         parallelism=dict(world_size=world, plan=plan),
                         comm_backend=parallel.backend if parallel else 'none')
-        if p800_logits is not None:
-            identity['numerics']['p800_logits'] = p800_logits
         if handle:
             handle.bind_tensor_inputs([], {}, identity=identity)
         out = Path(args.outputs)

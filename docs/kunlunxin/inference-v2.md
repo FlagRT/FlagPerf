@@ -60,6 +60,8 @@ python -B -S -m flagprof report /absolute/path/to/run --out "$FP_WORKSPACE/qwen-
 
 ## 模型与诊断范围
 
+执行策略的模型/库、项目 runner、操作者及后端职责见 [OneRec 执行策略说明](inference-v2-execution-policy.md)。当前 runner 手工编排生成，不能自动声称等同模型官方 `generate()`；分析不以改变策略取得一致。
+
 - Qwen3-Embedding-0.6B：真实前向、五预设、固定输入 accuracy、算子下钻、allocator memory、有限 FlagGems include 与报告均已有设备实测。
 - OneRec-8B：使用既有 Qwen3 架构约束、batch 1、BF16/eager、32 步 greedy 生成；accuracy 遵循 EOS 或上限，performance 固定步数。保留 prefill/decode、token 和 KV 释放记录。
 - 模型资产可从公开来源下载，但须记录文件 revision、字节数与 SHA。新建的公开验证输入包必须使用自己的 oracle ID；不能冒充历史 NVIDIA/Ascend reference 包。
@@ -69,7 +71,7 @@ python -B -S -m flagprof report /absolute/path/to/run --out "$FP_WORKSPACE/qwen-
 
 **TP2 为候选诊断路径，P800-INF-007 未闭合前不声明其精度通过。** 固定镜像缺少 Transformers TP 所需的 `accelerate`。已测独立依赖目录为 `accelerate==1.11.0`，wheel SHA-256 `a628fa6beb069b8e549460fc449135d5bd8d73e7a11fd09f0bc9fc4ace7f06f1`；可用固定解释器 `pip install --no-deps --target /path/to/overlay /path/to/verified.whl` 在独立目录准备，先核对其余依赖；只读挂载为 `/overlay`，设置 `PYTHONPATH=/code/inference:/overlay`，不覆盖镜像内 torch。TP2 容器另需第二张已保留卡及身份 JSON 第二项。Transformers 4.57.1 通过模型 `tp_plan` 属性接入显式计划，词表头使用 `colwise_rep`（列分片并汇聚完整输出），每 rank 核验本地权重形状 `[88192,4096]`。这证明分片实际发生，不证明单卡与 TP2 精度等价。其他版本保留原显式计划接口。
 
-P800-INF-007 的 BF16 logits 并列舍入已从历史 blob 定位；显式候选选项 `FLAGPROF_P800_ONEREC_LOGITS=fp32` 的机制、额外内存、CPU 验证及设备未验证边界统一见 [缺陷记录](inference-v2-validation.md)。默认仍保持原 BF16 执行，不自动应用该策略。
+P800-INF-007 的 BF16 logits 并列舍入已从历史 blob 定位；离线重投影仅作诊断。曾增加的 FP32 词表头策略已撤回，当前保持原 BF16 执行，差异如实记录，见 [缺陷记录](inference-v2-validation.md)。
 
 ```bash
 python -B -m flagprof launch --vendor kunlunxin --comm-backend flagcx \
