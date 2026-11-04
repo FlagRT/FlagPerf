@@ -136,6 +136,13 @@ report 的 `results` 中 `perf.op` / `perf.layer` / `perf.device` / `perf.gap` �
     --device cuda:0 --dtype bfloat16 --samples 8 --batch-size 1
 ```
 
+embedding 任务已实测支持 bfloat16/float16/float32、任意 batch、eager/sdpa 注意力
+（2026-11-04 PPU 实测，各产出有限且逐 forward 确定的 fp32 池化结果）。`--task
+generate` 则是 OneRec 专用路径：只接受 sealed `--inputs-from` 包（schema 见
+`flagprof/runner/fixed.load`，公共基线无通用打包工具）并在加载后硬校验架构为
+`qwen3`/hidden 4096/36 层/vocab 176384——其他因果 LM 无法走该入口，生成评测请以
+自定义目标 + `flagprof.attach()` 接入采集（usage.md）。
+
 窗口模式加 `--capture-mode windowed`（按目标的 `flagprof` step 句柄推进窗口，
 `--active`/`--windows` 控制窗数，`--timeout` 前传给受控目标进程）。多窗口时钟按窗口
 独立投影（`source_clock=per_window`），不跨窗双计。外部自行导出的 trace 用
