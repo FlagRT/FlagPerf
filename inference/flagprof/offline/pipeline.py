@@ -98,7 +98,7 @@ def prepare(source,directory,*,vendor,registry=None,kind=None,calls=None,marker_
             rawcats[category]+=1;task=tax.task_type(e);taskkey=str(task) if task is not None else '<absent>'
             db.put('task_count',taskkey,db.get('task_count',taskkey,0)+1)
             db.put('inventory',i,dict(trace_uid=uid,loc=e['_linker_loc'],category=category,name=e.get('name',''),task_type=task,dur=__import__('flagprof.vendors.chrome',fromlist=['nanoseconds']).nanoseconds(e.get('dur'))))
-        if vendor in ('nvidia','thead'):reason='not_normalized' if category else 'scope_annotation' if e.get('cat') in tax.contract['roles']['allowed_non_device_categories'] else 'host_or_metadata'
+        if vendor in ('nvidia','thead','kunlunxin'):reason='not_normalized' if category else 'scope_annotation' if e.get('cat') in tax.contract['roles']['allowed_non_device_categories'] else 'host_or_metadata'
         else:
             from flagprof.vendors.ascend.format import queue_key_valid
             reason='unrecognized_device_activity' if category else 'invalid_queue_key' if e.get('name','').startswith(('Enqueue','Dequeue')) and not queue_key_valid(e.get('args',{}).get('correlation_id')) else 'host_or_metadata'
@@ -118,16 +118,16 @@ def prepare(source,directory,*,vendor,registry=None,kind=None,calls=None,marker_
             db.add_interval(i,r['ts'],end,key((r['host_pid'],r['tid'])))
         args=ext['chrome.args'];cat=ext['chrome.cat'];ph=ext['chrome.ph']
         if r['t']=='launch' or call:db.put('native_pid',r['host_pid'],r['host_pid'])
-        flowcat='ac2g' if vendor in ('nvidia','thead') else 'HostToDevice'
+        flowcat='ac2g' if vendor in ('nvidia','thead','kunlunxin') else 'HostToDevice'
         if cat==flowcat and ext['chrome.id'] is not None:
             if ph=='s' and r['t']=='launch':db.addkey('flow_start',(cat,str(ext['chrome.id'])),i)
             if ph=='f':
                 db.addkey('flow_endpoint',(r['pid'],r['tid'],r['ts']),i);db.addkey('endpoint_flow',(cat,str(ext['chrome.id'])),i)
         if selected:
             db.addkey('device_endpoint',(r['pid'],r['tid'],r['ts']),i)
-            field='correlation' if vendor in ('nvidia','thead') else 'connection_id'
+            field='correlation' if vendor in ('nvidia','thead','kunlunxin') else 'connection_id'
             if args.get(field) is not None:db.addkey('device_launch',str(args[field]),i)
-        if vendor in ('nvidia','thead'):
+        if vendor in ('nvidia','thead','kunlunxin'):
             if cat in ('cuda_runtime','cuda_driver') and args.get('correlation') is not None:db.addkey('launch_key',str(args['correlation']),i)
             if args.get('External id') is not None:
                 if cat in ('cpu_op','user_annotation'):db.addkey('project_external',(r['host_pid'],str(args['External id'])),i)

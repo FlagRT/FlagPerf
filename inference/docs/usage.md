@@ -30,7 +30,7 @@ python3 -B -m flagprof record \
   -- python3 your_inference.py
 ```
 
-NVIDIA 环境使用 `--vendor nvidia`。默认 `final` 采集完整会话，目标正常退出后独立导入；窗口模式需显式选择并推进 step。包装 shell、服务进程或自行再启动的子进程，需要在真正执行推理的进程使用 `flagprof.attach()`；接口见 [总体架构](02-architecture.md)。
+NVIDIA 环境使用 `--vendor nvidia`。`perf/modules` 默认 `final` 采集完整会话，目标正常退出后独立导入；`coverage/perf-lite/accuracy` 转入窗口生命周期，显式 `--capture-mode windowed` 也走窗口路径。窗口采集需要目标推进 `handle.step()`，内置 runner 已提供相应边界。包装 shell、服务进程或自行再启动的子进程，需要在真正执行推理的进程使用 `flagprof.attach()`；接口见 [总体架构](02-architecture.md)。
 
 平头哥 PPU 环境使用 `--vendor thead`（设备名为 CUDA 兼容的 `cuda:N`），需先经 `ppu-smi` 生成 sourced 身份并以 `FLAGPROF_THEAD_IDENTITY` 注入；锁定镜像、最小命令、集合通信识别边界与验收状态见 [PPU Inference 适配](../../docs/thead/inference-v2.md)。
 
@@ -48,6 +48,8 @@ python3 -B -m flagprof record \
      --inputs /absolute/path/to/inputs.jsonl --batch-size 1 \
      --device npu:0 --dtype bfloat16 --outputs "$FP_WORKSPACE/runner-output"
 ```
+
+`--inputs` 当前只取前 `batch-size` 行组成一个批次，`--forwards` 重复这个批次，不遍历其余行。需要多批次或固定数值身份时使用 `--inputs-from`；文件结构及合成包生成示例见 [固定输入包](../../docs/kunlunxin/inference-v2-validation.md#固定输入包生成)。
 
 generation 使用 `--task generate` 和 `--generation-mode accuracy|performance`。双进程入口为 `flagprof launch --nproc-per-node 2 --comm-backend hccl|flagcx|nccl`，具体目标参数见 `launch --help` 与 `python -m flagprof.runner --help`。只有支持该运行器并匹配设备环境的模型可直接运行；其他目标保留自身加载逻辑，通过进程采集或 Python API 接入。
 
@@ -79,7 +81,7 @@ python3 -B -S -m flagprof import /absolute/path/to/sealed-capture \
 
 ## Oracle 与算子重放
 
-`accuracy` 采集需注册模型、样本和输入身份；内置 runner 完成这些接入。任意脚本只启用 preset 不等于已建立跨 run 可比性。
+`accuracy` 采集需注册模型、样本和输入身份；内置 runner 完成这些接入。任意脚本只启用 preset 不等于已建立跨 run 可比性。`record --preset accuracy` 默认不存张量 blob，完整误差与 replay 需显式 `--tensor-blob all` 并检查预算/跳过计数；`launch --preset accuracy` 默认保存 all，仍须核对实际覆盖。
 
 ```bash
 python3 -B -S -m flagprof report oracle \
@@ -94,10 +96,10 @@ python3 -B -S -m flagprof replay prepare \
 
 ## 设备最小验收
 
-改动涉及采集、厂商适配、导入或报告口径时，在对应设备环境运行一次最小样本全流程，并在 PR 中附上命令、被测 commit 与下列检查结果。以下用两条输入、batch 1 的 embedding 样本：
+改动涉及采集、厂商适配、导入或报告口径时，在对应设备环境运行一次最小样本全流程，并在 PR 中附上命令、被测 commit 与下列检查结果。以下用一条输入、batch 1 的 embedding 样本；默认重复同一批三次，不据此声称多样本覆盖：
 
 ```bash
-printf '%s\n' '"FlagPerf inference sample one."' '"FlagPerf inference sample two."' \
+printf '%s\n' '"FlagPerf inference sample one."' \
   > "$FP_WORKSPACE/accept-inputs.jsonl"
 python3 -B -m flagprof record \
   --vendor ascend --preset perf \
@@ -139,3 +141,7 @@ python3 -B -S -m unittest discover -s tests -v
 ## 归档与恢复（可选）
 
 `flagprof delivery publish|verify|restore` 把 Store、capture 等目录打包成带逐文件摘要的归档，并在新目录恢复相对依赖。发布目录不限文件系统；`restore` 的目标必须是 ext4 上的新目录。
+
+## P800 候选运行栈
+
+使用 `--vendor kunlunxin`；固定镜像、采集前置变量、SMI/UUID 身份、TP2 依赖及命令见 [P800 指南](../../docs/kunlunxin/inference-v2.md)。[验证记录](../../docs/kunlunxin/inference-v2-validation.md) 登记未解释的单卡/TP2 数值差异（P800-INF-007）；组执行完成不等于精度通过。NVIDIA/Ascend 的资格、时钟和历史豁免不转移到 P800。

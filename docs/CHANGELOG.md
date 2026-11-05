@@ -22,6 +22,20 @@
   publish→verify→restore 跨容器通过。同型第二台主机（契约允许的另一驱动版本）复制
   CPU 套件、单卡冒烟与 TP2，结果一致。
 - 新增 [PPU Inference 指南](thead/inference-v2.md)，更新文档导航与 Inference 使用说明。
+## 2026-11-04 — P800 Inference v2 文档与数值边界复核（未发布）
+
+- 撤回策略后的源码在两机重新通过 Inference、Gloo、Base、Operation、公开分发回归；7 份历史 Store 校验及报告重建通过，补充 accuracy 报告判读和新模型接入限制。设备占用预检拒绝，未重新执行硬件推理，开放缺陷和资格不变。
+
+- 补齐公开导航、固定栈准备、输入包生成、基线/采集/离线判读、TP2 依赖与排障说明；区分现行命令与编号文档中的历史设计。
+- 登记 P800-INF-007：同一 P800 的 OneRec 单卡/TP2 第 14 个生成 token 为 6741/5582，最终 hidden 摘要也不同；根因未确认，TP2 内部一致不代表与单卡等价，精度与完整性能资格尚未通过。
+- 更正历史回归计数（Inference 总计 19、含 1 skip；Base 总计 381、含 1 skip），保留采集证据限制与历史失败。文档核查不新增设备运行结论。
+- 后续定位 P800-INF-007 的直接触发：BF16 输出舍入造成两个最高 logits 并列。曾添加的 FP32 词表头策略、入口及专项测试已按用户要求撤回；离线重投影只作诊断，不改变原 BF16 协议，缺陷未关闭。
+
+## 2026-11-03 — P800 Inference v2 候选适配（未发布）
+
+- 新增独立 kunlunxin 采集/格式契约与真实 SMI/UUID 身份接入；复用公共 Store、参考、导入和报告，不继承 NVIDIA 硬件资格。
+- 兼容固定 FlagRT 镜像的 Linux pidfd/memfd 包装、FlagGems 注册接口与 Transformers TP 计划；补齐 runner 分窗口 step、functional collective 观测与子进程超时回收。
+- 增加候选使用指南与 CPU/真实 Gloo 回归。模型实测、失败与未闭合边界以指南为准，不自动声明性能资格。
 
 ## 2026-11-03 — 移除 Inference 历史资料目录
 

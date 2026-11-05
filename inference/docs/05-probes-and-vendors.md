@@ -6,6 +6,29 @@
 
 > 上游：[02 架构](02-architecture.md) L1、[03 schema](03-event-schema.md)、[D22](DECISIONS.md#d22--采集层复用官方-profiler不做源码级融合)–[D24](DECISIONS.md#d24--导入契约身份分层来源账本完成标记证据索引) ｜ 下游：[06 模型接入](06-model-onboarding.md)、[07 分析器](07-analyzers-and-reports.md)
 
+## P800 当前实现补充（2026-11-03）
+
+本节更新当前入口，以下历史表格保留其原登记日期。P800 使用独立
+`kunlunxin` registry、格式契约和硬件身份；共享已验证的 Kineto 字段解释代码，
+不继承 NVIDIA 资格。运行条件、能力表、模型实测与限制统一见
+[P800 使用与验收](../../docs/kunlunxin/inference-v2.md)。
+
+采集前由使用者显式设置 `XPU_ENABLE_PROFILER_TRACING=1` 和所选逻辑设备的
+`XPU_CUPTI_ENABLE_DEVICE`；launcher 为各 worker 设置对应 rank。它们是诊断采集前提，
+不调整被测算子、队列策略或模型。windowed 会话仅批准这两项精确条件。
+无采集基线和主机探针不据此声明设备轨完整。SDK 未提供的丢失计数仍是 unknown。
+
+通信探针在原 imperative 接口外，观察 PyTorch
+`_functional_collectives.all_reduce/all_gather_tensor`；通过精确注册的 group name
+区分模型组与控制组，保持原调用结果、序列和逻辑字节数，卸载恢复原入口。
+功能性通信的主机返回不证明设备完成；后台线程 launch 缺少与调用线程标记的因果键时，
+设备关联保留 unavailable。独立实测确认的有限 `kl3_all_reduce<float|bfloat16>`
+kernel 名称族只用于设备类别，不生成调用归属。
+
+`flagprof.scope()` 是当前已实现的可选用户区间入口；未 attach 或探针未启用时不采集。
+当前五预设为 perf/modules/coverage/perf-lite/accuracy；counter/monitor、在线恢复等
+路线图功能不因本适配而变成已实现。
+
 ## 1. 探针的定义与硬约束
 
 探针 = 一个独立的采集单元，负责安装/卸载某种 hook 并产出若干类事件。
@@ -266,7 +289,7 @@ class SourceFormat(Protocol):      # 厂商格式解释，由 vendors/<v>/format
 }
 ```
 
-> **当前实现（T9，2026-10-18）**：`flagprof/registry.py` 的 `Registry` 目前只做**懒加载的组件描述符**，字段为 `id`、`kind`、`version`、`module`、`factory`、`requires`、`format_vendor`。`kind` 取 `vendor`/`probe`/`analyzer`/`component`/`responder`；`requires` 是模块名字符串列表（不是上例的 `{framework, min_version}` 对象）；`format_vendor` 只对 `kind=vendor` 必需，取 `ascend` 或 `nvidia`。来源有两个：内置 `BUILTINS`（`ascend`、`nvidia` 两个 vendor）与 `record --plugins <JSON>` 传入的描述符列表（传入后**取代**而不是追加 `BUILTINS`）。`create()` 按 `module` + `factory` 延迟导入，并把实现文件 sha256 与厂商源码闭包身份写入实现身份（外部依赖不在认证范围）。上例的 `emits`、`cost`、`levels`、`sources`、`code_closure` 字段、`registry/` 目录下按类别分文件的 JSON，以及下面"作用"中的指标来源矩阵自动生成、`list` 子命令，均为**设计目标（未实现）**。
+> **当前实现（T9，2026-10-18）**：`flagprof/registry.py` 的 `Registry` 目前只做**懒加载的组件描述符**，字段为 `id`、`kind`、`version`、`module`、`factory`、`requires`、`format_vendor`。`kind` 取 `vendor`/`probe`/`analyzer`/`component`/`responder`；`requires` 是模块名字符串列表（不是上例的 `{framework, min_version}` 对象）；`format_vendor` 只对 `kind=vendor` 必需；当前取 `ascend`、`nvidia` 或候选 `kunlunxin`。来源有两个：内置 `BUILTINS`（三个 vendor）与 `record --plugins <JSON>` 传入的描述符列表（传入后**取代**而不是追加 `BUILTINS`）。`create()` 按 `module` + `factory` 延迟导入，并把实现文件 sha256 与厂商源码闭包身份写入实现身份（外部依赖不在认证范围）。上例的 `emits`、`cost`、`levels`、`sources`、`code_closure` 字段、`registry/` 目录下按类别分文件的 JSON，以及下面"作用"中的指标来源矩阵自动生成、`list` 子命令，均为**设计目标（未实现）**。
 
 作用：
 

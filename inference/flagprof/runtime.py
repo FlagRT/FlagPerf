@@ -104,6 +104,8 @@ class Attachment:
             else:
                 if descriptor['format_vendor']=='thead':
                     from .vendors.thead.session import hardware_identity
+                if descriptor['format_vendor']=='kunlunxin':
+                    from .vendors.kunlunxin.session import hardware_identity
                     self.state['hardware_identity']=hardware_identity()
                 self.state.update(status='running', collector_status='not_requested', capture_status='not_requested')
                 self.state['capabilities']['enabled'].remove('official_session')

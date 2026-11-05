@@ -293,10 +293,10 @@ class DB:
         if not self.c.execute("SELECT 1 FROM kv WHERE kind='dequeue' LIMIT 1").fetchone():self.empty_modes.update(('dequeue','project_dequeue'))
         self.c.commit()
     def edge_hits(self,event,vendor):
-        prefix='cuda' if vendor in ('nvidia','thead') else 'cann'
+        prefix='cuda' if vendor in ('nvidia','thead','kunlunxin') else 'cann'
         q='SELECT e.mode,n.payload,f.payload FROM device_edges e JOIN norm n ON n.id=e.dst LEFT JOIN norm f ON f.id=e.extra WHERE e.src=? ORDER BY e.mode,e.extra,e.dst'
         for mode,launch,extra in self.c.execute(q,(self.rid(event),)):
-            yield prefix+('.flow' if mode==0 else '.correlation_id' if vendor in ('nvidia','thead') else '.connection_id'),unpack(launch),(unpack(extra),) if extra is not None else ()
+            yield prefix+('.flow' if mode==0 else '.correlation_id' if vendor in ('nvidia','thead','kunlunxin') else '.connection_id'),unpack(launch),(unpack(extra),) if extra is not None else ()
     def node(self,i):
         ck=pack(('norm',i));data=self.cache.get(ck)
         if data is None:

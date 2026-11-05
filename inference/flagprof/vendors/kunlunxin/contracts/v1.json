@@ -1,0 +1,184 @@
+{
+  "conditions": [
+    {
+      "id": "hardware.model",
+      "path": "hardware.model",
+      "allowed": [
+        "P800"
+      ],
+      "requirement": "required"
+    },
+    {
+      "id": "hardware.driver",
+      "path": "hardware.driver",
+      "allowed": [
+        "5.0.21.47"
+      ],
+      "requirement": "required"
+    },
+    {
+      "id": "hardware.xpu_smi_runtime",
+      "path": "hardware.xpu_smi_runtime",
+      "allowed": [
+        "10.2"
+      ],
+      "requirement": "required"
+    },
+    {
+      "id": "collector.name",
+      "path": "collector.name",
+      "allowed": [
+        "torch.profiler"
+      ],
+      "requirement": "required"
+    },
+    {
+      "id": "collector.version",
+      "path": "collector.version",
+      "allowed": [
+        "2.9.0+cu129"
+      ],
+      "requirement": "required"
+    },
+    {
+      "id": "actual.record_shapes",
+      "path": "actual.record_shapes",
+      "allowed": [
+        true
+      ],
+      "requirement": "required"
+    },
+    {
+      "id": "exporter.schema_version",
+      "path": "exporter.schema_version",
+      "allowed": [
+        1
+      ],
+      "requirement": "required"
+    }
+  ],
+  "excluded_duplicate_names": [],
+  "format_version": "1",
+  "known_unobserved_taxonomy": [
+    "gpu_memcpy",
+    "gpu_memset"
+  ],
+  "notes": {
+    "assessment_limit": "P800 XPyTorch 2.9 FlagRT v2 observed Kineto structure; not capture completeness, occupancy metrics, or NVIDIA hardware semantics.",
+    "evidence_sources": [
+      "docs/kunlunxin/inference-v2.md"
+    ],
+    "labels": [],
+    "conditional_dependencies": []
+  },
+  "open_unknown": true,
+  "revision": 1,
+  "roles": {
+    "allowed_non_device_categories": [
+      "gpu_user_annotation"
+    ],
+    "audit_device_structure": {},
+    "communication_process_names": [],
+    "device_categories": [
+      "kernel",
+      "gpu_memcpy",
+      "gpu_memset"
+    ],
+    "device_identity_signal": "category_or_device_stream",
+    "device_process_names": [],
+    "expected_process_names": [
+      "python"
+    ],
+    "host_categories": [
+      "cpu_op",
+      "user_annotation",
+      "cuda_runtime",
+      "cuda_driver",
+      "privateuse1_runtime",
+      "python_function"
+    ],
+    "host_process_names": [],
+    "metadata_process_names": [],
+    "structural_records": [
+      {
+        "basis": "official TraceSpan envelope; tid/name are display names, not work identity",
+        "id": "profiler_trace_span",
+        "match": {
+          "cat": "Trace",
+          "pid": "Spans"
+        },
+        "role": "metadata"
+      },
+      {
+        "basis": "official OverheadActivity sentinel; thread may vary",
+        "id": "profiler_overhead",
+        "match": {
+          "cat": "overhead",
+          "pid": -1
+        },
+        "role": "host"
+      }
+    ],
+    "unknown_execution_process_names": []
+  },
+  "schema_version": 1,
+  "structural_conditions": [
+    "device_complete_track"
+  ],
+  "support_scope": {
+    "conditions": [
+      {
+        "allowed": [
+          1
+        ],
+        "id": "scope.device_count",
+        "path": "scope.device_count",
+        "requirement": "required"
+      },
+      {
+        "allowed": [
+          false
+        ],
+        "id": "scope.host_device_pid_collision",
+        "path": "scope.host_device_pid_collision",
+        "requirement": "required"
+      },
+      {
+        "allowed": [
+          [
+            0
+          ],
+          [
+            1
+          ]
+        ],
+        "id": "scope.device_ordinals",
+        "path": "scope.device_ordinals",
+        "requirement": "required"
+      },
+      {
+        "allowed": [
+          true
+        ],
+        "id": "scope.device_pid_matches_device_arg",
+        "path": "scope.device_pid_matches_device_arg",
+        "requirement": "required"
+      }
+    ],
+    "unchecked": [
+      "partial_device_track_or_stream_loss",
+      "capture_completeness",
+      "unobserved_exporter_behavior",
+      "physical_device_mapping",
+      "execution_tracks_per_device"
+    ]
+  },
+  "taxonomy_entries": [
+    {
+      "label": "kernel",
+      "category": "compute",
+      "status": "capture_verified",
+      "evidence": "structural"
+    }
+  ]
+}

@@ -11,6 +11,8 @@ import re
 BUILTINS = (
     dict(id='thead', kind='vendor', version='1', module='flagprof.vendors.thead.session',
          factory='TheadProfiler', requires=['torch'], format_vendor='thead'),
+    dict(id='kunlunxin', kind='vendor', version='1', module='flagprof.vendors.kunlunxin.session',
+         factory='KunlunxinProfiler', requires=['torch'], format_vendor='kunlunxin'),
     dict(id='ascend', kind='vendor', version='1', module='flagprof.vendors.ascend.session',
          factory='AscendProfiler', requires=['torch_npu'], format_vendor='ascend'),
     dict(id='nvidia', kind='vendor', version='1', module='flagprof.vendors.nvidia.session',
@@ -48,7 +50,7 @@ class Registry:
                 raise ValueError('duplicate descriptor id: ' + d['id'])
             if not isinstance(d.get('requires'), list) or not all(isinstance(x,str) for x in d['requires']):
                 raise ValueError('requires must be a list of names')
-            if d['kind'] == 'vendor' and d.get('format_vendor') not in ('ascend', 'nvidia', 'thead'):
+            if d['kind'] == 'vendor' and d.get('format_vendor') not in ('ascend', 'nvidia', 'thead', 'kunlunxin'):
                 raise ValueError('unsupported format family')
             self._items[d['id']] = d
 

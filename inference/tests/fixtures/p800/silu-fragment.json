@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "record_shapes": 1,
+  "baseTimeNanoseconds": 1790857026000000000,
+  "traceEvents": [
+    {
+      "ph": "X",
+      "cat": "cuda_runtime",
+      "name": "cudaLaunchKernel",
+      "pid": 101,
+      "tid": 101,
+      "ts": 2824379726063.97,
+      "dur": 68.249,
+      "args": {
+        "cbid": 211,
+        "correlation": 12
+      }
+    },
+    {
+      "ph": "X",
+      "cat": "kernel",
+      "name": "silu_forward_kernel_rank_1",
+      "pid": 0,
+      "tid": 0,
+      "ts": 2824379726127.819,
+      "dur": 10.239,
+      "args": {
+        "queued": 1130,
+        "device": 0,
+        "context": 0,
+        "stream": 0,
+        "correlation": 12,
+        "registers per thread": 0,
+        "shared memory": 2,
+        "blocks per SM": 0.0,
+        "warps per SM": 0.0,
+        "grid": [
+          24778,
+          494,
+          0
+        ],
+        "block": [
+          1,
+          1,
+          1
+        ],
+        "est. achieved occupancy %": 0
+      }
+    },
+    {
+      "name": "process_name",
+      "ph": "M",
+      "ts": 2824376575999.487,
+      "pid": 0,
+      "tid": 0,
+      "args": {
+        "name": "python"
+      }
+    },
+    {
+      "name": "process_labels",
+      "ph": "M",
+      "ts": 2824376575999.487,
+      "pid": 0,
+      "tid": 0,
+      "args": {
+        "labels": "GPU 0"
+      }
+    },
+    {
+      "name": "thread_name",
+      "ph": "M",
+      "ts": 2824376575999.487,
+      "pid": 0,
+      "tid": 0,
+      "args": {
+        "name": "stream 0 "
+      }
+    }
+  ]
+}

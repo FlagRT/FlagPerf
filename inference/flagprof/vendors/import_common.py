@@ -237,9 +237,9 @@ def import_capture(directory: str | Path, writer: Writer, *, vendor: str,
                 from .format import load_adapter
                 registry = load_adapter(vendor).default_registry()
             supplied=dict(options,registry=registry,identities=identities,capture=capture)
-            if vendor == 'thead':
-                # The PPU window path persists the same device projection as
-                # final captures. Never claim a scheduled window covers a
+            if vendor in ('thead','kunlunxin'):
+                # The PPU/P800 window path persists the same device projection
+                # as final captures. Never claim a scheduled window covers a
                 # complete request.
                 from tempfile import TemporaryDirectory
                 from flagprof.offline.pipeline import prepare, import_prepared
@@ -260,7 +260,7 @@ def import_capture(directory: str | Path, writer: Writer, *, vendor: str,
                 analysis['capture_scope']='scheduled_window_not_complete_request'
                 calls=options.get('calls')
                 if calls is None:calls=calls_from(writer.run_dir,manifest['run_id'])
-                with TemporaryDirectory(prefix='thead-window-import-') as work:
+                with TemporaryDirectory(prefix={'thead':'thead-window-import-','kunlunxin':'p800-window-import-'}[vendor]) as work:
                     prepared=prepare(source,Path(work)/'prepared',vendor=vendor,
                         registry=registry,identities=identities,calls=calls,
                         marker_prefix=options.get('marker_prefix','flagprof::op#'),
