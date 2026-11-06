@@ -51,7 +51,7 @@ def check_disk(path):
 def check_capture_disk(path, vendor, filesystem='ext4'):
     """Explicit NVIDIA capture-only admission; import/query remain ext4."""
     if filesystem == 'ext4':return check_disk(path)
-    if filesystem != 'overlay' or vendor != 'nvidia' or filesystem_type(path) != 'overlay':
+    if filesystem != 'overlay' or vendor not in ('nvidia','thead','kunlunxin') or filesystem_type(path) != 'overlay':
         raise ValueError('capture-only overlay admission requires NVIDIA on actual overlay')
 
 

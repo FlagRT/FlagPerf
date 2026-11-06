@@ -23,6 +23,7 @@ import zlib
 from .writer import Writer
 from flagprof.store.manifest import atomic_json
 from flagprof.store.schema import is_control
+from ._pidfd import open_pidfd, create_memfd, supported as pidfd_supported
 
 RING_BYTES = 8 << 20
 BATCH_EVENTS = 512
@@ -62,7 +63,7 @@ def _held(lock, deadline):
 
 class ProxyWriter(Writer):
     def __init__(self, run_dir, *, config=None, attachment_dir=None, handshake_callback=None, **kwargs):
-        if sys.platform != 'linux' or platform.machine() not in ('aarch64', 'x86_64') or platform.python_implementation() != 'CPython' or not hasattr(os, 'pidfd_open'):
+        if not pidfd_supported() or platform.python_implementation() != 'CPython':
             raise RuntimeError('proxy unsupported platform or pidfd unavailable')
         ring_bytes = RING_BYTES
         self.attachment_dir = Path(attachment_dir) if attachment_dir else Path(run_dir)/'attachments'/uuid.uuid4().hex
@@ -110,7 +111,7 @@ class ProxyWriter(Writer):
         self.consumer_cpu_seconds = 0.
         self._stop = threading.Event()
         path = self.attachment_dir/'transport'
-        self._file = os.fdopen(os.memfd_create('flagprof-ring', os.MFD_CLOEXEC), 'w+b')
+        self._file = os.fdopen(create_memfd('flagprof-ring'), 'w+b')
         self._transport_path = path
         try:
             self._file.truncate(HDR+ring_bytes)
@@ -147,7 +148,7 @@ class ProxyWriter(Writer):
             os.close(ack_w)
             ack_w = None
             os.set_blocking(self._ack_r, False)
-            self._pidfd = os.pidfd_open(self._consumer.pid)
+            self._pidfd = open_pidfd(self._consumer.pid)
             ready = self._recv(10)
             if ready.get("op") != "ready" or ready.get("instance") != self._instance:
                 raise RuntimeError("consumer startup: %r" % ready)

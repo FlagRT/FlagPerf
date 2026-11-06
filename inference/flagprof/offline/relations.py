@@ -15,11 +15,11 @@ def device_hits(db,event,vendor):
 
 
 def host_hits(db,launch,vendor,native=False):
-    prefix='cuda' if vendor=='nvidia' else 'cann'
+    prefix='cuda' if vendor in ('nvidia','thead','kunlunxin') else 'cann'
     for n in db.contains(launch,'call' if native else 'project'):
         yield prefix+('.native_nesting' if native else '.same_thread'),n,()
     args=launch['ext']['chrome.args']
-    if vendor=='nvidia':
+    if vendor in ('nvidia','thead','kunlunxin'):
         ext=args.get('External id')
         if ext is not None:
             for source in records(db,'native_external' if native else 'project_external',(launch['host_pid'],str(ext))):
@@ -87,7 +87,7 @@ def native(db,event,vendor,registry,single_pid):
             for n in proof:db.add('evidence',n)
         db.innermost('host_candidates','host_owners');unknown |= db.count('host_owners')==0
         copyset(db,'host_owners','candidates')
-    if vendor=='nvidia' and single_pid[0]:
+    if vendor in ('nvidia','thead','kunlunxin') and single_pid[0]:
         ext=event['ext']['chrome.args'].get('External id')
         if ext is not None:
             for n in records(db,'native_external',(single_pid[1],str(ext))):

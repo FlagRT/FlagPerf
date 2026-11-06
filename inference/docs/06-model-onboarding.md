@@ -2,6 +2,8 @@
 
 # 06 语义层与模型接入
 
+当前可运行的内置任务为 embedding，以及登记约束下的 OneRec generation；下文还保留 profile、task 和插件设计，不代表这些接口全部已实现。可执行参数以 [使用说明](usage.md) 与 runner `--help` 为准。P800 的固定输入包、单卡/TP2 数值边界见 [验证记录](../../docs/kunlunxin/inference-v2-validation.md)。
+
 > 上游：[02 架构](02-architecture.md) L3/§7、[03 schema](03-event-schema.md) §4.7/§4.9 ｜ 下游：[07 分析器](07-analyzers-and-reports.md)、[09 CLI](09-cli-and-campaign.md)
 
 要解决的问题：**500 个模型，接入成本必须接近零；但"逐层"又需要知道层在哪里。**

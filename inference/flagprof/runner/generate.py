@@ -164,11 +164,17 @@ def execute(args):
                     'lm_head':'colwise_gather_output'}
         options = dict(local_files_only=True, trust_remote_code=False,
                        dtype=getattr(torch, args.dtype), attn_implementation=args.attention)
+        loader=AutoModelForCausalLM
         if parallel:
-            options.update(tp_plan=plan, device_mesh=parallel.mesh())
-        model = AutoModelForCausalLM.from_pretrained(model_path, **options).eval().requires_grad_(False)
+            from .parallel import onerec_loader, onerec_plan
+            plan = onerec_plan(plan)
+            loader,plan_mode=onerec_loader(plan)
+            options.update(tp_plan=plan_mode, device_mesh=parallel.mesh(),config=architecture)
+        model = loader.from_pretrained(model_path, **options).eval().requires_grad_(False)
         if parallel:
-            if list(model.lm_head.weight.shape) != [176384 // 2, 4096]:
+            head = model.lm_head.weight
+            local_head = head.to_local() if hasattr(head, 'to_local') else head
+            if list(local_head.shape) != [176384 // 2, 4096]:
                 raise ValueError('OneRec vocabulary head was not sharded as declared')
         else:
             model.to(args.device)
@@ -214,6 +220,10 @@ def execute(args):
                             torch.save(cpu, out/('hidden-'+request_id.replace(':','-')+'.pt'))
                     requests.append(row)
                     del last
+                    # Window scheduling is outside the synchronized request
+                    # envelope, including output sealing and cache release.
+                    if handle:
+                        handle.step()
         result = dict(schema='generation-runner/1', oracle_identity=identity, requests=requests,
                       load_s=load_s, instrumentation='attachment' if handle else 'none',
                       rank=int(os.environ.get('RANK','0')), status='complete')

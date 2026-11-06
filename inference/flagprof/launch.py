@@ -65,11 +65,19 @@ def worker(settings, rank):
 
 def launch(command, *, store, nproc_per_node=2, comm_backend='hccl', preset='perf',
            config=None, timeout=1800, source_max_bytes=1 << 30,
-           capture_only=False, capture_filesystem='ext4'):
+           capture_only=False, capture_filesystem='ext4', vendor=None):
     vendors = {'hccl':'ascend','flagcx':'ascend','nccl':'nvidia'}
     if nproc_per_node != 2 or comm_backend not in vendors:
         raise ValueError('launch supports single-host TP2 HCCL/FlagCX/NCCL')
-    vendor = vendors[comm_backend]
+    vendor = vendor or vendors[comm_backend]
+    if vendor not in ('ascend','nvidia','thead','kunlunxin'):
+        raise ValueError('unsupported launch vendor')
+    if vendor=='thead' and comm_backend not in ('flagcx','nccl'):
+        raise ValueError('PPU TP2 requires the NCCL-compatible or FlagCX backend')
+    if vendor=='kunlunxin' and comm_backend not in ('flagcx','nccl'):
+        raise ValueError('P800 TP2 requires FlagCX or the XPyTorch NCCL-compatible backend')
+    if vendor not in ('thead','kunlunxin') and vendor!=vendors[comm_backend]:
+        raise ValueError('launch vendor/backend mismatch')
     if capture_only and preset not in ('perf','modules'):
         raise ValueError('capture-only requires an official profiler preset')
     if capture_filesystem != 'ext4' and not capture_only:
@@ -140,6 +148,10 @@ def launch(command, *, store, nproc_per_node=2, comm_backend='hccl', preset='per
                        MASTER_ADDR='127.0.0.1', MASTER_PORT=str(port), FLAGPROF_COMM_BACKEND=comm_backend,
                        FLAGPROF_GROUP_ID=group_id, FLAGPROF_LAUNCH_WORKER='1')
             env.pop('FLAGPROF_RECORD_CONFIG', None)
+            if vendor=='kunlunxin' and env.get('XPU_ENABLE_PROFILER_TRACING')=='1':
+                # XPyTorch reads this at import, before initialize() can select
+                # the worker device. It must refer to this worker's ordinal.
+                env['XPU_CUPTI_ENABLE_DEVICE']=str(rank)
             log = (root/('rank-'+str(rank)+'.log')).open('xb')
             logs.append(log)
             children.append(subprocess.Popen([command[0], '-B', '-m', 'flagprof.launch',

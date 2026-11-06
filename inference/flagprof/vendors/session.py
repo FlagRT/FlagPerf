@@ -230,7 +230,8 @@ class ProfilerSession:
             self.directory.mkdir(parents=True,exist_ok=False)
             identity=dict(self.backend.identity(self.config))
             prerequisites=identity.get('collector_prerequisites',[])
-            if prerequisites:
+            approve=getattr(self.backend,'approve_prerequisites',None)
+            if prerequisites and not (approve and approve(prerequisites)):
                 raise RuntimeError('unapproved collector prerequisites: '+repr(prerequisites))
             environment,redacted=environment_identity()
             cfg=dict(asdict(self.config),schedule=dict(wait=0,warmup=0,active=self.config.active,repeat=self.config.windows))

@@ -7,6 +7,35 @@ import os
 _OWNERS = []
 
 
+def onerec_plan(plan):
+    """Keep vocabulary sharding and replicated full logits on the pinned API."""
+    import transformers
+    result = dict(plan)
+    if transformers.__version__ == '4.57.1' and result.get('lm_head') == 'colwise_gather_output':
+        # 4.57.1 ColwiseParallel(output_layouts=Replicate()) shards weights
+        # along vocabulary and gathers the output before local greedy argmax.
+        result['lm_head'] = 'colwise_rep'
+    return result
+
+
+def onerec_loader(plan):
+    """Bind the explicit plan before pinned Transformers auto sharding.
+
+    Transformers 4.57.1 rejects a dict at from_pretrained, but its documented
+    model tp_plan property accepts that dict. Use a local model subclass;
+    never patch the installed library or replace model/operator semantics.
+    """
+    import transformers
+    if transformers.__version__!='4.57.1':
+        return transformers.AutoModelForCausalLM,plan
+    from transformers import Qwen3ForCausalLM
+    class OneRecWithPlan(Qwen3ForCausalLM):
+        def post_init(self):
+            super().post_init()
+            self.tp_plan=dict(plan)
+    return OneRecWithPlan,'auto'
+
+
 class Parallel:
     def __init__(self, device, backend):
         import torch.distributed as dist

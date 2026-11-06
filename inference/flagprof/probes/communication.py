@@ -18,6 +18,7 @@ class CommunicationProbe(Probe):
         self.control = control
         self.model_groups = []
         self.native = {}
+        self.functional_native = {}
         self.sequences = defaultdict(int)
         self.busy = False
 
@@ -28,9 +29,14 @@ class CommunicationProbe(Probe):
             native = getattr(dist, name)
             self.native[name] = native
             setattr(dist, name, self._wrap(name, native))
+        import torch.distributed._functional_collectives as functional
+        for name in ('all_reduce', 'all_gather_tensor'):
+            native = getattr(functional, name)
+            self.functional_native[name] = native
+            setattr(functional, name, self._wrap(name, native, functional=True))
         self.manager.state['probes'][self.id] = dict(status='available', descriptor=self.descriptor())
 
-    def _wrap(self, name, native):
+    def _wrap(self, name, native, functional=False):
         @functools.wraps(native)
         def observed(*args, **kwargs):
             if self.busy or not self.active():
@@ -40,18 +46,27 @@ class CommunicationProbe(Probe):
             import torch.distributed as dist
             bound = inspect.signature(native).bind(*args, **kwargs).arguments
             group = bound.get('group')
+            if functional:
+                import torch.distributed._functional_collectives as collectives
+                group_name = collectives._resolve_group_name(group, bound.get('tag', ''))
+                # Resolve only exact registered process-group names. Do not
+                # infer model ownership from ranks or neighboring kernels.
+                candidates = [self.control, dist.group.WORLD] + self.model_groups
+                group = next((g for g in candidates if g is not None and g.group_name == group_name), group)
             role = ('control' if group is self.control else 'model'
                     if group is None or group is dist.group.WORLD or any(group is g for g in self.model_groups)
                     else 'unknown')
             group_id = os.environ['FLAGPROF_GROUP_ID']+'/'+role
             seq = self.sequences[group_id]
             self.sequences[group_id] += 1
-            tensor = bound.get('tensor', bound.get('input_tensor'))
+            tensor = bound.get('tensor', bound.get('input_tensor', bound.get('self')))
             tensors = [tensor] if isinstance(tensor, torch.Tensor) else []
             size = sum(t.numel()*t.element_size() for t in tensors)
             output = bound.get('tensor_list', bound.get('output_tensor', tensor))
             outputs = output if isinstance(output, list) else [output]
             output_size = sum(t.numel()*t.element_size() for t in outputs if isinstance(t, torch.Tensor))
+            if functional and name == 'all_gather_tensor' and role != 'unknown':
+                output_size = size * dist.get_world_size(group)
             marker = 'flagprof/comm/'+role+'/'+str(seq)
             start = clock()
             self.busy = True
@@ -68,11 +83,13 @@ class CommunicationProbe(Probe):
                 scope = self.context.current_scope()
                 generation = self.context.probe_state().get('generation', {})
                 op = {'all_reduce':'allreduce','all_gather':'allgather',
-                      'all_gather_into_tensor':'allgather','all_gather_object':'allgather','barrier':'barrier'}[name]
+                      'all_gather_into_tensor':'allgather','all_gather_tensor':'allgather',
+                      'all_gather_object':'allgather','barrier':'barrier'}[name]
                 event = dict(t='comm', op=op, group=group_id, group_seq=seq,
-                             bytes=size, dur=duration, ts=start, lib=dist.get_backend(group), phase='enqueue',
+                             bytes=size, dur=duration, ts=start, lib=dist.get_backend(group) if role != 'unknown' else 'unknown', phase='enqueue',
                              ext=dict(communication=dict(role=role, marker=marker, host_duration_ns=duration,
-                                      api=name, logical_input_bytes=size, logical_output_bytes=output_size,
+                                      api=('torch.distributed._functional_collectives.' if functional else 'torch.distributed.')+name,
+                                      logical_input_bytes=size, logical_output_bytes=output_size,
                                       payload_status='tensor' if tensors else 'object_or_control',
                                       runtime_padding_bytes=None, device_wire_bytes=None,
                                       device_link_status='explicit_link_unavailable', error=error,
@@ -90,4 +107,7 @@ class CommunicationProbe(Probe):
         import torch.distributed as dist
         for name, native in self.native.items():
             setattr(dist, name, native)
+        import torch.distributed._functional_collectives as functional
+        for name, native in self.functional_native.items():
+            setattr(functional, name, native)
         self.installed = False

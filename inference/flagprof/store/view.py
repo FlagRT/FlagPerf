@@ -178,6 +178,14 @@ class StoreView:
         return view.page(offset,limit)
 
     def device_analysis_context(self):
+        if len(self._analysis_verified)>1:
+            contexts=[value['context'] for value in self._analysis_caches()]
+            if all(c.get('status')=='available' for c in contexts):
+                return dict(schema='device-analysis/2',status='available',source_clock='per_window',
+                    clock=dict(clock_valid=False,status='per_window',reason='independent source clocks; no cross-window interval union'),
+                    contexts=deepcopy(contexts),capture_scope='scheduled_windows_not_complete_request',
+                    windows=[dict(w,source_clock=c['source_clock']) for c in contexts for w in c.get('windows',[])],
+                    request_window_status='partial' if any(c.get('request_window_status')!='unavailable' for c in contexts) else 'unavailable')
         cached=self._analysis_cache()
         if cached is not None:return deepcopy(cached['context'])
         view=self._bounded()
@@ -192,8 +200,31 @@ class StoreView:
             raise ValueError('analysis metadata changed after read')
         return value
 
+    def _analysis_caches(self):
+        if self._closed:raise ValueError('view is closed')
+        values=list(self._analysis_verified.values())
+        for value in values:
+            if any(_signature(path.stat())!=signature for path,signature in value['bindings']):
+                raise ValueError('analysis metadata changed after read')
+        return values
+
     def iter_device_events(self, *, trace_uid=None, category=None, projection='events'):
         """Verified bounded iterator for Plan B runs; no full result retention."""
+        if projection=='analysis' and len(self._analysis_verified)>1:
+            for value in self._analysis_caches():
+                if trace_uid is not None and trace_uid!=value['trace_uid']:continue
+                info=value['intervals']
+                if info is None:continue
+                path=self._path(info['path'],'derived');before=_signature(path.stat());digest=hashlib.sha256();size=0
+                with path.open('rb') as source:
+                    for line in iter(lambda:source.readline((16<<20)+1),b''):
+                        if len(line)>16<<20:raise ValueError('analysis record byte limit')
+                        digest.update(line);size+=len(line);row=json.loads(line)
+                        if category is None or row['category']==category:yield row
+                if size!=info['bytes'] or digest.hexdigest()!=info['sha256'] or _signature(path.stat())!=before:
+                    raise ValueError('analysis intervals SHA mismatch')
+            self._analysis_caches()
+            return
         cached=self._analysis_cache() if projection=='analysis' else None
         if cached is not None:
             if trace_uid is not None and trace_uid!=cached['trace_uid']:raise ValueError('unknown trace uid')

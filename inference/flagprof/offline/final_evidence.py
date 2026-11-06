@@ -77,6 +77,12 @@ def identities(directory,metadata,vendor,trace,occurrence,raw_manifest):
         if complete:
             actual={k:True if type(trace_values.get(k)) is int and trace_values[k]==1 else False if k not in trace_values else None for k in FLAGS}
             sources=[dict(**trace_source,interpretation='version-bound Kineto '+version+' metadata',values=actual)]
+        if vendor=='thead' and version=='2.10.0' and trace_values.get('schemaVersion')==1:
+            actual={k:True if type(trace_values.get(k)) is int and trace_values[k]==1 else None for k in FLAGS}
+            sources=[dict(**trace_source,interpretation='PPU explicit exporter flags; absent fields unknown',values=actual)]
+        if vendor=='kunlunxin' and version=='2.9.0+cu129' and trace_values.get('schemaVersion')==1:
+            actual={k:True if type(trace_values.get(k)) is int and trace_values[k]==1 else None for k in FLAGS}
+            sources=[dict(**trace_source,interpretation='P800 explicit exporter flags; absent fields unknown',values=actual)]
         exporter=dict(source=trace_source,version=None,schema_version=trace_values.get('schemaVersion'))
     mismatches=[dict(field=k,requested=v,actual=actual[k]) for k,v in requested.items()
                 if actual.get(k) is not None and (type(v) is not type(actual[k]) or v!=actual[k])]

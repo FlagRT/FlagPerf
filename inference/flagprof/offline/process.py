@@ -13,6 +13,9 @@ def run_owned(command,*,timeout,**options):
     if not math.isfinite(timeout) or timeout<=0:raise ValueError('positive finite process timeout required')
     previous={};received=[]
     with subprocess.Popen(command,start_new_session=True,**options) as child:
+        from flagprof.store.manifest import proc_key
+        try:process_key=proc_key(child.pid)
+        except OSError:process_key=None
         signal_deadline=[None]
         def forward(signum,frame):
             received.append(signum);signal_deadline[0]=time.monotonic()+5
@@ -43,6 +46,7 @@ def run_owned(command,*,timeout,**options):
                 child.wait();code=124
             if received:code=128+received[0]
             result=subprocess.CompletedProcess(command,code)
+            result.pid=child.pid;result.process_key=process_key
             result.timed_out=timed_out;result.signal=received[0] if received else None
             return result
         finally:
