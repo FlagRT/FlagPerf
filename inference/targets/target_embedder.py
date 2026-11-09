@@ -163,13 +163,14 @@ def main():
     call = forward_row()
     if handle:
         handle.bind_tensor_inputs(sample_ids, call, identity=identity)
-    run_row = run_prepared(model, call, warmup=args.warmup, forwards=args.forwards,
-                           outputs=out, sync=sync, transform=transform)
-    embed_sha = hashlib.sha256(json.dumps(run_row['run']['outputs'], sort_keys=True).encode()).hexdigest()
+    run_payload = run_prepared(model, call, warmup=args.warmup, forwards=args.forwards,
+                               outputs=out, sync=sync, transform=transform)
+    embed_sha = hashlib.sha256(json.dumps(run_payload['outputs'], sort_keys=True).encode()).hexdigest()
     result = dict(model=model_path, pooling=args.pooling,
         semantics=POOLING_SEMANTICS[args.pooling] + '; use_flash_attn=False' if vendor_code else POOLING_SEMANTICS[args.pooling] + '; use_cache=False; eager',
         vendor_code=bool(vendor_code), oracle_identity=identity,
-        batch_size=args.batch_size, embed_batches_sha256=embed_sha, runs=[run_row])
+        batch_size=args.batch_size, embed_batches_sha256=embed_sha,
+        runs=[dict(samples=sample_ids, run=run_payload)])
     (out / 'target-result.json').write_text(json.dumps(result, sort_keys=True, indent=2) + '\n')
     print(json.dumps(dict(output=str(out), attachment=bool(handle), vendor_code=bool(vendor_code),
         embed_batches_sha256=embed_sha)))
