@@ -8,8 +8,8 @@ from pathlib import Path
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'targets'))
-from template_ctr import (load_ctr_package, build_model, weight_sha256,
-                          CtrCallable, ARCH_CONFIG, prepare_inputs)
+from flagprof.runner.ctr import (load_ctr_package, build_model, weight_sha256,
+                                 CtrCallable, ARCH_CONFIG, prepare_inputs)
 from make_ctr_package import SCHEMA
 
 
@@ -180,11 +180,31 @@ class CtrModelTests(unittest.TestCase):
         import torch
         # perturbing VISIBLE history ids must change output (mask is not
         # degenerate all-False); perturbing pad ids (masked) must not.
+        self._visible_perturbation_changes_output('bst')
+
+    def test_dien_output_shape_and_range(self):
+        import torch
         with tempfile.TemporaryDirectory() as tmp:
             pkg = build_ctr_package(tmp)
             batches, _ = load_ctr_package(pkg, batch_size=4)
             inputs = batches[0][1]
-            model = CtrCallable('bst', build_model('bst', 531, 'cpu', dtype=torch.float32))
+            model = CtrCallable('dien', build_model('dien', 531, 'cpu', dtype=torch.float32))
+            out = model(**inputs).float()  # reference sigmoids inside forward
+            self.assertEqual(out.shape, (4,))
+            self.assertTrue(bool(torch.isfinite(out).all()))
+            self.assertTrue(bool((out >= 0).all()) and bool((out <= 1).all()))
+
+    def test_dien_visible_history_changes_output(self):
+        import torch
+        self._visible_perturbation_changes_output('dien')
+
+    def _visible_perturbation_changes_output(self, arch):
+        import torch
+        with tempfile.TemporaryDirectory() as tmp:
+            pkg = build_ctr_package(tmp)
+            batches, _ = load_ctr_package(pkg, batch_size=4)
+            inputs = batches[0][1]
+            model = CtrCallable(arch, build_model(arch, 531, 'cpu', dtype=torch.float32))
             base = model(**inputs).detach()
             vis = inputs['hist_mask']
             self.assertTrue(bool(vis.any()))
@@ -193,7 +213,7 @@ class CtrModelTests(unittest.TestCase):
             noise[vis] = (noise[vis] + 7 - 1) % 999 + 1
             perturbed['hist_ids'] = noise
             changed = model(**perturbed).detach()
-            self.assertFalse(torch.equal(base, changed))
+            self.assertFalse(torch.equal(base, changed), arch)
 
     def test_deepfm_output_shape_and_range(self):
         import torch
@@ -237,7 +257,7 @@ class CtrModelTests(unittest.TestCase):
 
     def test_all_archs_reproducible_same_seed(self):
         import torch
-        for arch in ('deepfm', 'dcn', 'esmm', 'mmoe', 'ple', 'bst'):
+        for arch in ('deepfm', 'dcn', 'esmm', 'mmoe', 'ple', 'bst', 'dien'):
             with tempfile.TemporaryDirectory() as tmp:
                 pkg = build_ctr_package(tmp)
                 batches, _ = load_ctr_package(pkg, batch_size=8)

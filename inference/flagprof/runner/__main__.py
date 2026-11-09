@@ -29,7 +29,7 @@ POOLING_SEMANTICS={'last':'last-valid-token-fp32-l2','mean':'mean-fp32-l2','cls'
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('model')
-    p.add_argument('--task', choices=['embedding','generate'], default='embedding')
+    p.add_argument('--task', choices=['embedding','generate','rerank','ctr'], default='embedding')
     p.add_argument('--generation-mode', choices=['accuracy','performance'], default='accuracy')
     p.add_argument('--max-new-tokens', type=int, default=32)
     p.add_argument('--inputs')
@@ -49,11 +49,25 @@ def main():
     p.add_argument('--outputs', required=True)
     p.add_argument('--flaggems', choices=['off','on'], default=None)
     p.add_argument('--flaggems-include')
+    p.add_argument('--package')
+    p.add_argument('--score', choices=['causal_yesno','sequence_logit'])
+    p.add_argument('--arch', choices=['dlrm','din','widedeep','deepfm','dcn','esmm','mmoe','ple','bst','dien'])
+    p.add_argument('--seed', type=int, default=531)
     args = p.parse_args()
     if args.forwards is None:args.forwards=1 if args.task=='generate' else 3
     if args.task=='generate' and __import__('os').environ.get('FLAGPROF_DEVICE'):
         args.device=__import__('os').environ['FLAGPROF_DEVICE']
         args.outputs=str(Path(args.outputs)/('rank-'+__import__('os').environ['RANK']))
+    if args.task=='rerank':
+        if not args.model.startswith('hf:') or not args.package or not args.score:
+            p.error('--task rerank needs hf:<directory> model, --package and --score')
+        from .rerank import execute
+        return execute(args)
+    if args.task=='ctr':
+        if not args.package or not args.arch:
+            p.error('--task ctr needs --package and --arch')
+        from .ctr import execute
+        return execute(args)
     if not args.model.startswith('hf:') or min(args.batch_size or 4, args.forwards, args.repeats) < 1 or args.warmup < 0:
         p.error('hf:<directory>, positive counts and nonnegative warmup required')
     if not args.inputs and not args.inputs_from:p.error('--inputs or --inputs-from required')
