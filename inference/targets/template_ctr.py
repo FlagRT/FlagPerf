@@ -363,6 +363,19 @@ def build_model(arch, seed, device, dtype=None):
     return model.to(device).eval()
 
 
+def prepare_inputs(cpu, device, dtype):
+    """Move a cpu input dict to device; float inputs are cast to the compute
+    dtype (package dense is float32, model weights follow --dtype). Integer
+    id fields are never cast."""
+    out = {}
+    for key, value in cpu.items():
+        if value.is_floating_point():
+            out[key] = value.to(device, dtype)
+        else:
+            out[key] = value.to(device)
+    return out
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('--package', required=True)
@@ -406,7 +419,7 @@ def main():
     out = Path(args.outputs)
     run_rows = []
     for batch_index, (sample_ids, cpu) in enumerate(batches):
-        inputs = {key: value.to(args.device) for key, value in cpu.items()}
+        inputs = prepare_inputs(cpu, args.device, dtype)
         def transform(output):
             if args.arch == 'esmm':
                 # reference already sigmoides each tower; [batch, 3] = [cvr, ctr, ctcvr]

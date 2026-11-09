@@ -9,7 +9,7 @@ from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'targets'))
 from template_ctr import (load_ctr_package, build_model, weight_sha256,
-                          CtrCallable, ARCH_CONFIG)
+                          CtrCallable, ARCH_CONFIG, prepare_inputs)
 from make_ctr_package import SCHEMA
 
 
@@ -139,6 +139,17 @@ class CtrModelTests(unittest.TestCase):
         self.assertEqual(weight_sha256(a), weight_sha256(b))
         self.assertNotEqual(weight_sha256(a),
                             weight_sha256(build_model('din', 531, 'cpu', dtype=torch.float32)))
+
+    def test_prepare_inputs_casts_float_only(self):
+        import torch
+        cpu = dict(dense=torch.zeros(2, 13), sparse=torch.zeros(2, 26, dtype=torch.int64),
+                   hist_ids=torch.zeros(2, 20, dtype=torch.int64),
+                   hist_mask=torch.zeros(2, 20, dtype=torch.bool))
+        inputs = prepare_inputs(cpu, 'cpu', torch.bfloat16)
+        self.assertEqual(inputs['dense'].dtype, torch.bfloat16)
+        self.assertEqual(inputs['sparse'].dtype, torch.int64)
+        self.assertEqual(inputs['hist_ids'].dtype, torch.int64)
+        self.assertEqual(inputs['hist_mask'].dtype, torch.bool)
 
     def test_deepfm_output_shape_and_range(self):
         import torch
