@@ -17,6 +17,7 @@ families that have not been promoted to a runner task yet).
 """
 import argparse
 import datetime
+import hashlib
 import json
 import os
 import subprocess
@@ -81,13 +82,30 @@ def build_cmd(row, run_idx, out_dir, device='cuda:0', dtype=None, batch_size=Non
     return cmd, out
 
 
+def _score_digest(doc):
+    """Top-level score_batches_sha256 (ctr/rerank/attach), or a digest over
+    the per-forward output sha256 list for legacy embedding runner.json
+    (whose score lives at run level, not top level)."""
+    top = doc.get('score_batches_sha256')
+    if top:
+        return top
+    runs = doc.get('runs') or []
+    if runs and isinstance(runs[0], dict) and 'run' in runs[0]:
+        runs = [r['run'] for r in runs]
+    digests = [o['sha256'] for r in runs for o in (r.get('outputs') or [])
+               if 'sha256' in o]
+    if not digests:
+        return None
+    return hashlib.sha256('|'.join(digests).encode()).hexdigest()
+
+
 def _result_sha(path):
     p = Path(path)
     if not p.exists():
         return None, None
     with open(p, encoding='utf-8') as f:
         doc = json.load(f)
-    return doc.get('score_batches_sha256'), doc.get('oracle_identity')
+    return _score_digest(doc), doc.get('oracle_identity')
 
 
 def run_battery(row, out_dir, device='cuda:0', runner_cwd=None):
