@@ -23,6 +23,9 @@ def model_files_identity(model_path):
     return files
 
 
+POOLING_SEMANTICS={'last':'last-valid-token-fp32-l2','mean':'mean-fp32-l2','cls':'cls-token-fp32-l2'}
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('model')
@@ -38,7 +41,7 @@ def main():
     p.add_argument('--dtype', choices=['bfloat16','float16','float32'], default='bfloat16')
     p.add_argument('--attention', default='eager')
     p.add_argument('--padding-side', choices=['left','right'], default='left')
-    p.add_argument('--pooling', choices=['last','mean'], default='last')
+    p.add_argument('--pooling', choices=['last','mean','cls'], default='last')
     p.add_argument('--warmup', type=int, default=0)
     p.add_argument('--forwards', type=int)
     p.add_argument('--repeats', type=int, default=1)
@@ -116,7 +119,7 @@ def main():
         if hasattr(model.config,'use_cache'):model.config.use_cache=False
         from . import run_prepared, pool_embedding
         if handle:handle.register_model(model)
-        input_identity.update(dtype=args.dtype,attention=args.attention,pooling='mean-fp32-l2' if args.pooling=='mean' else 'last-valid-token-fp32-l2',
+        input_identity.update(dtype=args.dtype,attention=args.attention,pooling=POOLING_SEMANTICS[args.pooling],
             device=args.device,software=software(),numerics=numeric_settings,flaggems=effective['flaggems'],include=effective['flaggems_include'])
         # Direct inputs carry the same oracle identity contract as prepared packages
         # (runner/fixed.load): model plus input digest pin the must_equal fields.
@@ -136,7 +139,7 @@ def main():
                 if 'use_cache' in inspect.signature(model.forward).parameters:inputs['use_cache']=False
                 if handle:handle.bind_tensor_inputs(sample_ids,inputs,identity=input_identity)
                 def transform(output):
-                    pooled=pool_embedding(output.last_hidden_state,inputs['attention_mask'],mean=args.pooling=='mean',normalize=False)
+                    pooled=pool_embedding(output.last_hidden_state,inputs['attention_mask'],mean=args.pooling=='mean',cls=args.pooling=='cls',normalize=False)
                     result=torch.nn.functional.normalize(pooled.float(),p=2,dim=1)
                     if handle:
                         handle.record_tensor('pooled',pooled);handle.record_tensor('output',result)
@@ -151,7 +154,7 @@ def main():
                       component_owner='attachment' if handle else 'runner',
                       component_install_s=handle.state['component'].get('install_ns',0)/1e9 if handle else component_install_s,
                       component_close_s=None if handle else component_close_s,
-                      semantics=('mean-fp32-l2' if args.pooling=='mean' else 'last-valid-token-fp32-l2')+'; use_cache=False; eager',
+                      semantics=POOLING_SEMANTICS[args.pooling]+'; use_cache=False; eager',
                       instrumentation='attachment' if handle else 'none',
                       component_identity=component.identity if component else handle.state.get('flaggems_identity') if handle else None,
                       batch_size=args.batch_size, oracle_identity=input_identity, runs=runs)

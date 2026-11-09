@@ -8,10 +8,12 @@ from pathlib import Path
 import time
 
 
-def pool_embedding(hidden, mask, *, mean=False, normalize=True):
-    """Last valid token and FP32 L2, matching the registered workload semantics."""
+def pool_embedding(hidden, mask, *, mean=False, cls=False, normalize=True):
+    """CLS token / last valid token / token mean, then FP32 L2, matching the registered workload semantics."""
     import torch
-    if mean:
+    if cls:
+        pooled=hidden[:,0]
+    elif mean:
         weights=mask.unsqueeze(-1).to(torch.float32)
         pooled=(hidden.float()*weights).sum(1)/weights.sum(1).clamp_min(1)
     else:
