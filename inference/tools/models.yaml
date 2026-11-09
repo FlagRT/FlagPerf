@@ -1,0 +1,49 @@
+# 15-model adaptation roster — battery config for tools/batch_driver.py.
+# Paths are container-side (/w = model-adaptation-work mount on thead1/thead2).
+# Each row runs twice (A/A); status: active | blocked.
+# Evidence protocol: A/A sha+identity equality; cross-host comparison is done
+# outside the battery by diffing score_batches_sha256 between host reports.
+models:
+  # ---- Batch A: retrieval / rerank (4) ----
+  - id: bge-large-zh-v1.5
+    task: embedding
+    model: hf:/w/models/bge-large-zh-v1.5
+    pooling: cls
+    inputs: /w/texts_embed16.jsonl
+    batch_size: 4
+    status: active
+  - id: bge-reranker-large
+    task: rerank
+    model: hf:/w/models/bge-reranker-large
+    package: /w/packages/bge-reranker-seq
+    score: sequence_logit
+    batch_size: 4
+    status: active
+  - id: Qwen3-Reranker-0.6B
+    task: rerank
+    model: hf:/w/models/Qwen3-Reranker-0.6B
+    package: /w/packages/qwen3-reranker-causal
+    score: causal_yesno
+    batch_size: 4
+    status: active
+  - id: jina-embeddings-v3
+    task: attach            # vendor-code family, pre-promotion surface
+    target: /w/FlagPerf/inference/targets/target_embedder.py
+    args:
+      model: hf:/w/models/jina-embeddings-v3
+      inputs: /w/texts_embed16.jsonl
+      pooling: mean
+      max-length: 256
+      batch-size: 4
+    status: active
+  # ---- Batch B/C: CTR (10) — strict reference mirrors, seed 531 ----
+  - { id: ctr-dlrm,      task: ctr, package: /w/packages/ctr-v1, arch: dlrm,      seed: 531, status: active }
+  - { id: ctr-din,       task: ctr, package: /w/packages/ctr-v1, arch: din,       seed: 531, status: active }
+  - { id: ctr-widedeep,  task: ctr, package: /w/packages/ctr-v1, arch: widedeep,  seed: 531, status: active }
+  - { id: ctr-deepfm,    task: ctr, package: /w/packages/ctr-v1, arch: deepfm,    seed: 531, status: active }
+  - { id: ctr-dcn,       task: ctr, package: /w/packages/ctr-v1, arch: dcn,       seed: 531, status: active }
+  - { id: ctr-esmm,      task: ctr, package: /w/packages/ctr-v1, arch: esmm,      seed: 531, status: active }
+  - { id: ctr-mmoe,      task: ctr, package: /w/packages/ctr-v1, arch: mmoe,      seed: 531, status: active }
+  - { id: ctr-ple,       task: ctr, package: /w/packages/ctr-v1, arch: ple,       seed: 531, status: active }
+  - { id: ctr-bst,       task: ctr, package: /w/packages/ctr-v1, arch: bst,       seed: 531, status: active }
+  - { id: ctr-dien,      task: ctr, package: /w/packages/ctr-v1, arch: dien,      seed: 531, status: active }
