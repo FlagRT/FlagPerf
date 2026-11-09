@@ -132,6 +132,67 @@ class CtrModelTests(unittest.TestCase):
         self.assertEqual(weight_sha256(a), weight_sha256(b))
         self.assertNotEqual(weight_sha256(a), weight_sha256(c))
 
+    def test_weight_sha256_supports_bfloat16(self):
+        import torch
+        a = build_model('din', 531, 'cpu', dtype=torch.bfloat16)
+        b = build_model('din', 531, 'cpu', dtype=torch.bfloat16)
+        self.assertEqual(weight_sha256(a), weight_sha256(b))
+        self.assertNotEqual(weight_sha256(a),
+                            weight_sha256(build_model('din', 531, 'cpu', dtype=torch.float32)))
+
+    def test_deepfm_output_shape_and_range(self):
+        import torch
+        with tempfile.TemporaryDirectory() as tmp:
+            pkg = build_ctr_package(tmp)
+            batches, _ = load_ctr_package(pkg, batch_size=4)
+            inputs = batches[0][1]
+            model = CtrCallable('deepfm', build_model('deepfm', 531, 'cpu', dtype=torch.float32))
+            scores = torch.sigmoid(model(**inputs).float().squeeze(1))
+            self.assertEqual(scores.shape, (4,))
+            # FM term sums 325 pairwise dots; random init saturates sigmoid to
+            # endpoints, so the closed interval [0, 1] is the honest assertion
+            self.assertTrue(bool(torch.isfinite(scores).all()))
+            self.assertTrue(bool((scores >= 0).all()) and bool((scores <= 1).all()))
+
+    def test_dcn_output_shape_and_range(self):
+        import torch
+        with tempfile.TemporaryDirectory() as tmp:
+            pkg = build_ctr_package(tmp)
+            batches, _ = load_ctr_package(pkg, batch_size=4)
+            inputs = batches[0][1]
+            model = CtrCallable('dcn', build_model('dcn', 531, 'cpu', dtype=torch.float32))
+            scores = torch.sigmoid(model(**inputs).float().squeeze(1))
+            self.assertEqual(scores.shape, (4,))
+            self.assertTrue(bool(torch.isfinite(scores).all()))
+            self.assertTrue(bool((scores >= 0).all()) and bool((scores <= 1).all()))
+
+    def test_esmm_output_three_columns_in_unit_range(self):
+        import torch
+        with tempfile.TemporaryDirectory() as tmp:
+            pkg = build_ctr_package(tmp)
+            batches, _ = load_ctr_package(pkg, batch_size=4)
+            inputs = batches[0][1]
+            model = CtrCallable('esmm', build_model('esmm', 531, 'cpu', dtype=torch.float32))
+            out = model(**inputs).float()
+            self.assertEqual(out.shape, (4, 3))
+            self.assertTrue(bool(torch.isfinite(out).all()))
+            self.assertTrue(bool((out >= 0).all()) and bool((out <= 1).all()))
+            # ctcvr = ctr * cvr columnwise
+            self.assertTrue(torch.equal(out[:, 2], out[:, 0] * out[:, 1]))
+
+    def test_all_archs_reproducible_same_seed(self):
+        import torch
+        for arch in ('deepfm', 'dcn', 'esmm'):
+            with tempfile.TemporaryDirectory() as tmp:
+                pkg = build_ctr_package(tmp)
+                batches, _ = load_ctr_package(pkg, batch_size=8)
+                inputs = batches[0][1]
+                outs = []
+                for _ in range(2):
+                    model = CtrCallable(arch, build_model(arch, 531, 'cpu', dtype=torch.float32))
+                    outs.append(model(**inputs).detach())
+                self.assertTrue(torch.equal(outs[0], outs[1]), arch)
+
 
 if __name__ == '__main__':
     unittest.main()

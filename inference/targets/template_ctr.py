@@ -14,6 +14,12 @@ Architectures mirror canonical reference implementations:
   widedeep   torch-rechub WideDeep (models/ranking/widedeep.py): wide linear
              over 1-dim sparse embeddings + raw dense, deep MLP over 16-dim
              embeddings + dense, sigmoid(wide + deep).
+  deepfm     torch-rechub DeepFM (models/ranking/deepfm.py): shared embedding,
+             LR + FM (0.5*(sum^2 - sum_of_squares)) + deep MLP -> sigmoid.
+  dcn        torch-rechub DCN (models/ranking/dcn.py): CrossNetwork
+             (x = x0 * Linear_i(x) + b_i + x) + MLP -> LR over concat -> sigmoid.
+  esmm       torch-rechub ESMM (multi_task/esmm.py): shared embedding, CVR/CTR
+             towers sigmoided, ctcvr = ctr * cvr, output [cvr, ctr, ctcvr].
 
 Weights are random-initialized from torch.manual_seed(--seed, default 531);
 CTR templates have no pretrained upstream weights, so the run identity pins
@@ -69,7 +75,10 @@ def weight_sha256(model):
     digest = hashlib.sha256()
     for name, tensor in sorted(model.state_dict().items()):
         digest.update(name.encode())
-        digest.update(tensor.detach().cpu().contiguous().numpy().tobytes())
+        raw = tensor.detach().cpu().contiguous()
+        if raw.dtype == torch.bfloat16:
+            raw = raw.view(torch.int16)  # numpy() rejects bfloat16; keep raw bytes
+        digest.update(raw.numpy().tobytes())
     return digest.hexdigest()
 
 
@@ -123,6 +132,9 @@ ARCH_CONFIG = dict(
     dlrm=dict(bottom_dims=[128, 16], top_dims=[256, 128, 64], activation='relu', batchnorm=False),
     din=dict(profile_sparse=10, attn_dims=[36], mlp_dims=[128, 64], activation='dice', batchnorm=True),
     widedeep=dict(mlp_dims=[128, 64], activation='relu', batchnorm=True),
+    deepfm=dict(mlp_dims=[128, 64], activation='relu', batchnorm=True),
+    dcn=dict(n_cross_layers=2, mlp_dims=[128, 64], activation='relu', batchnorm=True),
+    esmm=dict(user_sparse=13, cvr_dims=[128, 64], ctr_dims=[128, 64], activation='relu', batchnorm=True),
 )
 
 
@@ -227,6 +239,103 @@ class WideDeep(torch.nn.Module):
         return self.mlp(deep_in) + y_wide
 
 
+class Fm(torch.nn.Module):
+    """torch-rechub FM(reduce_sum=True), mirrored exactly."""
+
+    def forward(self, x):
+        square_of_sum = torch.sum(x, dim=1) ** 2
+        sum_of_square = torch.sum(x ** 2, dim=1)
+        ix = square_of_sum - sum_of_square
+        ix = torch.sum(ix, dim=1, keepdim=True)
+        return 0.5 * ix
+
+
+class DeepFm(torch.nn.Module):
+    """torch-rechub DeepFM semantics: shared embedding, LR + FM + deep MLP."""
+
+    def __init__(self, config):
+        super().__init__()
+        c = ARCH_CONFIG
+        spec = config['deepfm']
+        emb = c['emb_dim']
+        self.embedding = torch.nn.Embedding(c['vocab'], emb)
+        self.linear = torch.nn.Linear(c['sparse_dim'] * emb, 1)
+        self.fm = Fm()
+        self.mlp = Mlp.build(c['sparse_dim'] * emb, spec['mlp_dims'],
+                             activation=spec['activation'], output_layer=True,
+                             batchnorm=spec['batchnorm'])
+
+    def forward(self, dense, sparse):
+        fields = self.embedding(sparse)
+        flat = fields.flatten(start_dim=1)
+        y_linear = self.linear(flat)
+        y_fm = self.fm(fields)
+        y_deep = self.mlp(flat)
+        return y_linear + y_fm + y_deep
+
+
+class CrossNetwork(torch.nn.Module):
+    """torch-rechub CrossNetwork: x = x0 * Linear(x) + b + x per layer."""
+
+    def __init__(self, input_dim, num_layers):
+        super().__init__()
+        self.w = torch.nn.ModuleList([torch.nn.Linear(input_dim, 1, bias=False)
+                                      for _ in range(num_layers)])
+        self.b = torch.nn.ParameterList([torch.nn.Parameter(torch.zeros(input_dim))
+                                         for _ in range(num_layers)])
+
+    def forward(self, x):
+        x0 = x
+        for i in range(len(self.w)):
+            xw = self.w[i](x)
+            x = x0 * xw + self.b[i] + x
+        return x
+
+
+class Dcn(torch.nn.Module):
+    """torch-rechub DCN semantics: cross network + MLP + LR over concat."""
+
+    def __init__(self, config):
+        super().__init__()
+        c = ARCH_CONFIG
+        spec = config['dcn']
+        dims = c['sparse_dim'] * c['emb_dim']
+        self.embedding = torch.nn.Embedding(c['vocab'], c['emb_dim'])
+        self.cn = CrossNetwork(dims, spec['n_cross_layers'])
+        self.mlp = Mlp.build(dims, spec['mlp_dims'], activation=spec['activation'],
+                             output_layer=False, batchnorm=spec['batchnorm'])
+        self.linear = torch.nn.Linear(dims + spec['mlp_dims'][-1], 1)
+
+    def forward(self, dense, sparse):
+        embed = self.embedding(sparse).flatten(start_dim=1)
+        cn_out = self.cn(embed)
+        mlp_out = self.mlp(embed)
+        return self.linear(torch.cat([cn_out, mlp_out], dim=1))
+
+
+class Esmm(torch.nn.Module):
+    """torch-rechub ESMM semantics: shared embedding, two towers, ctcvr product."""
+
+    def __init__(self, config):
+        super().__init__()
+        c = ARCH_CONFIG
+        spec = config['esmm']
+        self.user_n = spec['user_sparse']
+        dims = c['sparse_dim'] * c['emb_dim']
+        self.embedding = torch.nn.Embedding(c['vocab'], c['emb_dim'])
+        self.tower_cvr = Mlp.build(dims, spec['cvr_dims'], activation=spec['activation'],
+                                   output_layer=True, batchnorm=spec['batchnorm'])
+        self.tower_ctr = Mlp.build(dims, spec['ctr_dims'], activation=spec['activation'],
+                                   output_layer=True, batchnorm=spec['batchnorm'])
+
+    def forward(self, dense, sparse):
+        embed = self.embedding(sparse).flatten(start_dim=1)
+        cvr_pred = torch.sigmoid(self.tower_cvr(embed))
+        ctr_pred = torch.sigmoid(self.tower_ctr(embed))
+        ctcvr_pred = torch.mul(ctr_pred, cvr_pred)
+        return torch.cat([cvr_pred, ctr_pred, ctcvr_pred], dim=1)
+
+
 class CtrCallable(torch.nn.Module):
     """Adapter so run_prepared can call every arch with the full input dict."""
 
@@ -244,14 +353,11 @@ class CtrCallable(torch.nn.Module):
 def build_model(arch, seed, device, dtype=None):
     import torch
     torch.manual_seed(seed)
-    if arch == 'dlrm':
-        model = Dlrm(ARCH_CONFIG)
-    elif arch == 'din':
-        model = Din(ARCH_CONFIG)
-    elif arch == 'widedeep':
-        model = WideDeep(ARCH_CONFIG)
-    else:
+    builders = dict(dlrm=Dlrm, din=Din, widedeep=WideDeep, deepfm=DeepFm,
+                    dcn=Dcn, esmm=Esmm)
+    if arch not in builders:
         raise ValueError('template arch not implemented yet: ' + arch)
+    model = builders[arch](ARCH_CONFIG)
     if dtype is not None:
         model = model.to(dtype)
     return model.to(device).eval()
@@ -260,7 +366,8 @@ def build_model(arch, seed, device, dtype=None):
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('--package', required=True)
-    p.add_argument('--arch', choices=['dlrm', 'din', 'widedeep'], required=True)
+    p.add_argument('--arch', choices=['dlrm', 'din', 'widedeep', 'deepfm', 'dcn', 'esmm'],
+                   required=True)
     p.add_argument('--seed', type=int, default=531)
     p.add_argument('--device', default='cuda:0')
     p.add_argument('--dtype', choices=['bfloat16', 'float16', 'float32'], default='bfloat16')
@@ -301,7 +408,11 @@ def main():
     for batch_index, (sample_ids, cpu) in enumerate(batches):
         inputs = {key: value.to(args.device) for key, value in cpu.items()}
         def transform(output):
-            scores = torch.sigmoid(output.float().squeeze(1))
+            if args.arch == 'esmm':
+                # reference already sigmoides each tower; [batch, 3] = [cvr, ctr, ctcvr]
+                scores = output.float()
+            else:
+                scores = torch.sigmoid(output.float().squeeze(1))
             if handle:
                 handle.record_tensor('scores', scores)
             return scores
