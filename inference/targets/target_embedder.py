@@ -118,7 +118,7 @@ def main():
     tokenizer = AutoTokenizer.from_pretrained(model_path, local_files_only=True, trust_remote_code=False)
     vendor_code = code_files_identity(model_path)
     if vendor_code and any(name.startswith('modeling_') for name in vendor_code):
-        model = load_with_vendor_code(model_path, getattr(torch, args.dtype), True)
+        model = load_with_vendor_code(model_path, getattr(torch, args.dtype))
     else:
         from transformers import AutoModel
         model = AutoModel.from_pretrained(model_path, local_files_only=True, trust_remote_code=False,
