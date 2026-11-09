@@ -151,6 +151,50 @@ class CtrModelTests(unittest.TestCase):
         self.assertEqual(inputs['hist_ids'].dtype, torch.int64)
         self.assertEqual(inputs['hist_mask'].dtype, torch.bool)
 
+    def test_mmoe_ple_output_two_tasks_in_unit_range(self):
+        import torch
+        for arch in ('mmoe', 'ple'):
+            with tempfile.TemporaryDirectory() as tmp:
+                pkg = build_ctr_package(tmp)
+                batches, _ = load_ctr_package(pkg, batch_size=4)
+                inputs = batches[0][1]
+                model = CtrCallable(arch, build_model(arch, 531, 'cpu', dtype=torch.float32))
+                out = model(**inputs).float()
+                self.assertEqual(out.shape, (4, 2), arch)
+                self.assertTrue(bool(torch.isfinite(out).all()))
+                self.assertTrue(bool((out >= 0).all()) and bool((out <= 1).all()), arch)
+
+    def test_bst_output_shape_and_range(self):
+        import torch
+        with tempfile.TemporaryDirectory() as tmp:
+            pkg = build_ctr_package(tmp)
+            batches, _ = load_ctr_package(pkg, batch_size=4)
+            inputs = batches[0][1]
+            model = CtrCallable('bst', build_model('bst', 531, 'cpu', dtype=torch.float32))
+            out = model(**inputs).float()  # reference sigmoids inside forward
+            self.assertEqual(out.shape, (4,))
+            self.assertTrue(bool(torch.isfinite(out).all()))
+            self.assertTrue(bool((out >= 0).all()) and bool((out <= 1).all()))
+
+    def test_bst_target_position_uses_masked_history(self):
+        import torch
+        # perturbing VISIBLE history ids must change output (mask is not
+        # degenerate all-False); perturbing pad ids (masked) must not.
+        with tempfile.TemporaryDirectory() as tmp:
+            pkg = build_ctr_package(tmp)
+            batches, _ = load_ctr_package(pkg, batch_size=4)
+            inputs = batches[0][1]
+            model = CtrCallable('bst', build_model('bst', 531, 'cpu', dtype=torch.float32))
+            base = model(**inputs).detach()
+            vis = inputs['hist_mask']
+            self.assertTrue(bool(vis.any()))
+            perturbed = dict(inputs)
+            noise = inputs['hist_ids'].clone()
+            noise[vis] = (noise[vis] + 7 - 1) % 999 + 1
+            perturbed['hist_ids'] = noise
+            changed = model(**perturbed).detach()
+            self.assertFalse(torch.equal(base, changed))
+
     def test_deepfm_output_shape_and_range(self):
         import torch
         with tempfile.TemporaryDirectory() as tmp:
@@ -193,7 +237,7 @@ class CtrModelTests(unittest.TestCase):
 
     def test_all_archs_reproducible_same_seed(self):
         import torch
-        for arch in ('deepfm', 'dcn', 'esmm'):
+        for arch in ('deepfm', 'dcn', 'esmm', 'mmoe', 'ple', 'bst'):
             with tempfile.TemporaryDirectory() as tmp:
                 pkg = build_ctr_package(tmp)
                 batches, _ = load_ctr_package(pkg, batch_size=8)

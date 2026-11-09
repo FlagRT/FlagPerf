@@ -20,6 +20,13 @@ Architectures mirror canonical reference implementations:
              (x = x0 * Linear_i(x) + b_i + x) + MLP -> LR over concat -> sigmoid.
   esmm       torch-rechub ESMM (multi_task/esmm.py): shared embedding, CVR/CTR
              towers sigmoided, ctcvr = ctr * cvr, output [cvr, ctr, ctcvr].
+  mmoe       torch-rechub MMOE (multi_task/mmoe.py): shared embedding, expert
+             MLPs, per-task softmax gates, towers, sigmoid; output [batch, 2].
+  ple        torch-rechub PLE (multi_task/ple.py): stacked CGC levels (task-
+             specific + shared experts, softmax gates), towers; output [batch, 2].
+  bst        torch-rechub BST (models/ranking/bst.py): history+target through
+             TransformerEncoder (positional embedding, src_key_padding_mask),
+             target-position output -> MLP -> sigmoid.
 
 Weights are random-initialized from torch.manual_seed(--seed, default 531);
 CTR templates have no pretrained upstream weights, so the run identity pins
@@ -107,6 +114,8 @@ def _activation(name):
         return torch.nn.ReLU()
     if name == 'dice':
         return Dice()
+    if name == 'softmax':
+        return torch.nn.Softmax(dim=-1)
     raise ValueError('unsupported activation ' + name)
 
 
@@ -135,6 +144,12 @@ ARCH_CONFIG = dict(
     deepfm=dict(mlp_dims=[128, 64], activation='relu', batchnorm=True),
     dcn=dict(n_cross_layers=2, mlp_dims=[128, 64], activation='relu', batchnorm=True),
     esmm=dict(user_sparse=13, cvr_dims=[128, 64], ctr_dims=[128, 64], activation='relu', batchnorm=True),
+    mmoe=dict(n_task=2, n_expert=2, expert_dims=[64, 16], tower_dims=[64],
+              activation='relu', batchnorm=True),
+    ple=dict(n_task=2, n_level=2, n_expert_specific=1, n_expert_shared=1,
+             expert_dims=[64, 16], tower_dims=[64], activation='relu', batchnorm=True),
+    bst=dict(profile_sparse=10, nhead=8, num_layers=1, dropout=0.0,
+             mlp_dims=[128, 64], activation='relu', batchnorm=True),
 )
 
 
@@ -336,6 +351,164 @@ class Esmm(torch.nn.Module):
         return torch.cat([cvr_pred, ctr_pred, ctcvr_pred], dim=1)
 
 
+class Mmoe(torch.nn.Module):
+    """torch-rechub MMOE semantics: shared embedding, experts, per-task softmax
+    gates, towers, sigmoid per task; output [batch, n_task]."""
+
+    def __init__(self, config):
+        super().__init__()
+        c = ARCH_CONFIG
+        spec = config['mmoe']
+        dims = c['sparse_dim'] * c['emb_dim']
+        self.embedding = torch.nn.Embedding(c['vocab'], c['emb_dim'])
+        self.experts = torch.nn.ModuleList([
+            Mlp.build(dims, spec['expert_dims'], activation=spec['activation'],
+                      output_layer=False, batchnorm=spec['batchnorm'])
+            for _ in range(spec['n_expert'])])
+        self.gates = torch.nn.ModuleList([
+            Mlp.build(dims, [spec['n_expert']], activation='softmax',
+                      output_layer=False, batchnorm=spec['batchnorm'])
+            for _ in range(spec['n_task'])])
+        self.towers = torch.nn.ModuleList([
+            Mlp.build(spec['expert_dims'][-1], spec['tower_dims'],
+                      activation=spec['activation'], output_layer=True,
+                      batchnorm=spec['batchnorm'])
+            for _ in range(spec['n_task'])])
+
+    def forward(self, dense, sparse):
+        embed = self.embedding(sparse).flatten(start_dim=1)
+        expert_outs = torch.stack([expert(embed) for expert in self.experts], dim=1)
+        ys = []
+        for gate, tower in zip(self.gates, self.towers):
+            gate_out = gate(embed).unsqueeze(-1)
+            expert_pooling = torch.sum(torch.mul(gate_out, expert_outs), dim=1)
+            ys.append(torch.sigmoid(tower(expert_pooling)))  # PredictionLayer
+        return torch.cat(ys, dim=1)
+
+
+class Cgc(torch.nn.Module):
+    """torch-rechub CGC layer, mirrored exactly (shared gate only below top)."""
+
+    def __init__(self, cur_level, spec):
+        super().__init__()
+        c = ARCH_CONFIG
+        self.n_task = spec['n_task']
+        self.n_specific = spec['n_expert_specific']
+        self.n_shared = spec['n_expert_shared']
+        self.cur_level = cur_level
+        self.n_level = spec['n_level']
+        self.n_all = self.n_specific * self.n_task + self.n_shared
+        input_dims = (c['sparse_dim'] * c['emb_dim'] if cur_level == 1
+                      else spec['expert_dims'][-1])
+        self.experts_specific = torch.nn.ModuleList([
+            Mlp.build(input_dims, spec['expert_dims'], activation=spec['activation'],
+                      output_layer=False, batchnorm=spec['batchnorm'])
+            for _ in range(self.n_task * self.n_specific)])
+        self.experts_shared = torch.nn.ModuleList([
+            Mlp.build(input_dims, spec['expert_dims'], activation=spec['activation'],
+                      output_layer=False, batchnorm=spec['batchnorm'])
+            for _ in range(self.n_shared)])
+        self.gates_specific = torch.nn.ModuleList([
+            Mlp.build(input_dims, [self.n_specific + self.n_shared], activation='softmax',
+                      output_layer=False, batchnorm=spec['batchnorm'])
+            for _ in range(self.n_task)])
+        if cur_level < self.n_level:
+            self.gate_shared = Mlp.build(input_dims, [self.n_all], activation='softmax',
+                                         output_layer=False, batchnorm=spec['batchnorm'])
+
+    def forward(self, x_list):
+        expert_specific_outs = []
+        for i in range(self.n_task):
+            experts = self.experts_specific[i * self.n_specific:(i + 1) * self.n_specific]
+            expert_specific_outs.extend([expert(x_list[i]).unsqueeze(1) for expert in experts])
+        expert_shared_outs = [expert(x_list[-1]).unsqueeze(1) for expert in self.experts_shared]
+        gate_specific_outs = [gate(x_list[i]).unsqueeze(-1)
+                              for i, gate in enumerate(self.gates_specific)]
+        cgc_outs = []
+        for i, gate_out in enumerate(gate_specific_outs):
+            cur = expert_specific_outs[i * self.n_specific:(i + 1) * self.n_specific] + expert_shared_outs
+            expert_concat = torch.cat(cur, dim=1)
+            expert_pooling = torch.sum(torch.mul(gate_out, expert_concat), dim=1)
+            cgc_outs.append(expert_pooling)
+        if self.cur_level < self.n_level:
+            gate_shared_out = self.gate_shared(x_list[-1]).unsqueeze(-1)
+            expert_concat = torch.cat(expert_specific_outs + expert_shared_outs, dim=1)
+            expert_pooling = torch.sum(torch.mul(gate_shared_out, expert_concat), dim=1)
+            cgc_outs.append(expert_pooling)
+        return cgc_outs
+
+
+class Ple(torch.nn.Module):
+    """torch-rechub PLE semantics: stacked CGC levels then per-task towers."""
+
+    def __init__(self, config):
+        super().__init__()
+        c = ARCH_CONFIG
+        spec = config['ple']
+        self.n_task = spec['n_task']
+        self.n_level = spec['n_level']
+        self.embedding = torch.nn.Embedding(c['vocab'], c['emb_dim'])
+        self.cgc_layers = torch.nn.ModuleList([
+            Cgc(i + 1, spec) for i in range(spec['n_level'])])
+        self.towers = torch.nn.ModuleList([
+            Mlp.build(spec['expert_dims'][-1], spec['tower_dims'],
+                      activation=spec['activation'], output_layer=True,
+                      batchnorm=spec['batchnorm'])
+            for _ in range(self.n_task)])
+
+    def forward(self, dense, sparse):
+        embed = self.embedding(sparse).flatten(start_dim=1)
+        ple_inputs = [embed] * (self.n_task + 1)
+        ple_outs = []
+        for i in range(self.n_level):
+            ple_outs = self.cgc_layers[i](ple_inputs)
+            ple_inputs = ple_outs
+        ys = []
+        for ple_out, tower in zip(ple_outs, self.towers):
+            ys.append(torch.sigmoid(tower(ple_out)))  # PredictionLayer
+        return torch.cat(ys, dim=1)
+
+
+class Bst(torch.nn.Module):
+    """torch-rechub BST semantics: history+target through a TransformerEncoder
+    with positional embedding and src_key_padding_mask; target-position output
+    -> MLP -> sigmoid (reference sigmoids inside forward)."""
+
+    def __init__(self, config):
+        super().__init__()
+        c = ARCH_CONFIG
+        spec = config['bst']
+        emb = c['emb_dim']
+        self.profile_n = spec['profile_sparse']
+        self.max_seq_len = c['hist_len'] + 1
+        self.embedding = torch.nn.Embedding(c['vocab'], emb)
+        self.pos_embedding = torch.nn.Embedding(self.max_seq_len, emb)
+        encoder_layer = torch.nn.TransformerEncoderLayer(
+            d_model=emb, nhead=spec['nhead'], dropout=spec['dropout'],
+            activation=torch.nn.LeakyReLU(), batch_first=True)
+        self.transformer_layers = torch.nn.TransformerEncoder(
+            encoder_layer, num_layers=spec['num_layers'])
+        all_dims = self.profile_n * emb + 2 * emb
+        self.mlp = Mlp.build(all_dims, spec['mlp_dims'], activation=spec['activation'],
+                             output_layer=True, batchnorm=spec['batchnorm'])
+
+    def forward(self, dense, sparse, hist_ids, hist_mask):
+        profile = self.embedding(sparse[:, :self.profile_n]).flatten(start_dim=1)
+        target = self.embedding(sparse[:, self.profile_n])
+        history = self.embedding(hist_ids)
+        seq = torch.cat([history, target.unsqueeze(1)], dim=1)
+        positions = torch.arange(seq.size(1), device=seq.device).unsqueeze(0)
+        seq = seq + self.pos_embedding(positions)
+        pad_mask = hist_ids == 0
+        tgt_mask = torch.zeros(pad_mask.size(0), 1, dtype=torch.bool,
+                               device=pad_mask.device)
+        src_key_padding_mask = torch.cat([pad_mask, tgt_mask], dim=1)
+        out = self.transformer_layers(seq, src_key_padding_mask=src_key_padding_mask)
+        interest = out[:, -1, :]
+        mlp_in = torch.cat([interest, target, profile], dim=1)
+        return torch.sigmoid(self.mlp(mlp_in).squeeze(1))
+
+
 class CtrCallable(torch.nn.Module):
     """Adapter so run_prepared can call every arch with the full input dict."""
 
@@ -345,7 +518,7 @@ class CtrCallable(torch.nn.Module):
         self.net = net
 
     def forward(self, dense, sparse, hist_ids=None, hist_mask=None):
-        if self.arch == 'din':
+        if self.arch in ('din', 'bst'):
             return self.net(dense, sparse, hist_ids, hist_mask)
         return self.net(dense, sparse)
 
@@ -354,7 +527,7 @@ def build_model(arch, seed, device, dtype=None):
     import torch
     torch.manual_seed(seed)
     builders = dict(dlrm=Dlrm, din=Din, widedeep=WideDeep, deepfm=DeepFm,
-                    dcn=Dcn, esmm=Esmm)
+                    dcn=Dcn, esmm=Esmm, mmoe=Mmoe, ple=Ple, bst=Bst)
     if arch not in builders:
         raise ValueError('template arch not implemented yet: ' + arch)
     model = builders[arch](ARCH_CONFIG)
@@ -379,8 +552,8 @@ def prepare_inputs(cpu, device, dtype):
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('--package', required=True)
-    p.add_argument('--arch', choices=['dlrm', 'din', 'widedeep', 'deepfm', 'dcn', 'esmm'],
-                   required=True)
+    p.add_argument('--arch', choices=['dlrm', 'din', 'widedeep', 'deepfm', 'dcn', 'esmm',
+                                      'mmoe', 'ple', 'bst'], required=True)
     p.add_argument('--seed', type=int, default=531)
     p.add_argument('--device', default='cuda:0')
     p.add_argument('--dtype', choices=['bfloat16', 'float16', 'float32'], default='bfloat16')
@@ -421,8 +594,8 @@ def main():
     for batch_index, (sample_ids, cpu) in enumerate(batches):
         inputs = prepare_inputs(cpu, args.device, dtype)
         def transform(output):
-            if args.arch == 'esmm':
-                # reference already sigmoides each tower; [batch, 3] = [cvr, ctr, ctcvr]
+            if args.arch in ('esmm', 'mmoe', 'ple', 'bst'):
+                # reference already applies sigmoid; esmm/mmoe/ple are [batch, n_task]
                 scores = output.float()
             else:
                 scores = torch.sigmoid(output.float().squeeze(1))
