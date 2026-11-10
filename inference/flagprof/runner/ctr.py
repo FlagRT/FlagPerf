@@ -38,6 +38,35 @@ Architectures mirror canonical reference implementations:
              gated updates, masked positions skipped) -> dice MLP -> sigmoid;
              training-only auxiliary loss branch omitted (not on prediction
              path; package v1 carries no negative sequence field).
+  dcnmix     torch-rechub DCNv2 (models/ranking/dcn_v2.py) with
+             use_low_rank_mixture=True (basic/layers.py CrossNetMix): MOE cross
+             network with nonlinear low-rank transforms (tanh low-rank space,
+             softmax expert gating) + parallel MLP -> LR -> sigmoid (reference
+             sigmoids inside forward). Parallel model_structure default.
+  dssm       DSSM (Huang et al. 2013) double-tower semantics, adapted to the
+             sealed package schema (no canonical upstream implementation in the
+             reference set): user tower over raw dense + masked mean-pool of
+             valid history embeddings, item tower over mean-pool trailing
+             sparse fields, tanh MLPs, L2-normalised, cosine output in
+             [-1, 1] as the final score (no second sigmoid in the transform).
+  sasrec     pmixer/SASRec.pytorch post-LN semantics (norm_first=False
+             default): item/positional embeddings (padding_idx=0, scale by
+             dim**0.5, pad positions get positional index 0), causal
+             MultiheadAttention blocks with PointWiseFeedForward (Conv1d
+             kernel 1), final LayerNorm; score = <last-position hidden,
+             target embedding> raw logit (reference predict() returns raw
+             logits). Side fields unused (reference ignores user_ids too).
+  lightgcn   kuandeng/LightGCN (official paper implementation, TF): pure
+             propagation E^{k+1} = D^-1/2 A D^-1/2 E^k over the symmetric
+             bipartite adjacency (adj_type='pre': no self-loops, no weights,
+             no activation), layer combination = mean over E^0..E^K,
+             init = random_normal(stddev=0.01) user table then item table
+             (the repo's xavier line is commented out). The dataset graph is
+             replaced by a deterministic package-derived graph (user nodes =
+             package samples, item nodes = sorted unique valid history and
+             target ids); the dense normalized adjacency and id->node mapping
+             are pinned as buffers. Requires the package rows at build time
+             and a user_idx input per batch.
 
 Weights are random-initialized from torch.manual_seed(--seed, default 531);
 CTR templates have no pretrained upstream weights, so the run identity pins
@@ -121,6 +150,8 @@ def _activation(name):
     import torch
     if name == 'relu':
         return torch.nn.ReLU()
+    if name == 'tanh':
+        return torch.nn.Tanh()
     if name == 'dice':
         return Dice()
     if name == 'softmax':
@@ -160,6 +191,11 @@ ARCH_CONFIG = dict(
     bst=dict(profile_sparse=10, nhead=8, num_layers=1, dropout=0.0,
              mlp_dims=[128, 64], activation='relu', batchnorm=True),
     dien=dict(profile_sparse=10, mlp_dims=[128, 64], activation='dice', batchnorm=True),
+    dcnmix=dict(n_cross_layers=2, low_rank=16, num_experts=2, mlp_dims=[128, 64],
+                activation='relu', batchnorm=True),
+    dssm=dict(item_sparse=13, user_dims=[64, 32], item_dims=[64, 32], activation='tanh'),
+    sasrec=dict(profile_sparse=10, nhead=1, num_blocks=2, dropout=0.0),
+    lightgcn=dict(profile_sparse=10, n_layers=3),
 )
 
 
@@ -615,6 +651,290 @@ class Dien(torch.nn.Module):
         return torch.sigmoid(self.mlp(mlp_in).squeeze(1))
 
 
+class CrossNetMix(torch.nn.Module):
+    """torch-rechub basic/layers.py CrossNetMix, mirrored exactly: MOE cross
+    network with nonlinear low-rank transforms. Takes the flattened embedding
+    (B, in_features) and unsqueezes internally to (B, in_features, 1).
+    Parameter init order (RNG-relevant): u_list over all layers, v_list,
+    c_list, gating (Linear default init), bias (zeros)."""
+
+    def __init__(self, input_dim, num_layers=2, low_rank=32, num_experts=4):
+        super().__init__()
+        self.num_layers = num_layers
+        self.num_experts = num_experts
+        self.u_list = torch.nn.ParameterList([
+            torch.nn.Parameter(torch.nn.init.xavier_normal_(
+                torch.empty(num_experts, input_dim, low_rank)))
+            for _ in range(self.num_layers)])
+        self.v_list = torch.nn.ParameterList([
+            torch.nn.Parameter(torch.nn.init.xavier_normal_(
+                torch.empty(num_experts, input_dim, low_rank)))
+            for _ in range(self.num_layers)])
+        self.c_list = torch.nn.ParameterList([
+            torch.nn.Parameter(torch.nn.init.xavier_normal_(
+                torch.empty(num_experts, low_rank, low_rank)))
+            for _ in range(self.num_layers)])
+        self.gating = torch.nn.ModuleList(
+            [torch.nn.Linear(input_dim, 1, bias=False) for _ in range(self.num_experts)])
+        self.bias = torch.nn.ParameterList([
+            torch.nn.Parameter(torch.nn.init.zeros_(torch.empty(input_dim, 1)))
+            for _ in range(self.num_layers)])
+
+    def forward(self, x):
+        x_0 = x.unsqueeze(2)  # (bs, in_features, 1)
+        x_l = x_0
+        for i in range(self.num_layers):
+            output_of_experts = []
+            gating_score_experts = []
+            for expert_id in range(self.num_experts):
+                # (1) G(x_l): gating score from the current representation
+                gating_score_experts.append(self.gating[expert_id](x_l.squeeze(2)))
+                # (2) E(x_l): project to the low-rank space, tanh between maps
+                v_x = torch.matmul(self.v_list[i][expert_id].t(), x_l)
+                v_x = torch.tanh(v_x)
+                v_x = torch.matmul(self.c_list[i][expert_id], v_x)
+                v_x = torch.tanh(v_x)
+                # project back to R^d and Hadamard with x_0
+                uv_x = torch.matmul(self.u_list[i][expert_id], v_x)
+                dot_ = x_0 * (uv_x + self.bias[i])
+                output_of_experts.append(dot_.squeeze(2))
+            # (3) mixture of low-rank experts
+            output_of_experts = torch.stack(output_of_experts, 2)  # (bs, d, E)
+            gating_score_experts = torch.stack(gating_score_experts, 1)  # (bs, E, 1)
+            moe_out = torch.matmul(output_of_experts, gating_score_experts.softmax(1))
+            x_l = moe_out + x_l  # residual
+        return x_l.squeeze(-1)
+
+
+class DcnMix(torch.nn.Module):
+    """torch-rechub DCNv2 parallel semantics with use_low_rank_mixture=True:
+    flattened embeddings through CrossNetMix and a parallel MLP, concatenated
+    into LR -> sigmoid (reference sigmoids inside forward)."""
+
+    def __init__(self, config):
+        super().__init__()
+        c = ARCH_CONFIG
+        spec = config['dcnmix']
+        dims = c['sparse_dim'] * c['emb_dim']
+        self.embedding = torch.nn.Embedding(c['vocab'], c['emb_dim'])
+        self.crossnet = CrossNetMix(dims, spec['n_cross_layers'],
+                                    low_rank=spec['low_rank'],
+                                    num_experts=spec['num_experts'])
+        self.parallel_dnn = Mlp.build(dims, spec['mlp_dims'],
+                                      activation=spec['activation'],
+                                      output_layer=False, batchnorm=spec['batchnorm'])
+        self.linear = torch.nn.Linear(spec['mlp_dims'][-1] + dims, 1)  # LR(final_dim)
+
+    def forward(self, dense, sparse):
+        embed_x = self.embedding(sparse).flatten(start_dim=1)
+        cross_out = self.crossnet(embed_x)
+        dnn_out = self.parallel_dnn(embed_x)
+        final_out = torch.cat([cross_out, dnn_out], dim=1)
+        return torch.sigmoid(self.linear(final_out).squeeze(1))
+
+
+class Dssm(torch.nn.Module):
+    """DSSM double-tower semantics (Huang et al. 2013), adapted to the sealed
+    package schema. No canonical upstream implementation exists in the
+    reference set (torch-rechub carries no dssm), so this mirrors the paper's
+    tower/cosine semantics: user tower over raw dense + masked mean-pool of
+    valid history embeddings, item tower over the mean-pool of trailing sparse
+    field embeddings, tanh MLPs (paper-era, no batchnorm), L2-normalised,
+    cosine output in [-1, 1] as the final score (the transform does not apply
+    a second sigmoid). The query/document n-gram text mapping of the original
+    paper is replaced by the field mapping above; this is schema-driven and
+    recorded here."""
+
+    def __init__(self, config):
+        super().__init__()
+        c = ARCH_CONFIG
+        spec = config['dssm']
+        emb = c['emb_dim']
+        self.item_sparse_n = spec['item_sparse']
+        self.embedding = torch.nn.Embedding(c['vocab'], emb)
+        self.user_mlp = Mlp.build(c['dense_dim'] + emb, spec['user_dims'],
+                                  activation=spec['activation'], output_layer=False,
+                                  batchnorm=False)
+        self.item_mlp = Mlp.build(emb, spec['item_dims'], activation=spec['activation'],
+                                  output_layer=False, batchnorm=False)
+
+    def forward(self, dense, sparse, hist_ids=None, hist_mask=None):
+        import torch
+        if hist_ids is None or hist_mask is None:
+            raise ValueError('dssm requires history fields')
+        mask = hist_mask.to(hist_ids.dtype)
+        hist_vec = self.embedding(hist_ids)
+        pooled = (hist_vec * mask.unsqueeze(-1)).sum(dim=1) \
+            / mask.sum(dim=1, keepdim=True).clamp(min=1)  # zero row when no history
+        user_in = torch.cat([dense, pooled], dim=1)
+        item_in = self.embedding(sparse[:, self.item_sparse_n:]).mean(dim=1)
+        user_vec = torch.nn.functional.normalize(self.user_mlp(user_in), dim=1)
+        item_vec = torch.nn.functional.normalize(self.item_mlp(item_in), dim=1)
+        return (user_vec * item_vec).sum(dim=1, keepdim=True)
+
+
+class PointWiseFeedForward(torch.nn.Module):
+    """pmixer/SASRec.pytorch PointWiseFeedForward, mirrored exactly."""
+
+    def __init__(self, hidden_units, dropout_rate):
+        super().__init__()
+        self.conv1 = torch.nn.Conv1d(hidden_units, hidden_units, kernel_size=1)
+        self.dropout1 = torch.nn.Dropout(p=dropout_rate)
+        self.relu = torch.nn.ReLU()
+        self.conv2 = torch.nn.Conv1d(hidden_units, hidden_units, kernel_size=1)
+        self.dropout2 = torch.nn.Dropout(p=dropout_rate)
+
+    def forward(self, inputs):
+        outputs = self.dropout2(self.conv2(self.relu(
+            self.dropout1(self.conv1(inputs.transpose(-1, -2))))))
+        return outputs.transpose(-1, -2)  # as Conv1d requires (N, C, Length)
+
+
+class Sasrec(torch.nn.Module):
+    """pmixer/SASRec.pytorch semantics, mirrored exactly for inference
+    (norm_first=False default -> post-LN blocks: x = LN(x + MHA(causal));
+    x = LN(x + FF(x)); final LayerNorm; batch_first omitted so the (N, T, C)
+    sequence is transposed around MultiheadAttention like the reference).
+    Padding is excluded by zero-value construction (item_emb/pos_emb have
+    padding_idx=0, pad positions get positional index 0), the reference's
+    mechanism. Deviations recorded: hidden_units follows the package emb_dim
+    (reference default 50), maxlen = hist_len + 1 so the target is the causal
+    last position, dropout 0 for inference. Score = <last-position hidden,
+    target embedding> raw logit (reference predict() returns raw logits, no
+    sigmoid; the transform applies it). Side fields unused (the reference
+    ignores user_ids too)."""
+
+    def __init__(self, config):
+        super().__init__()
+        c = ARCH_CONFIG
+        spec = config['sasrec']
+        emb = c['emb_dim']
+        self.profile_n = spec['profile_sparse']
+        # pmixer pos_emb = Embedding(maxlen + 1): positions run 1..len(seq),
+        # here the fed sequence is hist_len history + 1 target.
+        self.max_seq_len = c['hist_len'] + 2
+        self.item_emb = torch.nn.Embedding(c['vocab'], emb, padding_idx=0)
+        self.pos_emb = torch.nn.Embedding(self.max_seq_len, emb, padding_idx=0)
+        self.emb_dropout = torch.nn.Dropout(p=spec['dropout'])
+        self.attention_layernorms = torch.nn.ModuleList()
+        self.attention_layers = torch.nn.ModuleList()
+        self.forward_layernorms = torch.nn.ModuleList()
+        self.forward_layers = torch.nn.ModuleList()
+        self.last_layernorm = torch.nn.LayerNorm(emb, eps=1e-8)
+        for _ in range(spec['num_blocks']):
+            self.attention_layernorms.append(torch.nn.LayerNorm(emb, eps=1e-8))
+            self.attention_layers.append(
+                torch.nn.MultiheadAttention(emb, spec['nhead'], spec['dropout']))
+            self.forward_layernorms.append(torch.nn.LayerNorm(emb, eps=1e-8))
+            self.forward_layers.append(PointWiseFeedForward(emb, spec['dropout']))
+
+    def log2feats(self, seq_ids):
+        seqs = self.item_emb(seq_ids)
+        seqs = seqs * self.item_emb.embedding_dim ** 0.5
+        positions = torch.arange(1, seq_ids.size(1) + 1,
+                                 device=seq_ids.device).unsqueeze(0)
+        poss = positions.expand(seq_ids.size(0), -1) * (seq_ids != 0)
+        seqs = seqs + self.pos_emb(poss)
+        seqs = self.emb_dropout(seqs)
+        tl = seqs.size(1)  # time dim len for enforce causality
+        attention_mask = ~torch.tril(torch.ones((tl, tl), dtype=torch.bool,
+                                                device=seqs.device))
+        for i in range(len(self.attention_layers)):
+            seqs = torch.transpose(seqs, 0, 1)
+            mha_outputs, _ = self.attention_layers[i](seqs, seqs, seqs,
+                                                      attn_mask=attention_mask)
+            seqs = self.attention_layernorms[i](seqs + mha_outputs)
+            seqs = torch.transpose(seqs, 0, 1)
+            seqs = self.forward_layernorms[i](seqs + self.forward_layers[i](seqs))
+        return self.last_layernorm(seqs)
+
+    def forward(self, dense, sparse, hist_ids=None, hist_mask=None):
+        if hist_ids is None:
+            raise ValueError('sasrec requires history fields')
+        target_ids = sparse[:, self.profile_n]
+        seq_ids = torch.cat([hist_ids, target_ids.unsqueeze(1)], dim=1)
+        log_feats = self.log2feats(seq_ids)
+        final_feat = log_feats[:, -1, :]  # only use last QKV classifier
+        target_embs = self.item_emb(target_ids)
+        return (final_feat * target_embs).sum(dim=-1, keepdim=True)
+
+
+class LightGcn(torch.nn.Module):
+    """kuandeng/LightGCN semantics (official paper implementation, TF), mirrored
+    exactly: pure propagation E^{k+1} = A_hat E^k with A_hat = D^-1/2 A D^-1/2
+    over the symmetric bipartite adjacency without self-loops (adj_type='pre'),
+    no per-layer weights, no bias, no activation; layer combination = mean over
+    E^0..E^K; init = random_normal(stddev=0.01) on the user table then the item
+    table (the repo's xavier line is commented out). Template adaptation
+    (schema-driven, recorded): the dataset graph is replaced by a deterministic
+    package-derived graph — user nodes are the package samples, item nodes are
+    the sorted unique valid history ids and target ids, interactions follow the
+    package rows; the dense normalized adjacency and the id->node mapping are
+    registered buffers (they enter weight_sha256). Side fields (dense, profile
+    sparse) are unused, mirroring the pure-CF reference. Requires the package
+    rows at build time and a user_idx input per batch."""
+
+    def __init__(self, config, rows):
+        super().__init__()
+        c = ARCH_CONFIG
+        spec = config['lightgcn']
+        emb = c['emb_dim']
+        self.target_n = spec['profile_sparse']
+        interactions = []
+        item_ids = set()
+        for row in rows:
+            user = len(interactions)
+            valid = [int(i) for i in row['hist_ids'].tolist() if int(i) != 0]
+            item_ids.update(valid)
+            item_ids.add(int(row['sparse'][self.target_n].item()))
+            interactions.append((user, valid, int(row['sparse'][self.target_n].item())))
+        item_ids = sorted(item_ids)
+        id_to_node = torch.full((c['vocab'],), -1, dtype=torch.long)
+        for node, item in enumerate(item_ids):
+            id_to_node[item] = node
+        self.n_users = len(interactions)
+        self.user_embedding = torch.nn.Embedding(self.n_users, emb)
+        torch.nn.init.normal_(self.user_embedding.weight, std=0.01)
+        self.item_embedding = torch.nn.Embedding(len(item_ids), emb)
+        torch.nn.init.normal_(self.item_embedding.weight, std=0.01)
+        adj = torch.zeros(self.n_users + len(item_ids), self.n_users + len(item_ids))
+        for user, valid, target in interactions:
+            nodes = {id_to_node[i].item() for i in valid}
+            nodes.add(id_to_node[target].item())
+            for node in nodes:
+                adj[user, self.n_users + node] = 1.0
+                adj[self.n_users + node, user] = 1.0
+        degree = adj.sum(dim=1)
+        d_inv_sqrt = degree.pow(-0.5)
+        d_inv_sqrt[torch.isinf(d_inv_sqrt)] = 0.0
+        norm_adj = d_inv_sqrt.unsqueeze(1) * adj * d_inv_sqrt.unsqueeze(0)
+        self.register_buffer('norm_adj', norm_adj)
+        self.register_buffer('id_to_node', id_to_node)
+        self.n_layers = spec['n_layers']
+
+    def computer(self):
+        ego = torch.cat([self.user_embedding.weight, self.item_embedding.weight], dim=0)
+        all_embeddings = [ego]
+        for _ in range(self.n_layers):
+            ego = torch.matmul(self.norm_adj, ego)
+            all_embeddings.append(ego)
+        stacked = torch.stack(all_embeddings, dim=1)
+        light_out = stacked.mean(dim=1)
+        return torch.split(light_out, [self.n_users, self.item_embedding.num_embeddings],
+                           dim=0)
+
+    def forward(self, dense, sparse, user_idx=None):
+        import torch
+        if user_idx is None:
+            raise ValueError('lightgcn requires user_idx (package sample ids)')
+        user_final, item_final = self.computer()
+        target_ids = sparse[:, self.target_n]
+        nodes = self.id_to_node[target_ids]
+        user_vec = user_final[user_idx]
+        item_vec = item_final[nodes]
+        return (user_vec * item_vec).sum(dim=1, keepdim=True)
+
+
 class CtrCallable(torch.nn.Module):
     """Adapter so run_prepared can call every arch with the full input dict."""
 
@@ -623,20 +943,30 @@ class CtrCallable(torch.nn.Module):
         self.arch = arch
         self.net = net
 
-    def forward(self, dense, sparse, hist_ids=None, hist_mask=None):
-        if self.arch in ('din', 'bst', 'dien'):
+    def forward(self, dense, sparse, hist_ids=None, hist_mask=None, user_idx=None):
+        if self.arch in ('din', 'bst', 'dien', 'dssm', 'sasrec'):
             return self.net(dense, sparse, hist_ids, hist_mask)
+        if self.arch == 'lightgcn':
+            return self.net(dense, sparse, user_idx=user_idx)
         return self.net(dense, sparse)
 
 
-def build_model(arch, seed, device, dtype=None):
+def build_model(arch, seed, device, dtype=None, package=None):
     import torch
     torch.manual_seed(seed)
     builders = dict(dlrm=Dlrm, din=Din, widedeep=WideDeep, deepfm=DeepFm,
-                    dcn=Dcn, esmm=Esmm, mmoe=Mmoe, ple=Ple, bst=Bst, dien=Dien)
-    if arch not in builders:
-        raise ValueError('template arch not implemented yet: ' + arch)
-    model = builders[arch](ARCH_CONFIG)
+                    dcn=Dcn, esmm=Esmm, mmoe=Mmoe, ple=Ple, bst=Bst, dien=Dien,
+                    dcnmix=DcnMix, dssm=Dssm, sasrec=Sasrec,
+                    lightgcn=LightGcn)
+    if arch == 'lightgcn':
+        if package is None:
+            raise ValueError('lightgcn requires the package rows (package=...)')
+        rows = torch.load(Path(package) / 'prepared' / 'inputs.pt', weights_only=False)
+        model = LightGcn(ARCH_CONFIG, rows)
+    else:
+        if arch not in builders:
+            raise ValueError('template arch not implemented yet: ' + arch)
+        model = builders[arch](ARCH_CONFIG)
     if dtype is not None:
         model = model.to(dtype)
     return model.to(device).eval()
@@ -656,7 +986,8 @@ def prepare_inputs(cpu, device, dtype):
 
 
 ARCH_CHOICES = ['dlrm', 'din', 'widedeep', 'deepfm', 'dcn', 'esmm',
-                'mmoe', 'ple', 'bst', 'dien']
+                'mmoe', 'ple', 'bst', 'dien', 'dcnmix', 'dssm', 'sasrec',
+                'lightgcn']
 
 
 def run_ctr(*, package, arch, seed, device, dtype, outputs, samples=None,
@@ -677,7 +1008,7 @@ def run_ctr(*, package, arch, seed, device, dtype, outputs, samples=None,
     if arch not in manifest['contract']['archs']:
         raise ValueError('arch not supported by package contract: ' + arch)
     torch_dtype = getattr(torch, dtype) if dtype != 'float32' else torch.float32
-    net = build_model(arch, seed, device, dtype=torch_dtype)
+    net = build_model(arch, seed, device, dtype=torch_dtype, package=package)
     model = CtrCallable(arch, net)
     config_sha = hashlib.sha256(json.dumps(ARCH_CONFIG, sort_keys=True,
         default=str).encode()).hexdigest()
@@ -692,9 +1023,16 @@ def run_ctr(*, package, arch, seed, device, dtype, outputs, samples=None,
     run_rows = []
     for batch_index, (sample_ids, cpu) in enumerate(batches):
         inputs = prepare_inputs(cpu, device, torch_dtype)
+        if arch == 'lightgcn':
+            # user nodes are the package samples; user_idx carries the sample
+            # index of every row in this batch (user_final lookup).
+            inputs['user_idx'] = torch.tensor([int(s) for s in sample_ids],
+                                              device=device)
         def transform(output):
-            if arch in ('esmm', 'mmoe', 'ple', 'bst', 'dien'):
-                # reference already applies sigmoid; esmm/mmoe/ple are [batch, n_task]
+            if arch in ('esmm', 'mmoe', 'ple', 'bst', 'dien', 'dcnmix', 'dssm'):
+                # reference produces the final scores inside forward
+                # (sigmoid for esmm/mmoe/ple/bst/dien/dcnmix; cosine in
+                # [-1, 1] for dssm); esmm/mmoe/ple are [batch, n_task]
                 scores = output.float()
             else:
                 scores = torch.sigmoid(output.float().squeeze(1))

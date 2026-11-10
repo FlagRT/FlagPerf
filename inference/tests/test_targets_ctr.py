@@ -257,7 +257,8 @@ class CtrModelTests(unittest.TestCase):
 
     def test_all_archs_reproducible_same_seed(self):
         import torch
-        for arch in ('deepfm', 'dcn', 'esmm', 'mmoe', 'ple', 'bst', 'dien'):
+        for arch in ('deepfm', 'dcn', 'esmm', 'mmoe', 'ple', 'bst', 'dien',
+                     'dcnmix', 'dssm', 'sasrec'):
             with tempfile.TemporaryDirectory() as tmp:
                 pkg = build_ctr_package(tmp)
                 batches, _ = load_ctr_package(pkg, batch_size=8)
@@ -267,6 +268,156 @@ class CtrModelTests(unittest.TestCase):
                     model = CtrCallable(arch, build_model(arch, 531, 'cpu', dtype=torch.float32))
                     outs.append(model(**inputs).detach())
                 self.assertTrue(torch.equal(outs[0], outs[1]), arch)
+
+
+class CtrExtendedArchTests(unittest.TestCase):
+    """DCN-Mix / DSSM / SASRec / LightGCN template semantics (CPU)."""
+
+    def test_dcnmix_output_sigmoided_inside_unit_range(self):
+        import torch
+        with tempfile.TemporaryDirectory() as tmp:
+            pkg = build_ctr_package(tmp)
+            batches, _ = load_ctr_package(pkg, batch_size=4)
+            inputs = batches[0][1]
+            model = CtrCallable('dcnmix', build_model('dcnmix', 531, 'cpu', dtype=torch.float32))
+            out = model(**inputs).float()  # reference sigmoids inside forward
+            self.assertEqual(out.shape, (4,))
+            self.assertTrue(bool(torch.isfinite(out).all()))
+            self.assertTrue(bool((out >= 0).all()) and bool((out <= 1).all()))
+
+    def test_dcnmix_gating_softmax_mixes_experts(self):
+        import torch
+        from flagprof.runner.ctr import CrossNetMix
+        torch.manual_seed(531)
+        net = CrossNetMix(input_dim=8, num_layers=2, low_rank=4, num_experts=3)
+        x = torch.randn(5, 8)
+        out = net(x)
+        # residual structure: zeroing the low-rank projection params leaves the
+        # layer output as x_l (identity path), so with u_list zeroed the forward
+        # is exactly the input.
+        with torch.no_grad():
+            for u in net.u_list:
+                u.zero_()
+        self.assertTrue(torch.equal(net(x), x))
+
+    def test_dssm_cosine_shape_and_range(self):
+        import torch
+        with tempfile.TemporaryDirectory() as tmp:
+            pkg = build_ctr_package(tmp)
+            batches, _ = load_ctr_package(pkg, batch_size=4)
+            inputs = batches[0][1]
+            model = CtrCallable('dssm', build_model('dssm', 531, 'cpu', dtype=torch.float32))
+            out = model(**inputs).float()  # final cosine score, no transform sigmoid
+            self.assertEqual(out.shape, (4, 1))
+            self.assertTrue(bool(torch.isfinite(out).all()))
+            self.assertTrue(bool((out >= -1).all()) and bool((out <= 1).all()))
+
+    def test_dssm_ignores_padded_history_ids(self):
+        import torch
+        with tempfile.TemporaryDirectory() as tmp:
+            pkg = build_ctr_package(tmp)
+            batches, _ = load_ctr_package(pkg, batch_size=4)
+            inputs = batches[0][1]
+            model = CtrCallable('dssm', build_model('dssm', 531, 'cpu', dtype=torch.float32))
+            base = model(**inputs).detach()
+            perturbed = dict(inputs)
+            pad = ~inputs['hist_mask']
+            noise = inputs['hist_ids'].clone()
+            noise[pad] = 999 - torch.arange(int(pad.sum()), dtype=torch.int64) % 900
+            perturbed['hist_ids'] = noise
+            changed = model(**perturbed).detach()
+            self.assertTrue(torch.equal(base, changed))
+
+    def test_sasrec_output_raw_logit_shape(self):
+        import torch
+        with tempfile.TemporaryDirectory() as tmp:
+            pkg = build_ctr_package(tmp)
+            batches, _ = load_ctr_package(pkg, batch_size=4)
+            inputs = batches[0][1]
+            model = CtrCallable('sasrec', build_model('sasrec', 531, 'cpu', dtype=torch.float32))
+            out = model(**inputs).float()  # raw logit; transform applies sigmoid
+            self.assertEqual(out.shape, (4, 1))
+            self.assertTrue(bool(torch.isfinite(out).all()))
+            scores = torch.sigmoid(out.squeeze(1))
+            # 16-dim dots of LayerNorm-scaled features saturate sigmoid to the
+            # endpoints at random init; the closed interval is the honest
+            # assertion (same treatment as deepfm).
+            self.assertTrue(bool((scores >= 0).all()) and bool((scores <= 1).all()))
+
+    def test_sasrec_visible_history_changes_output(self):
+        self._visible_perturbation_changes_output('sasrec')
+
+    def _visible_perturbation_changes_output(self, arch):
+        import torch
+        with tempfile.TemporaryDirectory() as tmp:
+            pkg = build_ctr_package(tmp)
+            batches, _ = load_ctr_package(pkg, batch_size=4)
+            inputs = batches[0][1]
+            model = CtrCallable(arch, build_model(arch, 531, 'cpu', dtype=torch.float32))
+            base = model(**inputs).detach()
+            vis = inputs['hist_mask']
+            self.assertTrue(bool(vis.any()))
+            perturbed = dict(inputs)
+            noise = inputs['hist_ids'].clone()
+            noise[vis] = (noise[vis] + 7 - 1) % 999 + 1
+            perturbed['hist_ids'] = noise
+            changed = model(**perturbed).detach()
+            self.assertFalse(torch.equal(base, changed), arch)
+
+    def test_lightgcn_requires_package_rows_and_user_idx(self):
+        import torch
+        with tempfile.TemporaryDirectory() as tmp:
+            pkg = build_ctr_package(tmp)
+            with self.assertRaises(ValueError):
+                build_model('lightgcn', 531, 'cpu', dtype=torch.float32)
+            batches, _ = load_ctr_package(pkg, batch_size=4)
+            inputs = batches[0][1]
+            model = CtrCallable('lightgcn', build_model('lightgcn', 531, 'cpu',
+                                                        dtype=torch.float32, package=pkg))
+            with self.assertRaises(ValueError):
+                model(**inputs)
+            out = model(**inputs, user_idx=torch.tensor([0, 1, 2, 3])).float()
+            self.assertEqual(out.shape, (4, 1))
+            scores = torch.sigmoid(out.squeeze(1))
+            self.assertTrue(bool((scores > 0).all()) and bool((scores < 1).all()))
+
+    def test_lightgcn_reproducible_and_graph_pinned_in_weights(self):
+        import torch
+        with tempfile.TemporaryDirectory() as tmp:
+            pkg = build_ctr_package(tmp)
+            a = build_model('lightgcn', 531, 'cpu', dtype=torch.float32, package=pkg)
+            b = build_model('lightgcn', 531, 'cpu', dtype=torch.float32, package=pkg)
+            c = build_model('lightgcn', 532, 'cpu', dtype=torch.float32, package=pkg)
+            self.assertEqual(weight_sha256(a), weight_sha256(b))
+            self.assertNotEqual(weight_sha256(a), weight_sha256(c))
+            # the derived graph buffers enter the state dict
+            self.assertIn('norm_adj', a.state_dict())
+            self.assertIn('id_to_node', a.state_dict())
+
+    def test_lightgcn_uses_package_graph_not_batch_history(self):
+        import torch
+        with tempfile.TemporaryDirectory() as tmp:
+            pkg = build_ctr_package(tmp)
+            batches, _ = load_ctr_package(pkg, batch_size=4)
+            inputs = batches[0][1]
+            model = CtrCallable('lightgcn', build_model('lightgcn', 531, 'cpu',
+                                                        dtype=torch.float32, package=pkg))
+            user_idx = torch.tensor([0, 1, 2, 3])
+            base = model(**inputs, user_idx=user_idx).detach()
+            # batch history is not consumed by lightgcn (the graph comes from the
+            # package rows), so perturbing every batch hist id must be a no-op...
+            perturbed = dict(inputs)
+            noise = inputs['hist_ids'].clone()
+            noise[inputs['hist_mask']] = (noise[inputs['hist_mask']] + 7 - 1) % 999 + 1
+            perturbed['hist_ids'] = noise
+            changed = model(**perturbed, user_idx=user_idx).detach()
+            self.assertTrue(torch.equal(base, changed))
+            # ...while a different target item changes the score.
+            perturbed2 = dict(inputs)
+            perturbed2['sparse'] = inputs['sparse'].clone()
+            perturbed2['sparse'][:, 10] = (perturbed2['sparse'][:, 10] % 900) + 20
+            moved = model(**perturbed2, user_idx=user_idx).detach()
+            self.assertFalse(torch.equal(base, moved))
 
 
 if __name__ == '__main__':

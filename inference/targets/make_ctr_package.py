@@ -49,7 +49,8 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument('--samples', type=int, default=8)
     p.add_argument('--seed', type=int, default=531)
-    p.add_argument('--archs', default='din,dlrm,widedeep,deepfm,dcn,esmm,mmoe,ple,bst,dien')
+    p.add_argument('--archs', default='din,dlrm,widedeep,deepfm,dcn,esmm,mmoe,ple,bst,dien,'
+                                     'dcnmix,dssm,sasrec,lightgcn')
     p.add_argument('--out', required=True)
     args = p.parse_args()
 

@@ -73,7 +73,8 @@ class RunnerCtrTests(unittest.TestCase):
         self.assertTrue(callable(ctr_mod.attach_main))
         self.assertEqual(ctr_mod.ARCH_CHOICES,
                          ['dlrm', 'din', 'widedeep', 'deepfm', 'dcn', 'esmm',
-                          'mmoe', 'ple', 'bst', 'dien'])
+                          'mmoe', 'ple', 'bst', 'dien', 'dcnmix', 'dssm',
+                          'sasrec', 'lightgcn'])
 
     def test_thin_targets_delegate_to_canonical(self):
         import template_ctr  # targets shim module
