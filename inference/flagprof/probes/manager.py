@@ -13,6 +13,7 @@ class ProbeManager:
         self.module = self.dispatch = self.compile = self.component = self.tensor = None
         self.route=self.user=None
         self.communication=None
+        self.compiler_observation=None
         self.errors = []
         self.pid = os.getpid()
         self.state.update(probes={}, effective_config=config, route_unobserved=0,
@@ -35,7 +36,24 @@ class ProbeManager:
 
     def install(self):
         enabled = self.config['probes'] != 'none'
+        from ..components.compiler import identity, JITObservation
+        try:
+            compiler = identity()
+        except Exception as error:
+            if self.config.get('flagtree') is not None:raise
+            compiler = dict(status='unavailable',provider=None,reason=type(error).__name__+': '+str(error))
+        self.state['compiler_identity'] = compiler
+        if compiler['status'] == 'available' and self.config.get('flagtree') is not None:
+            self.state['compiler_execution'] = dict(run_calls=0, warmup_calls=0, scope='Python JIT entry')
+            self.compiler_observation = JITObservation(self.state['compiler_execution'])
+            self.compiler_observation.install()
         if self.config['flaggems'] == 'on':
+            vendor=self.state.get('format_vendor')
+            if vendor:
+                import importlib
+                execution=importlib.import_module('flagprof.vendors.'+vendor+'.execution')
+                prepare=getattr(execution,'prepare_components',None)
+                if prepare:prepare()
             from ..components.flaggems import FlagGems
             self.component = FlagGems(self.config['flaggems_include'],
                 self.route_observer if enabled and self.config['dispatch'] != 'off' else None,
@@ -49,6 +67,7 @@ class ProbeManager:
             except Exception as error:
                 self.failure('route', error)
                 self.state['component']['error'] = repr(error)
+                raise
             finally:
                 self.state['component']['install_ns']=clock()-component_started
         if not enabled:
@@ -146,6 +165,8 @@ class ProbeManager:
     def close(self):
         if self.pid != os.getpid():
             return
+        if self.compiler_observation:
+            self.compiler_observation.close()
         for probe in (self.communication,self.tensor,self.dispatch, self.compile, self.module,self.route,self.user):
             if probe:
                 try:

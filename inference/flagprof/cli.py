@@ -26,6 +26,8 @@ def main(argv=None):
     record_parser.add_argument('--preset',choices=['perf','modules','perf-lite','coverage','accuracy'],default='perf',help='collection preset (default perf); perf/modules use the official profiler in final mode')
     record_parser.add_argument('--flaggems', choices=['off','on'],help='FlagGems component (preset default off)')
     record_parser.add_argument('--flaggems-include',help='JSON array of FlagGems function names to register')
+    record_parser.add_argument('--flagtree',choices=['off','on'],help='compiler selection; omitted preserves the current environment')
+    record_parser.add_argument('--vendor-compiler',help='sealed Triton-Ascend bundle; overrides FLAGPROF_VENDOR_COMPILER')
     record_parser.add_argument('--dispatch', choices=['off','summary','each-window'],help='per-call dispatch records; each-window links device events to project signatures and layers (preset default)')
     record_parser.add_argument('--layers', choices=['all','selected'],help='module layers to observe (preset default; accuracy requires all)')
     record_parser.add_argument('--probes', choices=['default','none'],help='project probes (preset default)')
@@ -49,16 +51,23 @@ def main(argv=None):
     record_parser.add_argument('command',nargs=argparse.REMAINDER,help='target Python command after --')
     launch=verbs.add_parser('launch',help='explicit two-rank workers with separate Stores')
     launch.add_argument('--nproc-per-node',type=int,default=2,help='number of ranks; only 2 is accepted')
-    launch.add_argument('--comm-backend',choices=['hccl','flagcx','nccl'],required=True,help='collective backend of the model group')
     launch.add_argument('--vendor',choices=['ascend','nvidia','thead','kunlunxin'],help='explicit hardware adapter; PPU requires thead; P800 requires kunlunxin')
+    launch.add_argument('--comm-backend',choices=['hccl','flagcx','nccl'],help='collective backend; compatible with --flagcx')
+    launch.add_argument('--flagcx',choices=['off','on'],help='Ascend TP2: off uses HCCL, on uses FlagCX')
+    launch.add_argument('--flaggems',choices=['off','on'],default='off')
+    launch.add_argument('--flaggems-include',help='JSON array of FlagGems function names')
+    launch.add_argument('--flagtree',choices=['off','on'],help='compiler selection; omitted preserves the current environment')
+    launch.add_argument('--vendor-compiler',help='sealed vendor compiler bundle; overrides FLAGPROF_VENDOR_COMPILER')
     launch.add_argument('--capture-only',action='store_true',help='seal per-rank profiler captures for later ext4 import')
     launch.add_argument('--capture-filesystem',choices=['ext4','overlay'],default='ext4',help='overlay requires NVIDIA capture-only')
     launch.add_argument('--store',required=True,help='group root: one rank-N Store per rank plus group.json for report')
-    launch.add_argument('--preset',choices=['none','accuracy','perf','modules','perf-lite'],default='perf',help='per-rank preset (default perf); none runs the target without collection')
+    launch.add_argument('--preset',choices=['none','accuracy','perf','modules','perf-lite','coverage'],default='perf',help='per-rank preset (default perf); none runs the target without collection')
     launch.add_argument('--timeout',type=float,default=1800,help='whole launch deadline in seconds')
     launch.add_argument('--source-max-bytes',type=int,default=1<<30,help='sealed source limit per rank in bytes (default 1 GiB)')
     launch.add_argument('--tensor-blob',choices=['all','none'],default='all',help='accuracy: save full tensor blobs (default all)')
     launch.add_argument('--tensor-blob-bytes',type=int,default=1<<30,help='accuracy: tensor blob budget in bytes (default 1 GiB)')
+    launch.add_argument('--tensor-boundaries',metavar='model|layer|PATH',help='same accuracy boundaries as record')
+    launch.add_argument('--tensor-ops-in',help='accuracy: capture operators within this module; batch 1 required')
     launch.add_argument('--profile-memory',action='store_true',help='collect official allocator memory records; requires perf or modules')
     launch.add_argument('command',nargs=argparse.REMAINDER,help='target Python command after --')
     offline=verbs.add_parser('import',help='import a sealed capture into a new run using bounded Plan B')
@@ -78,7 +87,7 @@ def main(argv=None):
     report=verbs.add_parser('report',help='generate bounded offline analysis and a self-contained HTML report')
     report.add_argument('run',help='one of: a Store run directory (single-run report); a group manifest file such as <launch store>/group.json (one report per rank); or the word oracle (compare --ref with --cmp)');report.add_argument('--out',help='new output directory outside the inputs (default <run>-report, <group dir>-report or <ref>-oracle beside the input)');report.add_argument('--work',help='parent of temporary analysis files, outside the input Stores (default system temp)')
     report.add_argument('--reports',nargs='+',help='compare: generated report directories; keep incompatible values with not_comparable reasons')
-    report.add_argument('--ref',help='oracle: reference accuracy run');report.add_argument('--cmp',help='oracle: compared accuracy run');report.add_argument('--declare',help='oracle: JSON file whose differences list names identity fields allowed to differ');report.add_argument('--perf-run',help='oracle: alias of --perf-cmp-run')
+    report.add_argument('--ref',help='oracle: reference Store run or TP2 group.json');report.add_argument('--cmp',help='oracle: compared Store run or TP2 group.json');report.add_argument('--declare',help='oracle: JSON file whose differences list names identity fields allowed to differ');report.add_argument('--perf-run',help='oracle: alias of --perf-cmp-run')
     report.add_argument('--perf-ref-run',help='oracle: performance run linked to the reference side by exact signature');report.add_argument('--perf-cmp-run',help='oracle: performance run linked to the compared side by exact signature')
     report.add_argument('--replay-ref-run',help='oracle: run created by replay run --side ref; requires --replay-cmp-run');report.add_argument('--replay-cmp-run',help='oracle: run created by replay run --side cmp; requires --replay-ref-run')
     report.add_argument('--op-kinds',help='operator categories generated in the run torch environment')
@@ -97,13 +106,21 @@ def main(argv=None):
         try:
             from .launch import launch
             command=args.command[1:] if args.command[:1]==['--'] else args.command
-            config=dict(flaggems='off')
+            config={name:getattr(args,name) for name in ('flaggems','flaggems_include','flagtree','vendor_compiler') if getattr(args,name) is not None}
             if args.preset=='accuracy':config.update(tensor_blob=args.tensor_blob,tensor_blob_bytes=args.tensor_blob_bytes)
+            if args.tensor_boundaries is not None:
+                value=args.tensor_boundaries
+                if value not in ('model','layer'):
+                    value=json.loads(Path(value).read_text())
+                    if not isinstance(value,list):raise ValueError('tensor boundaries file must contain a JSON array of module paths')
+                config['tensor_boundaries']=value
+            if args.tensor_ops_in is not None:config['tensor_ops_in']=args.tensor_ops_in
             if args.profile_memory:
                 if args.preset not in ('perf','modules'):raise ValueError('official memory requires perf/modules')
                 config['profile_memory']=True
             return launch(command,store=args.store,nproc_per_node=args.nproc_per_node,comm_backend=args.comm_backend,
                           vendor=args.vendor,
+                          flagcx=args.flagcx,
                           preset=args.preset,config=config,timeout=args.timeout,source_max_bytes=args.source_max_bytes,
                           capture_only=args.capture_only,capture_filesystem=args.capture_filesystem)
         except (ValueError,OSError,KeyError,RuntimeError) as error:
@@ -207,7 +224,7 @@ def main(argv=None):
         try:
             if (args.capture_only or args.capture_filesystem!='ext4') and (args.capture_mode!='final' or args.preset not in ('perf','modules')):
                 raise ValueError('capture-only/filesystem options require official final mode')
-            config = {name:getattr(args,name) for name in ('flaggems','flaggems_include','layers','probes') if getattr(args,name) is not None}
+            config = {name:getattr(args,name) for name in ('flaggems','flaggems_include','flagtree','vendor_compiler','layers','probes') if getattr(args,name) is not None}
             if args.profile_memory:
                 if args.preset not in ('perf','modules'):
                     raise ValueError('--profile-memory requires an official profiler preset (perf or modules)')

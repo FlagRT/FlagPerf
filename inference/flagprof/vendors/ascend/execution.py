@@ -3,6 +3,11 @@
 """NPU worker setup, imported only inside an executing worker."""
 
 
+def prepare_components():
+    # Component registration uses torch.npu even before a runner selects a device.
+    import torch_npu
+
+
 def initialize(rank):
     import torch
     import torch_npu

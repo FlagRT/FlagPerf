@@ -83,6 +83,19 @@ python3 -B -S -m flagprof import /absolute/path/to/sealed-capture \
 
 `accuracy` 采集需注册模型、样本和输入身份；内置 runner 完成这些接入。任意脚本只启用 preset 不等于已建立跨 run 可比性。`record --preset accuracy` 默认不存张量 blob，完整误差与 replay 需显式 `--tensor-blob all` 并检查预算/跳过计数；`launch --preset accuracy` 默认保存 all，仍须核对实际覆盖。
 
+`record` 和 `launch` 均支持以下采集范围，Python API 使用对应的 `tensor_boundaries` / `tensor_ops_in` 配置：
+
+| 参数 | 实际采集 |
+|---|---|
+| `--tensor-boundaries model` | runner 提交的 pooled/output 模型终点 |
+| `--tensor-boundaries layer` 或省略 | 默认 embedding、各 Transformer block 和模型终点 |
+| `--tensor-boundaries PATH` | JSON 数组指定模块路径，另保留 runner 模型终点 |
+| 以上模式加 `--tensor-ops-in '<root>.layers.0'` | 增加指定模块内算子输入与输出，要求 batch 1 |
+
+名为 model/layer 的自定义文件使用 `./model` / `./layer`。采集层级与 `--tensor-blob` 的持久化策略分别设置；报告只分析已采集的数据。
+
+FlagTree / FlagCX 参数、同规模 TP2 对比和性能命令见 [组件对比](components.md)。`report oracle --ref/--cmp` 也接受两侧 `group.json`：各 rank 同号配对，复制边界跨 rank 核对，逻辑样本只计一次。
+
 ```bash
 python3 -B -S -m flagprof report oracle \
   --ref /path/to/reference-run --cmp /path/to/compared-run \
@@ -136,7 +149,15 @@ python3 -B -S -m flagprof report "$FP_RUN" \
 python3 -B -S -m unittest discover -s tests -v
 ```
 
-测试检查离线读取层（`store`、`analyzers`、`report`）不加载 torch 与厂商模块，并用假厂商插件走通 record → import → inspect → report。PR 修改 `inference/**` 时由 GitHub Actions 自动运行。它确认链路与状态字段，不替代设备最小验收。
+测试检查离线读取层（`store`、`analyzers`、`report`）不加载 torch 与厂商模块，并用假厂商插件走通 record → import → inspect → report；同时覆盖组件选择、精度 CLI、Oracle、TP2 组计数及 P800/平头哥适配。PR 修改 `inference/**` 时由 GitHub Actions 在 Python 3.9 和 3.11 自动运行。
+
+在准备好 torch 和 Transformers 的 CPU 环境中，运行额外的模型／逐层／算子边界、Gloo TP2 与 replay 检查：
+
+```bash
+python3 -B -m unittest tests.probes.test_accuracy tests.probes.test_components tests.probes.test_replay tests.test_communication -v
+```
+
+这些 CPU 检查和历史 Store 的报告复验不扩大既有设备验收范围。
 
 ## 归档与恢复（可选）
 

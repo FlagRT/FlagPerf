@@ -42,11 +42,14 @@ class Parallel:
         if int(os.environ.get('WORLD_SIZE', '1')) != 2 or backend not in ('hccl', 'flagcx', 'nccl'):
             raise ValueError('registered TP requires two ranks and hccl, flagcx or nccl')
         self.backend = backend
+        self.identity = dict(backend=backend)
         self.device = device
         self.control = None
         if backend == 'flagcx':
             previous = os.environ.get('TORCH_DEVICE_BACKEND_AUTOLOAD')
             import flagcx
+            from flagprof.components.compiler import source_identity
+            self.identity['source_sha256'] = source_identity('flagcx')
             if previous is not None:
                 os.environ['TORCH_DEVICE_BACKEND_AUTOLOAD'] = previous
         dist.init_process_group(backend, timeout=timedelta(seconds=180))

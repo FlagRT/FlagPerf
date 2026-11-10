@@ -195,6 +195,8 @@ def execute(args):
                         device=args.device, software=software(), numerics=numeric, flaggems='off', include=None,
                         parallelism=dict(world_size=world, plan=plan),
                         comm_backend=parallel.backend if parallel else 'none')
+        from flagprof.components.compiler import identity as compiler_identity
+        identity['compiler'] = handle.state['compiler_identity'] if handle else compiler_identity()
         if handle:
             handle.bind_tensor_inputs([], {}, identity=identity)
         out = Path(args.outputs)

@@ -284,6 +284,11 @@ def generate_oracle(ref, cmp, out=None, *, declare=None, work=None, limits=None,
     """Compare two stores without loading torch or changing either source."""
     ref, cmp = Path(ref).resolve(), Path(cmp).resolve()
     out = Path(out).resolve() if out else ref.parent/(ref.name+'-oracle')
+    if ref.is_file() or cmp.is_file():
+        if not (ref.is_file() and cmp.is_file()):raise ValueError('both oracle inputs must be groups or both must be Stores')
+        from .oracle_group import generate as generate_group_oracle
+        return generate_group_oracle(ref,cmp,out,declare=declare,work=work,limits=limits,perf_run=perf_run,
+            perf_ref_run=perf_ref_run,perf_cmp_run=perf_cmp_run,replay_ref_run=replay_ref_run,replay_cmp_run=replay_cmp_run)
     for source in (ref,cmp):
         if out.is_relative_to(source) or source.is_relative_to(out):raise ValueError('oracle output must be outside input Stores')
         if work and (Path(work).resolve().is_relative_to(source) or source.is_relative_to(Path(work).resolve())):raise ValueError('oracle work must be outside input Stores')
