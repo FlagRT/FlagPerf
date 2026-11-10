@@ -62,13 +62,20 @@ python3 -B -m flagprof.runner --task embedding --pooling cls hf:models/bge-large
 python3 -B -m flagprof.runner --task embedding --pooling mean --trust-remote-code \
   hf:models/jina-embeddings-v3 --inputs texts.jsonl --batch-size 4 \
   --dtype bfloat16 --device cuda:0 --outputs OUT
+
+# rerank + 受控厂商代码加载（jina-reranker-v2 类；vendor 类族按 --score 选
+# auto_map 键：sequence_logit -> AutoModelForSequenceClassification）
+python3 -B -m flagprof.runner --task rerank --score sequence_logit \
+  --trust-remote-code --package packages/jina-reranker-v2-seq \
+  hf:models/jina-reranker-v2-base-multilingual --batch-size 4 \
+  --dtype bfloat16 --device cuda:0 --outputs OUT
 ```
 
 CPU 套件：`docker run -w /w/FlagPerf/inference -e PYTHONPATH=/w/FlagPerf/inference IMG python3 -B -m pytest tests -q`。
 
 ## 6. 已知边界与决策记录
 
-- **厂商代码（trust_remote_code）受控加载**（2026-11-10 用户授权后取代"仅限 attach 目标"旧决定）：runner `--task embedding --trust-remote-code` 显式开关；加载只认模型目录内已在磁盘的代码（本地包绕行，不走 transformers 动态模块缓存——4.57 只拷一级相对导入）；auto_map 必须是本地条目（拒绝 `repo--class` 远程前缀）；每个被消费的 `*.py` sha256 钉入 oracle identity（`code_files`）；flash-attention 强制关闭。标准模型带此 flag 是无害 no-op；非 embedding 任务传此 flag 直接 argparse 报错。canonical 实现唯一：`flagprof/runner/vendor.py`（attach 目标同源引用）。
+- **厂商代码（trust_remote_code）受控加载**（2026-11-10 用户授权后取代"仅限 attach 目标"旧决定；2026-11-11 扩至 rerank 任务）：runner `--task embedding|rerank --trust-remote-code` 显式开关（ctr/generate 仍 argparse 拒绝）；加载只认模型目录内已在磁盘的代码（本地包绕行，不走 transformers 动态模块缓存——4.57 只拷一级相对导入）；auto_map 必须是本地条目（拒绝 `repo--class` 远程前缀）；每个被消费的 `*.py` sha256 钉入 oracle identity（`code_files`，仅 vendor 路径写入——非 vendor 行 identity 字节不变）；flash-attention 强制关闭。rerank 的 vendor 类族按 score 语义选 auto_map 键（sequence_logit→`AutoModelForSequenceClassification`、causal_yesno→`AutoModelForCausalLM`）。标准模型带此 flag 是无害 no-op。canonical 实现唯一：`flagprof/runner/vendor.py`（attach 目标同源引用）。首验模型：jina-reranker-v2-base-multilingual 双机 A/A×2 + 跨机逐位一致（score b760f9c50163cf14）。
 - jina-v3 下载侧 provenance：`localization-provenance.json`（原始 download-provenance 不改）。
 - DIEN：`pack_padded_sequence(enforce_sorted=False)` + bf16 GRU 在 PPU 实测可用（ppu1 微基准探针）；pad 位 attention 精确为 0 → 隐状态不受 pad 影响。
 - deepfm 随机初始化下 FM 项量级可饱和 sigmoid 至 0/1 端点——闭区间断言，非缺陷。
