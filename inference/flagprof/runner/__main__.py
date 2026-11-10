@@ -52,7 +52,8 @@ def main():
     p.add_argument('--flaggems-include')
     p.add_argument('--package')
     p.add_argument('--score', choices=['causal_yesno','sequence_logit'])
-    p.add_argument('--arch', choices=['dlrm','din','widedeep','deepfm','dcn','esmm','mmoe','ple','bst','dien'])
+    from .ctr import ARCH_CHOICES as ctr_arch_choices  # lazy: keep non-ctr tasks torch-free at CLI start
+    p.add_argument('--arch', choices=ctr_arch_choices)
     p.add_argument('--seed', type=int, default=531)
     p.add_argument('--trust-remote-code', action='store_true',
                    help='embedding only: allow vendor modeling code already on disk in the '
