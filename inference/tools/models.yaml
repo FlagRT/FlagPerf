@@ -8,10 +8,14 @@
 # 10 CTR) + 3 HuggingFace tier-0 probes (standard-arch drop-in validation).
 models:
   # ---- Batch A: retrieval / rerank (4) ----
+  # padding_side is pinned per-row into oracle identity (2026-11-10 fix):
+  # encoder families use right (attach-face parity; left+cls would pool the
+  # PAD position), decoder last-token usage keeps left (official recipe).
   - id: bge-large-zh-v1.5
     task: embedding
     model: hf:/w/models/bge-large-zh-v1.5
     pooling: cls
+    padding_side: right
     inputs: /w/texts_embed16.jsonl
     batch_size: 4
     status: active
@@ -33,6 +37,7 @@ models:
     task: embedding          # promoted from attach: controlled vendor-code load
     model: hf:/w/models/jina-embeddings-v3
     pooling: mean
+    padding_side: right      # bit-identical to the attach-face banked value
     inputs: /w/texts_embed16.jsonl
     batch_size: 4
     flags: [trust-remote-code]
@@ -42,6 +47,7 @@ models:
     task: embedding          # official pooling is last-token -> runner 'last'
     model: hf:/w/models/Qwen3-Embedding-0.6B
     pooling: last
+    padding_side: left       # official last-token recipe (decoder family)
     inputs: /w/texts_embed16.jsonl
     batch_size: 4
     status: active
@@ -50,6 +56,7 @@ models:
     task: embedding
     model: hf:/w/models/bge-small-zh-v1.5
     pooling: cls
+    padding_side: right
     inputs: /w/texts_embed16.jsonl
     batch_size: 4
     status: active
@@ -57,6 +64,7 @@ models:
     task: embedding
     model: hf:/w/models/m3e-base
     pooling: mean
+    padding_side: right
     inputs: /w/texts_embed16.jsonl
     batch_size: 4
     status: active

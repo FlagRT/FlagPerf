@@ -153,6 +153,7 @@ def main():
         from . import run_prepared, pool_embedding
         if handle:handle.register_model(model)
         input_identity.update(dtype=args.dtype,pooling=POOLING_SEMANTICS[args.pooling],
+            padding_side=args.padding_side,
             device=args.device,software=software(),numerics=numeric_settings,flaggems=effective['flaggems'],include=effective['flaggems_include'])
         if vendor_code:
             input_identity.update(code_files=vendor_code,
@@ -165,7 +166,7 @@ def main():
         input_identity.setdefault('samples',[s for ids,_ in batches for s in ids])
         input_identity.setdefault('batches',[dict(samples=ids,shape=list(v['input_ids'].shape),valid_tokens=v['attention_mask'].sum(1).tolist()) for ids,v in batches])
         if 'oracle_id' not in input_identity:
-            oracle_keys=['model_files','inputs_sha256','dtype','attention','pooling']
+            oracle_keys=['model_files','inputs_sha256','dtype','attention','pooling','padding_side']
             if input_identity.get('code_files'):oracle_keys.append('code_files')
             input_identity['oracle_id']=hashlib.sha256(json.dumps(
                 {k:input_identity[k] for k in oracle_keys},

@@ -73,9 +73,9 @@ def build_cmd(row, run_idx, out_dir, device='cuda:0', dtype=None, batch_size=Non
     cmd = ['-B', '-m', 'flagprof.runner', '--task', task]
     if row.get('model'):
         cmd += [row['model']]
-    for k in ('package', 'score', 'arch', 'pooling', 'inputs', 'seed'):
+    for k in ('package', 'score', 'arch', 'pooling', 'inputs', 'seed', 'padding_side'):
         if row.get(k) is not None:
-            cmd += [f'--{k}', str(row[k])]
+            cmd += [f'--{k.replace("_", "-")}', str(row[k])]
     for flag in row.get('flags') or []:
         cmd += ['--' + flag]
     if batch_size or row.get('batch_size'):
