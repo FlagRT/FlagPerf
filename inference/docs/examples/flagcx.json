@@ -1,0 +1,4 @@
+{
+  "differences": ["comm_backend", "communication"],
+  "note": "Fixed Qwen TP2 plan, inputs, numerics, compiler and FlagGems-off condition; HCCL versus FlagCX."
+}

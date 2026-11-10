@@ -33,6 +33,8 @@ def execute_target(arguments):
 
 
 def capture_target(directory, vendor, preset, arguments, config=None, capture_filesystem='ext4', rank=0):
+    from flagprof.components.compiler import select
+    select(config or {},cache_root=Path(directory).parent/'component-cache')
     from flagprof.runtime import attach
     from flagprof.store.manifest import create_run
     import signal

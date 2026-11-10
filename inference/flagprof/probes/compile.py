@@ -14,17 +14,15 @@ class CompileProbe(Probe):
         if self.installed:
             return
         import triton
-        from triton import knobs
+        knobs = getattr(triton, 'knobs', None)
         if not hasattr(knobs, 'compilation') or not hasattr(knobs.compilation, 'listener'):
             self.manager.unavailable(self.id, 'cache_state_indeterminate')
             return
         self.knobs = knobs
         self.previous = knobs.compilation.listener
-        try:
-            self.version = importlib.metadata.version('flagtree')
-            self.backend = 'flagtree'
-        except importlib.metadata.PackageNotFoundError:
-            self.version, self.backend = triton.__version__, 'triton'
+        from flagprof.components.compiler import identity
+        observed = self.manager.state.get('compiler_identity') or identity()
+        self.version, self.backend = observed['version'], observed['provider']
         def listener(**values):
             previous_result = self.previous(**values) if self.previous else None
             self.safe(self.compiled, values)

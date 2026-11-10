@@ -5,11 +5,21 @@ from html import escape
 import json
 from pathlib import Path
 import tempfile
+import re
 
 from flagprof.store import StoreView
 from flagprof.analyzers.workspace import Workspace
 from flagprof.analyzers.generation import trajectories
 from . import generate
+
+
+def replicated_boundary(event):
+    """Local operator/shard tensors must never be compared between ranks."""
+    if event.get('boundary') in ('pooled','output','hidden','token'):
+        return True
+    scope = event.get('call_key','').split('#')[0]
+    return event.get('boundary') == 'out' and bool(re.fullmatch(
+        r'<root>\.(?:model\.)?(?:layers\.\d+|embedding|embed_tokens|norm|lm_head)',scope))
 
 
 def validate_manifest(path):
@@ -39,6 +49,8 @@ def check_ranks(states, group):
         raise ValueError('rank token or step control mismatch')
     if states[0].get('tensors') != states[1].get('tensors'):
         raise ValueError('rank replicated boundary mismatch')
+    if states[0].get('forward_counts') != states[1].get('forward_counts'):
+        raise ValueError('rank model forward count or phase mismatch')
     left, right = states[0]['calls'], states[1]['calls']
     if set(left) != set(right):
         raise ValueError('rank collective sequence missing or group mismatch')
@@ -77,12 +89,19 @@ def generate_group(manifest, out=None, *, work=None):
                 from flagprof.analyzers.oracle import identity
                 observed = identity(workspace)
                 observed.pop('device', None)
+                observed.pop('rank', None)
                 if observed.get('comm_backend')!=group['backend'] or observed.get('parallelism',{}).get('world_size')!=2:
                     raise ValueError('actual TP backend or world size differs from group manifest')
                 calls = {}
                 sequences = {}
                 tensors = {}
+                forward_counts = dict(warmup=0, measure=0, unknown=0)
+                for _, _, _, event in workspace.events(('span',)):
+                    if event.get('cat') == 'module' and event.get('ph') == 'x' and event.get('name') == '<root>':
+                        phase = event.get('attrs', {}).get('phase', 'unknown')
+                        forward_counts[phase if phase in forward_counts else 'unknown'] += 1
                 for _, _, _, event in workspace.events(('tensor',)):
+                    if not replicated_boundary(event):continue
                     key=event['call_key']
                     if key in tensors:raise ValueError('duplicate rank tensor call_key')
                     tensors[key]={k:event.get(k) for k in ('shape','dtype','digest','mask')}
@@ -102,7 +121,8 @@ def generate_group(manifest, out=None, *, work=None):
                         issues.append('rank '+str(rank)+' has an unregistered communication group')
                     if event.get('ext',{}).get('communication',{}).get('role')=='model' and event['lib']!=group['backend']:
                         raise ValueError('actual collective backend differs from group manifest')
-                states.append(dict(rank=rank, identity=observed, trajectories=trajectories(workspace), calls=calls,tensors=tensors))
+                states.append(dict(rank=rank, identity=observed, trajectories=trajectories(workspace),
+                                   calls=calls, tensors=tensors, forward_counts=forward_counts))
             finally:
                 workspace.close()
     if len(states) == 2:
@@ -117,6 +137,7 @@ def generate_group(manifest, out=None, *, work=None):
         panel=result['results'].get('perf.gap',{})
         context=dict(panel.get('coverage',{}));context['workload_identity']=dict(context.get('workload_identity') or {})
         context['workload_identity'].pop('device',None)
+        context['workload_identity'].pop('rank',None)
         contexts[report['rank']]=context
         request_rows.extend(dict(r,rank=report['rank']) for r in panel.get('data',[]) if r.get('kind')=='project_request')
         rows=out/('rank-'+str(report['rank']))/'exports/communication-device-calls.jsonl'
@@ -135,15 +156,26 @@ def generate_group(manifest, out=None, *, work=None):
     counts = []
     for state in states:
         model = [e for e in state['calls'].values()
-                 if e.get('ext',{}).get('communication',{}).get('role') == 'model'
-                 and e['ext']['communication'].get('generation')]
+                 if e.get('ext',{}).get('communication',{}).get('role') == 'model']
         allreduce = sum(e['op']=='allreduce' for e in model)
         allgather = sum(e['op']=='allgather' for e in model)
         steps = sum(len(q['steps']) for q in state['trajectories'].values())
-        counts.append(dict(rank=state['rank'], steps=steps, allreduce=allreduce, allgather=allgather,
-                           expected_allreduce=72*steps, expected_allgather=steps,
-                           model_count_matches=allreduce==72*steps and allgather==steps))
-        if not counts[-1]['model_count_matches']:
+        generation=state['identity'].get('task')=='generate'
+        # Perf does not capture tensors. Count actual root calls, including warmup,
+        # rather than inferring execution from precision output/sample records.
+        forwards=sum(state['forward_counts'].values())
+        expected_reduce=72*steps if generation else 56*forwards if forwards else None
+        expected_gather=steps if generation else 0
+        matches=None if expected_reduce is None else allreduce==expected_reduce and allgather==expected_gather
+        counts.append(dict(rank=state['rank'], steps=steps, forwards=forwards,
+                           forward_phases=state['forward_counts'],
+                           count_basis='generation_steps' if generation else 'root_module_spans',
+                           allreduce=allreduce, allgather=allgather,
+                           expected_allreduce=expected_reduce, expected_allgather=expected_gather,
+                           model_count_matches=matches))
+        if matches is None:
+            issues.append('rank '+str(state['rank'])+' model forward evidence missing')
+        elif not matches:
             issues.append('rank '+str(state['rank'])+' model collective count mismatch')
     result = dict(schema='flagprof-group-report/1', group_id=group['group_id'], backend=group['backend'],
                   execution_status=group['status'], status='partial' if issues else 'complete', issues=issues,

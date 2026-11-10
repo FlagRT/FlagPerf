@@ -21,9 +21,9 @@ def chain_sitecustomize(injection):
 
 
 def bootstrap(injection):
-    chain_sitecustomize(injection)
     config_path = os.environ.get('FLAGPROF_RECORD_CONFIG')
     if not config_path:
+        chain_sitecustomize(injection)
         return
     config = json.loads(Path(config_path).read_bytes())
     from .store.manifest import atomic_json, proc_key
@@ -35,6 +35,7 @@ def bootstrap(injection):
     # SDK analysis helpers and ordinary spawned children inherit the env, but
     # do not enroll. Only a fully identified direct target may auto-attach.
     if not expected or not all(v is not None for v in parent.values()) or parent != expected:
+        chain_sitecustomize(injection)
         return
     from .runtime import attach
     from .registry import Registry
@@ -44,6 +45,9 @@ def bootstrap(injection):
     state = dict(process=proc_key(), status='starting')
     atomic_json(handshake, state)
     try:
+        from .components.compiler import select
+        select(config['config'], cache_root=Path(config['run']).parent/'component-cache')
+        chain_sitecustomize(injection)
         handle = attach(config['run'], config['vendor'], preset=config['preset'], config=config['config'],
                         registry=Registry(config.get('descriptors')), identity=config.get('identity'),
                         backend_options=config.get('backend_options'),capture_mode=config.get('capture_mode','windowed'))
@@ -51,3 +55,6 @@ def bootstrap(injection):
     except Exception as error:
         state.update(status='failed', error=repr(error))
     atomic_json(handshake, state)
+    if (config['config'].get('flagtree') is not None or config['config'].get('flaggems') == 'on') and state['status'] != 'running':
+        # Python otherwise ignores sitecustomize exceptions and runs the target.
+        raise SystemExit('explicit component selection failed: '+str(state.get('error',state['status'])))

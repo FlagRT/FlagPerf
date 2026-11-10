@@ -95,6 +95,8 @@ kernel 名称族只用于设备类别，不生成调用归属。
 
 ## 3. 预设（preset）
 
+2026-11-10 公共组件入口：record/launch/runner 支持 FlagTree 编译器选择；launch 支持 FlagGems 参数、Ascend FlagCX 快捷入口、coverage 预设和 accuracy 边界配置。实际编译器/JIT 身份、TP2 同 rank 精度对比及通信后来源规则见 [组件对比](components.md)。
+
 用户不直接勾选探针，而是选预设。预设是 registry 中的 JSON，可被用户覆盖。
 
 > **2026-10-27 按 [D46](DECISIONS.md#d46) 第 1 条修订**（P1 首批；当前实现待 [T10.1](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-29067dfd8983) 交付，之前以下方 T9 的“当前实现”为准）。修订前的表原文保留在本节末尾。

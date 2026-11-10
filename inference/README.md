@@ -45,11 +45,13 @@ python3 -B -S -m flagprof.runner --help
 |---|---|
 | 进程采集 | `record`、`flagprof.attach()`；默认完整会话 `final`，显式 `windowed` 可选 |
 | 设备分析 | NVIDIA / Ascend / P800 适配器；设备区间、官方显存、通信和请求窗口分析；具体关联、时钟和完整性能力按厂商证据判定 |
-| 主机分析 | dispatch、module、user、route、tensor 和 communication 探针；FlagGems 组件开关 |
-| 数值诊断 | accuracy capture、`report oracle`、单算子 `replay prepare/run` |
+| 主机分析 | dispatch、module、user、route、tensor 和 communication 探针；FlagGems / FlagTree 组件选择、真实编译器与 JIT 证据 |
+| 数值诊断 | accuracy 模型／逐层／指定层内算子采集、单 run 或 TP2 组的 `report oracle`、带编译器身份核对的算子 replay |
 | 单机双进程 | `launch --nproc-per-node 2`；NCCL、HCCL、FlagCX，逐 rank Store 与 group 报告 |
 | 内置运行器 | `python -m flagprof.runner`：本地 Hugging Face embedding / generation；其他模型可通过自身 Python 程序接入 |
 | 离线消费 | `seal`、`analyse`、`import`、`inspect`、`page`、`report`；Store、work、scratch 分离 |
+
+FlagTree 单卡和 FlagCX TP2 的精度、性能与路由覆盖命令见 [组件对比](docs/components.md)。`launch` 支持与 `record` 相同的精度边界参数，以及 `coverage` 预设；当前公开版本不包含 monitor/watch。
 
 P0/P1/P2/P4 的历史退出以 [决策记录](docs/DECISIONS.md) 中登记的范围为准。多机、8 卡扩展、在线故障恢复与热加载仍按 [路线图](docs/10-roadmap.md) 推进。关联、时钟或输入身份不满足时，报告保留 `partial`、`unknown`、`unlinked` 或 `not_comparable` 及具体原因。
 

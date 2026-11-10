@@ -116,15 +116,31 @@ def _identity_result(ref,cmp,declare):
     generation=a.get('task')=='generate' or b.get('task')=='generate'
     required=tuple(k for k in REQUIRED if k!='pooling')+('task','generation') if generation else REQUIRED
     declarable=DECLARABLE+('parallelism','comm_backend') if generation else DECLARABLE
+    extra = tuple(k for k in ('compiler','communication','comm_backend')
+                  if k not in declarable and (k in a or k in b))
+    declarable += extra
+    if not generation:
+        required += tuple(k for k in ('parallelism','rank') if k in a or k in b)
+    def permitted(field, left, right):
+        if field in declared:return True
+        if isinstance(left,dict) and isinstance(right,dict):
+            return all(permitted(field+'.'+key,left.get(key),right.get(key))
+                       for key in set(left)|set(right)
+                       if left.get(key)!=right.get(key) or (key in left)!=(key in right))
+        return False
     for field in required+declarable:
         equal=field in a and field in b and a[field]==b[field]
         allowed=field in declarable
         # Optional absent software components are values inside software, not missing identity fields.
         if not equal:
             if not allowed:blocked='identity_mismatch'
-            elif field not in declared and blocked!='identity_mismatch':blocked='undeclared_difference'
+            elif not permitted(field,a.get(field),b.get(field)) and blocked!='identity_mismatch':blocked='undeclared_difference'
         ref.row('oracle.identity_diff',field,dict(field=field,ref=a.get(field),cmp=b.get(field),equal=equal,
-            requirement='declarable' if allowed else 'must_equal',declared=field in declared))
+            requirement='declarable' if allowed else 'must_equal',declared=permitted(field,a.get(field),b.get(field))))
+    for field in ('compiler','communication'):
+        if field not in a and field not in b:
+            ref.row('oracle.identity_diff',field,dict(field=field,ref=None,cmp=None,equal=None,
+                requirement='not_recorded',declared=False))
     panels=['oracle.layer','oracle.first_divergence','oracle.op_sensitivity']
     identity_result=Result('oracle.identity_diff','unavailable' if blocked else 'ok',ref.table('oracle.identity_diff'),{},[blocked] if blocked else [])
     return identity_result,blocked,panels

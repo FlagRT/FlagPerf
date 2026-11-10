@@ -56,6 +56,8 @@ class Attachment:
         self.capture_mode=capture_mode
         from .probes.config import resolve
         session_options, probe_options = resolve(preset, config)
+        from .components.compiler import select
+        select(probe_options, cache_root=Path(run).parent/'component-cache')
         official = preset in ('perf', 'modules')
         config = configuration(preset, **session_options)
         self.pid = os.getpid()
@@ -218,7 +220,11 @@ class Attachment:
             probe.safe(probe.capture, '<root>', boundary, tensor,
                        **(dict(counts=[step]*len(probe.samples)) if step is not None else {}))
 
-    def __enter__(self): return self
+    def __enter__(self):
+        selected=self.state.get('effective_config',{})
+        if self.state['status']!='running' and (selected.get('flagtree') is not None or selected.get('flaggems')=='on'):
+            raise RuntimeError('selected component attachment did not start: '+str(self.state.get('errors',[])))
+        return self
     def __exit__(self, *exc):
         normal=exc[0] is None or (exc[0] is SystemExit and exc[1].code in (None,0))
         self.close(normal=normal,returncode=0 if normal else 1)
