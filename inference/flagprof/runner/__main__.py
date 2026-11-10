@@ -52,7 +52,7 @@ def main():
     p.add_argument('--flaggems-include')
     p.add_argument('--package')
     p.add_argument('--score', choices=['causal_yesno','sequence_logit'])
-    from .ctr import ARCH_CHOICES as ctr_arch_choices  # lazy: keep non-ctr tasks torch-free at CLI start
+    from .ctr import ARCH_CHOICES as ctr_arch_choices  # lazy import: keeps module-level import torch-free (CLI runs still load torch here via ctr)
     p.add_argument('--arch', choices=ctr_arch_choices)
     p.add_argument('--seed', type=int, default=531)
     p.add_argument('--trust-remote-code', action='store_true',

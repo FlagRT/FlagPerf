@@ -709,7 +709,9 @@ class CrossNetMix(torch.nn.Module):
 class DcnMix(torch.nn.Module):
     """torch-rechub DCNv2 parallel semantics with use_low_rank_mixture=True:
     flattened embeddings through CrossNetMix and a parallel MLP, concatenated
-    into LR -> sigmoid (reference sigmoids inside forward)."""
+    into LR -> sigmoid (reference sigmoids inside forward). Template
+    deviation, shared with the baseline Dcn row: only sparse embeddings feed
+    both towers (the reference cross tower also consumes the dense field)."""
 
     def __init__(self, config):
         super().__init__()
@@ -1048,8 +1050,12 @@ def run_ctr(*, package, arch, seed, device, dtype, outputs, samples=None,
                              transform=transform)))
     score_sha = hashlib.sha256(json.dumps([r['run']['outputs'] for r in run_rows],
         sort_keys=True).encode()).hexdigest()
+    # dssm's forward yields cosines in [-1, 1]; every other arch's persisted
+    # scores are sigmoid outputs (PRE_SIGMOID passthrough or the explicit
+    # sigmoid in transform()).
+    scoring = 'cosine scores in [-1, 1]' if arch == 'dssm' else 'sigmoid scores'
     return dict(model='template:' + arch, arch=arch,
-        semantics='{ctr-template ' + arch + ' sigmoid scores; random-init seed=' +
+        semantics='{ctr-template ' + arch + ' ' + scoring + '; random-init seed=' +
                   str(seed) + '; weight_sha256 pinned}',
         oracle_identity=identity, batch_size=batch_size,
         score_batches_sha256=score_sha, runs=run_rows,
