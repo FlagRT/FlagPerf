@@ -1,0 +1,57 @@
+# HF tier-0 expansion batch 2 (2026-11-11) — 6 new models, run as a
+# separate roster consumed by tools/batch_driver.py with --filter sharding
+# (one driver instance per row, each bound to its own card on thead1/thead2).
+# Pools/padding follow the official recipes pinned in the main roster:
+# encoder families mean/cls with right padding; e5 official pooling is mean.
+# ms-marco-MiniLM-L-6-v2 and jina-reranker-v2 get fresh sealed rerank
+# packages (tokenizers differ from bge-reranker-seq; pairs JSONL reused).
+models:
+  # ---- embedding (4): zh cls, en mean, en mean, zh mean ----
+  - id: bge-base-zh-v1.5
+    task: embedding
+    model: hf:/w/models/bge-base-zh-v1.5
+    pooling: cls
+    padding_side: right
+    inputs: /w/texts_embed16.jsonl
+    batch_size: 4
+    status: active
+  - id: all-MiniLM-L6-v2
+    task: embedding
+    model: hf:/w/models/all-MiniLM-L6-v2
+    pooling: mean
+    padding_side: right
+    inputs: /w/texts_embed16.jsonl
+    batch_size: 4
+    status: active
+  - id: e5-small-v2
+    task: embedding
+    model: hf:/w/models/e5-small-v2
+    pooling: mean
+    padding_side: right
+    inputs: /w/texts_embed16.jsonl
+    batch_size: 4
+    status: active
+  - id: chinese-roberta-wwm-ext
+    task: embedding
+    model: hf:/w/models/chinese-roberta-wwm-ext
+    pooling: mean
+    padding_side: right
+    inputs: /w/texts_embed16.jsonl
+    batch_size: 4
+    status: active
+  # ---- rerank (2): fresh sequence_logit packages; jina-v2 via vendor path ----
+  - id: ms-marco-MiniLM-L-6-v2
+    task: rerank
+    model: hf:/w/models/ms-marco-MiniLM-L-6-v2
+    package: /w/packages/ms-marco-minilm-seq
+    score: sequence_logit
+    batch_size: 4
+    status: active
+  - id: jina-reranker-v2-base-multilingual
+    task: rerank             # controlled vendor-code load (auto_map family)
+    model: hf:/w/models/jina-reranker-v2-base-multilingual
+    package: /w/packages/jina-reranker-v2-seq
+    score: sequence_logit
+    batch_size: 4
+    flags: [trust-remote-code]
+    status: active
