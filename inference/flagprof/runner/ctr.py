@@ -932,6 +932,11 @@ class LightGcn(torch.nn.Module):
         user_final, item_final = self.computer()
         target_ids = sparse[:, self.target_n]
         nodes = self.id_to_node[target_ids]
+        if bool((nodes < 0).any()):
+            # ids absent from the package graph map to -1; without this guard
+            # item_final[-1] would silently score against the last item row.
+            bad = sorted({int(t) for t, n in zip(target_ids.tolist(), nodes.tolist()) if n < 0})
+            raise ValueError('lightgcn: target ids outside package graph: ' + str(bad))
         user_vec = user_final[user_idx]
         item_vec = item_final[nodes]
         return (user_vec * item_vec).sum(dim=1, keepdim=True)

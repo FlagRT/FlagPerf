@@ -412,12 +412,33 @@ class CtrExtendedArchTests(unittest.TestCase):
             perturbed['hist_ids'] = noise
             changed = model(**perturbed, user_idx=user_idx).detach()
             self.assertTrue(torch.equal(base, changed))
-            # ...while a different target item changes the score.
+            # ...while a different in-package target item changes the score
+            # (targets outside the package graph raise ValueError instead).
+            legal = torch.nonzero(model.net.id_to_node >= 0).flatten().tolist()
             perturbed2 = dict(inputs)
             perturbed2['sparse'] = inputs['sparse'].clone()
-            perturbed2['sparse'][:, 10] = (perturbed2['sparse'][:, 10] % 900) + 20
+            old = [int(v) for v in perturbed2['sparse'][:, 10].tolist()]
+            perturbed2['sparse'][:, 10] = torch.tensor(
+                [legal[(legal.index(v) + 1) % len(legal)] for v in old],
+                dtype=perturbed2['sparse'].dtype)
             moved = model(**perturbed2, user_idx=user_idx).detach()
             self.assertFalse(torch.equal(base, moved))
+
+    def test_lightgcn_rejects_target_outside_package_graph(self):
+        import torch
+        with tempfile.TemporaryDirectory() as tmp:
+            pkg = build_ctr_package(tmp)
+            batches, _ = load_ctr_package(pkg, batch_size=4)
+            inputs = batches[0][1]
+            model = CtrCallable('lightgcn', build_model('lightgcn', 531, 'cpu',
+                                                        dtype=torch.float32, package=pkg))
+            legal = set(torch.nonzero(model.net.id_to_node >= 0).flatten().tolist())
+            illegal = next(i for i in range(999, 0, -1) if i not in legal)
+            perturbed = dict(inputs)
+            perturbed['sparse'] = inputs['sparse'].clone()
+            perturbed['sparse'][:, 10] = illegal
+            with self.assertRaises(ValueError):
+                model(**perturbed, user_idx=torch.tensor([0, 1, 2, 3]))
 
 
 if __name__ == '__main__':
