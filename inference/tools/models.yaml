@@ -86,3 +86,13 @@ models:
   - { id: ctr-ple,       task: ctr, package: /w/packages/ctr-v1, arch: ple,       seed: 531, status: active }
   - { id: ctr-bst,       task: ctr, package: /w/packages/ctr-v1, arch: bst,       seed: 531, status: active }
   - { id: ctr-dien,      task: ctr, package: /w/packages/ctr-v1, arch: dien,      seed: 531, status: active }
+  # ---- 2026 annual-plan additions: DCN-Mix / DSSM / SASRec / LightGCN ----
+  # dcnmix/dssm/sasrec/lightgcn share the ctr-v1 inputs but require the
+  # 14-arch contract package ctr-v1b (identical inputs.pt bytes, identical
+  # oracle_id as ctr-v1; only contract.archs is extended). lightgcn derives
+  # its bipartite graph deterministically from the package rows at build
+  # time and consumes a user_idx batch input (sample index).
+  - { id: ctr-dcnmix,   task: ctr, package: /w/packages/ctr-v1b, arch: dcnmix,   seed: 531, status: active }
+  - { id: ctr-dssm,     task: ctr, package: /w/packages/ctr-v1b, arch: dssm,     seed: 531, status: active }
+  - { id: ctr-sasrec,   task: ctr, package: /w/packages/ctr-v1b, arch: sasrec,   seed: 531, status: active }
+  - { id: ctr-lightgcn, task: ctr, package: /w/packages/ctr-v1b, arch: lightgcn, seed: 531, status: active }
