@@ -1,8 +1,11 @@
-# 15-model adaptation roster — battery config for tools/batch_driver.py.
+# Model adaptation roster — acceptance-suite config for tools/batch_driver.py.
 # Paths are container-side (/w = model-adaptation-work mount on thead1/thead2).
 # Each row runs twice (A/A); status: active | blocked.
 # Evidence protocol: A/A sha+identity equality; cross-host comparison is done
-# outside the battery by diffing score_batches_sha256 between host reports.
+# outside the suite by diffing score_batches_sha256 between host reports.
+# Artifact filenames keep the historical battery-* prefix (acceptance suite).
+# Roster: 15 adaptation targets (4 retrieval/rerank + Qwen3-Embedding-0.6B +
+# 10 CTR) + 3 HuggingFace tier-0 probes (standard-arch drop-in validation).
 models:
   # ---- Batch A: retrieval / rerank (4) ----
   - id: bge-large-zh-v1.5
@@ -27,14 +30,42 @@ models:
     batch_size: 4
     status: active
   - id: jina-embeddings-v3
-    task: attach            # vendor-code family, pre-promotion surface
-    target: /w/FlagPerf/inference/targets/target_embedder.py
-    args:
-      model: hf:/w/models/jina-embeddings-v3
-      inputs: /w/texts_embed16.jsonl
-      pooling: mean
-      max-length: 256
-      batch-size: 4
+    task: embedding          # promoted from attach: controlled vendor-code load
+    model: hf:/w/models/jina-embeddings-v3
+    pooling: mean
+    inputs: /w/texts_embed16.jsonl
+    batch_size: 4
+    flags: [trust-remote-code]
+    status: active
+  # ---- 15th target: Qwen3-Embedding-0.6B (anchor -> full suite row) ----
+  - id: Qwen3-Embedding-0.6B
+    task: embedding          # official pooling is last-token -> runner 'last'
+    model: hf:/w/models/Qwen3-Embedding-0.6B
+    pooling: last
+    inputs: /w/texts_embed16.jsonl
+    batch_size: 4
+    status: active
+  # ---- HuggingFace tier-0 probes: standard-arch drop-in validation ----
+  - id: bge-small-zh-v1.5
+    task: embedding
+    model: hf:/w/models/bge-small-zh-v1.5
+    pooling: cls
+    inputs: /w/texts_embed16.jsonl
+    batch_size: 4
+    status: active
+  - id: m3e-base
+    task: embedding
+    model: hf:/w/models/m3e-base
+    pooling: mean
+    inputs: /w/texts_embed16.jsonl
+    batch_size: 4
+    status: active
+  - id: bge-reranker-base
+    task: rerank             # same XLM-R tokenizer family as -large: package reused
+    model: hf:/w/models/bge-reranker-base
+    package: /w/packages/bge-reranker-seq
+    score: sequence_logit
+    batch_size: 4
     status: active
   # ---- Batch B/C: CTR (10) — strict reference mirrors, seed 531 ----
   - { id: ctr-dlrm,      task: ctr, package: /w/packages/ctr-v1, arch: dlrm,      seed: 531, status: active }

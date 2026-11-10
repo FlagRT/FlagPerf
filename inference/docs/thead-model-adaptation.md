@@ -9,10 +9,10 @@
 |---|---|---|---|
 | attach 目标 | `targets/target_reranker.py` / `targets/template_ctr.py` / `targets/target_embedder.py`（薄壳） | `target-result.json` | `flagprof record` 挂探针采集 |
 | runner 任务 | `flagprof.runner --task rerank / ctr / embedding` | `runner.json` | 无 probe 基线、report oracle 配对 |
-| 批量电池 | `tools/batch_driver.py --config tools/models.yaml` | `battery-summary.{md,json}` | 15→500 模型扩量（方案 §8.2） |
+| 批量验收 | `tools/batch_driver.py --config tools/models.yaml` | `battery-summary.{md,json}`（文件名沿用历史前缀） | 15→500 模型扩量（方案 §8.2） |
 | 包构建器 | `targets/make_rerank_package.py` / `make_ctr_package.py` | 封签包 | 输入固化 + oracle_id |
 
-canonical 实现在 `flagprof/runner/{rerank,ctr,rerank_common}.py`；attach 薄壳与 runner 任务共用同一执行体（`run_ctr`/`run_rerank`），锚点等价由结构保证：同包同种子下 attach 与 runner 的 `score_batches_sha256` 必须逐位相同。批量电池对每行跑两遍（A/A），分值摘要兼容顶层字段（ctr/rerank/attach）与 run 层 outputs（embedding）。
+canonical 实现在 `flagprof/runner/{rerank,ctr,rerank_common}.py`；attach 薄壳与 runner 任务共用同一执行体（`run_ctr`/`run_rerank`），锚点等价由结构保证：同包同种子下 attach 与 runner 的 `score_batches_sha256` 必须逐位相同。批量验收对每行跑两遍（A/A），分值摘要兼容顶层字段（ctr/rerank/attach）与 run 层 outputs（embedding）。
 
 ## 2. 包契约 v1
 
@@ -22,7 +22,11 @@ canonical 实现在 `flagprof/runner/{rerank,ctr,rerank_common}.py`；attach 薄
 
 ## 3. 模型/架构清单
 
-**检索/重排（Batch A，4）**：bge-reranker-large（sequence_logit）、Qwen3-Reranker-0.6B（causal_yesno，三段模板）、bge-large-zh-v1.5（runner `--pooling cls`）、jina-embeddings-v3（厂商代码包加载 + `use_flash_attn=False` 原生注意力 + mean 池化）。
+**检索/重排（Batch A，4）**：bge-reranker-large（sequence_logit）、Qwen3-Reranker-0.6B（causal_yesno，三段模板）、bge-large-zh-v1.5（runner `--pooling cls`）、jina-embeddings-v3（runner `--trust-remote-code` 受控厂商代码加载 + `use_flash_attn=False` 原生注意力 + mean 池化）。
+
+**第 15 名目**：Qwen3-Embedding-0.6B（runner embedding `--pooling last`，对应官方 last-token 池化语义）。
+
+**HuggingFace Tier-0 探针（标准架构直接接入验证）**：bge-small-zh-v1.5（cls）、m3e-base（mean）、bge-reranker-base（sequence_logit，与 -large 同属 XLM-R 词表族，复用同一输入包）。
 
 **CTR（Batch B/C，10）**：dlrm（Meta 点积交互）、din（ActivationUnit+dice）、widedeep、deepfm、dcn、esmm（[cvr,ctr,ctcvr] 三列）、mmoe、ple（两级 CGC）、bst（TransformerEncoder）、dien（GRU packed + AUGRU；aux loss 只喂训练，推理路径省略）。全部严格镜像参考实现（torch-rechub 1.0.0 / Meta dlrm），输出已 sigmoid 的架构（esmm/mmoe/ple/bst/dien）transform 不二次 sigmoid。
 
@@ -51,13 +55,19 @@ python3 -B -m flagprof.runner --task rerank --package packages/bge-reranker-seq 
 # embed（runner 内建，cls 池化）
 python3 -B -m flagprof.runner --task embedding --pooling cls hf:models/bge-large-zh-v1.5 \
   --inputs texts.jsonl --batch-size 4 --dtype bfloat16 --device cuda:0 --outputs OUT
+
+# embed + 受控厂商代码加载（jina 类；详见 flagprof/runner/vendor.py docstring）
+python3 -B -m flagprof.runner --task embedding --pooling mean --trust-remote-code \
+  hf:models/jina-embeddings-v3 --inputs texts.jsonl --batch-size 4 \
+  --dtype bfloat16 --device cuda:0 --outputs OUT
 ```
 
 CPU 套件：`docker run -w /w/FlagPerf/inference -e PYTHONPATH=/w/FlagPerf/inference IMG python3 -B -m pytest tests -q`。
 
 ## 6. 已知边界与决策记录
 
-- jina-v3：transformers 4.57 动态模块缓存只拷一级相对导入 → 厂商代码以本地包绕行加载（不走动态缓存）；auto_map 去远程前缀；provenance 记录在 `localization-provenance.json`（原始 download-provenance 不改）。
+- **厂商代码（trust_remote_code）受控加载**（2026-11-10 用户授权后取代"仅限 attach 目标"旧决定）：runner `--task embedding --trust-remote-code` 显式开关；加载只认模型目录内已在磁盘的代码（本地包绕行，不走 transformers 动态模块缓存——4.57 只拷一级相对导入）；auto_map 必须是本地条目（拒绝 `repo--class` 远程前缀）；每个被消费的 `*.py` sha256 钉入 oracle identity（`code_files`）；flash-attention 强制关闭。标准模型带此 flag 是无害 no-op；非 embedding 任务传此 flag 直接 argparse 报错。canonical 实现唯一：`flagprof/runner/vendor.py`（attach 目标同源引用）。
+- jina-v3 下载侧 provenance：`localization-provenance.json`（原始 download-provenance 不改）。
 - DIEN：`pack_padded_sequence(enforce_sorted=False)` + bf16 GRU 在 PPU 实测可用（ppu1 微基准探针）；pad 位 attention 精确为 0 → 隐状态不受 pad 影响。
 - deepfm 随机初始化下 FM 项量级可饱和 sigmoid 至 0/1 端点——闭区间断言，非缺陷。
 - fixed.load 保持文本包专用；rerank/ctr 包由 runner canonical loader 负责（identity 契约在 oracle_id/inputs_sha256 层统一）。

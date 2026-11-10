@@ -14,9 +14,10 @@ ROOT = Path(__file__).resolve().parent.parent
 
 def _build_package(tmp):
     pkg = Path(tmp) / 'ctr'
+    env = dict(os.environ, PYTHONPATH=str(ROOT))
     subprocess.run([sys.executable, '-B', str(ROOT / 'targets' / 'make_ctr_package.py'),
                     '--samples', '8', '--seed', '531', '--out', str(pkg)],
-                   check=True, capture_output=True)
+                   check=True, capture_output=True, env=env)
     return pkg
 
 
@@ -52,6 +53,29 @@ class RunnerCliTests(unittest.TestCase):
                               '--outputs', str(Path(tmp) / 'o')])
             self.assertNotEqual(proc.returncode, 0)
             self.assertIn('hf:<directory>', proc.stderr)
+
+    def test_trust_remote_code_rejected_off_embedding(self):
+        for task in ('rerank', 'ctr'):
+            argv = ['--task', task, '--trust-remote-code',
+                    '--outputs', 'unused']
+            if task == 'rerank':
+                argv += ['hf:/nonexistent', '--package', 'p', '--score', 'sequence_logit']
+            else:
+                argv += ['--package', 'p', '--arch', 'dlrm']
+            proc = self._run(argv)
+            self.assertNotEqual(proc.returncode, 0, proc.stderr)
+            self.assertIn('only supported for --task embedding', proc.stderr)
+
+    def test_trust_remote_code_accepted_by_embedding_argparse(self):
+        # argparse must accept the flag; failure (if any) must come from the
+        # model path, never from an unrecognized-arguments parse error.
+        with tempfile.TemporaryDirectory() as tmp:
+            proc = self._run(['--task', 'embedding', '--trust-remote-code',
+                              'hf:/nonexistent-model-dir', '--inputs', 'x.jsonl',
+                              '--batch-size', '4', '--device', 'cpu', '--forwards', '1',
+                              '--outputs', str(Path(tmp) / 'o')])
+            self.assertNotEqual(proc.returncode, 0)
+            self.assertNotIn('unrecognized arguments', proc.stderr)
 
 
 if __name__ == '__main__':

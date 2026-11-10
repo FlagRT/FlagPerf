@@ -1,19 +1,21 @@
 # Copyright 2026 FlagOS Contributors
 # Licensed under the Apache License, Version 2.0.
-"""Batch adaptation driver: models.yaml -> A/A battery -> status table.
+"""Batch adaptation driver: models.yaml -> acceptance suite -> status table.
 
 Prototype for the 500-model scaleout (plan section 8.2). Each enabled row
-runs the battery twice through the canonical runner surfaces and the driver
-compares ``score_batches_sha256`` / ``oracle_identity`` for A/A, then emits
-a per-model status table (passed/failed + shas + artifact paths).
+runs the suite twice through the canonical runner surfaces (A/A protocol)
+and the driver compares ``score_batches_sha256`` / ``oracle_identity`` for
+the A/A verdict, then emits a per-model status table (passed/failed + shas
++ artifact paths). Artifact filenames keep the historical ``battery-*``
+prefix; the protocol is called the acceptance suite (A/A x2 per model).
 
 Run inside the target container:
 
     python3 -B tools/batch_driver.py --config tools/models.yaml --out /w/runs/batch-<date>
 
 Rows reference the three runner tasks (embedding / rerank / ctr) directly;
-``task: attach`` rows are executed via their attach target script (vendor-code
-families that have not been promoted to a runner task yet).
+``task: attach`` rows are executed via their attach target script (legacy
+surface kept for families outside the three runner tasks).
 """
 import argparse
 import datetime
@@ -74,6 +76,8 @@ def build_cmd(row, run_idx, out_dir, device='cuda:0', dtype=None, batch_size=Non
     for k in ('package', 'score', 'arch', 'pooling', 'inputs', 'seed'):
         if row.get(k) is not None:
             cmd += [f'--{k}', str(row[k])]
+    for flag in row.get('flags') or []:
+        cmd += ['--' + flag]
     if batch_size or row.get('batch_size'):
         cmd += ['--batch-size', str(batch_size or row['batch_size'])]
     if row.get('forwards'):

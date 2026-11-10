@@ -54,11 +54,17 @@ def main():
     p.add_argument('--score', choices=['causal_yesno','sequence_logit'])
     p.add_argument('--arch', choices=['dlrm','din','widedeep','deepfm','dcn','esmm','mmoe','ple','bst','dien'])
     p.add_argument('--seed', type=int, default=531)
+    p.add_argument('--trust-remote-code', action='store_true',
+                   help='embedding only: allow vendor modeling code already on disk in the '
+                        'model directory (local-package load, auto_map must be local, every '
+                        'code file sha256-pinned into oracle identity; no-op for standard models)')
     args = p.parse_args()
     if args.forwards is None:args.forwards=1 if args.task=='generate' else 3
     if args.task=='generate' and __import__('os').environ.get('FLAGPROF_DEVICE'):
         args.device=__import__('os').environ['FLAGPROF_DEVICE']
         args.outputs=str(Path(args.outputs)/('rank-'+__import__('os').environ['RANK']))
+    if args.trust_remote_code and args.task!='embedding':
+        p.error('--trust-remote-code is only supported for --task embedding')
     if args.task=='rerank':
         if not args.model or not args.model.startswith('hf:') or not args.package or not args.score:
             p.error('--task rerank needs hf:<directory> model, --package and --score')
@@ -117,8 +123,18 @@ def main():
         model_path = args.model[3:]
         tokenizer = None if args.inputs_from else AutoTokenizer.from_pretrained(model_path, local_files_only=True, trust_remote_code=False, padding_side=args.padding_side)
         model_started=time.perf_counter()
-        model = AutoModel.from_pretrained(model_path, local_files_only=True, trust_remote_code=False,
-            torch_dtype=getattr(torch, args.dtype), attn_implementation=args.attention).to(args.device).eval()
+        vendor_code = None
+        if args.trust_remote_code:
+            from .vendor import code_files_identity
+            vendor_code = code_files_identity(model_path)
+        if vendor_code:
+            # Controlled vendor-code load (see flagprof/runner/vendor.py):
+            # directory-as-package, dynamic-module cache never engaged.
+            from .vendor import load_with_vendor_code
+            model = load_with_vendor_code(model_path, getattr(torch, args.dtype)).to(args.device).eval()
+        else:
+            model = AutoModel.from_pretrained(model_path, local_files_only=True, trust_remote_code=False,
+                torch_dtype=getattr(torch, args.dtype), attn_implementation=args.attention).to(args.device).eval()
         model_load_and_device_s=time.perf_counter()-model_started
         input_started=time.perf_counter()
         if args.inputs_from:
@@ -136,15 +152,23 @@ def main():
         if hasattr(model.config,'use_cache'):model.config.use_cache=False
         from . import run_prepared, pool_embedding
         if handle:handle.register_model(model)
-        input_identity.update(dtype=args.dtype,attention=args.attention,pooling=POOLING_SEMANTICS[args.pooling],
+        input_identity.update(dtype=args.dtype,pooling=POOLING_SEMANTICS[args.pooling],
             device=args.device,software=software(),numerics=numeric_settings,flaggems=effective['flaggems'],include=effective['flaggems_include'])
+        if vendor_code:
+            input_identity.update(code_files=vendor_code,
+                adapter_names=getattr(model.config,'adapter_names',None),
+                attention='vendor(use_flash_attn=False)')
+        else:
+            input_identity['attention']=args.attention
         # Direct inputs carry the same oracle identity contract as prepared packages
         # (runner/fixed.load): model plus input digest pin the must_equal fields.
         input_identity.setdefault('samples',[s for ids,_ in batches for s in ids])
         input_identity.setdefault('batches',[dict(samples=ids,shape=list(v['input_ids'].shape),valid_tokens=v['attention_mask'].sum(1).tolist()) for ids,v in batches])
         if 'oracle_id' not in input_identity:
+            oracle_keys=['model_files','inputs_sha256','dtype','attention','pooling']
+            if input_identity.get('code_files'):oracle_keys.append('code_files')
             input_identity['oracle_id']=hashlib.sha256(json.dumps(
-                {k:input_identity[k] for k in ('model_files','inputs_sha256','dtype','attention','pooling')},
+                {k:input_identity[k] for k in oracle_keys},
                 sort_keys=True).encode()).hexdigest()
         input_prepare_s=time.perf_counter()-input_started
         load_s=time.perf_counter()-start
@@ -171,7 +195,8 @@ def main():
                       component_owner='attachment' if handle else 'runner',
                       component_install_s=handle.state['component'].get('install_ns',0)/1e9 if handle else component_install_s,
                       component_close_s=None if handle else component_close_s,
-                      semantics=POOLING_SEMANTICS[args.pooling]+'; use_cache=False; eager',
+                      semantics=POOLING_SEMANTICS[args.pooling]+'; use_flash_attn=False' if vendor_code else POOLING_SEMANTICS[args.pooling]+'; use_cache=False; eager',
+                      vendor_code=bool(vendor_code),
                       instrumentation='attachment' if handle else 'none',
                       component_identity=component.identity if component else handle.state.get('flaggems_identity') if handle else None,
                       batch_size=args.batch_size, oracle_identity=input_identity, runs=runs)

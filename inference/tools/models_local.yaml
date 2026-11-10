@@ -1,0 +1,5 @@
+# Local CPU battery for driver tests (paths relative to localtest root).
+models:
+  - { id: ctr-dlrm, task: ctr, package: /tmp/localtest-ctr-v1, arch: dlrm,  seed: 531, dtype: float32, forwards: 1, status: active }
+  - { id: ctr-din,  task: ctr, package: /tmp/localtest-ctr-v1, arch: din,   seed: 531, dtype: float32, forwards: 1, status: active }
+  - { id: blocked-example, task: ctr, package: /tmp/localtest-ctr-v1, arch: dlrm, seed: 531, dtype: float32, forwards: 1, status: blocked }

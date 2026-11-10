@@ -2,23 +2,21 @@
 # Licensed under the Apache License, Version 2.0.
 """Vendor-agnostic embedding attach target: texts -> pooled sentence vectors.
 
-Standard HF models load via AutoModel with trust_remote_code=False. Models
-whose config.json auto_map points at remote custom code (e.g. jina
-embeddings v3 -> XLMRobertaLoRA) load through a local package bypass: the
-model directory itself is imported as a Python package so the vendor's
-modeling files and their two-level relative imports resolve from disk, never
-from the transformers dynamic-module cache. Every code file consumed this
-way is sha256-pinned into the run identity (code_files).
-
-The vendor flash-attention path is force-disabled (config.use_flash_attn
-False when present) so execution uses the native attention implementation,
-consistent with the eager-attention protocol used elsewhere in this suite.
+Thin consumer of the canonical vendor-code loader in
+``flagprof/runner/vendor.py`` (the same controlled path the runner exposes
+through ``--task embedding --trust-remote-code``). Standard HF models load
+via AutoModel with trust_remote_code=False; vendor-code models load through
+the local-package bypass with every code file sha256-pinned into the run
+identity (code_files). The vendor flash-attention path is force-disabled so
+execution uses the native attention implementation, consistent with the
+eager-attention protocol used elsewhere in this suite.
 """
 import argparse
 import hashlib
 import json
 from pathlib import Path
-import sys
+
+from flagprof.runner.vendor import code_files_identity, load_with_vendor_code
 
 
 def model_files_identity(model_path):
@@ -33,50 +31,6 @@ def model_files_identity(model_path):
     if not files:
         raise ValueError('identity needs safetensors/bin weights under ' + str(model_path))
     return files
-
-
-def code_files_identity(model_path):
-    return {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
-            for p in sorted(Path(model_path).glob('*.py'))}
-
-
-def load_with_vendor_code(model_path, dtype):
-    """Import the model dir as a package and build the auto_map model class."""
-    import importlib
-    import importlib.util
-    root = Path(model_path)
-    config = json.loads((root / 'config.json').read_text())
-    auto_map = config.get('auto_map') or {}
-    if 'AutoModel' not in auto_map or '--' in str(auto_map['AutoModel']):
-        raise ValueError('vendor-code load needs a local auto_map AutoModel entry')
-    module_name, _, class_name = auto_map['AutoModel'].rpartition('.')
-    pkg_name = 'flagprof_vendor_' + root.name.replace('-', '_').replace('.', '_')
-    spec = importlib.util.spec_from_file_location(
-        pkg_name, root / (module_name + '.py'), submodule_search_locations=[str(root)])
-    package = importlib.util.module_from_spec(spec)
-    sys.modules[pkg_name] = package
-    spec.loader.exec_module(package)
-    model_cls = getattr(package, class_name)
-    config_cls = None
-    config_map = auto_map.get('AutoConfig')
-    if config_map and '--' not in str(config_map):
-        config_module, _, config_class = config_map.rpartition('.')
-        config_cls = getattr(importlib.import_module(pkg_name + '.' + config_module), config_class)
-    if hasattr(model_cls, 'from_pretrained'):
-        cfg = config_cls.from_pretrained(str(root), local_files_only=True) if config_cls else None
-        if cfg is not None and hasattr(cfg, 'use_flash_attn'):
-            cfg.use_flash_attn = False
-        load_kwargs = dict(local_files_only=True, torch_dtype=dtype)
-        if cfg is not None:
-            model = model_cls.from_pretrained(str(root), config=cfg, **load_kwargs)
-        else:
-            model = model_cls.from_pretrained(str(root), **load_kwargs)
-    else:
-        cfg = config_cls() if config_cls else None
-        if cfg is not None and hasattr(cfg, 'use_flash_attn'):
-            cfg.use_flash_attn = False
-        model = model_cls(cfg) if cfg is not None else model_cls()
-    return model
 
 
 def main():
