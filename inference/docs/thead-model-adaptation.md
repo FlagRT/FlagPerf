@@ -17,8 +17,8 @@ canonical 实现在 `flagprof/runner/{rerank,ctr,rerank_common}.py`；attach 薄
 ## 2. 包契约 v1
 
 - **rerank-package-v1**：`prepared/inputs.pt`（sample_id + 变长 input_ids）+ manifest（files sha256 / oracle_id / score_semantics / template_sha / contract.batch_size）。语义两种：`sequence_logit`（Bert 类重排）、`causal_yesno`（生成类重排，tokenizer 需含字面 yes/no）。
-- **ctr-package-v1**：Criteo 规范形四字段（dense f32[13]、sparse i64[26]∈[1,999]、hist_ids i64[20]（0=pad）、hist_mask bool[20]），seed 可复现，manifest 含 schema_sha + `contract.archs`（10 架构）。
-- **ctr 模型权重**：随机初始化（`torch.manual_seed(--seed)`，默认 531）——CTR 模板无上游预训练权重，identity 以 `weight_sha256`（state_dict 排序名+字节，bf16 先 `view(int16)`）钉真实权重。
+- **ctr-package-v1**：Criteo 规范形四字段（dense f32[13]、sparse i64[26]∈[1,999]、hist_ids i64[20]（0=pad）、hist_mask bool[20]），seed 可复现，manifest 含 schema_sha + `contract.archs`。历史包 `ctr-v1`（10 架构）保留；`ctr-v1b` 扩至 14 架构（inputs.pt 与 ctr-v1 逐字节同、oracle_id 相同——contract 不入 oracle 身份，扩合同零漂移）。
+- **ctr 模型权重**：随机初始化（`torch.manual_seed(--seed)`，默认 531）——CTR 模板无上游预训练权重，identity 以 `weight_sha256`（state_dict 排序名+字节，bf16 先 `view(int16)`）钉真实权重（lightgcn 的包派生图 buffer `norm_adj`/`id_to_node` 一并入钉）。
 
 ## 3. 模型/架构清单
 
@@ -29,6 +29,8 @@ canonical 实现在 `flagprof/runner/{rerank,ctr,rerank_common}.py`；attach 薄
 **HuggingFace Tier-0 探针（标准架构直接接入验证）**：bge-small-zh-v1.5（cls）、m3e-base（mean）、bge-reranker-base（sequence_logit，与 -large 同属 XLM-R 词表族，复用同一输入包）。
 
 **CTR（Batch B/C，10）**：dlrm（Meta 点积交互）、din（ActivationUnit+dice）、widedeep、deepfm、dcn、esmm（[cvr,ctr,ctcvr] 三列）、mmoe、ple（两级 CGC）、bst（TransformerEncoder）、dien（GRU packed + AUGRU；aux loss 只喂训练，推理路径省略）。全部严格镜像参考实现（torch-rechub 1.0.0 / Meta dlrm），输出已 sigmoid 的架构（esmm/mmoe/ple/bst/dien）transform 不二次 sigmoid。
+
+**CTR 扩展（2026 年度计划，+4，包 `ctr-v1b`）**：dcnmix（torch-rechub DCNv2 parallel + CrossNetMix 低秩 MOE：tanh 低秩空间、softmax 专家门控、残差；forward 内 sigmoid→PRE_SIGMOID）、dssm（Huang et al. 2013 双塔：用户塔=dense+hist 掩码均值池化、物品塔=sparse 后 13 列均值，tanh MLP、L2 归一 cosine∈[-1,1] 即终分，rechub 无 dssm 属论文镜像、字段映射偏差记录 docstring）、sasrec（pmixer/SASRec.pytorch post-LN：item/pos padding_idx=0 的 pad 位零值排除、PointWise Conv1d×2、score=<末位隐向量,target 嵌入> raw logit）、lightgcn（kuandeng/LightGCN 官方：纯传播 D^-1/2·A·D^-1/2 无自环无激活、层均值组合、random_normal(0.01) 初始化；图由包行确定性派生，构建需包行、每 batch 注入 user_idx=样本索引）。
 
 ## 4. 精度证据协议（attach 侧）
 
