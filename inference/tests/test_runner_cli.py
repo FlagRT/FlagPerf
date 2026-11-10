@@ -54,17 +54,13 @@ class RunnerCliTests(unittest.TestCase):
             self.assertNotEqual(proc.returncode, 0)
             self.assertIn('hf:<directory>', proc.stderr)
 
-    def test_trust_remote_code_rejected_off_embedding(self):
-        for task in ('rerank', 'ctr'):
-            argv = ['--task', task, '--trust-remote-code',
-                    '--outputs', 'unused']
-            if task == 'rerank':
-                argv += ['hf:/nonexistent', '--package', 'p', '--score', 'sequence_logit']
-            else:
-                argv += ['--package', 'p', '--arch', 'dlrm']
-            proc = self._run(argv)
-            self.assertNotEqual(proc.returncode, 0, proc.stderr)
-            self.assertIn('only supported for --task embedding', proc.stderr)
+    def test_trust_remote_code_rejected_off_embedding_rerank(self):
+        # ctr/generate never take vendor code; embedding and rerank admit it.
+        argv = ['--task', 'ctr', '--trust-remote-code',
+                '--package', 'p', '--arch', 'dlrm', '--outputs', 'unused']
+        proc = self._run(argv)
+        self.assertNotEqual(proc.returncode, 0, proc.stderr)
+        self.assertIn('only supported for --task embedding/rerank', proc.stderr)
 
     def test_trust_remote_code_accepted_by_embedding_argparse(self):
         # argparse must accept the flag; failure (if any) must come from the
@@ -75,6 +71,18 @@ class RunnerCliTests(unittest.TestCase):
                               '--batch-size', '4', '--device', 'cpu', '--forwards', '1',
                               '--outputs', str(Path(tmp) / 'o')])
             self.assertNotEqual(proc.returncode, 0)
+            self.assertNotIn('unrecognized arguments', proc.stderr)
+
+    def test_trust_remote_code_accepted_by_rerank_argparse(self):
+        # rerank admits the flag (jina-reranker-v2 vendor path); failure must
+        # come from the model path, never from the task restriction.
+        with tempfile.TemporaryDirectory() as tmp:
+            proc = self._run(['--task', 'rerank', '--trust-remote-code',
+                              'hf:/nonexistent-model-dir', '--package', 'p',
+                              '--score', 'sequence_logit', '--batch-size', '4',
+                              '--device', 'cpu', '--outputs', str(Path(tmp) / 'o')])
+            self.assertNotEqual(proc.returncode, 0)
+            self.assertNotIn('only supported for', proc.stderr)
             self.assertNotIn('unrecognized arguments', proc.stderr)
 
 

@@ -56,7 +56,7 @@ def main():
     p.add_argument('--arch', choices=ctr_arch_choices)
     p.add_argument('--seed', type=int, default=531)
     p.add_argument('--trust-remote-code', action='store_true',
-                   help='embedding only: allow vendor modeling code already on disk in the '
+                   help='embedding/rerank only: allow vendor modeling code already on disk in the '
                         'model directory (local-package load, auto_map must be local, every '
                         'code file sha256-pinned into oracle identity; no-op for standard models)')
     args = p.parse_args()
@@ -64,8 +64,8 @@ def main():
     if args.task=='generate' and __import__('os').environ.get('FLAGPROF_DEVICE'):
         args.device=__import__('os').environ['FLAGPROF_DEVICE']
         args.outputs=str(Path(args.outputs)/('rank-'+__import__('os').environ['RANK']))
-    if args.trust_remote_code and args.task!='embedding':
-        p.error('--trust-remote-code is only supported for --task embedding')
+    if args.trust_remote_code and args.task not in ('embedding','rerank'):
+        p.error('--trust-remote-code is only supported for --task embedding/rerank')
     if args.task=='rerank':
         if not args.model or not args.model.startswith('hf:') or not args.package or not args.score:
             p.error('--task rerank needs hf:<directory> model, --package and --score')

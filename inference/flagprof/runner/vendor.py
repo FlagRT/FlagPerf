@@ -1,13 +1,14 @@
 # Copyright 2026 FlagOS Contributors
 # Licensed under the Apache License, Version 2.0.
-"""Controlled vendor-code loading for embedding models (opt-in).
+"""Controlled vendor-code loading for embedding and rerank models (opt-in).
 
-Some HF embedding models ship custom modeling code referenced by
-``config.json`` ``auto_map`` (e.g. jina-embeddings-v3 -> XLMRobertaLoRA).
+Some HF embedding/rerank models ship custom modeling code referenced by
+``config.json`` ``auto_map`` (e.g. jina-embeddings-v3 -> XLMRobertaLoRA,
+jina-reranker-v2 -> XLMRobertaForSequenceClassification).
 The runner refuses the transformers remote-code path (``trust_remote_code``
 stays False everywhere); the only sanctioned entry is ``--trust-remote-code``
-on ``--task embedding``, which loads vendor code that is ALREADY on disk
-inside the model directory through a local-package bypass:
+on ``--task embedding`` or ``--task rerank``, which loads vendor code that is
+ALREADY on disk inside the model directory through a local-package bypass:
 
 - the model directory itself is imported as a Python package, so the
   vendor's modeling file and its multi-level relative imports resolve from
@@ -21,7 +22,7 @@ inside the model directory through a local-package bypass:
   False when present) so execution uses native attention.
 
 Standard models are unaffected: with the flag set but no ``*.py`` files in
-the model directory the loader falls through to the plain AutoModel path.
+the model directory the loader falls through to the plain transformers path.
 """
 import hashlib
 import json
@@ -35,16 +36,20 @@ def code_files_identity(model_path):
             for p in sorted(Path(model_path).glob('*.py'))}
 
 
-def load_with_vendor_code(model_path, dtype):
-    """Import the model dir as a package and build the auto_map model class."""
+def load_with_vendor_code(model_path, dtype, auto_key='AutoModel'):
+    """Import the model dir as a package and build the auto_map model class.
+
+    auto_key selects the class family from auto_map: 'AutoModel' (embedding)
+    or 'AutoModelForSequenceClassification' / 'AutoModelForCausalLM' (rerank).
+    """
     import importlib
     import importlib.util
     root = Path(model_path)
     config = json.loads((root / 'config.json').read_text())
     auto_map = config.get('auto_map') or {}
-    if 'AutoModel' not in auto_map or '--' in str(auto_map['AutoModel']):
-        raise ValueError('vendor-code load needs a local auto_map AutoModel entry')
-    module_name, _, class_name = auto_map['AutoModel'].rpartition('.')
+    if auto_key not in auto_map or '--' in str(auto_map[auto_key]):
+        raise ValueError('vendor-code load needs a local auto_map ' + auto_key + ' entry')
+    module_name, _, class_name = auto_map[auto_key].rpartition('.')
     pkg_name = 'flagprof_vendor_' + root.name.replace('-', '_').replace('.', '_')
     spec = importlib.util.spec_from_file_location(
         pkg_name, root / (module_name + '.py'), submodule_search_locations=[str(root)])

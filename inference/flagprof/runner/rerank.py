@@ -15,7 +15,10 @@ Two scoring semantics (package manifest pins which):
                     softmax over [no, yes] token pair -> yes probability.
   sequence_logit    AutoModelForSequenceClassification, raw relevance logit.
 
-Works for any HF reranker of either class without trust_remote_code.
+Works for any HF reranker of either class. Models shipping custom auto_map
+code load through the controlled vendor path (flagprof/runner/vendor.py)
+when trust_remote_code is set: directory-as-package import, local auto_map
+entry required, every consumed code file sha256-pinned into oracle identity.
 """
 import argparse
 import hashlib
@@ -48,7 +51,8 @@ def validate_package_semantics(manifest, score):
 
 
 def run_rerank(*, package, model_path, score, device, dtype, outputs,
-               samples=None, batch_size=None, warmup=0, forwards=3):
+               samples=None, batch_size=None, warmup=0, forwards=3,
+               trust_remote_code=False):
     """Canonical rerank execution; returns the target-style result dict."""
     import torch
     from flagprof import current_attachment
@@ -61,10 +65,22 @@ def run_rerank(*, package, model_path, score, device, dtype, outputs,
 
     torch.manual_seed(531)
     from transformers import AutoTokenizer, AutoModelForCausalLM, AutoModelForSequenceClassification
+    vendor_code = None
+    if trust_remote_code:
+        from .vendor import code_files_identity
+        vendor_code = code_files_identity(model_path)
     tokenizer = AutoTokenizer.from_pretrained(model_path, local_files_only=True, trust_remote_code=False)
     cls = AutoModelForCausalLM if score == 'causal_yesno' else AutoModelForSequenceClassification
-    model = cls.from_pretrained(model_path, local_files_only=True, trust_remote_code=False,
-        torch_dtype=getattr(torch, dtype), attn_implementation='eager').to(device).eval()
+    if vendor_code:
+        # Controlled vendor-code load (see flagprof/runner/vendor.py):
+        # directory-as-package, dynamic-module cache never engaged; the
+        # auto_map entry for this score's class family must be local.
+        from .vendor import load_with_vendor_code
+        model = load_with_vendor_code(model_path, getattr(torch, dtype),
+            auto_key='AutoModelForCausalLM' if score == 'causal_yesno' else 'AutoModelForSequenceClassification').to(device).eval()
+    else:
+        model = cls.from_pretrained(model_path, local_files_only=True, trust_remote_code=False,
+            torch_dtype=getattr(torch, dtype), attn_implementation='eager').to(device).eval()
     if hasattr(model.config, 'use_cache'):
         model.config.use_cache = False
     if handle:
@@ -82,6 +98,8 @@ def run_rerank(*, package, model_path, score, device, dtype, outputs,
         score_semantics=score, template_sha=manifest['template_sha'],
         model_files=model_files_identity(model_path), dtype=dtype, device=device,
         samples=[s for ids_, _ in batches for s in ids_])
+    if vendor_code:
+        identity['code_files'] = vendor_code
 
     out = Path(outputs)
     run_rows = []
@@ -111,8 +129,10 @@ def run_rerank(*, package, model_path, score, device, dtype, outputs,
     result = dict(model=model_path, score_semantics=score, yes_token_id=yes_id,
         no_token_id=no_id,
         semantics=('{causal last-valid-position softmax([no,yes]) -> yes prob}' if score == 'causal_yesno'
-                   else '{sequence-classification raw logit}') + '; use_cache=False; eager',
+                   else '{sequence-classification raw logit}')
+                  + ('; vendor code (use_flash_attn=False)' if vendor_code else '; use_cache=False; eager'),
         oracle_identity=identity, batch_size=batch_size, score_batches_sha256=score_sha,
+        vendor_code=bool(vendor_code),
         runs=run_rows, attachment=bool(handle))
     return result
 
@@ -129,12 +149,13 @@ def execute(args):
                         outputs=args.outputs,
                         samples=args.samples.split(',') if args.samples else None,
                         batch_size=args.batch_size, warmup=args.warmup,
-                        forwards=args.forwards)
+                        forwards=args.forwards, trust_remote_code=args.trust_remote_code)
     out = Path(args.outputs)
     runner_result = dict(model=result['model'], task='rerank', package=args.package,
         load_s=time.perf_counter() - start, score_semantics=result['score_semantics'],
         semantics=result['semantics'], oracle_identity=result['oracle_identity'],
         batch_size=result['batch_size'], score_batches_sha256=result['score_batches_sha256'],
+        vendor_code=result['vendor_code'],
         software=software(), instrumentation='attachment' if result['attachment'] else 'none',
         runs=[r['run'] for r in result['runs']])
     (out / 'runner.json').write_text(json.dumps(runner_result, sort_keys=True, indent=2) + '\n')
