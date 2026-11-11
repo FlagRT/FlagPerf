@@ -11,11 +11,14 @@ import random
 
 def parser():
     p=argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--task',choices=('classification','causal-lm','ctr'),default='classification')
-    p.add_argument('--model',help='Trusted local HF causal LM directory; no network download')
-    p.add_argument('--inputs',help='JSONL of token IDs: input_ids, optional attention_mask and labels')
+    p.add_argument('--task',choices=('classification','causal-lm','ctr','embedding','rerank'),default='classification')
+    p.add_argument('--model',help='Trusted local HF model directory; no network download')
+    p.add_argument('--inputs',help='JSONL of token IDs (causal-lm) or triplet groups (embedding)')
     p.add_argument('--ctr-arch',help='CTR architecture from the runner registry; validated at execution')
-    p.add_argument('--package',help='Sealed ctr-package-v1 directory (ctr task); digests verified, corpus unchanged')
+    p.add_argument('--package',help='Sealed package directory (ctr/rerank task); digests verified, corpus unchanged')
+    p.add_argument('--pooling',choices=('last','cls','mean'),default=None,help='Embedding pooling; required for the embedding task')
+    p.add_argument('--temperature',type=float,default=.05,help='InfoNCE temperature (embedding task)')
+    p.add_argument('--rerank-score',choices=('causal_yesno','sequence_logit'),default='causal_yesno',help='Rerank scoring semantics; must match the package manifest')
     p.add_argument('--outputs',required=True)
     p.add_argument('--device',default='cpu')
     p.add_argument('--steps',type=int,default=3,help='Total optimizer steps, including resumed steps')
@@ -114,6 +117,54 @@ def execute(args):
             model,batches,loss_fn,ctr_protocol=prepare_ctr(arch=args.ctr_arch,package=args.package,
                 seed=args.seed,batch_size=args.batch_size,rank=rank,world_size=world)
             protocol.update(ctr_protocol)
+        elif args.task=='embedding':
+            if args.package or args.ctr_arch: raise ValueError('embedding task does not accept package or ctr-arch')
+            if not args.model or not args.inputs: raise ValueError('embedding requires --model and --inputs')
+            if not args.pooling: raise ValueError('embedding requires --pooling')
+            from transformers import AutoModel,AutoModelForCausalLM
+            source=args.model.removeprefix('hf:')
+            if not Path(source).is_dir(): raise ValueError('local model directory missing')
+            protocol['model_files_sha256']=local_files(source)
+            protocol['attention']='eager'
+            try:
+                model=AutoModel.from_pretrained(source,local_files_only=True,trust_remote_code=False,
+                                                torch_dtype=torch.float32,attn_implementation='eager')
+                protocol['model_class']='AutoModel'
+            except Exception:
+                model=AutoModelForCausalLM.from_pretrained(source,local_files_only=True,trust_remote_code=False,
+                                                           torch_dtype=torch.float32,attn_implementation='eager').model
+                protocol['model_class']='AutoModelForCausalLM.base'
+            from .embedding import prepare_embedding
+            model,batches,loss_fn,emb_protocol=prepare_embedding(model=model,inputs=args.inputs,
+                pooling=args.pooling,temperature=args.temperature,batch_size=args.batch_size,
+                rank=rank,world_size=world)
+            protocol.update(emb_protocol)
+        elif args.task=='rerank':
+            if args.inputs: raise ValueError('rerank task does not accept inputs')
+            if not args.package or not args.model: raise ValueError('rerank task requires --package and --model')
+            from transformers import AutoTokenizer
+            source=args.model.removeprefix('hf:')
+            if not Path(source).is_dir(): raise ValueError('local model directory missing')
+            protocol['model_files_sha256']=local_files(source)
+            protocol['attention']='eager'
+            tokenizer=AutoTokenizer.from_pretrained(source,local_files_only=True,trust_remote_code=False)
+            yes_id=no_id=None
+            if args.rerank_score=='causal_yesno':
+                yes_id=tokenizer.convert_tokens_to_ids('yes')
+                no_id=tokenizer.convert_tokens_to_ids('no')
+                if yes_id==tokenizer.unk_token_id or no_id==tokenizer.unk_token_id:
+                    raise ValueError('tokenizer lacks literal yes/no tokens')
+            cls_name='AutoModelForCausalLM' if args.rerank_score=='causal_yesno' else 'AutoModelForSequenceClassification'
+            import transformers
+            model=getattr(transformers,cls_name).from_pretrained(source,local_files_only=True,trust_remote_code=False,
+                                                                torch_dtype=torch.float32,attn_implementation='eager')
+            protocol['model_class']=cls_name
+            if hasattr(model.config,'use_cache'): model.config.use_cache=False
+            from .rerank import prepare_rerank
+            model,batches,loss_fn,rerank_protocol=prepare_rerank(model=model,package=args.package,
+                score=args.rerank_score,batch_size=args.batch_size,yes_id=yes_id,no_id=no_id,
+                rank=rank,world_size=world)
+            protocol.update(rerank_protocol)
         else:
             if not args.model or not args.inputs: raise ValueError('causal-lm requires --model and --inputs')
             from transformers import AutoModelForCausalLM
