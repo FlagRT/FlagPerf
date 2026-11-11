@@ -31,7 +31,7 @@
 
 | 回归 | 结果 | 说明 |
 |---|---|---|
-| 既有 Inference 标准库 smoke（python -S） | 129 tests，40 skipped，OK | 在无 torch/SDK 导入条件运行；包含新增离线训练阶段负例，跳过项不计通过 |
+| 既有 Inference 标准库 smoke（python -S） | 134 tests，45 skipped，OK | 在无 torch/SDK 导入条件运行；包含新增离线训练阶段负例，跳过项不计通过 |
 | 训练语义 + 训练分析 + 原精度/replay 定向回归 | 27 tests，OK（2026-11-11 最终定向回归） | 不与上行或模型设备实测重复相加 |
 | 原 TP2 embedding CPU 用例 | 环境失败保留 | PPU 镜像无设备映射时，Transformers TP 加载尝试 CUDA 初始化并报 driver shutting down；在完全未修改的 `3417e54d` 归档上同样复现。不是本次引入，亦不改测试掩盖 |
 
