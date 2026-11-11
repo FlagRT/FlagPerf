@@ -11,7 +11,7 @@
 | 批量验证一整份模型名册 | `tools/batch_driver.py --config tools/models.yaml` | `battery-summary.md/.json` |
 | 把测试输入固化成密封包 | `targets/make_rerank_package.py`、`make_ctr_package.py` | 包目录 + `manifest.json` |
 
-设计要点：attach 与 runner 共用同一个执行体（`flagprof/runner/{rerank,ctr}.py`），所以"同包同种子"下两者的分数摘要 `score_batches_sha256` **必然逐位相同**——这是结构保证，不是调参调出来的。批量验证的每一行都连跑两遍（A/A），两遍不一致即判失败。
+设计要点：attach 与 runner 共用同一个执行体（`flagprof/runner/{rerank,ctr}.py`），所以"同包同种子"下两者的分数摘要**必然逐位相同**——这是结构保证，不是调参调出来的。批量验证的每一行都连跑两遍（A/A），两遍不一致即判失败。
 
 名册文件有两份：`tools/models.yaml`（15 模型 + 10 CTR 架构）与 `tools/models-hf2.yaml`（2026-11-11 从 HuggingFace 扩选的 6 个模型）。
 
@@ -100,7 +100,7 @@ python3 -B -m flagprof.runner --task ctr --package packages/ctr-v1 --arch dlrm \
 
 # runner 任务：重排（标准模型）
 python3 -B -m flagprof.runner --task rerank --package packages/bge-reranker-seq \
-  --model hf:models/bge-reranker-large --score sequence_logit \
+  hf:models/bge-reranker-large --score sequence_logit \
   --device cuda:0 --dtype bfloat16 --outputs OUT
 
 # 句向量（cls 池化）
