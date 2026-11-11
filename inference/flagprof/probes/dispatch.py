@@ -63,9 +63,17 @@ class DispatchProbe(Probe):
         import torch
         from .argtree import describe_args, describe_result
         from ..store.sig import compute_sid
-        root = self.context.probe_state()['root']
+        state = self.context.probe_state()
+        root = state['root']
         each = bool(root and root['each'])
-        if (self.manager.module is None or not self.manager.module.active()) and self.config['dispatch'] == 'each-window':
+        training = state.get('training')
+        if training and self.config['dispatch'] == 'each-window':
+            # Explicit training scopes select whole optimizer steps, including
+            # backward and optimizer calls on the owning context. No inferred
+            # thread propagation or change to an unmarked inference workload.
+            index = training['step']
+            each = self.config['each_start'] <= index < self.config['each_start'] + self.config['each_count']
+        if not training and (self.manager.module is None or not self.manager.module.active()) and self.config['dispatch'] == 'each-window':
             each = self.calls < self.config['fallback_calls']
         self.calls += 1
         # Metadata failures downgrade this probe while the user's call still runs once.

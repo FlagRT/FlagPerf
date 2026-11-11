@@ -1,3 +1,7 @@
+# 训练入口
+
+新增 [Training v2：标准训练与观测](../docs/training/v2.md)，支持显式训练阶段、梯度与更新对比、检查点和标准 DDP；[验证记录](../docs/training/v2-validation.md)列明实际覆盖与限制。下文保留旧集群 benchmark 部署方式，两套入口不混用。
+
 ### 部署说明
 
 #### 软件环境

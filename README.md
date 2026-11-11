@@ -26,6 +26,7 @@ Base、Operation、Inference 的当前单机入口不要求 SSH。先阅读所�
 
 P800 的环境与复现命令见 [P800 Inference](docs/kunlunxin/inference-v2.md)，[验证结果与开放缺陷](docs/kunlunxin/inference-v2-validation.md) 单独登记。当前为候选适配：OneRec 单卡与 TP2 存在未解释的 token 差异（P800-INF-007），TP2 精度和完整性能资格尚未通过。
 平头哥 PPU 的基础能力见 [PPU 适配指南](docs/thead/README.md)，算子入口、运行栈准备及待验收边界见 [PPU Operation](operation/vendors/thead/README.md)。
+训练观测新增 [Training v2](docs/training/v2.md)，复用 Inference v2 采集与报告，保留旧训练入口；[实测边界](docs/training/v2-validation.md)单独记录。
 完整导航见 [docs](docs/README.md)。
 
 ## 📣 FlagPerf评测亮点

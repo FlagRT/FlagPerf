@@ -17,6 +17,8 @@ flowchart LR
 
 昆仑芯 P800 的镜像、设备身份和复现步骤见 [P800 Inference v2](../docs/kunlunxin/inference-v2.md)，[验证记录](../docs/kunlunxin/inference-v2-validation.md) 包含开放缺陷：OneRec 单卡/TP2 第 14 个生成 token 不同（P800-INF-007），尚不能声明 TP2 精度通过；性能保持 `not_qualified`。
 
+训练程序复用本采集与 Store 架构，使用 [Training v2](../docs/training/v2.md) 的独立训练协议和报告，不套用推理 TP2 规则。
+
 ## 环境与最小入口
 
 离线导入、读取和报告使用 Python 3.9+ 标准库。采集在已经准备好的设备环境内运行：NVIDIA 使用 PyTorch profiler；Ascend 使用匹配的 PyTorch、torch_npu 与 CANN；P800 使用指南锁定的 XPyTorch/FlagRT 环境及前置 tracing 变量。内置 Hugging Face runner 另需 Transformers 和本地模型、输入。环境由使用者准备。
