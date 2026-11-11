@@ -1,6 +1,7 @@
 # Copyright 2026 FlagOS Contributors
 # Licensed under the Apache License, Version 2.0.
 """CLI-level tests for flagprof.runner __main__ arg contract (subprocess)."""
+import importlib.util
 import json
 import os
 import subprocess
@@ -27,6 +28,7 @@ class RunnerCliTests(unittest.TestCase):
         return subprocess.run([sys.executable, '-B', '-m', 'flagprof.runner'] + argv,
                               capture_output=True, text=True, env=env, cwd=str(ROOT))
 
+    @unittest.skipUnless(importlib.util.find_spec('torch'), 'optional torch CPU runtime')
     def test_ctr_task_runs_without_model_positional(self):
         # regression: model positional was required -> argparse killed --task ctr
         with tempfile.TemporaryDirectory() as tmp:
@@ -40,6 +42,7 @@ class RunnerCliTests(unittest.TestCase):
             doc = json.loads((out / 'runner.json').read_text())
             self.assertEqual(doc['task'], 'ctr')
 
+    @unittest.skipUnless(importlib.util.find_spec('torch'), 'optional torch CPU runtime')
     def test_ctr_task_rejects_model_positional(self):
         with tempfile.TemporaryDirectory() as tmp:
             proc = self._run(['--task', 'ctr', 'some-model-dir', '--package', 'p',
@@ -47,6 +50,7 @@ class RunnerCliTests(unittest.TestCase):
             self.assertNotEqual(proc.returncode, 0)
             self.assertIn('takes no model', proc.stderr)
 
+    @unittest.skipUnless(importlib.util.find_spec('torch'), 'optional torch CPU runtime')
     def test_embedding_task_errors_cleanly_without_model(self):
         with tempfile.TemporaryDirectory() as tmp:
             proc = self._run(['--task', 'embedding', '--inputs', 'x.jsonl',
@@ -54,6 +58,7 @@ class RunnerCliTests(unittest.TestCase):
             self.assertNotEqual(proc.returncode, 0)
             self.assertIn('hf:<directory>', proc.stderr)
 
+    @unittest.skipUnless(importlib.util.find_spec('torch'), 'optional torch CPU runtime')
     def test_trust_remote_code_rejected_off_embedding_rerank(self):
         # ctr/generate never take vendor code; embedding and rerank admit it.
         argv = ['--task', 'ctr', '--trust-remote-code',

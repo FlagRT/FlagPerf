@@ -89,6 +89,7 @@ class CmdTests(unittest.TestCase):
         self.assertEqual(cmd[-4:], ['--dtype', 'bfloat16', '--outputs', out])
 
 
+@unittest.skipUnless(importlib.util.find_spec('torch'), 'optional torch CPU runtime')
 class BatteryE2E(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
