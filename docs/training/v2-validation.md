@@ -18,7 +18,7 @@
 | PPU 单卡 CTR 训练五 preset + AMP | 通过 | dlrm 基线 3 步累积 2；`perf-lite/coverage/modules/perf/accuracy` 观测后与无采集基线零容差逐位一致（573 行对比 pass）；显式 BF16 AMP 独立运行完成，不与 FP32 基线对比 |
 | CTR 训练与推理权重互挂 | 相等 | 训练协议 `ctr_weight_sha256` = 推理 `oracle_identity.weight_sha256` = `4b20358e…a90`（同种子同构建器）；两台 PPU 均复验 |
 | PPU 双机 CTR 训练 A/A | 通过 | thead1 与 thead2 独立部署同一提交分别全量套件；跨主机零容差对比 pass（573 行），`final_model_sha256` 双机同为 `63b7af75…61f9` |
-| PPU embedding 微调（Qwen3-Embedding-0.6B） | 通过 | 确定性合成三元组组语料（32 组×3 负例，seed 531）上 `--task embedding`，last/cls 两种 pooling 各 3 步 AdamW（累积 2）端到端完成（返回码全零）；InfoNCE loss 区 FP32、温度 0.05 进协议 |
+| PPU embedding 微调（Qwen3-Embedding-0.6B、bge-m3） | 通过 | 确定性合成三元组组语料（32 组×3 负例，seed 531）上 `--task embedding`，last/cls 两种 pooling 各 3 步 AdamW（累积 2）端到端完成（返回码全零）；Qwen3 走 AutoModel 回退 CausalLM 主干，bge-m3（XLMRoberta）走标准 `AutoModel`（权重经 sha256 对账的 modelscope 镜像补齐）；InfoNCE loss 区 FP32、温度 0.05 进协议 |
 | PPU reranker 微调（Qwen3-Reranker-0.6B / bge-reranker-base） | 通过 | 复用推理侧密封 rerank 包，相关性标签由 sample id 派生；`causal_yesno`（AutoModelForCausalLM，末有效位置 [no,yes] 两列 CE）与 `sequence_logit`（AutoModelForSequenceClassification，BCEWithLogits）两种语义各 2 步完成；协议记录包 oracle/inputs/contract/template 与 `rerank_weight_sha256` |
 | PPU embedding 官方采集观测与对比 | 通过 | perf-lite 采集 embedding 训练后，与无采集基线零容差对比 pass（4654 行） |
 | PPU 双机 embedding/rerank A/A | 通过 | thead2 独立复跑同款套件（8 项返回码全零，模型与密封包 sha256 中转核对）；跨主机 JSON 级逐字段对照一致：`final_model_sha256` 双机同 `e2dbfd7b…cd4b`、`final_optimizer_sha256` 同 `149b5d11…7e39`、两 rerank `rerank_weight_sha256` 同（`73991b03…`/`b2b6114f…`）、逐步 loss 逐位相同；0.6B 模型逐步快照为 GB 级，不做跨机全量搬移，对照粒度如实记录为结果 JSON |
@@ -33,7 +33,7 @@
 |---|---|---|
 | PPU | PPU-ZW810E；物理 0/1 → 容器逻辑 0/1；驱动 1.5.1-1d747a；FlagRT 镜像 ID `1ba7ead15378`；torch 2.10 / SDK 2.1.0 / Python 3.12 | `health-ppu1.*`、`suite-v3/`、`suite-v5/`、`final-suite/`、`ppu-ddp/`、CPU/Gloo 与回归输出 |
 | PPU（CTR，双机） | thead1 物理 0 与 thead2 物理 2，同一镜像与身份文件；证据根 `perf-train-evidence-20261112` | `ctr-suite-v1/`（两台同构：baseline、14 架构、五 preset record/compare/inspect/report、AMP、推理 oracle 权重互挂、跨主机 comparison、`ctr-regression-20261112/` 回归输出） |
-| PPU（embedding/rerank，双机） | thead1 物理 0 与 thead2 物理 2，同一镜像与身份文件；证据根同上 | `model-tasks-v1/`（两台同构：语料生成、last/cls embedding、两种 rerank 语义、perf-lite record/compare、`op-micro-ppu.json`）；thead1 另含 `regression-20261112/` 权威回归输出 |
+| PPU（embedding/rerank，双机） | thead1 物理 0 与 thead2 物理 2，同一镜像与身份文件；证据根同上 | `model-tasks-v1/`（两台同构：语料生成、last/cls embedding、两种 rerank 语义、perf-lite record/compare、`op-micro-ppu.json`）；thead1 另含 `regression-20261112/` 权威回归输出与 `bgem3-v1/`（bge-m3 cls/last 补测） |
 | P800 | 同一已实测镜像 ID `cac5ddae5f62`，torch 2.9.0+cu129；klx1 minor 6/0/3、klx2 minor 0/2/1/3/6 四轮探针 | 各轮 `probe*` stdout/stderr/returncode、pre/postflight、独立小脚本与容器生命周期记录 |
 
 证据归档根使用 `perf-train-evidence-20261111` 与 `perf-train-evidence-20261112` 名称。它是本次实验资产，不是 Git 仓库内自动存在的路径；机器地址、账户、凭据不写入公开文档。公开源码提供最小复现命令；需要复核原始大体积 Store/模型快照时从项目维护者取得对应归档并核对 SHA-256。不能把没有入库的目录引用当作公开下载承诺。
@@ -57,7 +57,7 @@
 | 模型范围 | 内置分类功能示例、HF causal LM、密封 CTR 语料模板训练（14 架构，派生标签 + 逐架构 loss）、embedding 微调（InfoNCE，三种 pooling）与 reranker 微调（两种打分语义）；不含正式数据集收敛、FSDP/ZeRO/TP/PP | CTR/embedding 语料为确定性合成（不是真实点击或检索数据），rerank 标签由 sample id 派生；验证微调通路与观测闭环，不声明任务精度；新模型需明确输入、标签、loss、优化器和训练协议再单独验收 |
 | TRAIN-MODEL-001 | Qwen3-Reranker-8B 全参数微调超出单卡显存：FP32 参数 + AdamW 一二阶矩 + 梯度约 128 GB > 96 GB（PPU-ZW810E）；DDP 每 rank 复制全量不解决分片 | 暂不可在本框架训练，如实记录；FSDP/ZeRO 与 bf16 参数协议属范围外/协议变更，需用户明确授权后再评；同构通路已由 Qwen3-Reranker-0.6B（causal_yesno）实测覆盖 |
 | TRAIN-MODEL-002 | OneRec-1.7B 训练适配暂缓：模型权重未在 PPU 双机供给（thead1 全盘检索无 OneRec 目录），推理侧 runner 标注 inference-only；生成式推荐端到端训练目标（多任务/强化学习）超出当前标准训练任务定义 | 待权重供给与官方训练协议明确后再评；不把推理模板裸加 `.train()` 冒充训练适配 |
-| TRAIN-MODEL-003 | 搜广推 15 模型清单中两个多模态模型（openai/clip-vit-large-patch14、Qwen3-VL-Embedding-8B）按本轮范围约定排除 | 不在本轮训练适配范围；其余 13 个目标去向：9 个 CTR 架构（DIN/DeepFM/DCN-Mix/ESMM/DLRM/DSSM/LightGCN/SASRec/PLE）由 `--task ctr` 覆盖，Qwen3-Embedding-0.6B 与 bge-m3 由 `--task embedding` 覆盖（bge-m3 见下行实测状态），Qwen3-Reranker-8B 见 TRAIN-MODEL-001（0.6B 同构通路已实测），OneRec-1.7B 见 TRAIN-MODEL-002 |
+| TRAIN-MODEL-003 | 搜广推 15 模型清单中两个多模态模型（openai/clip-vit-large-patch14、Qwen3-VL-Embedding-8B）按本轮范围约定排除 | 不在本轮训练适配范围；其余 13 个目标去向：9 个 CTR 架构（DIN/DeepFM/DCN-Mix/ESMM/DLRM/DSSM/LightGCN/SASRec/PLE）由 `--task ctr` 覆盖，Qwen3-Embedding-0.6B 与 bge-m3 由 `--task embedding` 覆盖（均已实测），Qwen3-Reranker-8B 见 TRAIN-MODEL-001（0.6B 同构通路已实测），OneRec-1.7B 见 TRAIN-MODEL-002 |
 | 性能范围 | accuracy 快照开销、首次编译/初始化、共享宿主 | 不自动给独占资格，不把诊断时长当成优化后性能，不合计 rank-local 吞吐 |
 
 新增代码版权署名为 **Suscom Lab, The Hong Kong University of Science and Technology (Guangzhou)**；已有上游文件保留原版权声明。
