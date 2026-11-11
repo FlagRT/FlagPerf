@@ -1,5 +1,5 @@
 # Model adaptation roster — acceptance-suite config for tools/batch_driver.py.
-# Paths are container-side (/w = model-adaptation-work mount on thead1/thead2).
+# Paths are container-side (/w = model-adaptation-work mount on the two hosts).
 # Each row runs twice (A/A); status: active | blocked.
 # Evidence protocol: A/A sha+identity equality; cross-host comparison is done
 # outside the suite by diffing score_batches_sha256 between host reports.

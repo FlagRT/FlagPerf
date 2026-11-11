@@ -1,6 +1,6 @@
 # HF tier-0 expansion batch 2 (2026-11-11) — 6 new models, run as a
 # separate roster consumed by tools/batch_driver.py with --filter sharding
-# (one driver instance per row, each bound to its own card on thead1/thead2).
+# (one driver instance per row, each bound to its own card on the two hosts).
 # Pools/padding follow the official recipes pinned in the main roster:
 # encoder families mean/cls with right padding; e5 official pooling is mean.
 # ms-marco-MiniLM-L-6-v2 and jina-reranker-v2 get fresh sealed rerank
