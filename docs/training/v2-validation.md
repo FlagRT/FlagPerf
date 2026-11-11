@@ -21,6 +21,7 @@
 | PPU embedding 微调（Qwen3-Embedding-0.6B） | 通过 | 确定性合成三元组组语料（32 组×3 负例，seed 531）上 `--task embedding`，last/cls 两种 pooling 各 3 步 AdamW（累积 2）端到端完成（返回码全零）；InfoNCE loss 区 FP32、温度 0.05 进协议 |
 | PPU reranker 微调（Qwen3-Reranker-0.6B / bge-reranker-base） | 通过 | 复用推理侧密封 rerank 包，相关性标签由 sample id 派生；`causal_yesno`（AutoModelForCausalLM，末有效位置 [no,yes] 两列 CE）与 `sequence_logit`（AutoModelForSequenceClassification，BCEWithLogits）两种语义各 2 步完成；协议记录包 oracle/inputs/contract/template 与 `rerank_weight_sha256` |
 | PPU embedding 官方采集观测与对比 | 通过 | perf-lite 采集 embedding 训练后，与无采集基线零容差对比 pass（4654 行） |
+| PPU 双机 embedding/rerank A/A | 通过 | thead2 独立复跑同款套件（8 项返回码全零，模型与密封包 sha256 中转核对）；跨主机 JSON 级逐字段对照一致：`final_model_sha256` 双机同 `e2dbfd7b…cd4b`、`final_optimizer_sha256` 同 `149b5d11…7e39`、两 rerank `rerank_weight_sha256` 同（`73991b03…`/`b2b6114f…`）、逐步 loss 逐位相同；0.6B 模型逐步快照为 GB 级，不做跨机全量搬移，对照粒度如实记录为结果 JSON |
 | PPU 逐算子微基准（诊断） | 完成 | `op_micro.py` 14 算子 @ B8 S512 H1024 vocab151669 bf16，中位数 50 iters；产出 `op-micro-ppu.json`；诊断脚本，不入采集协议 |
 | P800 两台机器空闲卡健康探针 | 未通过健康前置 | 固定 FlagRT v2 镜像内最小 PyTorch 探针在 torch import 后、首个设备内核前停滞，硬上限后 rc=137；四轮独立实验覆盖两台机器共 6/6 长空闲物理卡同型挂死（楔死卡可被其他租户唤醒跑满，非永久损坏），证据链闭环，定性为厂商级阻塞。没有进入本训练框架，不能声明 P800 训练适配完成 |
 
@@ -32,7 +33,7 @@
 |---|---|---|
 | PPU | PPU-ZW810E；物理 0/1 → 容器逻辑 0/1；驱动 1.5.1-1d747a；FlagRT 镜像 ID `1ba7ead15378`；torch 2.10 / SDK 2.1.0 / Python 3.12 | `health-ppu1.*`、`suite-v3/`、`suite-v5/`、`final-suite/`、`ppu-ddp/`、CPU/Gloo 与回归输出 |
 | PPU（CTR，双机） | thead1 物理 0 与 thead2 物理 2，同一镜像与身份文件；证据根 `perf-train-evidence-20261112` | `ctr-suite-v1/`（两台同构：baseline、14 架构、五 preset record/compare/inspect/report、AMP、推理 oracle 权重互挂、跨主机 comparison、`ctr-regression-20261112/` 回归输出） |
-| PPU（embedding/rerank） | thead1 物理 0（thead2 复验见下行），同一镜像；证据根同上 | `model-tasks-v1/`（语料生成、last/cls embedding、两种 rerank 语义、perf-lite record/compare、`op-micro-ppu.json`、`regression-20261112/` 权威回归输出） |
+| PPU（embedding/rerank，双机） | thead1 物理 0 与 thead2 物理 2，同一镜像与身份文件；证据根同上 | `model-tasks-v1/`（两台同构：语料生成、last/cls embedding、两种 rerank 语义、perf-lite record/compare、`op-micro-ppu.json`）；thead1 另含 `regression-20261112/` 权威回归输出 |
 | P800 | 同一已实测镜像 ID `cac5ddae5f62`，torch 2.9.0+cu129；klx1 minor 6/0/3、klx2 minor 0/2/1/3/6 四轮探针 | 各轮 `probe*` stdout/stderr/returncode、pre/postflight、独立小脚本与容器生命周期记录 |
 
 证据归档根使用 `perf-train-evidence-20261111` 与 `perf-train-evidence-20261112` 名称。它是本次实验资产，不是 Git 仓库内自动存在的路径；机器地址、账户、凭据不写入公开文档。公开源码提供最小复现命令；需要复核原始大体积 Store/模型快照时从项目维护者取得对应归档并核对 SHA-256。不能把没有入库的目录引用当作公开下载承诺。
