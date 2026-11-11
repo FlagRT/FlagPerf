@@ -11,9 +11,11 @@ import random
 
 def parser():
     p=argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--task',choices=('classification','causal-lm'),default='classification')
+    p.add_argument('--task',choices=('classification','causal-lm','ctr'),default='classification')
     p.add_argument('--model',help='Trusted local HF causal LM directory; no network download')
     p.add_argument('--inputs',help='JSONL of token IDs: input_ids, optional attention_mask and labels')
+    p.add_argument('--ctr-arch',help='CTR architecture from the runner registry; validated at execution')
+    p.add_argument('--package',help='Sealed ctr-package-v1 directory (ctr task); digests verified, corpus unchanged')
     p.add_argument('--outputs',required=True)
     p.add_argument('--device',default='cpu')
     p.add_argument('--steps',type=int,default=3,help='Total optimizer steps, including resumed steps')
@@ -104,6 +106,14 @@ def execute(args):
                 sl=slice(rank*args.batch_size,(rank+1)*args.batch_size)
                 batches.append(dict(features=x[sl],labels=y[sl]))
             def loss_fn(m,b):return torch.nn.functional.cross_entropy(m(b['features']),b['labels'])
+        elif args.task=='ctr':
+            if args.model or args.inputs: raise ValueError('ctr task does not accept model or inputs')
+            if not args.package or not args.ctr_arch:
+                raise ValueError('ctr task requires --package and --ctr-arch')
+            from .ctr import prepare_ctr
+            model,batches,loss_fn,ctr_protocol=prepare_ctr(arch=args.ctr_arch,package=args.package,
+                seed=args.seed,batch_size=args.batch_size,rank=rank,world_size=world)
+            protocol.update(ctr_protocol)
         else:
             if not args.model or not args.inputs: raise ValueError('causal-lm requires --model and --inputs')
             from transformers import AutoModelForCausalLM
