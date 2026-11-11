@@ -1,82 +1,140 @@
-# thead (PPU) 模型适配：包、目标与 runner 任务
+# PPU（thead）模型适配：模型清单、验证结果与使用方法
 
-适用范围：FlagPerf/inference 分支 `zhiyu/model-adaptation`，PPU-ZW810E（thead1/thead2）。
-配套方案：`平头哥-Inference-v2-15模型适配实施方案-20261109.md`；阶段证据见各阶段报告与执行流水。
+本文回答三个问题：**这套适配覆盖哪些模型、精度怎么验证的、怎么在你自己的机器上复跑**。代码在分支 `zhiyu/model-adaptation`，目标硬件为同型号 PPU-ZW810E 服务器（下文称"双机"）。适配过程的工作日志在团队内部仓库，本文只保留可复现的内容。
 
-## 1. 三种执行面，一套 canonical 实现
+## 1. 四种入口，一套实现
 
-| 面 | 入口 | 产物 | 用途 |
-|---|---|---|---|
-| attach 目标 | `targets/target_reranker.py` / `targets/template_ctr.py` / `targets/target_embedder.py`（薄壳） | `target-result.json` | `flagprof record` 挂探针采集 |
-| runner 任务 | `flagprof.runner --task rerank / ctr / embedding` | `runner.json` | 无 probe 基线、report oracle 配对 |
-| 批量验收 | `tools/batch_driver.py --config tools/models.yaml` | `battery-summary.{md,json}`（文件名沿用历史前缀） | 15→500 模型扩量（方案 §8.2） |
-| 包构建器 | `targets/make_rerank_package.py` / `make_ctr_package.py` | 封签包 | 输入固化 + oracle_id |
+| 你想做什么 | 用什么 | 产物 |
+|---|---|---|
+| 挂探针采集单模型精度 | attach 目标（`targets/` 下薄壳脚本） | `target-result.json` |
+| 不挂探针跑基线 | `python3 -B -m flagprof.runner --task ctr/rerank/embedding …` | `runner.json` |
+| 批量验证一整份模型名册 | `tools/batch_driver.py --config tools/models.yaml` | `battery-summary.md/.json` |
+| 把测试输入固化成密封包 | `targets/make_rerank_package.py`、`make_ctr_package.py` | 包目录 + `manifest.json` |
 
-canonical 实现在 `flagprof/runner/{rerank,ctr,rerank_common}.py`；attach 薄壳与 runner 任务共用同一执行体（`run_ctr`/`run_rerank`），锚点等价由结构保证：同包同种子下 attach 与 runner 的 `score_batches_sha256` 必须逐位相同。批量验收对每行跑两遍（A/A），分值摘要兼容顶层字段（ctr/rerank/attach）与 run 层 outputs（embedding）。
+设计要点：attach 与 runner 共用同一个执行体（`flagprof/runner/{rerank,ctr}.py`），所以"同包同种子"下两者的分数摘要 `score_batches_sha256` **必然逐位相同**——这是结构保证，不是调参调出来的。批量验证的每一行都连跑两遍（A/A），两遍不一致即判失败。
 
-## 2. 包契约 v1
+名册文件有两份：`tools/models.yaml`（15 模型 + 10 CTR 架构）与 `tools/models-hf2.yaml`（2026-11-11 从 HuggingFace 扩选的 6 个模型）。
 
-- **rerank-package-v1**：`prepared/inputs.pt`（sample_id + 变长 input_ids）+ manifest（files sha256 / oracle_id / score_semantics / template_sha / contract.batch_size）。语义两种：`sequence_logit`（Bert 类重排）、`causal_yesno`（生成类重排，tokenizer 需含字面 yes/no）。
-- **ctr-package-v1**：Criteo 规范形四字段（dense f32[13]、sparse i64[26]∈[1,999]、hist_ids i64[20]（0=pad）、hist_mask bool[20]），seed 可复现，manifest 含 schema_sha + `contract.archs`。历史包 `ctr-v1`（10 架构）保留；`ctr-v1b` 扩至 14 架构（inputs.pt 与 ctr-v1 逐字节同、oracle_id 相同——contract 不入 oracle 身份，扩合同零漂移）。
-- **ctr 模型权重**：随机初始化（`torch.manual_seed(--seed)`，默认 531）——CTR 模板无上游预训练权重，identity 以 `weight_sha256`（state_dict 排序名+字节，bf16 先 `view(int16)`）钉真实权重（lightgcn 的包派生图 buffer `norm_adj`/`id_to_node` 一并入钉）。
+## 2. 测试输入为什么用"密封包"
 
-## 3. 模型/架构清单
+模型评测最怕输入不一致：改一个 token、换一种截断，结果就不可比。所以每个任务的输入连同指纹一起封进包：
 
-**检索/重排（Batch A，4）**：bge-reranker-large（sequence_logit）、Qwen3-Reranker-0.6B（causal_yesno，三段模板）、bge-large-zh-v1.5（runner `--pooling cls`）、jina-embeddings-v3（runner `--trust-remote-code` 受控厂商代码加载 + `use_flash_attn=False` 原生注意力 + mean 池化）。
+| 包 | 内容 | 适用任务 |
+|---|---|---|
+| rerank-package-v1 | 逐对 query-doc 的 token ids + manifest（文件 sha256、oracle_id、打分语义） | 重排 |
+| ctr-package-v1 / ctr-v1b | Criteo 规范形四字段（dense/sparse/hist_ids/hist_mask），固定种子可复现 | CTR 架构 |
 
-**第 15 名目**：Qwen3-Embedding-0.6B（runner embedding `--pooling last`，对应官方 last-token 池化语义）。
+两点说明：
 
-**HuggingFace Tier-0 探针（标准架构直接接入验证）**：bge-small-zh-v1.5（cls）、m3e-base（mean）、bge-reranker-base（sequence_logit，与 -large 同属 XLM-R 词表族，复用同一输入包）。
+- CTR 模板没有上游预训练权重，用固定种子（默认 531）随机初始化；真实权重以 `weight_sha256` 钉进身份记录。
+- `ctr-v1b` 把支持的架构从 10 个扩到 14 个，但输入文件与 `ctr-v1` 逐字节相同、oracle_id 不变——扩名单对历史结果零影响。
 
-**CTR（Batch B/C，10）**：dlrm（Meta 点积交互）、din（ActivationUnit+dice）、widedeep、deepfm、dcn、esmm（[cvr,ctr,ctcvr] 三列）、mmoe、ple（两级 CGC）、bst（TransformerEncoder）、dien（GRU packed + AUGRU；aux loss 只喂训练，推理路径省略）。全部严格镜像参考实现（torch-rechub 1.0.0 / Meta dlrm），输出已 sigmoid 的架构（esmm/mmoe/ple/bst/dien）transform 不二次 sigmoid。
+## 3. 模型清单（28 项）
 
-**CTR 扩展（2026 年度计划，+4，包 `ctr-v1b`）**：dcnmix（torch-rechub DCNv2 parallel + CrossNetMix 低秩 MOE：tanh 低秩空间、softmax 专家门控、残差；forward 内 sigmoid→PRE_SIGMOID）、dssm（Huang et al. 2013 双塔：用户塔=dense+hist 掩码均值池化、物品塔=sparse 后 13 列均值，tanh MLP、L2 归一 cosine∈[-1,1] 即终分，rechub 无 dssm 属论文镜像、字段映射偏差记录 docstring）、sasrec（pmixer/SASRec.pytorch post-LN：item/pos padding_idx=0 的 pad 位零值排除、PointWise Conv1d×2、score=<末位隐向量,target 嵌入> raw logit）、lightgcn（kuandeng/LightGCN 官方：纯传播 D^-1/2·A·D^-1/2 无自环无激活、层均值组合、random_normal(0.01) 初始化；图由包行确定性派生，构建需包行、每 batch 注入 user_idx=样本索引）。
+### 检索 / 重排（5 个）
 
-## 4. 精度证据协议（attach 侧）
+| 模型 | 任务 | 加载方式 |
+|---|---|---|
+| bge-reranker-large | 重排 sequence_logit | 标准 |
+| Qwen3-Reranker-0.6B | 重排 causal_yesno（三段模板） | 标准 |
+| bge-large-zh-v1.5 | 句向量，cls 池化 | 标准 |
+| jina-embeddings-v3 | 句向量，mean 池化 | 厂商代码受控加载 |
+| Qwen3-Embedding-0.6B | 句向量，last 池化（对应官方语义） | 标准 |
 
-1. **A/A 双跑**：同包同种子同命令连跑两次，`score_batches_sha256` 与 `oracle_identity` 必须逐位一致。
-2. **跨机复验**：双机各 A/A 后 `score_batches_sha256` 跨机比对（bf16、跨驱动逐位一致为达标线）。
-3. `flagprof report oracle` 精度面板只认 runner 任务契约；attach 证据 = A/A 协议（runner promotion 后 runner 级可用 oracle 配对）。
-4. `record status=complete` 不代表 target 成功——必须核 `exit_code` 与产物文件。
+### HF 标准架构探针（3 个）
 
-## 5. 常用命令（PPU 单卡容器）
+bge-small-zh-v1.5（cls）、m3e-base（mean）、bge-reranker-base（sequence_logit，与 -large 同词表族，复用同一输入包）。用途：验证"标准架构不经适配直接接入"的路径。
+
+### HF 扩面（6 个，2026-11-11）
+
+bge-base-zh-v1.5（cls）、all-MiniLM-L6-v2（mean）、e5-small-v2（mean）、chinese-roberta-wwm-ext（mean）、ms-marco-MiniLM-L-6-v2（重排）、jina-reranker-v2-base-multilingual（重排 + 厂商代码）。用途：扩大模型覆盖面，其中 jina-reranker-v2 是第一个需要厂商代码的重排模型。
+
+### CTR（14 种架构）
+
+| 架构 | 参考实现 | 要点 |
+|---|---|---|
+| dlrm | Meta | 点积交互 |
+| din | torch-rechub | ActivationUnit + dice |
+| widedeep / deepfm / dcn | torch-rechub | 宽窄路径 / FM 项 / 交叉网络 |
+| esmm | torch-rechub | 三列输出 [cvr, ctr, ctcvr] |
+| mmoe / ple | torch-rechub | 多专家门控 / 两级 CGC |
+| bst / dien | torch-rechub | TransformerEncoder / GRU+AUGRU |
+| dcnmix | torch-rechub DCNv2 | CrossNetMix 低秩 MOE |
+| dssm | Huang et al. 2013 论文 | 双塔 cosine ∈ [-1,1]（rechub 无此模型，按论文镜像，字段映射偏差在 docstring） |
+| sasrec | pmixer/SASRec.pytorch | pad 位零值排除，输出 raw logit |
+| lightgcn | kuandeng/LightGCN | 纯传播无激活，图由包行确定性派生 |
+
+所有架构严格镜像参考实现；自带 sigmoid 的架构（esmm/mmoe/ple/bst/dien）不做二次 sigmoid。
+
+## 4. 精度怎么验
+
+三级协议，逐级加严：
+
+1. **A/A**：同一命令连跑两遍，输出摘要与身份记录必须逐位一致。
+2. **跨机**：两台机器各跑 A/A 后，分数指纹跨机比对——bf16 下逐位一致是达标线，不是"近似就算"。
+3. **跨厂商**（CTR 扩展架构）：在昆仑芯 P800 上复跑对照。
+
+注意：`record status=complete` 只说明采集流程走完，不代表模型跑成功——必须看 `exit_code` 和产物文件本身。
+
+### 当前验证结果
+
+**HF 扩面 6 模型**（2026-11-11，双机各 A/A ×2，分数指纹跨机逐位一致，全过）：
+
+| 模型 | 任务 | 分数指纹 |
+|---|---|---|
+| bge-base-zh-v1.5 | 句向量 | `14174c43e547d506` |
+| all-MiniLM-L6-v2 | 句向量 | `05aa167fdc93f6db` |
+| e5-small-v2 | 句向量 | `4286b9513ec0c501` |
+| chinese-roberta-wwm-ext | 句向量 | `3b41fd05cff4e47d` |
+| ms-marco-MiniLM-L-6-v2 | 重排 | `d075ef7665c0d624` |
+| jina-reranker-v2-base-multilingual | 重排（厂商代码） | `b760f9c50163cf14` |
+
+**主名册 22 行**（15 模型名目 + 3 个 HF 探针 + 4 个 CTR 扩展架构）双机全过，老架构与历史基准值全对（零扰动回归）。跨厂商矩阵：lightgcn 三方逐位一致；dcnmix/dssm/dlrm 为 PPU = P800-CPU ≠ P800-XPU；sasrec 为 PPU = P800-XPU ≠ P800-CPU。
+
+## 5. 常用命令（单卡容器）
 
 ```bash
-# attach（accuracy preset，挂采集）
-flagprof record --vendor thead --preset accuracy --store S --work W --scratch X -- \
-  python3 -B targets/template_ctr.py --package packages/ctr-v1 --arch dlrm \
-  --seed 531 --device cuda:0 --dtype bfloat16 --outputs OUT
-
-# runner 任务（可脱离 record 单跑）
+# runner 任务：CTR（可脱离 record 单跑）
 python3 -B -m flagprof.runner --task ctr --package packages/ctr-v1 --arch dlrm \
   --seed 531 --device cuda:0 --dtype bfloat16 --outputs OUT
+
+# runner 任务：重排（标准模型）
 python3 -B -m flagprof.runner --task rerank --package packages/bge-reranker-seq \
   --model hf:models/bge-reranker-large --score sequence_logit \
   --device cuda:0 --dtype bfloat16 --outputs OUT
 
-# embed（runner 内建，cls 池化）
+# 句向量（cls 池化）
 python3 -B -m flagprof.runner --task embedding --pooling cls hf:models/bge-large-zh-v1.5 \
   --inputs texts.jsonl --batch-size 4 --dtype bfloat16 --device cuda:0 --outputs OUT
 
-# embed + 受控厂商代码加载（jina 类；详见 flagprof/runner/vendor.py docstring）
-python3 -B -m flagprof.runner --task embedding --pooling mean --trust-remote-code \
-  hf:models/jina-embeddings-v3 --inputs texts.jsonl --batch-size 4 \
-  --dtype bfloat16 --device cuda:0 --outputs OUT
+# 厂商代码受控加载（jina 类，embedding / rerank 两个任务支持）
+python3 -B -m flagprof.runner --task rerank --score sequence_logit --trust-remote-code \
+  --package packages/jina-reranker-v2-seq hf:models/jina-reranker-v2-base-multilingual \
+  --batch-size 4 --dtype bfloat16 --device cuda:0 --outputs OUT
 
-# rerank + 受控厂商代码加载（jina-reranker-v2 类；vendor 类族按 --score 选
-# auto_map 键：sequence_logit -> AutoModelForSequenceClassification）
-python3 -B -m flagprof.runner --task rerank --score sequence_logit \
-  --trust-remote-code --package packages/jina-reranker-v2-seq \
-  hf:models/jina-reranker-v2-base-multilingual --batch-size 4 \
-  --dtype bfloat16 --device cuda:0 --outputs OUT
+# attach（需要挂探针采集时）
+flagprof record --vendor thead --preset accuracy --store S --work W --scratch X -- \
+  python3 -B targets/template_ctr.py --package packages/ctr-v1 --arch dlrm \
+  --seed 531 --device cuda:0 --dtype bfloat16 --outputs OUT
 ```
 
-CPU 套件：`docker run -w /w/FlagPerf/inference -e PYTHONPATH=/w/FlagPerf/inference IMG python3 -B -m pytest tests -q`。
+CPU 测试套件：`python3 -B -m pytest tests -q`（在 `inference/` 下，配好 `PYTHONPATH`）。
 
-## 6. 已知边界与决策记录
+## 6. 决策与边界
 
-- **厂商代码（trust_remote_code）受控加载**（2026-11-10 用户授权后取代"仅限 attach 目标"旧决定；2026-11-11 扩至 rerank 任务）：runner `--task embedding|rerank --trust-remote-code` 显式开关（ctr/generate 仍 argparse 拒绝）；加载只认模型目录内已在磁盘的代码（本地包绕行，不走 transformers 动态模块缓存——4.57 只拷一级相对导入）；auto_map 必须是本地条目（拒绝 `repo--class` 远程前缀）；每个被消费的 `*.py` sha256 钉入 oracle identity（`code_files`，仅 vendor 路径写入——非 vendor 行 identity 字节不变）；flash-attention 强制关闭。rerank 的 vendor 类族按 score 语义选 auto_map 键（sequence_logit→`AutoModelForSequenceClassification`、causal_yesno→`AutoModelForCausalLM`）。标准模型带此 flag 是无害 no-op。canonical 实现唯一：`flagprof/runner/vendor.py`（attach 目标同源引用）。首验模型：jina-reranker-v2-base-multilingual 双机 A/A×2 + 跨机逐位一致（score b760f9c50163cf14）。
-- jina-v3 下载侧 provenance：`localization-provenance.json`（原始 download-provenance 不改）。
-- DIEN：`pack_padded_sequence(enforce_sorted=False)` + bf16 GRU 在 PPU 实测可用（ppu1 微基准探针）；pad 位 attention 精确为 0 → 隐状态不受 pad 影响。
-- deepfm 随机初始化下 FM 项量级可饱和 sigmoid 至 0/1 端点——闭区间断言，非缺陷。
-- fixed.load 保持文本包专用；rerank/ctr 包由 runner canonical loader 负责（identity 契约在 oracle_id/inputs_sha256 层统一）。
+**厂商代码（trust_remote_code）受控加载。** 有些模型自带 Python 代码（`config.json` 的 `auto_map` 指向自定义建模文件）。默认一律不执行模型自带的代码；确要执行时用 `--trust-remote-code` 显式打开（embedding、rerank 两个任务支持，ctr/generate 传了直接报错）。打开后也不是放任执行：
+
+- 只加载模型目录里**已经在磁盘上**的代码（绕开 transformers 动态模块缓存——它在 4.57 只拷一级相对导入，多级导入必坏）；
+- auto_map 必须是本地条目，拒绝指向远端的 `repo--class` 写法；
+- 每个被消费的 `.py` 文件 sha256 记入身份记录（`code_files`），结果能对上"是哪份代码跑出来的"（仅厂商代码路径写入，标准模型身份记录字节不变）；
+- 厂商的 flash-attention 路径强制关闭，走原生注意力；
+- rerank 按打分语义选类：sequence_logit → `AutoModelForSequenceClassification`，causal_yesno → `AutoModelForCausalLM`。
+
+标准模型带这个 flag 等于没带。实现只有一处：`flagprof/runner/vendor.py`。首个实测模型 jina-reranker-v2-base-multilingual：双机各 A/A ×2、跨机逐位一致。
+
+其余边界：
+
+- **下载 provenance**：每个模型记录下载渠道、文件清单与 sha256（`download-provenance.json`；jina-v3 的在 `localization-provenance.json`）。
+- **DIEN**：`pack_padded_sequence(enforce_sorted=False)` + bf16 GRU 在 PPU 实测可用；pad 位 attention 精确为 0，隐状态不受 pad 影响。
+- **deepfm**：随机初始化下 FM 项可能把 sigmoid 推到 0/1 端点，断言用闭区间——这是预期行为，不是缺陷。
+- **fixed.load** 保持文本包专用；rerank/ctr 包由 runner 的 canonical loader 负责（身份契约统一在 oracle_id / inputs_sha256 层）。
