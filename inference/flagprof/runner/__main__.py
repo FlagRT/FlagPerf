@@ -59,9 +59,11 @@ def main():
                    help='embedding/rerank only: allow vendor modeling code already on disk in the '
                         'model directory (local-package load, auto_map must be local, every '
                         'code file sha256-pinned into oracle identity; no-op for standard models)')
+    p.add_argument('--flagtree',choices=['off','on'],default=None)
+    p.add_argument('--vendor-compiler')
     args = p.parse_args()
     if args.forwards is None:args.forwards=1 if args.task=='generate' else 3
-    if args.task=='generate' and __import__('os').environ.get('FLAGPROF_DEVICE'):
+    if __import__('os').environ.get('FLAGPROF_DEVICE'):
         args.device=__import__('os').environ['FLAGPROF_DEVICE']
         args.outputs=str(Path(args.outputs)/('rank-'+__import__('os').environ['RANK']))
     if args.trust_remote_code and args.task not in ('embedding','rerank'):
@@ -81,6 +83,17 @@ def main():
     if not args.model or not args.model.startswith('hf:') or min(args.batch_size or 4, args.forwards, args.repeats) < 1 or args.warmup < 0:
         p.error('hf:<directory>, positive counts and nonnegative warmup required')
     if not args.inputs and not args.inputs_from:p.error('--inputs or --inputs-from required')
+    from flagprof import current_attachment
+    handle = current_attachment()
+    if handle:
+        for key in ('flagtree','vendor_compiler'):
+            value=getattr(args,key)
+            if key=='vendor_compiler' and value is not None:value=str(Path(value).resolve())
+            if value is not None and value != handle.state['effective_config'].get(key):
+                p.error('runner compiler configuration conflicts with attachment')
+    else:
+        from flagprof.components.compiler import select
+        select(dict(flagtree=args.flagtree,vendor_compiler=args.vendor_compiler),cache_root=Path(args.outputs).parent/'component-cache')
     if args.task=='generate':
         from .generate import execute
         return execute(args)
@@ -102,6 +115,7 @@ def main():
     from flagprof.probes.config import resolve
     handle = current_attachment()
     component = None
+    parallel = None
     component_install_s=0.0
     if handle:
         effective = handle.state['effective_config']
@@ -124,6 +138,7 @@ def main():
         model_path = args.model[3:]
         tokenizer = None if args.inputs_from else AutoTokenizer.from_pretrained(model_path, local_files_only=True, trust_remote_code=False, padding_side=args.padding_side)
         model_started=time.perf_counter()
+        import os
         vendor_code = None
         if args.trust_remote_code:
             from .vendor import code_files_identity
@@ -131,11 +146,18 @@ def main():
         if vendor_code:
             # Controlled vendor-code load (see flagprof/runner/vendor.py):
             # directory-as-package, dynamic-module cache never engaged.
+            # Vendor path is single-device only; TP2 parallelism below does not apply.
             from .vendor import load_with_vendor_code
             model = load_with_vendor_code(model_path, getattr(torch, args.dtype)).to(args.device).eval()
         else:
-            model = AutoModel.from_pretrained(model_path, local_files_only=True, trust_remote_code=False,
-                torch_dtype=getattr(torch, args.dtype), attn_implementation=args.attention).to(args.device).eval()
+            options=dict(local_files_only=True,trust_remote_code=False,
+                         torch_dtype=getattr(torch,args.dtype),attn_implementation=args.attention)
+            if int(os.environ.get('WORLD_SIZE','1')) > 1:
+                from .parallel import Parallel
+                parallel=Parallel(args.device,os.environ['FLAGPROF_COMM_BACKEND'])
+                options.update(tp_plan='auto',device_mesh=parallel.mesh())
+            model = AutoModel.from_pretrained(model_path, **options).eval()
+            if parallel is None:model.to(args.device)
         model_load_and_device_s=time.perf_counter()-model_started
         input_started=time.perf_counter()
         if args.inputs_from:
@@ -172,12 +194,18 @@ def main():
             input_identity['oracle_id']=hashlib.sha256(json.dumps(
                 {k:input_identity[k] for k in oracle_keys},
                 sort_keys=True).encode()).hexdigest()
+        from flagprof.components.compiler import identity as compiler_identity
+        input_identity['compiler']=handle.state['compiler_identity'] if handle else compiler_identity()
+        if parallel:
+            input_identity.update(parallelism=dict(world_size=2,plan='auto'),comm_backend=parallel.backend,
+                                  communication=parallel.identity,rank=int(os.environ['RANK']))
         input_prepare_s=time.perf_counter()-input_started
         load_s=time.perf_counter()-start
         out=Path(args.outputs);runs=[]
         for repeat in range(args.repeats):
             for batch_index,(sample_ids,values) in enumerate(batches):
                 inputs={key:value.to(args.device) for key,value in values.items()}
+                if parallel:parallel.barrier()
                 inputs.update(return_dict=True)
                 if 'use_cache' in inspect.signature(model.forward).parameters:inputs['use_cache']=False
                 if handle:handle.bind_tensor_inputs(sample_ids,inputs,identity=input_identity)
@@ -205,6 +233,7 @@ def main():
         (out/'runner.json').write_text(json.dumps(result, sort_keys=True, indent=2)+'\n')
         print(json.dumps(dict(output=str(out), attachment=bool(handle), load_s=load_s)))
     finally:
+        if parallel:parallel.close()
         if component:
             component.close()
 

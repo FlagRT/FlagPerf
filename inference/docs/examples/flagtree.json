@@ -1,0 +1,4 @@
+{
+  "differences": ["compiler", "software.triton"],
+  "note": "Fixed Qwen inputs, topology, numerics and FlagGems include; only the compiler changes."
+}

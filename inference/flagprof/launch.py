@@ -27,6 +27,8 @@ def worker(settings, rank):
     code = 1
     handle = None
     try:
+        from .components.compiler import select
+        select(settings['config'], cache_root=Path(settings['root'])/'component-cache')
         import importlib
         device = importlib.import_module('flagprof.vendors.'+settings['vendor']+'.execution').initialize(rank)
         os.environ['FLAGPROF_DEVICE'] = device
@@ -63,13 +65,25 @@ def worker(settings, rank):
     return code
 
 
-def launch(command, *, store, nproc_per_node=2, comm_backend='hccl', preset='perf',
+def launch(command, *, store, nproc_per_node=2, comm_backend=None, flagcx=None, preset='perf',
            config=None, timeout=1800, source_max_bytes=1 << 30,
            capture_only=False, capture_filesystem='ext4', vendor=None):
     vendors = {'hccl':'ascend','flagcx':'ascend','nccl':'nvidia'}
+    if flagcx not in (None, 'off', 'on'):
+        raise ValueError('flagcx requires off or on')
+    selected = {'off':'hccl','on':'flagcx'}.get(flagcx)
+    if selected and comm_backend and selected != comm_backend:
+        raise ValueError('--flagcx conflicts with --comm-backend')
+    comm_backend = selected or comm_backend or 'hccl'
+    from .probes.config import resolve
+    session_options, probe_options = resolve('coverage' if preset == 'none' else preset, config)
+    config = dict(session_options, **probe_options)
+    if preset == 'none':config['probes'] = 'none'
     if nproc_per_node != 2 or comm_backend not in vendors:
         raise ValueError('launch supports single-host TP2 HCCL/FlagCX/NCCL')
     vendor = vendor or vendors[comm_backend]
+    if flagcx is not None and vendor != 'ascend':
+        raise ValueError('--flagcx shortcut requires Ascend; select --vendor and --comm-backend for other adapters')
     if vendor not in ('ascend','nvidia','thead','kunlunxin'):
         raise ValueError('unsupported launch vendor')
     if vendor=='thead' and comm_backend not in ('flagcx','nccl'):
@@ -101,7 +115,7 @@ def launch(command, *, store, nproc_per_node=2, comm_backend='hccl', preset='per
         sock.bind(('127.0.0.1', 0))
         port = sock.getsockname()[1]
     settings = dict(schema='flagprof-launch/1', group_id=group_id, root=str(root), command=command,
-                    world_size=2, backend=comm_backend, preset=preset, config=config or {},
+                    world_size=2, backend=comm_backend, preset=preset, config=config,
                     timeout=timeout, source_max_bytes=source_max_bytes, vendor=vendor,
                     capture_only=capture_only,capture_filesystem=capture_filesystem)
     atomic_json(root/'launch.json', settings)

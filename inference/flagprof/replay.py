@@ -56,7 +56,8 @@ def prepare(ref, cmp, call_key, out, *, work=None):
             a.ingest();b.ingest()
             if a.partial() or b.partial():raise ValueError('replay source read is partial')
             identities={side:identity(ws) for side,ws in (('ref',a),('cmp',b))}
-            if any(k not in identities['ref'] or identities['ref'][k]!=identities['cmp'].get(k) for k in REQUIRED):
+            required=REQUIRED+tuple(k for k in ('parallelism','rank') if k in identities['ref'] or k in identities['cmp'])
+            if any(k not in identities['ref'] or identities['ref'][k]!=identities['cmp'].get(k) for k in required):
                 raise ValueError('replay source identity mismatch')
             outputs={side:find(ws,call_key) for side,ws in (('ref',a),('cmp',b))}
             configs=[call_config(outputs[side]) for side in ('ref','cmp')]
@@ -124,6 +125,19 @@ def run(package, *, side, device, store):
     selected=packet['sides'][side];expected=selected['identity']
     if device.split(':')[0]!=expected['device'].split(':')[0]:
         raise ValueError('replay execution device family mismatch')
+    compiler_expected=expected.get('compiler')
+    if compiler_expected and compiler_expected.get('status')=='available':
+        from .components.compiler import select, identity as compiler_identity
+        import os
+        provider=compiler_expected['provider']
+        config=dict(flagtree='on' if provider=='flagtree' else 'off')
+        if provider!='flagtree':
+            config['vendor_compiler']=os.environ.get('FLAGPROF_VENDOR_COMPILER') or str(Path(compiler_expected['module_path']).parents[1])
+        if provider=='flagtree' or (Path(config['vendor_compiler'])/'manifest.json').is_file():
+            select(config,cache_root=Path(store).resolve().parent/'component-cache')
+        actual_compiler=compiler_identity()
+        if any(actual_compiler.get(k)!=compiler_expected.get(k) for k in ('provider','version','source_sha256')):
+            raise ValueError('replay compiler source mismatch')
     import torch
     if device.startswith('npu'):__import__('torch_npu')
     from .runner.fixed import numerics,software

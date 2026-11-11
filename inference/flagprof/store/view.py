@@ -76,6 +76,7 @@ class StoreView:
             rows.append(dict(id=state['id'], probes=state.get('probes', {}),
                 effective_config=state.get('effective_config'), component=state.get('component'),
                 route_table=state.get('route_table'), flaggems_identity=state.get('flaggems_identity'),
+                compiler_identity=state.get('compiler_identity'), compiler_execution=state.get('compiler_execution'),
                 op_kinds=state.get('op_kinds'), torch_version=state.get('torch_version'),
                 oracle_identity=state.get('oracle_identity'), tensor=state.get('tensor'),
                 tensor_boundaries=state.get('tensor_boundaries'), module_selection=state.get('module_selection'), route_unobserved=state.get('route_unobserved', 0),

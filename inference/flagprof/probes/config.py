@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 PRESETS = ('perf', 'modules', 'coverage', 'perf-lite', 'accuracy')
-KEYS = {'flaggems', 'flaggems_include', 'dispatch', 'layers', 'probes',
+KEYS = {'flaggems', 'flaggems_include', 'flagtree', 'vendor_compiler', 'dispatch', 'layers', 'probes',
         'each_start', 'each_count', 'fallback_calls', 'summary_seconds',
         'tensor_blob','tensor_blob_bytes','tensor_ops_in','tensor_boundaries'}
 
@@ -15,6 +15,8 @@ def resolve(preset, config=None):
     if preset not in PRESETS:
         raise ValueError('unsupported preset: ' + preset)
     config = dict(config or {})
+    # Effective configurations may be passed through launcher/bootstrap again.
+    config.pop('include_sha256', None)
     options = {k: config.pop(k) for k in list(config) if k in KEYS}
     result = dict(flaggems='off', flaggems_include=None, dispatch='off',
                   layers='selected', probes='default', each_start=1,
@@ -24,6 +26,10 @@ def resolve(preset, config=None):
     if preset == 'accuracy':
         result.update(layers='all',tensor_blob='none',tensor_blob_bytes=1<<30,tensor_ops_in=None,tensor_boundaries=None)
     result.update(options)
+    if 'flagtree' in result and result['flagtree'] not in (None, 'off', 'on'):
+        raise ValueError('flagtree requires off or on')
+    if result.get('vendor_compiler') is not None:
+        result['vendor_compiler'] = str(Path(result['vendor_compiler']).resolve())
     for key, allowed in [('flaggems', ('off', 'on')), ('probes', ('default', 'none')),
                          ('dispatch', ('off', 'summary', 'each-window')),
                          ('layers', ('selected', 'all'))]:

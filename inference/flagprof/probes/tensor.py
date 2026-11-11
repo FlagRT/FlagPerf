@@ -140,6 +140,27 @@ class TensorProbe(Probe):
         return 'unknown'
 
     def invoke(self,func,args,kwargs):
+        try:name=func._schema.name
+        except Exception:name=''
+        if name.startswith(('c10d::','_c10d_functional::','_c10d_functional_autograd::')):
+            # Dispatcher return is not collective completion. Do not snapshot a
+            # tensor while another stream may still be updating its storage.
+            self.metrics['collective_boundaries_skipped']=self.metrics.get('collective_boundaries_skipped',0)+1
+            self.metrics['collective_skip_reason']='completion_not_established_at_dispatch_return'
+            self.busy=True;output=None
+            try:
+                output=func(*args,**kwargs)
+                return output
+            finally:
+                try:
+                    tensors=[t for _,t in arguments(args,kwargs)]+[t for _,t in leaves(output)]
+                    for tensor in tensors:
+                        self.storage_epochs[tensor.untyped_storage().data_ptr()]+=1
+                        self.sources.pop(id(tensor),None)
+                except Exception as error:
+                    self.sources.clear()
+                    self.manager.failure(self.id,error)
+                finally:self.busy=False
         from .dispatch import devices
         from flagprof.devices import accelerator
         from .argtree import describe_args
