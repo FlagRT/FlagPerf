@@ -1,6 +1,7 @@
 # Copyright 2026 FlagOS Contributors
 # Licensed under the Apache License, Version 2.0.
 """Batch driver tests: config contract, command building, CPU battery e2e."""
+import importlib.util
 import json
 import os
 import shutil
@@ -17,12 +18,14 @@ import batch_driver  # noqa: E402
 
 
 class ConfigTests(unittest.TestCase):
+    @unittest.skipUnless(importlib.util.find_spec('yaml'), 'pyyaml required for batch_driver')
     def test_load_local_yaml(self):
         rows = batch_driver.load_config(str(ROOT / 'tools' / 'models_local.yaml'))
         self.assertEqual([r['id'] for r in rows],
                          ['ctr-dlrm', 'ctr-din', 'blocked-example'])
         self.assertEqual(rows[2]['status'], 'blocked')
 
+    @unittest.skipUnless(importlib.util.find_spec('yaml'), 'pyyaml required for batch_driver')
     def test_rejects_duplicate_and_missing(self):
         import yaml
         with tempfile.TemporaryDirectory() as tmp:

@@ -10,9 +10,12 @@ from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'targets'))
 
-from flagprof.runner import ctr as ctr_mod
-from flagprof.runner import rerank as rerank_mod
-from flagprof.runner.rerank_common import load_package as canonical_load_package
+try:
+    from flagprof.runner import ctr as ctr_mod
+    from flagprof.runner import rerank as rerank_mod
+    from flagprof.runner.rerank_common import load_package as canonical_load_package
+except ImportError:  # smoke CI runs this suite without torch; runner.ctr imports torch
+    raise unittest.SkipTest('torch execution environment required')
 import rerank_common  # targets shim
 
 

@@ -1,6 +1,7 @@
 # Copyright 2026 FlagOS Contributors
 # Licensed under the Apache License, Version 2.0.
 """Rerank package v1 loader and score extraction, CPU only."""
+import importlib.util
 import json
 import tempfile
 import unittest
@@ -29,6 +30,7 @@ def build_package(root, rows, batch_size=2, corrupt=None):
     return root
 
 
+@unittest.skipUnless(importlib.util.find_spec('torch'), 'optional torch CPU runtime')
 class RerankPackageTests(unittest.TestCase):
     def test_load_selects_pads_and_masks_right(self):
         import torch

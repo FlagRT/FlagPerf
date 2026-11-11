@@ -1,6 +1,7 @@
 # Copyright 2026 FlagOS Contributors
 # Licensed under the Apache License, Version 2.0.
 """Vendor-code package loader and embed target helpers, CPU only."""
+import importlib.util
 import json
 import tempfile
 import unittest
@@ -50,6 +51,7 @@ def build_stub(root):
 
 
 class VendorCodeTests(unittest.TestCase):
+    @unittest.skipUnless(importlib.util.find_spec('torch'), 'optional torch CPU runtime')
     def test_two_level_package_load_resolves_leaf_modules(self):
         import torch
         with tempfile.TemporaryDirectory() as tmp:
@@ -58,6 +60,7 @@ class VendorCodeTests(unittest.TestCase):
             self.assertEqual(model.mid_marker, 'leaf')
             self.assertTrue(model.__class__.__module__.startswith('flagprof_vendor_'))
 
+    @unittest.skipUnless(importlib.util.find_spec('torch'), 'optional torch CPU runtime')
     def test_auto_map_remote_reference_rejected(self):
         import torch
         with tempfile.TemporaryDirectory() as tmp:

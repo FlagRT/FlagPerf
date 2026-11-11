@@ -8,8 +8,11 @@ from pathlib import Path
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'targets'))
-from flagprof.runner.ctr import (load_ctr_package, build_model, weight_sha256,
-                                 CtrCallable, ARCH_CONFIG, prepare_inputs)
+try:
+    from flagprof.runner.ctr import (load_ctr_package, build_model, weight_sha256,
+                                     CtrCallable, ARCH_CONFIG, prepare_inputs)
+except ImportError:  # smoke CI runs this suite without torch; runner.ctr imports torch
+    raise unittest.SkipTest('torch execution environment required')
 from make_ctr_package import SCHEMA
 
 
