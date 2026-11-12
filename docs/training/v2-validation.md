@@ -42,8 +42,8 @@
 
 | 回归 | 结果 | 说明 |
 |---|---|---|
-| 既有 Inference 标准库 smoke（python -S） | 160 tests，65 skipped，OK（2026-11-12，PPU 容器内 Linux） | 在无 torch/SDK 导入条件运行；新增 16 项 embedding/rerank 训练任务测试中 12 项依赖 torch 在此条件下跳过、4 项纯契约测试通过，跳过项不计通过 |
-| 训练语义 + 训练分析 + CTR/embedding/rerank 任务 + 原精度/replay 定向回归 | 53 tests，OK（2026-11-12，含 10 项 CTR、16 项 embedding/rerank 任务测试） | 命令为 `python3 -B -m unittest tests.test_training tests.test_training_analysis tests.test_training_ctr tests.test_training_embedding tests.test_training_rerank tests.probes.test_accuracy tests.probes.test_replay -v`（仓库 `inference/` 目录）；不与上行或模型设备实测重复相加 |
+| 既有 Inference 标准库 smoke（python -S） | 171 tests，69 skipped，OK（2026-11-12，PPU 容器内 Linux） | 在无 torch/SDK 导入条件运行；含 CTR/embedding/rerank/模型注册表新测试中不依赖 torch 的项，其余在此条件下跳过，跳过项不计通过 |
+| 训练语义 + 训练分析 + CTR/embedding/rerank/注册表任务 + 原精度/replay 定向回归 | 64 tests，OK（2026-11-12，含 10 项 CTR、16 项 embedding/rerank、11 项模型注册表测试） | 命令为 `python3 -B -m unittest tests.test_training tests.test_training_analysis tests.test_training_ctr tests.test_training_embedding tests.test_training_rerank tests.test_training_registry tests.probes.test_accuracy tests.probes.test_replay -v`（仓库 `inference/` 目录）；不与上行或模型设备实测重复相加 |
 | 原 TP2 embedding CPU 用例 | 环境失败保留 | PPU 镜像无设备映射时，Transformers TP 加载尝试 CUDA 初始化并报 driver shutting down；在完全未修改的 `3417e54d` 归档上同样复现。不是本次引入，亦不改测试掩盖 |
 
 ## 保留的问题与范围
