@@ -52,17 +52,34 @@ def validate_package_semantics(manifest, score):
 
 def run_rerank(*, package, model_path, score, device, dtype, outputs,
                samples=None, batch_size=None, warmup=0, forwards=3,
-               trust_remote_code=False):
+               trust_remote_code=False, repeats=1, numerics='default', flaggems=None,
+               flaggems_include=None, flagtree=None, vendor_compiler=None):
+    from .execution import execution, validate_counts
+    validate_counts(batch_size, warmup, forwards, repeats)
+    with execution(device=device, outputs=outputs, numerics=numerics, flaggems=flaggems,
+                   flaggems_include=flaggems_include, flagtree=flagtree,
+                   vendor_compiler=vendor_compiler) as state:
+        result = _run_rerank(package=package, model_path=model_path, score=score,
+                            device=device, dtype=dtype, outputs=outputs, samples=samples,
+                            batch_size=batch_size, warmup=warmup, forwards=forwards,
+                            trust_remote_code=trust_remote_code, repeats=repeats, execution_state=state)
+        result.update(effective_config=state['effective_config'],
+                      component_identity=state['component_identity'], component_owner=state['component_owner'])
+        return result
+
+
+def _run_rerank(*, package, model_path, score, device, dtype, outputs,
+               samples=None, batch_size=None, warmup=0, forwards=3,
+               trust_remote_code=False, repeats=1, execution_state):
     """Canonical rerank execution; returns the target-style result dict."""
     import torch
     from flagprof import current_attachment
     from flagprof.runner import run_prepared
     handle = current_attachment()
-    sync = torch.cuda.synchronize if device.startswith('cuda') else (torch.npu.synchronize if device.startswith('npu') else (lambda: None))
-    if device.startswith('npu'):
-        import torch_npu
-        torch.npu.set_device(device)
+    sync = execution_state['sync']
 
+    batches, manifest = load_package(package, batch_size=batch_size, samples=samples)
+    validate_package_semantics(manifest, score)
     torch.manual_seed(531)
     from transformers import AutoTokenizer, AutoModelForCausalLM, AutoModelForSequenceClassification
     vendor_code = None
@@ -83,47 +100,49 @@ def run_rerank(*, package, model_path, score, device, dtype, outputs,
             torch_dtype=getattr(torch, dtype), attn_implementation='eager').to(device).eval()
     if hasattr(model.config, 'use_cache'):
         model.config.use_cache = False
+    model._flagprof_output_boundaries = ['scores']
     if handle:
         handle.register_model(model)
-    batches, manifest = load_package(package, batch_size=batch_size, samples=samples)
-    validate_package_semantics(manifest, score)
     yes_id = no_id = None
     if score == 'causal_yesno':
         yes_id = tokenizer.convert_tokens_to_ids('yes')
         no_id = tokenizer.convert_tokens_to_ids('no')
         if yes_id == tokenizer.unk_token_id or no_id == tokenizer.unk_token_id:
             raise ValueError('tokenizer lacks literal yes/no tokens')
-    identity = dict(oracle_id=manifest['oracle_id'],
+    identity = dict(task='rerank', oracle_id=manifest['oracle_id'],
         inputs_sha256=manifest['files']['prepared/inputs.pt']['sha256'],
         score_semantics=score, template_sha=manifest['template_sha'],
         model_files=model_files_identity(model_path), dtype=dtype, device=device,
         samples=[s for ids_, _ in batches for s in ids_])
-    if vendor_code:
-        identity['code_files'] = vendor_code
+    from .execution import batch_identity
+    identity.update(execution_state['identity'], batches=batch_identity(batches), probe_alg='p4v1',
+                    attention='vendor(use_flash_attn=False)' if vendor_code else 'eager',
+                    yes_token_id=yes_id, no_token_id=no_id, code_files=vendor_code or {})
 
     out = Path(outputs)
     run_rows = []
-    for batch_index, (sample_ids, cpu) in enumerate(batches):
-        inputs = {key: value.to(device) for key, value in cpu.items()}
-        inputs.update(return_dict=True)
-        if 'use_cache' in inspect.signature(model.forward).parameters:
-            inputs['use_cache'] = False
-        if handle:
-            handle.bind_tensor_inputs(sample_ids, inputs, identity=identity)
-
-        def transform(output, _mask=inputs['attention_mask']):
-            if score == 'causal_yesno':
-                result = causal_yes_scores(output.logits, _mask, yes_id, no_id)
-            else:
-                result = sequence_logit_scores(output.logits)
+    for repeat in range(repeats):
+        for batch_index, (sample_ids, cpu) in enumerate(batches):
+            inputs = {key: value.to(device) for key, value in cpu.items()}
+            inputs.update(return_dict=True)
+            if 'use_cache' in inspect.signature(model.forward).parameters:
+                inputs['use_cache'] = False
             if handle:
-                handle.record_tensor('scores', result)
-            return result
+                handle.bind_tensor_inputs(sample_ids, inputs, identity=identity)
 
-        folder = out / str(batch_index) if len(batches) > 1 else out
-        run_rows.append(dict(samples=sample_ids,
-            run=run_prepared(model, inputs, warmup=warmup, forwards=forwards,
-                             outputs=folder, sync=sync, transform=transform)))
+            def transform(output, _mask=inputs['attention_mask']):
+                if score == 'causal_yesno':
+                    result = causal_yes_scores(output.logits, _mask, yes_id, no_id)
+                else:
+                    result = sequence_logit_scores(output.logits)
+                if handle:
+                    handle.record_tensor('scores', result)
+                return result
+
+            folder = out / (str(repeat)+'-'+str(batch_index)) if repeats > 1 else (out / str(batch_index) if len(batches) > 1 else out)
+            run_rows.append(dict(samples=sample_ids,
+                run=run_prepared(model, inputs, warmup=warmup, forwards=forwards,
+                                 outputs=folder, sync=sync, transform=transform)))
     score_sha = hashlib.sha256(json.dumps([r['run']['outputs'] for r in run_rows],
         sort_keys=True).encode()).hexdigest()
     result = dict(model=model_path, score_semantics=score, yes_token_id=yes_id,
@@ -141,6 +160,7 @@ def execute(args):
     """flagprof.runner --task rerank: same canonical run, runner.json surface."""
     import time
     from .fixed import software
+    from .execution import options
     if not args.model.startswith('hf:'):
         raise ValueError('hf:<directory> required for --task rerank')
     start = time.perf_counter()
@@ -149,7 +169,8 @@ def execute(args):
                         outputs=args.outputs,
                         samples=args.samples.split(',') if args.samples else None,
                         batch_size=args.batch_size, warmup=args.warmup,
-                        forwards=args.forwards, trust_remote_code=args.trust_remote_code)
+                        forwards=args.forwards, trust_remote_code=args.trust_remote_code,
+                        repeats=args.repeats, **options(args))
     out = Path(args.outputs)
     runner_result = dict(model=result['model'], task='rerank', package=args.package,
         load_s=time.perf_counter() - start, score_semantics=result['score_semantics'],
@@ -157,7 +178,8 @@ def execute(args):
         batch_size=result['batch_size'], score_batches_sha256=result['score_batches_sha256'],
         vendor_code=result['vendor_code'],
         software=software(), instrumentation='attachment' if result['attachment'] else 'none',
-        runs=[r['run'] for r in result['runs']])
+        effective_config=result['effective_config'], component_identity=result['component_identity'],
+        component_owner=result['component_owner'], runs=[r['run'] for r in result['runs']])
     (out / 'runner.json').write_text(json.dumps(runner_result, sort_keys=True, indent=2) + '\n')
     print(json.dumps(dict(output=str(out), attachment=result['attachment'],
         score_batches_sha256=result['score_batches_sha256'])))
@@ -177,6 +199,7 @@ def attach_main():
     p.add_argument('--batch-size', type=int)
     p.add_argument('--warmup', type=int, default=0)
     p.add_argument('--forwards', type=int, default=3)
+    p.add_argument('--trust-remote-code', action='store_true')
     args = p.parse_args()
     if not args.model.startswith('hf:'):
         p.error('hf:<directory> required')
@@ -185,7 +208,7 @@ def attach_main():
                         outputs=args.outputs,
                         samples=args.samples.split(',') if args.samples else None,
                         batch_size=args.batch_size, warmup=args.warmup,
-                        forwards=args.forwards)
+                        forwards=args.forwards, trust_remote_code=args.trust_remote_code)
     out = Path(args.outputs)
     payload = dict(model=result['model'], score_semantics=result['score_semantics'],
         yes_token_id=result['yes_token_id'], no_token_id=result['no_token_id'],

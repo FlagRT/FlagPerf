@@ -103,6 +103,7 @@ class EmbeddingTaskTests(unittest.TestCase):
         self.assertEqual(batches[0]['cand_ids'].shape[0], 3 * 3)  # pos + 2 negs per group
         self.assertTrue(bool((batches[0]['anchor_mask'].sum(1) >= 1).all()))
         self.assertEqual(protocol['pooling'], 'mean')
+        self.assertIn('embedding-loss/2', protocol['loss_precision'])
         self.assertEqual(protocol['groups_per_rank'], 6)
         self.assertIn('loss', protocol)
         left = self.prepare(rank=0, world_size=2)[1]

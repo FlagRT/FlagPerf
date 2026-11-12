@@ -7,12 +7,19 @@ import json
 from pathlib import Path
 import time
 
+CTR_ARCH_CHOICES = ['dlrm', 'din', 'widedeep', 'deepfm', 'dcn', 'esmm',
+                    'mmoe', 'ple', 'bst', 'dien', 'dcnmix', 'dssm', 'sasrec', 'lightgcn']
+
 
 def pool_embedding(hidden, mask, *, mean=False, cls=False, normalize=True):
     """CLS token / last valid token / token mean, then FP32 L2, matching the registered workload semantics."""
     import torch
     if cls:
-        pooled=hidden[:,0]
+        valid=mask != 0
+        if not bool(valid.any(dim=1).all()):
+            raise ValueError('CLS pooling requires a nonempty token sequence')
+        indices=valid.long().argmax(dim=1)
+        pooled=hidden[torch.arange(hidden.shape[0],device=hidden.device),indices]
     elif mean:
         weights=mask.unsqueeze(-1).to(torch.float32)
         pooled=(hidden.float()*weights).sum(1)/weights.sum(1).clamp_min(1)
@@ -53,7 +60,9 @@ def run_prepared(model, inputs, *, warmup=0, forwards=3, outputs=None, sync=None
             if i < warmup:
                 continue
             times.append(duration)
-            tensor = value.detach().cpu().contiguous()
+            # A size-one strided score can be "contiguous" while its last
+            # stride is >1; a byte view still requires a unit stride.
+            tensor = value.detach().cpu().clone(memory_format=torch.contiguous_format)
             raw = tensor.view(torch.uint8).numpy().tobytes()
             row = dict(index=i, shape=list(tensor.shape), dtype=str(tensor.dtype),
                        finite=bool(torch.isfinite(tensor).all()), sha256=hashlib.sha256(raw).hexdigest())

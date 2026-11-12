@@ -1,5 +1,14 @@
 # 适配与文档变更记录
 
+## 2026-11-12 — 模型适配 PR 审查修复
+
+- CTR/rerank 使用任务专属 Oracle 身份，采集的 scores 输出可进入差分报告；批次、初始权重、打分语义与代码身份纳入比较。
+- 包任务执行组件/数值策略开关及 repeats，并检查采集器配置冲突；不适用参数显式报错。
+- embedding/rerank 采集入口统一要求显式厂商代码授权；代码指纹递归覆盖子目录，模块缓存按代码版本隔离。
+- CLS 默认右填充并选择首个有效 token；修复单样本非单位步长分数的二进制导出。
+- embedding 训练 loss 显式使用 FP32 池化、归一化与相似度计算，数值协议记录精度边界。
+- 新增 CPU 完整采集与 Oracle 回归，并加入有 torch、无设备的 CI 作业。用法与验证入口见[模型适配](../inference/docs/thead-model-adaptation.md)。
+
 ## 2026-11-11 — Training v2 标准训练观测（候选）
 
 - 复用 Inference v2 采集、Store 和报告，新增训练阶段、标准分类/HF causal LM、梯度与参数对比、检查点恢复及标准 DDP 逐 rank 入口；旧训练入口保留。

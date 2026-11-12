@@ -27,7 +27,7 @@ POOLING_SEMANTICS={'last':'last-valid-token-fp32-l2','mean':'mean-fp32-l2','cls'
 
 
 def main():
-    p = argparse.ArgumentParser()
+    p = argparse.ArgumentParser(allow_abbrev=False)
     p.add_argument('model', nargs='?', default=None,
                    help='hf:<directory> (embedding/generate/rerank only)')
     p.add_argument('--task', choices=['embedding','generate','rerank','ctr'], default='embedding')
@@ -41,7 +41,7 @@ def main():
     p.add_argument('--max-length', type=int, default=256)
     p.add_argument('--dtype', choices=['bfloat16','float16','float32'], default='bfloat16')
     p.add_argument('--attention', default='eager')
-    p.add_argument('--padding-side', choices=['left','right'], default='left')
+    p.add_argument('--padding-side', choices=['left','right'], default=None)
     p.add_argument('--pooling', choices=['last','mean','cls'], default='last')
     p.add_argument('--warmup', type=int, default=0)
     p.add_argument('--forwards', type=int)
@@ -52,7 +52,7 @@ def main():
     p.add_argument('--flaggems-include')
     p.add_argument('--package')
     p.add_argument('--score', choices=['causal_yesno','sequence_logit'])
-    from .ctr import ARCH_CHOICES as ctr_arch_choices  # lazy import: keeps module-level import torch-free (CLI runs still load torch here via ctr)
+    from . import CTR_ARCH_CHOICES as ctr_arch_choices
     p.add_argument('--arch', choices=ctr_arch_choices)
     p.add_argument('--seed', type=int, default=531)
     p.add_argument('--trust-remote-code', action='store_true',
@@ -63,6 +63,7 @@ def main():
     p.add_argument('--vendor-compiler')
     args = p.parse_args()
     if args.forwards is None:args.forwards=1 if args.task=='generate' else 3
+    if args.padding_side is None:args.padding_side='right' if args.pooling=='cls' else 'left'
     if __import__('os').environ.get('FLAGPROF_DEVICE'):
         args.device=__import__('os').environ['FLAGPROF_DEVICE']
         args.outputs=str(Path(args.outputs)/('rank-'+__import__('os').environ['RANK']))
@@ -71,29 +72,36 @@ def main():
     if args.task=='rerank':
         if not args.model or not args.model.startswith('hf:') or not args.package or not args.score:
             p.error('--task rerank needs hf:<directory> model, --package and --score')
-        from .rerank import execute
-        return execute(args)
     if args.task=='ctr':
         if args.model:
             p.error('--task ctr takes no model positional')
         if not args.package or not args.arch:
             p.error('--task ctr needs --package and --arch')
-        from .ctr import execute
-        return execute(args)
-    if not args.model or not args.model.startswith('hf:') or min(args.batch_size or 4, args.forwards, args.repeats) < 1 or args.warmup < 0:
-        p.error('hf:<directory>, positive counts and nonnegative warmup required')
-    if not args.inputs and not args.inputs_from:p.error('--inputs or --inputs-from required')
+    from .execution import select_compiler, validate_counts
+    validate_counts(args.batch_size, args.warmup, args.forwards, args.repeats)
+    if args.task in ('ctr','rerank'):
+        import sys
+        unsupported = {'--inputs','--inputs-from','--pooling','--padding-side','--max-length',
+                       '--generation-mode','--max-new-tokens'}
+        unsupported |= {'--score','--attention'} if args.task=='ctr' else {'--arch','--seed'}
+        supplied = {arg.split('=',1)[0] for arg in sys.argv[1:] if arg.startswith('--')}
+        unused = supplied & unsupported
+        if unused:p.error('options not supported for --task '+args.task+': '+', '.join(sorted(unused)))
+        if args.task=='rerank' and args.attention!='eager':
+            p.error('rerank currently requires --attention eager')
+    else:
+        if not args.model or not args.model.startswith('hf:'):
+            p.error('hf:<directory> model required')
+        if not args.inputs and not args.inputs_from:p.error('--inputs or --inputs-from required')
     from flagprof import current_attachment
     handle = current_attachment()
-    if handle:
-        for key in ('flagtree','vendor_compiler'):
-            value=getattr(args,key)
-            if key=='vendor_compiler' and value is not None:value=str(Path(value).resolve())
-            if value is not None and value != handle.state['effective_config'].get(key):
-                p.error('runner compiler configuration conflicts with attachment')
-    else:
-        from flagprof.components.compiler import select
-        select(dict(flagtree=args.flagtree,vendor_compiler=args.vendor_compiler),cache_root=Path(args.outputs).parent/'component-cache')
+    select_compiler(handle, flagtree=args.flagtree, vendor_compiler=args.vendor_compiler, outputs=args.outputs)
+    if args.task=='rerank':
+        from .rerank import execute
+        return execute(args)
+    if args.task=='ctr':
+        from .ctr import execute
+        return execute(args)
     if args.task=='generate':
         from .generate import execute
         return execute(args)

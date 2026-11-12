@@ -20,11 +20,17 @@ class PoolingTests(unittest.TestCase):
     @unittest.skipUnless(importlib.util.find_spec('torch'), 'optional torch CPU runtime')
     def test_cls_is_invariant_to_padding_side(self):
         import torch
-        hidden = torch.randn(1, 5, 3)
-        left = torch.tensor([[1, 1, 1, 0, 0]])
-        right = torch.tensor([[0, 0, 1, 1, 1]])
-        self.assertTrue(torch.equal(pool_embedding(hidden, left, cls=True),
-                                    pool_embedding(hidden, right, cls=True)))
+        tokens = torch.tensor([[[1., 2.], [3., 4.], [5., 6.]]])
+        padding = torch.tensor([[[99., 99.], [99., 99.]]])
+        right_hidden = torch.cat([tokens, padding], dim=1)
+        left_hidden = torch.cat([padding, tokens], dim=1)
+        right_mask = torch.tensor([[1, 1, 1, 0, 0]])
+        left_mask = torch.tensor([[0, 0, 1, 1, 1]])
+        expected = torch.nn.functional.normalize(tokens[:, 0], p=2, dim=1)
+        self.assertTrue(torch.equal(pool_embedding(left_hidden, left_mask, cls=True), expected))
+        self.assertTrue(torch.equal(pool_embedding(right_hidden, right_mask, cls=True), expected))
+        with self.assertRaisesRegex(ValueError, 'nonempty'):
+            pool_embedding(left_hidden, torch.zeros_like(left_mask), cls=True)
 
     @unittest.skipUnless(importlib.util.find_spec('torch'), 'optional torch CPU runtime')
     def test_last_and_mean_behavior_unchanged(self):

@@ -12,6 +12,7 @@ not import torch.
 import json
 
 POOLS = ('last', 'cls', 'mean')
+LOSS_PRECISION = 'embedding-loss/2: float32 pooling, normalization, similarity and cross_entropy'
 
 
 def pool_description(pool):
@@ -49,23 +50,25 @@ def build_loss_fn(pool, temperature):
         hidden = getattr(output, 'last_hidden_state', None)
         if hidden is None:
             hidden = output[0]
-        anchor = F.normalize(pool_hidden(hidden, anchor_mask), dim=-1)
+        anchor_hidden = hidden
         cand_mask = batch['cand_mask']
         output = model(input_ids=batch['cand_ids'], attention_mask=cand_mask)
         hidden = getattr(output, 'last_hidden_state', None)
         if hidden is None:
             hidden = output[0]
-        candidates = F.normalize(pool_hidden(hidden, cand_mask), dim=-1)
-        device_type = anchor.device.type
+        candidate_hidden = hidden
+        device_type = anchor_hidden.device.type
         if device_type in ('cpu', 'cuda', 'xpu', 'npu'):
             region = torch.autocast(device_type, enabled=False)
         else:
             region = nullcontext()
         with region:
+            anchor = F.normalize(pool_hidden(anchor_hidden.float(), anchor_mask), dim=-1)
+            candidates = F.normalize(pool_hidden(candidate_hidden.float(), cand_mask), dim=-1)
             scores = anchor @ candidates.t() / float(temperature)
             stride = candidates.shape[0] // anchor.shape[0]
             target = torch.arange(anchor.shape[0], device=scores.device) * stride
-            return F.cross_entropy(scores.float(), target)
+            return F.cross_entropy(scores, target)
     return loss_fn
 
 
@@ -140,6 +143,7 @@ def prepare_embedding(*, model, inputs, pooling, temperature, batch_size,
                     groups_per_rank=len(groups),
                     negatives_per_group=neg_k,
                     loss=loss_definition(pooling, temperature),
+                    loss_precision=LOSS_PRECISION,
                     data='pretokenized triplet groups (anchor, pos, K negatives); '
                          'padded per microbatch; sealed by the engine input digest')
     return model, batches, build_loss_fn(pooling, temperature), protocol

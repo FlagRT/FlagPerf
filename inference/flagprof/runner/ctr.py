@@ -83,6 +83,7 @@ import torch
 import torch.nn
 
 from .rerank_common import sha
+from . import CTR_ARCH_CHOICES as ARCH_CHOICES
 
 
 def load_ctr_package(package, *, batch_size, samples=None):
@@ -992,13 +993,24 @@ def prepare_inputs(cpu, device, dtype):
     return out
 
 
-ARCH_CHOICES = ['dlrm', 'din', 'widedeep', 'deepfm', 'dcn', 'esmm',
-                'mmoe', 'ple', 'bst', 'dien', 'dcnmix', 'dssm', 'sasrec',
-                'lightgcn']
-
-
 def run_ctr(*, package, arch, seed, device, dtype, outputs, samples=None,
-            batch_size=4, warmup=0, forwards=3):
+            batch_size=4, warmup=0, forwards=3, repeats=1, numerics='default',
+            flaggems=None, flaggems_include=None, flagtree=None, vendor_compiler=None):
+    from .execution import execution, validate_counts
+    validate_counts(batch_size, warmup, forwards, repeats)
+    with execution(device=device, outputs=outputs, numerics=numerics, flaggems=flaggems,
+                   flaggems_include=flaggems_include, flagtree=flagtree,
+                   vendor_compiler=vendor_compiler) as state:
+        result = _run_ctr(package=package, arch=arch, seed=seed, device=device, dtype=dtype,
+                          outputs=outputs, samples=samples, batch_size=batch_size,
+                          warmup=warmup, forwards=forwards, repeats=repeats, execution_state=state)
+        result.update(effective_config=state['effective_config'],
+                      component_identity=state['component_identity'], component_owner=state['component_owner'])
+        return result
+
+
+def _run_ctr(*, package, arch, seed, device, dtype, outputs, samples=None,
+            batch_size=4, warmup=0, forwards=3, repeats=1, execution_state):
     """Canonical CTR execution shared by the attach target and runner task.
 
     Returns the target-style result dict; writes nothing."""
@@ -1006,10 +1018,7 @@ def run_ctr(*, package, arch, seed, device, dtype, outputs, samples=None,
     from flagprof import current_attachment
     from flagprof.runner import run_prepared
     handle = current_attachment()
-    sync = torch.cuda.synchronize if device.startswith('cuda') else (torch.npu.synchronize if device.startswith('npu') else (lambda: None))
-    if device.startswith('npu'):
-        import torch_npu
-        torch.npu.set_device(device)
+    sync = execution_state['sync']
 
     batches, manifest = load_ctr_package(package, batch_size=batch_size, samples=samples)
     if arch not in manifest['contract']['archs']:
@@ -1017,42 +1026,47 @@ def run_ctr(*, package, arch, seed, device, dtype, outputs, samples=None,
     torch_dtype = getattr(torch, dtype) if dtype != 'float32' else torch.float32
     net = build_model(arch, seed, device, dtype=torch_dtype, package=package)
     model = CtrCallable(arch, net)
+    model._flagprof_output_boundaries = ['scores']
     config_sha = hashlib.sha256(json.dumps(ARCH_CONFIG, sort_keys=True,
         default=str).encode()).hexdigest()
-    identity = dict(kind='ctr-template-v1', arch=arch,
+    identity = dict(task='ctr', kind='ctr-template-v1', arch=arch,
         config_sha256=config_sha, weight_sha256=weight_sha256(net),
         seed=seed, init='manual_seed+default-init',
         inputs_sha256=manifest['files']['prepared/inputs.pt']['sha256'],
         oracle_id=manifest['oracle_id'], dtype=dtype, device=device,
         samples=[s for ids_, _ in batches for s in ids_])
+    from .execution import batch_identity
+    identity.update(execution_state['identity'], batches=batch_identity(batches), probe_alg='p4v1',
+                    score_semantics='cosine' if arch=='dssm' else 'sigmoid')
 
     out = Path(outputs)
     run_rows = []
-    for batch_index, (sample_ids, cpu) in enumerate(batches):
-        inputs = prepare_inputs(cpu, device, torch_dtype)
-        if arch == 'lightgcn':
-            # user nodes are the package samples; user_idx carries the sample
-            # index of every row in this batch (user_final lookup).
-            inputs['user_idx'] = torch.tensor([int(s) for s in sample_ids],
-                                              device=device)
-        def transform(output):
-            if arch in ('esmm', 'mmoe', 'ple', 'bst', 'dien', 'dcnmix', 'dssm'):
-                # reference produces the final scores inside forward
-                # (sigmoid for esmm/mmoe/ple/bst/dien/dcnmix; cosine in
-                # [-1, 1] for dssm); esmm/mmoe/ple are [batch, n_task]
-                scores = output.float()
-            else:
-                scores = torch.sigmoid(output.float().squeeze(1))
+    for repeat in range(repeats):
+        for batch_index, (sample_ids, cpu) in enumerate(batches):
+            inputs = prepare_inputs(cpu, device, torch_dtype)
+            if arch == 'lightgcn':
+                # user nodes are the package samples; user_idx carries the sample
+                # index of every row in this batch (user_final lookup).
+                inputs['user_idx'] = torch.tensor([int(s) for s in sample_ids],
+                                                  device=device)
+            def transform(output):
+                if arch in ('esmm', 'mmoe', 'ple', 'bst', 'dien', 'dcnmix', 'dssm'):
+                    # reference produces the final scores inside forward
+                    # (sigmoid for esmm/mmoe/ple/bst/dien/dcnmix; cosine in
+                    # [-1, 1] for dssm); esmm/mmoe/ple are [batch, n_task]
+                    scores = output.float()
+                else:
+                    scores = torch.sigmoid(output.float().squeeze(1))
+                if handle:
+                    handle.record_tensor('scores', scores)
+                return scores
             if handle:
-                handle.record_tensor('scores', scores)
-            return scores
-        if handle:
-            handle.bind_tensor_inputs(sample_ids, inputs, identity=identity)
-        folder = out / str(batch_index) if len(batches) > 1 else out
-        run_rows.append(dict(samples=sample_ids,
-            run=run_prepared(model, inputs, warmup=warmup,
-                             forwards=forwards, outputs=folder, sync=sync,
-                             transform=transform)))
+                handle.bind_tensor_inputs(sample_ids, inputs, identity=identity)
+            folder = out / (str(repeat)+'-'+str(batch_index)) if repeats > 1 else (out / str(batch_index) if len(batches) > 1 else out)
+            run_rows.append(dict(samples=sample_ids,
+                run=run_prepared(model, inputs, warmup=warmup,
+                                 forwards=forwards, outputs=folder, sync=sync,
+                                 transform=transform)))
     score_sha = hashlib.sha256(json.dumps([r['run']['outputs'] for r in run_rows],
         sort_keys=True).encode()).hexdigest()
     # dssm's forward yields cosines in [-1, 1]; every other arch's persisted
@@ -1071,19 +1085,21 @@ def execute(args):
     """flagprof.runner --task ctr: same canonical run, runner.json surface."""
     import time
     from .fixed import software
+    from .execution import options
     start = time.perf_counter()
     result = run_ctr(package=args.package, arch=args.arch, seed=args.seed,
                      device=args.device, dtype=args.dtype, outputs=args.outputs,
                      samples=args.samples.split(',') if args.samples else None,
                      batch_size=args.batch_size or 4, warmup=args.warmup,
-                     forwards=args.forwards)
+                     forwards=args.forwards, repeats=args.repeats, **options(args))
     out = Path(args.outputs)
     runner_result = dict(model=result['model'], task='ctr', arch=args.arch,
         package=args.package, load_s=__import__('time').perf_counter() - start,
         semantics=result['semantics'], oracle_identity=result['oracle_identity'],
         batch_size=result['batch_size'], score_batches_sha256=result['score_batches_sha256'],
         software=software(), instrumentation='attachment' if result['attachment'] else 'none',
-        runs=[r['run'] for r in result['runs']])
+        effective_config=result['effective_config'], component_identity=result['component_identity'],
+        component_owner=result['component_owner'], runs=[r['run'] for r in result['runs']])
     (out / 'runner.json').write_text(json.dumps(runner_result, sort_keys=True, indent=2) + '\n')
     print(json.dumps(dict(output=str(out), attachment=result['attachment'],
         score_batches_sha256=result['score_batches_sha256'])))

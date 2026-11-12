@@ -92,7 +92,7 @@ class VendorLoadTests(unittest.TestCase):
             self.assertEqual(model.config.use_flash_attn, False)
             self.assertEqual(model.config.local_files_only, True)
             self.assertEqual(model.kwargs.get('torch_dtype'), 'float32')
-            pkg = 'flagprof_vendor_' + Path(tmp).name.replace('-', '_').replace('.', '_')
+            pkg = type(model).__module__.split('.')[0]
             self.assertIn(pkg, sys.modules)
             # cleanup so later tests do not see the fake package
             del sys.modules[pkg]
@@ -114,7 +114,7 @@ class VendorLoadTests(unittest.TestCase):
             root = _vendor_dir(tmp, auto_map={'AutoModel': 'configuration_fake.PlainModel'})
             model = load_with_vendor_code(tmp, 'float32')
             self.assertEqual(type(model).__name__, 'PlainModel')
-            pkg = 'flagprof_vendor_' + Path(tmp).name.replace('-', '_').replace('.', '_')
+            pkg = type(model).__module__.split('.')[0]
             del sys.modules[pkg]
 
 

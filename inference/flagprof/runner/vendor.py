@@ -32,8 +32,9 @@ import sys
 
 def code_files_identity(model_path):
     """sha256 of every vendor *.py shipped in the model directory."""
-    return {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
-            for p in sorted(Path(model_path).glob('*.py'))}
+    root = Path(model_path)
+    return {p.relative_to(root).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
+            for p in sorted(root.rglob('*.py')) if '__pycache__' not in p.parts}
 
 
 def load_with_vendor_code(model_path, dtype, auto_key='AutoModel'):
@@ -50,7 +51,8 @@ def load_with_vendor_code(model_path, dtype, auto_key='AutoModel'):
     if auto_key not in auto_map or '--' in str(auto_map[auto_key]):
         raise ValueError('vendor-code load needs a local auto_map ' + auto_key + ' entry')
     module_name, _, class_name = auto_map[auto_key].rpartition('.')
-    pkg_name = 'flagprof_vendor_' + root.name.replace('-', '_').replace('.', '_')
+    identity = json.dumps([str(root.resolve()), code_files_identity(root)], sort_keys=True)
+    pkg_name = 'flagprof_vendor_' + hashlib.sha256(identity.encode()).hexdigest()
     spec = importlib.util.spec_from_file_location(
         pkg_name, root / (module_name + '.py'), submodule_search_locations=[str(root)])
     package = importlib.util.module_from_spec(spec)

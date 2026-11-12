@@ -46,6 +46,8 @@ def main():
     p.add_argument('--samples')
     p.add_argument('--warmup', type=int, default=0)
     p.add_argument('--forwards', type=int, default=3)
+    p.add_argument('--trust-remote-code', action='store_true',
+                   help='Allow custom model Python already present in the local model directory')
     args = p.parse_args()
     if not args.model.startswith('hf:'):
         p.error('hf:<directory> required')
@@ -70,8 +72,8 @@ def main():
 
     from transformers import AutoTokenizer
     tokenizer = AutoTokenizer.from_pretrained(model_path, local_files_only=True, trust_remote_code=False)
-    vendor_code = code_files_identity(model_path)
-    if vendor_code and any(name.startswith('modeling_') for name in vendor_code):
+    vendor_code = code_files_identity(model_path) if args.trust_remote_code else None
+    if vendor_code:
         model = load_with_vendor_code(model_path, getattr(torch, args.dtype))
     else:
         from transformers import AutoModel

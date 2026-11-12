@@ -11,7 +11,7 @@
 | 批量验证一整份模型名册 | `tools/batch_driver.py --config tools/models.yaml` | `battery-summary.md/.json` |
 | 把测试输入固化成密封包 | `targets/make_rerank_package.py`、`make_ctr_package.py` | 包目录 + `manifest.json` |
 
-设计要点：attach 与 runner 共用同一个执行体（`flagprof/runner/{rerank,ctr}.py`），所以"同包同种子"下两者的分数摘要**必然逐位相同**——这是结构保证，不是调参调出来的。批量验证的每一行都连跑两遍（A/A），两遍不一致即判失败。
+设计要点：attach 与 runner 共用同一个执行体（`flagprof/runner/{rerank,ctr}.py`），减少了两套执行实现产生语义漂移的机会；同包同种子、相同运行配置下的逐位一致性由 A/A 实测验证。批量验证的每一行都连跑两遍（A/A），两遍不一致即判失败。
 
 名册文件有两份：`tools/models.yaml`（15 模型 + 10 CTR 架构）与 `tools/models-hf2.yaml`（2026-11-11 从 HuggingFace 扩选的 6 个模型）。
 
@@ -118,15 +118,23 @@ flagprof record --vendor thead --preset accuracy --store S --work W --scratch X 
   --seed 531 --device cuda:0 --dtype bfloat16 --outputs OUT
 ```
 
+包任务现在执行 `--flaggems` / `--flaggems-include`、`--flagtree` / `--vendor-compiler`、`--numerics`，并记录实际配置。FlagTree 在导入 torch 之前选择；FlagGems 的 `on` 仍要求非空 include 清单。挂采集器时，显式组件参数必须与采集器配置相同。`--repeats` 会实际执行多轮；包任务的 token/padding 已由输入包固定，`--inputs`、`--pooling` 等不适用选项会报错。
+
+CLS pooling 缺省使用右填充；显式左填充时按 attention mask 选择首个有效 token。`last` / `mean` 的既有默认填充保持不变。模板要求首个有效 token 就是模型的 CLS token。
+
+**Oracle 身份与报告。** CTR 和 rerank 都记录批次形状、样本顺序、probe 算法、软件、数值策略和组件来源。CTR 必须匹配架构配置、初始权重、种子和打分语义；rerank 必须匹配权重、打分语义、模板、yes/no token ID、attention 和厂商代码。两者均以 `scores` 注册输出边界。权重或打分语义变化会阻断精度归因；设备与软件等差异沿用既有显式声明规则。旧版本缺少这些身份字段的 Store 需要重新采集，不补写未知字段。
+
+`tests/test_review_regressions.py` 用真实 CPU 采集、Store 和报告验证 CTR 及两种 rerank 打分路径，并覆盖身份冲突、配置生效与清理、厂商代码授权、子目录指纹、CLS 默认值和 BF16 输入下的 FP32 loss。GitHub `Inference CPU smoke` 增加独立 `model-contracts` 作业，运行这些测试和训练语义回归，不下载模型或使用设备。
+
 CPU 测试套件：`python3 -B -m pytest tests -q`（在 `inference/` 下，配好 `PYTHONPATH`）。
 
 ## 6. 决策与边界
 
-**厂商代码（trust_remote_code）受控加载。** 有些模型自带 Python 代码（`config.json` 的 `auto_map` 指向自定义建模文件）。默认一律不执行模型自带的代码；确要执行时用 `--trust-remote-code` 显式打开（embedding、rerank 两个任务支持，ctr/generate 传了直接报错）。打开后也不是放任执行：
+**厂商代码（trust_remote_code）受控加载。** 有些模型自带 Python 代码（`config.json` 的 `auto_map` 指向自定义建模文件）。默认一律不执行模型自带的代码；确要执行时用 `--trust-remote-code` 显式打开（runner 的 embedding、rerank，以及 `target_embedder.py` / `target_reranker.py` 入口一致；ctr/generate 传了直接报错）。打开后也不是放任执行：
 
 - 只加载模型目录里**已经在磁盘上**的代码（绕开 transformers 动态模块缓存——它在 4.57 只拷一级相对导入，多级导入必坏）；
 - auto_map 必须是本地条目，拒绝指向远端的 `repo--class` 写法；
-- 每个被消费的 `.py` 文件 sha256 记入身份记录（`code_files`），结果能对上"是哪份代码跑出来的"（仅厂商代码路径写入，标准模型身份记录字节不变）；
+- 递归记录模型目录内 `.py` 文件的 SHA-256，以相对路径为 `code_files` 的键；模块命名空间包含目录与代码指纹，避免代码更新后复用旧子模块；
 - 厂商的 flash-attention 路径强制关闭，走原生注意力；
 - rerank 按打分语义选类：sequence_logit → `AutoModelForSequenceClassification`，causal_yesno → `AutoModelForCausalLM`。
 
@@ -137,4 +145,4 @@ CPU 测试套件：`python3 -B -m pytest tests -q`（在 `inference/` 下，配�
 - **下载 provenance**：每个模型记录下载渠道、文件清单与 sha256（`download-provenance.json`；jina-v3 的在 `localization-provenance.json`）。
 - **DIEN**：`pack_padded_sequence(enforce_sorted=False)` + bf16 GRU 在 PPU 实测可用；pad 位 attention 精确为 0，隐状态不受 pad 影响。
 - **deepfm**：随机初始化下 FM 项可能把 sigmoid 推到 0/1 端点，断言用闭区间——这是预期行为，不是缺陷。
-- **fixed.load** 保持文本包专用；rerank/ctr 包由 runner 的 canonical loader 负责（身份契约统一在 oracle_id / inputs_sha256 层）。
+- **fixed.load** 保持文本包专用；rerank/ctr 包由 runner 的 canonical loader 负责（共用输入身份字段，并分别校验任务专属的权重与打分契约）。
