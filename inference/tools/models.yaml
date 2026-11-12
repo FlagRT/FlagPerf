@@ -1,0 +1,98 @@
+# Model adaptation roster — acceptance-suite config for tools/batch_driver.py.
+# Paths are container-side (/w = model-adaptation-work mount on the two hosts).
+# Each row runs twice (A/A); status: active | blocked.
+# Evidence protocol: A/A sha+identity equality; cross-host comparison is done
+# outside the suite by diffing score_batches_sha256 between host reports.
+# Artifact filenames keep the historical battery-* prefix (acceptance suite).
+# Roster: 15 adaptation targets (4 retrieval/rerank + Qwen3-Embedding-0.6B +
+# 10 CTR) + 3 HuggingFace tier-0 probes (standard-arch drop-in validation).
+models:
+  # ---- Batch A: retrieval / rerank (4) ----
+  # padding_side is pinned per-row into oracle identity (2026-11-10 fix):
+  # encoder families use right (attach-face parity; left+cls would pool the
+  # PAD position), decoder last-token usage keeps left (official recipe).
+  - id: bge-large-zh-v1.5
+    task: embedding
+    model: hf:/w/models/bge-large-zh-v1.5
+    pooling: cls
+    padding_side: right
+    inputs: /w/texts_embed16.jsonl
+    batch_size: 4
+    status: active
+  - id: bge-reranker-large
+    task: rerank
+    model: hf:/w/models/bge-reranker-large
+    package: /w/packages/bge-reranker-seq
+    score: sequence_logit
+    batch_size: 4
+    status: active
+  - id: Qwen3-Reranker-0.6B
+    task: rerank
+    model: hf:/w/models/Qwen3-Reranker-0.6B
+    package: /w/packages/qwen3-reranker-causal
+    score: causal_yesno
+    batch_size: 4
+    status: active
+  - id: jina-embeddings-v3
+    task: embedding          # promoted from attach: controlled vendor-code load
+    model: hf:/w/models/jina-embeddings-v3
+    pooling: mean
+    padding_side: right      # bit-identical to the attach-face banked value
+    inputs: /w/texts_embed16.jsonl
+    batch_size: 4
+    flags: [trust-remote-code]
+    status: active
+  # ---- 15th target: Qwen3-Embedding-0.6B (anchor -> full suite row) ----
+  - id: Qwen3-Embedding-0.6B
+    task: embedding          # official pooling is last-token -> runner 'last'
+    model: hf:/w/models/Qwen3-Embedding-0.6B
+    pooling: last
+    padding_side: left       # official last-token recipe (decoder family)
+    inputs: /w/texts_embed16.jsonl
+    batch_size: 4
+    status: active
+  # ---- HuggingFace tier-0 probes: standard-arch drop-in validation ----
+  - id: bge-small-zh-v1.5
+    task: embedding
+    model: hf:/w/models/bge-small-zh-v1.5
+    pooling: cls
+    padding_side: right
+    inputs: /w/texts_embed16.jsonl
+    batch_size: 4
+    status: active
+  - id: m3e-base
+    task: embedding
+    model: hf:/w/models/m3e-base
+    pooling: mean
+    padding_side: right
+    inputs: /w/texts_embed16.jsonl
+    batch_size: 4
+    status: active
+  - id: bge-reranker-base
+    task: rerank             # same XLM-R tokenizer family as -large: package reused
+    model: hf:/w/models/bge-reranker-base
+    package: /w/packages/bge-reranker-seq
+    score: sequence_logit
+    batch_size: 4
+    status: active
+  # ---- Batch B/C: CTR (10) — strict reference mirrors, seed 531 ----
+  - { id: ctr-dlrm,      task: ctr, package: /w/packages/ctr-v1, arch: dlrm,      seed: 531, status: active }
+  - { id: ctr-din,       task: ctr, package: /w/packages/ctr-v1, arch: din,       seed: 531, status: active }
+  - { id: ctr-widedeep,  task: ctr, package: /w/packages/ctr-v1, arch: widedeep,  seed: 531, status: active }
+  - { id: ctr-deepfm,    task: ctr, package: /w/packages/ctr-v1, arch: deepfm,    seed: 531, status: active }
+  - { id: ctr-dcn,       task: ctr, package: /w/packages/ctr-v1, arch: dcn,       seed: 531, status: active }
+  - { id: ctr-esmm,      task: ctr, package: /w/packages/ctr-v1, arch: esmm,      seed: 531, status: active }
+  - { id: ctr-mmoe,      task: ctr, package: /w/packages/ctr-v1, arch: mmoe,      seed: 531, status: active }
+  - { id: ctr-ple,       task: ctr, package: /w/packages/ctr-v1, arch: ple,       seed: 531, status: active }
+  - { id: ctr-bst,       task: ctr, package: /w/packages/ctr-v1, arch: bst,       seed: 531, status: active }
+  - { id: ctr-dien,      task: ctr, package: /w/packages/ctr-v1, arch: dien,      seed: 531, status: active }
+  # ---- 2026 annual-plan additions: DCN-Mix / DSSM / SASRec / LightGCN ----
+  # dcnmix/dssm/sasrec/lightgcn share the ctr-v1 inputs but require the
+  # 14-arch contract package ctr-v1b (identical inputs.pt bytes, identical
+  # oracle_id as ctr-v1; only contract.archs is extended). lightgcn derives
+  # its bipartite graph deterministically from the package rows at build
+  # time and consumes a user_idx batch input (sample index).
+  - { id: ctr-dcnmix,   task: ctr, package: /w/packages/ctr-v1b, arch: dcnmix,   seed: 531, status: active }
+  - { id: ctr-dssm,     task: ctr, package: /w/packages/ctr-v1b, arch: dssm,     seed: 531, status: active }
+  - { id: ctr-sasrec,   task: ctr, package: /w/packages/ctr-v1b, arch: sasrec,   seed: 531, status: active }
+  - { id: ctr-lightgcn, task: ctr, package: /w/packages/ctr-v1b, arch: lightgcn, seed: 531, status: active }

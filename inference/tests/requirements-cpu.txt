@@ -1,0 +1,8 @@
+# CPU-only torch; Triton is imported for compiler-probe contracts, without kernels.
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.10.0+cpu
+numpy==2.2.6
+pytest==8.3.2
+transformers==5.5.3
+accelerate==1.12.0
+triton==3.5.0

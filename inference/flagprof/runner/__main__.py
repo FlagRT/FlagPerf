@@ -23,10 +23,14 @@ def model_files_identity(model_path):
     return files
 
 
+POOLING_SEMANTICS={'last':'last-valid-token-fp32-l2','mean':'mean-fp32-l2','cls':'cls-token-fp32-l2'}
+
+
 def main():
-    p = argparse.ArgumentParser()
-    p.add_argument('model')
-    p.add_argument('--task', choices=['embedding','generate'], default='embedding')
+    p = argparse.ArgumentParser(allow_abbrev=False)
+    p.add_argument('model', nargs='?', default=None,
+                   help='hf:<directory> (embedding/generate/rerank only)')
+    p.add_argument('--task', choices=['embedding','generate','rerank','ctr'], default='embedding')
     p.add_argument('--generation-mode', choices=['accuracy','performance'], default='accuracy')
     p.add_argument('--max-new-tokens', type=int, default=32)
     p.add_argument('--inputs')
@@ -37,8 +41,8 @@ def main():
     p.add_argument('--max-length', type=int, default=256)
     p.add_argument('--dtype', choices=['bfloat16','float16','float32'], default='bfloat16')
     p.add_argument('--attention', default='eager')
-    p.add_argument('--padding-side', choices=['left','right'], default='left')
-    p.add_argument('--pooling', choices=['last','mean'], default='last')
+    p.add_argument('--padding-side', choices=['left','right'], default=None)
+    p.add_argument('--pooling', choices=['last','mean','cls'], default='last')
     p.add_argument('--warmup', type=int, default=0)
     p.add_argument('--forwards', type=int)
     p.add_argument('--repeats', type=int, default=1)
@@ -46,27 +50,58 @@ def main():
     p.add_argument('--outputs', required=True)
     p.add_argument('--flaggems', choices=['off','on'], default=None)
     p.add_argument('--flaggems-include')
+    p.add_argument('--package')
+    p.add_argument('--score', choices=['causal_yesno','sequence_logit'])
+    from . import CTR_ARCH_CHOICES as ctr_arch_choices
+    p.add_argument('--arch', choices=ctr_arch_choices)
+    p.add_argument('--seed', type=int, default=531)
+    p.add_argument('--trust-remote-code', action='store_true',
+                   help='embedding/rerank only: allow vendor modeling code already on disk in the '
+                        'model directory (local-package load, auto_map must be local, every '
+                        'code file sha256-pinned into oracle identity; no-op for standard models)')
     p.add_argument('--flagtree',choices=['off','on'],default=None)
     p.add_argument('--vendor-compiler')
     args = p.parse_args()
     if args.forwards is None:args.forwards=1 if args.task=='generate' else 3
+    if args.padding_side is None:args.padding_side='right' if args.pooling=='cls' else 'left'
     if __import__('os').environ.get('FLAGPROF_DEVICE'):
         args.device=__import__('os').environ['FLAGPROF_DEVICE']
         args.outputs=str(Path(args.outputs)/('rank-'+__import__('os').environ['RANK']))
-    if not args.model.startswith('hf:') or min(args.batch_size or 4, args.forwards, args.repeats) < 1 or args.warmup < 0:
-        p.error('hf:<directory>, positive counts and nonnegative warmup required')
-    if not args.inputs and not args.inputs_from:p.error('--inputs or --inputs-from required')
+    if args.trust_remote_code and args.task not in ('embedding','rerank'):
+        p.error('--trust-remote-code is only supported for --task embedding/rerank')
+    if args.task=='rerank':
+        if not args.model or not args.model.startswith('hf:') or not args.package or not args.score:
+            p.error('--task rerank needs hf:<directory> model, --package and --score')
+    if args.task=='ctr':
+        if args.model:
+            p.error('--task ctr takes no model positional')
+        if not args.package or not args.arch:
+            p.error('--task ctr needs --package and --arch')
+    from .execution import select_compiler, validate_counts
+    validate_counts(args.batch_size, args.warmup, args.forwards, args.repeats)
+    if args.task in ('ctr','rerank'):
+        import sys
+        unsupported = {'--inputs','--inputs-from','--pooling','--padding-side','--max-length',
+                       '--generation-mode','--max-new-tokens'}
+        unsupported |= {'--score','--attention'} if args.task=='ctr' else {'--arch','--seed'}
+        supplied = {arg.split('=',1)[0] for arg in sys.argv[1:] if arg.startswith('--')}
+        unused = supplied & unsupported
+        if unused:p.error('options not supported for --task '+args.task+': '+', '.join(sorted(unused)))
+        if args.task=='rerank' and args.attention!='eager':
+            p.error('rerank currently requires --attention eager')
+    else:
+        if not args.model or not args.model.startswith('hf:'):
+            p.error('hf:<directory> model required')
+        if not args.inputs and not args.inputs_from:p.error('--inputs or --inputs-from required')
     from flagprof import current_attachment
     handle = current_attachment()
-    if handle:
-        for key in ('flagtree','vendor_compiler'):
-            value=getattr(args,key)
-            if key=='vendor_compiler' and value is not None:value=str(Path(value).resolve())
-            if value is not None and value != handle.state['effective_config'].get(key):
-                p.error('runner compiler configuration conflicts with attachment')
-    else:
-        from flagprof.components.compiler import select
-        select(dict(flagtree=args.flagtree,vendor_compiler=args.vendor_compiler),cache_root=Path(args.outputs).parent/'component-cache')
+    select_compiler(handle, flagtree=args.flagtree, vendor_compiler=args.vendor_compiler, outputs=args.outputs)
+    if args.task=='rerank':
+        from .rerank import execute
+        return execute(args)
+    if args.task=='ctr':
+        from .ctr import execute
+        return execute(args)
     if args.task=='generate':
         from .generate import execute
         return execute(args)
@@ -112,14 +147,25 @@ def main():
         tokenizer = None if args.inputs_from else AutoTokenizer.from_pretrained(model_path, local_files_only=True, trust_remote_code=False, padding_side=args.padding_side)
         model_started=time.perf_counter()
         import os
-        options=dict(local_files_only=True,trust_remote_code=False,
-                     torch_dtype=getattr(torch,args.dtype),attn_implementation=args.attention)
-        if int(os.environ.get('WORLD_SIZE','1')) > 1:
-            from .parallel import Parallel
-            parallel=Parallel(args.device,os.environ['FLAGPROF_COMM_BACKEND'])
-            options.update(tp_plan='auto',device_mesh=parallel.mesh())
-        model = AutoModel.from_pretrained(model_path, **options).eval()
-        if parallel is None:model.to(args.device)
+        vendor_code = None
+        if args.trust_remote_code:
+            from .vendor import code_files_identity
+            vendor_code = code_files_identity(model_path)
+        if vendor_code:
+            # Controlled vendor-code load (see flagprof/runner/vendor.py):
+            # directory-as-package, dynamic-module cache never engaged.
+            # Vendor path is single-device only; TP2 parallelism below does not apply.
+            from .vendor import load_with_vendor_code
+            model = load_with_vendor_code(model_path, getattr(torch, args.dtype)).to(args.device).eval()
+        else:
+            options=dict(local_files_only=True,trust_remote_code=False,
+                         torch_dtype=getattr(torch,args.dtype),attn_implementation=args.attention)
+            if int(os.environ.get('WORLD_SIZE','1')) > 1:
+                from .parallel import Parallel
+                parallel=Parallel(args.device,os.environ['FLAGPROF_COMM_BACKEND'])
+                options.update(tp_plan='auto',device_mesh=parallel.mesh())
+            model = AutoModel.from_pretrained(model_path, **options).eval()
+            if parallel is None:model.to(args.device)
         model_load_and_device_s=time.perf_counter()-model_started
         input_started=time.perf_counter()
         if args.inputs_from:
@@ -137,15 +183,24 @@ def main():
         if hasattr(model.config,'use_cache'):model.config.use_cache=False
         from . import run_prepared, pool_embedding
         if handle:handle.register_model(model)
-        input_identity.update(dtype=args.dtype,attention=args.attention,pooling='mean-fp32-l2' if args.pooling=='mean' else 'last-valid-token-fp32-l2',
+        input_identity.update(dtype=args.dtype,pooling=POOLING_SEMANTICS[args.pooling],
+            padding_side=args.padding_side,
             device=args.device,software=software(),numerics=numeric_settings,flaggems=effective['flaggems'],include=effective['flaggems_include'])
+        if vendor_code:
+            input_identity.update(code_files=vendor_code,
+                adapter_names=getattr(model.config,'adapter_names',None),
+                attention='vendor(use_flash_attn=False)')
+        else:
+            input_identity['attention']=args.attention
         # Direct inputs carry the same oracle identity contract as prepared packages
         # (runner/fixed.load): model plus input digest pin the must_equal fields.
         input_identity.setdefault('samples',[s for ids,_ in batches for s in ids])
         input_identity.setdefault('batches',[dict(samples=ids,shape=list(v['input_ids'].shape),valid_tokens=v['attention_mask'].sum(1).tolist()) for ids,v in batches])
         if 'oracle_id' not in input_identity:
+            oracle_keys=['model_files','inputs_sha256','dtype','attention','pooling','padding_side']
+            if input_identity.get('code_files'):oracle_keys.append('code_files')
             input_identity['oracle_id']=hashlib.sha256(json.dumps(
-                {k:input_identity[k] for k in ('model_files','inputs_sha256','dtype','attention','pooling')},
+                {k:input_identity[k] for k in oracle_keys},
                 sort_keys=True).encode()).hexdigest()
         from flagprof.components.compiler import identity as compiler_identity
         input_identity['compiler']=handle.state['compiler_identity'] if handle else compiler_identity()
@@ -163,7 +218,7 @@ def main():
                 if 'use_cache' in inspect.signature(model.forward).parameters:inputs['use_cache']=False
                 if handle:handle.bind_tensor_inputs(sample_ids,inputs,identity=input_identity)
                 def transform(output):
-                    pooled=pool_embedding(output.last_hidden_state,inputs['attention_mask'],mean=args.pooling=='mean',normalize=False)
+                    pooled=pool_embedding(output.last_hidden_state,inputs['attention_mask'],mean=args.pooling=='mean',cls=args.pooling=='cls',normalize=False)
                     result=torch.nn.functional.normalize(pooled.float(),p=2,dim=1)
                     if handle:
                         handle.record_tensor('pooled',pooled);handle.record_tensor('output',result)
@@ -178,7 +233,8 @@ def main():
                       component_owner='attachment' if handle else 'runner',
                       component_install_s=handle.state['component'].get('install_ns',0)/1e9 if handle else component_install_s,
                       component_close_s=None if handle else component_close_s,
-                      semantics=('mean-fp32-l2' if args.pooling=='mean' else 'last-valid-token-fp32-l2')+'; use_cache=False; eager',
+                      semantics=POOLING_SEMANTICS[args.pooling]+'; use_flash_attn=False' if vendor_code else POOLING_SEMANTICS[args.pooling]+'; use_cache=False; eager',
+                      vendor_code=bool(vendor_code),
                       instrumentation='attachment' if handle else 'none',
                       component_identity=component.identity if component else handle.state.get('flaggems_identity') if handle else None,
                       batch_size=args.batch_size, oracle_identity=input_identity, runs=runs)

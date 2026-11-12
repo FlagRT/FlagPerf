@@ -150,11 +150,12 @@ def gap_chart(stream, coverage):
 
 def html(stream, results, limits, quality):
     oracle=any(r.id.startswith('oracle.') for r in results)
+    title='训练负载分析' if any(r.id=='training' for r in results) else '推理负载分析'
     stream.write('<!doctype html><html lang="zh"><meta charset="utf-8"><meta name="viewport" content="width=device-width">'
-        '<title>FlagProf 推理分析</title><style>body{font:15px system-ui;margin:32px;color:#172338;background:#f6f8fc}'
+        '<title>FlagProf '+title+'</title><style>body{font:15px system-ui;margin:32px;color:#172338;background:#f6f8fc}'
         'section{background:white;padding:20px;margin:18px 0;border-radius:10px;overflow:auto}table{border-collapse:collapse}'
         'th,td{padding:8px;border:1px solid #d9dfeb;text-align:left;max-width:400px;overflow-wrap:anywhere}'
-        'pre{white-space:pre-wrap}h1,h2{color:#17345c}</style><h1>推理负载分析</h1>'
+        'pre{white-space:pre-wrap}h1,h2{color:#17345c}</style><h1>'+title+'</h1>'
         '<p>先查看各面板的可用性与原因，再阅读指标及其覆盖范围。</p>')
     if oracle:
         stream.write('<h2>Oracle—Device 精度差分</h2><p>完整值给出逐元素误差；抽样值只描述抽样位置。digest 相同用于判等。先看首个差异，再查看逐层误差与算子输入来源。</p>')
@@ -188,7 +189,7 @@ def html(stream, results, limits, quality):
             html_rows(stream,panel,displayed,limits.html_rows)
         if result.id=='perf.gap':gap_chart(stream,result.coverage)
         if result.id=='memory':memory_chart(stream,result.coverage.get('series',()),limits.html_rows)
-        if result.id in ('perf.device','perf.gap','communication','memory','generation'):
+        if result.id in ('perf.device','perf.gap','communication','memory','generation','training'):
             for name,table in result.coverage.items():
                 if isinstance(table,Table):
                     stream.write('<details><summary>'+escape(name)+'（完整记录见 exports）</summary>')
@@ -236,6 +237,8 @@ def generate(run, out=None, *, work=None, limits=None, op_kinds=None):
                 results.append(result)
             from flagprof.analyzers.generation import analyze as generation, communication
             results.extend(generation(workspace));results.extend(communication(workspace))
+            from flagprof.analyzers.training import analyze as training
+            results.extend(training(workspace))
             forward_quality=finish(workspace, op_kinds)
             for result in results:
                 if result.id in ('perf.op','perf.layer'):
@@ -259,7 +262,8 @@ def generate(run, out=None, *, work=None, limits=None, op_kinds=None):
                     ('perf.op.devices','perf-op-devices'),('perf.layer.devices','perf-layer-devices'),
                     ('memory','memory-peaks'),('memory.series','memory-series'),('memory.transfers','memory-transfers'),
                     ('memory.allocations','memory-allocations'),('generation','generation'),('generation.steps','generation-steps'),('generation.kv','generation-kv'),
-                    ('communication','communication'),('communication.calls','communication-calls')]:
+                    ('communication','communication'),('communication.calls','communication-calls'),
+                    ('training','training-steps'),('training.phases','training-phases')]:
                 with (out/'exports'/(filename+'.jsonl')).open('w') as stream:
                     for row in workspace.table(panel):
                         stream.write(encode(row)+'\n')

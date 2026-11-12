@@ -10,6 +10,7 @@
 | PPU Inference（flagprof v2）身份、镜像、最小命令与边界 | [PPU Inference 指南](thead/inference-v2.md) |
 | 基础算力、内存、传输与厂商诊断 | [Base 使用指南](../base/README.md) |
 | 算子正确性、路由、性能与失败诊断 | [Operation 使用指南](../operation/README.md) |
+| 标准训练观测、梯度/参数对比与检查点 | [Training v2](training/v2.md)、[实测边界](training/v2-validation.md) |
 | 推理进程观测、性能/通信与数值差分 | [Inference 使用指南](../inference/README.md)、[框架与协作导航](../inference/docs/README.md) |
 | Ascend 单机双 rank 通信资格验证 | [P2P 协议](ascend/p2p.md) |
 | 适配维护、离线回归与发布检查 | [Ascend 验证](ascend/validation.md)、[P800 验证](kunlunxin/validation.md)、[PPU 验证](thead/validation.md) |

@@ -8,6 +8,19 @@ from flagprof.tensor_data import compare, ULP_BUCKETS
 
 REQUIRED=('model_files','oracle_id','inputs_sha256','samples','batches','dtype','attention','pooling','boundaries','probe_alg')
 DECLARABLE=('device','software','numerics','flaggems','include')
+TASK_REQUIRED = {
+    'ctr': ('task','kind','arch','config_sha256','weight_sha256','seed','init','score_semantics'),
+    'rerank': ('task','model_files','attention','score_semantics','template_sha','yes_token_id','no_token_id','code_files'),
+}
+
+
+def required_fields(a, b):
+    tasks = {v.get('task', 'embedding') for v in (a, b)}
+    if tasks & TASK_REQUIRED.keys():
+        common = tuple(k for k in REQUIRED if k not in ('model_files','attention','pooling'))
+        return tuple(dict.fromkeys(common + tuple(k for task in sorted(tasks)
+                           for k in TASK_REQUIRED.get(task, REQUIRED))))
+    return tuple(k for k in REQUIRED if k!='pooling')+('task','generation') if 'generate' in tasks else REQUIRED
 
 
 def call_config(event):
@@ -114,7 +127,9 @@ def _identity_result(ref,cmp,declare):
     declared=set((declare or {}).get('differences',[]))
     a,b=identity(ref),identity(cmp);blocked=None
     generation=a.get('task')=='generate' or b.get('task')=='generate'
-    required=tuple(k for k in REQUIRED if k!='pooling')+('task','generation') if generation else REQUIRED
+    required=required_fields(a,b)
+    required += tuple(k for k in ('code_files','padding_side','adapter_names')
+                      if k not in required and (k in a or k in b))
     declarable=DECLARABLE+('parallelism','comm_backend') if generation else DECLARABLE
     extra = tuple(k for k in ('compiler','communication','comm_backend')
                   if k not in declarable and (k in a or k in b))

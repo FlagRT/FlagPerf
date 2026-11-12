@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import subprocess
 import sys
 import tempfile
 import types
@@ -31,6 +32,22 @@ class ComponentTests(unittest.TestCase):
         return root
 
     def test_explicit_selection_and_loaded_conflict(self):
+        # Selection is a worker-startup operation. Other tests may already have
+        # imported the installed Triton; exercise selection in a fresh process.
+        child = subprocess.run([sys.executable, '-B', '-S', '-c',
+            'from tests.store.test_components import ComponentTests; '
+            'ComponentTests().check_explicit_selection_and_loaded_conflict()'],
+            cwd=Path(__file__).resolve().parents[2],
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=30)
+        self.assertEqual(child.returncode, 0, child.stdout)
+
+    def test_selection_worker_preserves_parent_compiler(self):
+        loaded = types.SimpleNamespace(__file__='/existing/triton/__init__.py')
+        with patch.dict(sys.modules, {'triton': loaded}):
+            self.test_explicit_selection_and_loaded_conflict()
+            self.assertIs(sys.modules['triton'], loaded)
+
+    def check_explicit_selection_and_loaded_conflict(self):
         with tempfile.TemporaryDirectory() as tmp, patch.object(sys,'path',list(sys.path)), patch.dict(os.environ,{},clear=False):
             root=self.bundle(Path(tmp)/'vendor')
             compiler.select(dict(flagtree='off',vendor_compiler=str(root)),cache_root=Path(tmp)/'cache')

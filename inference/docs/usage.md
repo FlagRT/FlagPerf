@@ -151,11 +151,18 @@ python3 -B -S -m unittest discover -s tests -v
 
 测试检查离线读取层（`store`、`analyzers`、`report`）不加载 torch 与厂商模块，并用假厂商插件走通 record → import → inspect → report；同时覆盖组件选择、精度 CLI、Oracle、TP2 组计数及 P800/平头哥适配。PR 修改 `inference/**` 时由 GitHub Actions 在 Python 3.9 和 3.11 自动运行。
 
-在准备好 torch 和 Transformers 的 CPU 环境中，运行额外的模型／逐层／算子边界、Gloo TP2 与 replay 检查：
+完整 CPU 套件使用 Python 3.11 和独立虚拟环境（不继承厂商镜像的 site-packages），直接依赖版本记录在 `tests/requirements-cpu.txt`。在 `inference/` 下执行：
 
 ```bash
-python3 -B -m unittest tests.probes.test_accuracy tests.probes.test_components tests.probes.test_replay tests.test_communication -v
+python3.11 -m venv /tmp/flagperf-cpu-tests
+/tmp/flagperf-cpu-tests/bin/python -m pip install -r tests/requirements-cpu.txt
+HF_HUB_OFFLINE=1 OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 GLOO_SOCKET_IFNAME=lo \
+  /tmp/flagperf-cpu-tests/bin/python -B -m pytest -q -p no:cacheprovider tests
 ```
+
+GitHub `model-contracts` 作业执行同一套完整回归，包含模型／逐层／算子边界、两进程 Gloo TP2、Oracle、replay 和训练。TP2 使用本地生成的微型 Qwen，要求 Accelerate；Triton 用于编译器探针契约，不执行设备 kernel，不下载模型。
+
+厂商镜像中即使设置 `TORCH_DEVICE_BACKEND_AUTOLOAD=0`，Transformers 仍可能独立探测并导入 `torch_npu`；未挂载昇腾驱动时会在模型导入阶段报 `libascend_hal.so` 缺失。CPU 测试应使用上述独立环境；实际 NPU 执行仍使用厂商镜像及其驱动。编译器选择测试在独立子进程中运行，保留来源冲突检查，也不会改变父进程已经加载的 Triton。
 
 这些 CPU 检查和历史 Store 的报告复验不扩大既有设备验收范围。
 

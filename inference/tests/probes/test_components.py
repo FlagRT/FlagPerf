@@ -45,8 +45,8 @@ class TinyQwenTPTests(unittest.TestCase):
             self.assertNotEqual(child.returncode,0,child.stdout)
             self.assertFalse(marker.exists(),child.stdout)
 
-    @unittest.skipUnless(importlib.util.find_spec('torch') and importlib.util.find_spec('transformers'),
-                         'optional torch and Transformers CPU runtime')
+    @unittest.skipUnless(all(importlib.util.find_spec(name) for name in ('torch', 'transformers', 'accelerate')),
+                         'optional torch, Transformers and Accelerate CPU runtime')
     def test_tp2_embedding_runner_and_replicated_boundaries(self):
         import torch
         from transformers import Qwen3Config,Qwen3Model
