@@ -72,6 +72,17 @@ class BlockLayerDiscoveryTests(unittest.TestCase):
         model = _Outer(inner)
         self.assertEqual(len(block_layers(model)), 2)
 
+    def test_roberta_host_attribute_layers_are_found(self):
+        for host_name in ('roberta', 'bert'):
+            with self.subTest(host=host_name):
+                host_model = torch.nn.Module()
+                trunk = torch.nn.Module()
+                encoder = torch.nn.Module()
+                encoder.add_module('layer', torch.nn.ModuleList(_Block() for _ in range(2)))
+                trunk.add_module('encoder', encoder)
+                host_model.add_module(host_name, trunk)
+                self.assertEqual(len(block_layers(host_model)), 2)
+
     def test_model_without_repeated_blocks_returns_empty(self):
         model = _Outer(torch.nn.Sequential(torch.nn.Linear(4, 4)))
         self.assertEqual(block_layers(model), [])
@@ -123,6 +134,7 @@ class DefaultTaskTests(unittest.TestCase):
             result = json.loads((Path(out) / 'training-result.json').read_text(encoding='utf-8'))
             self.assertEqual(result['protocol']['task'], 'classification')
             self.assertEqual(result['protocol']['sharding'], 'none')
+            self.assertEqual(result['protocol']['task_source'], 'default')
 
 
 if __name__ == '__main__':

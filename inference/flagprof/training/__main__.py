@@ -57,7 +57,9 @@ def ensure_generated(kind, outputs, seed, vocab=None, rows=None):
     an existing result is reused untouched. Single-process only: DDP ranks
     must share an explicit --inputs/--package instead of racing on creation.
     kind: 'corpus' (embedding triplets), 'lm-corpus' (pretokenized LM rows),
-    or 'ctr-package'. rows defaults so a full batch grid is always possible.
+    or 'ctr-package'. Default row counts suit common batch sizes but do not
+    divide every batch size; a mismatch fails loudly with the required
+    multiple instead of dropping rows.
     """
     base=Path(outputs)
     suffix, marker, script_name = {
@@ -115,17 +117,21 @@ def prepared_lm(path, *, batch_size, rank=0, world_size=1):
 def block_layers(model):
     """Repeated transformer blocks of a HF model, best effort.
 
-    Standard Qwen3-style ``model.layers`` first, then Roberta-style
-    ``model.encoder.layer``. Sharding per block keeps the forward all-gather
-    peak at one layer instead of the whole model; models without such
-    repetition fall back to root-only wrapping.
+    Qwen3-style ``model.model.layers`` first, then encoder-style
+    ``model.model.encoder.layer``, then Roberta/XLMRoberta-style hosts that
+    hang the trunk under ``.roberta``/``.bert`` instead of ``.model``.
+    Sharding per block keeps the forward all-gather peak at one layer instead
+    of the whole model; models without such repetition fall back to root-only
+    wrapping.
     """
-    inner=getattr(model,'model',None)
-    layers=getattr(inner,'layers',None) if inner is not None else None
-    if not layers:
-        encoder=getattr(inner,'encoder',None) if inner is not None else None
-        layers=getattr(encoder,'layer',None) if encoder is not None else None
-    return list(layers) if layers else []
+    for host in (getattr(model,'model',None), getattr(model,'roberta',None), getattr(model,'bert',None)):
+        if host is None: continue
+        layers=getattr(host,'layers',None)
+        if not layers:
+            encoder=getattr(host,'encoder',None)
+            layers=getattr(encoder,'layer',None) if encoder is not None else None
+        if layers: return list(layers)
+    return []
 
 
 def apply_sharding(model, device_type, world_size):
@@ -147,15 +153,18 @@ def execute(args):
     import torch
     from .engine import train
     import torch.distributed as dist
+    task_source='explicit'
     if args.task is None:
         if args.model:
             from .registry import resolve_task
             args.task=resolve_task(args.model)
+            task_source='registry'
             if not args.task:
                 raise ValueError('--task is required: model %r is not in inference/targets/model_registry.json; '
                                  'pass one of: classification, causal-lm, ctr, embedding, rerank' % args.model)
         else:
             args.task='classification'
+            task_source='default'
     if args.steps<=0 or args.batch_size<=0 or args.accumulation<=0:
         raise ValueError('steps, batch-size and accumulation must be positive')
     if not 0<args.lr<float('inf'): raise ValueError('lr must be positive and finite')
@@ -172,9 +181,10 @@ def execute(args):
     world=int(os.environ.get('WORLD_SIZE','1'));rank=int(os.environ.get('RANK','0'))
     local_rank=int(os.environ.get('LOCAL_RANK','0'))
     if world!=1 and not args.ddp: raise ValueError('torchrun requires explicit --ddp')
-    if args.ddp and world<2: raise ValueError('DDP requires at least two torchrun workers')
+    if args.ddp and world<2: raise ValueError(('FSDP sharding' if args.sharding!='none' else 'DDP')+' requires at least two torchrun workers')
     device=args.device
     if args.ddp and device.startswith('cuda'): device='cuda:'+str(local_rank)
+    elif device=='cuda': device='cuda:0'  # bare 'cuda' lacks an index; set_device requires one
     if device.startswith('cuda'): torch.cuda.set_device(device)
     torch.manual_seed(args.seed);random.seed(args.seed)
     owned=False
@@ -186,7 +196,8 @@ def execute(args):
         protocol=dict(task=args.task,seed=args.seed,lr=args.lr,batch_size_per_rank=args.batch_size,
                       data='synthetic labelled classification' if args.task=='classification' else 'explicit pretokenized local input',
                       numerical_policy='framework defaults; no TF32/determinism/reduction override',
-                      dtype='float32 parameters; optional explicit AMP',backend=dist.get_backend() if args.ddp else None)
+                      dtype='float32 parameters; optional explicit AMP',backend=dist.get_backend() if args.ddp else None,
+                      task_source=task_source)
         if args.task=='classification':
             if args.model or args.inputs: raise ValueError('classification demo does not accept model or inputs')
             model=torch.nn.Sequential(torch.nn.Linear(16,32),torch.nn.ReLU(),torch.nn.Linear(32,4))
@@ -290,6 +301,7 @@ def execute(args):
                 vocab=int(config.get('vocab_size') or 65536)
                 inputs=ensure_generated('lm-corpus',args.outputs,args.seed,vocab=vocab,
                                         rows=max(16,4*args.batch_size*world))
+                inputs=str(Path(inputs)/'tokens.jsonl')  # ensure_generated returns the corpus directory; prepared_lm reads the file
                 protocol['data']='deterministic synthetic LM tokens generated next to --outputs (make_lm_corpus)'
                 protocol['default_corpus_generated']=True
             model=AutoModelForCausalLM.from_pretrained(source,local_files_only=True,trust_remote_code=False,

@@ -173,6 +173,51 @@ class TrainingTests(unittest.TestCase):
         self.assertEqual(summary['status'], 'partial')
         self.assertFalse(summary['rank_coverage_complete'])
 
+    def test_summary_fsdp_shard_finals_are_not_flagged(self):
+        from flagprof.training.summary import summarize
+        for rank, sha in [(0, 'a'*64), (1, 'b'*64)]:
+            d = self.root/'fsdp'/f'rank-{rank}'
+            d.mkdir(parents=True)
+            (d/'training-result.json').write_text(json.dumps(dict(
+                status='complete', next_step=3, steps=[],
+                final_model_sha256=sha,
+                protocol=dict(rank=rank, world_size=2, sharding='fsdp'))))
+        summary = summarize(self.root/'fsdp')
+        self.assertEqual(summary['status'], 'complete')
+        self.assertIsNone(summary['rank_final_models_equal'])
+        self.assertEqual(summary['sharding'], 'fsdp')
+        self.assertTrue(summary['rank_steps_aligned'])
+        self.assertEqual(summary['schema'], 'training-summary/2')
+
+    def test_summary_script_form_fsdp_check_mode_recognized(self):
+        from flagprof.training.summary import summarize
+        for rank, sha in [(0, 'c'*64), (1, 'd'*64)]:
+            d = self.root/'fsdp-script'/f'rank-{rank}'
+            d.mkdir(parents=True)
+            (d/'training-result.json').write_text(json.dumps(dict(
+                status='complete', next_step=3, steps=[],
+                final_model_sha256=sha,
+                protocol=dict(rank=rank, world_size=2, check_mode='fsdp'))))
+        summary = summarize(self.root/'fsdp-script')
+        self.assertEqual(summary['status'], 'complete')
+        self.assertEqual(summary['sharding'], 'fsdp')
+        self.assertIsNone(summary['rank_final_models_equal'])
+
+    def test_summary_fsdp_divergent_step_coverage_is_flagged(self):
+        from flagprof.training.summary import summarize
+        rows = [dict(step=1, loss=0.1, samples=2, synchronized_step_ns=1000, samples_per_second_local=1.0),
+                dict(step=2, loss=0.2, samples=2, synchronized_step_ns=1000, samples_per_second_local=1.0)]
+        for rank, steps in [(0, rows), (1, rows[:1])]:
+            d = self.root/'fsdp-div'/f'rank-{rank}'
+            d.mkdir(parents=True)
+            (d/'training-result.json').write_text(json.dumps(dict(
+                status='complete', next_step=3, steps=steps,
+                final_model_sha256='e'*64,
+                protocol=dict(rank=rank, world_size=2, sharding='fsdp'))))
+        summary = summarize(self.root/'fsdp-div')
+        self.assertEqual(summary['status'], 'partial')
+        self.assertFalse(summary['rank_steps_aligned'])
+
     def test_nonfinite_loss_preserves_failure(self):
         model=copy.deepcopy(self.model)
         def invalid(model,batch):return self.loss(model,batch)*float('nan')
@@ -200,3 +245,24 @@ class TrainingTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+try:
+    import torch  # noqa: F401
+    _HAS_TORCH = True
+except Exception:
+    _HAS_TORCH = False
+
+
+@unittest.skipUnless(_HAS_TORCH, "torch unavailable")
+class TestDefaultLmCorpusJoin(unittest.TestCase):
+    def test_default_lm_corpus_directory_joins_tokens_file(self):
+        import tempfile, os
+        from flagprof.training.__main__ import ensure_generated, prepared_lm
+        with tempfile.TemporaryDirectory() as td:
+            d=ensure_generated('lm-corpus',os.path.join(td,'onerec-a'),7)
+            batches=prepared_lm(os.path.join(d,'tokens.jsonl'),batch_size=4)
+        self.assertEqual(len(batches),4)
+        for b in batches:
+            self.assertEqual(b['input_ids'].shape[0],4)
+            self.assertIn('labels',b)

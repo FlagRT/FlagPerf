@@ -30,6 +30,8 @@ def fingerprint(value):
     def visit(v):
         placements = getattr(v, 'placements', None)
         if placements is not None:
+            # Sorted for run-stable ordering; assumes the 1-D device mesh used
+            # across this codebase (a multi-D mesh would need order-aware hashing).
             h.update(json.dumps(['DTensor', sorted(str(p) for p in placements)]).encode())
             v = local_shard(v)
         if isinstance(v, torch.Tensor):
@@ -64,8 +66,22 @@ def raw_model(model):
     return model.module if isinstance(model, DistributedDataParallel) else model
 
 
+def assert_replicated(model):
+    """Checkpoint paths need identical full-state replicas.
+
+    Sharded (FSDP) parameters only exist per rank; persisting them would
+    produce a checkpoint that cannot restore across topologies. Recorded
+    limitation: fail loudly here so script-form callers cannot silently
+    write per-rank shard checkpoints.
+    """
+    from torch.distributed.tensor import DTensor
+    if any(isinstance(p, DTensor) for p in raw_model(model).parameters()):
+        raise ValueError('checkpoint/resume is not supported for sharded (FSDP) parameters; per-rank shard checkpoints are a recorded limitation')
+
+
 def save(path, model, optimizer, *, next_step, protocol, device, scaler=None):
     import torch
+    assert_replicated(model)
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     state = dict(schema='training-checkpoint/1', next_step=next_step, protocol=protocol,
@@ -88,6 +104,7 @@ def save(path, model, optimizer, *, next_step, protocol, device, scaler=None):
 def restore(path, model, optimizer, *, protocol, device, scaler=None):
     """Only call on a user-selected, trusted local checkpoint (pickle)."""
     import torch
+    assert_replicated(model)
     state=torch.load(path,map_location='cpu',weights_only=False)
     if state.get('schema')!='training-checkpoint/1' or state['protocol']!=protocol:
         raise ValueError('checkpoint training protocol differs')
