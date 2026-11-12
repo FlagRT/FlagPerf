@@ -5,7 +5,7 @@
     "bge-m3": {"task": "embedding", "pooling": "cls", "provenance": "trained-verified", "note": "XLMRoberta dense; CLS pooling per official dense-retrieval usage; last-token pooling also trained in validation"},
     "Qwen3-Embedding-0.6B": {"task": "embedding", "pooling": "last", "provenance": "trained-verified"},
     "Qwen3-Reranker-0.6B": {"task": "rerank", "rerank_score": "causal_yesno", "provenance": "trained-verified"},
-    "Qwen3-Reranker-8B": {"task": "rerank", "rerank_score": "causal_yesno", "provenance": "official-default", "note": "FP32 parameters + AdamW + gradients are about 128 GB and exceed a 96 GB single card; DDP replicates per rank and does not shard. Recorded in the training validation notes as out of scope without FSDP/ZeRO or a bf16 protocol."},
+    "Qwen3-Reranker-8B": {"task": "rerank", "rerank_score": "causal_yesno", "provenance": "trained-verified", "note": "Two-card FSDP fine-tuning verified on PPU (performance mode, adamw, 2 steps); FP32 parameters + AdamW + gradients are about 128 GB and exceed a single 96 GB card, so DDP replication cannot host it and sharding is the verified path."},
     "bge-reranker-base": {"task": "rerank", "rerank_score": "sequence_logit", "provenance": "trained-verified"},
     "bge-reranker-large": {"task": "rerank", "rerank_score": "sequence_logit", "provenance": "official-default"},
     "jina-reranker-v2-base-multilingual": {"task": "rerank", "rerank_score": "sequence_logit", "provenance": "official-default"},
@@ -17,7 +17,7 @@
     "e5-small-v2": {"task": "embedding", "pooling": "mean", "provenance": "official-default"},
     "all-MiniLM-L6-v2": {"task": "embedding", "pooling": "mean", "provenance": "official-default"},
     "jina-embeddings-v3": {"task": "embedding", "pooling": "mean", "provenance": "official-default", "note": "publisher default uses task LoRA with mean pooling; only the plain AutoModel mean path is covered here"},
-    "OneRec-1.7B": {"task": "causal-lm", "provenance": "official-default", "note": "Qwen3ForCausalLM architecture (OpenOneRec/OneRec-1.7B); generative-recommendation training objectives (multi-task/RL) stay outside the standard task scope; causal-lm verifies the fine-tuning path on deterministic synthetic tokens"}
+    "OneRec-1.7B": {"task": "causal-lm", "provenance": "trained-verified", "note": "Qwen3ForCausalLM architecture (OpenOneRec/OneRec-1.7B); single-card causal-lm fine-tuning verified on PPU via registry task default and auto-generated deterministic token corpus; generative-recommendation objectives (multi-task/RL) stay outside the standard task scope"}
   },
   "prefixes": [
     {"prefix": "Qwen3-Embedding-", "task": "embedding", "pooling": "last", "provenance": "official-default"},

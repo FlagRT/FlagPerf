@@ -1,6 +1,6 @@
 # Training v2 验证与已知限制
 
-日期：2026-11-11（2026-11-12 增补 CTR 训练、embedding/reranker 训练任务与 P800 探针收官）。起点为 `zhiyu/model-adaptation@3417e54d`，开发分支 `zhiyu/perf-train`。验证目录包含多轮独立运行，不覆盖失败、不合并计数冒充一次验收。
+日期：2026-11-11（2026-11-12 增补 CTR 训练、embedding/reranker 训练任务与 P800 探针收官；同日晚间增补 FSDP 分片训练、注册表 --task 缺省解析与 causal-lm 通路）。起点为 `zhiyu/model-adaptation@3417e54d`，开发分支 `zhiyu/perf-train`。验证目录包含多轮独立运行，不覆盖失败、不合并计数冒充一次验收。
 
 ## 实测状态
 
@@ -22,6 +22,11 @@
 | PPU reranker 微调（Qwen3-Reranker-0.6B / bge-reranker-base） | 通过 | 复用推理侧密封 rerank 包，相关性标签由 sample id 派生；`causal_yesno`（AutoModelForCausalLM，末有效位置 [no,yes] 两列 CE）与 `sequence_logit`（AutoModelForSequenceClassification，BCEWithLogits）两种语义各 2 步完成；协议记录包 oracle/inputs/contract/template 与 `rerank_weight_sha256` |
 | PPU embedding 官方采集观测与对比 | 通过 | perf-lite 采集 embedding 训练后，与无采集基线零容差对比 pass（4654 行） |
 | PPU 双机 embedding/rerank A/A | 通过 | thead2 独立复跑同款套件（8 项返回码全零，模型与密封包 sha256 中转核对）；跨主机 JSON 级逐字段对照一致：`final_model_sha256` 双机同 `e2dbfd7b…cd4b`、`final_optimizer_sha256` 同 `149b5d11…7e39`、两 rerank `rerank_weight_sha256` 同（`73991b03…`/`b2b6114f…`）、逐步 loss 逐位相同；0.6B 模型逐步快照为 GB 级，不做跨机全量搬移，对照粒度如实记录为结果 JSON |
+| PPU 两卡 FSDP 分片（classification） | 通过 | thead1/thead2 各自独立双跑逐位可复现；final optimizer 指纹四跑双机逐位同（`47393cfa…`）；final model 按 rank 分片留证、各 rank 双机逐位同（脚本形态 rank-0 `0643d70f…`/rank-1 `33093750…`，CLI 形态 rank-0 `bbe255a5…`/rank-1 `f3b2667d…`）；summary 按 `sharding`/`check_mode` 识别分片并输出 complete |
+| PPU 两卡 FSDP vs DDP（0.6B rerank） | 数值逐位一致 | 复用密封 rerank 包，FSDP 与 DDP 对照的逐步 loss 轨迹逐位同（rank-0 `[0.0005846787244081497, 49.59575653076172]`）；最终模型指纹差异为 rank 局部 shard 与全量副本的语义差，非数值分歧；双机结果一致 |
+| PPU FSDP 扩展路径（thead2 fsdp-ext） | 通过 | performance 模式与 accuracy 数值逐位同且按预期不含 step 快照；FSDP+累积 2 与 DDP+累积 2 逐步 loss 逐位一致；4 卡 FSDP classification summary complete（无重复块 root-only 包装属预期）；compare 对协议不匹配与形状不匹配均诚实拒绝，`--declare` 不可绕过 |
+| PPU 两卡 FSDP 分片（Qwen3-Reranker-8B 全参，performance 模式） | 通过（rc=0，2 步完成） | FP32 训练态约 128 GB 分片进双 96 GB 卡（每 rank 约 64 GB），torchrun 2 rank；protocol `sharding=fsdp`、`fsdp_wrapping=per-block+root`；五分片权重全部通过 modelscope API sha256 关卡（含 shard4 双写事故修复后复验）；rank-0 逐步 loss [0.0124926, 0] |
+| PPU 单卡 causal-lm（OneRec-1.7B，注册表 --task 缺省 + 缺省语料自动生成） | 通过（双机双跑 rc=0） | thead1/thead2 各 explicit 与 registry 两形态共四跑：final_model_sha256 四方一致 467145ae260d9598…、逐步 loss 四方逐位 [13.533725, 21.052334]；protocol task_source explicit/registry 对比落证；权重 4263793656 字节 sha256 cabc217fad6129ab… 与 modelscope API 权威值逐字同，索引文件 sha 双机同 |
 | PPU 逐算子微基准（诊断） | 完成 | `op_micro.py` 14 算子 @ B8 S512 H1024 vocab151669 bf16，中位数 50 iters；产出 `op-micro-ppu.json`；诊断脚本，不入采集协议 |
 | P800 两台机器空闲卡健康探针 | 未通过健康前置 | 固定 FlagRT v2 镜像内最小 PyTorch 探针在 torch import 后、首个设备内核前停滞，硬上限后 rc=137；四轮独立实验覆盖两台机器共 6/6 长空闲物理卡同型挂死（楔死卡可被其他租户唤醒跑满，非永久损坏），证据链闭环，定性为厂商级阻塞。没有进入本训练框架，不能声明 P800 训练适配完成 |
 
@@ -33,6 +38,7 @@
 |---|---|---|
 | PPU | PPU-ZW810E；物理 0/1 → 容器逻辑 0/1；驱动 1.5.1-1d747a；FlagRT 镜像 ID `1ba7ead15378`；torch 2.10 / SDK 2.1.0 / Python 3.12 | `health-ppu1.*`、`suite-v3/`、`suite-v5/`、`final-suite/`、`ppu-ddp/`、CPU/Gloo 与回归输出 |
 | PPU（CTR，双机） | thead1 物理 0 与 thead2 物理 2，同一镜像与身份文件；证据根 `perf-train-evidence-20261112` | `ctr-suite-v1/`（两台同构：baseline、14 架构、五 preset record/compare/inspect/report、AMP、推理 oracle 权重互挂、跨主机 comparison、`ctr-regression-20261112/` 回归输出） |
+| PPU（FSDP 分片，双机） | thead1 物理 0/1 与 thead2 物理 2/3，同一镜像与身份文件；证据根同上 | thead1：`fsdp-ppu/`、`regression-fsdp/`（权威回归）、`fsdp-8b/`、`fsdp-onerec/`；thead2：`fsdp-ppu/`、`fsdp-ppu-b/`（跨主机 A/A 对照）、`fsdp-ext/`（performance 模式、FSDP+累积、4 卡 FSDP、compare 诚实性）；同一改动含 summary.py 分片感知修复与 `task_source` 协议字段 |
 | PPU（embedding/rerank，双机） | thead1 物理 0 与 thead2 物理 2，同一镜像与身份文件；证据根同上 | `model-tasks-v1/`（两台同构：语料生成、last/cls embedding、两种 rerank 语义、perf-lite record/compare、`op-micro-ppu.json`）；thead1 另含 `regression-20261112/` 权威回归输出与 `bgem3-v1/`（bge-m3 cls/last 补测） |
 | P800 | 同一已实测镜像 ID `cac5ddae5f62`，torch 2.9.0+cu129；klx1 minor 6/0/3、klx2 minor 0/2/1/3/6 四轮探针 | 各轮 `probe*` stdout/stderr/returncode、pre/postflight、独立小脚本与容器生命周期记录 |
 
@@ -42,8 +48,8 @@
 
 | 回归 | 结果 | 说明 |
 |---|---|---|
-| 既有 Inference 标准库 smoke（python -S） | 171 tests，69 skipped，OK（2026-11-12，PPU 容器内 Linux） | 在无 torch/SDK 导入条件运行；含 CTR/embedding/rerank/模型注册表新测试中不依赖 torch 的项，其余在此条件下跳过，跳过项不计通过 |
-| 训练语义 + 训练分析 + CTR/embedding/rerank/注册表任务 + 原精度/replay 定向回归 | 64 tests，OK（2026-11-12，含 10 项 CTR、16 项 embedding/rerank、11 项模型注册表测试） | 命令为 `python3 -B -m unittest tests.test_training tests.test_training_analysis tests.test_training_ctr tests.test_training_embedding tests.test_training_rerank tests.test_training_registry tests.probes.test_accuracy tests.probes.test_replay -v`（仓库 `inference/` 目录）；不与上行或模型设备实测重复相加 |
+| 既有 Inference 标准库 smoke（python -S） | 186 tests，81 skipped，OK（2026-11-13 最终权威回归 regression-fsdp4，PPU 容器内 python -S；torch 守卫用例按既有模式环境性跳过） | 在无 torch/SDK 导入条件运行；含 CTR/embedding/rerank/模型注册表新测试中不依赖 torch 的项，其余在此条件下跳过，跳过项不计通过 |
+| 训练语义 + 训练分析 + CTR/embedding/rerank/注册表/分片任务 + 原精度/replay 定向回归 | 79 tests，OK（2026-11-13 最终权威回归 regression-fsdp4，逐模块实测：training 17、analysis 5、ctr 10、embedding 8、rerank 8、registry 13、sharding 9、accuracy 8、replay 1；含 summary 分片识别/步骤覆盖校验、Roberta 式包装发现、task_source CLI 缺省与缺省语料目录拼接组合断言） | 命令为 `python3 -B -m unittest tests.test_training tests.test_training_analysis tests.test_training_ctr tests.test_training_embedding tests.test_training_rerank tests.test_training_registry tests.probes.test_accuracy tests.probes.test_replay -v`（仓库 `inference/` 目录）；不与上行或模型设备实测重复相加 |
 | 原 TP2 embedding CPU 用例 | 环境失败保留 | PPU 镜像无设备映射时，Transformers TP 加载尝试 CUDA 初始化并报 driver shutting down；在完全未修改的 `3417e54d` 归档上同样复现。不是本次引入，亦不改测试掩盖 |
 
 ## 保留的问题与范围
@@ -54,10 +60,10 @@
 | TRAIN-ENV-001 | 首轮官方采集因 scratch 位于容器 overlay 被 ext4 门禁拒绝 | 失败保留，指定 ext4 scratch 后通过；使用手册已明确 |
 | TRAIN-ENV-002 | 上述既有 TP2 embedding 无设备 CPU 测试在 PPU 镜像失败 | 精确起点基线已复现；需要独立处理环境选择，不能称全部旧回归全绿 |
 | 观察范围 | forward module 树不能直接当作 backward 层归属；Python collective 不包含全部 DDP C++ reducer 调用 | 训练显式范围内逐调用覆盖已补，跨线程不自动传递；设备关联缺失照常 partial/unavailable |
-| 模型范围 | 内置分类功能示例、HF causal LM、密封 CTR 语料模板训练（14 架构，派生标签 + 逐架构 loss）、embedding 微调（InfoNCE，三种 pooling）与 reranker 微调（两种打分语义）；不含正式数据集收敛、FSDP/ZeRO/TP/PP | CTR/embedding 语料为确定性合成（不是真实点击或检索数据），rerank 标签由 sample id 派生；验证微调通路与观测闭环，不声明任务精度；新模型需明确输入、标签、loss、优化器和训练协议再单独验收 |
-| TRAIN-MODEL-001 | Qwen3-Reranker-8B 全参数微调超出单卡显存：FP32 参数 + AdamW 一二阶矩 + 梯度约 128 GB > 96 GB（PPU-ZW810E）；DDP 每 rank 复制全量不解决分片 | 暂不可在本框架训练，如实记录；FSDP/ZeRO 与 bf16 参数协议属范围外/协议变更，需用户明确授权后再评；同构通路已由 Qwen3-Reranker-0.6B（causal_yesno）实测覆盖 |
-| TRAIN-MODEL-002 | OneRec-1.7B 训练适配暂缓：模型权重未在 PPU 双机供给（thead1 全盘检索无 OneRec 目录），推理侧 runner 标注 inference-only；生成式推荐端到端训练目标（多任务/强化学习）超出当前标准训练任务定义 | 待权重供给与官方训练协议明确后再评；不把推理模板裸加 `.train()` 冒充训练适配 |
-| TRAIN-MODEL-003 | 搜广推 15 模型清单中两个多模态模型（openai/clip-vit-large-patch14、Qwen3-VL-Embedding-8B）按本轮范围约定排除 | 不在本轮训练适配范围；其余 13 个目标去向：9 个 CTR 架构（DIN/DeepFM/DCN-Mix/ESMM/DLRM/DSSM/LightGCN/SASRec/PLE）由 `--task ctr` 覆盖，Qwen3-Embedding-0.6B 与 bge-m3 由 `--task embedding` 覆盖（均已实测），Qwen3-Reranker-8B 见 TRAIN-MODEL-001（0.6B 同构通路已实测），OneRec-1.7B 见 TRAIN-MODEL-002 |
+| 模型范围 | 内置分类功能示例、HF causal LM、密封 CTR 语料模板训练（14 架构，派生标签 + 逐架构 loss）、embedding 微调（InfoNCE，三种 pooling）、reranker 微调（两种打分语义）与两卡 FSDP 参数分片；不含正式数据集收敛、ZeRO/TP/PP | CTR/embedding 语料为确定性合成（不是真实点击或检索数据），rerank 标签由 sample id 派生；验证微调通路与观测闭环，不声明任务精度；新模型需明确输入、标签、loss、优化器和训练协议再单独验收 |
+| TRAIN-MODEL-001 | Qwen3-Reranker-8B 全参 FP32 训练态约 128 GB > 单卡 96 GB，DDP 每 rank 复制不可行；两卡 FSDP 分片（每 rank 约 64 GB）已实测通过（performance 模式，2 步，rc=0，权重过 sha 关卡） | 正式数据集收敛、多机扩展与 bf16 参数协议属范围外/协议变更，需用户明确授权后再评；0.6B 同构通路已逐步逐位验证 |
+| TRAIN-MODEL-002 | OneRec-1.7B 权重已供给（4263793656 字节，sha256 与 modelscope API 权威值逐字同）；标准 causal-lm 微调通路单卡实测通过：显式 --task 与注册表缺省两形态结果逐位一致，缺省语料自动生成 | 生成式推荐完整训练目标（多任务/强化学习）仍属范围外，按注册表 note 声明；不把推理模板裸加 .train() 冒充训练适配 |
+| TRAIN-MODEL-003 | 搜广推 15 模型清单中两个多模态模型（openai/clip-vit-large-patch14、Qwen3-VL-Embedding-8B）按本轮范围约定排除 | 不在本轮训练适配范围；其余 13 个目标去向：9 个 CTR 架构（DIN/DeepFM/DCN-Mix/ESMM/DLRM/DSSM/LightGCN/SASRec/PLE）由 `--task ctr` 覆盖，Qwen3-Embedding-0.6B 与 bge-m3 由 `--task embedding` 覆盖（均已实测），Qwen3-Reranker-8B 见 TRAIN-MODEL-001（0.6B 同构通路已实测），OneRec-1.7B 见 TRAIN-MODEL-002——至此 13 个非多模态目标全部实测覆盖 |
 | 性能范围 | accuracy 快照开销、首次编译/初始化、共享宿主 | 不自动给独占资格，不把诊断时长当成优化后性能，不合计 rank-local 吞吐 |
 
 新增代码版权署名为 **Suscom Lab, The Hong Kong University of Science and Technology (Guangzhou)**；已有上游文件保留原版权声明。
