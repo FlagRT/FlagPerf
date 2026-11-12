@@ -8,10 +8,30 @@ from pathlib import Path
 import random
 
 
+def local_shard(value):
+    """FSDP2 parameters/gradients arrive as DTensor; keep the local shard.
+
+    Plain tensors pass through untouched, so DDP and single-device paths
+    behave exactly as before. Shard placement is intentionally NOT collapsed:
+    saved states and fingerprints are per-rank shard states under sharding.
+    """
+    try:
+        from torch.distributed.tensor import DTensor
+    except Exception:
+        return value
+    if isinstance(value, DTensor):
+        return value.to_local()
+    return value
+
+
 def fingerprint(value):
     import torch
     h = hashlib.sha256()
     def visit(v):
+        placements = getattr(v, 'placements', None)
+        if placements is not None:
+            h.update(json.dumps(['DTensor', sorted(str(p) for p in placements)]).encode())
+            v = local_shard(v)
         if isinstance(v, torch.Tensor):
             t = v.detach().cpu().contiguous()
             h.update(json.dumps([str(t.dtype), list(t.shape)]).encode())
@@ -32,7 +52,7 @@ def fingerprint(value):
 
 def cpu_state(value):
     import torch
-    if isinstance(value, torch.Tensor): return value.detach().cpu().clone()
+    if isinstance(value, torch.Tensor): return local_shard(value).detach().cpu().clone()
     if isinstance(value, dict): return {k:cpu_state(v) for k,v in value.items()}
     if isinstance(value, list): return [cpu_state(v) for v in value]
     if isinstance(value, tuple): return tuple(cpu_state(v) for v in value)

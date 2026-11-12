@@ -8,7 +8,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from flagprof.training.registry import SCORES, load_registry, lookup, resolve
+from flagprof.training.registry import SCORES, load_registry, lookup, resolve, resolve_task
 
 
 def write_registry(root, data):
@@ -64,6 +64,25 @@ class RegistryContractTests(unittest.TestCase):
                          ('causal_yesno', 'registry'))
         self.assertEqual(resolve(None, '/models/unknown', kind='pooling', registry=data), (None, None))
         self.assertEqual(tuple(sorted(SCORES)), ('causal_yesno', 'sequence_logit'))
+
+    def test_task_resolution_and_causal_lm_entries(self):
+        data = load_registry()
+        self.assertEqual(resolve_task('/models/bge-m3', data), 'embedding')
+        self.assertEqual(resolve_task('hf:Qwen3-Reranker-8B', data), 'rerank')
+        self.assertIsNone(resolve_task('/models/chinese-roberta-wwm-ext', data))
+        causal = {name: entry for name, entry in data['entries'].items()
+                  if entry.get('task') == 'causal-lm'}
+        for name, entry in causal.items():
+            self.assertIn(entry['provenance'], ('trained-verified', 'official-default'), name)
+            self.assertNotIn('pooling', entry, name)
+            self.assertNotIn('rerank_score', entry, name)
+
+    def test_causal_lm_entry_resolves_task_without_extra_options(self):
+        with tempfile.TemporaryDirectory() as directory:
+            custom = dict(schema='model-registry-v1', entries={
+                'some-generative-rec': dict(task='causal-lm', provenance='official-default')})
+            data = load_registry(write_registry(directory, custom))
+            self.assertEqual(resolve_task('/models/some-generative-rec', data), 'causal-lm')
 
 
 class CliDefaultTests(unittest.TestCase):

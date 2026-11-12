@@ -11,7 +11,10 @@ import random
 
 def parser():
     p=argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--task',choices=('classification','causal-lm','ctr','embedding','rerank'),default='classification')
+    p.add_argument('--task',choices=('classification','causal-lm','ctr','embedding','rerank'),default=None,
+                   help='Training task; optional for adapted models in targets/model_registry.json (otherwise required); defaults to the classification demo when no model is given')
+    p.add_argument('--sharding',choices=('none','fsdp'),default='none',
+                   help='Multi-rank strategy: none=DistributedDataParallel full replica per rank; fsdp=fully_shard shards parameters/gradients/optimizer state so models too large for one card can train')
     p.add_argument('--model',help='Trusted local HF model directory; no network download')
     p.add_argument('--inputs',help='JSONL of token IDs (causal-lm) or triplet groups (embedding)')
     p.add_argument('--ctr-arch',help='CTR architecture (dlrm din widedeep deepfm dcn sasrec lightgcn bst dien dcnmix esmm mmoe ple dssm); required')
@@ -47,26 +50,33 @@ def local_files(model):
     return h.hexdigest()
 
 
-def ensure_generated(kind, outputs, seed):
-    """Generate the deterministic default corpus or CTR package next to --outputs.
+def ensure_generated(kind, outputs, seed, vocab=None, rows=None):
+    """Generate the deterministic default corpus or package next to --outputs.
 
     The generators are the sealed, seeded CLI tools under inference/targets/;
     an existing result is reused untouched. Single-process only: DDP ranks
     must share an explicit --inputs/--package instead of racing on creation.
+    kind: 'corpus' (embedding triplets), 'lm-corpus' (pretokenized LM rows),
+    or 'ctr-package'. rows defaults so a full batch grid is always possible.
     """
     base=Path(outputs)
-    suffix='-default-corpus' if kind=='corpus' else '-default-package'
+    suffix, marker, script_name = {
+        'corpus': ('-default-corpus','groups.jsonl','make_embedding_corpus.py'),
+        'lm-corpus': ('-default-corpus','tokens.jsonl','make_lm_corpus.py'),
+        'ctr-package': ('-default-package','manifest.json','make_ctr_package.py'),
+    }[kind]
     target=base.with_name(base.name+suffix)
-    marker='groups.jsonl' if kind=='corpus' else 'manifest.json'
     if (target/marker).exists(): return str(target)
-    script=Path(__file__).resolve().parents[2]/'targets'/(
-        'make_embedding_corpus.py' if kind=='corpus' else 'make_ctr_package.py')
+    script=Path(__file__).resolve().parents[2]/'targets'/script_name
     if not script.is_file(): raise ValueError('generator script missing: %s' % script)
     target.mkdir(parents=True, exist_ok=True)
     import subprocess, sys
     cmd=[sys.executable,'-B',str(script),'--seed',str(seed)]
     if kind=='corpus':
         cmd += ['--groups','32','--negs','3','--out',str(target/'groups.jsonl')]
+    elif kind=='lm-corpus':
+        cmd += ['--rows',str(rows or 16),'--seq-len','64','--vocab',str(vocab or 65536),
+                '--out',str(target/'tokens.jsonl')]
     else:
         cmd += ['--samples','1024','--out',str(target)]
     done=subprocess.run(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
@@ -102,10 +112,50 @@ def prepared_lm(path, *, batch_size, rank=0, world_size=1):
     return batches
 
 
+def block_layers(model):
+    """Repeated transformer blocks of a HF model, best effort.
+
+    Standard Qwen3-style ``model.layers`` first, then Roberta-style
+    ``model.encoder.layer``. Sharding per block keeps the forward all-gather
+    peak at one layer instead of the whole model; models without such
+    repetition fall back to root-only wrapping.
+    """
+    inner=getattr(model,'model',None)
+    layers=getattr(inner,'layers',None) if inner is not None else None
+    if not layers:
+        encoder=getattr(inner,'encoder',None) if inner is not None else None
+        layers=getattr(encoder,'layer',None) if encoder is not None else None
+    return list(layers) if layers else []
+
+
+def apply_sharding(model, device_type, world_size):
+    """Wrap with FSDP2 fully_shard: repeated blocks first, then the root.
+
+    Returns (model, wrapping description) so the protocol records the
+    structure that was actually used.
+    """
+    from torch.distributed.device_mesh import init_device_mesh
+    from torch.distributed.fsdp import fully_shard
+    mesh=init_device_mesh(device_type,(world_size,))
+    wrapped=block_layers(model)
+    for layer in wrapped: fully_shard(layer,mesh=mesh)
+    fully_shard(model,mesh=mesh)
+    return model, ('per-block+root' if wrapped else 'root-only')
+
+
 def execute(args):
     import torch
     from .engine import train
     import torch.distributed as dist
+    if args.task is None:
+        if args.model:
+            from .registry import resolve_task
+            args.task=resolve_task(args.model)
+            if not args.task:
+                raise ValueError('--task is required: model %r is not in inference/targets/model_registry.json; '
+                                 'pass one of: classification, causal-lm, ctr, embedding, rerank' % args.model)
+        else:
+            args.task='classification'
     if args.steps<=0 or args.batch_size<=0 or args.accumulation<=0:
         raise ValueError('steps, batch-size and accumulation must be positive')
     if not 0<args.lr<float('inf'): raise ValueError('lr must be positive and finite')
@@ -113,6 +163,12 @@ def execute(args):
         raise ValueError('DDP ranks must share an explicit --inputs; default corpus generation is single-process only')
     if args.ddp and args.task=='ctr' and not args.package:
         raise ValueError('DDP ranks must share an explicit --package; default corpus generation is single-process only')
+    if args.ddp and args.task=='causal-lm' and not args.inputs:
+        raise ValueError('DDP ranks must share an explicit --inputs; default corpus generation is single-process only')
+    if args.sharding!='none' and not args.ddp:
+        raise ValueError('--sharding fsdp requires --ddp (torchrun); a single process has nothing to shard across')
+    if args.sharding!='none' and (args.checkpoint or args.resume):
+        raise ValueError('checkpoint/resume is not yet supported with FSDP sharding; per-rank shard checkpoints are a recorded limitation, not silently dropped')
     world=int(os.environ.get('WORLD_SIZE','1'));rank=int(os.environ.get('RANK','0'))
     local_rank=int(os.environ.get('LOCAL_RANK','0'))
     if world!=1 and not args.ddp: raise ValueError('torchrun requires explicit --ddp')
@@ -222,19 +278,36 @@ def execute(args):
                 rank=rank,world_size=world)
             protocol.update(rerank_protocol)
         else:
-            if not args.model or not args.inputs: raise ValueError('causal-lm requires --model and --inputs')
+            if not args.model: raise ValueError('causal-lm requires --model')
             from transformers import AutoModelForCausalLM
             source=args.model.removeprefix('hf:')
             if not Path(source).is_dir(): raise ValueError('local model directory missing')
             protocol['model_files_sha256']=local_files(source)
+            inputs=args.inputs
+            if not inputs:
+                if args.ddp: raise ValueError('DDP ranks must share an explicit --inputs; default corpus generation is single-process only')
+                config=json.loads((Path(source)/'config.json').read_text(encoding='utf-8'))
+                vocab=int(config.get('vocab_size') or 65536)
+                inputs=ensure_generated('lm-corpus',args.outputs,args.seed,vocab=vocab,
+                                        rows=max(16,4*args.batch_size*world))
+                protocol['data']='deterministic synthetic LM tokens generated next to --outputs (make_lm_corpus)'
+                protocol['default_corpus_generated']=True
             model=AutoModelForCausalLM.from_pretrained(source,local_files_only=True,trust_remote_code=False,
                                                        torch_dtype=torch.float32,attn_implementation='eager')
             protocol['attention']='eager'
-            batches=prepared_lm(args.inputs,batch_size=args.batch_size,rank=rank,world_size=world)
+            batches=prepared_lm(inputs,batch_size=args.batch_size,rank=rank,world_size=world)
             def loss_fn(m,b):return m(**b).loss
         model=model.to(device)
         if args.ddp:
-            model=torch.nn.parallel.DistributedDataParallel(model,device_ids=[local_rank] if device.startswith('cuda') else None)
+            if args.sharding=='fsdp':
+                model,wrapping=apply_sharding(model,torch.device(device).type,world)
+                protocol['sharding']='fsdp'
+                protocol['fsdp_wrapping']=wrapping
+            else:
+                protocol['sharding']='ddp-replica'
+                model=torch.nn.parallel.DistributedDataParallel(model,device_ids=[local_rank] if device.startswith('cuda') else None)
+        else:
+            protocol['sharding']='none'
         optimizer=(torch.optim.SGD(model.parameters(),lr=args.lr) if args.optimizer=='sgd' else
                    torch.optim.AdamW(model.parameters(),lr=args.lr))
         def rank_path(path):return str(path)+'.rank-'+str(rank) if path and args.ddp else path

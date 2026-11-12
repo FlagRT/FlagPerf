@@ -16,11 +16,13 @@
     "m3e-base": {"task": "embedding", "pooling": "cls", "provenance": "official-default"},
     "e5-small-v2": {"task": "embedding", "pooling": "mean", "provenance": "official-default"},
     "all-MiniLM-L6-v2": {"task": "embedding", "pooling": "mean", "provenance": "official-default"},
-    "jina-embeddings-v3": {"task": "embedding", "pooling": "mean", "provenance": "official-default", "note": "publisher default uses task LoRA with mean pooling; only the plain AutoModel mean path is covered here"}
+    "jina-embeddings-v3": {"task": "embedding", "pooling": "mean", "provenance": "official-default", "note": "publisher default uses task LoRA with mean pooling; only the plain AutoModel mean path is covered here"},
+    "OneRec-1.7B": {"task": "causal-lm", "provenance": "official-default", "note": "Qwen3ForCausalLM architecture (OpenOneRec/OneRec-1.7B); generative-recommendation training objectives (multi-task/RL) stay outside the standard task scope; causal-lm verifies the fine-tuning path on deterministic synthetic tokens"}
   },
   "prefixes": [
     {"prefix": "Qwen3-Embedding-", "task": "embedding", "pooling": "last", "provenance": "official-default"},
     {"prefix": "Qwen3-Reranker-", "task": "rerank", "rerank_score": "causal_yesno", "provenance": "official-default"},
+    {"prefix": "OneRec-", "task": "causal-lm", "provenance": "official-default"},
     {"prefix": "bge-reranker-", "task": "rerank", "rerank_score": "sequence_logit", "provenance": "official-default"},
     {"prefix": "jina-reranker", "task": "rerank", "rerank_score": "sequence_logit", "provenance": "official-default"},
     {"prefix": "ms-marco-MiniLM", "task": "rerank", "rerank_score": "sequence_logit", "provenance": "official-default"},

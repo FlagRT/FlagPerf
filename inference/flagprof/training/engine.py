@@ -10,6 +10,11 @@ from . import attachment, phase, register_model
 from .state import cpu_state, fingerprint, raw_model, restore, save
 
 
+def is_sharded(model):
+    """FSDP2 rewrites modules in place; its modules carry the sync toggle."""
+    return hasattr(model, 'set_requires_gradient_sync')
+
+
 def synchronize(device):
     import torch
     dev=torch.device(device)
@@ -43,8 +48,8 @@ def train(model, optimizer, batches, loss_fn, *, outputs, steps=3, accumulation=
     if amp=='float16' and not str(device).startswith('cuda'):
         raise ValueError('FP16 AMP requires CUDA-compatible device with GradScaler')
     if rank<0 or rank>=world_size: raise ValueError('invalid rank')
-    if world_size>1 and not isinstance(model,DistributedDataParallel):
-        raise ValueError('world_size requires DistributedDataParallel')
+    if world_size>1 and not (isinstance(model,DistributedDataParallel) or is_sharded(model)):
+        raise ValueError('world_size requires DistributedDataParallel or fully_shard sharding')
     if stop_after is not None and (type(stop_after) is not int or not 0<stop_after<=steps):
         raise ValueError('stop_after must be within planned optimizer steps')
     destination=Path(outputs)
@@ -93,7 +98,10 @@ def train(model, optimizer, batches, loss_fn, *, outputs, steps=3, accumulation=
                             moved)
                     samples+=next(iter(batch.values())).shape[0]
                     if 'attention_mask' in batch: tokens+=int(batch['attention_mask'].sum())
-                    # no_sync wraps both forward and backward, as required by DDP.
+                    # DDP defers the all-reduce to the final microbatch via no_sync
+                    # (which wraps both forward and backward); FSDP2 defers the
+                    # reduce-scatter via set_requires_gradient_sync.
+                    if is_sharded(model): model.set_requires_gradient_sync(micro+1>=accumulation)
                     ddp=model.no_sync() if isinstance(model,DistributedDataParallel) and micro+1<accumulation else nullcontext()
                     autocast=torch.autocast(torch.device(device).type,dtype=getattr(torch,amp)) if amp!='off' else nullcontext()
                     with ddp:
@@ -111,8 +119,9 @@ def train(model, optimizer, batches, loss_fn, *, outputs, steps=3, accumulation=
                 if scaler: scaler.unscale_(optimizer)
                 if mode=='accuracy':
                     # Explicit diagnostic overhead: timing is labelled accordingly.
+                    # cpu_state keeps DTensor gradients as local shards under sharding.
                     synchronize(device)
-                    grad={n:p.grad.detach().cpu().clone() for n,p in raw_model(model).named_parameters() if p.grad is not None}
+                    grad={n:cpu_state(p.grad.detach()) for n,p in raw_model(model).named_parameters() if p.grad is not None}
                     if not grad: raise RuntimeError('no parameter gradients produced')
                     gradients_finite=all(bool(torch.isfinite(t).all()) for t in grad.values())
                     if not gradients_finite and scaler is None:
