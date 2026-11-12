@@ -8,6 +8,7 @@
 - CLS 默认右填充并选择首个有效 token；修复单样本非单位步长分数的二进制导出。
 - embedding 训练 loss 显式使用 FP32 池化、归一化与相似度计算，数值协议记录精度边界。
 - 新增 CPU 完整采集与 Oracle 回归，并加入有 torch、无设备的 CI 作业。用法与验证入口见[模型适配](../inference/docs/thead-model-adaptation.md)。
+- 后续排查修复编译器测试的进程状态依赖；补齐 CPU 套件的 Transformers、Accelerate 和 Triton 依赖，线上 CI 扩展到完整推理套件及 Gloo TP2。厂商镜像缺少驱动时的 CPU 隔离方式见[使用说明](../inference/docs/usage.md#cpu-冒烟测试)。
 
 ## 2026-11-11 — Training v2 标准训练观测（候选）
 

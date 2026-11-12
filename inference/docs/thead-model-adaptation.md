@@ -124,9 +124,9 @@ CLS pooling 缺省使用右填充；显式左填充时按 attention mask 选择�
 
 **Oracle 身份与报告。** CTR 和 rerank 都记录批次形状、样本顺序、probe 算法、软件、数值策略和组件来源。CTR 必须匹配架构配置、初始权重、种子和打分语义；rerank 必须匹配权重、打分语义、模板、yes/no token ID、attention 和厂商代码。两者均以 `scores` 注册输出边界。权重或打分语义变化会阻断精度归因；设备与软件等差异沿用既有显式声明规则。旧版本缺少这些身份字段的 Store 需要重新采集，不补写未知字段。
 
-`tests/test_review_regressions.py` 用真实 CPU 采集、Store 和报告验证 CTR 及两种 rerank 打分路径，并覆盖身份冲突、配置生效与清理、厂商代码授权、子目录指纹、CLS 默认值和 BF16 输入下的 FP32 loss。GitHub `Inference CPU smoke` 增加独立 `model-contracts` 作业，运行这些测试和训练语义回归，不下载模型或使用设备。
+`tests/test_review_regressions.py` 用真实 CPU 采集、Store 和报告验证 CTR 及两种 rerank 打分路径，并覆盖身份冲突、配置生效与清理、厂商代码授权、子目录指纹、CLS 默认值和 BF16 输入下的 FP32 loss。GitHub `Inference CPU smoke` 的独立 `model-contracts` 作业运行完整推理套件，包含两进程 Gloo TP2 和训练语义回归，不下载模型或使用设备。
 
-CPU 测试套件：`python3 -B -m pytest tests -q`（在 `inference/` 下，配好 `PYTHONPATH`）。
+CPU 测试套件：`python3 -B -m pytest tests -q`（在 `inference/` 下）；依赖安装和厂商镜像的 CPU 隔离方式见[使用说明](usage.md#cpu-冒烟测试)。
 
 ## 6. 决策与边界
 
