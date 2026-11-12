@@ -14,11 +14,11 @@ def parser():
     p.add_argument('--task',choices=('classification','causal-lm','ctr','embedding','rerank'),default='classification')
     p.add_argument('--model',help='Trusted local HF model directory; no network download')
     p.add_argument('--inputs',help='JSONL of token IDs (causal-lm) or triplet groups (embedding)')
-    p.add_argument('--ctr-arch',help='CTR architecture from the runner registry; validated at execution')
-    p.add_argument('--package',help='Sealed package directory (ctr/rerank task); digests verified, corpus unchanged')
-    p.add_argument('--pooling',choices=('last','cls','mean'),default=None,help='Embedding pooling; required for the embedding task')
+    p.add_argument('--ctr-arch',help='CTR architecture (dlrm din widedeep deepfm dcn sasrec lightgcn bst dien dcnmix esmm mmoe ple dssm); required')
+    p.add_argument('--package',help='Sealed package directory (ctr/rerank task); digests verified, corpus unchanged; ctr may omit it to generate the deterministic default corpus')
+    p.add_argument('--pooling',choices=('last','cls','mean'),default=None,help='Embedding pooling; optional for adapted models in targets/model_registry.json, otherwise required')
     p.add_argument('--temperature',type=float,default=.05,help='InfoNCE temperature (embedding task)')
-    p.add_argument('--rerank-score',choices=('causal_yesno','sequence_logit'),default='causal_yesno',help='Rerank scoring semantics; must match the package manifest')
+    p.add_argument('--rerank-score',choices=('causal_yesno','sequence_logit'),default=None,help='Rerank scoring semantics; optional for adapted models in targets/model_registry.json, otherwise required; must match the package manifest')
     p.add_argument('--outputs',required=True)
     p.add_argument('--device',default='cpu')
     p.add_argument('--steps',type=int,default=3,help='Total optimizer steps, including resumed steps')
@@ -45,6 +45,35 @@ def local_files(model):
             with path.open('rb') as stream:
                 for block in iter(lambda:stream.read(1<<20),b''):h.update(block)
     return h.hexdigest()
+
+
+def ensure_generated(kind, outputs, seed):
+    """Generate the deterministic default corpus or CTR package next to --outputs.
+
+    The generators are the sealed, seeded CLI tools under inference/targets/;
+    an existing result is reused untouched. Single-process only: DDP ranks
+    must share an explicit --inputs/--package instead of racing on creation.
+    """
+    base=Path(outputs)
+    suffix='-default-corpus' if kind=='corpus' else '-default-package'
+    target=base.with_name(base.name+suffix)
+    marker='groups.jsonl' if kind=='corpus' else 'manifest.json'
+    if (target/marker).exists(): return str(target)
+    script=Path(__file__).resolve().parents[2]/'targets'/(
+        'make_embedding_corpus.py' if kind=='corpus' else 'make_ctr_package.py')
+    if not script.is_file(): raise ValueError('generator script missing: %s' % script)
+    target.mkdir(parents=True, exist_ok=True)
+    import subprocess, sys
+    cmd=[sys.executable,'-B',str(script),'--seed',str(seed)]
+    if kind=='corpus':
+        cmd += ['--groups','32','--negs','3','--out',str(target/'groups.jsonl')]
+    else:
+        cmd += ['--samples','1024','--out',str(target)]
+    done=subprocess.run(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    if done.returncode!=0:
+        raise ValueError('default %s generation failed: %s' % (
+            kind, done.stderr.decode(errors='replace')[-400:]))
+    return str(target)
 
 
 def prepared_lm(path, *, batch_size, rank=0, world_size=1):
@@ -80,6 +109,10 @@ def execute(args):
     if args.steps<=0 or args.batch_size<=0 or args.accumulation<=0:
         raise ValueError('steps, batch-size and accumulation must be positive')
     if not 0<args.lr<float('inf'): raise ValueError('lr must be positive and finite')
+    if args.ddp and args.task=='embedding' and not args.inputs:
+        raise ValueError('DDP ranks must share an explicit --inputs; default corpus generation is single-process only')
+    if args.ddp and args.task=='ctr' and not args.package:
+        raise ValueError('DDP ranks must share an explicit --package; default corpus generation is single-process only')
     world=int(os.environ.get('WORLD_SIZE','1'));rank=int(os.environ.get('RANK','0'))
     local_rank=int(os.environ.get('LOCAL_RANK','0'))
     if world!=1 and not args.ddp: raise ValueError('torchrun requires explicit --ddp')
@@ -111,16 +144,33 @@ def execute(args):
             def loss_fn(m,b):return torch.nn.functional.cross_entropy(m(b['features']),b['labels'])
         elif args.task=='ctr':
             if args.model or args.inputs: raise ValueError('ctr task does not accept model or inputs')
-            if not args.package or not args.ctr_arch:
-                raise ValueError('ctr task requires --package and --ctr-arch')
+            from .ctr import TASK_ARCHS
+            if not args.ctr_arch:
+                raise ValueError('ctr task requires --ctr-arch with one of: '+', '.join(TASK_ARCHS))
+            if not args.package and args.ddp:
+                raise ValueError('DDP ranks must share an explicit --package')
+            package=args.package
+            if not package:
+                package=ensure_generated('ctr-package',args.outputs,args.seed)
+                protocol['data']='deterministic sealed CTR corpus generated next to --outputs (make_ctr_package, 1024 samples)'
+                protocol['default_package_generated']=True
             from .ctr import prepare_ctr
-            model,batches,loss_fn,ctr_protocol=prepare_ctr(arch=args.ctr_arch,package=args.package,
+            model,batches,loss_fn,ctr_protocol=prepare_ctr(arch=args.ctr_arch,package=package,
                 seed=args.seed,batch_size=args.batch_size,rank=rank,world_size=world)
             protocol.update(ctr_protocol)
         elif args.task=='embedding':
             if args.package or args.ctr_arch: raise ValueError('embedding task does not accept package or ctr-arch')
-            if not args.model or not args.inputs: raise ValueError('embedding requires --model and --inputs')
-            if not args.pooling: raise ValueError('embedding requires --pooling')
+            if not args.model: raise ValueError('embedding requires --model')
+            from .registry import resolve
+            pooling,pooling_source=resolve(args.pooling,args.model,kind='pooling')
+            if not pooling:
+                raise ValueError('embedding requires --pooling (last|cls|mean); model %r is not in '
+                                 'inference/targets/model_registry.json, so no default pooling is known' % args.model)
+            protocol['pooling_source']=pooling_source
+            inputs=args.inputs
+            if not inputs:
+                inputs=ensure_generated('corpus',args.outputs,args.seed)
+                protocol['data']='deterministic synthetic triplet corpus generated next to --outputs (make_embedding_corpus, 32 groups, 3 negatives)'
             from transformers import AutoModel,AutoModelForCausalLM
             source=args.model.removeprefix('hf:')
             if not Path(source).is_dir(): raise ValueError('local model directory missing')
@@ -135,13 +185,19 @@ def execute(args):
                                                            torch_dtype=torch.float32,attn_implementation='eager').model
                 protocol['model_class']='AutoModelForCausalLM.base'
             from .embedding import prepare_embedding
-            model,batches,loss_fn,emb_protocol=prepare_embedding(model=model,inputs=args.inputs,
-                pooling=args.pooling,temperature=args.temperature,batch_size=args.batch_size,
+            model,batches,loss_fn,emb_protocol=prepare_embedding(model=model,inputs=inputs,
+                pooling=pooling,temperature=args.temperature,batch_size=args.batch_size,
                 rank=rank,world_size=world)
             protocol.update(emb_protocol)
         elif args.task=='rerank':
             if args.inputs: raise ValueError('rerank task does not accept inputs')
             if not args.package or not args.model: raise ValueError('rerank task requires --package and --model')
+            from .registry import resolve
+            score,score_source=resolve(args.rerank_score,args.model,kind='rerank_score')
+            if not score:
+                raise ValueError('rerank requires --rerank-score (causal_yesno|sequence_logit); model %r is not in '
+                                 'inference/targets/model_registry.json, so no default scoring semantics is known' % args.model)
+            protocol['rerank_score_source']=score_source
             from transformers import AutoTokenizer
             source=args.model.removeprefix('hf:')
             if not Path(source).is_dir(): raise ValueError('local model directory missing')
@@ -149,12 +205,12 @@ def execute(args):
             protocol['attention']='eager'
             tokenizer=AutoTokenizer.from_pretrained(source,local_files_only=True,trust_remote_code=False)
             yes_id=no_id=None
-            if args.rerank_score=='causal_yesno':
+            if score=='causal_yesno':
                 yes_id=tokenizer.convert_tokens_to_ids('yes')
                 no_id=tokenizer.convert_tokens_to_ids('no')
                 if yes_id==tokenizer.unk_token_id or no_id==tokenizer.unk_token_id:
                     raise ValueError('tokenizer lacks literal yes/no tokens')
-            cls_name='AutoModelForCausalLM' if args.rerank_score=='causal_yesno' else 'AutoModelForSequenceClassification'
+            cls_name='AutoModelForCausalLM' if score=='causal_yesno' else 'AutoModelForSequenceClassification'
             import transformers
             model=getattr(transformers,cls_name).from_pretrained(source,local_files_only=True,trust_remote_code=False,
                                                                 torch_dtype=torch.float32,attn_implementation='eager')
@@ -162,7 +218,7 @@ def execute(args):
             if hasattr(model.config,'use_cache'): model.config.use_cache=False
             from .rerank import prepare_rerank
             model,batches,loss_fn,rerank_protocol=prepare_rerank(model=model,package=args.package,
-                score=args.rerank_score,batch_size=args.batch_size,yes_id=yes_id,no_id=no_id,
+                score=score,batch_size=args.batch_size,yes_id=yes_id,no_id=no_id,
                 rank=rank,world_size=world)
             protocol.update(rerank_protocol)
         else:
