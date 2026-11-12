@@ -48,8 +48,8 @@
 
 | 回归 | 结果 | 说明 |
 |---|---|---|
-| 既有 Inference 标准库 smoke（python -S） | 186 tests，81 skipped，OK（2026-11-13 最终权威回归 regression-fsdp4，PPU 容器内 python -S；torch 守卫用例按既有模式环境性跳过） | 在无 torch/SDK 导入条件运行；含 CTR/embedding/rerank/模型注册表新测试中不依赖 torch 的项，其余在此条件下跳过，跳过项不计通过 |
-| 训练语义 + 训练分析 + CTR/embedding/rerank/注册表/分片任务 + 原精度/replay 定向回归 | 79 tests，OK（2026-11-13 最终权威回归 regression-fsdp4，逐模块实测：training 17、analysis 5、ctr 10、embedding 8、rerank 8、registry 13、sharding 9、accuracy 8、replay 1；含 summary 分片识别/步骤覆盖校验、Roberta 式包装发现、task_source CLI 缺省与缺省语料目录拼接组合断言） | 命令为 `python3 -B -m unittest tests.test_training tests.test_training_analysis tests.test_training_ctr tests.test_training_embedding tests.test_training_rerank tests.test_training_registry tests.probes.test_accuracy tests.probes.test_replay -v`（仓库 `inference/` 目录）；不与上行或模型设备实测重复相加 |
+| 既有 Inference 标准库 smoke（python -S） | 197 tests，89 skipped，OK（2026-11-13 合并 inference 侧评审提交后的权威回归 regression-fsdp5，PPU 容器内 python -S；torch 守卫用例按既有模式环境性跳过） | 在无 torch/SDK 导入条件运行；含 CTR/embedding/rerank/模型注册表新测试中不依赖 torch 的项，其余在此条件下跳过，跳过项不计通过 |
+| 训练语义 + 训练分析 + CTR/embedding/rerank/注册表/分片任务 + 原精度/replay 定向回归 | 79 tests，OK（2026-11-13 最终权威回归 regression-fsdp5，逐模块实测：training 17、analysis 5、ctr 10、embedding 8、rerank 8、registry 13、sharding 9、accuracy 8、replay 1；含 summary 分片识别/步骤覆盖校验、Roberta 式包装发现、task_source CLI 缺省与缺省语料目录拼接组合断言） | 命令为 `python3 -B -m unittest tests.test_training tests.test_training_analysis tests.test_training_ctr tests.test_training_embedding tests.test_training_rerank tests.test_training_registry tests.probes.test_accuracy tests.probes.test_replay -v`（仓库 `inference/` 目录）；不与上行或模型设备实测重复相加 |
 | 原 TP2 embedding CPU 用例 | 环境失败保留 | PPU 镜像无设备映射时，Transformers TP 加载尝试 CUDA 初始化并报 driver shutting down；在完全未修改的 `3417e54d` 归档上同样复现。不是本次引入，亦不改测试掩盖 |
 
 ## 保留的问题与范围
