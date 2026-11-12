@@ -74,7 +74,17 @@ class PackageExecutionTests(unittest.TestCase):
         with patch('flagprof.devices.accelerator', return_value=True):
             with attach(run, 'ascend', preset='accuracy', config={'tensor_boundaries': 'model'}) as handle:
                 result = call()
-                self.assertEqual(handle.probe_manager.errors, [])
+                manager = handle.probe_manager
+                expected_errors = []
+                if importlib.util.find_spec('triton') is None:
+                    # CPU wheels omit Triton; its optional probe must report
+                    # unavailability while model/tensor capture remains active.
+                    expected_errors = ["compile: ModuleNotFoundError(\"No module named 'triton'\")"]
+                    self.assertEqual(manager.state['probes']['compile'], dict(
+                        status='unavailable', reason="ModuleNotFoundError: No module named 'triton'"))
+                self.assertEqual(manager.errors, expected_errors)
+                for probe in ('module', 'tensor'):
+                    self.assertEqual(manager.state['probes'][probe]['status'], 'available')
         finalize(run)
         return run, result
 
