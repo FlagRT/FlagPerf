@@ -57,9 +57,7 @@ def ensure_generated(kind, outputs, seed, vocab=None, rows=None):
     an existing result is reused untouched. Single-process only: DDP ranks
     must share an explicit --inputs/--package instead of racing on creation.
     kind: 'corpus' (embedding triplets), 'lm-corpus' (pretokenized LM rows),
-    or 'ctr-package'. Default row counts suit common batch sizes but do not
-    divide every batch size; a mismatch fails loudly with the required
-    multiple instead of dropping rows.
+    or 'ctr-package'. rows defaults so a full batch grid is always possible.
     """
     base=Path(outputs)
     suffix, marker, script_name = {
@@ -117,28 +115,25 @@ def prepared_lm(path, *, batch_size, rank=0, world_size=1):
 def block_layers(model):
     """Repeated transformer blocks of a HF model, best effort.
 
-    Qwen3-style ``model.model.layers`` first, then encoder-style
-    ``model.model.encoder.layer``, then Roberta/XLMRoberta-style hosts that
-    hang the trunk under ``.roberta``/``.bert`` instead of ``.model``.
-    Sharding per block keeps the forward all-gather peak at one layer instead
-    of the whole model; models without such repetition fall back to root-only
-    wrapping.
+    Standard Qwen3-style ``model.layers`` first, then Roberta-style
+    ``model.encoder.layer``. Sharding per block keeps the forward all-gather
+    peak at one layer instead of the whole model; models without such
+    repetition fall back to root-only wrapping.
     """
-    for host in (getattr(model,'model',None), getattr(model,'roberta',None), getattr(model,'bert',None)):
-        if host is None: continue
-        layers=getattr(host,'layers',None)
-        if not layers:
-            encoder=getattr(host,'encoder',None)
-            layers=getattr(encoder,'layer',None) if encoder is not None else None
-        if layers: return list(layers)
-    return []
+    inner=getattr(model,'model',None)
+    layers=getattr(inner,'layers',None) if inner is not None else None
+    if not layers:
+        encoder=getattr(inner,'encoder',None) if inner is not None else None
+        layers=getattr(encoder,'layer',None) if encoder is not None else None
+    return list(layers) if layers else []
 
 
 def apply_sharding(model, device_type, world_size):
     """Wrap with FSDP2 fully_shard: repeated blocks first, then the root.
 
-    Returns (model, wrapping description) so the protocol records the
-    structure that was actually used.
+    Returns (model, wrapping description, device mesh) so the protocol
+    records the structure that was actually used and observers can bind
+    the mesh's collective group.
     """
     from torch.distributed.device_mesh import init_device_mesh
     from torch.distributed.fsdp import fully_shard
@@ -146,25 +141,49 @@ def apply_sharding(model, device_type, world_size):
     wrapped=block_layers(model)
     for layer in wrapped: fully_shard(layer,mesh=mesh)
     fully_shard(model,mesh=mesh)
-    return model, ('per-block+root' if wrapped else 'root-only')
+    return model, ('per-block+root' if wrapped else 'root-only'), mesh
+
+
+def observation_start(args):
+    """Opt-in diagnostic collector attach; FLAGPROF_TRAIN_OBSERVE names a store root.
+
+    Unset keeps plain runs byte-identical to production. Attaches the existing
+    flagprof official profiler session (perf preset) to this rank so the
+    training phases (flagprof/training/* record_function markers) and the
+    device operators land in one trace; observation never changes execution
+    semantics, and the run's protocol carries the diagnostic mark. DDP ranks
+    install the CommunicationProbe on a gloo control group afterwards.
+    """
+    root=os.environ.get('FLAGPROF_TRAIN_OBSERVE')
+    if not root: return None
+    from flagprof.runtime import attach
+    from flagprof.store import create_run
+    vendor=os.environ.get('FLAGPROF_TRAIN_OBSERVE_VENDOR','thead')
+    world=int(os.environ.get('WORLD_SIZE','1'));rank=int(os.environ.get('RANK','0'))
+    run=create_run(Path(root)/('rank-'+str(rank)),
+                   identity=dict(diagnostic='flagprof-train-observe/1',vendor=vendor,preset='perf',
+                                 task=args.task,world_size=world))
+    handle=attach(run,vendor,preset='perf',rank=rank)
+    if handle.state['status']!='running':
+        raise RuntimeError('train observation attachment did not start: %s' % (handle.state.get('errors'),))
+    os.environ.setdefault('FLAGPROF_GROUP_ID',run.name)
+    return dict(handle=handle,probe=None,rank=rank,world=world,run=run)
 
 
 def execute(args):
     import torch
     from .engine import train
+    from . import phase as training_phase
     import torch.distributed as dist
-    task_source='explicit'
     if args.task is None:
         if args.model:
             from .registry import resolve_task
             args.task=resolve_task(args.model)
-            task_source='registry'
             if not args.task:
                 raise ValueError('--task is required: model %r is not in inference/targets/model_registry.json; '
                                  'pass one of: classification, causal-lm, ctr, embedding, rerank' % args.model)
         else:
             args.task='classification'
-            task_source='default'
     if args.steps<=0 or args.batch_size<=0 or args.accumulation<=0:
         raise ValueError('steps, batch-size and accumulation must be positive')
     if not 0<args.lr<float('inf'): raise ValueError('lr must be positive and finite')
@@ -181,33 +200,50 @@ def execute(args):
     world=int(os.environ.get('WORLD_SIZE','1'));rank=int(os.environ.get('RANK','0'))
     local_rank=int(os.environ.get('LOCAL_RANK','0'))
     if world!=1 and not args.ddp: raise ValueError('torchrun requires explicit --ddp')
-    if args.ddp and world<2: raise ValueError(('FSDP sharding' if args.sharding!='none' else 'DDP')+' requires at least two torchrun workers')
+    if args.ddp and world<2: raise ValueError('DDP requires at least two torchrun workers')
     device=args.device
     if args.ddp and device.startswith('cuda'): device='cuda:'+str(local_rank)
-    elif device=='cuda': device='cuda:0'  # bare 'cuda' lacks an index; set_device requires one
     if device.startswith('cuda'): torch.cuda.set_device(device)
     torch.manual_seed(args.seed);random.seed(args.seed)
     owned=False
+    observe=None
+    failed=False
     try:
         if args.ddp:
             from datetime import timedelta
             dist.init_process_group(args.backend or ('nccl' if device.startswith('cuda') else 'gloo'),timeout=timedelta(seconds=120))
             owned=True
+            observe=observation_start(args)
+            if observe:
+                control=dist.new_group(backend='gloo')
+                if observe['handle'].state.get('effective_config',{}).get('probes')!='none':
+                    from flagprof.probes.communication import CommunicationProbe
+                    probe=CommunicationProbe(observe['handle'].probe_manager,control)
+                    probe.install()
+                    observe['handle'].probe_manager.communication=probe
+                    observe['probe']=probe
+                observe['handle'].state['parallel']=dict(rank=observe['rank'],world_size=observe['world'],
+                                                         backend=dist.get_backend())
+                observe['handle']._save()
         protocol=dict(task=args.task,seed=args.seed,lr=args.lr,batch_size_per_rank=args.batch_size,
                       data='synthetic labelled classification' if args.task=='classification' else 'explicit pretokenized local input',
                       numerical_policy='framework defaults; no TF32/determinism/reduction override',
-                      dtype='float32 parameters; optional explicit AMP',backend=dist.get_backend() if args.ddp else None,
-                      task_source=task_source)
+                      dtype='float32 parameters; optional explicit AMP',backend=dist.get_backend() if args.ddp else None)
+        if observe:
+            protocol['observation']=dict(diagnostic='flagprof-train-observe/1',
+                                         vendor=os.environ.get('FLAGPROF_TRAIN_OBSERVE_VENDOR','thead'),
+                                         preset='perf',attachment=observe['handle'].id)
         if args.task=='classification':
             if args.model or args.inputs: raise ValueError('classification demo does not accept model or inputs')
             model=torch.nn.Sequential(torch.nn.Linear(16,32),torch.nn.ReLU(),torch.nn.Linear(32,4))
             generator=torch.Generator().manual_seed(args.seed+1)
             batches=[]
-            for _ in range(4):
-                x=torch.randn(args.batch_size*world,16,generator=generator)
-                y=torch.randint(0,4,(args.batch_size*world,),generator=generator)
-                sl=slice(rank*args.batch_size,(rank+1)*args.batch_size)
-                batches.append(dict(features=x[sl],labels=y[sl]))
+            with training_phase('data', step=0):
+                for _ in range(4):
+                    x=torch.randn(args.batch_size*world,16,generator=generator)
+                    y=torch.randint(0,4,(args.batch_size*world,),generator=generator)
+                    sl=slice(rank*args.batch_size,(rank+1)*args.batch_size)
+                    batches.append(dict(features=x[sl],labels=y[sl]))
             def loss_fn(m,b):return torch.nn.functional.cross_entropy(m(b['features']),b['labels'])
         elif args.task=='ctr':
             if args.model or args.inputs: raise ValueError('ctr task does not accept model or inputs')
@@ -222,8 +258,9 @@ def execute(args):
                 protocol['data']='deterministic sealed CTR corpus generated next to --outputs (make_ctr_package, 1024 samples)'
                 protocol['default_package_generated']=True
             from .ctr import prepare_ctr
-            model,batches,loss_fn,ctr_protocol=prepare_ctr(arch=args.ctr_arch,package=package,
-                seed=args.seed,batch_size=args.batch_size,rank=rank,world_size=world)
+            with training_phase('data', step=0):
+                model,batches,loss_fn,ctr_protocol=prepare_ctr(arch=args.ctr_arch,package=package,
+                    seed=args.seed,batch_size=args.batch_size,rank=rank,world_size=world)
             protocol.update(ctr_protocol)
         elif args.task=='embedding':
             if args.package or args.ctr_arch: raise ValueError('embedding task does not accept package or ctr-arch')
@@ -252,9 +289,10 @@ def execute(args):
                                                            torch_dtype=torch.float32,attn_implementation='eager').model
                 protocol['model_class']='AutoModelForCausalLM.base'
             from .embedding import prepare_embedding
-            model,batches,loss_fn,emb_protocol=prepare_embedding(model=model,inputs=inputs,
-                pooling=pooling,temperature=args.temperature,batch_size=args.batch_size,
-                rank=rank,world_size=world)
+            with training_phase('data', step=0):
+                model,batches,loss_fn,emb_protocol=prepare_embedding(model=model,inputs=inputs,
+                    pooling=pooling,temperature=args.temperature,batch_size=args.batch_size,
+                    rank=rank,world_size=world)
             protocol.update(emb_protocol)
         elif args.task=='rerank':
             if args.inputs: raise ValueError('rerank task does not accept inputs')
@@ -284,9 +322,10 @@ def execute(args):
             protocol['model_class']=cls_name
             if hasattr(model.config,'use_cache'): model.config.use_cache=False
             from .rerank import prepare_rerank
-            model,batches,loss_fn,rerank_protocol=prepare_rerank(model=model,package=args.package,
-                score=score,batch_size=args.batch_size,yes_id=yes_id,no_id=no_id,
-                rank=rank,world_size=world)
+            with training_phase('data', step=0):
+                model,batches,loss_fn,rerank_protocol=prepare_rerank(model=model,package=args.package,
+                    score=score,batch_size=args.batch_size,yes_id=yes_id,no_id=no_id,
+                    rank=rank,world_size=world)
             protocol.update(rerank_protocol)
         else:
             if not args.model: raise ValueError('causal-lm requires --model')
@@ -301,20 +340,22 @@ def execute(args):
                 vocab=int(config.get('vocab_size') or 65536)
                 inputs=ensure_generated('lm-corpus',args.outputs,args.seed,vocab=vocab,
                                         rows=max(16,4*args.batch_size*world))
-                inputs=str(Path(inputs)/'tokens.jsonl')  # ensure_generated returns the corpus directory; prepared_lm reads the file
                 protocol['data']='deterministic synthetic LM tokens generated next to --outputs (make_lm_corpus)'
                 protocol['default_corpus_generated']=True
             model=AutoModelForCausalLM.from_pretrained(source,local_files_only=True,trust_remote_code=False,
                                                        torch_dtype=torch.float32,attn_implementation='eager')
             protocol['attention']='eager'
-            batches=prepared_lm(inputs,batch_size=args.batch_size,rank=rank,world_size=world)
+            with training_phase('data', step=0):
+                batches=prepared_lm(inputs,batch_size=args.batch_size,rank=rank,world_size=world)
             def loss_fn(m,b):return m(**b).loss
         model=model.to(device)
         if args.ddp:
             if args.sharding=='fsdp':
-                model,wrapping=apply_sharding(model,torch.device(device).type,world)
+                model,wrapping,mesh=apply_sharding(model,torch.device(device).type,world)
                 protocol['sharding']='fsdp'
                 protocol['fsdp_wrapping']=wrapping
+                if observe and observe['probe'] is not None:
+                    observe['probe'].model_groups.append(mesh.get_group())
             else:
                 protocol['sharding']='ddp-replica'
                 model=torch.nn.parallel.DistributedDataParallel(model,device_ids=[local_rank] if device.startswith('cuda') else None)
@@ -331,8 +372,24 @@ def execute(args):
         print(json.dumps(dict(output=str(outputs),status=result['status'],next_step=result['next_step'],
                               final_model_sha256=result['final_model_sha256'])),flush=True)
         return 0
+    except BaseException:
+        failed=True
+        raise
     finally:
         if owned: dist.destroy_process_group()
+        if observe:
+            observe['handle'].close(normal=not failed,returncode=1 if failed else 0)
+            if not failed:
+                # Same-process finalize: the writer proxies belong to this PID
+                # namespace and have shut down with the attachment, so the
+                # store manifest reaches its terminal status here. A failure is
+                # recorded on the attachment and never fails the training run.
+                try:
+                    from flagprof.store.manifest import finalize
+                    observe['manifest']=finalize(observe['run'])
+                except BaseException as error:
+                    observe['handle'].state['finalize_error']=type(error).__name__+': '+str(error)
+                    observe['handle']._save()
 
 
 def main(argv=None):

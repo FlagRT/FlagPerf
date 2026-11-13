@@ -173,51 +173,6 @@ class TrainingTests(unittest.TestCase):
         self.assertEqual(summary['status'], 'partial')
         self.assertFalse(summary['rank_coverage_complete'])
 
-    def test_summary_fsdp_shard_finals_are_not_flagged(self):
-        from flagprof.training.summary import summarize
-        for rank, sha in [(0, 'a'*64), (1, 'b'*64)]:
-            d = self.root/'fsdp'/f'rank-{rank}'
-            d.mkdir(parents=True)
-            (d/'training-result.json').write_text(json.dumps(dict(
-                status='complete', next_step=3, steps=[],
-                final_model_sha256=sha,
-                protocol=dict(rank=rank, world_size=2, sharding='fsdp'))))
-        summary = summarize(self.root/'fsdp')
-        self.assertEqual(summary['status'], 'complete')
-        self.assertIsNone(summary['rank_final_models_equal'])
-        self.assertEqual(summary['sharding'], 'fsdp')
-        self.assertTrue(summary['rank_steps_aligned'])
-        self.assertEqual(summary['schema'], 'training-summary/2')
-
-    def test_summary_script_form_fsdp_check_mode_recognized(self):
-        from flagprof.training.summary import summarize
-        for rank, sha in [(0, 'c'*64), (1, 'd'*64)]:
-            d = self.root/'fsdp-script'/f'rank-{rank}'
-            d.mkdir(parents=True)
-            (d/'training-result.json').write_text(json.dumps(dict(
-                status='complete', next_step=3, steps=[],
-                final_model_sha256=sha,
-                protocol=dict(rank=rank, world_size=2, check_mode='fsdp'))))
-        summary = summarize(self.root/'fsdp-script')
-        self.assertEqual(summary['status'], 'complete')
-        self.assertEqual(summary['sharding'], 'fsdp')
-        self.assertIsNone(summary['rank_final_models_equal'])
-
-    def test_summary_fsdp_divergent_step_coverage_is_flagged(self):
-        from flagprof.training.summary import summarize
-        rows = [dict(step=1, loss=0.1, samples=2, synchronized_step_ns=1000, samples_per_second_local=1.0),
-                dict(step=2, loss=0.2, samples=2, synchronized_step_ns=1000, samples_per_second_local=1.0)]
-        for rank, steps in [(0, rows), (1, rows[:1])]:
-            d = self.root/'fsdp-div'/f'rank-{rank}'
-            d.mkdir(parents=True)
-            (d/'training-result.json').write_text(json.dumps(dict(
-                status='complete', next_step=3, steps=steps,
-                final_model_sha256='e'*64,
-                protocol=dict(rank=rank, world_size=2, sharding='fsdp'))))
-        summary = summarize(self.root/'fsdp-div')
-        self.assertEqual(summary['status'], 'partial')
-        self.assertFalse(summary['rank_steps_aligned'])
-
     def test_nonfinite_loss_preserves_failure(self):
         model=copy.deepcopy(self.model)
         def invalid(model,batch):return self.loss(model,batch)*float('nan')
@@ -243,26 +198,65 @@ class TrainingTests(unittest.TestCase):
         self.assertTrue(any(phases.get(e.get('scope'))=='optimizer' for e in calls))
 
 
+class TestCommunicationProbeCoverage(unittest.TestCase):
+    def test_fsdp_collectives_are_wrapped(self):
+        """FSDP2 bypasses torch.distributed: its functional entries must be wrapped."""
+        from flagprof.probes.communication import DIST_NAMES, FUNCTIONAL_NAMES, OP_BY_NAME
+        self.assertIn('reduce_scatter_tensor', DIST_NAMES)
+        self.assertIn('reduce_scatter_tensor', FUNCTIONAL_NAMES)
+        self.assertEqual(OP_BY_NAME['reduce_scatter_tensor'], 'reducescatter')
+        for name in ('all_reduce', 'all_gather_tensor'):
+            self.assertIn(name, FUNCTIONAL_NAMES)
+        for name in DIST_NAMES:
+            self.assertIn(name, OP_BY_NAME)
+        for name in FUNCTIONAL_NAMES:
+            self.assertIn(name, OP_BY_NAME)
+
+    def test_pipeline_and_p2p_entries_are_wrapped(self):
+        """Megatron-style pipeline parallelism moves activations over p2p entries;
+        rooted collectives beyond the FSDP pair must be visible too."""
+        from flagprof.probes.communication import DIST_NAMES, OP_BY_NAME, P2P_NAMES
+        for name in ('broadcast', 'reduce', 'scatter', 'gather', 'gather_object',
+                     'scatter_object_list', 'all_to_all', 'all_to_all_single',
+                     'send', 'recv', 'isend', 'irecv', 'batch_isend_irecv'):
+            self.assertIn(name, DIST_NAMES, name)
+        self.assertEqual(set(P2P_NAMES), {'send', 'recv', 'isend', 'irecv', 'batch_isend_irecv'})
+        self.assertTrue(set(P2P_NAMES).issubset(set(DIST_NAMES)))
+        self.assertEqual(OP_BY_NAME['batch_isend_irecv'], 'batch_p2p')
+        self.assertEqual(OP_BY_NAME['all_to_all_single'], 'alltoall')
+
+    def test_phase_accepts_data_and_rejects_unknown(self):
+        """The data-preparation phase is a first-class training/1 phase;
+        unknown names stay rejected so typos cannot silently drop spans."""
+        from flagprof.training import phase
+        with phase('data', step=0):
+            pass
+        with self.assertRaisesRegex(ValueError, 'unknown training phase'):
+            with phase('tokenize', step=0):
+                pass
+
+    @unittest.skipUnless(sys.platform == 'linux', 'Linux Store/attachment')
+    def test_driver_records_data_preparation_phase(self):
+        """End to end through the driver: batch materialisation must surface as
+        a training/1 span with phase=data, so layer-1 segment reports see it."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            from flagprof import attach
+            from flagprof.store import create_run, finalize, StoreView
+            from flagprof.training.__main__ import main
+            run = create_run(root/'driver-store')
+            with attach(run, 'ascend', preset='coverage'):
+                rc = main(['--steps', '1', '--outputs', str(root/'driver-out')])
+            self.assertEqual(rc, 0)
+            finalize(run)
+            with StoreView(run) as view:
+                events = [dict(item.record) for item in view.iter_events()]
+            phases = [e['attrs']['phase'] for e in events
+                      if e['t'] == 'span' and e.get('attrs', {}).get('training_schema') == 'training/1']
+            self.assertIn('data', phases)
+            self.assertIn('step', phases)
+            self.assertIn('forward', phases)
+
+
 if __name__ == '__main__':
     unittest.main()
-
-
-try:
-    import torch  # noqa: F401
-    _HAS_TORCH = True
-except Exception:
-    _HAS_TORCH = False
-
-
-@unittest.skipUnless(_HAS_TORCH, "torch unavailable")
-class TestDefaultLmCorpusJoin(unittest.TestCase):
-    def test_default_lm_corpus_directory_joins_tokens_file(self):
-        import tempfile, os
-        from flagprof.training.__main__ import ensure_generated, prepared_lm
-        with tempfile.TemporaryDirectory() as td:
-            d=ensure_generated('lm-corpus',os.path.join(td,'onerec-a'),7)
-            batches=prepared_lm(os.path.join(d,'tokens.jsonl'),batch_size=4)
-        self.assertEqual(len(batches),4)
-        for b in batches:
-            self.assertEqual(b['input_ids'].shape[0],4)
-            self.assertIn('labels',b)

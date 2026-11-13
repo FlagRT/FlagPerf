@@ -18,7 +18,7 @@ def attachment():
 @contextmanager
 def phase(name, *, step, microstep=None, **attrs):
     """Optional training interval; host duration, not device completion time."""
-    if name not in ('step', 'zero_grad', 'forward', 'backward', 'optimizer'):
+    if name not in ('data', 'step', 'zero_grad', 'forward', 'backward', 'optimizer'):
         raise ValueError('unknown training phase: '+name)
     if type(step) is not int or step < 0:
         raise ValueError('step must be a nonnegative integer')
