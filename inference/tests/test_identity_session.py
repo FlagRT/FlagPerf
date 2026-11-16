@@ -33,6 +33,12 @@ class SourcedIdentityTests(unittest.TestCase):
                                       dict(model='PPU-ZW810E', pci_bdf='x', driver='d',
                                            host_device_node='/dev/x'), 0)
 
+    def test_xpusmi_stack_reported_name_admitted(self):
+        from flagprof.vendors.thead.session import validate_sourced_identity
+        validate_sourced_identity(dict(source='xpu-smi'),
+                                  dict(model='GPU', pci_bdf='x', driver='d',
+                                       host_device_node='/dev/x'), 0)
+
     def test_unknown_source_rejected(self):
         from flagprof.vendors.thead.session import validate_sourced_identity
         with self.assertRaises(ValueError):

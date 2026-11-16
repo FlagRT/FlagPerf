@@ -32,7 +32,7 @@ class TheadProfiler(NvidiaProfiler):
 # plausibly come from a real vendor query.
 SOURCED_IDENTITY = {
     'ppu-smi': ('PPU-ZW810E',),
-    'xpu-smi': ('P800', 'P800 OAM'),
+    'xpu-smi': ('P800', 'P800 OAM', 'GPU'),
     'npu-smi': ('Ascend910B', 'Ascend910C', 'Ascend910', 'Atlas A2'),
 }
 
