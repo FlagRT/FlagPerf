@@ -20,7 +20,8 @@ from flagprof.analyzers.memory import make_memory
 
 
 def write_json(stream, value):
-    if isinstance(value, Table):
+    from .model import Rows
+    if isinstance(value, (Table, Rows)):
         stream.write('[')
         for i, row in enumerate(value):
             if i:
@@ -187,6 +188,12 @@ def html(stream, results, limits, quality):
                     html_rows(stream,panel+'.'+key,rows,min(10,limits.html_rows))
                 stream.write('<h3>按执行顺序的算子结果</h3>')
             html_rows(stream,panel,displayed,limits.html_rows)
+        if result.id=='resource':
+            for key,title in [('stages','按阶段汇总'),('energy','能耗与功率域'),('memory','扣除基线后的分配器外显存估算'),('restrictions','区间内限制记录'),('frequency','观测频率低于标称值的区间')]:
+                stream.write('<h3>'+title+'</h3>')
+                html_rows(stream,panel+'.'+key,result.coverage.get(key,()),limits.html_rows)
+        if result.id=='perf.timeline':
+            stream.write('<p><a href="exports/timeline.json">下载 Chrome / Perfetto 时间线</a></p><pre>'+escape(encode(result.coverage))+'</pre>')
         if result.id=='perf.gap':gap_chart(stream,result.coverage)
         if result.id=='memory':memory_chart(stream,result.coverage.get('series',()),limits.html_rows)
         if result.id in ('perf.device','perf.gap','communication','memory','generation','training'):
@@ -201,7 +208,7 @@ def html(stream, results, limits, quality):
     stream.write('<section id="data-quality"><h2>数据质量</h2><pre>'+escape(encode(quality))+'</pre></section></html>\n')
 
 
-def generate(run, out=None, *, work=None, limits=None, op_kinds=None):
+def generate(run, out=None, *, work=None, limits=None, op_kinds=None, runner_results=None):
     run = Path(run).resolve()
     out = Path(out).resolve() if out else run.parent/(run.name+'-report')
     if out.is_relative_to(run) or run.is_relative_to(out):
@@ -225,9 +232,10 @@ def generate(run, out=None, *, work=None, limits=None, op_kinds=None):
                 workspace.notes.append(str(error))
             from flagprof.analyzers.forwards import prepare, finish
             prepare(workspace)
+            from flagprof.analyzers.resource import make_resource
             results = []
             accuracy=any((s.get('effective_config') or {}).get('tensor_blob') is not None for s in workspace.statuses)
-            for analyzer in (() if accuracy else (*ANALYZERS,make_perf_device(),make_memory(),make_perf_gap())):
+            for analyzer in (() if accuracy else (*ANALYZERS,make_perf_device(),make_memory(),make_perf_gap(),make_resource())):
                 try:
                     result = analyzer.run(workspace, {})
                     workspace.check_budget()
@@ -245,10 +253,20 @@ def generate(run, out=None, *, work=None, limits=None, op_kinds=None):
                     result.coverage.update(forward_quality, headline=workspace.table(result.id+'.headline'))
                     result.notes.append(forward_quality['host_time_note'])
                 elif result.id=='route.coverage':result.coverage['missing_ops']=workspace.table('missing_ops')
+            from flagprof.analyzers.timeline import make_perf_timeline
+            if (run/'monitor-ref.json').exists():
+                results.append(make_perf_timeline().run(workspace,dict(out=out/'exports/timeline.json')))
             quality=workspace.coverage()
             quality.update(forward_quality)
             data = dict(schema='p1-result/1', limits=asdict(limits),quality=quality,
                         results={r.id: dict(status=r.status, data=r.data, coverage=r.coverage, notes=r.notes) for r in results})
+            data['report_context']=dict(run=dict(run_id=run.name),
+                identity=next((s['oracle_identity'] for s in workspace.statuses if s.get('oracle_identity')),{}))
+            if runner_results:
+                from .performance import summarize
+                data['runner_summary']=summarize(runner_results,data['report_context']['identity'],limits=limits)
+            from flagprof.monitor.diagnostic_report import panel, html as diagnostic_html
+            data['diagnosis'] = panel(run)
             with (out/'result.json').open('w') as stream:
                 write_json(stream, data)
                 stream.write('\n')
@@ -258,9 +276,9 @@ def generate(run, out=None, *, work=None, limits=None, op_kinds=None):
                     ('unscoped_by_tid','unscoped-by-tid'), ('forwards','forwards'),
                     ('perf.op.forwards','perf-op-forwards'), ('perf.layer.forwards','perf-layer-forwards'),
                     ('perf.gap','perf-gap'),('perf.gap.streams','perf-gap-streams'),('communication.device_calls','communication-device-calls'),('perf.device.headline','device-headline'),
-                    ('perf.device','perf-device'),('perf.device.coverage','device-coverage'),
+                    ('perf.device','perf-device'),('perf.device.phases','device-phases'),('perf.device.coverage','device-coverage'),
                     ('perf.op.devices','perf-op-devices'),('perf.layer.devices','perf-layer-devices'),
-                    ('memory','memory-peaks'),('memory.series','memory-series'),('memory.transfers','memory-transfers'),
+                    ('resource','resource'),('resource.stages','resource-stages'),('resource.energy','resource-energy'),('resource.memory','resource-memory'),('resource.restrictions','resource-restrictions'),('resource.frequency','resource-frequency'),('memory','memory-peaks'),('memory.series','memory-series'),('memory.transfers','memory-transfers'),
                     ('memory.allocations','memory-allocations'),('generation','generation'),('generation.steps','generation-steps'),('generation.kv','generation-kv'),
                     ('communication','communication'),('communication.calls','communication-calls'),
                     ('training','training-steps'),('training.phases','training-phases')]:
@@ -271,8 +289,8 @@ def generate(run, out=None, *, work=None, limits=None, op_kinds=None):
             with (out/'exports'/'layer-members.jsonl').open('w') as stream:
                 for panel, key, run_id, corr in workspace.db.execute('select * from members order by panel,key,run,corr'):
                     stream.write(encode(dict(panel=panel, key=key, run_id=run_id, corr=int(corr)))+'\n')
-            with (out/'report.html').open('w') as stream:
-                html(stream, results, limits, quality)
+            from .product import write_report
+            write_report(out,data,limits=limits,work=work)
             disk = sum(p.stat().st_size for p in Path(directory).rglob('*') if p.is_file())
             resources = dict(elapsed_s=time.perf_counter()-started,
                              peak_rss_kib=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
@@ -284,8 +302,12 @@ def generate(run, out=None, *, work=None, limits=None, op_kinds=None):
 
 
 def generate_oracle(ref, cmp, out=None, *, declare=None, work=None, limits=None, perf_run=None,
-                    perf_ref_run=None, perf_cmp_run=None, replay_ref_run=None, replay_cmp_run=None):
+                    perf_ref_run=None, perf_cmp_run=None, replay_ref_run=None, replay_cmp_run=None, baseline=None):
     """Compare two stores without loading torch or changing either source."""
+    if baseline:
+        from .three_way import generate as three_way
+        return three_way(ref,baseline,cmp,out,declare=declare,work=work,limits=limits,perf_run=perf_run,
+            perf_ref_run=perf_ref_run,perf_cmp_run=perf_cmp_run,replay_ref_run=replay_ref_run,replay_cmp_run=replay_cmp_run)
     ref, cmp = Path(ref).resolve(), Path(cmp).resolve()
     out = Path(out).resolve() if out else ref.parent/(ref.name+'-oracle')
     if ref.is_file() or cmp.is_file():
@@ -309,6 +331,9 @@ def generate_oracle(ref, cmp, out=None, *, declare=None, work=None, limits=None,
                 raise ValueError('--perf-run and --perf-cmp-run disagree')
             from flagprof.analyzers.perf_links import link
             links=link(a,b,dict(ref=perf_ref_run,cmp=perf_cmp_run or perf_run),directory,limits)
+            if links['requested']:
+                results.append(Result('oracle.perf_links','partial' if links['unmatched'] else 'ok',
+                    a.table('oracle.perf_links'),links,[]))
             if bool(replay_ref_run)!=bool(replay_cmp_run):raise ValueError('both replay Stores required')
             if replay_ref_run:
                 from flagprof.replay import panel
@@ -319,7 +344,8 @@ def generate_oracle(ref, cmp, out=None, *, declare=None, work=None, limits=None,
             for panel in ('oracle.identity_diff','oracle.layer','oracle.first_divergence','oracle.op_sensitivity','oracle.samples','oracle.alignment','oracle.introduced','oracle.amplification','oracle.perf_links','oracle.introduced_routes','oracle.replay','oracle.generation'):
                 with (out/'exports'/(panel+'.jsonl')).open('w') as stream:
                     for row in a.table(panel):stream.write(encode(row)+'\n')
-            with (out/'report.html').open('w') as stream:html(stream,results,limits,quality)
+            from .product import write_report
+            write_report(out,data,limits=limits,work=work)
             a.check_budget();b.check_budget()
             resources=dict(elapsed_s=time.perf_counter()-started,peak_rss_kib=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
                 scratch_bytes=sum(p.stat().st_size for p in Path(directory).rglob('*') if p.is_file()))
@@ -328,45 +354,6 @@ def generate_oracle(ref, cmp, out=None, *, declare=None, work=None, limits=None,
         finally:a.close();b.close()
 
 
-def compare_device_reports(reports, out):
-    """Compare delivered summaries, keeping uncomparable values visible."""
-    from flagprof.analyzers.gap import comparable
-    sources=[]
-    for report in reports:
-        path=Path(report).resolve();value=json.loads((path/'result.json').read_text())
-        panel=value['results']['perf.device']
-        gap=value['results'].get('perf.gap',{})
-        sources.append(dict(report=str(path),context={k:panel['coverage'].get(k) for k in ('window_identity','workload_identity')},
-                            windows=gap.get('data',[]),data=panel['coverage'].get('headline',panel['data'])))
-    pairs=[]
-    for index,left in enumerate(sources):
-        for right in sources[index+1:]:
-            pairs.append(dict(left=left['report'],right=right['report'],**comparable(left['context'],right['context'])))
-    for source in sources:
-        comparisons=[p for p in pairs if source['report'] in (p['left'],p['right'])]
-        source['comparison_status']='not_comparable' if any(p['status']=='not_comparable' for p in comparisons) else 'comparable'
-        source['data']=[dict(row,comparison_status=source['comparison_status']) for row in source['data']]
-    window_pairs=[]
-    for index,left in enumerate(sources):
-        for right in sources[index+1:]:
-            indexed={}
-            for b in right['windows']:indexed.setdefault((b['kind'],b.get('request_id'),b.get('step')),[]).append(b)
-            for a in left['windows']:
-                for b in indexed.get((a['kind'],a.get('request_id'),a.get('step')),[]):
-                    ac=dict(left['context'],window_identity=a.get('window_identity'))
-                    bc=dict(right['context'],window_identity=b.get('window_identity'))
-                    window_pairs.append(dict(left=left['report'],right=right['report'],kind=a['kind'],
-                        left_window_id=a.get('window_id'),right_window_id=b.get('window_id'),**comparable(ac,bc)))
-    result=dict(schema='device-comparison/1',sources=sources,comparisons=pairs,window_comparisons=window_pairs,
-                note='各来源原值保留。不可比时不生成速度比或差值。')
-    out=Path(out);out.mkdir(parents=True,exist_ok=True)
-    (out/'result.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n')
-    with (out/'report.html').open('w') as stream:
-        stream.write('<!doctype html><meta charset="utf-8"><h1>设备报告口径对照</h1><p>'+result['note']+'</p>')
-        html_rows(stream,'comparisons',pairs,len(pairs))
-        stream.write('<h2>窗口口径对照</h2><p>同类窗口分别核对边界定义、完成状态和执行身份；完整字段见 result.json。</p>')
-        html_rows(stream,'window.comparisons',window_pairs,100)
-        for source in sources:
-            stream.write('<h2>'+escape(source['report'])+' · 设备头条口径：'+source['comparison_status']+'</h2>');html_rows(stream,'perf.device.comparison',source['data'],len(source['data']))
-            stream.write('<h3>各窗口原值</h3>');html_rows(stream,'perf.gap',source['windows'],100)
-    return result
+def compare_device_reports(reports, out, *, declare=None, work=None, limits=None):
+    from .comparison import generate
+    return generate(reports,out,declare=declare,work=work,limits=limits)

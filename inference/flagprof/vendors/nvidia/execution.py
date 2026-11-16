@@ -8,3 +8,18 @@ def initialize(rank):
     device = 'cuda:' + str(rank)
     torch.cuda.set_device(device)
     return device
+
+
+def allocator_memory(device):
+    import torch
+    return {'allocated_bytes': torch.cuda.memory_allocated(device),
+            'reserved_bytes': torch.cuda.memory_reserved(device)}
+
+
+def physical_identity(device):
+    import torch
+    props = torch.cuda.get_device_properties(device)
+    uuid = str(props.uuid)
+    if not uuid.startswith('GPU-'):
+        uuid = 'GPU-'+uuid
+    return dict(entity='chip:'+uuid, uuid=uuid, power_domain='chip:'+uuid)

@@ -5,8 +5,8 @@ import hashlib
 import json
 from pathlib import Path
 
-PRESETS = ('perf', 'modules', 'coverage', 'perf-lite', 'accuracy')
-KEYS = {'flaggems', 'flaggems_include', 'flagtree', 'vendor_compiler', 'dispatch', 'layers', 'probes',
+PRESETS = ('perf', 'modules', 'coverage', 'perf-lite', 'accuracy', 'monitor')
+KEYS = {'diagnose', 'monitor', 'monitor_interval_ms', 'monitor_topology', 'monitor_root', 'flaggems', 'flaggems_include', 'flagtree', 'vendor_compiler', 'dispatch', 'layers', 'probes',
         'each_start', 'each_count', 'fallback_calls', 'summary_seconds',
         'tensor_blob','tensor_blob_bytes','tensor_ops_in','tensor_boundaries'}
 
@@ -25,7 +25,32 @@ def resolve(preset, config=None):
         result.update(dispatch='each-window', each_start=0)
     if preset == 'accuracy':
         result.update(layers='all',tensor_blob='none',tensor_blob_bytes=1<<30,tensor_ops_in=None,tensor_boundaries=None)
+    if preset == 'monitor':
+        result.update(monitor='on', probes='none')
     result.update(options)
+    result.setdefault('diagnose', 'off')
+    if result['diagnose'] not in ('on', 'off'):
+        raise ValueError('diagnose requires on/off')
+    if result['diagnose'] == 'on':
+        if preset not in ('perf-lite', 'perf', 'modules'):
+            raise ValueError('diagnose supports perf-lite/perf/modules')
+        if options.get('monitor', 'on') != 'on' or options.get('monitor_topology', 'agent') != 'agent':
+            raise ValueError('diagnose requires monitor on and agent topology')
+        result.update(monitor='on', monitor_topology='agent')
+    from flagprof.monitor import DEFAULT_MONITOR
+    result.setdefault('monitor', DEFAULT_MONITOR)
+    result.setdefault('monitor_interval_ms', 1000)
+    result.setdefault('monitor_topology', None)
+    if result['monitor'] not in ('on','off') or (preset == 'monitor' and result['monitor'] == 'off'):
+        raise ValueError('monitor requires on/off; monitor preset requires on')
+    if result['monitor_topology'] not in (None,'host','local','agent'):
+        raise ValueError('monitor topology requires host, local or agent')
+    if result['monitor_topology']=='agent' and not result.get('monitor_root'):
+        raise ValueError('agent topology requires monitor_root')
+    if result.get('monitor_root'):
+        result['monitor_root'] = str(Path(result['monitor_root']).resolve())
+    if type(result['monitor_interval_ms']) is not int or not 100 <= result['monitor_interval_ms'] <= 5000:
+        raise ValueError('monitor interval must be 100..5000 ms')
     if 'flagtree' in result and result['flagtree'] not in (None, 'off', 'on'):
         raise ValueError('flagtree requires off or on')
     if result.get('vendor_compiler') is not None:

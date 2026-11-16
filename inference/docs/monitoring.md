@@ -1,0 +1,87 @@
+# 资源监控与在线诊断
+
+资源监控把主机、设备和任务阶段放在同一条可核验的时间线上；在线诊断消费心跳、执行进度、异常和同步通信事件，输出带原始证据的 Finding。普通采集默认关闭两者。设备遥测目前支持 Ascend 和 NVIDIA，其他厂商仍使用既有采集与离线分析入口。
+
+```mermaid
+flowchart LR
+  T[目标进程：阶段、显存边界、进度、异常] --> S[目标 Store]
+  T -->|登记进程和设备| N[独立节点监控]
+  N --> C[隔离采集：DCMI / NVML / SMI]
+  C --> M[滚动监控 Store]
+  S --> R[规则引擎]
+  M --> R
+  R --> F[Finding、证据引用、固定窗口]
+  S --> V[StoreView]
+  M --> V
+  F --> V
+  V --> H[任务 / 节点报告、离线重放、归档恢复]
+```
+
+目标进程负责记录事实，节点进程负责采样和判定。目标结束后，启动器补充实际退出回执；这样能区分目标异常与启动器超时、信号或同组其他进程失败。监控不可用时保留原因，目标继续执行。
+
+## 从一个任务开始
+
+从 `inference/` 执行，使用新输出目录；Store、导入 work/scratch 与 delivery 恢复沿用 ext4 要求。独立监控可以由外部进程管理器托管，以下命令以前台方式运行：
+
+```bash
+python3 -m flagprof watch start --root /work/node --vendor ascend --devices 12,13
+python3 -m flagprof watch status --root /work/node
+
+python3 -m flagprof record --store /work/tasks --vendor ascend --preset perf-lite \
+  --monitor on --monitor-topology agent --monitor-root /work/node --diagnose on \
+  -- python3 target.py
+
+python3 -m flagprof report /work/node --last 1h --out /work/node-report
+python3 -m flagprof report /work/tasks/RUN --out /work/task-report
+python3 -m flagprof watch replay /work/node --out /work/replay
+```
+
+NVIDIA 使用 `--vendor nvidia --devices 0`。`launch` 支持同样的监控参数，单机 TP2 共用一个节点会话；组报告从 `group.json` 进入各 rank。容器需挂载节点和目标目录的共同父目录，使引用路径保持可达。
+
+`--diagnose on` 只用于 `perf-lite/perf/modules`，会选择 `monitor=on`、`topology=agent`，需要 `--monitor-root`。只看设备资源时省略 diagnose；`--preset monitor` 可采资源而不启用性能探针。快组默认 1000 ms，可通过 `--monitor-interval-ms 100..5000` 调整。独立 watch 的采样间隔与保留配置由启动时的 `--config` JSON 决定。
+
+按单次任务启动采样时，可选 `local` 旁路进程；Ascend 默认 `host`，由宿主侧运行 `python3 -m flagprof.monitor --root ROOT --vendor ascend --devices 12,13`。同一节点长期接多个任务时采用 `agent`，避免每个目标重复读取设备指标。
+
+## 指标如何解释
+
+| 观测 | 计算和判读 |
+|---|---|
+| 设备、功率域、进程身份 | inventory 登记物理设备、功率域、驱动与启动身份；同一功率域只计一次 |
+| CPU、RSS、设备利用率、功率、温度、频率、显存 | 通过隔离采样进程采集，API 超时或不支持保留缺失原因，成功读取的零仍为有效值 |
+| load / warmup / measure / prefill / decode | runner 记录阶段边界；有共同主机时钟依据时与资源曲线对应 |
+| allocated / reserved / device-used | 分别保留框架分配器、设备总量和来源；边界读取不调用 empty_cache 或强制设备同步 |
+| 分配器外显存估算 | 需要同设备、有效空闲校准、相邻来源和独占证据；发现共享后停止目标独占估算 |
+| 能耗与 J/token | NVIDIA 优先计数器差分，Ascend 使用功率积分；功率域归属及覆盖完整时才给出 token 归一值 |
+| p95 与覆盖 | 使用来源有效时长和加权观测；不足分辨率、缺口和不够的有效点数单独保留 |
+
+曲线缩减保留峰谷、端点和缺口，统计仍来自原始观测。缩短轮询间隔不会改变厂商指标本身的时间分辨率。采集和诊断的性能开销应在实际负载上单独比较。
+
+## 在线规则与证据
+
+节点基础规则覆盖采样缺口、采集调用超时、目标退出、设备错误和温度/功率限制。业务诊断增加以下规则：
+
+| 规则 | 触发依据与结果 |
+|---|---|
+| OOM | 明确的 OOM 异常、分配消息和目标身份；保留发生位置与退出回执 |
+| 心跳超时 | 来源身份、水位和心跳时限；断流或积压单独解释 |
+| 执行停滞 | 有效执行进度未增长且超过阈值；未观测到进度时保留 unknown |
+| 同步通信超时 | 同一通信域/序号、各 rank 的进入与返回证据；恢复时输出同 ID 的新修订 |
+
+Finding 的发生起点、首次检出、后续修订和证据引用分别保存。`available` 表示能读取诊断数据，空 Finding 表示规则未报告异常；正常覆盖还需要有效执行观测。当前登记范围为短任务和单机 TP2 同步路径；短 measure 可能落在心跳间隔内，报告保留此覆盖缺口。任务重试、节点隔离、热加载、多节点通信、性能漂移和外部告警继续独立实现。
+
+Python 入口为 `StoreView.monitor_status()`、`iter_monitor_events()`、`monitor_coverage()`、`iter_diagnostic_findings()`、`iter_diagnostic_evidence(ids)` 和 `iter_diagnostic_coverage()`。规则配置及版本跟随会话保存，重放核对完整 `(id, revision)` 和证据对象。
+
+## 数据保留、归档和恢复
+
+默认每 5 分钟或 32 MiB 轮转；节点预算 8 GiB，其中 256 MiB 用于控制和收尾。未固定原始数据保留最多 24 小时 / 3 GiB，分钟趋势最多 30 天 / 1 GiB。登记目标相关段与异常前 60 秒、后 30 秒窗口固定，窗口不完整时记录缺口。分钟趋势不能替代规则的原始证据。
+
+```bash
+python3 -m flagprof delivery publish /work/tasks/RUN --out /archive/run-delivery
+python3 -m flagprof delivery verify /archive/run-delivery
+python3 -m flagprof watch release --root /work/node \
+  --reference /work/tasks/RUN/monitor-ref.json --delivery /archive/run-delivery
+```
+
+`release` 核对归档，在新目录恢复，比对公共事件身份与内容并重开报告，通过后解除该引用的固定。仍被其他任务引用的历史数据继续保留。归档目标由部署选择，生产代码不要求 dtfs。
+
+继续修改时：采样与来源见 `telemetry/` 和 `vendors/*/telemetry*.py`；会话与保留见 `monitor/node.py`、`retention.py`；规则见 `monitor/rules.py`、`business.py`；读取和展示见 `store/view.py`、`analyzers/resource.py`、`monitor/diagnostic_report.py`。公共回归在 `tests/monitor/` 和 `tests/telemetry/`。

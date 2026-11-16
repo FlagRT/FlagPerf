@@ -80,8 +80,19 @@ def inspect_group(path, *, work=None):
 
 def generate(ref,cmp,out,*,declare=None,work=None,limits=None,**options):
     from . import generate_oracle
-    if any(options.values()):
-        raise ValueError('group oracle uses rank Stores directly; per-rank replay/performance options require Store inputs')
+    def rank_inputs(value):
+        if not value:return {}
+        path=Path(value).resolve()
+        if not path.is_file():raise ValueError('group linked input requires group.json or a rank manifest')
+        data=json.loads(path.read_text())
+        if data.get('schema')=='flagprof-group/1':
+            group=validate_manifest(path)
+            mapping={str(r['rank']):r.get('run') for r in group['ranks']}
+        else:mapping=data.get('ranks',{})
+        if set(mapping)!={'0','1'} or any(not isinstance(v,str) for v in mapping.values()):
+            raise ValueError('linked rank manifest requires exactly ranks 0 and 1')
+        return {int(k):(path.parent/v).resolve() for k,v in mapping.items()}
+    mapped={k:rank_inputs(v) for k,v in options.items()}
     if work:Path(work).mkdir(parents=True,exist_ok=True)
     a,ar,ai=inspect_group(ref,work=work);b,br,bi=inspect_group(cmp,work=work)
     out=Path(out).resolve()
@@ -91,7 +102,8 @@ def generate(ref,cmp,out,*,declare=None,work=None,limits=None,**options):
     out.mkdir(parents=True,exist_ok=False)
     ranks=[]
     for rank,(left,right) in enumerate(zip(ar,br)):
-        result=generate_oracle(left,right,out/('rank-'+str(rank)),declare=declare,work=work,limits=limits)
+        result=generate_oracle(left,right,out/('rank-'+str(rank)),declare=declare,work=work,limits=limits,
+            **{k:v.get(rank) for k,v in mapped.items()})
         ranks.append(dict(rank=rank,report='rank-'+str(rank)+'/report.html',panels=result['panels']))
     status='ok' if all(all(v in ('ok','unavailable') for v in r['panels'].values()) and
                        r['panels'].get('oracle.identity_diff')=='ok' for r in ranks) else 'partial'
@@ -99,5 +111,6 @@ def generate(ref,cmp,out,*,declare=None,work=None,limits=None,**options):
                 ref_backend=a['backend'],cmp_backend=b['backend'],ranks=ranks,
                 sample_count_scope='logical input samples, counted once; operator shards compare within the same rank')
     (out/'result.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n')
-    write_index(result,out)
+    from .product import write_report
+    write_report(out,result,work=work,limits=limits)
     return dict(output=str(out),status=status,ranks=ranks)

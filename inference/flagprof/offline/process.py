@@ -16,6 +16,7 @@ def run_owned(command,*,timeout,**options):
         from flagprof.store.manifest import proc_key
         try:process_key=proc_key(child.pid)
         except OSError:process_key=None
+        target_key=process_key
         signal_deadline=[None]
         def forward(signum,frame):
             received.append(signum);signal_deadline[0]=time.monotonic()+5
@@ -48,6 +49,7 @@ def run_owned(command,*,timeout,**options):
             result=subprocess.CompletedProcess(command,code)
             result.pid=child.pid;result.process_key=process_key
             result.timed_out=timed_out;result.signal=received[0] if received else None
+            result.wait_returncode=child.returncode;result.process=target_key
             return result
         finally:
             for sig,handler in previous.items():signal.signal(sig,handler)

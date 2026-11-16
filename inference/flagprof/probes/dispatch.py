@@ -100,8 +100,12 @@ class DispatchProbe(Probe):
                 return output
             except BaseException as exc:
                 error = exc
+                if self.context.diagnostic:
+                    self.context.diagnostic.exception(exc)
                 raise
             finally:
+                if self.context.diagnostic:
+                    self.context.diagnostic.progress()
                 dur = clock()-start
                 try:
                     dev = devices(args, kwargs, output)

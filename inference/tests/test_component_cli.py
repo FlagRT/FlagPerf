@@ -95,17 +95,23 @@ class ComponentCLITests(unittest.TestCase):
                 self.assertEqual(sdk, {'profile_memory': True})
                 self.assertEqual(probes['flagtree'], 'on')
 
-    def test_monitor_is_not_part_of_this_release(self):
+    def test_monitor_is_available_and_opt_in(self):
         from flagprof.registry import Registry
         from flagprof.store.schema import SCHEMA_VERSION
-        self.assertEqual(SCHEMA_VERSION, '1.2')
-        self.assertFalse({'resource', 'perf.timeline'} & {d['id'] for d in Registry().descriptors()})
-        for argv in [['watch'], ['record', '--store', 'unused', '--vendor', 'ascend', '--monitor', 'on'],
-                     ['launch', '--store', 'unused', '--preset', 'monitor']]:
-            with self.subTest(argv=argv), contextlib.redirect_stderr(io.StringIO()):
+        from flagprof.probes.config import resolve
+        self.assertEqual(SCHEMA_VERSION, '1.3')
+        self.assertTrue({'resource', 'perf.timeline', 'telemetry.host', 'telemetry.ascend',
+                         'telemetry.nvidia'} <= {d['id'] for d in Registry().descriptors()})
+        self.assertEqual(resolve('perf')[1]['monitor'], 'off')
+        self.assertEqual(resolve('monitor')[1]['monitor'], 'on')
+        for verb in ('record', 'launch', 'watch', 'export'):
+            with self.subTest(verb=verb), contextlib.redirect_stdout(io.StringIO()) as output:
                 with self.assertRaises(SystemExit) as error:
-                    main(argv)
-                self.assertEqual(error.exception.code, 2)
+                    main([verb, '--help'])
+                self.assertEqual(error.exception.code, 0)
+                if verb in ('record', 'launch'):
+                    self.assertIn('--diagnose', output.getvalue())
+                    self.assertIn('--monitor', output.getvalue())
 
 
 if __name__ == '__main__':

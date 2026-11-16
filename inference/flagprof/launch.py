@@ -14,7 +14,7 @@ import time
 import traceback
 import uuid
 
-from .store.manifest import atomic_json
+from .store.manifest import atomic_json, proc_key
 
 
 def worker(settings, rank):
@@ -24,6 +24,7 @@ def worker(settings, rank):
     root = Path(settings['root'])/('rank-'+str(rank))
     root.mkdir()
     state = dict(rank=rank, group_id=settings['group_id'], status='running', run=None)
+    atomic_json(root/'worker.json',state)
     code = 1
     handle = None
     try:
@@ -47,12 +48,21 @@ def worker(settings, rank):
             if settings['preset'] != 'none':
                 run = create_run(root/'delivery', identity=dict(group_id=settings['group_id'], rank=rank))
                 state['run'] = str(run.relative_to(settings['root']))
+                atomic_json(root/'worker.json', state)
                 handle = attach(run, settings['vendor'], preset=settings['preset'], config=settings['config'], rank=rank)
+                handle.register_device(device)
                 if handle.state['status'] != 'running':
                     raise RuntimeError('worker attachment did not start')
             execute_target(args)
             code = 0
+    except SystemExit as error:
+        code=0 if error.code is None else error.code if isinstance(error.code,int) else 1
+        if code:
+            state['error']='SystemExit: '+str(error.code)
+            if not isinstance(error.code,(int,type(None))):print(error.code,file=sys.stderr)
     except BaseException as error:
+        if handle and handle.diagnostic:
+            handle.diagnostic.exception(error)
         state['error'] = type(error).__name__+': '+str(error)
         traceback.print_exc()
     finally:
@@ -109,7 +119,13 @@ def launch(command, *, store, nproc_per_node=2, comm_backend=None, flagcx=None, 
         check_capture_disk(root,vendor,capture_filesystem)
     else:
         check_disk(root)
-    root.mkdir(parents=True, exist_ok=False)
+    if root.exists():
+        if any(p.name not in ('monitor','targets','telemetry-calibration.json') for p in root.iterdir()):
+            raise ValueError('launch output already contains target data')
+    else:
+        root.mkdir(parents=True)
+    from .monitor.lifecycle import Monitor
+    monitor = Monitor(root, root/'monitor-ref.json', vendor, config, preset=preset)
     group_id = uuid.uuid4().hex
     with socket.socket() as sock:
         sock.bind(('127.0.0.1', 0))
@@ -135,7 +151,7 @@ def launch(command, *, store, nproc_per_node=2, comm_backend=None, flagcx=None, 
         finally:
             row['elapsed_seconds']=(time.monotonic_ns()-row['start_monotonic_ns'])/1e9
             atomic_json(root/'group-progress.json',state)
-    children, logs = [], []
+    children, logs, child_keys = [], [], []
     def worker_state(rank):
         path=root/('rank-'+str(rank))/'worker.json'
         row=dict(rank=rank,group_id=group_id,status='missing',run=None)
@@ -144,14 +160,18 @@ def launch(command, *, store, nproc_per_node=2, comm_backend=None, flagcx=None, 
             except (OSError,ValueError) as error:
                 row.update(status='unreadable',error=type(error).__name__+': '+str(error))
         row['process_returncode']=children[rank].returncode if rank<len(children) else None
+        row['termination_reason']=termination_reasons.get(children[rank].pid,'target_exit') if rank<len(children) else 'not_started'
         return row
     deadline = time.monotonic()+timeout
     previous = {}
     stopped = []
+    termination_reasons = {}
+    stop_reason = 'external_signal'
     def stop(signum, frame):
         stopped.append(signum)
         for child in children:
             if child.poll() is None:
+                termination_reasons.setdefault(child.pid, stop_reason)
                 try:os.killpg(child.pid, signal.SIGTERM)
                 except ProcessLookupError:pass
     try:
@@ -168,11 +188,15 @@ def launch(command, *, store, nproc_per_node=2, comm_backend=None, flagcx=None, 
                 env['XPU_CUPTI_ENABLE_DEVICE']=str(rank)
             log = (root/('rank-'+str(rank)+'.log')).open('xb')
             logs.append(log)
+            monitor.environment(env)
             children.append(subprocess.Popen([command[0], '-B', '-m', 'flagprof.launch',
                                                str(root/'launch.json'), str(rank)], env=env,
                                               stdout=log, stderr=subprocess.STDOUT, start_new_session=True))
+            try: child_keys.append(proc_key(children[-1].pid))
+            except OSError: child_keys.append(None)
         while any(child.poll() is None for child in children):
             if stopped or time.monotonic() >= deadline or any(child.poll() not in (None,0) for child in children):
+                stop_reason = 'external_signal' if stopped else 'launcher_timeout' if time.monotonic() >= deadline else 'peer_failure'
                 stop(signal.SIGTERM, None)
                 break
             time.sleep(.25)
@@ -241,6 +265,14 @@ def launch(command, *, store, nproc_per_node=2, comm_backend=None, flagcx=None, 
             log.close()
         for sig, handler in previous.items():
             signal.signal(sig, handler)
+        for rank, child in enumerate(children):
+            for path in (root/('rank-'+str(rank))).rglob('monitor-ref.json'):
+                try:
+                    reference=json.loads(path.read_text())
+                    if rank<len(child_keys) and reference.get('worker_proc_key')==child_keys[rank] and child_keys[rank] and child.returncode is not None:
+                        monitor.target_exit(dict(returncode=child.returncode,source='subprocess.wait',termination_reason=termination_reasons.get(child.pid,'target_exit')),reference['worker_proc_key'])
+                except (OSError,ValueError) as error:monitor.error(error)
+        monitor.close()
         atomic_json(root/'group.json', state)
 
 

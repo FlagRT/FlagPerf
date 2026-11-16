@@ -65,5 +65,19 @@ class GroupOracleTests(unittest.TestCase):
             value=json.loads(b.read_text());value['ranks'].pop();b.write_text(json.dumps(value))
             with self.assertRaisesRegex(ValueError,'ranks'):generate_oracle(a,b,root/'missing')
 
+    def test_group_performance_manifest_rejects_swapped_rank_identity(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);a=self.fixture(root/'ref','hccl');b=self.fixture(root/'cmp','hccl',.25)
+            entries=json.loads(a.read_text())['ranks']
+            mapping=root/'performance.json'
+            mapping.write_text(json.dumps(dict(ranks={str(r['rank']):str(a.parent/entries[1-r['rank']]['run']) for r in entries})))
+            generate_oracle(a,b,root/'report',perf_ref_run=mapping)
+            for rank in (0,1):
+                result=json.loads((root/'report'/('rank-'+str(rank))/'result.json').read_text())
+                rows=result['results']['oracle.perf_links']['data']
+                self.assertTrue(rows)
+                self.assertTrue(all(r['matched_rows']==0 for r in rows))
+                self.assertIn('rank',[d['field'] for d in rows[0]['identity_mismatches']])
+
 
 if __name__=='__main__':unittest.main()

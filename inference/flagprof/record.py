@@ -19,7 +19,7 @@ def record(command, *, store, vendor, preset='perf', config=None, descriptors=No
            identity=None, backend_options=None,capture_mode='final',work=None,scratch=None,timeout=1800):
     if not math.isfinite(timeout) or timeout <= 0:
         raise ValueError('positive finite record timeout required')
-    if preset in ('coverage', 'perf-lite', 'accuracy'):
+    if preset in ('coverage', 'perf-lite', 'accuracy', 'monitor'):
         capture_mode = 'windowed'
     if capture_mode=='final':
         if descriptors or identity or backend_options:
@@ -32,11 +32,17 @@ def record(command, *, store, vendor, preset='perf', config=None, descriptors=No
     config=dict(config or {})
     if 'log_files' in config:
         config['log_files']=tuple(str(Path(p).resolve()) for p in config['log_files'])
+    from .probes.config import resolve
+    session_config, probe_config = resolve(preset, config)
+    if probe_config['diagnose'] == 'on':
+        config.update({key:probe_config[key] for key in ('monitor','monitor_topology','monitor_root')})
     configuration(preset, **config)
     descriptor = Registry(descriptors).describe(vendor)
     if descriptor['kind'] != 'vendor':
         raise ValueError('record needs a vendor')
     run = create_run(store, identity=dict(argv=list(command), cwd=os.getcwd(), vendor=vendor, preset=preset)).resolve()
+    from .monitor.lifecycle import Monitor
+    monitor = Monitor(store, run/'monitor-ref.json', vendor, config, preset=preset)
     settings = dict(run=str(run), vendor=vendor, preset=preset, config=config or {}, descriptors=descriptors,
                     identity=identity, backend_options=backend_options, wrapper_process=proc_key(),
                     injection_policy='direct_python_target_only')
@@ -50,6 +56,7 @@ def record(command, *, store, vendor, preset='perf', config=None, descriptors=No
     with tempfile.TemporaryDirectory(prefix='flagprof-injection-') as directory:
         Path(directory, 'sitecustomize.py').write_text('from flagprof._bootstrap import bootstrap\nbootstrap('+repr(directory)+')\n')
         env = dict(original)
+        monitor.environment(env)
         env['PYTHONPATH'] = os.pathsep.join([directory, root] + ([original['PYTHONPATH']] if original.get('PYTHONPATH') else []))
         env['FLAGPROF_RECORD_CONFIG'] = str(run/'record-config.json')
         try:
@@ -62,6 +69,11 @@ def record(command, *, store, vendor, preset='perf', config=None, descriptors=No
         except OSError as error:
             code = 127
             state['target_exit'] = dict(returncode=code, error=repr(error))
+        if state['target_exit'].get('source') == 'owned subprocess.wait':
+            monitor.target_exit(dict(returncode=target.wait_returncode, source='subprocess.wait',
+                termination_reason='launcher_timeout' if target.timed_out else
+                    'external_signal' if target.signal else 'target_exit'), worker=target_key)
+        monitor.close()
         handshakes = [json.loads(p.read_bytes()) for p in (run/'handshakes').glob('*')]
         attachments = [json.loads(p.read_bytes()) for p in (run/'attachments').glob('*/state.json')]
         state['handshakes'] = handshakes

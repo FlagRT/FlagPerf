@@ -369,6 +369,10 @@ class Writer:
             os.close(fd)
 
     def _persist_event(self, event: dict[str, Any]) -> bool:
+        if event.get('t') == 'counter' and 'miss' in event:
+            from flagprof.telemetry.contract import REASONS
+            if any(reason not in REASONS for reason in event['miss'].values()):
+                raise ValueError('unknown counter miss reason')
         decoded = self._validator.decode(event, self.defaults)
         if decoded is None:
             with self._lock:

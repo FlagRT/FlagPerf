@@ -88,6 +88,8 @@ def _import_bundle(directory, *, store, work, run_id=None, options=None):
             save_prepared(prepared, bind)
         timings['prepare_or_restore_s'] = time.perf_counter()-t
         run = create_run(store, run_id=run_id, identity=dict(route='plan-b-final', capture_occurrence=capture['occurrence'])).resolve()
+        from flagprof.monitor.reference import relocate
+        relocate(directory/'monitor-ref.json', run/'monitor-ref.json')
         state = dict(schema='plan-b-import/1', status='incomplete', run=str(run), capture=str(directory),
                      reused=reused, timings=timings, throughput_gate='not_passed', performance_blocking=False,
                      performance_disposition=('not_qualified' if capture['vendor'] in ('thead','kunlunxin') else 'accepted_nonblocking_by_user'), latency_budget='pending')

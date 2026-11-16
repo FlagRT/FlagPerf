@@ -2,6 +2,8 @@
 
 # 09 CLI 与批量运行
 
+> 2026-11-16 发布状态：当前新增 watch、export、report baseline/render 和三路 Oracle 参数；可执行用法见 [使用说明](usage.md)。下文批量调度等条目保留设计范围。
+
 > **当前实现更新（2026-10-26，D33）**：已落地动词为 record/inspect/import/page/seal/analyse。record 默认 final，窗口模式须显式 --capture-mode windowed；B run 的 inspect 自动有界。report/campaign/watch 仍为后续目标。生产目录与命令见[默认 B 使用说明](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-e854eaa4d4fc)，整合证据见[交付记录](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-dbcab1a14471)。下文 2026-10-18 状态保留历史语境。
 
 > 上游：[02 架构](02-architecture.md) §3/§4、[05 预设](05-probes-and-vendors.md) §3、[07 分析器](07-analyzers-and-reports.md)

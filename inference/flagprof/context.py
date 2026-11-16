@@ -21,6 +21,7 @@ class Context:
         self.writer = writer
         self.pid = os.getpid()
         self.closed = False
+        self.diagnostic = None
         self.local = threading.local()
         self.forward_count = 0
         self._forward_lock = threading.Lock()
@@ -100,6 +101,8 @@ class Context:
         self._check()
         token = Scope(name, self.alloc_corr())
         self._state()['scopes'].append(token)
+        if self.diagnostic:
+            self.diagnostic.enter(str(token.corr), name)
         return token
 
     def pop_scope(self, token):
@@ -108,6 +111,8 @@ class Context:
         if not stack or stack[-1] is not token:
             raise ValueError('scope must be popped by its owner in LIFO order')
         stack.pop()
+        if self.diagnostic:
+            self.diagnostic.leave(str(token.corr))
 
     def next_seq(self):
         self._check()

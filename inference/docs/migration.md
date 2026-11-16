@@ -20,13 +20,13 @@ v2 按 [10 路线图 §0.1](10-roadmap.md#01-v1-能力清单p5-之前的排序�
 
 | v1 能力 | 本目录现状 | 归属 |
 |---|---|---|
-| DLRM、DeepFM 推荐模型（v1 用合成权重与输入） | 无内置 runner 与登记验证 | 路线图 §0.1 序 7，P2b 之后 |
+| DLRM、DeepFM 推荐模型（v1 用合成权重与输入） | PR #14 已加入 CTR 模板及 runner | [模型适配](thead-model-adaptation.md) |
 | FlagTree 组件开关与编译器对照 | 2026-11-10 已同步登记范围的组件选择、精度与性能链路；见 [组件对比](components.md) | 序 8 |
 | preview 分组搜索与联合策略校验 | 部分：一次 run 的 `route.coverage` 给出回退清单，无二次搜索 | 序 6 |
-| `export` FX / ONNX 图导出 | 无 | 序 9 |
+| `export` FX / ONNX 图导出 | 独立 CPU 固定形状 Qwen3-Embedding，通用 ExportSpec API | [图导出](graph-export.md) |
 | A100 TP2 性能基线 | 只有匹配的单卡基线；无同规模 A100 TP2 对照 | 序 4–5 |
 | TP 通信 padding 与链路量 | 不可用，报告保留原因 | 序 5 |
-| 独立设备监控（v1 默认开启的 dcmi 遥测与 worker CPU/RSS） | 无；counter / health 旁路归入 P3 | [08 在线与故障](08-online-and-fault.md) |
+| 独立设备监控 | Ascend / NVIDIA 资源采样、独立 watch、目标引用、在线规则，默认关闭 | [监控指南](monitoring.md) |
 | v1 参考包读写与 `repack-reference` | 不读取 v1 参考包；数值参照改为 accuracy run 与 `report oracle` | 不迁移 |
 
 ## 来源和迁移边界
@@ -49,6 +49,21 @@ Store schema 保持 1.2。monitor/watch、telemetry、资源与联合时间线�
 本目录是公开的生产代码，按本仓库规范单独进行版本管理；`FlagPerf_advance/inference_v2` 是维护者私有的开发与测试目录，保留完整回归套件、验收工具和实验原件，不合并其 Git 历史。两边的生产代码通过 PR 同步，同步后在本节更新来源提交。模型权重、镜像和运行产物留在各自原位置。
 
 框架文档保留设计与历史语境。2026-11-03 移除 `docs/history/` 目录；正文中的历史引用改为删除前固定 Git 提交中的链接，[出处索引](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md)保留原路径和引用页。协作方式见 [文档导航](README.md#两人如何协作)。
+
+## 2026-11-16 监控、诊断、图导出与结果报告
+
+生产合并基础为 PR #14 的 `8c9d1d7ce6b568e3ceb086b8d97249e7cfca41a0`。上次同来源同步是 PR #13（`2f240c45b28d4bcea950d998c7b7bea13ba8e353`），对应开发版本 `748fb9a405ce6dc5f947f18feb2d284806c6cfb2`。本次按该开发版本到 `dc28d9134caf114b058959506add2bee7a795e9f` 的运行代码增量进行三方合并。
+
+- 资源：DCMI/NVML/SMI 与主机采样，阶段/分配器边界、资源统计、显存估算、能耗和联合时间线。
+- 独立监控：watch 会话、设备与功率域租约、采集监督、目标登记、滚动保留、固定异常窗口、依赖归档和恢复重放。
+- 业务诊断：OOM、心跳、执行停滞、同步通信超时；真实退出回执、规则版本与证据引用。
+- 图导出：独立 CPU FX/ONNX、结构/完整包、回读与可选 ORT 数值检查、离线查看器。
+- 结果：HTML/Markdown、证据跳转与筛选、性能基准及条件比较、三路精度、误差分位数和尺度统计、历史重绘、逐 rank 性能/回放关联。
+- 整合：保留公开厂商适配、CTR/rerank、CLS 和模型加载修复；协调启动器退出回执及阶段生命周期；报告静态资源随 wheel 分发。
+
+新 Store 使用 schema 1.3，为 counter 增加读取时长与缺失原因；Reader 保留 1.x 读取兼容。监控与诊断仍显式启用。使用入口分别见 [监控](monitoring.md)、[导出](graph-export.md)、[报告](user-result-reports.md)。
+
+运行产物、验收日志和实验归档保存在维护者工作区的 `personal/evidence/inference-public-sync-20261116/`，不随生产代码发布。本次验收为 CPU 和离线链路，不新增设备性能、稳定性或跨厂商精度结论；任务恢复与热加载继续后续开发。
 
 ## 恢复旧版
 

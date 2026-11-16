@@ -45,6 +45,8 @@ def capture_target(directory, vendor, preset, arguments, config=None, capture_fi
     directory=Path(directory)
     run=create_run(directory/'collection',identity=dict(route='final-capture',argv=list(arguments)))
     handle=attach(run,vendor,preset=preset,config=config,capture_mode='final',capture_filesystem=capture_filesystem,rank=rank)
+    if os.environ.get('FLAGPROF_DEVICE'):
+        handle.register_device(os.environ['FLAGPROF_DEVICE'])
     target_file=Path(arguments[0]).resolve() if arguments and not arguments[0].startswith('-') else None
     target_before=fileinfo(target_file) if target_file else None
     code=0;started=time.perf_counter();error=None
@@ -182,7 +184,10 @@ def record_final(command, *, store, work=None, scratch=None, vendor, preset='per
     session_options, probe_options = resolve(preset, config)
     atomic_json(destination/'record-config.json', dict(preset=preset,capture_filesystem=capture_filesystem,rank=rank, config=dict(session_options,
         **{k:v for k,v in probe_options.items() if k != 'include_sha256'})))
+    from flagprof.monitor.lifecycle import Monitor
+    monitor = Monitor(store, destination/'monitor-ref.json', vendor, probe_options, preset=preset)
     root=str(Path(__file__).resolve().parents[2]);env=dict(os.environ)
+    monitor.environment(env)
     env.pop('FLAGPROF_RECORD_CONFIG',None)
     env['PYTHONPATH']=os.pathsep.join([root]+([env['PYTHONPATH']] if env.get('PYTHONPATH') else []))
     started=time.perf_counter();deadline=time.monotonic()+timeout
@@ -194,6 +199,9 @@ def record_final(command, *, store, work=None, scratch=None, vendor, preset='per
         with (destination/'target.log').open('xb') as log:
             cp=run_owned([command[0],'-B',*flags,'-m','flagprof.offline.capture','target',str(destination),vendor,preset,*arguments],
                          env=env,stdout=log,stderr=subprocess.STDOUT,timeout=max(.01,deadline-time.monotonic()))
+        if type(getattr(cp,'wait_returncode',None)) is int:
+            monitor.target_exit(dict(returncode=cp.wait_returncode,source='subprocess.wait'),getattr(cp,'process',None))
+        monitor.close()
         state['target_exit']=dict(returncode=cp.returncode,timed_out=cp.timed_out,source='subprocess.wait')
         code=128-cp.returncode if cp.returncode<0 else cp.returncode
         from flagprof.store._proxy_lifecycle import record_wait, deadline_scope
@@ -235,6 +243,7 @@ def record_final(command, *, store, work=None, scratch=None, vendor, preset='per
     except (ValueError,OSError,RuntimeError) as error:
         state['error']=type(error).__name__+': '+str(error);return code
     finally:
+        monitor.close()
         state['exit_code']=code;state['entry_total_s']=time.perf_counter()-started
         atomic_json(destination/'record-status.json',state)
         if state.get('run'):atomic_json(Path(state['run'])/'record-status.json',state)

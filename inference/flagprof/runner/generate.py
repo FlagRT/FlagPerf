@@ -13,8 +13,15 @@ from .onerec import GreedyExecution
 
 @contextmanager
 def interval(handle, name, category, attrs):
-    if not handle or handle.state['effective_config'].get('probes') == 'none':
-        yield
+    observe = bool(handle and category in ('phase','step'))
+    if observe:
+        handle.allocator_boundary(name+':begin')
+    if not handle or (category != 'phase' and handle.state['effective_config'].get('probes') == 'none'):
+        try:
+            yield
+        finally:
+            if observe:
+                handle.allocator_boundary(name+':end')
         return
     from flagprof.probes.base import clock
     parent = handle.context.current_scope()
@@ -28,6 +35,28 @@ def interval(handle, name, category, attrs):
             if parent:
                 event['parent'] = parent.corr
             handle.writer.emit(event)
+            if observe:
+                handle.allocator_boundary(name+':end')
+
+
+_phases = []
+
+
+def begin_phase(handle, name, **attrs):
+    phase = interval(handle, name, 'phase', attrs)
+    phase.__enter__()
+    _phases.append(phase)
+    return phase
+
+
+def end_phase(phase):
+    if phase in _phases:_phases.remove(phase)
+    phase.__exit__(None, None, None)
+
+
+def close_phases():
+    while _phases:
+        end_phase(_phases[-1])
 
 
 def wrapper(model):
@@ -64,6 +93,7 @@ def run_request(model, step_model, inputs, sample_ids, *, mode, sync, handle=Non
             while not session.done:
                 context = dict(session.context)
                 step_attrs = dict(kind='generation_step', request_id=request_id, samples=sample_ids, **context)
+                step_attrs['generated_tokens'] = sum(context['active_samples'])
                 if handle:
                     mask = (session.mask if session.index == 0 else
                             torch.tensor(session.active, device=session.mask.device,
@@ -74,7 +104,7 @@ def run_request(model, step_model, inputs, sample_ids, *, mode, sync, handle=Non
                 with interval(handle, context['phase'], 'step', step_attrs):
                     step = step_model(session)
                     sync()
-                end = time.perf_counter_ns()
+                    end = time.perf_counter_ns()
                 selected = step.token_ids.tolist()
                 rows.append(dict(**context, start_ns=start, end_ns=end, latency_ns=end-start))
                 tokens.append(selected)
@@ -92,10 +122,12 @@ def run_request(model, step_model, inputs, sample_ids, *, mode, sync, handle=Non
                         pass
                 if parallel and mode == 'accuracy':
                     parallel.check_step(context, selected)
+                if handle and handle.session and handle.capture_mode=='windowed':handle.step()
             sync()
             end = time.perf_counter_ns()
             last = step.outputs['hidden']
             stops = list(session.stop_reasons)
+            attrs.update(generated_tokens=sum(sum(r['active_samples']) for r in rows))
     finally:
         session.close()
         if handle:
@@ -124,6 +156,7 @@ def execute(args):
     if args.flaggems not in (None, 'off') or args.flaggems_include:
         raise ValueError('OneRec registered execution has FlagGems off')
     handle = current_attachment()
+    load_phase = begin_phase(handle, 'load')
     if handle and handle.state['effective_config']['flaggems'] != 'off':
         raise ValueError('OneRec requires attachment FlagGems off')
     if args.device.startswith('npu'):
@@ -135,6 +168,8 @@ def execute(args):
         sync = torch.cuda.synchronize
     else:
         sync = lambda: None
+    if handle:
+        handle.register_device(args.device)
     # Initialize the vendor extension before Transformers probes optional backends.
     from transformers import AutoConfig, AutoModelForCausalLM
     torch.set_num_threads(8)
@@ -203,10 +238,15 @@ def execute(args):
         out.mkdir(parents=True, exist_ok=False)
         requests = []
         load_s = time.perf_counter()-began
+        end_phase(load_phase)
         for repeat in range(args.repeats):
             for index, (sample_ids, values) in enumerate(batches):
                 inputs = {k:v.to(args.device) for k,v in values.items()}
+                phase = None
                 for cycle in range(-args.warmup, args.forwards):
+                    if phase is None or cycle == 0:
+                        if phase is not None:end_phase(phase)
+                        phase = begin_phase(handle, 'warmup' if cycle < 0 else 'measure', repeat=repeat, batch=index)
                     request_id = '%s:%s:%s' % (repeat, index, cycle)
                     last, row = run_request(model, step_model, inputs, sample_ids, mode=args.generation_mode,
                                             sync=sync, handle=handle, request_id=request_id, parallel=parallel,
@@ -226,6 +266,7 @@ def execute(args):
                     # envelope, including output sealing and cache release.
                     if handle:
                         handle.step()
+                if phase is not None:end_phase(phase)
         result = dict(schema='generation-runner/1', oracle_identity=identity, requests=requests,
                       load_s=load_s, instrumentation='attachment' if handle else 'none',
                       rank=int(os.environ.get('RANK','0')), status='complete')

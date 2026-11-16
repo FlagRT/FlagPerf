@@ -201,7 +201,7 @@ class OracleTests(unittest.TestCase):
         self.assertEqual(layer['differing_fraction'],1)
         document=(self.root/'population/report.html').read_text()
         self.assertLess(document.index('id="oracle.identity_diff"'),document.index('id="oracle.first_divergence"'))
-        self.assertNotIn('relative_mean',document.split('<section id="oracle.layer">')[1].split('</section>')[0])
+        self.assertNotIn('relative_mean',document.split('id="oracle.layer"')[1].split('</section>')[0])
 
     def test_horizontal_cells_keep_legacy_field_mapping(self):
         import io

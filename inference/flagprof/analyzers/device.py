@@ -34,7 +34,8 @@ def device(work, params):
         from .core import perf_layer
         perf_layer(work, params)
     totals = dict(events=0, linked=0, project_resolved=0, native_owned=0,
-                  valid_durations=0, missing_durations=0, device_work_ns=0)
+                  valid_durations=0, missing_durations=0, device_work_ns=0,
+                  native_owned_ns=0, project_resolved_ns=0, linked_ns=0)
     for run, writer, seq, event in work.events(('kernel', 'memop', 'comm')):
         if event['t'] == 'comm' and event.get('phase') != 'device':
             continue
@@ -51,6 +52,9 @@ def device(work, params):
         route = work.event(source_run, op['corr'], 'route') if op else None
         decision = route['decision'] if route else 'unknown'
         totals['project_resolved'] += op is not None
+        duration=event.get('dur') or 0
+        totals['linked_ns']+=duration if link.get('status')=='linked' else 0
+        totals['project_resolved_ns']+=duration if op is not None else 0
         source = event.get('_source')
         native = None
         if source:
@@ -60,11 +64,14 @@ def device(work, params):
                 native = json.loads(found[0])
         owned = bool(native and native.get('state') == 'owned')
         totals['native_owned'] += owned
+        totals['native_owned_ns']+=duration if owned else 0
+        root=work.forward_root_of(source_run,str(op.get('scope',0))) if op and hasattr(work,'forward_root_of') else None
+        phase=getattr(work,'forward_roots',{}).get((source_run,root),{}).get('phase','unknown')
         evidence = dict(run_id=run, w=writer, seq=seq)
         if source:
             evidence['source'] = source
         base = dict(dev=event.get('dev'), category=kind, name=event.get('name', event.get('kind')),
-                    sid=op.get('sid') if op else None, route_decision=decision,
+                    sid=op.get('sid') if op else None, route_decision=decision, phase=phase,
                     link_status=link.get('status', 'unlinked'),link_reason=link.get('reason'),
                     association_label='已关联项目调用' if link.get('status')=='linked' else '未关联项目调用',
                     native_owner=native.get('owner_name') if owned else None,
@@ -72,6 +79,8 @@ def device(work, params):
         accumulate(work, 'perf.device', encode(base), base, event, evidence)
         group = {k:base[k] for k in ('dev', 'category', 'link_status', 'link_reason', 'route_decision')}
         accumulate(work, 'perf.device.coverage', encode(group), group, event, evidence)
+        phase_group={k:base[k] for k in ('dev','category','phase')}
+        accumulate(work,'perf.device.phases',encode(phase_group),phase_group,event,evidence)
         if op:
             key = encode((op['sid'], op.get('dev'), bool(op.get('parent_corr')),
                           route['decision'] if route else None))
@@ -97,6 +106,11 @@ def device(work, params):
     totals.update(linked_ratio=totals['linked']/total if total else None,
                   project_resolved_ratio=totals['project_resolved']/total if total else None,
                   native_owned_ratio=totals['native_owned']/total if total else None)
+    totals['time_denominator']='sum_of_valid_device_record_durations_including_overlap'
+    totals['count_denominator']='all_recorded_device_events'
+    duration=totals['device_work_ns']
+    for field in ('linked','project_resolved','native_owned'):
+        totals[field+'_time_ratio']=totals[field+'_ns']/duration if duration else None
     if not totals['valid_durations']:
         totals['device_work_ns'] = None
     for panel, groups, field in (('perf.op','perf.op.devices','op_group_key'),('perf.layer','perf.layer.devices','name')):
@@ -120,7 +134,7 @@ def device(work, params):
         if (dev,kind,'linked') not in observed:
             row=dict(dev=dev,category=kind,link_status='linked',association_label='已关联项目调用',route_decision='unknown',events=0,valid_durations=0,missing_durations=0,device_work_ns=0,evidence=[],scope_note='此类别未记录已关联项目调用；linked 子集不代表完整前向',window_identity=context.get('window_identity'),workload_identity=context.get('workload_identity'))
             work.row('perf.device.headline',encode((dev,kind,'linked')),row)
-    coverage = dict(work.coverage(), totals=totals, groups=work.table('perf.device.coverage'),
+    coverage = dict(work.coverage(), totals=totals, phases=work.table('perf.device.phases'), groups=work.table('perf.device.coverage'),
                     op_groups=work.table('perf.op.devices'), layer_groups=work.table('perf.layer.devices'),headline=work.table('perf.device.headline'),
                     window_identity=context.get('window_identity'),workload_identity=context.get('workload_identity'))
     uncertain = any(q.get('format_status') != 'within' or q.get('import_status') != 'complete'

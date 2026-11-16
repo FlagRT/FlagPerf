@@ -39,6 +39,48 @@ class StoreView:
         self._bounded_context = None
         self._analysis_verified = {}
 
+    def iter_diagnostic_findings(self):
+        """Versioned task/rank Findings, independent of vendor SDKs."""
+        from flagprof.monitor.diagnostic_report import findings
+        yield from findings(self.run)
+
+    def iter_diagnostic_evidence(self, identities):
+        """Resolve stable node/source IDs through the archived diagnostic journal."""
+        from flagprof.monitor.diagnostic_report import evidence
+        yield from evidence(self.run, identities)
+
+    def iter_diagnostic_coverage(self):
+        """Observed registered/excluded/idle progress coverage per task and rank."""
+        from flagprof.monitor.diagnostic_report import coverage
+        yield from coverage(self.run)
+
+    def monitor_status(self):
+        """Normalized monitor reference, inventory and descriptor roles."""
+        from flagprof.monitor.reading import status
+        return status(self.run)
+
+    def monitor_descriptors(self):
+        return self.monitor_status()['inventory']['descriptors']
+
+    def iter_monitor_minutes(self):
+        """Derived sample means for trends; never a replacement for raw events."""
+        from flagprof.monitor.reading import minutes
+        yield from minutes(self.run)
+
+    def iter_monitor_events(self, types=None, *, work=None, limits=None):
+        """Normalized monitor records with stable evidence IDs; no vendor imports."""
+        from flagprof.monitor.reading import events
+        self.monitor_read_report = dict(errors=[])
+        yield from events(self.run, types, work=work, limits=limits,report=self.monitor_read_report)
+
+    def monitor_coverage(self):
+        state = self.monitor_status()
+        from flagprof.monitor.reading import window_coverage
+        return dict(reference=state['reference'], processes=state['inventory'].get('processes', []),
+                    unavailable=state['inventory'].get('unavailable', {}),
+                    window_coverage=window_coverage(state),
+                    read_report=getattr(self,'monitor_read_report',dict(errors=[])))
+
     def iter_events(self, types=None, *, work=None, limits=None):
         """Strict streaming records with disk-backed signature/control state."""
         import sqlite3
@@ -144,7 +186,7 @@ class StoreView:
         if not collection.is_relative_to(directory) or load_json(collection/'manifest.json')['run_id'] != source:
             raise ValueError('collection run identity mismatch')
         return dict(status='available', source_run_id=source, collection_run=str(collection),
-                    capture_occurrence=capture['occurrence'])
+                    capture_occurrence=capture['occurrence'],capture_directory=str(directory))
 
     def open_collection(self):
         source = self.analysis_source()
