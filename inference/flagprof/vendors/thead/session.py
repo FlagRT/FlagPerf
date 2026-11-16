@@ -26,6 +26,28 @@ class TheadProfiler(NvidiaProfiler):
         return result
 
 
+# Sourced-identity admission pairs each accepted vendor smi tool with the
+# device model strings that tool reports. The framework UUID cross-check below
+# remains the real identity anchor; this table only admits identities that
+# plausibly come from a real vendor query.
+SOURCED_IDENTITY = {
+    'ppu-smi': ('PPU-ZW810E',),
+    'xpu-smi': ('P800', 'P800 OAM'),
+    'npu-smi': ('Ascend910B', 'Ascend910C', 'Ascend910', 'Atlas A2'),
+}
+
+
+def validate_sourced_identity(host, device, selected):
+    """Validate a sourced host identity against the admitted smi/model pairs."""
+    source=host.get('source')
+    accepted=SOURCED_IDENTITY.get(source)
+    if accepted is None or device.get('model') not in accepted:
+        raise ValueError('sourced identity model mismatch for source %r (accepted smi tools: %s)'
+                         % (source, ', '.join(sorted(SOURCED_IDENTITY))))
+    for field in ('pci_bdf', 'driver', 'host_device_node'):
+        if not device.get(field):raise ValueError('missing sourced '+str(source)+' '+field)
+
+
 def hardware_identity(selected=None):
     """Also identify host-only runs without requiring profiler environment."""
     import torch
@@ -34,15 +56,13 @@ def hardware_identity(selected=None):
     if not path:raise ValueError('FLAGPROF_THEAD_IDENTITY must name a sourced host identity JSON')
     with Path(path).open('rb') as stream:
         raw=stream.read(65537)
-    if len(raw)>65536:raise ValueError('PPU identity byte budget')
+    if len(raw)>65536:raise ValueError('identity byte budget')
     host=json.loads(raw)
     devices=host.get('devices',[])
-    if not isinstance(devices,list) or selected>=len(devices):raise ValueError('PPU logical device outside physical selection')
+    if not isinstance(devices,list) or selected>=len(devices):raise ValueError('logical device outside physical selection')
     device=devices[selected]
-    if host.get('source')!='ppu-smi' or device.get('model')!='PPU-ZW810E':raise ValueError('sourced PPU-ZW810E model required')
+    validate_sourced_identity(host, device, selected)
     observed=str(torch.cuda.get_device_properties(selected).uuid).lower().removeprefix('gpu-')
-    if observed!=str(device.get('uuid','')).lower().removeprefix('gpu-'):raise ValueError('PPU physical/framework UUID mismatch')
-    for field in ('pci_bdf','driver','host_device_node'):
-        if not device.get(field):raise ValueError('missing sourced PPU '+field)
-    return dict(device,logical_device=selected,source='ppu-smi host query joined to torch.cuda UUID',
+    if observed!=str(device.get('uuid','')).lower().removeprefix('gpu-'):raise ValueError('physical/framework UUID mismatch')
+    return dict(device,logical_device=selected,source=str(host.get('source'))+' host query joined to torch.cuda UUID',
                             compatibility_name=torch.cuda.get_device_name(selected))

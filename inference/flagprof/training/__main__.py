@@ -115,16 +115,27 @@ def prepared_lm(path, *, batch_size, rank=0, world_size=1):
 def block_layers(model):
     """Repeated transformer blocks of a HF model, best effort.
 
-    Standard Qwen3-style ``model.layers`` first, then Roberta-style
-    ``model.encoder.layer``. Sharding per block keeps the forward all-gather
-    peak at one layer instead of the whole model; models without such
-    repetition fall back to root-only wrapping.
+    Qwen3-style ``model.model.layers``, Roberta-style ``model.model.encoder.layer``,
+    and host-mounted variants (``model.<host>.encoder.layer`` as used by
+    AutoModel wrappers around XLMRoberta/BERT backbones, e.g. bge-m3).
+    Sharding per block keeps the forward all-gather peak at one layer instead
+    of the whole model; models without such repetition fall back to
+    root-only wrapping.
     """
     inner=getattr(model,'model',None)
     layers=getattr(inner,'layers',None) if inner is not None else None
     if not layers:
         encoder=getattr(inner,'encoder',None) if inner is not None else None
         layers=getattr(encoder,'layer',None) if encoder is not None else None
+    if not layers:
+        for host_name in ('roberta','bert','xlm-roberta','xlmroberta'):
+            host=getattr(model,host_name,None)
+            if host is None: continue
+            encoder=getattr(host,'encoder',None)
+            layers=getattr(encoder,'layer',None) if encoder is not None else None
+            if layers: break
+    if not layers:
+        layers=getattr(model,'layers',None)
     return list(layers) if layers else []
 
 
@@ -179,11 +190,15 @@ def execute(args):
         if args.model:
             from .registry import resolve_task
             args.task=resolve_task(args.model)
+            task_source='registry'
             if not args.task:
                 raise ValueError('--task is required: model %r is not in inference/targets/model_registry.json; '
                                  'pass one of: classification, causal-lm, ctr, embedding, rerank' % args.model)
         else:
             args.task='classification'
+            task_source='default'
+    else:
+        task_source='explicit'
     if args.steps<=0 or args.batch_size<=0 or args.accumulation<=0:
         raise ValueError('steps, batch-size and accumulation must be positive')
     if not 0<args.lr<float('inf'): raise ValueError('lr must be positive and finite')
@@ -202,6 +217,7 @@ def execute(args):
     if world!=1 and not args.ddp: raise ValueError('torchrun requires explicit --ddp')
     if args.ddp and world<2: raise ValueError('DDP requires at least two torchrun workers')
     device=args.device
+    if device=='cuda': device='cuda:0'
     if args.ddp and device.startswith('cuda'): device='cuda:'+str(local_rank)
     if device.startswith('cuda'): torch.cuda.set_device(device)
     torch.manual_seed(args.seed);random.seed(args.seed)
@@ -227,6 +243,7 @@ def execute(args):
                 observe['handle']._save()
         protocol=dict(task=args.task,seed=args.seed,lr=args.lr,batch_size_per_rank=args.batch_size,
                       data='synthetic labelled classification' if args.task=='classification' else 'explicit pretokenized local input',
+                      task_source=task_source,
                       numerical_policy='framework defaults; no TF32/determinism/reduction override',
                       dtype='float32 parameters; optional explicit AMP',backend=dist.get_backend() if args.ddp else None)
         if observe:

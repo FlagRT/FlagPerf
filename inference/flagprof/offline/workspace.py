@@ -40,12 +40,22 @@ def filesystem_type(path):
     return selected
 
 
+LOCAL_PERSISTENT_FS = ('ext2', 'ext3', 'ext4', 'xfs')
+
+
 def check_disk(path):
-    """Require the accepted ext4 workspace before making any artifacts."""
+    """Require a local persistent journaling filesystem before making artifacts.
+
+    The original gate accepted ext4 only because statfs/f_type magic cannot
+    distinguish ext4 from ext2/ext3; local xfs (common for vendor data
+    volumes, e.g. P800 hosts) carries the same durability semantics, while
+    network and overlay filesystems stay rejected.
+    """
     kind = filesystem_type(path)
-    if kind != 'ext4':
-        raise ValueError('Plan B requires ext4: ' + str(Path(path).resolve()) +
-                         ' is on ' + kind + '; select an ext4 directory')
+    if kind not in LOCAL_PERSISTENT_FS:
+        raise ValueError('Plan B requires a local persistent filesystem (ext-family or xfs): ' +
+                         str(Path(path).resolve()) + ' is on ' + kind +
+                         '; select a directory on local ext4/xfs storage')
 
 
 def check_capture_disk(path, vendor, filesystem='ext4'):
