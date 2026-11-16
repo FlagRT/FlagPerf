@@ -43,7 +43,7 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install CPU-only test runtime
-        run: python -m pip install -r inference/tests/requirements-cpu.txt
+        run: python -m pip install -r inference/tests/requirements-cpu.txt -r inference/tests/requirements-graph.txt
       - name: Full inference suite including Gloo TP2, Oracle and training
         working-directory: inference
         env:

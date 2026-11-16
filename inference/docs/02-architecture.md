@@ -2,6 +2,8 @@
 
 # 02 总体架构
 
+> 2026-11-16 发布状态：当前架构增加独立 monitor/telemetry 旁路和 graph 导出路径，使用方式见 [监控](monitoring.md)、[图导出](graph-export.md) 与 [报告](user-result-reports.md)。
+
 > 上游：[00 需求](00-requirements.md)、[01 诊断](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/01-diagnosis.md)、[DECISIONS](DECISIONS.md) D1–D5、D22–D24
 > 下游：[03 schema](03-event-schema.md)、[04 关联](04-correlation.md)、[05 探针](05-probes-and-vendors.md)、[06 模型接入](06-model-onboarding.md)、[07 分析器](07-analyzers-and-reports.md)、[08 在线/故障](08-online-and-fault.md)、[09 CLI](09-cli-and-campaign.md)
 

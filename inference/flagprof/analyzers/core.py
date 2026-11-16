@@ -190,6 +190,11 @@ def perf_layer(work, params):
                    min_ns=min(row['min_ns'], dur), max_ns=max(row['max_ns'], dur),
                    exclusive_ns=None if exclusive is None or row['exclusive_ns'] is None else row['exclusive_ns']+exclusive,
                    exclusive_reason=reason or row['exclusive_reason'])
+        node=work.db.execute('select payload from spans where run=? and corr=?',(run,parent)).fetchone()
+        parent_name=json.loads(node[0]).get('attrs',{}).get('fold_group',json.loads(node[0])['name']) if node else None
+        parents=row.setdefault('parent_names',[])
+        if parent_name is not None and parent_name not in parents:parents.append(parent_name)
+        row['parent_status']='recorded_parent' if parents else 'root' if parent=='0' else 'parent_unavailable'
         row['mean_ns'] = row['inclusive_ns']/row['members']
         row['corr_samples'] = sample(row['corr_samples'], dict(run_id=run, corr=int(corr)), work.limits.evidence_samples)
         row['op_calls'] += work.db.execute("select count(*) from events where run=? and scope=? and type='op'", (run, corr)).fetchone()[0]

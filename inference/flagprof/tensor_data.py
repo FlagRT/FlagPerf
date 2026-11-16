@@ -79,7 +79,15 @@ def _ulp_bucket(distance: int) -> str:
     return '>256'
 
 
-def metrics(reference,candidate,*,dtype=None,with_bits=False):
+def metrics(reference,candidate,*,dtype=None,with_bits=False,work=None,limits=None):
+    from .error_statistics import ErrorDistribution
+    errors=ErrorDistribution(work,limits)
+    try:
+        return _metrics(reference,candidate,dtype=dtype,with_bits=with_bits,errors=errors)
+    finally:errors.close()
+
+
+def _metrics(reference,candidate,*,dtype=None,with_bits=False,errors=None):
     """One pass over pairs; ULP is descriptive and never an accuracy verdict."""
     from itertools import zip_longest
     missing=object();n=count=0;absolute=square=relative=aa=bb=ab=0.;max_abs=max_relative=0.
@@ -103,6 +111,7 @@ def metrics(reference,candidate,*,dtype=None,with_bits=False):
             continue
         if maximum is not None and x!=y and (abs(x)==maximum or abs(y)==maximum):extreme_mismatches+=1
         delta=abs(y-x);rel=delta/max(abs(x),1e-12)
+        errors.add(delta,x)
         distance=_ulp_distance(xb,yb,spec[0]) if with_bits else None
         if with_bits and distance:
             differing+=1;histogram[_ulp_bucket(distance)]+=1;ulp_max=max(ulp_max,distance)
@@ -120,13 +129,14 @@ def metrics(reference,candidate,*,dtype=None,with_bits=False):
         relative_mean=finite(relative/n) if n else None,relative_max=finite(max_relative) if n else None,
         cosine_similarity=finite(cosine),relative_l2=finite(math.sqrt(square)/max(math.sqrt(aa),1e-12)) if n else None,
         valid_elements=n,total_elements=count,statistics_scope='excluding_paired_sentinels' if paired_sentinel else 'all_elements' if n==count else 'finite_pairs_only',special=special)
+    result.update(errors.finish(n,aa,square))
     if with_bits:
         result.update(differing_elements=differing,differing_fraction=differing/n if n else None,
             ulp_histogram=histogram,ulp_max=ulp_max if n else None,max_abs_ulp=max_abs_ulp)
     return result
 
 
-def compare(ref_run,a,cmp_run,b):
+def compare(ref_run,a,cmp_run,b,*,work=None,limits=None):
     if a['shape']!=b['shape'] or a['dtype']!=b['dtype']:return dict(status='misaligned_shape',level=None)
     level='full' if 'blob' in a and 'blob' in b else 'sampled' if a.get('probe_alg')==b.get('probe_alg') and a.get('probe') and b.get('probe') else 'aggregate'
     dtype=a['dtype'].removeprefix('torch.');spec=FLOATS.get(dtype);with_bits=level=='full' and spec is not None
@@ -148,7 +158,15 @@ def compare(ref_run,a,cmp_run,b):
                 special={side:dict(nan=0,positive_inf=0,negative_inf=0) for side in ('ref','cmp')})
             if with_bits:result.update(differing_elements=0,differing_fraction=0. if count else None,
                 ulp_histogram=dict.fromkeys(ULP_BUCKETS,0),ulp_max=0 if count else None,max_abs_ulp=0 if count else None)
+            scale=stats.get('l2')
+            result.update(absolute_error_quantiles={str(q):0. if count else None for q in (50,90,99)},
+                error_quantile_rule='linear_(n-1)*p',error_quantile_elements=count,error_quantile_overflow=0,
+                rmse=0. if count else None,reference_rms=scale/math.sqrt(count) if scale is not None and count else None,
+                normalized_rmse=0. if count and scale else None,
+                normalized_rmse_reason='zero_reference_scale' if scale==0 else 'no_valid_elements' if not count else None,
+                near_zero_threshold=1e-12,near_zero_reference_elements=(sum(abs(x)<=1e-12 for x in values(ref_run,a,level)) if work is not None else count if zero else 0 if stats.get('min',0)>1e-12 or stats.get('max',0)<-1e-12 else None))
+            result['near_zero_reference_fraction']=result['near_zero_reference_elements']/count if count and result['near_zero_reference_elements'] is not None else None
             return result
-    if level!='aggregate':result.update(metrics(values(ref_run,a,level,with_bits=with_bits),values(cmp_run,b,level,with_bits=with_bits),dtype=dtype,with_bits=with_bits))
+    if level!='aggregate':result.update(metrics(values(ref_run,a,level,with_bits=with_bits),values(cmp_run,b,level,with_bits=with_bits),dtype=dtype,with_bits=with_bits,work=work,limits=limits))
     if not with_bits:result['ulp_unavailable_reason']='requires_full_float_pair'
     return result

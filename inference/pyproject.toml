@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "flagperf-inference"
-version = "0.1.0"
+version = "0.2.0"
 description = "Process-level inference profiling, evidence stores, and offline diagnostics"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -20,6 +20,7 @@ include = ["flagprof*"]
 namespaces = false
 
 [tool.setuptools.package-data]
+"flagprof.report" = ["assets/*.css", "assets/*.js"]
 "flagprof.vendors.ascend" = ["registry.json", "contracts/*.json"]
 "flagprof.vendors.nvidia" = ["contracts/*.json"]
 "flagprof.vendors.thead" = ["contracts/*.json"]

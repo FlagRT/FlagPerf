@@ -13,6 +13,13 @@ BUILTINS = (
          factory='TheadProfiler', requires=['torch'], format_vendor='thead'),
     dict(id='kunlunxin', kind='vendor', version='1', module='flagprof.vendors.kunlunxin.session',
          factory='KunlunxinProfiler', requires=['torch'], format_vendor='kunlunxin'),
+    *(dict(id='telemetry.'+name,kind='telemetry',version='1',module=module,
+           factory='Provider',requires=[]) for name,module in (
+        ('host','flagprof.telemetry.host_proc'),
+        ('ascend','flagprof.vendors.ascend.telemetry'),
+        ('nvidia','flagprof.vendors.nvidia.telemetry'))),
+    dict(id='perf.timeline',kind='analyzer',version='1',module='flagprof.analyzers.timeline',factory='make_perf_timeline',requires=[]),
+    dict(id='resource',kind='analyzer',version='1',module='flagprof.analyzers.resource',factory='make_resource',requires=[]),
     dict(id='ascend', kind='vendor', version='1', module='flagprof.vendors.ascend.session',
          factory='AscendProfiler', requires=['torch_npu'], format_vendor='ascend'),
     dict(id='nvidia', kind='vendor', version='1', module='flagprof.vendors.nvidia.session',
@@ -42,7 +49,7 @@ class Registry:
             for key in ('id', 'kind', 'version', 'module', 'factory'):
                 if not isinstance(d.get(key), str) or not d[key]:
                     raise ValueError('descriptor requires ' + key)
-            if d['kind'] not in ('vendor', 'probe', 'analyzer', 'component', 'responder'):
+            if d['kind'] not in ('vendor', 'probe', 'analyzer', 'component', 'responder', 'telemetry'):
                 raise ValueError('unknown descriptor kind')
             if not re.fullmatch(r'[A-Za-z_]\w*(\.[A-Za-z_]\w*)*', d['module']) or not d['factory'].isidentifier():
                 raise ValueError('invalid factory location')

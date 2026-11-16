@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from typing import Any, Mapping, Protocol
 import re
 
-SCHEMA_VERSION = "1.2"
+SCHEMA_VERSION = "1.3"
 REQUIRED_FIELDS = {
     "meta": ("kind",),
     "sig": ("sid", "role", "name", "overload", "tree"),
@@ -43,7 +43,7 @@ OPTIONAL_FIELDS = {
     "kernel": {"ktype", "grid", "block", "regs", "smem", "metrics"},
     "memop": set(),
     "tensor": {"corr", "digest", "blob", "mask", "align", "sid", "src"},
-    "counter": {"blocked"},
+    "counter": {"blocked", "dur", "miss"},
     "health": {"detail", "evidence"},
 }
 ENVELOPE = {"v", "t", "ts", "clk", "seq", "pid", "tid", "rank", "p", "corr", "ext"}
@@ -205,8 +205,15 @@ class SchemaValidator:
             _require(isinstance(result[key], str) and bool(SID_RE.fullmatch(result[key])), f"invalid {key}")
         for key in {"name", "lib", "backend", "key", "boundary", "dtype", "probe_alg", "p", "clk"} & set(result):
             _require(isinstance(result[key], str), f"{key} must be a string")
-        for key in {"ext", "data", "attrs", "stats", "values", "metrics", "stage_dur"} & set(result):
+        for key in {"ext", "data", "attrs", "stats", "values", "metrics", "stage_dur", "miss"} & set(result):
             _require(isinstance(result[key], dict), f"{key} must be an object")
+        if event_type == "counter" and "miss" in result:
+            from flagprof.telemetry.contract import REASONS
+            _require(set(result["miss"]) == {k for k,v in result["values"].items() if v is None}, "counter miss must match null values")
+            for reason in result["miss"].values():
+                _require(isinstance(reason, str), "counter miss reason must be a string")
+            self.unknown_enums += sum(v not in REASONS for v in result["miss"].values())
+            result["miss"] = {k: v if v in REASONS else "other" for k,v in result["miss"].items()}
         if "link" in result:
             validate_link(result["link"])
             if result["link"].get("reason") not in LINK_REASONS | {None}:

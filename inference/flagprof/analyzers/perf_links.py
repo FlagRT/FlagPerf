@@ -22,7 +22,8 @@ def link(ref,cmp,runs,directory,limits):
             try:
                 perf.ingest();perf_op(perf,{});device(perf,{})
                 wanted,actual=identity(accuracy),identity(perf)
-                mismatches=[dict(field=k,accuracy=wanted.get(k),performance=actual.get(k)) for k in FIELDS
+                fields=FIELDS+tuple(k for k in ('rank','parallelism','comm_backend','compiler','communication') if k in wanted or k in actual)
+                mismatches=[dict(field=k,accuracy=wanted.get(k),performance=actual.get(k)) for k in fields
                     if k not in wanted or k not in actual or wanted[k]!=actual[k]]
                 totals['sides'][side]=dict(run=str(view.run),identity_mismatches=mismatches,joined=0,unmatched=0)
                 perf.db.execute("create index perf_sid on rows(json_extract(payload,'$.sid')) where panel='perf.op'")

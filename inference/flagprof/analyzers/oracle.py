@@ -73,7 +73,7 @@ def _operator(ref,cmp,left,right,row,result,find,mismatch,ordinal):
             ea,eb=find(ref,source_a),find(cmp,source_b)
             if ea is None or eb is None:unknown=True;all_equal=False;continue
             cached=ref.db.execute("select payload from rows where panel='oracle.samples' and key=?",(source_a,)).fetchone()
-            comparison=json.loads(cached[0]) if cached else compare(ref.view.run,ea,cmp.view.run,eb)
+            comparison=json.loads(cached[0]) if cached else compare(ref.view.run,ea,cmp.view.run,eb,work=ref.directory,limits=ref.limits)
             same=comparison.get('digest_equal',False);all_equal &= same
             errors.append(0. if same else comparison.get('relative_l2'))
     if unknown:mismatch('source_unknown',key)
@@ -85,7 +85,7 @@ def _operator(ref,cmp,left,right,row,result,find,mismatch,ordinal):
         if sig:
             op=sig['name'].removeprefix('aten::')+('.'+sig['overload'] if sig['overload'] else '')
             rule=next((s.get('route_table',{}).get(op,{}) for s in cmp.statuses if s.get('route_table')), {})
-    item=dict(row,sid_ref=left.get('sid'),sid_cmp=right.get('sid'),introduced=introduced,error_out=result.get('relative_l2'),error_in=error_in,
+    item=dict(row,sid_ref=left.get('sid'),sid_cmp=right.get('sid'),input_sources_ref=sources_a,input_sources_cmp=sources_b,introduced=introduced,error_out=result.get('relative_l2'),error_in=error_in,
         amplification=result['relative_l2']/error_in if config_equal and error_in and result.get('relative_l2') is not None else None,
         input_status='unknown' if unknown else 'misaligned_producer' if not paired else 'equal' if all_equal else 'different',
         layout_differs=_layout(left)!=_layout(right),call_config_status='equal' if config_equal else 'unknown' if config_a is None or config_b is None else 'different',expected_route=rule or {'status':'not_registered'})
@@ -104,6 +104,13 @@ def _layer_sample(summaries,row,result,ordinal):
     if 'generation_step' in row:
         summary.update(generation_step=row['generation_step'],phase=row['phase'])
     summary['samples']+=1;summary['digest_equal'] &= result['digest_equal']
+    weights=summary.setdefault('weighting',dict(valid_samples=0,valid_elements=0,sample_mae_sum=0.,sample_mse_sum=0.,element_abs_sum=0.,element_square_sum=0.))
+    n=result.get('valid_elements',0)
+    if n and result.get('mae') is not None and result.get('mse') is not None:
+        weights['valid_samples']+=1;weights['valid_elements']+=n
+        weights['sample_mae_sum']+=result['mae'];weights['sample_mse_sum']+=result['mse']
+        weights['element_abs_sum']+=result['mae']*n;weights['element_square_sum']+=result['mse']*n
+
     for metric in ('mse','mae','max_abs','relative_mean','relative_max','relative_l2','cosine_similarity'):
         value=result.get(metric)
         if value is None:continue
@@ -219,10 +226,10 @@ def analyze(ref,cmp,declare=None):
             binding=right.get('ext',{}).get('generation',{})
             if binding.get('generation_step')!=step or binding.get('phase')!=left['ext']['generation']['phase']:
                 raise ValueError('paired generation tensor step binding mismatch: '+key)
-        result=compare(ref.view.run,left,cmp.view.run,right)
+        result=compare(ref.view.run,left,cmp.view.run,right,work=ref.directory,limits=ref.limits)
         if result['status']!='ok':mismatch('misaligned_shape',key);continue
         scope,iteration,boundary,sample=key.split('#',3)
-        row=dict(call_key=key,scope=scope,boundary=boundary,sample=sample,sample_pass=int(iteration),**result)
+        row=dict(call_key=key,scope=scope,boundary=boundary,sample=sample,sample_pass=int(iteration),shape=left['shape'],dtype=left['dtype'],**result)
         if generation_limits is not None:
             row.update(generation_step=step,phase=left['ext']['generation']['phase'])
         ref.row('oracle.samples',key,row)
@@ -250,6 +257,12 @@ def analyze(ref,cmp,declare=None):
         if right.get('call_key') is None:mismatch('unscoped',None)
         elif find(ref,right['call_key']) is None:mismatch('only_cmp',right['call_key'])
     for group,summary in summaries.items():
+        weights=summary['weighting'];ns=weights['valid_samples'];ne=weights['valid_elements']
+        weights.update(sample_equal_mae=weights['sample_mae_sum']/ns if ns else None,
+            sample_equal_mse=weights['sample_mse_sum']/ns if ns else None,
+            element_equal_mae=weights['element_abs_sum']/ne if ne else None,
+            element_equal_mse=weights['element_square_sum']/ne if ne else None,
+            scope='paired finite elements; sampled and full levels remain explicitly labelled')
         cosines=summary.pop('cosines');summary['sample_cosine_mean']=sum(cosines)/len(cosines) if cosines else None
         summary['sample_cosine_min']=min(cosines) if cosines else None;summary['levels']=sorted(summary['levels'])
         if 'ulp_histogram' in summary:summary['differing_fraction']=summary['differing_elements']/summary['valid_elements'] if summary['valid_elements'] else None

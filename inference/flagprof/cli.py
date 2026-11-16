@@ -10,6 +10,17 @@ import sys
 def main(argv=None):
     parser=argparse.ArgumentParser(prog='flagprof')
     verbs=parser.add_subparsers(dest='verb',required=True)
+    from .graph.command import add_parser as add_export_parser
+    add_export_parser(verbs)
+    watch=verbs.add_parser('watch',help='independent node monitoring')
+    actions=watch.add_subparsers(dest='watch_action',required=True)
+    start=actions.add_parser('start'); start.add_argument('--root',required=True)
+    start.add_argument('--vendor',required=True,choices=('ascend','nvidia'))
+    start.add_argument('--devices',default='all'); start.add_argument('--config')
+    status=actions.add_parser('status'); status.add_argument('--root',required=True)
+    replay_watch=actions.add_parser('replay'); replay_watch.add_argument('session'); replay_watch.add_argument('--out',required=True)
+    release=actions.add_parser('release'); release.add_argument('--root',required=True)
+    release.add_argument('--reference',required=True); release.add_argument('--delivery',required=True)
     delivery=verbs.add_parser('delivery',help='publish portable evidence archives and restore evidence trees')
     delivery.add_argument('action',choices=['publish','verify','restore'],help='publish source trees to a new delivery directory, verify a delivery, or restore it to a new ext4 directory')
     delivery.add_argument('paths',nargs='+',help='publish: one or more source trees; verify/restore: exactly one delivery directory')
@@ -23,7 +34,7 @@ def main(argv=None):
     record_parser=verbs.add_parser('record',help='capture one complete official Python session')
     record_parser.add_argument('--store',required=True,help='output root; final mode keeps the Store under <store>/runs')
     record_parser.add_argument('--vendor',required=True,help='vendor adapter, e.g. ascend or nvidia')
-    record_parser.add_argument('--preset',choices=['perf','modules','perf-lite','coverage','accuracy'],default='perf',help='collection preset (default perf); perf/modules use the official profiler in final mode')
+    record_parser.add_argument('--preset',choices=['perf','modules','perf-lite','coverage','accuracy','monitor'],default='perf',help='collection preset (default perf); perf/modules use the official profiler in final mode')
     record_parser.add_argument('--flaggems', choices=['off','on'],help='FlagGems component (preset default off)')
     record_parser.add_argument('--flaggems-include',help='JSON array of FlagGems function names to register')
     record_parser.add_argument('--flagtree',choices=['off','on'],help='compiler selection; omitted preserves the current environment')
@@ -61,7 +72,7 @@ def main(argv=None):
     launch.add_argument('--capture-only',action='store_true',help='seal per-rank profiler captures for later ext4 import')
     launch.add_argument('--capture-filesystem',choices=['ext4','overlay'],default='ext4',help='overlay requires NVIDIA capture-only')
     launch.add_argument('--store',required=True,help='group root: one rank-N Store per rank plus group.json for report')
-    launch.add_argument('--preset',choices=['none','accuracy','perf','modules','perf-lite','coverage'],default='perf',help='per-rank preset (default perf); none runs the target without collection')
+    launch.add_argument('--preset',choices=['none','accuracy','perf','modules','perf-lite','coverage','monitor'],default='perf',help='per-rank preset (default perf); none runs the target without collection')
     launch.add_argument('--timeout',type=float,default=1800,help='whole launch deadline in seconds')
     launch.add_argument('--source-max-bytes',type=int,default=1<<30,help='sealed source limit per rank in bytes (default 1 GiB)')
     launch.add_argument('--tensor-blob',choices=['all','none'],default='all',help='accuracy: save full tensor blobs (default all)')
@@ -70,6 +81,8 @@ def main(argv=None):
     launch.add_argument('--tensor-ops-in',help='accuracy: capture operators within this module; batch 1 required')
     launch.add_argument('--profile-memory',action='store_true',help='collect official allocator memory records; requires perf or modules')
     launch.add_argument('command',nargs=argparse.REMAINDER,help='target Python command after --')
+    for target_parser in (record_parser,launch):
+        target_parser.add_argument('--monitor-root',help='independent watch root; required for agent topology')
     offline=verbs.add_parser('import',help='import a sealed capture into a new run using bounded Plan B')
     offline.add_argument('capture',help='sealed capture directory');offline.add_argument('--store',required=True,help='ext4 runs root that receives the new run');offline.add_argument('--work',help='durable import checkpoints outside the Store');offline.add_argument('--scratch',help='ext4 directory for rebuildable indexes (default FLAGPROF_SCRATCH or /var/tmp/flagprof-offline-UID)')
     offline.add_argument('--run-id',help='name of the new run (default UTC time, host and random suffix)')
@@ -85,13 +98,18 @@ def main(argv=None):
     analyse=verbs.add_parser('analyse',help='retry official analysis of already sealed final raw capture')
     analyse.add_argument('capture',help='sealed final raw capture directory')
     report=verbs.add_parser('report',help='generate bounded offline analysis and a self-contained HTML report')
-    report.add_argument('run',help='one of: a Store run directory (single-run report); a group manifest file such as <launch store>/group.json (one report per rank); or the word oracle (compare --ref with --cmp)');report.add_argument('--out',help='new output directory outside the inputs (default <run>-report, <group dir>-report or <ref>-oracle beside the input)');report.add_argument('--work',help='parent of temporary analysis files, outside the input Stores (default system temp)')
+    report.add_argument('run',help='one of: a Store run directory (single-run report); a group manifest file such as <launch store>/group.json (one report per rank); or oracle, baseline, compare, render');report.add_argument('--out',help='new output directory outside the inputs (default <run>-report, <group dir>-report or <ref>-oracle beside the input)');report.add_argument('--work',help='parent of temporary analysis files, outside the input Stores (default system temp)')
+    report.add_argument('--last',default='1h',help='monitor session window (default 1h)')
     report.add_argument('--reports',nargs='+',help='compare: generated report directories; keep incompatible values with not_comparable reasons')
-    report.add_argument('--ref',help='oracle: reference Store run or TP2 group.json');report.add_argument('--cmp',help='oracle: compared Store run or TP2 group.json');report.add_argument('--declare',help='oracle: JSON file whose differences list names identity fields allowed to differ');report.add_argument('--perf-run',help='oracle: alias of --perf-cmp-run')
+    report.add_argument('--ref',help='oracle: reference Store run or TP2 group.json');report.add_argument('--cmp',help='oracle: compared Store run or TP2 group.json');report.add_argument('--declare',help='oracle/compare: JSON differences list of explicitly varied identity fields');report.add_argument('--perf-run',help='oracle: alias of --perf-cmp-run')
     report.add_argument('--perf-ref-run',help='oracle: performance run linked to the reference side by exact signature');report.add_argument('--perf-cmp-run',help='oracle: performance run linked to the compared side by exact signature')
     report.add_argument('--replay-ref-run',help='oracle: run created by replay run --side ref; requires --replay-cmp-run');report.add_argument('--replay-cmp-run',help='oracle: run created by replay run --side cmp; requires --replay-ref-run')
     report.add_argument('--op-kinds',help='operator categories generated in the run torch environment')
     report.add_argument('--limits',help='JSON file of analysis resource limits')
+    report.add_argument('--source',help='render: existing report directory; no Store or device access')
+    report.add_argument('--refresh-view',action='store_true',help='render: rebuild conclusions from saved machine results and exports')
+    report.add_argument('--runner-results',nargs='+',help='saved runner.json files for the same workload condition')
+    report.add_argument('--baseline',help='oracle: optional third accuracy Store or group.json')
     replay=verbs.add_parser('replay',help='prepare portable inputs or execute a pure operator')
     replay_verbs=replay.add_subparsers(dest='replay_verb',required=True)
     prepare=replay_verbs.add_parser('prepare',help='build a portable input package from two accuracy runs')
@@ -100,13 +118,39 @@ def main(argv=None):
     execute=replay_verbs.add_parser('run',help='execute one side of an input package into a new replay Store run')
     execute.add_argument('package',help='input package from replay prepare');execute.add_argument('--side',choices=['ref','cmp'],required=True,help='side whose registered conditions are used')
     execute.add_argument('--device',required=True,help='torch device of the same family as the side, e.g. cuda:0 or npu:0');execute.add_argument('--store',required=True,help='Store root that receives the replay run')
+    for entry in (record_parser, launch):
+        entry.add_argument('--diagnose', choices=['on','off'], help='business fault diagnosis; default off')
+        entry.add_argument('--monitor', choices=['on','off'], help='node resource monitor; default off')
+        entry.add_argument('--monitor-topology', choices=['host','local','agent'], help='default ascend: host; nvidia: local')
+        entry.add_argument('--monitor-interval-ms', type=int, help='fast sampling interval, 100..5000 ms; default 1000')
     args=parser.parse_args(argv)
     from pathlib import Path
+    if args.verb=='export':
+        try:
+            from .graph.command import run
+            return run(args)
+        except (OSError, ValueError) as error:
+            print('flagprof export: '+str(error),file=sys.stderr)
+            return 2
+    if args.verb=='watch':
+        try:
+            from .monitor.session import configuration,load
+            if args.watch_action=='start':
+                from .monitor.node import start
+                return start(args.root,args.vendor,args.devices,configuration(args.config))
+            if args.watch_action=='status':
+                from .monitor.session import snapshot
+                print(json.dumps(snapshot(args.root),ensure_ascii=False)); return 0
+            from .monitor.commands import replay, release
+            result = replay(args.session,args.out) if args.watch_action=='replay' else release(args.root,args.reference,args.delivery)
+            print(json.dumps(result,ensure_ascii=False)); return 0
+        except (OSError,ValueError) as error:
+            print('flagprof watch: '+str(error),file=sys.stderr); return 2
     if args.verb=='launch':
         try:
             from .launch import launch
             command=args.command[1:] if args.command[:1]==['--'] else args.command
-            config={name:getattr(args,name) for name in ('flaggems','flaggems_include','flagtree','vendor_compiler') if getattr(args,name) is not None}
+            config={name:getattr(args,name) for name in ('flaggems','flaggems_include','flagtree','vendor_compiler','monitor','monitor_topology','monitor_root','monitor_interval_ms','diagnose') if getattr(args,name) is not None}
             if args.preset=='accuracy':config.update(tensor_blob=args.tensor_blob,tensor_blob_bytes=args.tensor_blob_bytes)
             if args.tensor_boundaries is not None:
                 value=args.tensor_boundaries
@@ -131,7 +175,13 @@ def main(argv=None):
             options={} if args.max_bytes is None else dict(max_bytes=args.max_bytes)
             if args.action=='publish':
                 if not args.out:raise ValueError('publish requires --out')
-                result=publish_tree(args.paths,args.out,**options)
+                if len(args.paths)==1 and ((Path(args.paths[0])/'monitor-ref.json').exists() or
+                        Path(args.paths[0]).name=='monitor-ref.json' or
+                        (Path(args.paths[0]).parent.name=='references' and Path(args.paths[0]).suffix=='.json')):
+                    from .monitor.commands import publish
+                    result=publish(args.paths[0],args.out,**options)
+                else:
+                    result=publish_tree(args.paths,args.out,**options)
             else:
                 if len(args.paths)!=1:raise ValueError('one delivery directory required')
                 if args.action=='verify':result=verify(args.paths[0])
@@ -150,27 +200,54 @@ def main(argv=None):
         except (ValueError,OSError,KeyError,TypeError,RuntimeError) as error:
             print('flagprof replay: '+str(error),file=sys.stderr);return 2
     if args.verb=='report':
-        if args.run=='compare':
-            if not args.reports or len(args.reports)<2 or not args.out:parser.error('report compare requires --reports (at least two) and --out')
-            from .report import compare_device_reports
-            compare_device_reports(args.reports,args.out)
-            print(json.dumps(dict(output=args.out,status='complete')))
-            return 0
+        from .analyzers.workspace import Limits
+        if args.baseline and args.run!='oracle':parser.error('--baseline is only valid for report oracle')
+        if args.source and args.run!='render':parser.error('--source is only valid for report render')
+        if args.refresh_view and args.run!='render':parser.error('--refresh-view is only valid for report render')
+        if args.runner_results and args.run in ('oracle','compare'):parser.error('--runner-results belongs to a task, baseline or render report')
+        if args.run=='render':
+            try:
+                if not args.source or not args.out:raise ValueError('render requires --source and --out')
+                from .report.product import redraw
+                from .analyzers.workspace import Limits
+                result=redraw(args.source,args.out,work=args.work,runner_results=args.runner_results,refresh_view=args.refresh_view,
+                    limits=Limits(**json.loads(Path(args.limits).read_text())) if args.limits else None)
+                print(json.dumps(result,ensure_ascii=False));return 0
+            except (ValueError,OSError,KeyError,TypeError) as error:
+                print('flagprof report render: '+str(error),file=sys.stderr);return 2
+        if args.run in ('compare','baseline'):
+            try:
+                if args.run=='baseline':
+                    if not args.runner_results or not args.out:raise ValueError('report baseline requires --runner-results and --out')
+                    from .report.performance import generate as baseline_report
+                    baseline_report(args.runner_results,args.out,work=args.work,limits=Limits(**json.loads(Path(args.limits).read_text())) if args.limits else None)
+                else:
+                    if not args.reports or len(args.reports)<2 or not args.out:raise ValueError('report compare requires --reports (at least two) and --out')
+                    from .report import compare_device_reports
+                    compare_device_reports(args.reports,args.out,declare=json.loads(Path(args.declare).read_text()) if args.declare else None,work=args.work,limits=Limits(**json.loads(Path(args.limits).read_text())) if args.limits else None)
+                print(json.dumps(dict(output=args.out,status='complete')));return 0
+            except (ValueError,OSError,KeyError,TypeError) as error:
+                print('flagprof report: '+str(error),file=sys.stderr);return 2
         try:
             from .report import generate, generate_oracle
             if args.run=='oracle':
                 if not args.ref or not args.cmp:raise ValueError('oracle requires --ref and --cmp')
-                result=generate_oracle(args.ref,args.cmp,args.out,work=args.work,perf_run=args.perf_run,
+                result=generate_oracle(args.ref,args.cmp,args.out,work=args.work,baseline=args.baseline,perf_run=args.perf_run,
                     perf_ref_run=args.perf_ref_run,perf_cmp_run=args.perf_cmp_run,
                     replay_ref_run=args.replay_ref_run,replay_cmp_run=args.replay_cmp_run,
                     declare=json.loads(Path(args.declare).read_text()) if args.declare else None,
                     limits=json.loads(Path(args.limits).read_text()) if args.limits else None)
                 print(json.dumps(result,ensure_ascii=False));return 0
+            if (Path(args.run)/'session.json').exists() and not (Path(args.run)/'manifest.json').exists():
+                if args.runner_results:raise ValueError('runner results require a task report or report baseline')
+                from .monitor.report import generate as monitor_report
+                print(json.dumps(monitor_report(args.run,args.out,last=args.last),ensure_ascii=False));return 0
             if Path(args.run).is_file():
                 from .report.group import generate_group
-                result=generate_group(args.run,args.out,work=args.work)
+                result=generate_group(args.run,args.out,work=args.work,runner_results=args.runner_results,
+                    limits=Limits(**json.loads(Path(args.limits).read_text())) if args.limits else None)
                 print(json.dumps(result));return 0
-            result=generate(args.run,args.out,work=args.work,
+            result=generate(args.run,args.out,work=args.work,runner_results=args.runner_results,
                             op_kinds=json.loads(Path(args.op_kinds).read_text()) if args.op_kinds else None,
                             limits=json.loads(Path(args.limits).read_text()) if args.limits else None)
             print(json.dumps(result,ensure_ascii=False));return 0
@@ -224,7 +301,7 @@ def main(argv=None):
         try:
             if (args.capture_only or args.capture_filesystem!='ext4') and (args.capture_mode!='final' or args.preset not in ('perf','modules')):
                 raise ValueError('capture-only/filesystem options require official final mode')
-            config = {name:getattr(args,name) for name in ('flaggems','flaggems_include','flagtree','vendor_compiler','layers','probes') if getattr(args,name) is not None}
+            config = {name:getattr(args,name) for name in ('flaggems','flaggems_include','flagtree','vendor_compiler','layers','probes','monitor','monitor_topology','monitor_root','monitor_interval_ms','diagnose') if getattr(args,name) is not None}
             if args.profile_memory:
                 if args.preset not in ('perf','modules'):
                     raise ValueError('--profile-memory requires an official profiler preset (perf or modules)')
@@ -242,7 +319,7 @@ def main(argv=None):
             if args.capture_mode=='final':
                 if args.active is not None or args.windows is not None or args.invalid_policy is not None or args.plugins or args.log_file:
                     raise ValueError('final mode does not accept window/plugin/log options')
-                if args.preset in ('coverage','perf-lite','accuracy'):
+                if args.preset in ('coverage','perf-lite','accuracy','monitor'):
                     return record(command,store=args.store,work=args.work,scratch=args.scratch,vendor=args.vendor,preset=args.preset,config=config,timeout=args.timeout)
                 from .offline.capture import record_final
                 return record_final(command,store=args.store,work=args.work,scratch=args.scratch,vendor=args.vendor,preset=args.preset,

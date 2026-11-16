@@ -71,11 +71,20 @@ class _HashedReader:
         return data
 
 
-def publish_tree(sources, destination, *, max_bytes=200 << 30):
+def publish_tree(sources, destination, *, max_bytes=200 << 30, file_overrides=None):
     destination = Path(destination).absolute()
     if destination.exists():
         raise ValueError('delivery destination already exists')
     roots, rows, links = _inventory(sources, max_bytes)
+    overrides={str(Path(k).resolve()):Path(v).resolve(strict=True) for k,v in (file_overrides or {}).items()}
+    unknown=set(overrides)-{row['source'] for row in rows}
+    if unknown: raise ValueError('delivery override outside selected regular files')
+    for row in rows:
+        if row['source'] in overrides:
+            original=row['source']; replacement=overrides[original]
+            row.update(source=str(replacement),original_source=original,bytes=replacement.stat().st_size,
+                       identity=identity(replacement))
+    if sum(row['bytes'] for row in rows)>max_bytes: raise ValueError('delivery byte budget')
     if any(p == destination or p in destination.parents for p in roots):
         raise ValueError('delivery destination inside source')
     destination.parent.mkdir(parents=True, exist_ok=True)

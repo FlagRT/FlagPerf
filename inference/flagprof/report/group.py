@@ -8,7 +8,7 @@ import tempfile
 import re
 
 from flagprof.store import StoreView
-from flagprof.analyzers.workspace import Workspace
+from flagprof.analyzers.workspace import Workspace, Limits
 from flagprof.analyzers.generation import trajectories
 from . import generate
 
@@ -63,7 +63,8 @@ def check_ranks(states, group):
             raise ValueError('collective group identity mismatch')
 
 
-def generate_group(manifest, out=None, *, work=None):
+def generate_group(manifest, out=None, *, work=None, runner_results=None, limits=None):
+    limits=limits if isinstance(limits,Limits) else Limits(**(limits or {}))
     manifest = Path(manifest).resolve()
     group = validate_manifest(manifest)
     out = Path(out).resolve() if out else manifest.parent.with_name(manifest.parent.name+'-report')
@@ -81,16 +82,26 @@ def generate_group(manifest, out=None, *, work=None):
             issues.append('rank '+str(rank)+' has no Store')
             continue
         run = manifest.parent/row['run']
-        reports.append(dict(rank=rank,**generate(run, out/('rank-'+str(rank)), work=work)))
+        if not (run/'manifest.json').exists():
+            issues.append('rank '+str(rank)+' Store unavailable')
+            continue
+        try:
+            reports.append(dict(rank=rank,**generate(run, out/('rank-'+str(rank)), work=work,limits=limits)))
+        except (OSError,ValueError,KeyError) as error:
+            issues.append('rank '+str(rank)+' report: '+str(error))
+            continue
         with StoreView(run) as view, tempfile.TemporaryDirectory(dir=work) as directory:
-            workspace = Workspace(view, directory)
+            workspace = Workspace(view, directory, limits)
             try:
                 workspace.ingest()
                 from flagprof.analyzers.oracle import identity
                 observed = identity(workspace)
                 observed.pop('device', None)
                 observed.pop('rank', None)
-                if observed.get('comm_backend')!=group['backend'] or observed.get('parallelism',{}).get('world_size')!=2:
+                backend=observed.get('comm_backend');world=observed.get('parallelism',{}).get('world_size')
+                if backend is None or world is None:
+                    issues.append('rank '+str(rank)+' workload identity unavailable; model comparison unavailable')
+                if backend not in (None,group['backend']) or world not in (None,2):
                     raise ValueError('actual TP backend or world size differs from group manifest')
                 calls = {}
                 sequences = {}
@@ -123,6 +134,9 @@ def generate_group(manifest, out=None, *, work=None):
                         raise ValueError('actual collective backend differs from group manifest')
                 states.append(dict(rank=rank, identity=observed, trajectories=trajectories(workspace),
                                    calls=calls, tensors=tensors, forward_counts=forward_counts))
+            except (OSError,ValueError,KeyError) as error:
+                if group.get('status')=='complete':raise
+                issues.append('rank '+str(rank)+' incomplete execution evidence: '+str(error))
             finally:
                 workspace.close()
     if len(states) == 2:
@@ -179,7 +193,7 @@ def generate_group(manifest, out=None, *, work=None):
             issues.append('rank '+str(state['rank'])+' model collective count mismatch')
     result = dict(schema='flagprof-group-report/1', group_id=group['group_id'], backend=group['backend'],
                   execution_status=group['status'], status='partial' if issues else 'complete', issues=issues,
-                  rank_counts=counts, ranks=reports,
+                  rank_counts=counts, ranks=reports, rank_execution=group['ranks'],
                   device_link_status='linked' if aligned and all('cross_rank_min_observed_ns' in r for r in aligned) else 'partial' if aligned else 'explicit_link_unavailable', device_duration_ns=None,
                   device_link_scope='explicitly_linked_collectives; control calls retain unavailable state in rank reports',
                   unlinked_logical_calls={s['rank']:len(s['calls'])-len(device_calls.get(s['rank'],{})) for s in states},
@@ -190,24 +204,12 @@ def generate_group(manifest, out=None, *, work=None):
     (out/'exports').mkdir(exist_ok=True)
     with (out/'exports/communication-aligned.jsonl').open('w') as stream:
         for row in aligned:stream.write(json.dumps(row,ensure_ascii=False)+'\n')
+    if runner_results:
+        from .performance import summarize
+        result['runner_summary']=summarize(runner_results,states[0]['identity'] if states else None,limits=limits)
+    from flagprof.monitor.diagnostic_report import panel, html as diagnostic_html
+    result['diagnosis']=panel(manifest.parent)
     (out/'result.json').write_text(json.dumps(result, indent=2)+'\n')
-    from . import html_rows
-    with (out/'report.html').open('w') as page:
-        page.write('<!doctype html><meta charset="utf-8"><title>TP2 通信对照</title>'
-            '<style>body{font:16px sans-serif;max-width:1400px;margin:32px auto;padding:0 20px}table{border-collapse:collapse;display:block;overflow:auto}td,th{border:1px solid #ccd;padding:7px}pre{white-space:pre-wrap}h2{margin-top:32px}</style>'
-            '<h1>TP2 通信与生成</h1><p>状态：'+escape(result['status'])+'；设备关联：'+escape(result['device_link_status'])+
-            '。按同一 (group, group_seq) 核对两 rank；模型通信与控制组分列。</p><p>'+escape(result['device_timing_note'])+
-            '。时间单位 ns；主机调用耗时与设备占用分别解释。</p>')
-        page.write('<h2>逻辑通信计数</h2>');html_rows(page,'group.counts',counts,2)
-        page.write('<h2>完整请求窗口</h2><p>各 rank 按自己的来源时钟映射；误差界与映射状态分别记录。</p>')
-        html_rows(page,'group.request_windows',[
-            {k:r.get(k) for k in ('rank','request_id','coverage_status','start_ns','end_ns','window_ns','all_activity_union_ns','blank_ns')}
-            for r in request_rows],100)
-        page.write('<p>未关联逻辑调用（含控制组）：'+escape(json.dumps(result['unlinked_logical_calls']))+'</p>')
-        page.write('<h2>同调用的设备占用</h2><p>显示前 100 条；全部 '+str(len(aligned))+
-            ' 条见 <a href="exports/communication-aligned.jsonl">机器导出</a>。</p>')
-        html_rows(page,'communication.aligned',aligned,100)
-        page.write('<details><summary>身份、时钟与诊断范围</summary><pre>'+escape(json.dumps(
-            {k:result[k] for k in ('comparison','clocks','issues','device_link_scope')},ensure_ascii=False,indent=2))+'</pre></details>')
-        page.write(''.join('<p><a href="rank-'+str(row['rank'])+'/report.html">rank '+str(row['rank'])+' 诊断</a></p>' for row in reports))
+    from .product import write_report
+    write_report(out,result,work=work)
     return dict(output=str(out), status=result['status'], issues=issues)
