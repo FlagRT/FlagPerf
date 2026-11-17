@@ -90,6 +90,8 @@ def save(path, model, optimizer, *, next_step, protocol, device, scaler=None):
                  accelerator_rng=None, scaler=scaler.state_dict() if scaler else None)
     if str(device).startswith('cuda'):
         state['accelerator_rng'] = torch.cuda.get_rng_state(device)
+    elif str(device).startswith('npu'):
+        state['accelerator_rng'] = torch.npu.get_rng_state(device)
     elif not str(device).startswith('cpu'):
         raise ValueError('checkpoint RNG unsupported for device: '+str(device))
     temporary=path.with_name(path.name+'.tmp')
@@ -120,6 +122,9 @@ def restore(path, model, optimizer, *, protocol, device, scaler=None):
     if str(device).startswith('cuda'):
         if state['accelerator_rng'] is None: raise ValueError('checkpoint missing accelerator RNG')
         torch.cuda.set_rng_state(state['accelerator_rng'],device)
+    elif str(device).startswith('npu'):
+        if state['accelerator_rng'] is None: raise ValueError('checkpoint missing accelerator RNG')
+        torch.npu.set_rng_state(state['accelerator_rng'],device)
     elif state['accelerator_rng'] is not None:
         raise ValueError('checkpoint accelerator differs')
     return state['next_step']

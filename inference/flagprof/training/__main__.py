@@ -36,7 +36,7 @@ def parser():
     p.add_argument('--resume',help='Trusted local pickle checkpoint; rank suffix added for DDP')
     p.add_argument('--stop-after',type=int,help='Stop after this absolute optimizer step, at a checkpoint boundary')
     p.add_argument('--ddp',action='store_true',help='Use torchrun-provided ranks and DistributedDataParallel')
-    p.add_argument('--backend',choices=('gloo','nccl'),default=None)
+    p.add_argument('--backend',choices=('gloo','nccl','hccl'),default=None)
     return p
 
 
