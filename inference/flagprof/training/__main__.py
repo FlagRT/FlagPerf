@@ -244,6 +244,7 @@ def execute(args):
     if device=='cuda': device='cuda:0'
     if args.ddp and device.startswith('cuda'): device='cuda:'+str(local_rank)
     if device.startswith('cuda'): torch.cuda.set_device(device)
+    elif device.startswith('npu'): torch.npu.set_device(device)
     torch.manual_seed(args.seed);random.seed(args.seed)
     owned=False
     observe=None
@@ -251,7 +252,7 @@ def execute(args):
     try:
         if args.ddp:
             from datetime import timedelta
-            dist.init_process_group(args.backend or ('nccl' if device.startswith('cuda') else 'gloo'),timeout=timedelta(seconds=120))
+            dist.init_process_group(args.backend or ('nccl' if device.startswith('cuda') else 'hccl' if device.startswith('npu') else 'gloo'),timeout=timedelta(seconds=120))
             owned=True
             observe=observation_start(args)
             if observe:

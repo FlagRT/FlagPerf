@@ -19,6 +19,7 @@ def synchronize(device):
     import torch
     dev=torch.device(device)
     if dev.type=='cuda': torch.cuda.synchronize(dev)
+    elif dev.type=='npu': torch.npu.synchronize(dev)
     elif dev.type!='cpu': raise ValueError('unsupported synchronization device: '+str(dev))
 
 
