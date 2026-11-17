@@ -241,8 +241,8 @@ def execute(args):
     if world!=1 and not args.ddp: raise ValueError('torchrun requires explicit --ddp')
     if args.ddp and world<2: raise ValueError('DDP requires at least two torchrun workers')
     device=args.device
-    if device=='cuda': device='cuda:0'
-    if args.ddp and device.startswith('cuda'): device='cuda:'+str(local_rank)
+    if device in ('cuda','npu'): device=device+':0'
+    if args.ddp and device.startswith(('cuda','npu')): device=device.split(':')[0]+':'+str(local_rank)
     if device.startswith('cuda'): torch.cuda.set_device(device)
     elif device.startswith('npu'): torch.npu.set_device(device)
     torch.manual_seed(args.seed);random.seed(args.seed)
