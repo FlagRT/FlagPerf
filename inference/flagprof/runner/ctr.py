@@ -644,8 +644,18 @@ class Dien(torch.nn.Module):
             packed = pack_padded_sequence(history[has_hist], seq_lens[has_hist].clamp(min=1),
                                           batch_first=True, enforce_sorted=False)
             packed_out, _ = self.interest_extractor(packed)
-            unpacked, _ = pad_packed_sequence(packed_out, batch_first=True,
-                                              total_length=history.size(1))
+            # Pad back to the full history width manually: passing
+            # total_length=history.size(1) to pad_packed_sequence raises
+            # "shape invalid for input" whenever the longest valid sequence
+            # in the packed subset is shorter than the history width (a
+            # data-dependent latent bug that only stayed hidden on batches
+            # that happened to contain a full-length sequence). Augru's mask
+            # gives padded positions exactly zero attention, so zeros here
+            # are numerically inert.
+            unpacked, _ = pad_packed_sequence(packed_out, batch_first=True)
+            if unpacked.size(1) < history.size(1):
+                unpacked = torch.nn.functional.pad(
+                    unpacked, (0, 0, 0, history.size(1) - unpacked.size(1)))
             outs[has_hist] = unpacked.to(outs.dtype)
         _, h = self.interest_evolving(outs, target, mask)
         mlp_in = torch.cat([h, target, profile], dim=1)

@@ -84,3 +84,37 @@ torchrun --standalone --nproc-per-node=4 training/run.py --task rerank ... --ddp
 
 torchrun 以脚本路径启动时各 worker 从头执行 run.py，sys.path 注入同样生效。
 历史上以 `-m flagprof.training` 跑出的证据命令保持原样（记录当时真实形态）。
+
+## 9. Ascend（910B/910C）发车约定
+
+已在 Atlas 800T A3（8 卡 × 每卡 2 chip = 16 个 device）实机验证（npu1-11 /
+npu1-27，CANN 9.x，flagrt `ascend-operator-runtime` torch2.10 镜像）。
+
+- **容器形态**（照 `base/configs/ascend910_cann9_local.yaml`）：`--privileged` +
+  `--network=host`（部分宿主无 docker0，bridge 不可用）+ 挂载
+  `/usr/local/dcmi`、`/usr/local/Ascend/driver`、`/usr/local/Ascend/firmware`、
+  `/usr/local/Ascend/version.info`、`/usr/local/bin/npu-smi`、
+  `/etc/ascend_install.info` + 每卡 `--device=/dev/davinciN` +
+  `--device=/dev/davinci_manager --device=/dev/devmm_svm --device=/dev/hisi_hdc`
+- **CANN 版本对齐**：镜像把工具链放在 `/usr/local/Ascend/cann-9.0.0`。宿主
+  CANN 可能是 8.5/9.1/9.2——把宿主对应版本目录**挂到该路径别名**即可（9.x 线
+  向上兼容实测通过：cann-9.1.0 → /usr/local/Ascend/cann-9.0.0）。镜像内
+  torch_npu 依赖宿主 driver/HAL 库，driver 挂载不可省。
+- **设备计数**：npu-smi 显示 NPU 行数是卡数（每卡 2 chip）；torch 视角
+  `torch.npu.device_count() = 卡数×2`。`--device npu:N` 的 N 是 chip 序号
+  （npu:0/1 同卡两 chip）。
+- **DDP**：`--ddp --backend hccl --device npu`（hccl 已入 choices；npu+nccl 会
+  给出明确报错）。每 rank 自动绑定 `npu:local_rank`（早前版本会让所有 rank 绑
+  npu:0 导致 HCCL ranktable 冲突——已修复）。
+- **HCCL 端口**：同宿主有其他 HCCL 进程（租户容器）时可能报
+  `Communication_Error_Bind_IP_Port(EI0020)`；可先试
+  `-e HCCL_IF_BASE_PORT=<高位端口>`、`-e HCCL_SOCKET_IFNAME=<网卡>`，仍失败则
+  等租户释放（环境级，非框架可解）。
+- **观察态**：只设 `FLAGPROF_TRAIN_OBSERVE=<store>` 即可——vendor 按设备自动
+  识别（npu → 内置 ascend session，torch_npu.profiler），无需手工指定。
+- **checkpoint/resume**：npu 设备的 RNG 状态已支持（save/restore）。
+- **位精确性注意**：910C 平台同一命令逐跑 final sha 可能不同（控制实验证实），
+  sha 级"零漂移"判据在 Ascend 不适用；观察不扰协议需以行为级证据论证。
+- **已知架构问题**：CTR `dien` 曾在"批内最长序列 < history 宽度"时触发
+  `pad_packed_sequence` 形状错误（数据依赖潜在 bug，各平台通病）——已修复并
+  加回归测试。

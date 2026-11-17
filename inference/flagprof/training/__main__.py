@@ -174,7 +174,12 @@ def observation_start(args):
     if not root: return None
     from flagprof.runtime import attach
     from flagprof.store import create_run
-    vendor=os.environ.get('FLAGPROF_TRAIN_OBSERVE_VENDOR','thead')
+    # Vendor auto-detection: npu devices always run the built-in ascend
+    # session; everything else keeps the historical thead default. The env
+    # variable still overrides explicitly.
+    device_hint=str(getattr(args,'device',''))
+    default_vendor='ascend' if device_hint.startswith('npu') else 'thead'
+    vendor=os.environ.get('FLAGPROF_TRAIN_OBSERVE_VENDOR',default_vendor)
     world=int(os.environ.get('WORLD_SIZE','1'));rank=int(os.environ.get('RANK','0'))
     os.environ.setdefault('XPU_ENABLE_PROFILER_TRACING', '1')
     identity_path=os.environ.get('FLAGPROF_THEAD_IDENTITY')
@@ -244,6 +249,10 @@ def execute(args):
     if world!=1 and not args.ddp: raise ValueError('torchrun requires explicit --ddp')
     if args.ddp and world<2: raise ValueError('DDP requires at least two torchrun workers')
     device=args.device
+    if args.backend=='hccl' and not device.startswith('npu'):
+        raise ValueError('--backend hccl requires a npu device (got %r); use nccl for cuda accelerators' % device)
+    if args.backend=='nccl' and device.startswith('npu'):
+        raise ValueError('npu devices use the hccl backend; drop --backend nccl or pass --backend hccl')
     if device in ('cuda','npu'): device=device+':0'
     if args.ddp and device.startswith(('cuda','npu')): device=device.split(':')[0]+':'+str(local_rank)
     if device.startswith('cuda'): torch.cuda.set_device(device)
@@ -276,7 +285,7 @@ def execute(args):
                       dtype='float32 parameters; optional explicit AMP',backend=dist.get_backend() if args.ddp else None)
         if observe:
             protocol['observation']=dict(diagnostic='flagprof-train-observe/1',
-                                         vendor=os.environ.get('FLAGPROF_TRAIN_OBSERVE_VENDOR','thead'),
+                                         vendor=observe['handle'].state.get('vendor'),
                                          preset='perf',attachment=observe['handle'].id)
         if args.task=='classification':
             if args.model or args.inputs: raise ValueError('classification demo does not accept model or inputs')
