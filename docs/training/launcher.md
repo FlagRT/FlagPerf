@@ -59,3 +59,13 @@
 - git bundle 增量传输用 ref 名（裸 SHA 拒建）；目标分支已检出时 fetch 走
   FETCH_HEAD + `merge --ff-only`。
 - push 前 `ls-remote` 核对目标 ref；新工作只推同名新分支。
+
+## 7. 多租户宿主共存（共享机器）
+
+- `torchrun --standalone` 的 rendezvous 端口可能与同宿主其他训练容器冲突：
+  `DistStoreError: wait timeout ... keys: /default_pg/.../flagcx_dev` 优先怀疑
+  端口/通道撞车，而不是设备问题。错开方式：`--standalone --master-port=<自由端口>`。
+- 同宿主租户进程占用单卡（xpu-smi 可见）不必然阻塞其他卡的训练——先按卡号核对
+  挂载清单，再判断是否真的冲突。
+- 附带产物：多卡长跑的稳态步时与 samples/s 从 steps[].synchronized_step_ns 直取
+  （剔除首步冷启动），作为吞吐基线口径。
