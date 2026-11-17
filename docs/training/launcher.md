@@ -69,3 +69,18 @@
   挂载清单，再判断是否真的冲突。
 - 附带产物：多卡长跑的稳态步时与 samples/s 从 steps[].synchronized_step_ns 直取
   （剔除首步冷启动），作为吞吐基线口径。
+
+## 8. 入口形态：统一走 training/run.py
+
+`training/run.py` 是文档化的训练 v2 入口（自动加入 inference 包路径，免设
+PYTHONPATH），与 `python -m flagprof.training` 逐位等价——同参对照 sha 一致
+（P800 cuda:0 实测 ENTRY-PARITY-MATCH，runpy/module 双形态 f2a02f66…）。
+批量发车统一用脚本路径形态，命令外观从 training/ 出发：
+
+```
+python training/run.py --task ctr --ctr-arch din --package ... --device cuda:0 ...
+torchrun --standalone --nproc-per-node=4 training/run.py --task rerank ... --ddp ...
+```
+
+torchrun 以脚本路径启动时各 worker 从头执行 run.py，sys.path 注入同样生效。
+历史上以 `-m flagprof.training` 跑出的证据命令保持原样（记录当时真实形态）。
