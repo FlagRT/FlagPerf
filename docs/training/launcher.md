@@ -116,6 +116,10 @@ torch2.10 镜像）。其他 Ascend 型号未验证，不做推断。
 - **checkpoint/resume**：npu 设备的 RNG 状态已支持（save/restore）。
 - **位精确性注意**：910C 平台同一命令逐跑 final sha 可能不同（控制实验证实），
   sha 级"零漂移"判据在 Ascend 不适用；观察不扰协议需以行为级证据论证。
-- **已知架构问题**：CTR `dien` 曾在"批内最长序列 < history 宽度"时触发
-  `pad_packed_sequence` 形状错误（数据依赖潜在 bug，各平台通病）——已修复并
-  加回归测试。
+- **已知架构限制（dien，厂商算子规格）**：CTR `dien` 的 GRU 在 910C 上映射到
+  融合算子 `DynamicGRUV2`，该算子**仅支持 FP16**（CANN 9.0/9.1/9.2 一致，
+  报错 `Unsupported_Operator ... DT_FLOAT ... is not supported`），因此 FP32
+  训练不被支持。本框架不通过静默换 dtype 规避——如实记录为厂商算子规格缺口，
+  交算子团队评估（其余 13 个 CTR 架构不受影响）。另有已修复的潜在数据依赖
+  bug：`pad_packed_sequence(total_length=...)` 在"批内最长序列 < history
+  宽度"时形状报错（各平台通病），现已改为手动 pad 并加回归测试。
