@@ -85,10 +85,11 @@ torchrun --standalone --nproc-per-node=4 training/run.py --task rerank ... --ddp
 torchrun 以脚本路径启动时各 worker 从头执行 run.py，sys.path 注入同样生效。
 历史上以 `-m flagprof.training` 跑出的证据命令保持原样（记录当时真实形态）。
 
-## 9. Ascend（910B/910C）发车约定
+## 9. Ascend 910C 发车约定
 
-已在 Atlas 800T A3（8 卡 × 每卡 2 chip = 16 个 device）实机验证（npu1-11 /
-npu1-27，CANN 9.x，flagrt `ascend-operator-runtime` torch2.10 镜像）。
+本节仅声明 **910C 实机验证**（Atlas 800T A3，8 卡 × 每卡 2 chip = 16 个
+device；npu1-11 / npu1-27，CANN 9.x，flagrt `ascend-operator-runtime`
+torch2.10 镜像）。其他 Ascend 型号未验证，不做推断。
 
 - **容器形态**（照 `base/configs/ascend910_cann9_local.yaml`）：`--privileged` +
   `--network=host`（部分宿主无 docker0，bridge 不可用）+ 挂载
