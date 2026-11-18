@@ -149,3 +149,13 @@ with obs:                      # attach 官方 profiler + 通信探针 + 进程�
   双 rank `allgather 2 + reducescatter 2`、五相 ×2、manifest complete。
 - 用法：训练脚本 `FLAGPROF_TRAIN_OBSERVE=<store> torchrun …` 即产 store，供
   comm-report（通信/计算分列、按 rank、等待-带宽、相段占比）直接消费。
+
+## 11. FlagScale 真实集成（已实跑）
+
+`inference/tools/flagscale_integration/` 提供在 FlagScale
+`flagscale/train/train_retrieval.py` 上接入观察采集的完整工件
+（patch + standalone 配置 + 数据生成脚本 + 复现命令）。PPU 双卡实跑结果：
+train_loss 0.116918 / validation 0.000107；store 1.6 GB complete；
+`comm={'model/allreduce': 2}`（评测归约；DDP 梯度 Reducer 按设计不可见）、
+`phases={data:28, forward:27, backward:27, optimizer:27, step:27}`；
+开/关采集两跑 `model.safetensors` sha256 逐字节相同。
