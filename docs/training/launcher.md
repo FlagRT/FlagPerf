@@ -123,3 +123,29 @@ torch2.10 镜像）。其他 Ascend 型号未验证，不做推断。
   交算子团队评估（其余 13 个 CTR 架构不受影响）。另有已修复的潜在数据依赖
   bug：`pad_packed_sequence(total_length=...)` 在"批内最长序列 < history
   宽度"时形状报错（各平台通病），现已改为手动 pad 并加回归测试。
+
+## 10. FlagScale 检索训练集成（适配器）
+
+`inference/tools/flagscale_adapter.py`：外部训练循环（FlagScale/Megatron/FSDP2
+风格，非 flagprof 引擎）挂运行时层的最小适配器，约 40 行、不改训练语义：
+
+```python
+from flagscale_adapter import ObservationSession
+obs = ObservationSession()     # 读 FLAGPROF_TRAIN_OBSERVE；未设置则完全 no-op
+with obs:                      # attach 官方 profiler + 通信探针 + 进程内 finalize
+    for step in range(steps):
+        with obs.phase('data', step=step):      batch = next(loader)
+        with obs.phase('forward', step=step):   loss = loss_fn(model(**batch))
+        with obs.phase('backward', step=step):  loss.backward()
+        with obs.phase('optimizer', step=step): opt.step(); opt.zero_grad()
+        with obs.phase('step', step=step):      pass
+```
+
+- vendor 自动识别（npu→ascend、PPU→thead、其余 NVIDIA→nvidia）；thead 身份
+  文件缺失时自动生成（torch 真实 UUID）。
+- **FSDP2 funcol 通路可见**（all-gather/reduce-scatter 逐调用入账）；传统 DDP 的
+  C++ Reducer 不可见（已知边界）；Megatron p2p 入口已覆盖。
+- 验证（`inference/tools/flagscale_demo.py`，thead 2 卡 FSDP2 两步）：
+  双 rank `allgather 2 + reducescatter 2`、五相 ×2、manifest complete。
+- 用法：训练脚本 `FLAGPROF_TRAIN_OBSERVE=<store> torchrun …` 即产 store，供
+  comm-report（通信/计算分列、按 rank、等待-带宽、相段占比）直接消费。
