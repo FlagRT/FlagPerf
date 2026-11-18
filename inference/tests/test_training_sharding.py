@@ -72,6 +72,15 @@ class BlockLayerDiscoveryTests(unittest.TestCase):
         model = _Outer(inner)
         self.assertEqual(len(block_layers(model)), 2)
 
+    def test_backbone_encoder_direct_layers_are_found(self):
+        """XLMRobertaModel (AutoModel, e.g. bge-m3) exposes encoder.layer on
+        the model itself rather than under a host attribute."""
+        host_model = torch.nn.Module()
+        encoder = torch.nn.Module()
+        encoder.add_module('layer', torch.nn.ModuleList(_Block() for _ in range(3)))
+        host_model.add_module('encoder', encoder)
+        self.assertEqual(len(block_layers(host_model)), 3)
+
     def test_roberta_host_attribute_layers_are_found(self):
         for host_name in ('roberta', 'bert'):
             with self.subTest(host=host_name):

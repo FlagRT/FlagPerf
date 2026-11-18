@@ -135,6 +135,11 @@ def block_layers(model):
             layers=getattr(encoder,'layer',None) if encoder is not None else None
             if layers: break
     if not layers:
+        # Backbone models themselves (XLMRobertaModel from AutoModel, as used
+        # for bge-m3) expose the encoder directly: model.encoder.layer.
+        encoder=getattr(model,'encoder',None)
+        layers=getattr(encoder,'layer',None) if encoder is not None else None
+    if not layers:
         layers=getattr(model,'layers',None)
     return list(layers) if layers else []
 
