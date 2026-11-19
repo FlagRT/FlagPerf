@@ -1,6 +1,6 @@
 # 训练入口
 
-新增 [Training v2：标准训练与观测](../docs/training/v2.md)，支持显式训练阶段、梯度与更新对比、检查点和标准 DDP；[验证记录](../docs/training/v2-validation.md)列明实际覆盖与限制。下文保留旧集群 benchmark 部署方式，两套入口不混用。
+新增 [Training v2：标准训练与观测](../docs/training/v2.md)，支持显式训练阶段、梯度与更新对比、检查点和标准 DDP；[验证记录](../docs/training/v2-validation.md)列明实际覆盖与限制（PPU / 昆仑芯 P800 / Ascend 910C 三平台实测）。外部训练框架接入见 [FlagScale使用FlagPerf最佳实践](../docs/training/FlagScale使用FlagPerf最佳实践.md)；三平台交付总结见 [FlagPerf训练适配完成报告](../docs/training/FlagPerf训练适配完成报告.md)。下文保留旧集群 benchmark 部署方式，两套入口不混用。
 
 ### 部署说明
 
