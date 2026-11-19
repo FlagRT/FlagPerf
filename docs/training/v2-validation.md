@@ -28,7 +28,7 @@
 | PPU 两卡 FSDP 分片（Qwen3-Reranker-8B 全参，performance 模式） | 通过（rc=0，2 步完成） | FP32 训练态约 128 GB 分片进双 96 GB 卡（每 rank 约 64 GB），torchrun 2 rank；protocol `sharding=fsdp`、`fsdp_wrapping=per-block+root`；五分片权重全部通过 modelscope API sha256 关卡（含 shard4 双写事故修复后复验）；rank-0 逐步 loss [0.0124926, 0] |
 | PPU 单卡 causal-lm（OneRec-1.7B，注册表 --task 缺省 + 缺省语料自动生成） | 通过（双机双跑 rc=0） | thead1/thead2 各 explicit 与 registry 两形态共四跑：final_model_sha256 四方一致 467145ae260d9598…、逐步 loss 四方逐位 [13.533725, 21.052334]；protocol task_source explicit/registry 对比落证；权重 4263793656 字节 sha256 cabc217fad6129ab… 与 modelscope API 权威值逐字同，索引文件 sha 双机同 |
 | PPU 逐算子微基准（诊断） | 完成 | `op_micro.py` 14 算子 @ B8 S512 H1024 vocab151669 bf16，中位数 50 iters；产出 `op-micro-ppu.json`；诊断脚本，不入采集协议 |
-| P800 训练全量（klx1） | 通过（套件 28/28） | CTR 架构（dien 因厂商算子限制单列，13/14）、DDP 2/4/8 卡（含 100 步长跑，稳态 1816 samples/s）、embedding（last/cls、bge-m3）、rerank 两语义、FSDP 0.6B r2–r4、8B r2–r4（16 卡 47 s）、checkpoint/resume（单卡+4 卡）、AMP bf16、租户共存稳定性（rendezvous 换端口） |
+| P800 训练全量（klx1） | 通过（套件 28/28） | CTR 14 架构全绿、DDP 2/4/8 卡（含 100 步长跑，稳态 1816 samples/s）、embedding（last/cls、bge-m3）、rerank 两语义、FSDP 0.6B r2–r4、8B r2–r4（16 卡 47 s）、checkpoint/resume（单卡+4 卡）、AMP bf16、租户共存稳定性（rendezvous 换端口） |
 | P800 观察态全链（klx1） | 通过 | 零配置观察态（`FLAGPROF_TRAIN_OBSERVE`）全链打通，与无采集基线零漂移对照 MATCH；store 114 MB、trace 192k 事件、comm 计数 171/87 与 store 交叉一致；设备内核事件缺失为厂商 kineto 限制（见下表） |
 | Ascend 910C 训练全量（ascend1） | 通过 | CTR 13/14（dien：`DynamicGRUV2` 仅 FP16，FP32 不支持，厂商算子规格）；DDP 8 卡与 16 卡（各 20 步）；FSDP 0.6B 2 卡；8B FSDP 4 卡；embedding（last/cls、bge-m3）、rerank 两语义；checkpoint/resume（补 npu RNG 分支后）；稳定性 10/10 轮（5×DDP16 100 步、3×DDP8 150 步、2×8B FSDP r4）；AMP 未单测（套件外） |
 | Ascend 910C 观察态全链 | 通过 | vendor 按设备自动识别（npu → 内置 ascend session，torch_npu.profiler）；store 88 MB、manifest complete |
@@ -63,6 +63,7 @@
 | 训练语义 + 训练分析 + CTR/embedding/rerank/注册表/分片任务 + 原精度/replay 定向回归 | 79 tests，OK（2026-11-13 最终权威回归 regression-fsdp5，逐模块实测：training 17、analysis 5、ctr 10、embedding 8、rerank 8、registry 13、sharding 9、accuracy 8、replay 1；含 summary 分片识别/步骤覆盖校验、Roberta 式包装发现、task_source CLI 缺省与缺省语料目录拼接组合断言） | 命令为 `python3 -B -m unittest tests.test_training tests.test_training_analysis tests.test_training_ctr tests.test_training_embedding tests.test_training_rerank tests.test_training_registry tests.probes.test_accuracy tests.probes.test_replay -v`（仓库 `inference/` 目录）；不与上行或模型设备实测重复相加 |
 | 原 TP2 embedding CPU 用例 | 环境失败保留 | PPU 镜像无设备映射时，Transformers TP 加载尝试 CUDA 初始化并报 driver shutting down；在完全未修改的 `3417e54d` 归档上同样复现。不是本次引入，亦不改测试掩盖 |
 | 全量回归（三平台实机，2026-11-17） | 230 passed / 0 failed × 4（thead1、thead2、klx1、ascend1；33–54 s/机） | 同一提交在 PPU/P800/910C 三平台一致通过；910C 于 flagrt 容器内运行 |
+| P800 夜间全量口径（更宽，236 项） | 232 passed / 3 failed / 1 skipped | 3 项失败经 thead 同树对照定性为既有全量口径测试债（非 P800 平台差异、非本分支引入），如实保留未修；与上一行 230 项子集口径分别记录，不合并计数 |
 
 ## 保留的问题与范围
 
