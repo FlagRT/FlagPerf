@@ -208,21 +208,22 @@ def html(stream, results, limits, quality):
     stream.write('<section id="data-quality"><h2>数据质量</h2><pre>'+escape(encode(quality))+'</pre></section></html>\n')
 
 
-def generate(run, out=None, *, work=None, limits=None, op_kinds=None, runner_results=None):
+def generate(run, out=None, *, limits=None, op_kinds=None, runner_results=None):
+    from flagprof.offline.worker import output_operation
+    target = out or Path(run).resolve().with_name(Path(run).name + '-report')
+    return output_operation(target, [run], _generate, run, limits=limits, op_kinds=op_kinds, runner_results=runner_results)
+
+
+def _generate(run, out, *, limits=None, op_kinds=None, runner_results=None):
     run = Path(run).resolve()
     out = Path(out).resolve() if out else run.parent/(run.name+'-report')
     if out.is_relative_to(run) or run.is_relative_to(out):
         raise ValueError('report output must be outside input Store')
     limits = limits if isinstance(limits, Limits) else Limits(**(limits or {}))
-    if work:
-        work = Path(work).resolve()
-        if work.is_relative_to(run) or run.is_relative_to(work):
-            raise ValueError('analysis work must be outside input Store')
-        work.mkdir(parents=True, exist_ok=True)
     out.mkdir(parents=True, exist_ok=True)
     (out/'exports').mkdir(exist_ok=True)
     started = time.perf_counter()
-    with StoreView(run) as view, tempfile.TemporaryDirectory(prefix='analysis-', dir=work) as directory:
+    with StoreView(run) as view, tempfile.TemporaryDirectory(prefix='analysis-') as directory:
         workspace = Workspace(view, directory, limits)
         try:
             try:
@@ -290,7 +291,7 @@ def generate(run, out=None, *, work=None, limits=None, op_kinds=None, runner_res
                 for panel, key, run_id, corr in workspace.db.execute('select * from members order by panel,key,run,corr'):
                     stream.write(encode(dict(panel=panel, key=key, run_id=run_id, corr=int(corr)))+'\n')
             from .product import write_report
-            write_report(out,data,limits=limits,work=work)
+            write_report(out,data,limits=limits)
             disk = sum(p.stat().st_size for p in Path(directory).rglob('*') if p.is_file())
             resources = dict(elapsed_s=time.perf_counter()-started,
                              peak_rss_kib=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
@@ -301,36 +302,40 @@ def generate(run, out=None, *, work=None, limits=None, op_kinds=None, runner_res
             workspace.close()
 
 
-def generate_oracle(ref, cmp, out=None, *, declare=None, work=None, limits=None, perf_run=None,
-                    perf_ref_run=None, perf_cmp_run=None, replay_ref_run=None, replay_cmp_run=None, baseline=None):
-    """Compare two stores without loading torch or changing either source."""
+def generate_oracle(ref, cmp, out=None, *, declare=None, limits=None, perf_ref_run=None, perf_cmp_run=None,
+                    replay_ref_run=None, replay_cmp_run=None, baseline=None):
+    from flagprof.offline.worker import output_operation
+    target = out or Path(ref).resolve().with_name(Path(ref).name + ('-three-way' if baseline else '-oracle'))
+    inputs = [ref, cmp, baseline, perf_ref_run, perf_cmp_run, replay_ref_run, replay_cmp_run]
+    return output_operation(target, inputs, _generate_oracle, ref, cmp, declare=declare, limits=limits,
+                            perf_ref_run=perf_ref_run, perf_cmp_run=perf_cmp_run, replay_ref_run=replay_ref_run,
+                            replay_cmp_run=replay_cmp_run, baseline=baseline)
+
+
+def _generate_oracle(ref, cmp, out, *, declare, limits, perf_ref_run, perf_cmp_run, replay_ref_run, replay_cmp_run, baseline):
     if baseline:
         from .three_way import generate as three_way
-        return three_way(ref,baseline,cmp,out,declare=declare,work=work,limits=limits,perf_run=perf_run,
+        return three_way(ref,baseline,cmp,out,declare=declare,limits=limits,
             perf_ref_run=perf_ref_run,perf_cmp_run=perf_cmp_run,replay_ref_run=replay_ref_run,replay_cmp_run=replay_cmp_run)
     ref, cmp = Path(ref).resolve(), Path(cmp).resolve()
     out = Path(out).resolve() if out else ref.parent/(ref.name+'-oracle')
     if ref.is_file() or cmp.is_file():
         if not (ref.is_file() and cmp.is_file()):raise ValueError('both oracle inputs must be groups or both must be Stores')
         from .oracle_group import generate as generate_group_oracle
-        return generate_group_oracle(ref,cmp,out,declare=declare,work=work,limits=limits,perf_run=perf_run,
+        return generate_group_oracle(ref,cmp,out,declare=declare,limits=limits,
             perf_ref_run=perf_ref_run,perf_cmp_run=perf_cmp_run,replay_ref_run=replay_ref_run,replay_cmp_run=replay_cmp_run)
     for source in (ref,cmp):
         if out.is_relative_to(source) or source.is_relative_to(out):raise ValueError('oracle output must be outside input Stores')
-        if work and (Path(work).resolve().is_relative_to(source) or source.is_relative_to(Path(work).resolve())):raise ValueError('oracle work must be outside input Stores')
-    if work:Path(work).mkdir(parents=True,exist_ok=True)
     limits=limits if isinstance(limits,Limits) else Limits(**(limits or {}))
     out.mkdir(parents=True,exist_ok=True);(out/'exports').mkdir(exist_ok=True)
     started=time.perf_counter()
     from flagprof.analyzers.oracle import analyze
-    with StoreView(ref) as av, StoreView(cmp) as bv, tempfile.TemporaryDirectory(prefix='oracle-',dir=work) as directory:
+    with StoreView(ref) as av, StoreView(cmp) as bv, tempfile.TemporaryDirectory(prefix='oracle-') as directory:
         a=Workspace(av,Path(directory)/'ref',limits);b=Workspace(bv,Path(directory)/'cmp',limits)
         try:
             a.ingest();b.ingest();results=analyze(a,b,declare)
-            if perf_run and perf_cmp_run and Path(perf_run).resolve()!=Path(perf_cmp_run).resolve():
-                raise ValueError('--perf-run and --perf-cmp-run disagree')
             from flagprof.analyzers.perf_links import link
-            links=link(a,b,dict(ref=perf_ref_run,cmp=perf_cmp_run or perf_run),directory,limits)
+            links=link(a,b,dict(ref=perf_ref_run,cmp=perf_cmp_run),directory,limits)
             if links['requested']:
                 results.append(Result('oracle.perf_links','partial' if links['unmatched'] else 'ok',
                     a.table('oracle.perf_links'),links,[]))
@@ -345,7 +350,7 @@ def generate_oracle(ref, cmp, out=None, *, declare=None, work=None, limits=None,
                 with (out/'exports'/(panel+'.jsonl')).open('w') as stream:
                     for row in a.table(panel):stream.write(encode(row)+'\n')
             from .product import write_report
-            write_report(out,data,limits=limits,work=work)
+            write_report(out,data,limits=limits)
             a.check_budget();b.check_budget()
             resources=dict(elapsed_s=time.perf_counter()-started,peak_rss_kib=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
                 scratch_bytes=sum(p.stat().st_size for p in Path(directory).rglob('*') if p.is_file()))
@@ -354,6 +359,6 @@ def generate_oracle(ref, cmp, out=None, *, declare=None, work=None, limits=None,
         finally:a.close();b.close()
 
 
-def compare_device_reports(reports, out, *, declare=None, work=None, limits=None):
+def compare_device_reports(reports, out, *, declare=None, limits=None):
     from .comparison import generate
-    return generate(reports,out,declare=declare,work=work,limits=limits)
+    return generate(reports,out,declare=declare,limits=limits)

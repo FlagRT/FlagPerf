@@ -1,49 +1,44 @@
 # Copyright 2026 FlagOS Contributors
 # Licensed under the Apache License, Version 2.0.
-"""Default bounded sealed import; each retry gets a new run."""
+"""Bounded sealed imports with validated checkpoints and atomic run publication."""
 from pathlib import Path
-from contextlib import contextmanager
-import fcntl
+import hashlib
+import os
+import shutil
+import sqlite3
 import resource
 import time
-import uuid
 from . import pipeline
 from .bundle import load_bundle, register
 from .checkpoints import binding, validate, save_scan, save_prepared, load_prepared
 from .finish import BoundedView, finalize_bounded
+from .limits import read_json
 from flagprof.store.manifest import create_run, atomic_json
 from flagprof.store._offline_writer import offline_writer
 from flagprof.vendors.import_common import importer_writer_config
 
 
-@contextmanager
-def lease(work):
-    work = Path(work).resolve(); work.mkdir(parents=True, exist_ok=True)
-    with (work/'.lock').open('a+b') as lock:
-        fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-        yield work
+def import_bundle(directory, *, store, run_id=None, options=None, calls_from_run=None):
+    from .worker import on_disk
+    directory, store = Path(directory).resolve(), Path(store).resolve()
+    if store.is_relative_to(directory):
+        raise ValueError('import output must be outside the sealed capture')
+    return on_disk(store, _import_bundle, directory, store, run_id, options, calls_from_run)
 
 
-def import_bundle(directory, *, store, work=None, scratch=None, run_id=None, options=None):
+def _import_bundle(directory, store, run_id, options, calls_from_run):
     from .disk import scratch_scope
-    from .workspace import locations, owned_scratch, check_capture_layout
-    capture = load_bundle(directory)
-    work,scratch=locations(store,work,scratch,key='import-'+capture['occurrence'])
-    _check_scratch(scratch,store,work)
-    check_capture_layout(directory, store, work, scratch)
-    with owned_scratch(scratch) as owned, scratch_scope(owned,work):
-        return _import_bundle(directory,store=store,work=work,run_id=run_id,options=options)
-
-
-def _check_scratch(scratch,store,work):
-    from .workspace import check_layout
-    check_layout(store, work, scratch)
-
-
-def _import_bundle(directory, *, store, work, run_id=None, options=None):
+    from .worker import active_directory
+    from .workspace import checkpoint, private_name
+    from flagprof.store.manifest import json_bytes
+    directory, store = Path(directory), Path(store)
+    temporary = active_directory()
     started = time.perf_counter(); timings = {}; options = dict(options or {})
-    directory = Path(directory).resolve(); capture = load_bundle(directory)
+    capture = load_bundle(directory)
     source = directory/'sealed-trace/data/trace.json'
+    if calls_from_run is not None:
+        from .project import calls_from
+        options.update(calls=calls_from(calls_from_run, capture['metadata'].get('source_run_id')), marker_prefix='flagprof::op#')
     if 'calls' not in options and capture['metadata'].get('collection_run'):
         from .checkpoints import checked_relative
         from .project import calls_from
@@ -56,49 +51,73 @@ def _import_bundle(directory, *, store, work, run_id=None, options=None):
     options['analysis_input'] = capture_context(directory,capture)
     options['vendor'] = capture['vendor']
     options['profile_memory'] = capture['metadata'].get('requested_configuration',{}).get('profile_memory',False)
+    from flagprof.vendors.native_common import ScopeConfig
+    scope = options.get('scope_config')
+    if scope is not None:
+        options['scope_config'] = dict(scope)
     bind = binding(source, capture['occurrence'], options)
-    # Bind all capture metadata as well as the trace to recovery stages.
     bind['capture'] = capture
+    key = hashlib.sha256(json_bytes(bind)).hexdigest()
+    if scope is not None:
+        options = dict(options, scope_config=ScopeConfig(**{k:tuple(v) if v is not None else None for k,v in scope.items()}))
     timings['validate_source_s'] = time.perf_counter()-started
-    with lease(work) as work:
-        # Work must be outside Store: verification snapshots must not see scratch.
-        store = Path(store).resolve()
-        if work == store or work.is_relative_to(store) or store.is_relative_to(work):
-            raise ValueError('work and store must be separate directory trees')
-        # A failed pre-commit attempt remains untouched. A small durable pointer
-        # identifies the latest attempt, including a commit made before death.
-        from .limits import read_json
-        from .checkpoints import checked_relative
-        pointer=work/'stages.json'
-        stages=read_json(pointer) if pointer.exists() else dict(scan='scan',prepared='prepared')
-        scan, derived = (work/checked_relative(stages[k]) for k in ('scan','prepared'))
-        reused = []; t = time.perf_counter()
-        if (derived/'committed.json').exists():
-            prepared = load_prepared(derived, bind); reused.append('derived')
-        else:
+    with checkpoint(store, key) as work, scratch_scope(temporary, work):
+        reused = []
+        t = time.perf_counter()
+        derived, scan = work / 'prepared', work / 'scan'
+        prepared = None
+        if derived.is_dir():
+            try:
+                prepared = load_prepared(derived, bind)
+                reused.append('derived')
+            except (ValueError, OSError, KeyError, TypeError, AttributeError, sqlite3.DatabaseError):
+                shutil.rmtree(derived)
+        if prepared is None:
             resume = None
-            if (scan/'committed.json').exists():
-                validate(scan, bind, 'scan'); resume = scan/'scan.sqlite'; reused.append('scan')
-            elif scan.exists():
-                scan = work/('scan-' + uuid.uuid4().hex)
-            if derived.exists():derived = work/('prepared-' + uuid.uuid4().hex)
-            atomic_json(pointer,dict(scan=scan.name,prepared=derived.name))
-            prepared = pipeline.prepare(source, derived, **options, resume_scan=resume,
-                                         scan_checkpoint=lambda db: save_scan(db, scan, bind))
-            save_prepared(prepared, bind)
+            if scan.is_dir():
+                try:
+                    validate(scan, bind, 'scan')
+                    resume = scan / 'scan.sqlite'
+                    reused.append('scan')
+                except (ValueError, OSError, KeyError, TypeError, AttributeError, sqlite3.DatabaseError):
+                    shutil.rmtree(scan)
+            try:
+                prepared = pipeline.prepare(source, derived, **options, resume_scan=resume,
+                                            scan_checkpoint=lambda db: save_scan(db, scan, bind))
+                save_prepared(prepared, bind)
+            except BaseException:
+                for stage in (derived, scan):
+                    if stage.is_dir() and not (stage/'committed.json').is_file():
+                        shutil.rmtree(stage)
+                raise
         timings['prepare_or_restore_s'] = time.perf_counter()-t
-        run = create_run(store, run_id=run_id, identity=dict(route='plan-b-final', capture_occurrence=capture['occurrence'])).resolve()
+        if run_id and (run_id == private_name() or run_id.startswith('.flagprof-import-')):
+            raise ValueError('reserved run id')
+        initial = create_run(temporary/'output', run_id=run_id, identity=dict(route='plan-b-final', capture_occurrence=capture['occurrence']))
+        final_run = store / initial.name
+        if final_run.exists():
+            receipt = final_run/'plan-b-status.json'
+            saved = read_json(receipt) if receipt.is_file() else {}
+            if saved.get('status') != 'complete' or saved.get('import_key') != key:
+                raise FileExistsError('run id belongs to another import: ' + str(final_run))
+            with BoundedView(final_run, temporary/'existing') as view:
+                if view.verified['status'] != 'complete':
+                    raise ValueError('published run failed verification')
+            return dict(saved, run=str(final_run), capture=str(directory))
+        run = store / ('.flagprof-import-' + temporary.name)
+        (temporary / 'staged-run').touch()
+        initial.rename(run)
         from flagprof.monitor.reference import relocate
         relocate(directory/'monitor-ref.json', run/'monitor-ref.json')
-        state = dict(schema='plan-b-import/1', status='incomplete', run=str(run), capture=str(directory),
-                     reused=reused, timings=timings, throughput_gate='not_passed', performance_blocking=False,
-                     performance_disposition=('not_qualified' if capture['vendor'] in ('thead','kunlunxin') else 'accepted_nonblocking_by_user'), latency_budget='pending')
+        state = dict(schema='plan-b-import/1', import_key=key, status='incomplete', run=final_run.name, capture=os.path.relpath(directory, final_run),
+                     reused=reused, timings=timings, throughput_gate='not_evaluated', performance_blocking=False,
+                     performance_disposition='not_evaluated', latency_budget='pending')
         atomic_json(run/'plan-b-status.json', state)
         try:
             ref = register(run, directory, capture)
             from flagprof.store.lineage import register_lineage
             register_lineage(run,execution_id=capture['occurrence'],source_run_id=capture['metadata'].get('source_run_id'),
-                             source_attempt_id=capture['occurrence'],attempt_id=run.name)
+                             source_attempt_id=capture['occurrence'],attempt_id=final_run.name)
             t = time.perf_counter()
             with offline_writer(run, config=importer_writer_config()) as writer:
                 imported = pipeline.import_prepared(source, writer, prepared, vendor=capture['vendor'],
@@ -111,7 +130,7 @@ def _import_bundle(directory, *, store, work, run_id=None, options=None):
             t = time.perf_counter()
             state['memory'] = finish_memory(run, memory, verify=False)
             timings['memory_import_verify_s'] = time.perf_counter()-memory_started
-            view_work = work/('view-' + uuid.uuid4().hex); t = time.perf_counter()
+            view_work = temporary / 'verification'; t = time.perf_counter()
             with BoundedView(run, view_work) as view:
                 timings['independent_verify_s'] = time.perf_counter()-t
                 t = time.perf_counter(); final = finalize_bounded(run, view)
@@ -130,14 +149,21 @@ def _import_bundle(directory, *, store, work, run_id=None, options=None):
             timings['total_s'] = time.perf_counter()-started
             state['peak_rss_mib'] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/1024
             atomic_json(run/'plan-b-status.json', state)
-        return state
+        from .workspace import publish_run
+        publish_run(run, final_run)
+        return dict(state, run=str(final_run), capture=str(directory))
 
 
-def inspect_run(run, work=None, *, scratch=None, offset=None, limit=100):
+def inspect_run(run, *, offset=None, limit=100):
+    from .worker import on_disk
+    return on_disk(None, _inspect_run, run, offset, limit)
+
+
+def _inspect_run(run, offset, limit):
     from .workspace import query_view
-    with query_view(run,work=work,scratch=scratch) as view:
+    with query_view(run) as view:
         if offset is None:
             from flagprof.store.status import run_status
             return dict(schema='inspect/2',run=run_status(run),traces=view.inspect(),count=view.verified['count'],
-                        source_records=view.verified['source_records'],throughput_gate='not_passed',performance_blocking=False)
+                        source_records=view.verified['source_records'],throughput_gate='not_evaluated',performance_blocking=False)
         return dict(schema='plan-b-page/1', offset=offset, limit=limit, total=view.verified['count'], rows=view.page(offset, limit))

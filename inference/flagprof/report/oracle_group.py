@@ -33,7 +33,7 @@ def write_index(result,out):
             page.write('<p>部分算子的输入来源或调用配置不完整；数值配对继续保留，introduced 判断仅使用完整来源。请在对应 rank 面板核对原因。</p>')
 
 
-def inspect_group(path, *, work=None):
+def inspect_group(path):
     path = Path(path).resolve()
     group = validate_manifest(path)
     if group['status'] != 'complete':
@@ -43,7 +43,7 @@ def inspect_group(path, *, work=None):
         if entry.get('status') != 'complete' or not entry.get('run'):
             raise ValueError('oracle requires complete rank Stores')
         run = path.parent/entry['run']
-        with StoreView(run) as view, tempfile.TemporaryDirectory(dir=work) as tmp:
+        with StoreView(run) as view, tempfile.TemporaryDirectory() as tmp:
             ws = Workspace(view,tmp)
             try:
                 ws.ingest()
@@ -78,7 +78,7 @@ def inspect_group(path, *, work=None):
     return group,runs,states[0]['identity']
 
 
-def generate(ref,cmp,out,*,declare=None,work=None,limits=None,**options):
+def generate(ref,cmp,out,*,declare=None,limits=None,**options):
     from . import generate_oracle
     def rank_inputs(value):
         if not value:return {}
@@ -93,16 +93,16 @@ def generate(ref,cmp,out,*,declare=None,work=None,limits=None,**options):
             raise ValueError('linked rank manifest requires exactly ranks 0 and 1')
         return {int(k):(path.parent/v).resolve() for k,v in mapping.items()}
     mapped={k:rank_inputs(v) for k,v in options.items()}
-    if work:Path(work).mkdir(parents=True,exist_ok=True)
-    a,ar,ai=inspect_group(ref,work=work);b,br,bi=inspect_group(cmp,work=work)
+    a,ar,ai=inspect_group(ref);b,br,bi=inspect_group(cmp)
     out=Path(out).resolve()
     for source in (Path(ref).resolve().parent,Path(cmp).resolve().parent):
         if out.is_relative_to(source) or source.is_relative_to(out):
             raise ValueError('group oracle output must be outside both deliveries')
-    out.mkdir(parents=True,exist_ok=False)
+    from flagprof.offline.worker import new_output
+    new_output(out)
     ranks=[]
     for rank,(left,right) in enumerate(zip(ar,br)):
-        result=generate_oracle(left,right,out/('rank-'+str(rank)),declare=declare,work=work,limits=limits,
+        result=generate_oracle(left,right,out/('rank-'+str(rank)),declare=declare,limits=limits,
             **{k:v.get(rank) for k,v in mapped.items()})
         ranks.append(dict(rank=rank,report='rank-'+str(rank)+'/report.html',panels=result['panels']))
     status='ok' if all(all(v in ('ok','unavailable') for v in r['panels'].values()) and
@@ -112,5 +112,5 @@ def generate(ref,cmp,out,*,declare=None,work=None,limits=None,**options):
                 sample_count_scope='logical input samples, counted once; operator shards compare within the same rank')
     (out/'result.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n')
     from .product import write_report
-    write_report(out,result,work=work,limits=limits)
+    write_report(out,result,limits=limits)
     return dict(output=str(out),status=status,ranks=ranks)

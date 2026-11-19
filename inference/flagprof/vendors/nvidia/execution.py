@@ -3,6 +3,11 @@
 """CUDA worker setup, imported only inside an executing worker."""
 
 
+TORCH_DEVICE = 'cuda'
+SMI = 'nvidia-smi'
+BACKENDS = ('nccl',)
+
+
 def initialize(rank):
     import torch
     device = 'cuda:' + str(rank)

@@ -157,14 +157,20 @@ def summarize(paths, identity=None, limits=None):
                 condition=condition,group_windows=group_windows,instrumentation_pairs=perturbations)
 
 
-def generate(paths,out,*,work=None,limits=None):
+def generate(paths, out, *, limits=None):
+    from flagprof.offline.worker import output_operation
+    return output_operation(out, paths, _generate, paths, limits=limits)
+
+
+def _generate(paths,out,*,limits=None):
     from .product import write_report
     out=Path(out).resolve()
     if any(out==Path(p).resolve() or out in Path(p).resolve().parents for p in paths):
         raise ValueError('baseline report must not contain source runner inputs')
-    out.mkdir(parents=True,exist_ok=False)
+    from flagprof.offline.worker import new_output
+    new_output(out)
     summary=summarize(paths,limits=limits)
     document=dict(schema='runner-result/1',report_context=dict(identity=summary['condition']),results={},runner_summary=summary)
     (out/'result.json').write_text(json.dumps(document,ensure_ascii=False,indent=2)+'\n')
-    write_report(out,document,work=work,limits=limits)
+    write_report(out,document,limits=limits)
     return dict(output=str(out),groups=len(summary['groups']))

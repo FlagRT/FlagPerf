@@ -1,6 +1,7 @@
 # Copyright 2026 FlagOS Contributors
 # Licensed under the Apache License, Version 2.0.
 """Second candidate: metadata cardinality also spills to disk."""
+from flagprof.vendors import is_kineto
 from decimal import Decimal,InvalidOperation
 import json
 import re
@@ -103,11 +104,11 @@ def new_scope_state():return dict(missing=0,examples=[],selected=0,mismatch=Fals
 
 
 def observe_scope(db,tax,vendor,e,state):
-    if e.get('ph')=='X' and e.get('cat') in (tax.contract['roles']['host_categories'] if vendor in ('nvidia','thead','kunlunxin') else ['cpu_op']):db.put('scope_host',e.get('pid'),True)
+    if e.get('ph')=='X' and e.get('cat') in (tax.contract['roles']['host_categories'] if is_kineto(vendor) else ['cpu_op']):db.put('scope_host',e.get('pid'),True)
     if not tax.is_device(e,tax.ctx):return
     db.put('scope_device_pid',e.get('pid'),True)
     if len(state["examples"])<3:state["examples"].append(e['_linker_loc'])
-    if vendor in ('nvidia','thead','kunlunxin'):v=e.get('args',{}).get('device')
+    if is_kineto(vendor):v=e.get('args',{}).get('device')
     else:
         m=re.fullmatch(r'NPU (\d+)',db.get('labels',e.get('pid'),''));v=int(m.group(1)) if m else None
     valid=type(v) is int and v>=0
@@ -128,11 +129,11 @@ def scope(db,tax,vendor,state=None):
     def tracks():
         for label,count in db.c.execute("SELECT pstr(payload),count(*) FROM stage WHERE kind='scope_track' GROUP BY pstr(payload) ORDER BY pstr(payload)"):yield label,count
     collision=bool(db.c.execute("SELECT 1 FROM stage a JOIN stage b ON a.k=b.k WHERE a.kind='scope_host' AND b.kind='scope_device_pid' LIMIT 1").fetchone())
-    fields=['args.device','pid','cat'] if vendor in ('nvidia','thead','kunlunxin') else ['process_labels.args.labels','pid','cat']
+    fields=['args.device','pid','cat'] if is_kineto(vendor) else ['process_labels.args.labels','pid','cat']
     facts=dict(device_count=n if not missing else None,device_ordinals=known if not missing else None,observed_devices=known,
         missing_device_identity=missing,host_device_pid_collision=collision,source=dict(kind='raw_trace',fields=fields,examples=examples),
         execution_track_count=sum(t['role']=='device' and bool(t['complete_events']) for t in tax.ctx.tracks),tracks_per_device=ObjectRows(tracks))
-    if vendor in ('nvidia','thead','kunlunxin'):facts['device_pid_matches_device_arg']=False if mismatch else None if missing_arg or not selected else True
+    if is_kineto(vendor):facts['device_pid_matches_device_arg']=False if mismatch else None if missing_arg or not selected else True
     return facts
 
 
@@ -153,7 +154,7 @@ def assess(db,tax,identities,ledger,vendor,uid,scope_state=None):
     def fail(item):
         nonlocal failure_count
         db.put('failure',failure_count,item);failure_count+=1
-    if vendor=='ascend':
+    if not is_kineto(vendor):
         for item in tax.audit_dependencies(Rows(db.raws),tax.ctx):fail(item)
     else:
         allowed=set(contract['roles']['expected_process_names'])

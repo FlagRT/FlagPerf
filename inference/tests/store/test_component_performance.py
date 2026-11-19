@@ -96,9 +96,9 @@ class ComponentPerformanceTests(unittest.TestCase):
                 self.assertEqual(record.call_args.kwargs['config']['flagtree'],'off')
                 self.assertEqual(record.call_args.kwargs['config']['vendor_compiler'],'/vendor')
             with patch('flagprof.launch.launch',return_value=0) as launch:
-                self.assertEqual(main(['launch','--store','unused','--preset',preset,'--flagcx','on',
+                self.assertEqual(main(['launch','--store','unused','--preset',preset,'--comm-backend','flagcx',
                     '--flagtree','off','--vendor-compiler','/vendor','--','python','-c','pass']),0)
-                self.assertEqual(launch.call_args.kwargs['flagcx'],'on')
+                self.assertEqual(launch.call_args.kwargs['comm_backend'],'flagcx')
                 self.assertEqual(launch.call_args.kwargs['config']['flagtree'],'off')
                 self.assertFalse(any(k.startswith('tensor_') for k in launch.call_args.kwargs['config']))
 
@@ -121,7 +121,8 @@ class ComponentPerformanceTests(unittest.TestCase):
                         device_records=1,evidence=[]))+'\n' for i in range(168)))
                     return result
                 with patch('flagprof.report.group.generate',side_effect=rank_report):
-                    generate_group(manifest,root/'report')
+                    from flagprof.report.group import _generate_group
+                    _generate_group(manifest,root/'report')
                 result=json.loads((root/'report/result.json').read_text())
                 self.assertEqual(result['comparison']['status'],'not_comparable' if changed else 'comparable')
                 if changed:

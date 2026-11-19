@@ -1,19 +1,19 @@
 # PPU（thead）模型适配：模型清单、验证结果与使用方法
 
-本文回答三个问题：**这套适配覆盖哪些模型、精度怎么验证的、怎么在你自己的机器上复跑**。代码在分支 `zhiyu/model-adaptation`，目标硬件为同型号 PPU-ZW810E 服务器（下文称"双机"）。适配过程的工作日志在团队内部仓库，本文只保留可复现的内容。
+本文回答三个问题：**这套适配覆盖哪些模型、精度怎么验证的、怎么在你自己的机器上复跑**。下文的双机验证使用了同型号 PPU-ZW810E。运行工具时可以选择自己的模型、输入和输出盘。
 
 ## 1. 四种入口，一套实现
 
 | 你想做什么 | 用什么 | 产物 |
 |---|---|---|
-| 挂探针采集单模型精度 | attach 目标（`targets/` 下薄壳脚本） | `target-result.json` |
+| 挂探针采集单模型精度 | `python -m flagprof.targets.target_embedder` 等 attach 目标 | `target-result.json` |
 | 不挂探针跑基线 | `python3 -B -m flagprof.runner --task ctr/rerank/embedding …` | `runner.json` |
-| 批量验证一整份模型名册 | `tools/batch_driver.py --config tools/models.yaml` | `battery-summary.md/.json` |
-| 把测试输入固化成密封包 | `targets/make_rerank_package.py`、`make_ctr_package.py` | 包目录 + `manifest.json` |
+| 批量验证一整份模型名册 | `flagprof-batch --config models.yaml --out results` | `battery-summary.md/.json` |
+| 把测试输入固化成密封包 | `flagprof-make-rerank`、`flagprof-make-ctr` | 包目录 + `manifest.json` |
 
 设计要点：attach 与 runner 共用同一个执行体（`flagprof/runner/{rerank,ctr}.py`），减少了两套执行实现产生语义漂移的机会；同包同种子、相同运行配置下的逐位一致性由 A/A 实测验证。批量验证的每一行都连跑两遍（A/A），两遍不一致即判失败。
 
-名册文件有两份：`tools/models.yaml`（15 模型 + 10 CTR 架构）与 `tools/models-hf2.yaml`（2026-11-11 从 HuggingFace 扩选的 6 个模型）。
+名册文件有两份：`flagprof-batch --example models`（15 模型 + 10 CTR 架构）与 `flagprof-batch --example hf2`（2026-11-11 从 HuggingFace 扩选的 6 个模型）。
 
 ## 2. 测试输入为什么用"密封包"
 
@@ -113,8 +113,8 @@ python3 -B -m flagprof.runner --task rerank --score sequence_logit --trust-remot
   --batch-size 4 --dtype bfloat16 --device cuda:0 --outputs OUT
 
 # attach（需要挂探针采集时）
-flagprof record --vendor thead --preset accuracy --store S --work W --scratch X -- \
-  python3 -B targets/template_ctr.py --package packages/ctr-v1 --arch dlrm \
+flagprof record --vendor thead --preset accuracy --store ./results -- \
+  python -m flagprof.targets.template_ctr --package packages/ctr-v1 --arch dlrm \
   --seed 531 --device cuda:0 --dtype bfloat16 --outputs OUT
 ```
 

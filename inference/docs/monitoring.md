@@ -21,26 +21,26 @@ flowchart LR
 
 ## 从一个任务开始
 
-从 `inference/` 执行，使用新输出目录；Store、导入 work/scratch 与 delivery 恢复沿用 ext4 要求。独立监控可以由外部进程管理器托管，以下命令以前台方式运行：
+安装后可从任意目录执行。以下示例在当前目录保存各类输出。独立监控可以由外部进程管理器托管，以下命令以前台方式运行：
 
 ```bash
-python3 -m flagprof watch start --root /work/node --vendor ascend --devices 12,13
-python3 -m flagprof watch status --root /work/node
+python3 -m flagprof watch start --root ./node --vendor ascend --devices all
+python3 -m flagprof watch status --root ./node
 
-python3 -m flagprof record --store /work/tasks --vendor ascend --preset perf-lite \
-  --monitor on --monitor-topology agent --monitor-root /work/node --diagnose on \
+python3 -m flagprof record --store ./tasks --vendor ascend --preset perf-lite \
+  --monitor on --monitor-topology agent --monitor-root ./node --diagnose on \
   -- python3 target.py
 
-python3 -m flagprof report /work/node --last 1h --out /work/node-report
-python3 -m flagprof report /work/tasks/RUN --out /work/task-report
-python3 -m flagprof watch replay /work/node --out /work/replay
+python3 -m flagprof report ./node --last 1h --out ./node-report
+python3 -m flagprof report ./tasks/RUN --out ./task-report
+python3 -m flagprof watch replay ./node --out ./replay
 ```
 
-NVIDIA 使用 `--vendor nvidia --devices 0`。`launch` 支持同样的监控参数，单机 TP2 共用一个节点会话；组报告从 `group.json` 进入各 rank。容器需挂载节点和目标目录的共同父目录，使引用路径保持可达。
+NVIDIA 使用 `--vendor nvidia --devices all`。`launch` 支持同样的监控参数，单机 TP2 共用一个节点会话；组报告从 `group.json` 进入各 rank。跨容器任务使用同一宿主监控 agent，容器需挂载节点和目标目录的共同父目录，使引用路径保持可达。
 
 `--diagnose on` 只用于 `perf-lite/perf/modules`，会选择 `monitor=on`、`topology=agent`，需要 `--monitor-root`。只看设备资源时省略 diagnose；`--preset monitor` 可采资源而不启用性能探针。快组默认 1000 ms，可通过 `--monitor-interval-ms 100..5000` 调整。独立 watch 的采样间隔与保留配置由启动时的 `--config` JSON 决定。
 
-按单次任务启动采样时，可选 `local` 旁路进程；Ascend 默认 `host`，由宿主侧运行 `python3 -m flagprof.monitor --root ROOT --vendor ascend --devices 12,13`。同一节点长期接多个任务时采用 `agent`，避免每个目标重复读取设备指标。
+单次任务会探测本地采集能力。Ascend 在容器内优先使用可见的 `npu-smi`，宿主可使用 DCMI；NVIDIA 可使用 NVML 或 `nvidia-smi`。探测到相应接口时选择 `local`，缺少接口时选择 `host`，由宿主侧运行 `python3 -m flagprof.monitor --root ROOT --vendor ascend --devices all`。同一节点长期接多个任务时采用 `agent`，避免每个目标重复读取设备指标。
 
 ## 指标如何解释
 
@@ -76,12 +76,14 @@ Python 入口为 `StoreView.monitor_status()`、`iter_monitor_events()`、`monit
 默认每 5 分钟或 32 MiB 轮转；节点预算 8 GiB，其中 256 MiB 用于控制和收尾。未固定原始数据保留最多 24 小时 / 3 GiB，分钟趋势最多 30 天 / 1 GiB。登记目标相关段与异常前 60 秒、后 30 秒窗口固定，窗口不完整时记录缺口。分钟趋势不能替代规则的原始证据。
 
 ```bash
-python3 -m flagprof delivery publish /work/tasks/RUN --out /archive/run-delivery
-python3 -m flagprof delivery verify /archive/run-delivery
-python3 -m flagprof watch release --root /work/node \
-  --reference /work/tasks/RUN/monitor-ref.json --delivery /archive/run-delivery
+python3 -m flagprof delivery publish ./tasks/RUN --out ./archives/run-delivery
+python3 -m flagprof delivery verify ./archives/run-delivery
+python3 -m flagprof watch release --root ./node \
+  --reference ./tasks/RUN/monitor-ref.json --delivery ./archives/run-delivery
 ```
 
-`release` 核对归档，在新目录恢复，比对公共事件身份与内容并重开报告，通过后解除该引用的固定。仍被其他任务引用的历史数据继续保留。归档目标由部署选择，生产代码不要求 dtfs。
+DCMI 采集在持有设备租约后测量本机的快速采样轮次，将采样下限写入监控目录的 `telemetry-sampling.json`。相同设备、驱动、SDK、启动实例、采集方式和指标描述可复用这一结果。
+
+`release` 核对归档，在新目录恢复，比对公共事件身份与内容并重开报告，通过后解除该引用的固定。仍被其他任务引用的历史数据继续保留。归档目标由使用者选择。
 
 继续修改时：采样与来源见 `telemetry/` 和 `vendors/*/telemetry*.py`；会话与保留见 `monitor/node.py`、`retention.py`；规则见 `monitor/rules.py`、`business.py`；读取和展示见 `store/view.py`、`analyzers/resource.py`、`monitor/diagnostic_report.py`。公共回归在 `tests/monitor/` 和 `tests/telemetry/`。

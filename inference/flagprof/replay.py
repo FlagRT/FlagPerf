@@ -42,15 +42,19 @@ def copy_blob(run, event, out, name):
     return dict(event,blob=dict(blob,path=name,offset=0))
 
 
-def prepare(ref, cmp, call_key, out, *, work=None):
+def prepare(ref, cmp, call_key, out):
+    from .offline.worker import output_operation
+    return output_operation(out, [ref, cmp], _prepare, ref, cmp, call_key)
+
+
+def _prepare(ref, cmp, call_key, out):
     from .analyzers.workspace import Workspace
     from .analyzers.oracle import identity, REQUIRED, call_config
     out=Path(out).resolve()
     for source in (Path(ref).resolve(),Path(cmp).resolve()):
         if out.is_relative_to(source) or source.is_relative_to(out):
             raise ValueError('replay package must be outside source Stores')
-    if work:Path(work).mkdir(parents=True,exist_ok=True)
-    with StoreView(ref) as av,StoreView(cmp) as bv,tempfile.TemporaryDirectory(prefix='replay-',dir=work) as temp:
+    with StoreView(ref) as av,StoreView(cmp) as bv,tempfile.TemporaryDirectory(prefix='replay-') as temp:
         a=Workspace(av,Path(temp)/'a');b=Workspace(bv,Path(temp)/'b')
         try:
             a.ingest();b.ingest()
@@ -80,12 +84,13 @@ def prepare(ref, cmp, call_key, out, *, work=None):
                 for item in (event,tensor):
                     if 'blob' not in item:raise ValueError('replay full blob missing')
                     verify_blob(ws.view.run,item)
-                entries[side]=dict(source_run=str(ws.view.run.resolve()),source_manifest=digest(ws.view.run/'manifest.json'),
+                entries[side]=dict(source_run_id=ws.view.run_status()['run_id'],source_manifest=digest(ws.view.run/'manifest.json'),
                     signature=sig,config=event['ext']['call_config'],input=tensor,expected_output=event,
                     identity=identities[side])
             if entries['ref']['input']['digest']==entries['cmp']['input']['digest']:
                 raise ValueError('replay target requires already different actual inputs')
-            out.mkdir(parents=True,exist_ok=False)
+            from .offline.worker import new_output
+            new_output(out)
             for side,ws in (('ref',a),('cmp',b)):
                 for field in ('input','expected_output'):
                     entries[side][field]=copy_blob(ws.view.run,entries[side][field],out,side+'-'+field+'.bin')
@@ -116,7 +121,7 @@ def arguments(tree, tensor):
     return args,kwargs
 
 
-def run(package, *, side, device, store):
+def run(package, *, side, device, store, vendor_compiler=None):
     from .offline.limits import read_json
     from .store import create_run,Writer,finalize
     package=Path(package).resolve();packet=read_json(package/'replay.json')
@@ -131,10 +136,9 @@ def run(package, *, side, device, store):
         import os
         provider=compiler_expected['provider']
         config=dict(flagtree='on' if provider=='flagtree' else 'off')
-        if provider!='flagtree':
-            config['vendor_compiler']=os.environ.get('FLAGPROF_VENDOR_COMPILER') or str(Path(compiler_expected['module_path']).parents[1])
-        if provider=='flagtree' or (Path(config['vendor_compiler'])/'manifest.json').is_file():
-            select(config,cache_root=Path(store).resolve().parent/'component-cache')
+        if vendor_compiler is not None:
+            config['vendor_compiler'] = vendor_compiler
+        select(config, cache_root=Path(store).resolve(), target=device)
         actual_compiler=compiler_identity()
         if any(actual_compiler.get(k)!=compiler_expected.get(k) for k in ('provider','version','source_sha256')):
             raise ValueError('replay compiler source mismatch')

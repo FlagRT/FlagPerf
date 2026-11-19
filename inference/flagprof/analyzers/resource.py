@@ -87,7 +87,7 @@ def resource(work, params):
     count = 0
     with StoreView(work.view.run) as view:
         try:
-            for event in view.iter_monitor_events(types=('counter',), work=work.directory, limits=asdict(work.limits)):
+            for event in view.iter_monitor_events(types=('counter',), limits=asdict(work.limits)):
                 if event.get('ts') is None:
                     continue
                 entity = event['dev']

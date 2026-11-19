@@ -10,6 +10,9 @@ from copy import deepcopy
 from flagprof.vendors.session import SessionConfig,validate_chrome,requested_configuration
 from flagprof.vendors.contracts import load_contract
 
+FINAL_OPTIONS = {'data_simplification': False}
+
+
 class AscendProfiler:
     activity_source='npu'
 

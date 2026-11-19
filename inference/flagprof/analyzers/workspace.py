@@ -112,7 +112,7 @@ class Workspace:
             state=view.probe_status(limits=asdict(self.limits))
             self.statuses.extend(state['attachments'])
             try:
-                for stored in view.iter_events(work=self.directory, limits=asdict(self.limits)):
+                for stored in view.iter_events(limits=asdict(self.limits)):
                     r = dict(stored.record)
                     if r['t']=='opsum' and state['schema_version']=='1.0':
                         self.legacy_summary_calls+=r['n']
@@ -136,7 +136,7 @@ class Workspace:
                 self.limit_error = str(error)
                 self.notes.append(str(error))
         try:
-            for r in self.view.iter_native_relations(work=self.directory, limits=asdict(self.limits)):
+            for r in self.view.iter_native_relations(limits=asdict(self.limits)):
                 self.qualities[r['trace_uid']]=r.get('source_state',{})
                 self.db.execute('insert into native values(?,?,?,?)', (r['trace_uid'], str(r['loc']),
                     encode(r.get('owner')), encode(r)))

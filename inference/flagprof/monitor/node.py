@@ -27,7 +27,8 @@ def sampling_interval(requested, inventory, previous=None, calibrated=100):
     minimum=max(math.ceil(inventory.get('minimum_interval_ms',100)),calibrated)
     # SMI measures a whole command round. Round its minimum up to a second so
     # startup timing jitter cannot silently change the rule configuration.
-    if inventory.get('source') in ('npu-smi','nvidia-smi'):minimum=math.ceil(minimum/1000)*1000
+    quantum = inventory.get('interval_quantum_ms', 1)
+    minimum = math.ceil(minimum / quantum) * quantum
     interval=max(requested,minimum)
     if previous:
         if minimum>previous:raise ValueError('source sampling floor increased: recalibrate in a new session')
@@ -48,14 +49,7 @@ def worker(root):
         host = Host()
         inventory = dict(provider.inventory,boot_id=state['boot_id'],source_identity=identity['shipped_source_closure'],
                          descriptors=[m.snapshot() for m in provider.metrics+host.metrics])
-        calibrated=100
-        calibration = root/'telemetry-calibration.json'
-        if calibration.exists():
-            data = json.loads(calibration.read_text())
-            if (data.get('boot_id'),data.get('driver_version')) == (state['boot_id'],inventory.get('driver_version')):
-                inventory['idle_baselines'] = data.get('idle_baselines',{})
-                calibrated=math.ceil(data.get('minimum_interval_ms',100))
-        interval=sampling_interval(config['interval_ms'],inventory,state.get('inventory',{}).get('effective_interval_ms'),calibrated)
+        interval = sampling_interval(config['interval_ms'], inventory)
         inventory.update(effective_interval_ms=interval, requested_interval_ms=config['interval_ms'])
         atomic_json(root/'probe.json',dict(process=proc_key(),inventory=inventory))
         while not stopping and not (root/'worker-grant.json').exists():
@@ -63,6 +57,10 @@ def worker(root):
         if stopping: return 0
         grant = json.loads((root/'worker-grant.json').read_text())
         if grant['process'] != proc_key(): raise ValueError('worker lease grant identity')
+        from .calibration import calibrate
+        floor = calibrate(root, state['vendor'], 'agent', provider, inventory)
+        interval = sampling_interval(config['interval_ms'], inventory, state.get('inventory',{}).get('effective_interval_ms'), floor)
+        inventory.update(minimum_interval_ms=floor, effective_interval_ms=interval)
         sampler = Sampler(provider.calls()+host.calls(),interval,timeout=inventory.get('call_timeout_s',3),
                           queue_capacity=config['queue_capacity'])
         inventory['sampling_epoch_ns']=sampler.epoch_ns
@@ -193,7 +191,7 @@ def start(root, vendor, devices='all', config=None, *, module='flagprof.monitor.
         while not stopping:
             for name in ('probe.json','worker-grant.json','heartbeat'): (root/name).unlink(missing_ok=True)
             with edit(root) as state: state['status'] = 'starting'
-            child = subprocess.Popen([sys.executable,'-B','-S','-m',module,'--worker','--root',str(root)],
+            child = subprocess.Popen([sys.executable,'-B','-m',module,'--worker','--root',str(root)],
                                      stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
             child_key = proc_key(child.pid)
             with edit(root) as state: state['worker_process']=child_key

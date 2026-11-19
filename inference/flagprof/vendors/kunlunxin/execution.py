@@ -1,6 +1,18 @@
 # Copyright 2026 FlagOS Contributors
 # Licensed under the Apache License, Version 2.0.
 """Reuse the explicitly shared Kineto execution syntax; P800 identity remains separate."""
+TORCH_DEVICE = 'cuda'
+SMI = 'xpu-smi'
+BACKENDS = ('nccl', 'flagcx')
+
+
+def prepare_capture_environment(env, rank=None):
+    if rank is None:
+        rank = env.get('XPU_CUPTI_ENABLE_DEVICE', 0)
+    env['XPU_ENABLE_PROFILER_TRACING'] = '1'
+    env['XPU_CUPTI_ENABLE_DEVICE'] = str(rank)
+
+
 def initialize(rank):
     import os
     if os.environ.get('XPU_ENABLE_PROFILER_TRACING')=='1':

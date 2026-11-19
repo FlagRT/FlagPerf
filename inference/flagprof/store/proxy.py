@@ -142,7 +142,7 @@ class ProxyWriter(Writer):
             environment = dict(os.environ)
             root = str(Path(__file__).resolve().parents[2])
             environment['PYTHONPATH'] = os.pathsep.join([root]+([environment['PYTHONPATH']] if environment.get('PYTHONPATH') else []))
-            self._consumer = subprocess.Popen([sys.executable, '-B', '-S', '-m', 'flagprof.store._proxy_consumer', str(ident_path), str(ctrl_r), str(ack_w)], pass_fds=inherited, env=environment)
+            self._consumer = subprocess.Popen([sys.executable, '-B', '-m', 'flagprof.store._proxy_consumer', str(ident_path), str(ctrl_r), str(ack_w)], pass_fds=inherited, env=environment)
             os.close(ctrl_r)
             ctrl_r = None
             os.close(ack_w)

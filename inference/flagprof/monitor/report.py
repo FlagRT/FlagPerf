@@ -30,10 +30,16 @@ def lines(points,lo,hi):
 
 
 def generate(session, out=None, *, last='1h'):
+    from flagprof.offline.worker import output_operation
+    return output_operation(out or str(Path(session).resolve())+'-report', [session], _generate, session, last=last)
+
+
+def _generate(session, out, *, last):
     root=Path(session).resolve();state=load(root)
     out=Path(out or str(root)+'-report').resolve()
     if root==out or root in out.parents:raise ValueError('report must be outside session')
-    out.mkdir(parents=True,exist_ok=False)
+    from flagprof.offline.worker import new_output
+    new_output(out)
     end=state.get('ended_raw_ns') or raw_clock()
     begin=max(state['started_raw_ns'],end-duration(last)*1_000_000_000)
     rows={};aggregates={};events=0;errors=[]

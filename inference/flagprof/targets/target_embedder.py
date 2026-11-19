@@ -40,7 +40,7 @@ def main():
     p.add_argument('--pooling', choices=['mean', 'cls', 'last'], default='mean')
     p.add_argument('--max-length', type=int, default=256)
     p.add_argument('--batch-size', type=int, default=4)
-    p.add_argument('--device', default='cuda:0')
+    p.add_argument('--device')
     p.add_argument('--dtype', choices=['bfloat16', 'float16', 'float32'], default='bfloat16')
     p.add_argument('--outputs', required=True)
     p.add_argument('--samples')
@@ -49,6 +49,8 @@ def main():
     p.add_argument('--trust-remote-code', action='store_true',
                    help='Allow custom model Python already present in the local model directory')
     args = p.parse_args()
+    from flagprof.devices import execution_device
+    args.device = execution_device(args.device)
     if not args.model.startswith('hf:'):
         p.error('hf:<directory> required')
 
@@ -58,10 +60,8 @@ def main():
     from flagprof.runner import run_prepared, pool_embedding
     from flagprof.runner.__main__ import POOLING_SEMANTICS
     handle = current_attachment()
-    sync = torch.cuda.synchronize if args.device.startswith('cuda') else (torch.npu.synchronize if args.device.startswith('npu') else (lambda: None))
-    if args.device.startswith('npu'):
-        import torch_npu
-        torch.npu.set_device(args.device)
+    from flagprof.devices import synchronize_device
+    sync = synchronize_device(args.device)
 
     model_path = args.model[3:]
     rows = [json.loads(line) for line in Path(args.inputs).read_text().splitlines() if line.strip()]

@@ -16,7 +16,7 @@ from .store.manifest import atomic_json, proc_key
 
 
 def record(command, *, store, vendor, preset='perf', config=None, descriptors=None,
-           identity=None, backend_options=None,capture_mode='final',work=None,scratch=None,timeout=1800):
+           identity=None, backend_options=None,capture_mode='final',timeout=1800):
     if not math.isfinite(timeout) or timeout <= 0:
         raise ValueError('positive finite record timeout required')
     if preset in ('coverage', 'perf-lite', 'accuracy', 'monitor'):
@@ -25,7 +25,7 @@ def record(command, *, store, vendor, preset='perf', config=None, descriptors=No
         if descriptors or identity or backend_options:
             raise ValueError('final record uses explicit vendor/preset; window/plugin settings require windowed mode')
         from .offline.capture import record_final
-        return record_final(command,store=store,vendor=vendor,preset=preset,config=config,work=work,scratch=scratch,timeout=timeout)
+        return record_final(command,store=store,vendor=vendor,preset=preset,config=config,timeout=timeout)
     if capture_mode!='windowed':raise ValueError('unknown capture mode')
     if not command:
         raise ValueError('record needs a target command after --')
@@ -43,19 +43,23 @@ def record(command, *, store, vendor, preset='perf', config=None, descriptors=No
     run = create_run(store, identity=dict(argv=list(command), cwd=os.getcwd(), vendor=vendor, preset=preset)).resolve()
     from .monitor.lifecycle import Monitor
     monitor = Monitor(store, run/'monitor-ref.json', vendor, config, preset=preset)
-    settings = dict(run=str(run), vendor=vendor, preset=preset, config=config or {}, descriptors=descriptors,
+    settings = dict(run='.', vendor=vendor, preset=preset, config=config or {}, descriptors=descriptors,
                     identity=identity, backend_options=backend_options, wrapper_process=proc_key(),
                     injection_policy='direct_python_target_only')
     atomic_json(run/'record-config.json', settings)
     state = dict(run=str(run), target_exit=None, importer_exit=None, import_completion='not_started', finalize='not_started')
-    # Preserve the original environment for the importer; -S also prevents
-    # a user's sitecustomize from being executed a second time by this helper.
+    # Helpers run in the installed interpreter without target injection.
     original = dict(os.environ)
     original.pop('FLAGPROF_RECORD_CONFIG', None)
     root = str(Path(__file__).resolve().parent.parent)
     with tempfile.TemporaryDirectory(prefix='flagprof-injection-') as directory:
         Path(directory, 'sitecustomize.py').write_text('from flagprof._bootstrap import bootstrap\nbootstrap('+repr(directory)+')\n')
         env = dict(original)
+        if preset in ('perf', 'modules') and descriptors is None:
+            from .vendors import adapter
+            prepare = getattr(adapter(vendor, 'execution'), 'prepare_capture_environment', None)
+            if prepare:
+                prepare(env)
         monitor.environment(env)
         env['PYTHONPATH'] = os.pathsep.join([directory, root] + ([original['PYTHONPATH']] if original.get('PYTHONPATH') else []))
         env['FLAGPROF_RECORD_CONFIG'] = str(run/'record-config.json')
@@ -85,7 +89,7 @@ def record(command, *, store, vendor, preset='perf', config=None, descriptors=No
         importer_env = dict(original)
         importer_env['PYTHONPATH'] = os.pathsep.join([root] + ([original['PYTHONPATH']] if original.get('PYTHONPATH') else []))
         with (run/'logs/importer.log').open('wb') as log:
-            child = subprocess.run([sys.executable, '-B', '-S', '-m', 'flagprof._import_worker', str(run)],
+            child = subprocess.run([sys.executable, '-B', '-m', 'flagprof._import_worker', str(run)],
                                    env=importer_env, stdout=log, stderr=subprocess.STDOUT)
         state['importer_exit'] = child.returncode
         result = run/'import-result.json'
@@ -109,6 +113,6 @@ def record(command, *, store, vendor, preset='perf', config=None, descriptors=No
                state['importer_exit']==0 and state['import_completion']=='complete')
     state['status'] = 'complete' if success else 'incomplete'
     state['exit_code'] = (128-code if code < 0 else code) if code else (0 if success else 2)
-    atomic_json(run/'record-status.json', state)
+    atomic_json(run/'record-status.json', dict(state, run='.'))
     print(json.dumps(dict(run=str(run), status=state['status'], exit_code=state['exit_code'])))
     return state['exit_code']

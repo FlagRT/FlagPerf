@@ -21,9 +21,20 @@ class Monitor:
         self.root = Path(options.get('monitor_root') or root).resolve()
         self.vendor = vendor
         self.interval = options.get('monitor_interval_ms', 1000)
-        self.topology = options.get('monitor_topology') or ('host' if vendor == 'ascend' else 'local')
+        self.topology = options.get('monitor_topology')
         if not self.enabled:
             return
+        if self.topology is None:
+            from flagprof.registry import Registry
+            import importlib
+            try:
+                provider = Registry().describe('telemetry.' + vendor)
+            except ValueError:
+                bind(self.path, root=self.root, topology='unavailable')
+                self.error('no telemetry provider registered for ' + vendor)
+                self.enabled = False
+                return
+            self.topology = importlib.import_module(provider['module']).default_topology()
         shared = os.environ.get('FLAGPROF_MONITOR_REFERENCE')
         try:
             if shared:
@@ -45,7 +56,7 @@ class Monitor:
                     bind(self.path, monitor=monitor)
                     self.log = (monitor/'logs/sidecar.log').open('wb')
                     env = dict(os.environ); env.pop('FLAGPROF_RECORD_CONFIG', None)
-                    self.child = subprocess.Popen([sys.executable, '-B', '-S', '-m', 'flagprof.monitor',
+                    self.child = subprocess.Popen([sys.executable, '-B', '-m', 'flagprof.monitor',
                         '--root', str(self.root), '--run', str(monitor), '--vendor', vendor,
                         '--interval-ms', str(self.interval)], env=env, stdout=self.log, stderr=subprocess.STDOUT)
                     deadline = time.monotonic()+max(2, 2*self.interval/1000)

@@ -11,7 +11,7 @@ prefix; the protocol is called the acceptance suite (A/A x2 per model).
 
 Run inside the target container:
 
-    python3 -B tools/batch_driver.py --config tools/models.yaml --out /w/runs/batch-<date>
+    flagprof-batch --config models.yaml --out results
 
 Rows reference the three runner tasks (embedding / rerank / ctr) directly;
 ``task: attach`` rows are executed via their attach target script (legacy
@@ -53,16 +53,23 @@ def load_config(path):
         if r['id'] in seen:
             raise ValueError(f'duplicate model id: {r["id"]}')
         seen.add(r['id'])
+        for fields in (r, r.get('args', {})):
+            for key in ('target', 'package', 'inputs', 'inputs_from', 'inputs-from', 'model'):
+                value = fields.get(key)
+                if not isinstance(value, str):
+                    continue
+                prefix = 'hf:' if key == 'model' and value.startswith('hf:') else ''
+                fields[key] = prefix + str((Path(path).absolute().parent / value[len(prefix):]).resolve())
     return rows
 
 
-def build_cmd(row, run_idx, out_dir, device='cuda:0', dtype=None, batch_size=None):
+def build_cmd(row, run_idx, out_dir, device=None, dtype=None, batch_size=None):
     """One battery run as an argv list WITHOUT the interpreter (run_battery
     prepends sys.executable). Module-level for testability."""
     out = str(Path(out_dir) / f'{row["id"]}-run{run_idx}')
     task = row['task']
     dtype = dtype or row.get('dtype', 'bfloat16')
-    common = ['--device', device, '--dtype', dtype, '--outputs', out]
+    common = (['--device', device] if device else []) + ['--dtype', dtype, '--outputs', out]
     if task == 'attach':
         script = row['target']
         cmd = ['-B', script]
@@ -112,7 +119,7 @@ def _result_sha(path):
     return _score_digest(doc), doc.get('oracle_identity')
 
 
-def run_battery(row, out_dir, device='cuda:0', runner_cwd=None):
+def run_battery(row, out_dir, device=None, runner_cwd=None):
     """Two identical runs; returns A/A verdict plus artifact evidence."""
     entry = dict(id=row['id'], task=row['task'], runs=[])
     shas, idents, outs = [], [], []
@@ -171,13 +178,22 @@ def render_markdown(summary, generated_at):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument('--config', required=True)
-    ap.add_argument('--out', required=True)
-    ap.add_argument('--device', default='cuda:0')
+    selection = ap.add_mutually_exclusive_group(required=True)
+    selection.add_argument('--config', help='model list in YAML')
+    selection.add_argument('--example', choices=('cpu','models','hf2'), help='print a packaged YAML example')
+    ap.add_argument('--out', help='batch results directory')
+    ap.add_argument('--device')
     ap.add_argument('--filter', default=None, help='substring on model id')
     ap.add_argument('--dry-run', action='store_true')
     args = ap.parse_args(argv)
 
+    if args.example:
+        from importlib.resources import files
+        names = {'cpu':'models_local.yaml', 'models':'models.yaml', 'hf2':'models-hf2.yaml'}
+        print(files('flagprof.batch').joinpath(names[args.example]).read_text(), end='')
+        return 0
+    if not args.out:
+        ap.error('--config requires --out')
     rows = load_config(args.config)
     if args.filter:
         rows = [r for r in rows if args.filter in r['id']]

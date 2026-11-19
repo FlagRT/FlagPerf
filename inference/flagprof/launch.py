@@ -29,7 +29,7 @@ def worker(settings, rank):
     handle = None
     try:
         from .components.compiler import select
-        select(settings['config'], cache_root=Path(settings['root'])/'component-cache')
+        select(settings['config'], cache_root=Path(settings['root']), target=settings['vendor'])
         import importlib
         device = importlib.import_module('flagprof.vendors.'+settings['vendor']+'.execution').initialize(rank)
         os.environ['FLAGPROF_DEVICE'] = device
@@ -41,15 +41,15 @@ def worker(settings, rank):
             code = record_final(settings['command'], store=root/'delivery', vendor=settings['vendor'],
                                 preset=settings['preset'], config=settings['config'], rank=rank,
                                 timeout=settings['timeout'], capture_only=True,
-                                source_max_bytes=settings['source_max_bytes'],
-                                capture_filesystem=settings.get('capture_filesystem','ext4'))
+                                source_max_bytes=settings['source_max_bytes'])
             state['capture'] = str(next((root/'delivery').glob('capture-*')).relative_to(settings['root']))
         else:
             if settings['preset'] != 'none':
                 run = create_run(root/'delivery', identity=dict(group_id=settings['group_id'], rank=rank))
                 state['run'] = str(run.relative_to(settings['root']))
                 atomic_json(root/'worker.json', state)
-                handle = attach(run, settings['vendor'], preset=settings['preset'], config=settings['config'], rank=rank)
+                handle = attach(run, settings['vendor'], preset=settings['preset'], config=settings['config'], rank=rank,
+                                _compiler_store=Path(settings['root']))
                 handle.register_device(device)
                 if handle.state['status'] != 'running':
                     raise RuntimeError('worker attachment did not start')
@@ -75,52 +75,29 @@ def worker(settings, rank):
     return code
 
 
-def launch(command, *, store, nproc_per_node=2, comm_backend=None, flagcx=None, preset='perf',
+def launch(command, *, store, nproc_per_node=2, comm_backend=None, preset='perf',
            config=None, timeout=1800, source_max_bytes=1 << 30,
-           capture_only=False, capture_filesystem='ext4', vendor=None):
-    vendors = {'hccl':'ascend','flagcx':'ascend','nccl':'nvidia'}
-    if flagcx not in (None, 'off', 'on'):
-        raise ValueError('flagcx requires off or on')
-    selected = {'off':'hccl','on':'flagcx'}.get(flagcx)
-    if selected and comm_backend and selected != comm_backend:
-        raise ValueError('--flagcx conflicts with --comm-backend')
-    comm_backend = selected or comm_backend or 'hccl'
+           capture_only=False, vendor=None):
+    from .vendors import launch_backend
+    vendor, comm_backend = launch_backend(vendor, comm_backend)
     from .probes.config import resolve
     session_options, probe_options = resolve('coverage' if preset == 'none' else preset, config)
     config = dict(session_options, **probe_options)
     if preset == 'none':config['probes'] = 'none'
-    if nproc_per_node != 2 or comm_backend not in vendors:
-        raise ValueError('launch supports single-host TP2 HCCL/FlagCX/NCCL')
-    vendor = vendor or vendors[comm_backend]
-    if flagcx is not None and vendor != 'ascend':
-        raise ValueError('--flagcx shortcut requires Ascend; select --vendor and --comm-backend for other adapters')
-    if vendor not in ('ascend','nvidia','thead','kunlunxin'):
-        raise ValueError('unsupported launch vendor')
-    if vendor=='thead' and comm_backend not in ('flagcx','nccl'):
-        raise ValueError('PPU TP2 requires the NCCL-compatible or FlagCX backend')
-    if vendor=='kunlunxin' and comm_backend not in ('flagcx','nccl'):
-        raise ValueError('P800 TP2 requires FlagCX or the XPyTorch NCCL-compatible backend')
-    if vendor not in ('thead','kunlunxin') and vendor!=vendors[comm_backend]:
-        raise ValueError('launch vendor/backend mismatch')
+    if nproc_per_node != 2:
+        raise ValueError('launch supports single-host TP2')
     if capture_only and preset not in ('perf','modules'):
         raise ValueError('capture-only requires an official profiler preset')
-    if capture_filesystem != 'ext4' and not capture_only:
-        raise ValueError('overlay requires explicit capture-only')
     if not math.isfinite(timeout) or timeout <= 0:
         raise ValueError('positive finite timeout required')
     if not command or not Path(command[0]).name.startswith('python'):
         raise ValueError('launch requires a direct Python target')
-    from .offline.workspace import check_disk
+    from .offline.workspace import private_name
     from .offline.checkpoints import source_budget
     source_budget(source_max_bytes)
     root = Path(store).resolve()
-    if capture_only:
-        from .offline.workspace import check_capture_disk
-        check_capture_disk(root,vendor,capture_filesystem)
-    else:
-        check_disk(root)
     if root.exists():
-        if any(p.name not in ('monitor','targets','telemetry-calibration.json') for p in root.iterdir()):
+        if any(p.name not in ('monitor','targets','telemetry-calibration.json',private_name()) for p in root.iterdir()):
             raise ValueError('launch output already contains target data')
     else:
         root.mkdir(parents=True)
@@ -130,10 +107,10 @@ def launch(command, *, store, nproc_per_node=2, comm_backend=None, flagcx=None, 
     with socket.socket() as sock:
         sock.bind(('127.0.0.1', 0))
         port = sock.getsockname()[1]
-    settings = dict(schema='flagprof-launch/1', group_id=group_id, root=str(root), command=command,
+    settings = dict(schema='flagprof-launch/1', group_id=group_id, command=command,
                     world_size=2, backend=comm_backend, preset=preset, config=config,
                     timeout=timeout, source_max_bytes=source_max_bytes, vendor=vendor,
-                    capture_only=capture_only,capture_filesystem=capture_filesystem)
+                    capture_only=capture_only)
     atomic_json(root/'launch.json', settings)
     state = dict(schema='flagprof-group/1', group_id=group_id, world_size=2, backend=comm_backend,
                  status='running', ranks=[], stages=[])
@@ -182,10 +159,10 @@ def launch(command, *, store, nproc_per_node=2, comm_backend=None, flagcx=None, 
                        MASTER_ADDR='127.0.0.1', MASTER_PORT=str(port), FLAGPROF_COMM_BACKEND=comm_backend,
                        FLAGPROF_GROUP_ID=group_id, FLAGPROF_LAUNCH_WORKER='1')
             env.pop('FLAGPROF_RECORD_CONFIG', None)
-            if vendor=='kunlunxin' and env.get('XPU_ENABLE_PROFILER_TRACING')=='1':
-                # XPyTorch reads this at import, before initialize() can select
-                # the worker device. It must refer to this worker's ordinal.
-                env['XPU_CUPTI_ENABLE_DEVICE']=str(rank)
+            from .vendors import adapter
+            prepare = getattr(adapter(vendor, 'execution'), 'prepare_capture_environment', None)
+            if prepare and preset in ('perf', 'modules'):
+                prepare(env, rank)
             log = (root/('rank-'+str(rank)+'.log')).open('xb')
             logs.append(log)
             monitor.environment(env)
@@ -213,7 +190,7 @@ def launch(command, *, store, nproc_per_node=2, comm_backend=None, flagcx=None, 
             state['status'] = 'failed'
             return 2
         if capture_only:
-            state.update(status='captured',vendor=vendor,capture_filesystem=capture_filesystem)
+            state.update(status='captured',vendor=vendor)
             return 0
         # All device workers have exited. Finalize and import one rank at a time.
         for row in state['ranks']:
@@ -224,9 +201,7 @@ def launch(command, *, store, nproc_per_node=2, comm_backend=None, flagcx=None, 
                 with stage('official_analysis',row['rank']):
                     finish_capture(capture, timeout=max(1, deadline-time.monotonic()))
                 with stage('first_import',row['rank']):
-                    result = import_bundle(capture, store=root/('rank-'+str(row['rank']))/'runs',
-                                           work=root/('import-work-'+str(row['rank'])),
-                                           scratch=root/('scratch-'+str(row['rank'])))
+                    result = import_bundle(capture, store=root/('rank-'+str(row['rank']))/'runs')
                 row['run'] = str(Path(result['run']).relative_to(root))
                 row['import_status'] = result['status']
                 if result['status'] != 'complete':
@@ -277,4 +252,5 @@ def launch(command, *, store, nproc_per_node=2, comm_backend=None, flagcx=None, 
 
 
 if __name__ == '__main__':
-    raise SystemExit(worker(json.loads(Path(sys.argv[1]).read_text()), int(sys.argv[2])))
+    path = Path(sys.argv[1]).resolve()
+    raise SystemExit(worker(dict(json.loads(path.read_text()), root=str(path.parent)), int(sys.argv[2])))

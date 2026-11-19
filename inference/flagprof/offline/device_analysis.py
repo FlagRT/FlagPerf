@@ -21,7 +21,8 @@ def capture_context(directory, capture):
                                   and not meta.get('closed_before_target_return') and not meta.get('errors')))
     collection=meta.get('collection_run');argv=[];identity={};config={};steps=[]
     if collection:
-        run=directory/collection
+        from .checkpoints import checked_relative
+        run=directory/checked_relative(collection)
         manifest=read_json(run/'manifest.json');argv=manifest.get('identity',{}).get('argv',[])
         out['source_run_id']=manifest['run_id']
         from flagprof.store.manifest import writer_fragments

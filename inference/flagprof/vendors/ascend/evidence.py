@@ -3,6 +3,8 @@
 """Sealed profiler_info and SQLite self-description producer."""
 import json
 import sqlite3
+from pathlib import Path
+from .capture import analyse_trace
 from ..evidence import FLAGS,_consensus
 
 def derive(document, collector, trace_source, artifacts, configuration, exporter, evidence):
@@ -45,3 +47,28 @@ def derive(document, collector, trace_source, artifacts, configuration, exporter
         evidence['conflicts'].append(dict(field='actual',sources=configs))
     evidence['observations'].append(dict(versions=versions,schemas=schemas,
         end_markers=[source for name,(_,source) in artifacts.items() if name.endswith('.done')]))
+
+
+def final_configuration(directory, measured, trace, trace_values, end_count, raw_manifest):
+    from flagprof.offline.checkpoints import fileinfo
+    from flagprof.offline.limits import read_json
+    actual, sources, versions = {}, [], []
+    exporter = dict(status='unknown')
+    for name,info in raw_manifest['files'].items():
+        if Path(name).name.startswith('profiler_info') and Path(name).suffix=='.json':
+            if len(sources)>=16:raise ValueError('official configuration cardinality budget')
+            config=read_json(directory/'sealed-raw'/name)
+            common=config.get('config',{}).get('common_config',{})
+            extra=config.get('config',{}).get('experimental_config',{})
+            value={k:common.get(k) for k in FLAGS}
+            value.update(activities=[str(x).split('.')[-1] for x in common.get('activities',[])],
+                         profiler_level=extra.get('_profiler_level'),data_simplification=extra.get('_data_simplification'))
+            sources.append(dict(path='sealed-raw/'+name,sha256=info['sha256'],values=value))
+            versions.append(config.get('cann_version'))
+    for key in (*FLAGS,'activities','profiler_level','data_simplification'):
+        values=[row['values'][key] for row in sources]
+        actual[key]=values[0] if values and all(type(v) is type(values[0]) and v==values[0] for v in values) else None
+    if sources:
+        exporter=dict(source=[dict(path=r['path'],sha256=r['sha256']) for r in sources],
+                      version=versions[0] if all(v==versions[0] for v in versions) else None,schema_version=None)
+    return actual, sources, exporter

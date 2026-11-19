@@ -92,10 +92,10 @@ with torch.inference_mode():
 ```bash
 python -m flagprof delivery publish /path/to/full --out /path/to/new-archive
 python -m flagprof delivery verify /path/to/new-archive
-python -m flagprof delivery restore /path/to/new-archive --out /path/to/new-ext4-restore
+python -m flagprof delivery restore /path/to/new-archive --out /path/to/new-restore
 ```
 
-restore 输出原路径到恢复路径的映射；使用该映射找到图包，再运行 `verify_graph` 与回读。当前 delivery 的恢复目录要求 ext4；独立 export 的输出没有 Writer 的文件系统限制。
+restore 返回对象 ID 到恢复路径的映射。使用该映射找到图包，再运行 `verify_graph` 与回读。
 
 ## 接入其他 CPU 模型
 

@@ -2,6 +2,7 @@
 # Licensed under the Apache License, Version 2.0.
 """torchrun worker reusing attachments/capture, without inference TP2 rules."""
 import argparse
+from flagprof.vendors import adapter, is_kineto, vendor_names
 import json
 import os
 from pathlib import Path
@@ -11,7 +12,7 @@ import sys
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--store', required=True)
-    parser.add_argument('--vendor', required=True, choices=('thead','kunlunxin','nvidia'))
+    parser.add_argument('--vendor', required=True, choices=[v for v in vendor_names() if is_kineto(v)])
     parser.add_argument('--preset', default='perf-lite', choices=('none','perf-lite','coverage','accuracy','perf','modules'))
     parser.add_argument('--timeout', type=float, default=600)
     parser.add_argument('training_args', nargs=argparse.REMAINDER)
@@ -24,13 +25,11 @@ def main(argv=None):
     arguments = args.training_args[1:] if args.training_args[:1] == ['--'] else args.training_args
     destination = Path(args.store)/('rank-'+str(rank))
     destination.mkdir(parents=True, exist_ok=False)
-    if args.vendor == 'kunlunxin':
-        if os.environ.get('XPU_ENABLE_PROFILER_TRACING') != '1':
-            raise ValueError('set XPU_ENABLE_PROFILER_TRACING=1 before torchrun')
-        os.environ['XPU_CUPTI_ENABLE_DEVICE'] = str(local_rank)
-    import torch
-    torch.cuda.set_device(local_rank)
-    os.environ['FLAGPROF_DEVICE'] = 'cuda:'+str(local_rank)
+    provider = adapter(args.vendor, 'execution')
+    prepare = getattr(provider, 'prepare_capture_environment', None)
+    if prepare and args.preset in ('perf','modules'):
+        prepare(os.environ, local_rank)
+    os.environ['FLAGPROF_DEVICE'] = provider.initialize(local_rank)
     # The existing capture target initializes each child before attachment.
     os.environ['FLAGPROF_LAUNCH_WORKER'] = '1'
     handle = None; code = 1; run = None; error = None

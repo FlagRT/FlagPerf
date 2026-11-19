@@ -12,7 +12,6 @@ try:
 except ImportError:
     torch = None
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'targets'))
 from flagprof.training.ctr import (TASK_ARCHS, build_loss_fn, label_bit, loss_definition,
                                    prepare_ctr)
 from flagprof.training.engine import train
@@ -20,7 +19,7 @@ from flagprof.training.state import fingerprint
 
 
 def build_ctr_package(root, samples=8, seed=531):
-    import make_ctr_package
+    from flagprof.targets import make_ctr_package
     out = Path(root) / 'ctr-seq'
     argv_backup = sys.argv
     sys.argv = ['make_ctr_package.py', '--samples', str(samples),

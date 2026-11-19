@@ -2,7 +2,7 @@
 # Licensed under the Apache License, Version 2.0.
 """Rerank package v1: sealed query-doc inputs shared by reranker targets.
 
-Canonical runner-side copy (targets/rerank_common.py re-exports from here).
+Shared by the runner, input generator and attach target.
 
 Layout:
   manifest.json           files[].sha256, oracle_id, score_semantics,

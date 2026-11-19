@@ -3,6 +3,7 @@
 from .store._offline_writer import offline_writer
 """Separate owner-exit handoff; never injected into the target process."""
 import json
+import os
 from pathlib import Path
 import sys
 from .store import Writer, StoreView
@@ -11,6 +12,11 @@ from .vendors.import_common import import_capture, importer_writer_config
 
 
 def main(run):
+    from .offline.worker import on_disk
+    return on_disk(Path(run).resolve().parent, _import, run)
+
+
+def _import(run):
     run = Path(run)
     from .offline.limits import read_json
     # Bounded single-process entry; historical windowed artifacts stay on their
@@ -31,20 +37,21 @@ def main(run):
         from .offline.checkpoints import checked_relative
         from .offline.capture import seal_capture,finish_capture
         from .offline.service import import_bundle
-        capture=run/checked_relative(state['capture_relative'])
+        capture=(run/checked_relative(state['capture_relative']) if state.get('capture_relative') else Path(state['capture']))
         meta=read_json(capture/'producer.json')
         if process_alive(meta['process']) is not False:raise ValueError('producer must exit before handoff')
         meta['producer_exited_before_analysis']=True
         if not (capture/'capture-input.json').exists():seal_capture(capture,meta,state['format_vendor'])
         finish_capture(capture,timeout=1800)
         result=import_bundle(capture,store=run.parent/'analysis-runs')
-        atomic_json(run/'import-result.json',result)
+        atomic_json(run/'import-result.json', dict(result, capture=os.path.relpath(capture, run),
+                                                   run=os.path.relpath(result['run'], run)))
         return 0 if result['status']=='complete' else 2
     results = []
     with offline_writer(run, config=importer_writer_config()) as writer:
         for path in sorted((run/'attachments').glob('*/state.json')):
             state = json.loads(path.read_bytes())
-            capture = Path(state['capture'])
+            capture = run/state['capture_relative'] if state.get('capture_relative') else Path(state['capture'])
             row = dict(attachment=state['id'], status='failed', collector_status=state.get('collector_status'))
             try:
                 session = json.loads((capture/'session.json').read_bytes())
@@ -68,4 +75,5 @@ def main(run):
 
 
 if __name__ == '__main__':
+    from flagprof._import_worker import main
     sys.exit(main(sys.argv[1]))

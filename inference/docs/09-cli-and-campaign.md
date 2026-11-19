@@ -4,17 +4,17 @@
 
 > 2026-11-16 发布状态：当前新增 watch、export、report baseline/render 和三路 Oracle 参数；可执行用法见 [使用说明](usage.md)。下文批量调度等条目保留设计范围。
 
-> **当前实现更新（2026-10-26，D33）**：已落地动词为 record/inspect/import/page/seal/analyse。record 默认 final，窗口模式须显式 --capture-mode windowed；B run 的 inspect 自动有界。report/campaign/watch 仍为后续目标。生产目录与命令见[默认 B 使用说明](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-e854eaa4d4fc)，整合证据见[交付记录](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-dbcab1a14471)。下文 2026-10-18 状态保留历史语境。
+现行命令以 `flagprof --help` 和[使用指南](usage.md)为准。已发布的入口包括 record、launch、inspect、page、seal、analyse、import、report、replay、watch、delivery 和 export。下文保留 2026-10-18 的设计与示例，campaign 是规划中的功能。
 
 > 上游：[02 架构](02-architecture.md) §3/§4、[05 预设](05-probes-and-vendors.md) §3、[07 分析器](07-analyzers-and-reports.md)
 
 ## 1. 设计原则：按动词扩展，不按分析种类扩展
 
-> **当前实现（T9，2026-10-18）**：CLI 目前只有两个动词——**`record`** 与 **`inspect`**（`python3 -m flagprof --help`）。下文的 `report`、`campaign`、`watch` 均为**设计目标（未实现）**：`campaign` 属 P5，`watch` 属 P3，`report` 随分析器落地（阶段见 [10 路线图](10-roadmap.md)）。目前的"campaign"只是 `tools/acceptance/` 下的验收脚本（如 `t93_campaign.py`），不是产品命令，也不读写下文的 `_index/`。
+> **2026-10-18 的 T9 快照**：当时 CLI 只有两个动词——**`record`** 与 **`inspect`**（`python3 -m flagprof --help`）。下文的 `report`、`campaign`、`watch` 均为**设计目标（未实现）**：`campaign` 属 P5，`watch` 属 P3，`report` 随分析器落地（阶段见 [10 路线图](10-roadmap.md)）。目前的"campaign"只是 `tools/acceptance/` 下的验收脚本（如 `t93_campaign.py`），不是产品命令，也不读写下文的 `_index/`。
 
 v1 的 10 个顶层命令是按"分析种类"长出来的（accuracy / performance / preview / oracle / performance-baseline / repack-reference…），能力增加则命令增加（[01 §2.4](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/01-diagnosis.md)）。
 
-v2 固定为 **5 个动词**，新增能力只增加 `report` 的分析器名或 `record` 的预设，不增加顶层命令。
+初版设计列出 **5 个动词**，新增能力只增加 `report` 的分析器名或 `record` 的预设，不增加顶层命令。
 
 | 动词 | 作用 |
 |---|---|
@@ -30,7 +30,7 @@ v2 固定为 **5 个动词**，新增能力只增加 `report` 的分析器名或
 >
 > - **record**：`flagprof record --store <dir> --vendor <id> [--preset {perf,modules}] [--active N] [--windows N] [--invalid-policy {stop,continue}] [--plugins <descriptors.json>] -- <python 目标>`。`--store`、`--vendor` 必传；`--preset` 默认 `perf`；`--active`（默认 5）、`--windows`（默认 2）是每窗步数与窗口数。只注入 wrapper 直接启动的 Python 目标，后代与 worker 须显式 attach（[D32](DECISIONS.md#d32--record-自动注入范围只注入-wrapper-直接启动的-python-目标)，见 [02 §3](02-architecture.md#3-目标接入attach--wrap--launch)）；被测代码当前须显式调用 `step()` 推进窗口（该方式按 [D33](DECISIONS.md#d33--恢复attach-不改被测代码)（用户 2026-10-20）降为**可选项**：默认模式恢复"attach 不改被测代码"、由工具侧自动推进窗口，机制待设计，见 [02 §3](02-architecture.md#3-目标接入attach--wrap--launch)）。目标退出后另起独立进程导入，再 finalize。
 > - **inspect**：`flagprof inspect <run> [--verify] [--json]`，只接**单个 run 路径**，读已存的身份与证据状态。
-> - **未实现**（设计目标，下文保留）：`--probes`、`--seal`、`--inputs-from`、`--experiment`、`--layers`、`--blob`、`--out`、`--target`、`--task`、`--profile`、`--component`；`perf-lite`、`accuracy`、`coverage`、`monitor` 预设（见 [05 §3](05-probes-and-vendors.md#3-预设preset)）；`--vendor` 自动探测（当前必须显式传）；`inspect runs --model --where ...` 的 run 查询（§5.1，P5）。
+> - **T9 当时的设计目标**：`--probes`、`--seal`、`--inputs-from`、`--experiment`、`--layers`、`--blob`、`--out`、`--target`、`--task`、`--profile`、`--component`；`perf-lite`、`accuracy`、`coverage`、`monitor` 预设（见 [05 §3](05-probes-and-vendors.md#3-预设preset)）；`--vendor` 自动探测（当前必须显式传）；`inspect runs --model --where ...` 的 run 查询（§5.1，P5）。
 > - **已知缺口（T9.4 待修）**：`inspect` 不显示 run 级 `truncated`/`lost`（被 SIGKILL 的 run 在 inspect 里看不出不完整）；`inspect` 对不存在的路径输出为空且退出 0；`record` 的窗口日志来源尚未接线，生产 record 下"日志报错判 invalid"不会触发，也不留"日志未检查"的痕迹（均见 [05 §4.3](05-probes-and-vendors.md#43-生命周期义务当前实现t92026-10-18)）。
 
 ```bash
@@ -45,7 +45,7 @@ flagprof record --preset perf --target hf:$MODELS/Qwen3-Embedding-0.6B --task em
 flagprof record --profile profiles/qwen3-embedding-0.6b.yaml --preset accuracy --seal --out runs/
 ```
 
-> 上面三种形态的 CLI 示例均为**设计目标（未实现）**；当前可用的 wrap 形态见本节开头的"当前实现"。第二条 launch 示例中的 `--seal` 另见下表注。
+> 上面三种形态为初版命令草案；当前可用的 wrap 形态见本节开头的"当前实现"。第二条 launch 示例中的 `--seal` 另见下表注。
 
 常用参数：
 

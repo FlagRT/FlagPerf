@@ -8,8 +8,7 @@ import unittest
 from pathlib import Path
 
 import sys
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'targets'))
-from rerank_common import load_package, causal_yes_scores, sequence_logit_scores, sha
+from flagprof.runner.rerank_common import load_package, causal_yes_scores, sequence_logit_scores, sha
 
 
 def build_package(root, rows, batch_size=2, corrupt=None):

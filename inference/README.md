@@ -15,43 +15,39 @@ flowchart LR
 
 先阅读 [快速使用](docs/usage.md)，参与开发时从 [框架与协作导航](docs/README.md) 开始。旧版配置、命令和结果格式的迁移方式见 [版本迁移](docs/migration.md)。
 
-昆仑芯 P800 的镜像、设备身份和复现步骤见 [P800 Inference v2](../docs/kunlunxin/inference-v2.md)，[验证记录](../docs/kunlunxin/inference-v2-validation.md) 包含开放缺陷：OneRec 单卡/TP2 第 14 个生成 token 不同（P800-INF-007），尚不能声明 TP2 精度通过；性能保持 `not_qualified`。
+昆仑芯 P800 的当前命令见[使用指南](docs/usage.md#p800-候选运行栈)，既有实测镜像和身份清单字段见 [P800 适配资料](../docs/kunlunxin/inference-v2.md)。[验证记录](../docs/kunlunxin/inference-v2-validation.md) 包含开放缺陷：OneRec 单卡/TP2 第 14 个生成 token 不同（P800-INF-007），尚不能声明 TP2 精度通过；该次验证未授予性能资格。
 
 训练程序复用本采集与 Store 架构，使用 [Training v2](../docs/training/v2.md) 的独立训练协议和报告，不套用推理 TP2 规则。
 
 ## 环境与最小入口
 
-离线导入、读取和报告使用 Python 3.9+ 标准库。采集在已经准备好的设备环境内运行：NVIDIA 使用 PyTorch profiler；Ascend 使用匹配的 PyTorch、torch_npu 与 CANN；P800 使用指南锁定的 XPyTorch/FlagRT 环境及前置 tracing 变量。内置 Hugging Face runner 另需 Transformers 和本地模型、输入。环境由使用者准备。
+离线导入、读取和报告使用 Python 3.9+ 标准库。采集在已经准备好的设备环境内运行：NVIDIA 使用 PyTorch profiler；Ascend 使用匹配的 PyTorch、torch_npu 与 CANN；P800 使用支持 profiler 的 XPyTorch/FlagRT，FlagPerf 在创建目标进程时设置 tracing 变量。内置 Hugging Face runner 另需 Transformers 和本地模型、输入。环境由使用者准备。
 
-在仓库根目录执行：
-
-```bash
-python3 -B -S inference/run.py --help
-python3 -B -S inference/run.py record --help
-```
-
-也可进入模块目录使用统一模块入口：
+从仓库根目录安装，后续命令可以在任意目录执行。
 
 ```bash
-cd inference
-export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"
-python3 -B -S -m flagprof --help
-python3 -B -S -m flagprof.runner --help
+python -m pip install ./inference
+flagprof --help
+flagprof record --vendor ascend --store ./results -- python my_inference.py
+flagprof import "$CAPTURE" --store ./results
+flagprof inspect "$RUN" --verify
+flagprof page "$RUN" --limit 10
+flagprof report "$RUN" --out ./report
 ```
 
-`run.py` 与 `python -m flagprof` 使用同一个 CLI。正式采集命令不加 `-S`，使设备环境中的 PyTorch 和厂商 SDK 可导入。需要从任意目录使用时可安装此模块：`python3 -m pip install --no-deps -e ./inference`（在仓库根目录执行）。
+`CAPTURE` 指已封存的采集，`RUN` 取命令输出中的 run 路径。只读查看可直接使用挂载的结果，报告写入所选输出盘。`python -m flagprof` 使用相同参数。无需设备的完整示例见[快速使用](docs/usage.md#第一次使用先读一个样例)。
 
 ## 当前能力
 
 | 能力 | 生产入口与范围 |
 |---|---|
 | 进程采集 | `record`、`flagprof.attach()`；默认完整会话 `final`，显式 `windowed` 可选 |
-| 设备分析 | NVIDIA / Ascend / P800 适配器；设备区间、官方显存、通信和请求窗口分析；具体关联、时钟和完整性能力按厂商证据判定 |
+| 设备分析 | NVIDIA / Ascend / 平头哥 PPU / 昆仑芯 P800 适配器；设备区间、官方显存、通信和请求窗口分析；具体关联、时钟和完整性能力按厂商证据判定 |
 | 主机分析 | dispatch、module、user、route、tensor 和 communication 探针；FlagGems / FlagTree 组件选择、真实编译器与 JIT 证据 |
 | 数值诊断 | accuracy 模型／逐层／指定层内算子采集、单 run 或 TP2 组的 `report oracle`、带编译器身份核对的算子 replay |
 | 单机双进程 | `launch --nproc-per-node 2`；NCCL、HCCL、FlagCX，逐 rank Store 与 group 报告 |
 | 内置运行器 | `python -m flagprof.runner`：本地 Hugging Face embedding / generation / rerank 与 CTR 模板；其他模型可通过自身 Python 程序接入 |
-| 离线消费 | `seal`、`analyse`、`import`、`inspect`、`page`、`report`；Store、work、scratch 分离 |
+| 离线消费 | `seal`、`analyse`、`import`、`inspect`、`page`、`report`；自动管理检查点和临时索引 |
 | 资源监控 | Ascend / NVIDIA 遥测、框架显存边界、阶段与资源联合时间线；`watch` 独立会话、滚动保留、归档恢复 |
 | 在线诊断 | 显式 `--diagnose on`：OOM、心跳、执行停滞、单机 TP2 同步通信超时，保留证据和覆盖 |
 | 计算图导出 | `export` 独立 CPU 入口：Qwen3-Embedding 固定形状 FX / ONNX；通用 `ExportSpec` API |

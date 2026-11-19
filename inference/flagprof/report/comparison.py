@@ -55,7 +55,12 @@ def change(a,b,allowed):
                 reason=None if valid and a else 'zero_baseline' if valid else 'not_comparable_or_missing')
 
 
-def generate(reports,out,*,declare=None,work=None,limits=None):
+def generate(reports, out, *, declare=None, limits=None):
+    from flagprof.offline.worker import output_operation
+    return output_operation(out, reports, _generate, reports, declare=declare, limits=limits)
+
+
+def _generate(reports,out,*,declare=None,limits=None):
     from .model import opened_model,read_document
     from . import write_json
     from .product import write_report
@@ -63,7 +68,7 @@ def generate(reports,out,*,declare=None,work=None,limits=None):
     if any(out==Path(p).resolve() or Path(p).resolve() in out.parents or out in Path(p).resolve().parents for p in reports):
         raise ValueError('comparison output must be separate from source reports')
     out.mkdir(parents=True,exist_ok=True)
-    with opened_model(work,limits) as model:
+    with opened_model(limits=limits) as model:
         sources=[]
         for report in reports:
             path=Path(report).resolve();value=read_document(path/'result.json',model)
@@ -131,13 +136,13 @@ def generate(reports,out,*,declare=None,work=None,limits=None):
         for index,source in enumerate(sources):
             from .product import redraw
             local=out/('source-'+str(index))
-            if not local.exists():redraw(source['report'],local,work=work,limits=limits)
+            if not local.exists():redraw(source['report'],local,limits=limits)
             source['local_report']='source-'+str(index)+'/report.html'
             source['comparison_status']='not_comparable' if any(p['status']=='not_comparable' for p in pairs if source['report'] in (p['left'],p['right'])) else 'comparable'
         result=dict(schema='device-comparison/1',declaration=declare or {},sources=sources,comparisons=pairs,
                     window_comparisons=window_pairs,metric_comparisons=metrics,
                     note='第一份报告为基准。变化因素完整保留；差值描述观测变化，不自动归因于设备或组件。工作量时长和不作为加速比。')
         with (out/'result.json').open('w') as stream:write_json(stream,result);stream.write('\n')
-        write_report(out,result,work=work,limits=limits)
+        write_report(out,result,limits=limits)
         # Caller-compatible materialized summaries; large input tables remain on disk.
         return dict(result,sources=[dict(s,data=list(s['data']),windows=list(s['windows'])) for s in sources])

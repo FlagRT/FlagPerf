@@ -18,10 +18,10 @@ from flagprof.vendors.ascend.telemetry_health import health_events
 class FoundationTests(unittest.TestCase):
     def test_smi_round_jitter_preserves_frozen_sampling_configuration(self):
         from flagprof.monitor.node import sampling_interval
-        self.assertEqual(sampling_interval(1000,dict(source='npu-smi',minimum_interval_ms=1182)),2000)
-        self.assertEqual(sampling_interval(1000,dict(source='npu-smi',minimum_interval_ms=1700),2000),2000)
+        self.assertEqual(sampling_interval(1000,dict(source='npu-smi',interval_quantum_ms=1000,minimum_interval_ms=1182)),2000)
+        self.assertEqual(sampling_interval(1000,dict(source='npu-smi',interval_quantum_ms=1000,minimum_interval_ms=1700),2000),2000)
         with self.assertRaisesRegex(ValueError,'sampling floor increased'):
-            sampling_interval(1000,dict(source='npu-smi',minimum_interval_ms=2100),2000)
+            sampling_interval(1000,dict(source='npu-smi',interval_quantum_ms=1000,minimum_interval_ms=2100),2000)
 
     def test_wall_clock_jump_does_not_extend_deadline(self):
         with tempfile.TemporaryDirectory() as folder:

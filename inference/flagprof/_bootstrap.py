@@ -26,6 +26,7 @@ def bootstrap(injection):
         chain_sitecustomize(injection)
         return
     config = json.loads(Path(config_path).read_bytes())
+    config['run'] = str((Path(config_path).resolve().parent / config['run']).resolve())
     from .store.manifest import atomic_json, proc_key
     expected = config.get('wrapper_process')
     try:
@@ -46,7 +47,7 @@ def bootstrap(injection):
     atomic_json(handshake, state)
     try:
         from .components.compiler import select
-        select(config['config'], cache_root=Path(config['run']).parent/'component-cache')
+        select(config['config'], cache_root=Path(config['run']).parent, target=config['vendor'])
         chain_sitecustomize(injection)
         handle = attach(config['run'], config['vendor'], preset=config['preset'], config=config['config'],
                         registry=Registry(config.get('descriptors')), identity=config.get('identity'),

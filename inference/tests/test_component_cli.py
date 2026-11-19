@@ -45,26 +45,20 @@ class ComponentCLITests(unittest.TestCase):
         self.assertEqual(options['preset'], 'coverage')
         self.assertEqual(options['config'], dict(flaggems='on', flaggems_include='/inputs/include.json', flagtree='on'))
 
-    def test_shortcut_conflicts_fail_before_launching_workers(self):
-        for options, reason in [
-            (dict(flagcx='on', comm_backend='hccl'), 'conflicts'),
-            (dict(flagcx='on', vendor='kunlunxin'), 'shortcut requires Ascend'),
-            (dict(flagcx='on', vendor='thead'), 'shortcut requires Ascend'),
-            (dict(flagcx='off', vendor='nvidia'), 'shortcut requires Ascend'),
-        ]:
-            with self.subTest(options=options), patch('flagprof.launch.subprocess.Popen') as process:
-                with self.assertRaisesRegex(ValueError, reason):
-                    launch(['python', 'target.py'], store='/unused', **options)
+    def test_incompatible_backend_fails_before_launching_workers(self):
+        for vendor, backend in [('ascend','nccl'), ('nvidia','hccl'), ('thead','hccl'), ('kunlunxin','hccl')]:
+            with self.subTest(vendor=vendor), patch('flagprof.launch.subprocess.Popen') as process:
+                with self.assertRaisesRegex(ValueError, 'supports --comm-backend'):
+                    launch(['python', 'target.py'], store='/unused', vendor=vendor, comm_backend=backend)
                 process.assert_not_called()
 
-    def test_launch_default_and_shortcuts_select_backend(self):
+    def test_selected_vendor_chooses_its_backend(self):
         class StopBeforeOutput(Exception):
             pass
-        for options, backend in [({}, 'hccl'), (dict(flagcx='off'), 'hccl'),
-                                 (dict(flagcx='on'), 'flagcx')]:
+        for options, backend in [(dict(vendor='ascend'), 'hccl'), (dict(vendor='nvidia'), 'nccl'),
+                                 (dict(vendor='kunlunxin', comm_backend='flagcx'), 'flagcx')]:
             with self.subTest(options=options), tempfile.TemporaryDirectory() as tmp:
-                with patch('flagprof.offline.workspace.check_disk'), \
-                     patch('flagprof.launch.socket.socket') as socket_factory, \
+                with patch('flagprof.launch.socket.socket') as socket_factory, \
                      patch('flagprof.launch.atomic_json', side_effect=StopBeforeOutput) as save:
                     socket_factory.return_value.__enter__.return_value.getsockname.return_value = ('127.0.0.1', 12345)
                     with self.assertRaises(StopBeforeOutput):
@@ -83,12 +77,11 @@ class ComponentCLITests(unittest.TestCase):
             pass
         for preset in ('perf', 'modules'):
             with self.subTest(preset=preset), tempfile.TemporaryDirectory() as tmp:
-                with patch('flagprof.offline.workspace.check_disk'), \
-                     patch('flagprof.launch.socket.socket') as socket_factory, \
+                with patch('flagprof.launch.socket.socket') as socket_factory, \
                      patch('flagprof.launch.atomic_json', side_effect=StopBeforeWorkers) as save:
                     socket_factory.return_value.__enter__.return_value.getsockname.return_value = ('127.0.0.1', 12345)
                     with self.assertRaises(StopBeforeWorkers):
-                        main(['launch', '--store', str(Path(tmp)/'launch'), '--preset', preset,
+                        main(['launch', '--vendor', 'ascend', '--store', str(Path(tmp)/'launch'), '--preset', preset,
                               '--profile-memory', '--flagtree', 'on', '--', 'python', 'target.py'])
                 config = save.call_args.args[1]['config']
                 sdk, probes = resolve(preset, config)

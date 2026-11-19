@@ -16,9 +16,9 @@ def parser():
     p.add_argument('--inputs',help='JSONL of token IDs (causal-lm) or triplet groups (embedding)')
     p.add_argument('--ctr-arch',help='CTR architecture (dlrm din widedeep deepfm dcn sasrec lightgcn bst dien dcnmix esmm mmoe ple dssm); required')
     p.add_argument('--package',help='Sealed package directory (ctr/rerank task); digests verified, corpus unchanged; ctr may omit it to generate the deterministic default corpus')
-    p.add_argument('--pooling',choices=('last','cls','mean'),default=None,help='Embedding pooling; optional for adapted models in targets/model_registry.json, otherwise required')
+    p.add_argument('--pooling',choices=('last','cls','mean'),default=None,help='Embedding pooling; optional for adapted models in the installed model registry, otherwise required')
     p.add_argument('--temperature',type=float,default=.05,help='InfoNCE temperature (embedding task)')
-    p.add_argument('--rerank-score',choices=('causal_yesno','sequence_logit'),default=None,help='Rerank scoring semantics; optional for adapted models in targets/model_registry.json, otherwise required; must match the package manifest')
+    p.add_argument('--rerank-score',choices=('causal_yesno','sequence_logit'),default=None,help='Rerank scoring semantics; optional for adapted models in the installed model registry, otherwise required; must match the package manifest')
     p.add_argument('--outputs',required=True)
     p.add_argument('--device',default='cpu')
     p.add_argument('--steps',type=int,default=3,help='Total optimizer steps, including resumed steps')
@@ -50,7 +50,7 @@ def local_files(model):
 def ensure_generated(kind, outputs, seed):
     """Generate the deterministic default corpus or CTR package next to --outputs.
 
-    The generators are the sealed, seeded CLI tools under inference/targets/;
+    The generators are the installed flagprof.targets modules;
     an existing result is reused untouched. Single-process only: DDP ranks
     must share an explicit --inputs/--package instead of racing on creation.
     """
@@ -59,12 +59,10 @@ def ensure_generated(kind, outputs, seed):
     target=base.with_name(base.name+suffix)
     marker='groups.jsonl' if kind=='corpus' else 'manifest.json'
     if (target/marker).exists(): return str(target)
-    script=Path(__file__).resolve().parents[2]/'targets'/(
-        'make_embedding_corpus.py' if kind=='corpus' else 'make_ctr_package.py')
-    if not script.is_file(): raise ValueError('generator script missing: %s' % script)
+    module = 'flagprof.targets.' + ('make_embedding_corpus' if kind=='corpus' else 'make_ctr_package')
     target.mkdir(parents=True, exist_ok=True)
     import subprocess, sys
-    cmd=[sys.executable,'-B',str(script),'--seed',str(seed)]
+    cmd=[sys.executable,'-B','-m',module,'--seed',str(seed)]
     if kind=='corpus':
         cmd += ['--groups','32','--negs','3','--out',str(target/'groups.jsonl')]
     else:
@@ -165,7 +163,7 @@ def execute(args):
             pooling,pooling_source=resolve(args.pooling,args.model,kind='pooling')
             if not pooling:
                 raise ValueError('embedding requires --pooling (last|cls|mean); model %r is not in '
-                                 'inference/targets/model_registry.json, so no default pooling is known' % args.model)
+                                 'the installed flagprof.targets model registry, so no default pooling is known' % args.model)
             protocol['pooling_source']=pooling_source
             inputs=args.inputs
             if not inputs:
@@ -196,7 +194,7 @@ def execute(args):
             score,score_source=resolve(args.rerank_score,args.model,kind='rerank_score')
             if not score:
                 raise ValueError('rerank requires --rerank-score (causal_yesno|sequence_logit); model %r is not in '
-                                 'inference/targets/model_registry.json, so no default scoring semantics is known' % args.model)
+                                 'the installed flagprof.targets model registry, so no default scoring semantics is known' % args.model)
             protocol['rerank_score_source']=score_source
             from transformers import AutoTokenizer
             source=args.model.removeprefix('hf:')

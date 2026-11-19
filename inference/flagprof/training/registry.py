@@ -2,19 +2,20 @@
 # Licensed under the Apache License, Version 2.0.
 """Adapted-model registry for the training tasks.
 
-Reads ``inference/targets/model_registry.json`` so users can omit
+Reads ``flagprof/targets/model_registry.json`` so users can omit
 ``--pooling`` / ``--rerank-score`` when they name an already-adapted model.
 Lookup matches the model directory name exactly, then the longest matching
 prefix rule. An explicit CLI flag always wins and the origin of the chosen
 value is returned so the training protocol can record it faithfully.
 """
 import json
+from importlib.resources import files
 from pathlib import Path
 
 POOLS = ('last', 'cls', 'mean')
 SCORES = ('causal_yesno', 'sequence_logit')
 TASKS = ('embedding', 'rerank')
-REGISTRY_PATH = Path(__file__).resolve().parents[2] / 'targets' / 'model_registry.json'
+REGISTRY_PATH = files('flagprof.targets').joinpath('model_registry.json')
 
 
 def load_registry(path=None):

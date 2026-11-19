@@ -42,7 +42,7 @@ def configuration(preset='perf', **options):
 
 class Attachment:
     def __init__(self, run, vendor, *, preset='perf', config=None, registry=None, rank=0,
-                 node_index=None, identity=None, backend_options=None, log_reader=None,capture_mode='final',capture_filesystem='ext4'):
+                 node_index=None, identity=None, backend_options=None, log_reader=None,capture_mode='final', _compiler_store=None):
         registry = registry or Registry()
         descriptor = registry.describe(vendor)
         if descriptor['kind'] != 'vendor':
@@ -50,15 +50,12 @@ class Attachment:
         if capture_mode not in ('final','windowed'):raise ValueError('unknown capture mode')
         if capture_mode=='final' and set(config or {}) & {'active','windows','log_files','invalid_policy'}:
             raise ValueError('window settings require capture_mode=windowed')
-        if capture_mode == 'final' and preset in ('perf', 'modules'):
-            from .offline.workspace import check_capture_disk
-            check_capture_disk(run,descriptor['format_vendor'],capture_filesystem)
         self.rank = rank
         self.capture_mode=capture_mode
         from .probes.config import resolve
         session_options, probe_options = resolve(preset, config)
         from .components.compiler import select
-        select(probe_options, cache_root=Path(run).parent/'component-cache')
+        select(probe_options, cache_root=_compiler_store or Path(run).parent, target=vendor)
         official = preset in ('perf', 'modules')
         config = configuration(preset, **session_options)
         self.pid = os.getpid()
@@ -75,9 +72,8 @@ class Attachment:
         self.monitor_reference = self.run/'monitor-ref.json'
         self.monitor_parent = os.environ.get('FLAGPROF_MONITOR_REFERENCE')
         self.state = dict(id=self.id, process=proc_key(), vendor=vendor, format_vendor=descriptor['format_vendor'],
-                          preset=preset, capture=str(self.capture), capture_relative=str(self.capture.relative_to(self.run)),
+                          preset=preset, capture_relative=str(self.capture.relative_to(self.run)),
                           capture_mode=capture_mode,status='starting',
-                          capture_filesystem=capture_filesystem,
                           capabilities=dict(enabled=['official_session', 'writer', 'explicit_context'],
                               unavailable=['module_probe', 'dispatch_probe', 'route_probe', 'compile_probe', 'eager_module_tree']),
                           import_status='pending_owner_exit')
@@ -101,8 +97,11 @@ class Attachment:
             raise
         try:
             backend_options=dict(backend_options or {})
+            from .vendors import adapter
+            profile = adapter(descriptor['format_vendor'], 'session')
             if official:
-                if capture_mode=='final' and descriptor['format_vendor']=='ascend':backend_options.setdefault('data_simplification',False)
+                if capture_mode == 'final':
+                    backend_options = {**getattr(profile, 'FINAL_OPTIONS', {}), **backend_options}
                 backend, implementation = registry.create(vendor, **backend_options)
                 self.state['descriptor'] = implementation
                 from .vendors.final_session import FinalSession
@@ -110,12 +109,9 @@ class Attachment:
                 if capture_mode=='final':self.session.meta['source_run_id']=self.writer.run_id
                 self.state['status'] = 'running' if self.session.start() else 'failed'
             else:
-                if descriptor['format_vendor']=='thead':
-                    from .vendors.thead.session import hardware_identity
-                    self.state['hardware_identity']=hardware_identity()
-                if descriptor['format_vendor']=='kunlunxin':
-                    from .vendors.kunlunxin.session import hardware_identity
-                    self.state['hardware_identity']=hardware_identity()
+                identify = getattr(profile, 'hardware_identity', None)
+                if identify:
+                    self.state['hardware_identity'] = identify()
                 self.state.update(status='running', collector_status='not_requested', capture_status='not_requested')
                 self.state['capabilities']['enabled'].remove('official_session')
             from .probes.manager import ProbeManager

@@ -1,100 +1,155 @@
-# Copyright 2026 FlagOS Contributors
-# Licensed under the Apache License, Version 2.0.
-"""Owned ephemeral indexes, durable checkpoints, and explicit disk placement."""
+"""Private operation directories on the user's selected volume."""
 from contextlib import contextmanager
+import errno
+import fcntl
 import os
 from pathlib import Path
 import re
 import shutil
+import stat
+import tempfile
+import time
 import uuid
 
 
-def locations(store, work=None, scratch=None, *, key='query'):
-    if not key or Path(key).name != key or key in ('.', '..'):
-        raise ValueError('invalid workspace key')
-    store = Path(store).resolve()
-    work = Path(work).resolve() if work else store.parent/'work'/key
-    scratch = Path(scratch or os.environ.get('FLAGPROF_SCRATCH', '/var/tmp/flagprof-offline-'+str(os.getuid()))).resolve()
-    return work, scratch
-
-
-def filesystem_type(path):
-    """Resolve the most specific Linux mount, including bind mounts.
-
-    statfs's ext-family magic cannot distinguish ext4 from ext2/ext3. Inspect
-    mountinfo instead, without creating the prospective output directory.
-    """
-    path = Path(path).resolve()
-    selected = None
-    depth = -1
-    with Path('/proc/self/mountinfo').open() as mounts:
-        for line in mounts:
-            left, right = line.rstrip('\n').split(' - ', 1)
-            encoded = left.split()[4]
-            mount = Path(re.sub(r'\\([0-7]{3})', lambda m: chr(int(m[1], 8)), encoded))
-            if path.is_relative_to(mount) and len(mount.parts) >= depth:
-                selected = right.split()[0]
-                depth = len(mount.parts)
-    if selected is None:
-        raise OSError('cannot determine filesystem for ' + str(path))
-    return selected
-
-
-def check_disk(path):
-    """Require the accepted ext4 workspace before making any artifacts."""
-    kind = filesystem_type(path)
-    if kind != 'ext4':
-        raise ValueError('Plan B requires ext4: ' + str(Path(path).resolve()) +
-                         ' is on ' + kind + '; select an ext4 directory')
-
-
-def check_capture_disk(path, vendor, filesystem='ext4'):
-    """Explicit NVIDIA capture-only admission; import/query remain ext4."""
-    if filesystem == 'ext4':return check_disk(path)
-    if filesystem != 'overlay' or vendor not in ('nvidia','thead','kunlunxin') or filesystem_type(path) != 'overlay':
-        raise ValueError('capture-only overlay admission requires NVIDIA on actual overlay')
-
-
-def check_layout(store, work, scratch):
-    paths = dict(store=Path(store).resolve(), work=Path(work).resolve(),
-                 scratch=Path(scratch).resolve())
-    for name, path in paths.items():
-        for other, second in paths.items():
-            if name < other and (path.is_relative_to(second) or second.is_relative_to(path)):
-                raise ValueError(name + ' and ' + other + ' must be separate directory trees')
-    for path in paths.values():
-        check_disk(path)
-
-
-def check_capture_layout(capture, *outputs):
-    capture = Path(capture).resolve()
-    check_disk(capture)
-    for output in outputs:
-        output = Path(output).resolve()
-        if capture.is_relative_to(output) or output.is_relative_to(capture):
-            raise ValueError('capture and output must be separate directory trees')
+def private_name():
+    return '.flagprof-' + str(os.getuid())
 
 
 @contextmanager
-def owned_scratch(root):
-    root=Path(root).resolve();check_disk(root)
-    root.mkdir(parents=True, exist_ok=True)
-    own=root/('attempt-'+uuid.uuid4().hex);own.mkdir()
-    try:yield own
-    except BaseException:
-        # Keep failure evidence; a new attempt never opens this partial database.
-        raise
-    else:shutil.rmtree(own)
+def directory_lock(path, *, nonblocking=False):
+    fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    try:
+        flags = fcntl.LOCK_EX | (fcntl.LOCK_NB if nonblocking else 0)
+        fcntl.flock(fd, flags)
+        yield fd
+    finally:
+        os.close(fd)
+
+
+def private_root(volume):
+    volume = Path(volume).resolve()
+    volume.mkdir(parents=True, exist_ok=True)
+    root = volume / private_name()
+    root.mkdir(mode=0o700, exist_ok=True)
+    info = root.lstat()
+    if not stat.S_ISDIR(info.st_mode) or info.st_uid != os.getuid() or info.st_mode & 0o077:
+        raise ValueError('private FlagPerf directory unavailable: ' + str(root))
+    # An operation may itself be the output volume of a nested restore.
+    # Serialize initialization on the namespace, independently of its parent lease.
+    with directory_lock(root):
+        marker = root / 'workspace-v1'
+        if not marker.exists() and not any(root.iterdir()):
+            marker.touch(mode=0o600)
+        if marker.is_symlink() or not marker.is_file():
+            raise ValueError('private FlagPerf directory is not initialized: ' + str(root))
+    return root
+
+
+def _discard_attempt(path):
+    # A staged run is a sibling of the final run so its relative evidence
+    # references are identical before and after publication.
+    if (path / 'staged-run').is_file():
+        stage = path.parents[2] / ('.flagprof-import-' + path.name)
+        if stage.is_dir() and not stage.is_symlink():
+            shutil.rmtree(stage)
+    shutil.rmtree(path)
 
 
 @contextmanager
-def query_view(run, *, work=None, scratch=None):
-    from .service import lease, _check_scratch
-    from .disk import scratch_scope
+def attempt(volume=None):
+    root = private_root(volume if volume is not None else tempfile.gettempdir()) / 'tmp'
+    root.mkdir(mode=0o700, exist_ok=True)
+    with directory_lock(root):
+        for old in root.iterdir():
+            if re.fullmatch('[0-9a-f]{32}', old.name) and (old / 'attempt-v1').is_file():
+                try:
+                    with directory_lock(old, nonblocking=True):
+                        _discard_attempt(old)
+                except BlockingIOError:
+                    continue
+        own = root / uuid.uuid4().hex
+        own.mkdir(mode=0o700)
+        lock = directory_lock(own)
+        fd = lock.__enter__()
+        (own / 'attempt-v1').touch()
+    try:
+        yield own, fd
+    finally:
+        lock.__exit__(None, None, None)
+        # A surviving worker inherits the lock if its parent was interrupted.
+        with directory_lock(root):
+            if own.exists():
+                try:
+                    with directory_lock(own, nonblocking=True):
+                        _discard_attempt(own)
+                except BlockingIOError:
+                    pass
+
+
+@contextmanager
+def checkpoint(volume, key):
+    root = private_root(volume) / 'checkpoints'
+    root.mkdir(mode=0o700, exist_ok=True)
+    with directory_lock(root):
+        current = root / key
+        current.mkdir(mode=0o700, exist_ok=True)
+        disk = shutil.disk_usage(root)
+        reserve = min(2 << 30, disk.total // 20)
+        obsolete = time.time() - 30 * 86400
+        for old in sorted(root.iterdir(), key=lambda p: p.stat().st_mtime):
+            if old == current or not re.fullmatch('[0-9a-f]{64}', old.name):
+                continue
+            if old.stat().st_mtime >= obsolete and shutil.disk_usage(root).free >= reserve:
+                break
+            try:
+                with directory_lock(old, nonblocking=True):
+                    shutil.rmtree(old)
+            except BlockingIOError:
+                continue
+        # Wait on this key without blocking unrelated imports or pruning.
+        fd = os.open(current, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    try:
+        while True:
+            fcntl.flock(fd, fcntl.LOCK_EX)
+            # GC may have removed this empty key before it was locked.
+            if current.exists() and os.path.samestat(os.fstat(fd), current.stat()):
+                break
+            with directory_lock(root):
+                current.mkdir(mode=0o700, exist_ok=True)
+                replacement = os.open(current, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+            os.close(fd)
+            fd = replacement
+        os.utime(fd, None)
+        yield current
+    finally:
+        os.close(fd)
+
+
+@contextmanager
+def query_view(run):
     from .finish import BoundedView
-    store = Path(run).resolve().parent
-    work,scratch=locations(store,work,scratch,key='query-'+Path(run).name)
-    _check_scratch(scratch,store,work)
-    with lease(work), owned_scratch(scratch) as own, scratch_scope(own,work):
-        with BoundedView(run,work/('query-'+uuid.uuid4().hex),cache_root=work) as view:
+    with attempt() as (temp, _lease):
+        with BoundedView(run, temp / 'view', cache_root=temp) as view:
             yield view
+
+
+def publish_run(stage, target):
+    import ctypes
+    from .checkpoints import syncdir
+    libc = ctypes.CDLL(None, use_errno=True)
+    rename = getattr(libc, 'renameat2', None)
+    if rename is not None:
+        if rename(-100, os.fsencode(stage), -100, os.fsencode(target), 1) == 0:
+            syncdir(target.parent)
+            return
+        error = ctypes.get_errno()
+        if error not in (errno.EINVAL, errno.ENOSYS, errno.EOPNOTSUPP):
+            raise OSError(error, os.strerror(error), str(target))
+    # Some mounted filesystems implement POSIX directory rename but not its
+    # Linux no-replace flag. Serialize this account's publishers on the destination.
+    with directory_lock(private_root(target.parent)):
+        if os.path.lexists(target):
+            raise FileExistsError(str(target))
+        os.rename(stage, target)
+        syncdir(target.parent)

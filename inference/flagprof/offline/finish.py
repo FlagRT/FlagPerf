@@ -21,7 +21,7 @@ class BoundedView:
         from .verification_cache import VerificationCache
         preflight_store(self.run)
         self.identities=self.snapshot()
-        self.cache=VerificationCache(self.run,cache_root)
+        self.cache=VerificationCache(self.run,cache_root or self.work)
         self._cache_binding=self.cache.binding()
         self.verified=self.cache.load(self._cache_binding)
         self.verification_reused=self.verified is not None

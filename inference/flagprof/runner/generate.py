@@ -159,15 +159,8 @@ def execute(args):
     load_phase = begin_phase(handle, 'load')
     if handle and handle.state['effective_config']['flaggems'] != 'off':
         raise ValueError('OneRec requires attachment FlagGems off')
-    if args.device.startswith('npu'):
-        import torch_npu
-        torch.npu.set_device(args.device)
-        sync = torch.npu.synchronize
-    elif args.device.startswith('cuda'):
-        torch.cuda.set_device(args.device)
-        sync = torch.cuda.synchronize
-    else:
-        sync = lambda: None
+    from flagprof.devices import synchronize_device
+    sync = synchronize_device(args.device)
     if handle:
         handle.register_device(args.device)
     # Initialize the vendor extension before Transformers probes optional backends.

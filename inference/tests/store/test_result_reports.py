@@ -126,7 +126,8 @@ class ResultReportTests(unittest.TestCase):
         view.monitor_coverage.return_value=dict(read_report=dict(errors=[]))
         out=self.root/'timed-report'
         with patch('flagprof.monitor.report.load',return_value=state),patch('flagprof.monitor.report.StoreView',return_value=view),patch('flagprof.monitor.diagnostic_report.panel',return_value={}):
-            generate(session,out)
+            from flagprof.monitor.report import _generate
+            _generate(session,out,last='1h')
         row=json.loads((out/'result.json').read_text())['series'][0]
         self.assertEqual([p for p in row['samples_points'] if p[1] is not None],[[2000000000,123]])
         self.assertEqual(row['unit'],'W')

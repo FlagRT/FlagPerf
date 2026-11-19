@@ -76,7 +76,7 @@ from pathlib import Path
 from flagprof.store import create_run
 from flagprof.runtime import attach
 settings=json.loads(Path(sys.argv[1]).read_text());rank=int(sys.argv[2])
-root=Path(settings['root']);part=root/('rank-'+str(rank));part.mkdir()
+root=Path(sys.argv[1]).resolve().parent;part=root/('rank-'+str(rank));part.mkdir()
 run=create_run(part/'delivery',identity={'rank':rank,'group_id':settings['group_id']})
 (part/'worker.json').write_text(json.dumps(dict(rank=rank,group_id=settings['group_id'],status='running',run=str(run.relative_to(root)))))
 h=attach(run,'nvidia',preset='perf-lite',config=settings['config'],rank=rank)
@@ -97,7 +97,7 @@ time.sleep(30)
             root=Path(directory);agent=self.start_agent(root/'node')
             try:
                 with patch('subprocess.Popen',spawn):
-                    code=launch([sys.executable,'-c','pass'],store=root/'group',comm_backend='nccl',preset='perf-lite',
+                    code=launch([sys.executable,'-c','pass'],store=root/'group',vendor='nvidia',comm_backend='nccl',preset='perf-lite',
                         config=dict(diagnose='on',monitor_root=str(root/'node')),timeout=10)
                 self.assertEqual(code,2)
                 time.sleep(.5)
@@ -185,7 +185,8 @@ time.sleep(1.2)
             target=next((root/'targets').glob('*/monitor-ref.json')).parent
             publish(target,root/'archive')
             result=restore(root/'archive',root/'restore')
-            restored=Path(result['mapping'][str(root/'node/session.json')]).parent if str(root/'node/session.json') in result['mapping'] else root/'restore/payload'/str(root/'node').lstrip('/')
+            from flagprof.monitor.reference import resolve_reference
+            _, restored, _ = resolve_reference(result['mapping']['monitor-reference'])
             replay(restored,root/'restored-replay')
             actual=[json.loads(s) for s in (root/'restored-replay/findings.jsonl').read_text().splitlines()]
             self.assertEqual(sorted(online,key=order),sorted(actual,key=order))

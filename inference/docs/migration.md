@@ -2,6 +2,14 @@
 
 2026-11-02 起，`FlagPerf/inference` 由 flagprof v2 的生产实现替换旧模型评测框架。框架文档、其依赖的 `DECISIONS.md` 与设计历史一同迁入本目录。
 
+## 0.3 的目录和工具入口
+
+采集和导入使用 `--store`，报告使用 `--out`，查看只需 run 路径。旧脚本中的 `--capture-filesystem`、`--work` 和 `--scratch` 应删除，`FLAGPROF_SCRATCH` 已移除。检查点与索引由程序管理。
+
+有界校验已由读取器自动选择，原 `inspect --bounded` 可直接删去。双卡通信使用 `launch --vendor ascend --comm-backend hccl` 或 `--comm-backend flagcx` 取代 `--flagcx off/on`。Oracle 性能关联使用 `--perf-cmp-run` 指定对比侧，使用 `--perf-ref-run` 指定参考侧。原 `--perf-run` 是对比侧参数的旧名。
+
+安装后，原 `tools/batch_driver.py` 和 `tools/op_micro.py` 分别使用 `flagprof-batch` 和 `flagprof-op-micro`。原 `targets/` 下的输入生成器使用 `flagprof-make-ctr`、`flagprof-make-corpus` 和 `flagprof-make-rerank`。模型注册表随 `flagprof.targets` 模块安装。可用 `flagprof-batch --example cpu` 导出一份可编辑的名册。完整示例见[使用指南](usage.md)。
+
 ## 使用方式变化
 
 | 原入口 / 资产 | 当前方式 |

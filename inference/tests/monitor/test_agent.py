@@ -148,7 +148,7 @@ class AgentTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory);agent=self.start_agent(root/'node')
             with patch('subprocess.Popen',spawn):
-                code=launch([sys.executable,'-c',BODY],store=root/'group',comm_backend='nccl',preset='perf-lite',
+                code=launch([sys.executable,'-c',BODY],store=root/'group',vendor='nvidia',comm_backend='nccl',preset='perf-lite',
                     config=dict(monitor='on',monitor_topology='agent',monitor_root=str(root/'node'),probes='none'),timeout=30)
             self.assertEqual(code,0)
             paths=list((root/'group').glob('rank-*/delivery/*/monitor-ref.json'))

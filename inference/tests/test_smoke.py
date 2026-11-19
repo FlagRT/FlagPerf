@@ -74,7 +74,7 @@ class SmokeTests(unittest.TestCase):
                 self.assertIn('integrity', trace)
 
             out = temp/'report'
-            result = self.flagprof('report', str(run), '--out', str(out), '--work', str(temp/'work'))
+            result = self.flagprof('report', str(run), '--out', str(out))
             self.assertEqual(result.returncode, 0, (result.stdout, result.stderr))
             data = json.loads((out/'result.json').read_text())
             self.assertEqual(data['schema'], 'p1-result/1')

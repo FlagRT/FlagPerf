@@ -288,7 +288,7 @@ class PairedAnalyzer:
         from pathlib import Path
         params=params or {}
         if 'cmp' not in params:raise ValueError('paired analyzer requires cmp Store path')
-        temporary=tempfile.TemporaryDirectory(prefix='oracle-analyzer-',dir=params.get('work'))
+        temporary=tempfile.TemporaryDirectory(prefix='oracle-analyzer-')
         other=StoreView(params['cmp']);a=Workspace(store,Path(temporary.name)/'ref',Limits(**params.get('limits',{})))
         b=Workspace(other,Path(temporary.name)/'cmp',a.limits)
         class Owner:

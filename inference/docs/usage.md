@@ -1,40 +1,59 @@
 # 使用 flagprof
 
-命令从 `FlagPerf/inference` 执行，先设置 `PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"`。`python -m flagprof --help` 是当前已实现命令的入口；编号框架文档同时包含设计方案和历史阶段记录。
+在仓库根目录执行 `python -m pip install ./inference`，也可安装构建好的 wheel。随后可以在任意目录运行 `flagprof --help`。离线操作使用 Python 3.9+ 标准库，采集需要在目标程序的 Python 环境中安装 FlagPerf 和相应设备 SDK。
 
-监控和诊断见 [监控指南](monitoring.md)；FX/ONNX 见 [图导出](graph-export.md)；报告筛选、比较、三路 Oracle 和历史重绘见 [结果报告](user-result-reports.md)。
-
-## 准备输出目录
-
-默认 final 路径的 capture、Store、work、scratch 要求实际文件系统为 ext4。选择本机有空间的 ext4 盘；目录名或软链接本身不能证明文件系统类型。以下路径由使用者替换，运行后保留打印出的 run 路径：
+## 选择结果位置
 
 ```bash
-export FP_WORKSPACE=/path/on/ext4/flagprof-session
-mkdir -p "$FP_WORKSPACE/tmp" "$FP_WORKSPACE/scratch"
-export TMPDIR="$FP_WORKSPACE/tmp"
-export SQLITE_TMPDIR="$TMPDIR"
-export FLAGPROF_SCRATCH="$FP_WORKSPACE/scratch"
-findmnt -T "$FP_WORKSPACE"
+FP_WORKSPACE="$PWD/flagprof-results"
+mkdir -p "$FP_WORKSPACE"
 ```
 
-Store、capture、work、scratch 使用各自目录；输出 run 和报告使用新路径。NVIDIA 支持显式 `--capture-only --capture-filesystem overlay` 的采集路径，之后在 ext4 导入。其他文件系统支持由代码中的准入检查决定。
+采集或导入用 `--store` 选盘。检查点和大索引放在该路径下面的用户私有目录，独立于正式 run 和 capture。相同封存输入和配置重试时会校验并复用检查点。完成或失败的临时工作由程序清理。查看 run 只需它的路径和可读的关联证据，每次查询使用单独的系统临时目录。生成报告可用 `--out` 单独选盘，排序、索引和报告文件都使用该盘。
+
+后续操作会回收同一位置中断后遗留的私有临时目录。导入会清理 30 天未使用的检查点，或在可用空间低于盘容量 5% 与 2 GiB 中较小的值时，优先回收最久未用的检查点。正在使用的检查点和正式结果会保留。
+
+监控、图导出和结果解读分别见[监控指南](monitoring.md)、[图导出](graph-export.md)和[结果报告](user-result-reports.md)。
+
+## 第一次使用，先读一个样例
+
+下面的命令只需已安装的 `flagprof` 和 Python。它们生成一条合成的 Chrome trace，用于练习封存、导入、查询和报告。请在新目录执行。
+
+```bash
+python -c 'import json; print(json.dumps({"traceEvents":[{"ph":"X","cat":"kernel","name":"example","pid":1,"tid":1,"ts":10,"dur":2,"args":{"device":0,"stream":1}}]}))' > trace.json
+flagprof seal trace.json --normal-close --vendor nvidia --out capture
+flagprof import capture --store results --run-id sample
+flagprof inspect results/sample --verify
+flagprof page results/sample --limit 1
+flagprof report results/sample --out report
+```
+
+打开 `report/report.html` 可离线查看。报告将样例中缺少的硬件身份、采集配置和时钟证据标为未知。需要在另一台机器查看时，执行 `flagprof delivery publish results/sample --out archive`，复制整个 `archive`，执行 `flagprof delivery restore archive --out restored`。本例恢复结果中的 `mapping.run` 可以直接传给 `inspect`。
+
+在装有 PyTorch 的环境，从仓库根目录用 `python -m pip install './inference[batch]'` 安装批量工具后，也可使用自带的 CPU CTR 示例。以下命令在同一工作目录生成固定输入、运行和比较两次推理。
+
+```bash
+flagprof-batch --example cpu > models.yaml
+flagprof-make-ctr --samples 8 --seed 531 --out packages/ctr-v1
+flagprof-batch --config models.yaml --filter ctr-dlrm --device cpu --out batch-results
+```
+
+YAML 中模型和输入的相对路径以该 YAML 所在目录为准。`flagprof-batch --example models` 和 `--example hf2` 提供可编辑的多模型名册。
 
 ## 采集自己的推理程序
 
 在已准备的设备环境内，直接启动 Python 目标。`record` 自动注入的范围是它直接启动的 Python 进程：
 
 ```bash
-python3 -B -m flagprof record \
+flagprof record \
   --vendor ascend --preset perf \
   --store "$FP_WORKSPACE/capture" \
-  --work "$FP_WORKSPACE/import-work" \
-  --scratch "$FP_WORKSPACE/scratch" \
   -- python3 your_inference.py
 ```
 
 NVIDIA 环境使用 `--vendor nvidia`。`perf/modules` 默认 `final` 采集完整会话，目标正常退出后独立导入；`coverage/perf-lite/accuracy` 转入窗口生命周期，显式 `--capture-mode windowed` 也走窗口路径。窗口采集需要目标推进 `handle.step()`，内置 runner 已提供相应边界。包装 shell、服务进程或自行再启动的子进程，需要在真正执行推理的进程使用 `flagprof.attach()`；接口见 [总体架构](02-architecture.md)。
 
-平头哥 PPU 环境使用 `--vendor thead`（设备名为 CUDA 兼容的 `cuda:N`），需先经 `ppu-smi` 生成 sourced 身份并以 `FLAGPROF_THEAD_IDENTITY` 注入；锁定镜像、最小命令、集合通信识别边界与验收状态见 [PPU Inference 适配](../../docs/thead/inference-v2.md)。
+平头哥 PPU 环境使用 `--vendor thead`（设备名为 CUDA 兼容的 `cuda:N`），适配器通过 `ppu-smi` 读取设备身份并按 UUID 关联。容器无法查询宿主时，可用 `FLAGPROF_THEAD_IDENTITY` 提供宿主清单；锁定镜像、最小命令、集合通信识别边界与验收状态见 [PPU Inference 适配](../../docs/thead/inference-v2.md)。
 
 `--preset perf` 采集设备与主机性能；`modules` 面向模块；`perf-lite` 使用轻量主机探针；`coverage` 面向路由覆盖；`accuracy` 用于张量数值诊断。`--profile-memory` 增加官方显存记录；`--dispatch each-window` 为逐调用关联提供主机记录。探针对运行的扰动应通过匹配的无采集运行测量。
 
@@ -43,9 +62,8 @@ NVIDIA 环境使用 `--vendor nvidia`。`perf/modules` 默认 `final` 采集完�
 模型路径、输入与设备均显式提供；模型权重不随代码发布。embedding 输入 JSONL 每行是字符串或含 `text`、`query`、`input` 的对象：
 
 ```bash
-python3 -B -m flagprof record \
+flagprof record \
   --vendor ascend --preset perf --store "$FP_WORKSPACE/embedding" \
-  --work "$FP_WORKSPACE/embedding-work" \
   -- python3 -m flagprof.runner hf:/absolute/path/to/model \
      --inputs /absolute/path/to/inputs.jsonl --batch-size 1 \
      --device npu:0 --dtype bfloat16 --outputs "$FP_WORKSPACE/runner-output"
@@ -61,12 +79,10 @@ generation 使用 `--task generate` 和 `--generation-mode accuracy|performance`
 
 ```bash
 export FP_RUN=/absolute/path/to/store/run
-python3 -B -S -m flagprof inspect "$FP_RUN" --verify --json \
-  --work "$FP_WORKSPACE/query-work"
-python3 -B -S -m flagprof page "$FP_RUN" --offset 0 --limit 10 \
-  --work "$FP_WORKSPACE/query-work"
-python3 -B -S -m flagprof report "$FP_RUN" \
-  --out "$FP_WORKSPACE/report" --work "$FP_WORKSPACE/report-work"
+flagprof inspect "$FP_RUN" --verify --json
+flagprof page "$FP_RUN" --offset 0 --limit 10
+flagprof report "$FP_RUN" \
+  --out "$FP_WORKSPACE/report"
 ```
 
 报告生成于 `--out`，HTML 和 JSONL 可离线阅读。双 rank 报告将 `FP_RUN` 换成 launch 产生的 `group.json`。观察数据完整性、身份和覆盖率后，再解读耗时；设备时间、主机时间和请求窗口是不同口径。缺失关联或时钟证据会保留原因。
@@ -74,9 +90,8 @@ python3 -B -S -m flagprof report "$FP_RUN" \
 从已封存 capture 重新生成 Store：
 
 ```bash
-python3 -B -S -m flagprof import /absolute/path/to/sealed-capture \
-  --store "$FP_WORKSPACE/reimport-runs" \
-  --work "$FP_WORKSPACE/reimport-work" --scratch "$FP_WORKSPACE/scratch"
+flagprof import /absolute/path/to/sealed-capture \
+  --store "$FP_WORKSPACE/reimport-runs"
 ```
 
 `seal` 处理正常关闭的外部官方 trace；`analyse` 在带对应 SDK 的环境中分析已封存 raw capture。升级后的派生证据通过新导入生成，历史 Store 和报告保留原样。
@@ -99,10 +114,10 @@ python3 -B -S -m flagprof import /absolute/path/to/sealed-capture \
 FlagTree / FlagCX 参数、同规模 TP2 对比和性能命令见 [组件对比](components.md)。`report oracle --ref/--cmp` 也接受两侧 `group.json`：各 rank 同号配对，复制边界跨 rank 核对，逻辑样本只计一次。
 
 ```bash
-python3 -B -S -m flagprof report oracle \
+flagprof report oracle \
   --ref /path/to/reference-run --cmp /path/to/compared-run \
   --out "$FP_WORKSPACE/oracle"
-python3 -B -S -m flagprof replay prepare \
+flagprof replay prepare \
   --ref /path/to/reference-run --cmp /path/to/compared-run \
   --call-key 'selected-call-key' --out "$FP_WORKSPACE/replay-input"
 ```
@@ -116,10 +131,9 @@ python3 -B -S -m flagprof replay prepare \
 ```bash
 printf '%s\n' '"FlagPerf inference sample one."' \
   > "$FP_WORKSPACE/accept-inputs.jsonl"
-python3 -B -m flagprof record \
+flagprof record \
   --vendor ascend --preset perf \
-  --store "$FP_WORKSPACE/accept" --work "$FP_WORKSPACE/accept-work" \
-  --scratch "$FP_WORKSPACE/scratch" \
+  --store "$FP_WORKSPACE/accept" \
   -- python3 -m flagprof.runner hf:/absolute/path/to/Qwen3-Embedding-0.6B \
      --inputs "$FP_WORKSPACE/accept-inputs.jsonl" --batch-size 1 \
      --device npu:0 --dtype bfloat16 --outputs "$FP_WORKSPACE/accept-runner"
@@ -128,10 +142,9 @@ python3 -B -m flagprof record \
 NVIDIA 环境把 `--vendor ascend` 换成 `--vendor nvidia`，`--device npu:0` 换成 `--device cuda:0`。将 record 输出中的 `run` 写入 `FP_RUN` 后读取并生成报告：
 
 ```bash
-python3 -B -S -m flagprof inspect "$FP_RUN" --verify --json \
-  --work "$FP_WORKSPACE/accept-query"
-python3 -B -S -m flagprof report "$FP_RUN" \
-  --out "$FP_WORKSPACE/accept-report" --work "$FP_WORKSPACE/accept-report-work"
+flagprof inspect "$FP_RUN" --verify --json
+flagprof report "$FP_RUN" \
+  --out "$FP_WORKSPACE/accept-report"
 ```
 
 | 检查点 | 预期 |
@@ -153,13 +166,13 @@ python3 -B -S -m unittest discover -s tests -v
 
 测试检查离线读取层（`store`、`analyzers`、`report`）不加载 torch 与厂商模块，并用假厂商插件走通 record → import → inspect → report；同时覆盖组件选择、精度 CLI、Oracle、TP2 组计数及 P800/平头哥适配。PR 修改 `inference/**` 时由 GitHub Actions 在 Python 3.9 和 3.11 自动运行。
 
-完整 CPU 套件使用 Python 3.11 和独立虚拟环境（不继承厂商镜像的 site-packages），直接依赖版本记录在 `tests/requirements-cpu.txt`。在 `inference/` 下执行：
+完整 CPU 套件的固定依赖已在 Python 3.11 验证，使用该版本的解释器创建独立虚拟环境（不继承厂商镜像的 site-packages），直接依赖版本记录在 `tests/requirements-cpu.txt`。在 `inference/` 下执行：
 
 ```bash
-python3.11 -m venv /tmp/flagperf-cpu-tests
-/tmp/flagperf-cpu-tests/bin/python -m pip install -r tests/requirements-cpu.txt -r tests/requirements-graph.txt
-HF_HUB_OFFLINE=1 OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 GLOO_SOCKET_IFNAME=lo \
-  /tmp/flagperf-cpu-tests/bin/python -B -m pytest -q -p no:cacheprovider tests
+python -m venv .venv
+.venv/bin/python -m pip install -r tests/requirements-cpu.txt -r tests/requirements-graph.txt
+HF_HUB_OFFLINE=1 OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 \
+  .venv/bin/python -B -m pytest -q -p no:cacheprovider tests
 ```
 
 GitHub `model-contracts` 作业执行同一套完整回归，包含模型／逐层／算子边界、两进程 Gloo TP2、Oracle、replay 和训练。TP2 使用本地生成的微型 Qwen，要求 Accelerate；Triton 用于编译器探针契约，不执行设备 kernel，不下载模型。
@@ -170,8 +183,18 @@ GitHub `model-contracts` 作业执行同一套完整回归，包含模型／逐�
 
 ## 归档与恢复（可选）
 
-`flagprof delivery publish|verify|restore` 把 Store、capture 等目录打包成带逐文件摘要的归档，并在新目录恢复相对依赖。发布目录不限文件系统；`restore` 的目标必须是 ext4 上的新目录。
+`flagprof delivery publish|verify|restore` 把 Store、capture 等目录打包成带逐文件摘要的归档，并在新目录恢复相对依赖。恢复命令使用用户选定的新目录，返回对象 ID 和本次恢复路径的映射。
 
 ## P800 候选运行栈
 
-使用 `--vendor kunlunxin`；固定镜像、采集前置变量、SMI/UUID 身份、TP2 依赖及命令见 [P800 指南](../../docs/kunlunxin/inference-v2.md)。[验证记录](../../docs/kunlunxin/inference-v2-validation.md) 登记未解释的单卡/TP2 数值差异（P800-INF-007）；组执行完成不等于精度通过。NVIDIA/Ascend 的资格、时钟和历史豁免不转移到 P800。
+在目标程序已有的 XPyTorch 环境安装 FlagPerf。单卡采集使用已分配的逻辑设备和选定的结果目录。例如，从上面的工作目录运行：
+
+```bash
+flagprof record --vendor kunlunxin --store "$FP_WORKSPACE/p800" -- python my_inference.py
+```
+
+适配器在创建采集进程时设置 XPyTorch tracing 变量。多卡使用 `launch --vendor kunlunxin --nproc-per-node 2 --comm-backend nccl` 等受支持的组合，适配器为每个 rank 设置对应的逻辑设备。只有直接在应用内调用 `attach` 时，才需要在加载 torch 前设置 `XPU_ENABLE_PROFILER_TRACING=1` 和所选逻辑卡号 `XPU_CUPTI_ENABLE_DEVICE`。
+
+适配器调用 `xpu-smi` 并按框架报告的 UUID 核对设备。容器无法访问宿主 SMI 时，可以将宿主查询得到的清单只读挂载，并把 `FLAGPROF_P800_IDENTITY` 指向该文件。清单字段、既有实测镜像和 TP2 依赖见 [P800 适配资料](../../docs/kunlunxin/inference-v2.md)。采集返回的 run 可以直接交给本页的 `inspect`、`page` 和 `report` 示例。
+
+既有实测记录了 OneRec 单卡与 TP2 在第 14 个生成 token 出现差异，TP2 精度仍待查明。可核对[验证记录与开放缺陷](../../docs/kunlunxin/inference-v2-validation.md)。

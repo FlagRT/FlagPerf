@@ -599,10 +599,10 @@ def add_runner(model, summary):
     model.meta['notices'].extend(summary.get('notes',[]))
 
 
-def write_report(out, document=None, *, limits=None, work=None, source=None, filename='report.html'):
+def write_report(out, document=None, *, limits=None,  source=None, filename='report.html'):
     from .render import render
     out=Path(out)
-    with opened_model(work,limits) as model:
+    with opened_model(limits=limits) as model:
         document = document if document is not None else read_document(out/'result.json',model)
         build(model,document,source or out)
         model.save(out/'report-data.jsonl')
@@ -610,12 +610,19 @@ def write_report(out, document=None, *, limits=None, work=None, source=None, fil
         return dict(output=str(out),html=filename,summary='report.md',sections=len(model.sections))
 
 
-def redraw(source, out, *, work=None, limits=None, runner_results=None, refresh_view=False):
+def redraw(source, out, *, limits=None, runner_results=None, refresh_view=False):
+    from flagprof.offline.worker import output_operation
+    return output_operation(out, [source], _redraw, source, limits=limits,
+                            runner_results=runner_results, refresh_view=refresh_view)
+
+
+def _redraw(source, out, *,  limits=None, runner_results=None, refresh_view=False):
     from .render import render
     source,out=Path(source).resolve(),Path(out).resolve()
     if source==out or source in out.parents or out in source.parents:
         raise ValueError('render output must be separate from its source')
-    out.mkdir(parents=True,exist_ok=False)
+    from flagprof.offline.worker import new_output
+    new_output(out)
     # Preserve exports and linked rank reports; no Store or device access.
     for name in ('result.json','resources.json','exports'):
         path=source/name
@@ -623,9 +630,9 @@ def redraw(source, out, *, work=None, limits=None, runner_results=None, refresh_
         elif path.is_file():shutil.copyfile(path,out/name)
     for path in list(source.glob('rank-*'))+list(source.glob('source-*'))+[source/name for name in ('reference-baseline','reference-candidate','baseline-candidate')]:
         if path.is_dir() and (path/'result.json').is_file():
-            redraw(path,out/path.name,work=work,limits=limits,refresh_view=refresh_view)
+            redraw(path,out/path.name,limits=limits,refresh_view=refresh_view)
     filename='index.html' if (source/'index.html').exists() and not (source/'report.html').exists() else 'report.html'
-    with opened_model(work,limits) as model:
+    with opened_model(limits=limits) as model:
         snapshot=source/'report-data.jsonl'
         if runner_results:
             from .performance import summarize

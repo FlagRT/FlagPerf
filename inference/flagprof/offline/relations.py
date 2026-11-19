@@ -1,6 +1,7 @@
 # Copyright 2026 FlagOS Contributors
 # Licensed under the Apache License, Version 2.0.
 """SQL lookups preserve full rule unions; per-device sets spill to scratch."""
+from flagprof.vendors import is_kineto
 from .disk import Rows,key,unpack
 from flagprof.correlate.linker import ref,registry_match
 from flagprof.correlate.native import contains
@@ -15,11 +16,11 @@ def device_hits(db,event,vendor):
 
 
 def host_hits(db,launch,vendor,native=False):
-    prefix='cuda' if vendor in ('nvidia','thead','kunlunxin') else 'cann'
+    prefix='cuda' if is_kineto(vendor) else 'cann'
     for n in db.contains(launch,'call' if native else 'project'):
         yield prefix+('.native_nesting' if native else '.same_thread'),n,()
     args=launch['ext']['chrome.args']
-    if vendor in ('nvidia','thead','kunlunxin'):
+    if is_kineto(vendor):
         ext=args.get('External id')
         if ext is not None:
             for source in records(db,'native_external' if native else 'project_external',(launch['host_pid'],str(ext))):
@@ -87,7 +88,7 @@ def native(db,event,vendor,registry,single_pid):
             for n in proof:db.add('evidence',n)
         db.innermost('host_candidates','host_owners');unknown |= db.count('host_owners')==0
         copyset(db,'host_owners','candidates')
-    if vendor in ('nvidia','thead','kunlunxin') and single_pid[0]:
+    if is_kineto(vendor) and single_pid[0]:
         ext=event['ext']['chrome.args'].get('External id')
         if ext is not None:
             for n in records(db,'native_external',(single_pid[1],str(ext))):

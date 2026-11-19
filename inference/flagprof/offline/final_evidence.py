@@ -46,44 +46,11 @@ def identities(directory,metadata,vendor,trace,occurrence,raw_manifest):
     directory=Path(directory);measured=deepcopy(metadata.get('measured_identity',{}))
     source=dict(kind='capture-envelope',artifact='capture.json',occurrence=occurrence)
     requested=metadata.get('requested_configuration',{})
-    actual={};sources=[];conflicts=[];versions=[];exporter=dict(status='unknown')
-    trace_values,end_count=trace_metadata(trace)
-    if vendor=='ascend':
-        for name,info in raw_manifest['files'].items():
-            if Path(name).name.startswith('profiler_info') and Path(name).suffix=='.json':
-                if len(sources)>=16:raise ValueError('official configuration cardinality budget')
-                config=read_json(directory/'sealed-raw'/name)
-                common=config.get('config',{}).get('common_config',{})
-                extra=config.get('config',{}).get('experimental_config',{})
-                value={k:common.get(k) for k in FLAGS}
-                value.update(activities=[str(x).split('.')[-1] for x in common.get('activities',[])],
-                             profiler_level=extra.get('_profiler_level'),data_simplification=extra.get('_data_simplification'))
-                sources.append(dict(path='sealed-raw/'+name,sha256=info['sha256'],values=value))
-                versions.append(config.get('cann_version'))
-        for key in (*FLAGS,'activities','profiler_level','data_simplification'):
-            values=[row['values'][key] for row in sources]
-            actual[key]=values[0] if values and all(type(v) is type(values[0]) and v==values[0] for v in values) else None
-        if sources:
-            exporter=dict(source=[dict(path=r['path'],sha256=r['sha256']) for r in sources],
-                          version=versions[0] if all(v==versions[0] for v in versions) else None,schema_version=None)
-    else:
-        info=fileinfo(trace);trace_source=dict(path='sealed-trace/data/trace.json',sha256=info['sha256'])
-        version=measured.get('collector',{}).get('version')
-        complete=(version in ('2.8.0+cu126','2.10.0+cu126')
-            and type(trace_values.get('schemaVersion')) is int and trace_values['schemaVersion']==1
-            and isinstance(trace_values.get('deviceProperties'),list) and bool(trace_values['deviceProperties'])
-            and all(type(trace_values.get(k)) is int for k in ('cupti_version','cuda_runtime_version','cuda_driver_version'))
-            and isinstance(trace_values.get('traceName'),str) and end_count>0)
-        if complete:
-            actual={k:True if type(trace_values.get(k)) is int and trace_values[k]==1 else False if k not in trace_values else None for k in FLAGS}
-            sources=[dict(**trace_source,interpretation='version-bound Kineto '+version+' metadata',values=actual)]
-        if vendor=='thead' and version=='2.10.0' and trace_values.get('schemaVersion')==1:
-            actual={k:True if type(trace_values.get(k)) is int and trace_values[k]==1 else None for k in FLAGS}
-            sources=[dict(**trace_source,interpretation='PPU explicit exporter flags; absent fields unknown',values=actual)]
-        if vendor=='kunlunxin' and version=='2.9.0+cu129' and trace_values.get('schemaVersion')==1:
-            actual={k:True if type(trace_values.get(k)) is int and trace_values[k]==1 else None for k in FLAGS}
-            sources=[dict(**trace_source,interpretation='P800 explicit exporter flags; absent fields unknown',values=actual)]
-        exporter=dict(source=trace_source,version=None,schema_version=trace_values.get('schemaVersion'))
+    from flagprof.vendors import adapter
+    trace_values, end_count = trace_metadata(trace)
+    actual, sources, exporter = adapter(vendor, 'evidence').final_configuration(
+        directory, measured, trace, trace_values, end_count, raw_manifest)
+    conflicts = []
     mismatches=[dict(field=k,requested=v,actual=actual[k]) for k,v in requested.items()
                 if actual.get(k) is not None and (type(v) is not type(actual[k]) or v!=actual[k])]
     configuration=dict(requested=dict(status='available',values=requested,source=source),

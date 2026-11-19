@@ -63,7 +63,14 @@ def check_ranks(states, group):
             raise ValueError('collective group identity mismatch')
 
 
-def generate_group(manifest, out=None, *, work=None, runner_results=None, limits=None):
+def generate_group(manifest, out=None, *, runner_results=None, limits=None):
+    from flagprof.offline.worker import output_operation
+    group = Path(manifest).resolve().parent
+    return output_operation(out or group.with_name(group.name+'-report'), [group], _generate_group,
+                            manifest, runner_results=runner_results, limits=limits)
+
+
+def _generate_group(manifest, out=None, *,  runner_results=None, limits=None):
     limits=limits if isinstance(limits,Limits) else Limits(**(limits or {}))
     manifest = Path(manifest).resolve()
     group = validate_manifest(manifest)
@@ -71,8 +78,6 @@ def generate_group(manifest, out=None, *, work=None, runner_results=None, limits
     if out.is_relative_to(manifest.parent) or manifest.parent.is_relative_to(out):
         raise ValueError('group report must be outside input delivery')
     out.mkdir(parents=True, exist_ok=True)
-    if work:
-        Path(work).mkdir(parents=True, exist_ok=True)
     states, issues, reports = [], [], []
     if group.get('status')!='complete':
         issues.append('group execution did not complete')
@@ -86,11 +91,11 @@ def generate_group(manifest, out=None, *, work=None, runner_results=None, limits
             issues.append('rank '+str(rank)+' Store unavailable')
             continue
         try:
-            reports.append(dict(rank=rank,**generate(run, out/('rank-'+str(rank)), work=work,limits=limits)))
+            reports.append(dict(rank=rank,**generate(run, out/('rank-'+str(rank)),limits=limits)))
         except (OSError,ValueError,KeyError) as error:
             issues.append('rank '+str(rank)+' report: '+str(error))
             continue
-        with StoreView(run) as view, tempfile.TemporaryDirectory(dir=work) as directory:
+        with StoreView(run) as view, tempfile.TemporaryDirectory() as directory:
             workspace = Workspace(view, directory, limits)
             try:
                 workspace.ingest()
@@ -211,5 +216,5 @@ def generate_group(manifest, out=None, *, work=None, runner_results=None, limits
     result['diagnosis']=panel(manifest.parent)
     (out/'result.json').write_text(json.dumps(result, indent=2)+'\n')
     from .product import write_report
-    write_report(out,result,work=work)
+    write_report(out,result)
     return dict(output=str(out), status=result['status'], issues=issues)
