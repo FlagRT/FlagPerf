@@ -24,7 +24,10 @@ flowchart LR
 安装后可从任意目录执行。以下示例在当前目录保存各类输出。独立监控可以由外部进程管理器托管，以下命令以前台方式运行：
 
 ```bash
+# 在第一个终端保持节点监控运行
 python3 -m flagprof watch start --root ./node --vendor ascend --devices all
+
+# 在第二个终端进入同一工作目录，再查询和采集
 python3 -m flagprof watch status --root ./node
 
 python3 -m flagprof record --store ./tasks --vendor ascend --preset perf-lite \

@@ -96,26 +96,26 @@ bge-base-zh-v1.5（cls）、all-MiniLM-L6-v2（mean）、e5-small-v2（mean）�
 ```bash
 # runner 任务：CTR（可脱离 record 单跑）
 python3 -B -m flagprof.runner --task ctr --package packages/ctr-v1 --arch dlrm \
-  --seed 531 --device cuda:0 --dtype bfloat16 --outputs OUT
+  --seed 531 --device cuda:0 --dtype bfloat16 --outputs ./outputs/ctr
 
 # runner 任务：重排（标准模型）
 python3 -B -m flagprof.runner --task rerank --package packages/bge-reranker-seq \
   hf:models/bge-reranker-large --score sequence_logit \
-  --device cuda:0 --dtype bfloat16 --outputs OUT
+  --device cuda:0 --dtype bfloat16 --outputs ./outputs/bge-rerank
 
 # 句向量（cls 池化）
 python3 -B -m flagprof.runner --task embedding --pooling cls hf:models/bge-large-zh-v1.5 \
-  --inputs texts.jsonl --batch-size 4 --dtype bfloat16 --device cuda:0 --outputs OUT
+  --inputs texts.jsonl --batch-size 4 --dtype bfloat16 --device cuda:0 --outputs ./outputs/bge-embedding
 
 # 厂商代码受控加载（jina 类，embedding / rerank 两个任务支持）
 python3 -B -m flagprof.runner --task rerank --score sequence_logit --trust-remote-code \
   --package packages/jina-reranker-v2-seq hf:models/jina-reranker-v2-base-multilingual \
-  --batch-size 4 --dtype bfloat16 --device cuda:0 --outputs OUT
+  --batch-size 4 --dtype bfloat16 --device cuda:0 --outputs ./outputs/jina-rerank
 
 # attach（需要挂探针采集时）
 flagprof record --vendor thead --preset accuracy --store ./results -- \
   python -m flagprof.targets.template_ctr --package packages/ctr-v1 --arch dlrm \
-  --seed 531 --device cuda:0 --dtype bfloat16 --outputs OUT
+  --seed 531 --device cuda:0 --dtype bfloat16 --outputs ./outputs/ctr-attach
 ```
 
 包任务现在执行 `--flaggems` / `--flaggems-include`、`--flagtree` / `--vendor-compiler`、`--numerics`，并记录实际配置。FlagTree 在导入 torch 之前选择；FlagGems 的 `on` 仍要求非空 include 清单。挂采集器时，显式组件参数必须与采集器配置相同。`--repeats` 会实际执行多轮；包任务的 token/padding 已由输入包固定，`--inputs`、`--pooling` 等不适用选项会报错。

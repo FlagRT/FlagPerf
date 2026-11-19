@@ -2,6 +2,8 @@
 
 日期：2026-11-11（2026-11-12 增补 CTR 训练、embedding/reranker 训练任务与 P800 探针收官）。起点为 `zhiyu/model-adaptation@3417e54d`，开发分支 `zhiyu/perf-train`。验证目录包含多轮独立运行，不覆盖失败、不合并计数冒充一次验收。
 
+下表的设备数据、失败处置和工具名称适用于上述验证提交（flagprof 0.3.0 接口变更前）。现行采集及输入工具入口见[Training v2 指南](v2.md)。
+
 ## 实测状态
 
 | 项目 | 结果 | 解释 |
@@ -51,7 +53,7 @@
 | 编号 | 事实 | 下一步 / 判定边界 |
 |---|---|---|
 | TRAIN-P800-001 | 两台 P800 机器 6/6 长空闲物理卡在固定镜像内首内核前同型挂死（四轮探针证据链闭环）；挂死卡可被其他租户唤醒跑满，排除永久损坏 | 厂商级阻塞，交厂商定位；恢复可用设备窗口后按同镜像复测；不重置共享驱动、不清理他人任务；该平台仍待验证 |
-| TRAIN-ENV-001 | 首轮官方采集因 scratch 位于容器 overlay 被 ext4 门禁拒绝 | 失败保留，指定 ext4 scratch 后通过；使用手册已明确 |
+| TRAIN-ENV-001 | 首轮官方采集因 scratch 位于容器 overlay 被 ext4 门禁拒绝 | 在 2026-11-11 至 11-12 的验证版本，改用 ext4 scratch 后通过。0.3.0 的存储和重试方式见[现行指南](v2.md#环境) |
 | TRAIN-ENV-002 | 上述既有 TP2 embedding 无设备 CPU 测试在 PPU 镜像失败 | 精确起点基线已复现；需要独立处理环境选择，不能称全部旧回归全绿 |
 | 观察范围 | forward module 树不能直接当作 backward 层归属；Python collective 不包含全部 DDP C++ reducer 调用 | 训练显式范围内逐调用覆盖已补，跨线程不自动传递；设备关联缺失照常 partial/unavailable |
 | 模型范围 | 内置分类功能示例、HF causal LM、密封 CTR 语料模板训练（14 架构，派生标签 + 逐架构 loss）、embedding 微调（InfoNCE，三种 pooling）与 reranker 微调（两种打分语义）；不含正式数据集收敛、FSDP/ZeRO/TP/PP | CTR/embedding 语料为确定性合成（不是真实点击或检索数据），rerank 标签由 sample id 派生；验证微调通路与观测闭环，不声明任务精度；新模型需明确输入、标签、loss、优化器和训练协议再单独验收 |

@@ -122,7 +122,7 @@ flagprof replay prepare \
   --call-key 'selected-call-key' --out "$FP_WORKSPACE/replay-input"
 ```
 
-算子重放需要两侧完整张量 blob，生成包后在相应设备环境执行 `replay run --side ref|cmp --device ... --store ...`。输出误差、传播误差和 replay 新引入误差按各自证据读取。详细契约见 [分析器与报告](07-analyzers-and-reports.md)。
+算子重放需要两侧完整张量 blob，生成包后在相应设备环境执行 `flagprof replay run "$FP_WORKSPACE/replay-input" --side ref --device "$DEVICE" --store "$FP_WORKSPACE/replay-runs"`。设置 `DEVICE` 为与该侧匹配的设备，对比侧使用 `--side cmp`。输出误差、传播误差和 replay 新引入误差按各自证据读取。详细契约见 [分析器与报告](07-analyzers-and-reports.md)。
 
 ## 设备最小验收
 

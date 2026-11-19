@@ -29,7 +29,7 @@ FlagTree 在本批中编译 FlagGems 使用的 Triton 算子，模型执行模�
 
 FlagTree 对照固定 `--flaggems on` 和同一 include，才能观察到真实 JIT 执行。编译器已安装或已导入，不等于模型执行了该编译器生成的算子；公共 `StoreView.probe_status()` 保留 `compiler_identity`、`compiler_execution`。JIT 计数表示 Python JIT 入口调用，不代表设备 kernel 覆盖率。缺少编译 listener 的厂商版本仍保留 JIT 观察，但不推断缓存命中或编译耗时。
 
-示例从已准备输入的目录运行，模型、参考包、include 和厂商编译器路径可替换为自己的路径，结果写入 `./evidence`。
+示例从已准备输入的目录运行，模型、参考包、include 和厂商编译器路径可替换为自己的路径，结果写入 `./evidence`。以下 `--declare` 路径以仓库的 `inference/` 为基准；在其他目录运行时，传入 [FlagTree 声明](examples/flagtree.json)或 [FlagCX 声明](examples/flagcx.json)的实际文件路径。
 
 ```bash
 python -B -m flagprof record --vendor ascend --preset accuracy \
@@ -125,4 +125,4 @@ flagprof report ./evidence/cx-perf/group.json --out ./evidence/cx-perf-report
 
 Python `attach(..., config={...})` 与 CLI 使用相同配置：`flagtree`、`vendor_compiler`、`tensor_boundaries`、`tensor_ops_in`。重复传递有效配置时会重新计算 include 摘要。显式组件选择或注册失败时，record、final capture 和 `with attach(...)` 均停止目标执行。
 
-`StoreView.probe_status()` 返回 `compiler_identity`、`compiler_execution`；`report oracle` 支持 Store 对 Store 或 group 对 group。组报告的数值结果按相同 rank 展示，逐 rank 性能关联及 replay 参数仍传给单个 Store 入口。Store schema 继续为 1.2。
+`StoreView.probe_status()` 返回 `compiler_identity`、`compiler_execution`；`report oracle` 支持 Store 对 Store 或 group 对 group。组报告的数值结果按相同 rank 展示，逐 rank 性能关联及 replay 参数仍传给单个 Store 入口。当前写出的 Store schema 为 `1.3`。
