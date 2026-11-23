@@ -255,7 +255,9 @@ def build(model, doc, source=None):
         order = ('oracle.identity_diff','oracle.generation','oracle.first_divergence',
                  'oracle.op_sensitivity','oracle.layer','oracle.perf_links','oracle.replay')
     else:
-        order = ('perf.device','perf.op','perf.layer','perf.gap','generation',
+        if 'training' in panels:
+            model.meta['title'] = '训练运行结果'
+        order = ('training','perf.device','perf.op','perf.layer','perf.gap','generation',
                  'route.coverage','compile.health','communication','memory','resource')
     for ident in list(order)+[key for key in panels if key not in order]:
         if ident not in panels or ident == 'perf.timeline':

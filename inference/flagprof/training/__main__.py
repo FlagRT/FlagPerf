@@ -229,32 +229,42 @@ def monitor_start(root,vendor,world,rank):
         diagnose='on' if os.environ.get('FLAGPROF_TRAIN_DIAGNOSE','on')=='on' else 'off'
         topology='agent'
         return dict(topology=topology,diagnose=diagnose)
-    if agent:
-        if world>1:
-            import torch.distributed as dist
-            handshake=dist.new_group(backend='gloo')
-            decision=[None]
-            if rank==0:
-                try:
-                    decision=[agent_attempt()]
-                except Exception:
-                    if supervisor is not None:
-                        supervisor.terminate();supervisor=None
-            dist.broadcast_object_list(decision,src=0,group=handshake)
-            if decision[0] is None:
-                owner=start_local();topology='local';diagnose='off'
-            else:
-                topology=decision[0]['topology'];diagnose=decision[0]['diagnose']
-                os.environ['FLAGPROF_MONITOR_REFERENCE']=reference
-        else:
+    def local_attempt():
+        nonlocal owner,topology,diagnose
+        owner=start_local()
+        topology='local';diagnose='off'
+        return dict(topology=topology,diagnose=diagnose)
+    if world>1:
+        # One decision on global rank 0, one session owner, every rank binds
+        # into the same session through the shared reference at attach time.
+        import torch.distributed as dist
+        handshake=dist.new_group(backend='gloo')
+        decision=[None]
+        if rank==0:
             try:
-                agent_attempt()
+                decision=[agent_attempt() if agent else local_attempt()]
             except Exception:
                 if supervisor is not None:
                     supervisor.terminate();supervisor=None
-                owner=start_local();topology='local';diagnose='off'
+                try:
+                    decision=[local_attempt()]
+                except Exception:
+                    decision=[None]
+        dist.broadcast_object_list(decision,src=0,group=handshake)
+        if decision[0] is not None:
+            topology=decision[0]['topology'];diagnose=decision[0]['diagnose']
+            os.environ['FLAGPROF_MONITOR_REFERENCE']=reference
     else:
-        owner=start_local()
+        try:
+            if agent: agent_attempt()
+            else: local_attempt()
+        except Exception:
+            if supervisor is not None:
+                supervisor.terminate();supervisor=None
+            try:
+                local_attempt()
+            except Exception:
+                topology='local';diagnose='off'
     if supervisor is not None:
         def stop_supervisor():
             try:
