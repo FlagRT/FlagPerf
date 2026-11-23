@@ -83,6 +83,8 @@ class TrainingReportAlignmentTests(unittest.TestCase):
             run = create_run(root/'rank-0'/'run-1')
             with Writer(run) as writer:
                 corr = 0
+                corr += 1
+                writer.emit(training_span(0, 'data', corr, 500, 100))
                 for step in range(2):
                     corr += 1
                     writer.emit(training_span(step, 'step', corr, 1000+step*10**7, 10**7, accumulation=2))
