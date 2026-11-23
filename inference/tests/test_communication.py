@@ -47,7 +47,7 @@ class CommunicationTests(unittest.TestCase):
         import torch.distributed as dist
         from flagprof.probes.communication import CommunicationProbe
         rows = []
-        context = SimpleNamespace(closed=False, current_scope=lambda: None,
+        context = SimpleNamespace(closed=False, diagnostic=None, current_scope=lambda: None,
             probe_state=lambda: dict(generation=dict(generation_step=0)),
             writer=SimpleNamespace(emit=rows.append))
         manager = SimpleNamespace(context=context, config={}, state=dict(probes={}))
