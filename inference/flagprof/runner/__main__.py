@@ -26,7 +26,7 @@ def model_files_identity(model_path):
 POOLING_SEMANTICS={'last':'last-valid-token-fp32-l2','mean':'mean-fp32-l2','cls':'cls-token-fp32-l2'}
 
 
-def main():
+def _main():
     p = argparse.ArgumentParser(allow_abbrev=False)
     p.add_argument('model', nargs='?', default=None,
                    help='hf:<directory> (embedding/generate/rerank only)')
@@ -105,6 +105,8 @@ def main():
     if args.task=='generate':
         from .generate import execute
         return execute(args)
+    from .generate import begin_phase, end_phase
+    load_phase = begin_phase(handle, 'load')
     import torch
     from .fixed import numerics, software
     numeric_settings=numerics(args.device,args.numerics)
@@ -117,6 +119,7 @@ def main():
         sync = torch.cuda.synchronize
     else:
         sync = lambda: None
+    if handle:handle.register_device(args.device)
     torch.set_num_threads(4)
     torch.manual_seed(531)
     from flagprof import current_attachment
@@ -142,9 +145,9 @@ def main():
             component_install_s=time.perf_counter()-component_started
     start = time.perf_counter()
     try:
-        from transformers import AutoModel, AutoTokenizer
+        from .embedding import load_model, load_tokenizer, text_batch, embedding_outputs
         model_path = args.model[3:]
-        tokenizer = None if args.inputs_from else AutoTokenizer.from_pretrained(model_path, local_files_only=True, trust_remote_code=False, padding_side=args.padding_side)
+        tokenizer = None if args.inputs_from else load_tokenizer(model_path, args.padding_side)
         model_started=time.perf_counter()
         import os
         vendor_code = None
@@ -158,13 +161,12 @@ def main():
             from .vendor import load_with_vendor_code
             model = load_with_vendor_code(model_path, getattr(torch, args.dtype)).to(args.device).eval()
         else:
-            options=dict(local_files_only=True,trust_remote_code=False,
-                         torch_dtype=getattr(torch,args.dtype),attn_implementation=args.attention)
+            options={}
             if int(os.environ.get('WORLD_SIZE','1')) > 1:
                 from .parallel import Parallel
                 parallel=Parallel(args.device,os.environ['FLAGPROF_COMM_BACKEND'])
                 options.update(tp_plan='auto',device_mesh=parallel.mesh())
-            model = AutoModel.from_pretrained(model_path, **options).eval()
+            model = load_model(model_path, args.dtype, args.attention, **options)
             if parallel is None:model.to(args.device)
         model_load_and_device_s=time.perf_counter()-model_started
         input_started=time.perf_counter()
@@ -173,15 +175,12 @@ def main():
             batches,input_identity=load(args.inputs_from,samples=args.samples.split(',') if args.samples else None,batch_size=args.batch_size,model=model_path)
         else:
             args.batch_size=args.batch_size or 4
-            rows=[json.loads(line) for line in Path(args.inputs).read_text().splitlines() if line.strip()]
-            texts=[r if isinstance(r,str) else r.get('text',r.get('query',r.get('input'))) for r in rows[:args.batch_size]]
-            if len(texts)!=args.batch_size or not all(isinstance(t,str) for t in texts):raise ValueError('inputs need batch-size text rows')
-            batches=[([str(i) for i in range(args.batch_size)],dict(tokenizer(texts,padding=True,truncation=True,max_length=args.max_length,return_tensors='pt')))]
+            batches=[([str(i) for i in range(args.batch_size)],text_batch(args.inputs,tokenizer,args.batch_size,args.max_length))]
             input_identity=dict(inputs_sha256=hashlib.sha256(Path(args.inputs).read_bytes()).hexdigest(),
                 model_files=model_files_identity(model_path),probe_alg='p4v1')
         import inspect
         if hasattr(model.config,'use_cache'):model.config.use_cache=False
-        from . import run_prepared, pool_embedding
+        from . import run_prepared
         if handle:handle.register_model(model)
         input_identity.update(dtype=args.dtype,pooling=POOLING_SEMANTICS[args.pooling],
             padding_side=args.padding_side,
@@ -208,6 +207,7 @@ def main():
             input_identity.update(parallelism=dict(world_size=2,plan='auto'),comm_backend=parallel.backend,
                                   communication=parallel.identity,rank=int(os.environ['RANK']))
         input_prepare_s=time.perf_counter()-input_started
+        end_phase(load_phase)
         load_s=time.perf_counter()-start
         out=Path(args.outputs);runs=[]
         for repeat in range(args.repeats):
@@ -218,8 +218,7 @@ def main():
                 if 'use_cache' in inspect.signature(model.forward).parameters:inputs['use_cache']=False
                 if handle:handle.bind_tensor_inputs(sample_ids,inputs,identity=input_identity)
                 def transform(output):
-                    pooled=pool_embedding(output.last_hidden_state,inputs['attention_mask'],mean=args.pooling=='mean',cls=args.pooling=='cls',normalize=False)
-                    result=torch.nn.functional.normalize(pooled.float(),p=2,dim=1)
+                    pooled,result=embedding_outputs(output.last_hidden_state,inputs['attention_mask'],mean=args.pooling=='mean',cls=args.pooling=='cls')
                     if handle:
                         handle.record_tensor('pooled',pooled);handle.record_tensor('output',result)
                     return result
@@ -244,6 +243,20 @@ def main():
         if parallel:parallel.close()
         if component:
             component.close()
+
+
+def main():
+    from .generate import close_phases
+    normal=False
+    try:
+        result=_main();normal=True
+        return result
+    finally:
+        close_phases()
+        from flagprof import current_attachment
+        handle=current_attachment()
+        if handle and handle.session and handle.capture_mode=='windowed':
+            handle.close(normal=normal,returncode=0 if normal else 1)
 
 
 if __name__ == '__main__':

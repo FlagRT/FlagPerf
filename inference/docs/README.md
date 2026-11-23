@@ -29,7 +29,7 @@ P800 候选适配见 [环境与复现步骤](../../docs/kunlunxin/inference-v2.m
 
 ## 当前状态与文档读法
 
-截至 2026-11-02，P0/P1/P2/P4 已按各自登记范围退出；P2 的最新裁决见 [D55](DECISIONS.md#d55)。设备覆盖、性能和长期运行结论以对应记录为依据，v1 中尚未实现的能力见 [版本迁移](migration.md#未实现项)。
+截至 2026-11-02，P0/P1/P2/P4 已按各自登记范围退出；P2 的最新裁决见 [D55](DECISIONS.md#d55)。设备覆盖、性能和长期运行结论以对应记录为依据，v1 中尚未实现的能力见 [版本迁移](migration.md#v1-能力对照)。
 
 框架文档是持续演进的材料，其中保留计划、历史状态和曾提议的命令。当前可执行参数以 `python -m flagprof --help` 和 [使用说明](usage.md) 为准；P3 在线恢复 / 热加载、P5 与其他后续内容按路线图推进。历史资料已从当前目录移除；正文中的历史引用指向删除前的固定 Git 提交，实验出处见 [出处索引](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md)，原件保存在维护者的本地开发仓库。
 
@@ -47,4 +47,6 @@ P800 候选适配见 [环境与复现步骤](../../docs/kunlunxin/inference-v2.m
 
 功能或契约变化同步更新使用说明、相应编号文档和决策记录。编号文档中的 `personal/` 路径指维护者本地的同步文档，用于解释原开发流程。
 
-2026-11-10 的 [组件对比指南](components.md) 汇总当前 FlagTree、FlagCX、TP2 精度边界与性能命令；增量来源及 monitor 排除范围见 [迁移记录](migration.md#2026-11-10-成熟功能增量)。
+2026-11-10 的 [组件对比指南](components.md) 汇总当前 FlagTree、FlagCX、TP2 精度边界与性能命令；该次增量见 [迁移记录](migration.md#2026-11-10-成熟功能增量)。
+
+2026-11-16 已整合 [资源监控与在线诊断](monitoring.md)、[独立计算图导出](graph-export.md) 和 [结果报告](user-result-reports.md)。Store 新写入版本为 1.3；此前 schema 1.2 与未发布 monitor 的说明属于 11 月 10 日的历史同步范围。

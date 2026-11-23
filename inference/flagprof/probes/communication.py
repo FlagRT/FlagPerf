@@ -139,6 +139,11 @@ class CommunicationProbe(Probe):
                 output_size = size // dist.get_world_size(group)
             peer = next((bound[field] for field in PEER_FIELDS.get(name, ()) if field in bound), None)
             marker = 'flagprof/comm/' + role + '/' + str(seq)
+            diagnostic = self.context.diagnostic
+            call = None
+            if diagnostic:
+                call = diagnostic.comm_enter(group_id, seq, name, role,
+                    bool(bound.get('async_op', False)))
             start = clock()
             self.busy = True
             error = None
@@ -149,6 +154,8 @@ class CommunicationProbe(Probe):
                 error = type(exc).__name__
                 raise
             finally:
+                if diagnostic:
+                    diagnostic.comm_leave(call, error)
                 duration = clock() - start
                 self.busy = False
                 scope = self.context.current_scope()

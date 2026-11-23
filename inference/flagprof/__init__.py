@@ -2,7 +2,7 @@
 # Licensed under the Apache License, Version 2.0.
 """FlagPerf inference v2: independent profiling infrastructure."""
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 
 def attach(*args, **kwargs):

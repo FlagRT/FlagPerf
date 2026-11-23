@@ -2,6 +2,8 @@
 
 命令从 `FlagPerf/inference` 执行，先设置 `PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"`。`python -m flagprof --help` 是当前已实现命令的入口；编号框架文档同时包含设计方案和历史阶段记录。
 
+监控和诊断见 [监控指南](monitoring.md)；FX/ONNX 见 [图导出](graph-export.md)；报告筛选、比较、三路 Oracle 和历史重绘见 [结果报告](user-result-reports.md)。
+
 ## 准备输出目录
 
 默认 final 路径的 capture、Store、work、scratch 要求实际文件系统为 ext4。选择本机有空间的 ext4 盘；目录名或软链接本身不能证明文件系统类型。以下路径由使用者替换，运行后保留打印出的 run 路径：
@@ -155,7 +157,7 @@ python3 -B -S -m unittest discover -s tests -v
 
 ```bash
 python3.11 -m venv /tmp/flagperf-cpu-tests
-/tmp/flagperf-cpu-tests/bin/python -m pip install -r tests/requirements-cpu.txt
+/tmp/flagperf-cpu-tests/bin/python -m pip install -r tests/requirements-cpu.txt -r tests/requirements-graph.txt
 HF_HUB_OFFLINE=1 OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 GLOO_SOCKET_IFNAME=lo \
   /tmp/flagperf-cpu-tests/bin/python -B -m pytest -q -p no:cacheprovider tests
 ```

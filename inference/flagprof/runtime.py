@@ -53,6 +53,7 @@ class Attachment:
         if capture_mode == 'final' and preset in ('perf', 'modules'):
             from .offline.workspace import check_capture_disk
             check_capture_disk(run,descriptor['format_vendor'],capture_filesystem)
+        self.rank = rank
         self.capture_mode=capture_mode
         from .probes.config import resolve
         session_options, probe_options = resolve(preset, config)
@@ -65,10 +66,14 @@ class Attachment:
         self.errors = []
         self.writer = self.context = self.session = None
         self.probe_manager = None
+        self.diagnostic = None
         self.run = Path(run).resolve()
         self.id = uuid.uuid4().hex
         self.path = self.run/'attachments'/self.id
         self.capture = self.run/'capture-staging'/self.id
+        self.monitor_enabled = probe_options.get('monitor') == 'on'
+        self.monitor_reference = self.run/'monitor-ref.json'
+        self.monitor_parent = os.environ.get('FLAGPROF_MONITOR_REFERENCE')
         self.state = dict(id=self.id, process=proc_key(), vendor=vendor, format_vendor=descriptor['format_vendor'],
                           preset=preset, capture=str(self.capture), capture_relative=str(self.capture.relative_to(self.run)),
                           capture_mode=capture_mode,status='starting',
@@ -88,6 +93,7 @@ class Attachment:
             self.writer = online_writer(self.run, rank=rank, node_index=node_index,
                                         attachment_dir=self.path, handshake_callback=handshake)
             self.context = Context(self.writer)
+            self._monitor_bind()
         except Exception as error:
             self.state.update(status='failed', writer_failure=dict(reason='startup_failed:'+repr(error), ts=__import__('time').monotonic_ns()))
             self.errors.append('writer startup: '+repr(error))
@@ -115,6 +121,17 @@ class Attachment:
             from .probes.manager import ProbeManager
             self.probe_manager = ProbeManager(self.context, probe_options, self.state, official=official,state_callback=self._save)
             self.probe_manager.install()
+            if probe_options.get('diagnose') == 'on':
+                from .probes.diagnostic import DiagnosticProbe
+                self.diagnostic = DiagnosticProbe(self)
+                self.context.diagnostic = self.diagnostic
+                try:
+                    self.diagnostic.start()
+                except Exception as error:
+                    self.state['diagnostic_status']='startup_unavailable:'+type(error).__name__
+                    self.diagnostic.emit('gap',reason='probe_startup_failed')
+                    self.diagnostic.close()
+                    self.context.diagnostic = self.diagnostic = None
             self.state['capabilities']['unavailable'] = [name+'_probe' for name, value in self.state['probes'].items() if value['status']=='unavailable']
             self.state['capabilities']['enabled'].extend(name+'_probe' for name, value in self.state['probes'].items() if value['status']=='available')
             self._save()
@@ -129,6 +146,68 @@ class Attachment:
             with _lock:
                 _handles[:] = [ref for ref in _handles if ref() is not None and not ref().closed]
                 _handles.append(weakref.ref(self))
+
+    def _monitor_bind(self, devices=None, finish=False):
+        if not self.monitor_enabled:
+            return
+        try:
+            from .monitor.reference import relocate, bind
+            if not self.monitor_reference.exists() and self.monitor_parent:
+                relocate(self.monitor_parent, self.monitor_reference)
+            if self.monitor_reference.exists():
+                bind(self.monitor_reference, worker=proc_key(), devices=devices, finish=finish)
+                if devices:
+                    from .monitor.reference import resolve_reference
+                    resolved, monitor, _ = resolve_reference(self.monitor_reference)
+                    if monitor is not None:
+                        bind(self.monitor_reference, monitor=monitor)
+                if self.monitor_parent and devices is not None:
+                    parent = Path(self.monitor_parent)
+                    # A record capture has one target; launch's shared reference
+                    # is owned by its parent, with per-rank identities in refs.
+                    if parent.parent.name.startswith('capture-') or parent.parent == self.run:
+                        bind(parent, worker=proc_key(), devices=devices)
+        except (OSError, ValueError) as error:
+            self.state.setdefault('monitor_errors', []).append(str(error))
+
+    def register_device(self, device):
+        if not self.monitor_enabled:
+            return
+        try:
+            from importlib import import_module
+            provider = import_module('flagprof.vendors.'+self.state['format_vendor']+'.execution')
+            identity = provider.physical_identity(device)
+            identity.update(rank=self.rank, logical_device=str(device), status='available')
+        except Exception as error:
+            identity = dict(rank=self.rank, logical_device=str(device), status='unknown', reason=str(error))
+        self.state['device_identity'] = identity
+        self._monitor_bind([identity])
+        self._save()
+
+    def allocator_boundary(self, boundary):
+        if not self.monitor_enabled:
+            return
+        from .telemetry.contract import raw_clock
+        start = raw_clock()
+        observed = False
+        values = {'allocated_bytes': None, 'reserved_bytes': None}
+        detail = dict(boundary=boundary, observed=False)
+        try:
+            identity = self.state.get('device_identity', {})
+            if identity.get('status') != 'available':
+                raise ValueError('device identity unavailable')
+            from importlib import import_module
+            provider = import_module('flagprof.vendors.'+self.state['format_vendor']+'.execution')
+            values = provider.allocator_memory(identity['logical_device'])
+            observed = True
+        except Exception as error:
+            detail['reason'] = str(error)
+        detail['observed'] = observed
+        self.writer.emit(dict(t='counter', src='framework', dev=self.state.get('device_identity',{}).get('logical_device','unknown'),
+            ts=start, dur=raw_clock()-start, values=values,
+            miss={} if observed else {k:'read_error' for k in values},
+            ext=dict(producer='span_boundary',telemetry=dict(detail,entity=self.state.get('device_identity',{}).get('entity')))))
+        self.state['allocator_probe'] = dict(status='available' if observed else 'unavailable', boundary=boundary)
 
     def _save(self):
         self.path.mkdir(parents=True, exist_ok=True)
@@ -166,6 +245,9 @@ class Attachment:
             return dict(status='foreign_process')
         if self.closed:
             return self.state
+        if self.diagnostic:
+            self.diagnostic.close()
+        self._monitor_bind(finish=True)
         self.closed = True
         atexit.unregister(self._exit_close)
         try:
@@ -226,6 +308,8 @@ class Attachment:
             raise RuntimeError('selected component attachment did not start: '+str(self.state.get('errors',[])))
         return self
     def __exit__(self, *exc):
+        if self.diagnostic and exc[1] is not None:
+            self.diagnostic.exception(exc[1])
         normal=exc[0] is None or (exc[0] is SystemExit and exc[1].code in (None,0))
         self.close(normal=normal,returncode=0 if normal else 1)
 

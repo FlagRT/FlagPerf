@@ -42,6 +42,8 @@ class FinalSession:
                                              actual=dict(status='unknown'),comparison=dict(status='unavailable'))
             self.profiler=self.backend.create_final(self.config,raw,self.ready)
             self.profiler.step=self.forbidden_step
+            from flagprof.telemetry.contract import raw_clock
+            self.meta['profiler_raw_window']=[raw_clock(),None]
             self.meta['start_calls']+=1;t=time.perf_counter();self.profiler.start()
             self.meta['start_s']=time.perf_counter()-t;self.status='running';self.save();return True
         except BaseException as error:
@@ -63,6 +65,8 @@ class FinalSession:
         try:
             if self.profiler is not None and self.meta['start_calls']:
                 self.meta['stop_calls']+=1;t=time.perf_counter();self.profiler.stop()
+                from flagprof.telemetry.contract import raw_clock
+                self.meta['profiler_raw_window'][1]=raw_clock()
                 self.meta['stop_s']=time.perf_counter()-t
                 t=time.perf_counter();self.backend.export_final(self.profiler,self.directory/'official')
                 self.meta['export_s']=time.perf_counter()-t

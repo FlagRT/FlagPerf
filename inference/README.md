@@ -50,10 +50,14 @@ python3 -B -S -m flagprof.runner --help
 | 主机分析 | dispatch、module、user、route、tensor 和 communication 探针；FlagGems / FlagTree 组件选择、真实编译器与 JIT 证据 |
 | 数值诊断 | accuracy 模型／逐层／指定层内算子采集、单 run 或 TP2 组的 `report oracle`、带编译器身份核对的算子 replay |
 | 单机双进程 | `launch --nproc-per-node 2`；NCCL、HCCL、FlagCX，逐 rank Store 与 group 报告 |
-| 内置运行器 | `python -m flagprof.runner`：本地 Hugging Face embedding / generation；其他模型可通过自身 Python 程序接入 |
+| 内置运行器 | `python -m flagprof.runner`：本地 Hugging Face embedding / generation / rerank 与 CTR 模板；其他模型可通过自身 Python 程序接入 |
 | 离线消费 | `seal`、`analyse`、`import`、`inspect`、`page`、`report`；Store、work、scratch 分离 |
+| 资源监控 | Ascend / NVIDIA 遥测、框架显存边界、阶段与资源联合时间线；`watch` 独立会话、滚动保留、归档恢复 |
+| 在线诊断 | 显式 `--diagnose on`：OOM、心跳、执行停滞、单机 TP2 同步通信超时，保留证据和覆盖 |
+| 计算图导出 | `export` 独立 CPU 入口：Qwen3-Embedding 固定形状 FX / ONNX；通用 `ExportSpec` API |
+| 结果交付 | 离线 HTML / Markdown、两路或三路 Oracle、runner 性能基准、条件对照、历史报告重绘 |
 
-FlagTree 单卡和 FlagCX TP2 的精度、性能与路由覆盖命令见 [组件对比](docs/components.md)。`launch` 支持与 `record` 相同的精度边界参数，以及 `coverage` 预设；当前公开版本不包含 monitor/watch。
+FlagTree 单卡和 FlagCX TP2 的精度、性能与路由覆盖命令见 [组件对比](docs/components.md)。新入口见 [资源监控与诊断](docs/monitoring.md)、[计算图导出](docs/graph-export.md) 和 [结果报告](docs/user-result-reports.md)。监控与在线诊断默认关闭；新写入的 Store 使用 schema 1.3，公共 Reader 继续读取 1.x 历史数据。
 
 P0/P1/P2/P4 的历史退出以 [决策记录](docs/DECISIONS.md) 中登记的范围为准。多机、8 卡扩展、在线故障恢复与热加载仍按 [路线图](docs/10-roadmap.md) 推进。关联、时钟或输入身份不满足时，报告保留 `partial`、`unknown`、`unlinked` 或 `not_comparable` 及具体原因。
 
@@ -67,6 +71,7 @@ P0/P1/P2/P4 的历史退出以 [决策记录](docs/DECISIONS.md) 中登记的范
 | `flagprof/offline/`、`correlate/` | 封存导入、可恢复检查点、关联与派生证据 |
 | `flagprof/store/` | schema、Writer、Reader、只读 StoreView 与完整性校验 |
 | `flagprof/analyzers/`、`report/` | 有界分析、数值差分及离线报告 |
+| `flagprof/monitor/`、`telemetry/`、`graph/` | 独立监控、采样与在线规则、CPU 图导出 |
 | `docs/` | 需求、总体框架、接口契约、阶段计划与决策记录 |
 | `tests/` | CPU 冒烟与适配负例；可选 torch/Gloo 检查，PR 时由 GitHub Actions 运行 |
 

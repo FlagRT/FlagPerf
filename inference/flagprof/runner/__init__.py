@@ -42,17 +42,24 @@ def run_prepared(model, inputs, *, warmup=0, forwards=3, outputs=None, sync=None
     destination = Path(outputs) if outputs else None
     if destination:
         destination.mkdir(parents=True, exist_ok=True)
+    from .generate import begin_phase, end_phase
+    phase = None
     with torch.inference_mode():
         for i in range(warmup + forwards):
+            if phase is None or i == warmup:
+                if phase is not None:end_phase(phase)
+                phase = begin_phase(handle, 'warmup' if i < warmup else 'measure')
             sync()
             start = time.perf_counter_ns()
             if handle:
                 handle.context.probe_state()['forward_phase'] = 'warmup' if i < warmup else 'measure'
+            if handle:handle.allocator_boundary('forward:begin')
             value = model(**inputs) if isinstance(inputs, Mapping) else model(inputs)
             if transform:
                 value = transform(value)
             sync()
             duration = time.perf_counter_ns()-start
+            if handle:handle.allocator_boundary('forward:end')
             if handle:
                 # Windowed collection advances once per completed forward.
                 # Keep export/validation outside the measured envelope.
@@ -71,6 +78,7 @@ def run_prepared(model, inputs, *, warmup=0, forwards=3, outputs=None, sync=None
                 path.write_bytes(raw)
                 row['file'] = path.name
             records.append(row)
+    if phase is not None:end_phase(phase)
     result = dict(warmup=warmup, forwards=forwards, latencies_ns=times, outputs=records,
                   attachment=handle.id if handle else None)
     if destination:

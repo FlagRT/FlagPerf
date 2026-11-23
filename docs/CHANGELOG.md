@@ -1,5 +1,11 @@
 # 适配与文档变更记录
 
+## 2026-11-16：推理监控、诊断与结果交付
+
+- 合入 Ascend/NVIDIA 遥测、独立节点监控、滚动保留和在线故障诊断；新 Store 使用 schema 1.3，监控及诊断默认关闭。
+- 新增独立 CPU FX/ONNX 导出、离线交互报告、两路/三路 Oracle、runner 性能基准、条件比较和历史重绘。
+- 保留已有厂商和模型适配，补齐退出回执整合与 wheel 报告静态资源。使用与来源见 [Inference](../inference/README.md) 和 [迁移记录](../inference/docs/migration.md)。
+
 ## 2026-11-12 — 模型适配 PR 审查修复
 
 - CTR/rerank 使用任务专属 Oracle 身份，采集的 scores 输出可进入差分报告；批次、初始权重、打分语义与代码身份纳入比较。

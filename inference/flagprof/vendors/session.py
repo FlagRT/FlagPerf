@@ -159,6 +159,7 @@ class ProfilerSession:
         path.mkdir()
         self._window=dict(capture_id=uuid.uuid4().hex,index=index,path=path.name,state='collecting',
             step_begin=index*self.config.active,step_end=None,clock_valid=False,
+            raw_window=[time.clock_gettime_ns(time.CLOCK_MONOTONIC_RAW),None],
             source_clocks=[],orchestration_clock=dict(domain='host_monotonic_ns',start=time.monotonic_ns(),end=None),artifacts=[])
         self.manifest['windows'].append(self._window)
         self.backend.set_destination(path)
@@ -168,6 +169,7 @@ class ProfilerSession:
         if self._window is None or self._window['state']!='collecting':
             return
         window=self._window;started=time.monotonic_ns()
+        window['raw_window'][1]=time.clock_gettime_ns(time.CLOCK_MONOTONIC_RAW)
         try:
             self._ready_work(profiler)
         finally:

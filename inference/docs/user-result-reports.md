@@ -1,0 +1,102 @@
+# 阅读与生成推理结果报告
+
+一次报告回答三个问题：本次运行的条件是什么，哪些观测最值得关注，怎样回到证据继续定位。
+打开输出目录中的 `report.html`；节点监控沿用 `index.html`。`report.md` 是同一批结论的简短摘要，适合交接和留档。
+复制整个输出目录即可离线阅读，页面不请求网络资源。
+
+## 从概览进入证据
+
+首页先给出任务条件和主要观察。点击具体观察会清除当前筛选、切换到对应页并打开原记录；整体覆盖说明进入对应面板。Markdown 的证据链接也能直接定位该行。
+随后可用名称、rank、层、阶段、输入形状、两侧签名或生成步筛选；完整任务身份在首页展开核对。
+表格可以排序和翻页；计数同时说明筛选范围与全表范围。较长的 kernel 名称在表格中缩写，详情保留完整名称。
+主要表格保留所有聚合项；大量逐事件证据另外静态分页。证据分页中的筛选范围有明确提示，完整数据仍在机器导出中。
+打印保存当前阅读视图，包括当前筛选和页内明细；打印件保留筛选条件、显示行号范围与全表条数。交接完整结果时保存整个报告目录。
+
+| 要判断什么 | 阅读顺序与含义 |
+|---|---|
+| 时间花在哪里 | 设备 kernel 热点 → 签名和层 → 请求窗口。主机调用时长、设备时长和、活动并集、请求墙钟各有计时边界。只有同一窗口的活动并集与空白可以相加。 |
+| 哪些层或实现值得继续检查 | 层树使用已记录的父层关系；父子层耗时不能相加。路由按非命中次数、原因、调用类型阅读；策略排除和缺少实现分别解释。 |
+| 性能是否变化 | 先看无插桩或采集条件，再看时延、吞吐和重复分布。比较表先列条件变化；口径不满足时保留原值和原因。 |
+| 精度从哪里开始不同 | 比较条件 → 首个已观测差异 → 逐层/逐样本 → 算子输入生产者。相同完整输入和相同配置下引入的差异单独列出。 |
+| 精度和性能如何联读 | 在算子详情点击同调用或同签名，查看独立性能、实际路由与回放。它们通过身份和签名关联，不代表精度采集中的逐事件耗时。 |
+| 通信是否不均衡 | 从通信域和序号进入两 rank 的设备证据，分别检查模型通信和控制通信。跨 rank 观测占用差不等于额外等待。 |
+| 显存和资源如何变化 | 选择设备/来源/指标，调整时间窗口或定位峰值。任务资源曲线在有共同主机时钟依据时显示阶段背景，并支持阶段筛选。节点独立监控不附会任务阶段。 |
+| 故障如何接手 | 异常类型 → 触发依据 → 已知活动位置 → 原始事件。发生起点、首次检出和后续判定分开。没有记录到活动层时，从任务和分配/通信消息接手。 |
+
+“未记录 / 不适用”不是零。原生框架归属、项目调用关联、阶段、路由和故障进度观测分别说明覆盖。
+诊断结果可以读取且没有告警，并不等于已经充分观测到正常执行。历史报告没有保存的模型名称、阶段、规则阈值或采样单位会明确显示。
+
+## 常用命令
+
+以下命令从 `FlagPerf/inference` 执行。Store 分析沿用已有 work/scratch 和文件系统要求；报告重绘只读取已经保存的结果。
+
+```bash
+# 单次任务；group.json 可用于已有多 rank 运行
+python3 -m flagprof report /path/to/run --out /path/to/result
+
+# 历史报告重绘到一个新目录
+python3 -m flagprof report render --source /path/to/old-result --out /path/to/new-result
+
+# 使用当前版本从封存结果重新整理结论（同时刷新子报告）
+python3 -m flagprof report render --source /path/to/old-result --out /path/to/refreshed-result --refresh-view
+
+# 直接读取已有 runner 输出，生成性能基准
+python3 -m flagprof report baseline --runner-results /path/to/r1/runner.json /path/to/r2/runner.json --out /path/to/baseline
+
+# 同条件 runner 也可加入 Store 报告或历史报告重绘
+python3 -m flagprof report /path/to/run --runner-results /path/to/runner.json --out /path/to/result-with-baseline
+
+# 两路精度；性能和回放参数仍绑定 ref 与 cmp
+python3 -m flagprof report oracle --ref /path/to/A --cmp /path/to/C --declare /path/to/differences.json --out /path/to/pair
+
+# 三路：A→B、A→C、B→C 各有完整详情
+python3 -m flagprof report oracle --ref /path/to/A --baseline /path/to/B --cmp /path/to/C --declare /path/to/differences.json --out /path/to/three-way
+
+# 第一份报告作为基准，比较保存的报告或 runner 基准报告
+python3 -m flagprof report compare --reports /path/to/baseline /path/to/candidate --declare /path/to/differences.json --out /path/to/comparison
+```
+
+性能声明文件示例：`{"differences":["device","software.torch","compiler"]}`。
+允许声明设备、软件、FlagGems/include、编译器、通信后端和并行配置变化；模型、输入、dtype、输出语义与计时边界需要一致。
+多个因素同时变化时，报告只描述指标变化，不自动归因。基准为零只给绝对差值。
+历史结果缺少新的统计时，重绘不会伪造统计；需要从已有 Store 重新离线分析。
+默认重绘复用保存的展示快照；`--refresh-view` 使用原 `result.json` 和导出重新生成当前版本的摘要、身份与证据定位。两者均写入新目录；刷新展示保留原机器结果和导出字节，不执行设备采集。
+
+性能对照首页优先给出各 rank 的请求/前向均值、变化比例和 p95；组墙钟使用单独证据。三路精度优先给出最终 `output` 的绝对误差与相对 L2，各指标可能有不同变化方向。
+故障首页呈现分配申请、已有位置和退出记录；原始事件时刻与规则检测时刻分别保留，具有同一任务和时钟依据时才换算任务内时刻。
+
+## 时延、重复与回执
+
+embedding 的 `latencies_ns` 已排除预热；生成请求中 `warmup=true` 的请求不进入统计。
+请求吞吐用实际逻辑样本或生成 token 数除以请求时间；decode 吞吐使用 decode 的 token 与时间，分母在详情中保存。
+分布采用 nearest-rank 分位数。CV 使用独立进程均值，至少三次独立重复才筛查超过 10% 的波动；尖峰超过中位数五倍，至少二十个有效观测才启用筛查。
+筛查不修改原运行状态，也不自动重跑。历史文件没有进程身份时保留进程内重复分布，独立重复 CV 留空。
+
+已有执行回执可包装为 `runner-evidence/1`，路径相对清单目录：
+
+```json
+{
+  "schema": "runner-evidence/1",
+  "runner": "outputs/runner.json",
+  "execution": {"boot_id":"已记录的主机启动身份", "pid":123, "start_ticks":456}
+}
+```
+
+回执必须来自实际执行记录。`group_execution` 与 `clock: "perf_counter_ns"` 可登记同一组、同一主机时钟下的各 rank 请求；完整且唯一配对后，组请求取最早开始至最晚结束，逻辑 token 只计一次。
+`pair_id` 与 `measurement_protocol` 可登记采集开/关的配对实验；同条件、同边界、同观测次数时才给出采集扰动。缺少这些证据时分别展示原值。
+
+## 精度、回放和曲线的统计范围
+
+绝对误差 p50/p90/p99 使用有限有效配对元素的线性插值；成对极值哨兵和非有限值沿用原判据。
+参考 RMS、RMSE、归一化 RMSE 和参考近零占比用于理解误差相对于数值尺度的大小；近零阈值为 `1e-12`。
+参考尺度为零时归一化 RMSE 留空。完整张量、抽样位置和摘要证据分别标注。逐层摘要同时保留每样本等权和每元素等权的 MAE/MSE。
+三路变化只对齐同一个调用键、样本和有效元素范围；排除元素导致范围不能确认一致时只保留各路原值。
+
+组精度的 `--perf-ref-run` / `--perf-cmp-run` 支持性能 `group.json`，或 `{"ranks":{"0":"path/to/store0","1":"path/to/store1"}}`。
+回放的 ref/cmp 参数使用同样的 rank 清单；每侧都要提供，按 rank、身份与既有回放来源检查。跨 rank 复制边界与逻辑样本不会重复计数。
+
+资源曲线的缩减覆盖完整来源时间，保留峰谷、端点与缺失；统计表从原始观测计算。
+allocated、reserved、device-used、分配器外估算和功率域分别解释。资源 p95 沿用有效加权观测判据，不能用曲线显示点数量代替。
+
+报告目录中的 `result.json`、`exports` 保留机器接口；`report-data.jsonl` 保存展示模型，`renderer.json` 标识渲染版本。
+生成器由标准库完成；Chromium/Playwright 只用于开发验收，不是使用报告的运行依赖。

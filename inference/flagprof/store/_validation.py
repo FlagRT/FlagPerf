@@ -14,7 +14,7 @@ _INT_KEYS = {"seq", "pid", "tid", "rank", "scope", "seq_in_scope", "parent", "de
              "group_seq", "bytes", "count"}
 _U64_KEYS = {"corr", "parent_corr"}
 _STR_KEYS = {"name", "lib", "backend", "key", "boundary", "dtype", "probe_alg", "p", "clk"}
-_DICT_KEYS = {"ext", "data", "attrs", "stats", "values", "metrics", "stage_dur"}
+_DICT_KEYS = {"ext", "data", "attrs", "stats", "values", "metrics", "stage_dur", "miss"}
 _U64 = S.U64_MAX
 
 
@@ -55,7 +55,7 @@ class CachedValidator(SchemaValidator):
         if type(record) is not dict:
             return super().decode(record, defaults)
         t = record.get("t")
-        if type(t) is not str or t not in _FAST_TYPES or "v" in record or "link" in record:
+        if type(t) is not str or t not in _FAST_TYPES or "v" in record or "link" in record or "miss" in record:
             return super().decode(record, defaults)
         if defaults is not None and (type(defaults) is not dict or
                 not set(defaults) <= {"pid", "tid", "rank", "p", "clk", "ts", "seq"}):
