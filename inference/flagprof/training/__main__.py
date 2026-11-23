@@ -177,7 +177,10 @@ def monitor_start(root,vendor,world,rank):
     if os.environ.get('FLAGPROF_TRAIN_MONITOR')!='on': return None
     from flagprof.monitor.lifecycle import Monitor
     reference=str((Path(root)/'monitor-ref.json').resolve())
-    interval=os.environ.get('FLAGPROF_TRAIN_MONITOR_INTERVAL_MS','1000')
+    try:
+        interval=int(os.environ.get('FLAGPROF_TRAIN_MONITOR_INTERVAL_MS','1000'))
+    except ValueError:
+        interval=1000
     handshake=owner=None
     if world>1:
         import torch.distributed as dist
