@@ -160,6 +160,47 @@ def apply_sharding(model, device_type, world_size):
     return model, ('per-block+root' if wrapped else 'root-only'), mesh
 
 
+def monitor_start(root,vendor,world,rank):
+    """Opt-in node monitoring and online diagnosis; FLAGPROF_TRAIN_MONITOR=on.
+
+    One session per store root: global rank 0 owns the sidecar node process
+    (topology 'host' on Ascend, 'local' elsewhere), the reference path is
+    broadcast over a gloo handshake group, and every rank relocates a
+    per-run reference and registers itself as a target during attach.
+    FLAGPROF_TRAIN_DIAGNOSE=on (default: with the monitor) additionally
+    attaches the diagnostic probe, feeding heartbeat, progress, communication
+    and OOM findings from this rank into the same timeline; the rank's device
+    identity joins the session through register_device. Best-effort by
+    construction: every failure is recorded on the session or attachment and
+    never fails the training run.
+    """
+    if os.environ.get('FLAGPROF_TRAIN_MONITOR')!='on': return None
+    from flagprof.monitor.lifecycle import Monitor
+    reference=str((Path(root)/'monitor-ref.json').resolve())
+    interval=os.environ.get('FLAGPROF_TRAIN_MONITOR_INTERVAL_MS','1000')
+    handshake=owner=None
+    if world>1:
+        import torch.distributed as dist
+        handshake=dist.new_group(backend='gloo')
+        payload=[None]
+        if rank==0:
+            try:
+                owner=Monitor(root,reference,vendor,dict(monitor='on',monitor_interval_ms=interval))
+                os.environ['FLAGPROF_MONITOR_REFERENCE']=reference
+                payload=[reference]
+            except Exception:
+                payload=[None]
+        dist.broadcast_object_list(payload,src=0,group=handshake)
+        if payload[0] is None: return None
+        os.environ['FLAGPROF_MONITOR_REFERENCE']=payload[0]
+    else:
+        owner=Monitor(root,reference,vendor,dict(monitor='on',monitor_interval_ms=interval))
+        os.environ['FLAGPROF_MONITOR_REFERENCE']=reference
+    diagnose=os.environ.get('FLAGPROF_TRAIN_DIAGNOSE','on')=='on'
+    return dict(owner=owner,handshake=handshake,
+                config=dict(monitor='on',diagnose='on' if diagnose else 'off'))
+
+
 def observation_start(args):
     """Opt-in diagnostic collector attach; FLAGPROF_TRAIN_OBSERVE names a store root.
 
@@ -172,8 +213,15 @@ def observation_start(args):
 
     Customer-facing conveniences: the vendor profiler tracing switch is set
     when absent (XPU stacks refuse to start their runtime profiler without
-    it), and a missing identity file is generated from the live torch device
-    stack (real framework UUIDs) instead of failing the attach.
+    it), a missing identity file is generated from the live torch device
+    stack (real framework UUIDs) instead of failing the attach, and the same
+    node monitoring / online diagnosis / result-report reading experience as
+    inference is available: FLAGPROF_TRAIN_MONITOR=on starts one monitor
+    session per store root with per-rank targets (FLAGPROF_TRAIN_DIAGNOSE,
+    FLAGPROF_TRAIN_MONITOR_INTERVAL_MS tune it), and after a successful run
+    each rank renders its own report (report.html/report.md next to the run
+    dir; FLAGPROF_TRAIN_REPORT=off skips it). Monitoring and report
+    generation are best-effort and never change execution semantics.
     """
     root=os.environ.get('FLAGPROF_TRAIN_OBSERVE')
     if not root: return None
@@ -202,7 +250,9 @@ def observation_start(args):
     run=create_run(Path(root)/('rank-'+str(rank)),
                    identity=dict(diagnostic='flagprof-train-observe/1',vendor=vendor,preset='perf',
                                  task=args.task,world_size=world,identity_source=identity_note))
-    handle=attach(run,vendor,preset='perf',rank=rank)
+    monitoring=monitor_start(root,vendor,world,rank)
+    handle=attach(run,vendor,preset='perf',rank=rank,
+                  config=monitoring['config'] if monitoring else None)
     if handle.state['status']!='running':
         producer_errors=''
         for producer in sorted(Path(root).glob('rank-%d/*/capture-staging/*/producer.json' % rank))[-1:]:
@@ -214,8 +264,10 @@ def observation_start(args):
                 pass
         raise RuntimeError('train observation attachment did not start: %s%s'
                            % (handle.state.get('errors'), producer_errors))
+    if monitoring and handle.monitor_enabled:
+        handle.register_device(str(getattr(args,'device','')))
     os.environ.setdefault('FLAGPROF_GROUP_ID',run.name)
-    return dict(handle=handle,probe=None,rank=rank,world=world,run=run)
+    return dict(handle=handle,probe=None,rank=rank,world=world,run=run,monitoring=monitoring)
 
 
 def execute(args):
@@ -449,6 +501,17 @@ def execute(args):
                 except BaseException as error:
                     observe['handle'].state['finalize_error']=type(error).__name__+': '+str(error)
                     observe['handle']._save()
+                if os.environ.get('FLAGPROF_TRAIN_REPORT')!='off':
+                    # Same reading experience as inference: a browsable
+                    # report.html/report.md per rank run, rendered after the
+                    # manifest reaches its terminal status. Generation is a
+                    # pure post-run read and never fails the training run.
+                    try:
+                        from flagprof.report import generate
+                        observe['report']=generate(observe['run'])
+                    except BaseException as error:
+                        observe['handle'].state['report_error']=type(error).__name__+': '+str(error)
+                        observe['handle']._save()
 
 
 def main(argv=None):
