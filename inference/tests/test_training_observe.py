@@ -45,11 +45,16 @@ class TrainingMonitorWiringTests(unittest.TestCase):
             self.assertEqual(os.environ['FLAGPROF_MONITOR_REFERENCE'],
                              str((self.root/'monitor-ref.json').resolve()))
             reference = json.loads((self.root/'monitor-ref.json').read_text())
-            self.assertEqual(reference.get('status'), 'running')
+            self.assertEqual(reference.get('topology'), 'local')
+            self.assertIn(reference.get('pre_sample'), ('available', 'no_pre_sample'))
             self.assertTrue((self.root/'monitor').is_dir())
+            manifests = list((self.root/'monitor').glob('*/manifest.json'))
+            self.assertEqual(len(manifests), 1, 'monitor session run missing')
+            self.assertEqual(json.loads(manifests[0].read_text()).get('identity', {}).get('kind'), 'monitor')
         finally:
             monitoring['owner'].close()
-        self.assertEqual(json.loads((self.root/'monitor-ref.json').read_text()).get('status'), 'finished')
+        closed = json.loads((self.root/'monitor-ref.json').read_text())
+        self.assertIsNotNone(closed.get('reclaim'), 'monitor close left no reclaim receipt')
 
     def test_diagnose_can_be_disabled_independently(self):
         from flagprof.training.__main__ import monitor_start
