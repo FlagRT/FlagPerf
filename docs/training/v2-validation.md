@@ -37,6 +37,7 @@
 | 8B FSDP2 外部循环演示（适配器） | 通过 | 手写 FSDP2 循环接 `ObservationSession`：双 rank 每步 all-gather/reduce-scatter 逐调用入账（合计 allgather 730 / reducescatter 370）；开/关两跑 399/399 张量值一致（DTensor 文件字节不同为分片元数据差异，按值对比） |
 | 算子级画像（封存 trace 聚合，`kernel_profile.py`） | 完成 | FlagScale 运行：183,647 内核 / 104 种 / 通信占比 52.0%（pccl AllReduce RING 243 次、twoShot 351 次、elementwise add 21,120 次等）；8B FSDP2：87,478 内核 / 69 种 / 45.5%（AllGather 730 / ReduceScatter 370，与通信事件计数吻合） |
 | 训练观察态节点监控与 rank 级结果报告（PPU DDP2 FSDP，2026-11-23） | 通过（双车 rc=0） | 带 `FLAGPROF_TRAIN_MONITOR=on`：store 根单监控会话（rank0 属主，`monitor-ref.json` + `monitor/` + `targets/` 逐 rank 注册），每 rank run 目录内 relocate 出旁路引用，跑完自动渲染 `<run>-report/`（report.html/report.md/result.json）；训练面板 status ok（2 步、11 区间全 complete、data/zero_grad/forward/backward/optimizer 计数齐全），perf.device/perf.layer/perf.timeline/resource/memory/communication 等推理级面板同套可用，报告标题按训练负载呈现；不带监控的对照车 store 无任何 monitor 引用、报告照常生成；拓扑/诊断状态与设备身份降级（thead `physical_identity` 缺失记 unknown）逐字落 attachment state |
+| 训练观察态节点监控与在线诊断（Ascend 910C DDP2 FSDP rerank-0.6B，2026-11-23） | 通过（双车 rc=0） | vendor=ascend 走 **agent 拓扑**：rank0 自起独立 `flagprof watch` 监督进程（会话 `monitor-session/1`，vendor=ascend，结束 status=stopped——自起进程回收验证），双 rank 注册为 target（history 2 条），DCMI 遥测真实采样（aggregates 含 `host.memory.*` 与 `chip:N` 逐分钟聚合），诊断引擎产出 2 条 confirmed finding（`monitor.gap` 覆盖缺口，schema `monitor-finding/1`）；rank store 内 DiagnosticProbe 发出 788 条 `health/heartbeat` 事件 + 258 条 comm + 124 条训练 span；attachment state 记 `monitor_topology=agent`、`monitor_diagnose=on`、设备身份 `chip:0 phyid 0 available`（ascend vendor 有 `physical_identity`）；报告 training ok（3 步）、`perf.timeline ok`、面板全套；无监控对照车无会话痕迹、报告照常 |
 | 官方流水并行引擎（torch.distributed.pipelining） | 未验证（厂商栈挂死） | 官方 PP 引擎在 PPU 带/不带观察两配方均第一步挂死（NCCL RAS 转储留档），P800 同型；不绕过、不改写，如实记录为引擎级 PP 未验证；DDP/FSDP2 通路不受影响 |
 | P800 两台机器空闲卡健康探针 | 未通过健康前置 | 固定 FlagRT v2 镜像内最小 PyTorch 探针在 torch import 后、首个设备内核前停滞，硬上限后 rc=137；四轮独立实验覆盖两台机器共 6/6 长空闲物理卡同型挂死（楔死卡可被其他租户唤醒跑满，非永久损坏），证据链闭环，定性为厂商级阻塞。没有进入本训练框架，不能声明 P800 训练适配完成（2026-11-17 更新：klx1 正常卡窗口内 P800 训练与观察态全量已通过，见新增行；空闲卡同型挂死仍交厂商，本行保留为当时记录） |
 
@@ -84,7 +85,7 @@
 | TRAIN-ASCEND-002 | 910C 同一命令逐跑 final sha 非确定（控制实验：两次无采集 base 运行 sha 均不同） | sha 级零漂移判据在 Ascend 不适用；观察不扰协议以行为级证据（loss/梯度轨迹）论证 |
 | TRAIN-ASCEND-003 | ascend2 租户容器上机后 HCCL NPU 网卡绑定失败（`EI0020`，环境级） | 该机 FSDP/观察态冒烟待租户退场复测；能力已由 ascend1 覆盖 |
 | TRAIN-PP-001 | 官方流水引擎（torch.distributed.pipelining）在 PPU/P800 厂商栈第一步挂死 | 引擎级 PP 未验证，如实留档（PPU 两配方日志）；诊断性 p2p/集合通信 demo 通过，但不据此声明 PP 支持 |
-| TRAIN-MONITOR-001 | 训练观察态在线诊断（agent 拓扑）要求厂商设备遥测（ascend/nvidia）；thead 平台与推理当日能力一致保持 off，本地边车会话可用；agent 拓扑的训练侧实车尚未在 ascend/nvidia 真实训练上跑过 | P800/910C 训练复测时附带验证 agent 拓扑与诊断规则；thead 平台不虚报诊断能力；`register_device` 在 thead 记 unknown（vendor 缺 `physical_identity`） |
+| TRAIN-MONITOR-001 | 训练观察态在线诊断（agent 拓扑）要求厂商设备遥测（ascend/nvidia）；thead 平台与推理当日能力一致保持 off，本地边车会话可用。agent 拓扑已在 Ascend 910C 真实训练实车验证（2026-11-23，见上表）；nvidia 平台训练侧未实车（无 nvidia 训练机）；P800 复测时附带验证 | thead 平台不虚报诊断能力；`register_device` 在 thead 记 unknown（vendor 缺 `physical_identity`）、ascend 记 `chip:N available` |
 | 性能范围 | accuracy 快照开销、首次编译/初始化、共享宿主 | 不自动给独占资格，不把诊断时长当成优化后性能，不合计 rank-local 吞吐 |
 
 新增代码版权署名为 **Suscom Lab, The Hong Kong University of Science and Technology (Guangzhou)**；已有上游文件保留原版权声明。
