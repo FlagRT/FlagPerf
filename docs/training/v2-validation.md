@@ -1,6 +1,6 @@
 # Training v2 验证与已知限制
 
-日期：2026-11-11（2026-11-12 增补 CTR 训练、embedding/reranker 训练任务与 P800 探针收官；同日晚间增补 FSDP 分片训练、注册表 --task 缺省解析与 causal-lm 通路；2026-11-19 增补三平台全量矩阵：P800 训练与观察态全量、Ascend 910C 全量、通信画像报表实测、FlagScale 真实集成与算子级画像，证据随 2026-11-17/18 三平台交付材料归档）。起点为 `zhiyu/model-adaptation@3417e54d`，开发分支 `zhiyu/perf-train`。验证目录包含多轮独立运行，不覆盖失败、不合并计数冒充一次验收。
+日期：2026-11-11（2026-11-12 增补 CTR 训练、embedding/reranker 训练任务与 P800 探针收官；同日晚间增补 FSDP 分片训练、注册表 --task 缺省解析与 causal-lm 通路；2026-11-19 增补三平台全量矩阵：P800 训练与观察态全量、Ascend 910C 全量、通信画像报表实测、FlagScale 真实集成与算子级画像，证据随 2026-11-17/18 三平台交付材料归档；2026-11-23 增补合并 PR #15 后的节点监控与 rank 级结果报告实车）。起点为 `zhiyu/model-adaptation@3417e54d`，开发分支 `zhiyu/perf-train`。验证目录包含多轮独立运行，不覆盖失败、不合并计数冒充一次验收。
 
 ## 实测状态
 
@@ -36,6 +36,7 @@
 | FlagScale 真实集成（train_retrieval.py，PPU 双卡） | 通过 | bge-m3、DDP 2 卡：train_loss 0.116918 / validation 0.000107；store 1.6 GB manifest complete；comm=`{model/allreduce: 2}`（评测归约；DDP 梯度 Reducer 按设计不可见）、phases data 28 / forward 27 / backward 27 / optimizer 27 / step 27；开/关采集两跑 `model.safetensors` sha256 逐字节相同（`4b346bb7…`）。工件见 `inference/tools/flagscale_integration/`，指南见 [FlagScale使用FlagPerf最佳实践](FlagScale使用FlagPerf最佳实践.md) |
 | 8B FSDP2 外部循环演示（适配器） | 通过 | 手写 FSDP2 循环接 `ObservationSession`：双 rank 每步 all-gather/reduce-scatter 逐调用入账（合计 allgather 730 / reducescatter 370）；开/关两跑 399/399 张量值一致（DTensor 文件字节不同为分片元数据差异，按值对比） |
 | 算子级画像（封存 trace 聚合，`kernel_profile.py`） | 完成 | FlagScale 运行：183,647 内核 / 104 种 / 通信占比 52.0%（pccl AllReduce RING 243 次、twoShot 351 次、elementwise add 21,120 次等）；8B FSDP2：87,478 内核 / 69 种 / 45.5%（AllGather 730 / ReduceScatter 370，与通信事件计数吻合） |
+| 训练观察态节点监控与 rank 级结果报告（PPU DDP2 FSDP，2026-11-23） | 通过（双车 rc=0） | 带 `FLAGPROF_TRAIN_MONITOR=on`：store 根单监控会话（rank0 属主，`monitor-ref.json` + `monitor/` + `targets/` 逐 rank 注册），每 rank run 目录内 relocate 出旁路引用，跑完自动渲染 `<run>-report/`（report.html/report.md/result.json）；训练面板 status ok（2 步、11 区间全 complete、data/zero_grad/forward/backward/optimizer 计数齐全），perf.device/perf.layer/perf.timeline/resource/memory/communication 等推理级面板同套可用，报告标题按训练负载呈现；不带监控的对照车 store 无任何 monitor 引用、报告照常生成；拓扑/诊断状态与设备身份降级（thead `physical_identity` 缺失记 unknown）逐字落 attachment state |
 | 官方流水并行引擎（torch.distributed.pipelining） | 未验证（厂商栈挂死） | 官方 PP 引擎在 PPU 带/不带观察两配方均第一步挂死（NCCL RAS 转储留档），P800 同型；不绕过、不改写，如实记录为引擎级 PP 未验证；DDP/FSDP2 通路不受影响 |
 | P800 两台机器空闲卡健康探针 | 未通过健康前置 | 固定 FlagRT v2 镜像内最小 PyTorch 探针在 torch import 后、首个设备内核前停滞，硬上限后 rc=137；四轮独立实验覆盖两台机器共 6/6 长空闲物理卡同型挂死（楔死卡可被其他租户唤醒跑满，非永久损坏），证据链闭环，定性为厂商级阻塞。没有进入本训练框架，不能声明 P800 训练适配完成（2026-11-17 更新：klx1 正常卡窗口内 P800 训练与观察态全量已通过，见新增行；空闲卡同型挂死仍交厂商，本行保留为当时记录） |
 
@@ -64,6 +65,7 @@
 | 原 TP2 embedding CPU 用例 | 环境失败保留 | PPU 镜像无设备映射时，Transformers TP 加载尝试 CUDA 初始化并报 driver shutting down；在完全未修改的 `3417e54d` 归档上同样复现。不是本次引入，亦不改测试掩盖 |
 | 全量回归（三平台实机，2026-11-17） | 230 passed / 0 failed × 4（thead1、thead2、klx1、ascend1；33–54 s/机） | 同一提交在 PPU/P800/910C 三平台一致通过；910C 于 flagrt 容器内运行 |
 | P800 夜间全量口径（更宽，236 项） | 232 passed / 3 failed / 1 skipped | 3 项失败经 thead 同树对照定性为既有全量口径测试债（非 P800 平台差异、非本分支引入），如实保留未修；与上一行 230 项子集口径分别记录，不合并计数 |
+| 合并 dev-1.0（PR #15）后全量（PPU 容器，2026-11-23 @ `9b635461`） | 377 passed / 12 failed / 1 skipped | 12 项失败为 PR #15 自带 monitor/final-lifecycle/components 测试，在**未修改的 dev-1.0 `cc85edc8`** 同容器逐名复现同一批失败（上游环境性，非合并/训练侧引入）；训练观察监控/报告新测试（tests/test_training_observe.py 4 项）全绿 |
 
 ## 保留的问题与范围
 
@@ -82,6 +84,7 @@
 | TRAIN-ASCEND-002 | 910C 同一命令逐跑 final sha 非确定（控制实验：两次无采集 base 运行 sha 均不同） | sha 级零漂移判据在 Ascend 不适用；观察不扰协议以行为级证据（loss/梯度轨迹）论证 |
 | TRAIN-ASCEND-003 | ascend2 租户容器上机后 HCCL NPU 网卡绑定失败（`EI0020`，环境级） | 该机 FSDP/观察态冒烟待租户退场复测；能力已由 ascend1 覆盖 |
 | TRAIN-PP-001 | 官方流水引擎（torch.distributed.pipelining）在 PPU/P800 厂商栈第一步挂死 | 引擎级 PP 未验证，如实留档（PPU 两配方日志）；诊断性 p2p/集合通信 demo 通过，但不据此声明 PP 支持 |
+| TRAIN-MONITOR-001 | 训练观察态在线诊断（agent 拓扑）要求厂商设备遥测（ascend/nvidia）；thead 平台与推理当日能力一致保持 off，本地边车会话可用；agent 拓扑的训练侧实车尚未在 ascend/nvidia 真实训练上跑过 | P800/910C 训练复测时附带验证 agent 拓扑与诊断规则；thead 平台不虚报诊断能力；`register_device` 在 thead 记 unknown（vendor 缺 `physical_identity`） |
 | 性能范围 | accuracy 快照开销、首次编译/初始化、共享宿主 | 不自动给独占资格，不把诊断时长当成优化后性能，不合计 rank-local 吞吐 |
 
 新增代码版权署名为 **Suscom Lab, The Hong Kong University of Science and Technology (Guangzhou)**；已有上游文件保留原版权声明。

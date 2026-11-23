@@ -510,7 +510,22 @@ rank-1 manifest= complete comm= {'model/allreduce': 2} phases= {'data': 28, 'for
   （归集）、`wait_bandwidth`（等待/带宽，分级读法见 4.4）、`segments`（同并行度
   对比）。字段拼写与含义固定，可直接进交付报告。
 
-### 4.13 功能：训练结果数值对比（compare）
+### 4.13 功能：节点监控与 rank 级结果报告（与推理同链路）
+
+- **是什么**：观察态跑完即得两件事。其一，store 根下的节点监控会话
+  （`monitor-ref.json` + `monitor/` + `targets/`）：旁路采样的资源曲线与
+  health 事件；ascend/nvidia 平台附加在线诊断（心跳/进度/通信超时/OOM 规则，
+  与推理同阈值）。其二，每个 rank 的 run 目录旁自动生成 `<run>-report/`
+  （`report.html`/`report.md`），训练面板给出逐步相位区间，perf/通信/显存/
+  时间线面板与推理同一套。
+- **怎么开**：进程环境加 `FLAGPROF_TRAIN_MONITOR=on`（其余旋钮见 v2.md
+  「节点监控与在线诊断」）。适配器（`ObservationSession`）路径同样适用：
+  环境变量在适配器发车前设置即可，会话属主与 rank 无关的全局 rank 0 绑定。
+- **怎么读**：报告先看 `result.json` 各面板 status 与覆盖，`report.md` 供
+  交接留档；thead 平台设备身份如实记 `unknown`，诊断在该平台保持 off——
+  与推理当日能力一致，不虚报。
+
+### 4.14 功能：训练结果数值对比（compare）
 
 - **是什么**：比较两次**已完成**训练的数值结果——loss、梯度、模型参数/buffer、
   优化器状态，逐张量给出是否一致与最大绝对误差；协议或数值后端（TF32 等）
