@@ -2,11 +2,15 @@
 # Licensed under the Apache License, Version 2.0.
 """Standard PyTorch training examples, observed by the existing flagprof record."""
 import argparse
+import atexit
 import hashlib
 import json
 import os
 from pathlib import Path
 import random
+import subprocess
+import sys
+import time
 
 
 def parser():
@@ -163,45 +167,107 @@ def apply_sharding(model, device_type, world_size):
 def monitor_start(root,vendor,world,rank):
     """Opt-in node monitoring and online diagnosis; FLAGPROF_TRAIN_MONITOR=on.
 
-    One session per store root: global rank 0 owns the sidecar node process
-    (topology 'host' on Ascend, 'local' elsewhere), the reference path is
-    broadcast over a gloo handshake group, and every rank relocates a
-    per-run reference and registers itself as a target during attach.
-    FLAGPROF_TRAIN_DIAGNOSE=on (default: with the monitor) additionally
-    attaches the diagnostic probe, feeding heartbeat, progress, communication
-    and OOM findings from this rank into the same timeline; the rank's device
-    identity joins the session through register_device. Best-effort by
-    construction: every failure is recorded on the session or attachment and
-    never fails the training run.
+    Mirrors the inference semantics per platform. When the vendor has device
+    telemetry (ascend, nvidia) the session uses the independent agent
+    topology: global rank 0 reuses or starts a detached `flagprof watch`
+    supervisor under FLAGPROF_TRAIN_MONITOR_ROOT (default: the store root),
+    the reference is broadcast over a gloo handshake group, and every rank
+    relocates a per-run reference, registers as a target and attaches the
+    diagnostic probe (FLAGPROF_TRAIN_DIAGNOSE, default on) so heartbeat,
+    progress, communication and OOM findings share one timeline. On vendors
+    without device telemetry (e.g. thead) the session uses the local sidecar
+    topology — the same as inference today — and diagnosis stays off; the
+    chosen topology and diagnose state are returned for the attachment and
+    the run protocol. Best-effort by construction: every failure is recorded
+    and never fails the training run.
     """
     if os.environ.get('FLAGPROF_TRAIN_MONITOR')!='on': return None
     from flagprof.monitor.lifecycle import Monitor
-    reference=str((Path(root)/'monitor-ref.json').resolve())
     try:
         interval=int(os.environ.get('FLAGPROF_TRAIN_MONITOR_INTERVAL_MS','1000'))
     except ValueError:
         interval=1000
-    handshake=owner=None
-    if world>1:
-        import torch.distributed as dist
-        handshake=dist.new_group(backend='gloo')
-        payload=[None]
-        if rank==0:
-            try:
-                owner=Monitor(root,reference,vendor,dict(monitor='on',monitor_interval_ms=interval))
-                os.environ['FLAGPROF_MONITOR_REFERENCE']=reference
-                payload=[reference]
-            except Exception:
-                payload=[None]
-        dist.broadcast_object_list(payload,src=0,group=handshake)
-        if payload[0] is None: return None
-        os.environ['FLAGPROF_MONITOR_REFERENCE']=payload[0]
-    else:
+    interval=max(100,min(5000,interval))
+    monitor_root=str(Path(os.environ.get('FLAGPROF_TRAIN_MONITOR_ROOT') or root).resolve())
+    reference=str((Path(root)/'monitor-ref.json').resolve())
+    agent=vendor in ('ascend','nvidia')
+    handshake=owner=supervisor=None
+    topology='local'; diagnose='off'
+    def start_local():
         owner=Monitor(root,reference,vendor,dict(monitor='on',monitor_interval_ms=interval))
         os.environ['FLAGPROF_MONITOR_REFERENCE']=reference
-    diagnose=os.environ.get('FLAGPROF_TRAIN_DIAGNOSE','on')=='on'
-    return dict(owner=owner,handshake=handshake,
-                config=dict(monitor='on',diagnose='on' if diagnose else 'off'))
+        return owner
+    def start_agent():
+        """Reuse an independent session when one is supervised under the
+        monitor root; otherwise host one for this run and return the child."""
+        from flagprof.monitor.subscriptions import request
+        try:
+            request(monitor_root,dict(action='hello'))
+            return None
+        except (OSError,ValueError):
+            pass
+        child=subprocess.Popen([sys.executable,'-B','-S','-m','flagprof','watch','start',
+                                '--root',monitor_root,'--vendor',vendor],
+                               stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,
+                               start_new_session=True)
+        deadline=time.monotonic()+10
+        while time.monotonic()<deadline:
+            try:
+                request(monitor_root,dict(action='hello'))
+                return child
+            except (OSError,ValueError):
+                if child.poll() is not None: return None
+                time.sleep(.2)
+        child.terminate()
+        return None
+    def agent_attempt():
+        nonlocal supervisor,topology,diagnose
+        supervisor=start_agent()
+        Monitor(root,reference,vendor,dict(monitor='on',monitor_topology='agent',
+                monitor_root=monitor_root,monitor_interval_ms=interval))
+        os.environ['FLAGPROF_MONITOR_REFERENCE']=reference
+        diagnose='on' if os.environ.get('FLAGPROF_TRAIN_DIAGNOSE','on')=='on' else 'off'
+        topology='agent'
+        return dict(topology=topology,diagnose=diagnose)
+    if agent:
+        if world>1:
+            import torch.distributed as dist
+            handshake=dist.new_group(backend='gloo')
+            decision=[None]
+            if rank==0:
+                try:
+                    decision=[agent_attempt()]
+                except Exception:
+                    if supervisor is not None:
+                        supervisor.terminate();supervisor=None
+            dist.broadcast_object_list(decision,src=0,group=handshake)
+            if decision[0] is None:
+                owner=start_local();topology='local';diagnose='off'
+            else:
+                topology=decision[0]['topology'];diagnose=decision[0]['diagnose']
+                os.environ['FLAGPROF_MONITOR_REFERENCE']=reference
+        else:
+            try:
+                agent_attempt()
+            except Exception:
+                if supervisor is not None:
+                    supervisor.terminate();supervisor=None
+                owner=start_local();topology='local';diagnose='off'
+    else:
+        owner=start_local()
+    if supervisor is not None:
+        def stop_supervisor():
+            try:
+                supervisor.terminate();supervisor.wait(timeout=5)
+            except OSError:
+                pass
+        atexit.register(stop_supervisor)
+    if topology=='agent':
+        config=dict(monitor='on',diagnose=diagnose,monitor_topology='agent',monitor_root=monitor_root)
+    else:
+        config=dict(monitor='on',monitor_topology='local')
+    return dict(owner=owner,supervisor=supervisor,handshake=handshake,topology=topology,
+                diagnose=diagnose,config=config)
 
 
 def observation_start(args):
@@ -269,6 +335,9 @@ def observation_start(args):
                            % (handle.state.get('errors'), producer_errors))
     if monitoring and handle.monitor_enabled:
         handle.register_device(str(getattr(args,'device','')))
+        handle.state['monitor_topology']=monitoring['topology']
+        handle.state['monitor_diagnose']=monitoring['diagnose']
+        handle._save()
     os.environ.setdefault('FLAGPROF_GROUP_ID',run.name)
     return dict(handle=handle,probe=None,rank=rank,world=world,run=run,monitoring=monitoring)
 

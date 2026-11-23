@@ -41,7 +41,8 @@ class TrainingMonitorWiringTests(unittest.TestCase):
         monitoring = monitor_start(self.root, 'thead', 1, 0)
         try:
             self.assertIsNotNone(monitoring)
-            self.assertEqual(monitoring['config'], dict(monitor='on', diagnose='on'))
+            self.assertEqual(monitoring['topology'], 'local')
+            self.assertEqual(monitoring['config'], dict(monitor='on', monitor_topology='local'))
             self.assertEqual(os.environ['FLAGPROF_MONITOR_REFERENCE'],
                              str((self.root/'monitor-ref.json').resolve()))
             reference = json.loads((self.root/'monitor-ref.json').read_text())
@@ -56,12 +57,14 @@ class TrainingMonitorWiringTests(unittest.TestCase):
         closed = json.loads((self.root/'monitor-ref.json').read_text())
         self.assertIsNotNone(closed.get('reclaim'), 'monitor close left no reclaim receipt')
 
-    def test_diagnose_can_be_disabled_independently(self):
+    def test_vendor_without_device_telemetry_keeps_diagnose_off(self):
         from flagprof.training.__main__ import monitor_start
-        with patch.dict(os.environ, dict(FLAGPROF_TRAIN_DIAGNOSE='off')):
+        with patch.dict(os.environ, dict(FLAGPROF_TRAIN_DIAGNOSE='on')):
             monitoring = monitor_start(self.root, 'thead', 1, 0)
             try:
-                self.assertEqual(monitoring['config'], dict(monitor='on', diagnose='off'))
+                self.assertEqual(monitoring['topology'], 'local')
+                self.assertEqual(monitoring['diagnose'], 'off')
+                self.assertEqual(monitoring['supervisor'], None)
             finally:
                 monitoring['owner'].close()
 
