@@ -24,6 +24,15 @@ from flagprof.training.oracle import OracleCapture, join_runs
 HAVE_TORCH = torch is not None
 
 if nn is not None:
+    class Block(nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.layer = nn.Linear(8, 8)
+
+        def forward(self, x):
+            return torch.tanh(self.layer(x))
+
+
     class Model(nn.Module):
         def __init__(self):
             super().__init__()
@@ -36,33 +45,6 @@ if nn is not None:
             for block in self.blocks:
                 h = block(h)
             return self.head(h)
-
-
-class Block(nn.Module if nn is not None else object):
-    pass
-
-
-class Block(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.layer = nn.Linear(8, 8)
-
-    def forward(self, x):
-        return torch.tanh(self.layer(x))
-
-
-class Model(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.embed = nn.Linear(8, 8)
-        self.blocks = nn.ModuleList([Block(), Block()])
-        self.head = nn.Linear(8, 4)
-
-    def forward(self, x):
-        h = self.embed(x)
-        for block in self.blocks:
-            h = block(h)
-        return self.head(h)
 
 
 def make_handle(writer, step_box):
@@ -156,9 +138,10 @@ class TrainingOracleTests(unittest.TestCase):
         replay_key = ops[0]['call_key']
         result = replay(run, replay_key)
         self.assertTrue(result['match'], 'same-machine replay must match the captured output')
-        self.assertEqual(result['inputs'] >= 1, True)
-        run_a = capture_run(self.root/'a', seed=5)
-        run_b = capture_run(self.root/'b', seed=5)
+        self.assertGreaterEqual(result['inputs'], 1)
+
+        run_a = capture_run(self.root/'g-a', seed=5)
+        run_b = capture_run(self.root/'g-b', seed=5)
         snap = {'gradients': {'blocks.0.layer.weight': torch.tensor([[0.5, 1.0]])}}
         torch.save(snap, Path(run_a)/'step-0.pt')
         torch.save({'gradients': {'blocks.0.layer.weight': torch.tensor([[0.5, 1.0]])}}, Path(run_b)/'step-0.pt')
