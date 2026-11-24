@@ -15,6 +15,17 @@ from flagprof.probes.config import resolve
 
 
 class ComponentCLITests(unittest.TestCase):
+    def test_final_record_source_budget(self):
+        for options, expected in [
+            ([], 4 << 30),
+            (['--source-max-bytes', str(1 << 30)], 1 << 30),
+            (['--source-max-bytes', str(8 << 30)], 8 << 30),
+        ]:
+            with self.subTest(options=options), patch('flagprof.offline.capture.record_final', return_value=0) as capture:
+                self.assertEqual(main(['record', '--store', 'unused', '--vendor', 'ascend',
+                                       *options, '--', 'python', 'target.py']), 0)
+                self.assertEqual(capture.call_args.kwargs['source_max_bytes'], expected)
+
     def test_accuracy_boundaries_and_drill_forward_to_both_entries(self):
         with tempfile.TemporaryDirectory() as tmp:
             custom = Path(tmp)/'boundaries.json'

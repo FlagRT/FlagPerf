@@ -91,7 +91,7 @@ accuracy Store 单独运行 `report RUN` 可能不含性能面板；这不是精
 
 显式 `perf --capture-mode windowed --active 1 --windows 2` 需要目标调用 `handle.step()`。内置 Qwen 在前向间推进，OneRec 在完整生成请求后推进；不能将其 32 个 decode 步当作 32 次 profiler window step。scheduled window 不能自动代表完整请求。
 
-modules 默认源预算 1 GiB，按实际大小设置 `--source-max-bytes`（例如 8 GiB 为 8589934592），该值不是总磁盘预算或任意规模保证。capture-only/analyse/import 分离采集与离线处理，选项见 CLI 帮助。
+`record --preset modules` 默认源预算为 4 GiB，按实际大小设置 `--source-max-bytes`（例如 8 GiB 为 8589934592），该值不是总磁盘预算或任意规模保证。capture-only/analyse/import 分离采集与离线处理，选项见 CLI 帮助。
 
 | 层次 | 必须读取 | 不代表什么 |
 |---|---|---|

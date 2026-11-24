@@ -43,7 +43,7 @@ python -B -m flagprof inspect /absolute/path/to/run --verify --json
 python -B -m flagprof report /absolute/path/to/run --out "$FP_WORKSPACE/qwen-report"
 ```
 
-`python` 在以上命令中指已激活环境的解释器。默认 `perf/modules` 采用 final 完整会话；其他预设和显式 windowed 按 step 采集。`modules` 开启完整 stack trace，真实模型 trace 可超过默认 1 GiB；必须事先核算原始文件、封存副本、索引和派生数据的总空间，再显式设置 `--source-max-bytes`。不能只按原始 trace 大小估算磁盘，也不能因存储中止修改原失败。
+`python` 在以上命令中指已激活环境的解释器。默认 `perf/modules` 采用 final 完整会话；其他预设和显式 windowed 按 step 采集。`modules` 开启完整 stack trace，单进程 `record` 默认封存上限为 4 GiB，真实模型 trace 可超过此上限；必须事先核算原始文件、封存副本、索引和派生数据的总空间，再显式设置 `--source-max-bytes`。不能只按原始 trace 大小估算磁盘，也不能因存储中止修改原失败。
 
 `capture-only → analyse → import` 支持将采集和离线处理分开；对同一封存采集和导入配置沿用原 `--store`，程序校验并复用检查点；指定同一 `--run-id` 时还会校验已完成的结果。离线 `inspect/page/report/delivery` 不要求导入 torch 或厂商 SDK。
 

@@ -146,7 +146,7 @@ accuracy 对照显式保存 `--tensor-blob all`，并检查预算/跳过计数�
 | P800-INF-002 | 固定镜像缺 pidfd/memfd Python 包装 | 受限 Linux syscall 兼容；超时、SIGTERM/SIGKILL 已测 |
 | P800-INF-003 | windowed timeout 未传递，projection 未写入或来源时钟混合 | 已修复；Qwen 双窗口、OneRec 32 步及旧失败分别保留 |
 | P800-INF-004 | wheel 漏打包 P800 contract | 已修复；独立构建安装后无 torch 读取通过 |
-| P800-INF-005 | 默认 1 GiB、磁盘空间或导入时间预算不足 | 显式预算、新目录封存恢复；不是任意规模保证 |
+| P800-INF-005 | 该次验证使用的默认 1 GiB、磁盘空间或导入时间预算不足 | 显式预算、新目录封存恢复；不是任意规模保证 |
 | P800-INF-006 | exporter 缺 loss/时钟误差上界，BKCL 后台 launch 缺调用因果键 | 开放；完整性 unknown、clock_valid=false、设备调用关联 unavailable |
 | P800-INF-007 | OneRec 单卡/TP2 第 14 token 与最终 hidden 不同 | 开放；根因未确认，TP2 精度未通过 |
 

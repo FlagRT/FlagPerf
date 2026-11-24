@@ -5,6 +5,7 @@ from pathlib import Path
 import json
 import os
 
+DEFAULT_RECORD_SOURCE_BYTES = 4 << 30
 METADATA_BYTES = 4 << 20
 
 

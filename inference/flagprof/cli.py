@@ -8,6 +8,7 @@ import sys
 
 
 def main(argv=None):
+    from .offline.limits import DEFAULT_RECORD_SOURCE_BYTES
     from .vendors import monitored_vendors, vendor_names
     vendors = vendor_names()
     parser=argparse.ArgumentParser(prog='flagprof')
@@ -49,7 +50,7 @@ def main(argv=None):
     record_parser.add_argument('--tensor-ops-in',help='accuracy: record per-operator tensors inside this module path; requires batch size 1')
     record_parser.add_argument('--tensor-boundaries',metavar='model|layer|PATH',help='accuracy: model keeps runner outputs only; layer uses default layer boundaries (default); PATH is a JSON array of module paths; --tensor-ops-in adds operator capture independently')
     record_parser.add_argument('--capture-mode',choices=['windowed','final'],default='final',help='final (default): one official session for the whole target; windowed: step windows')
-    record_parser.add_argument('--source-max-bytes',type=int,default=1<<30,help='sealed source limit in bytes')
+    record_parser.add_argument('--source-max-bytes',type=int,default=DEFAULT_RECORD_SOURCE_BYTES,help='final capture source limit in bytes (default 4 GiB)')
     record_parser.add_argument('--timeout',type=float,default=1800,help='whole record deadline in seconds')
     record_parser.add_argument('--active',type=int,default=None,help='windowed: active steps per window (default 5)')
     record_parser.add_argument('--windows',type=int,default=None,help='windowed: number of windows (default 2)')
@@ -311,8 +312,7 @@ def main(argv=None):
                     return record(command,store=args.store,vendor=args.vendor,preset=args.preset,config=config,timeout=args.timeout)
                 from .offline.capture import record_final
                 return record_final(command,store=args.store,vendor=args.vendor,preset=args.preset,
-                                    timeout=args.timeout,
-                                    **(dict(source_max_bytes=args.source_max_bytes) if args.source_max_bytes!=1<<30 else {}),
+                                    timeout=args.timeout, source_max_bytes=args.source_max_bytes,
                                     **(dict(capture_only=args.capture_only) if args.capture_only else {}),
                                     **(dict(config=config) if config else {}))
             config.update(active=5 if args.active is None else args.active,windows=2 if args.windows is None else args.windows,invalid_policy='stop' if args.invalid_policy is None else args.invalid_policy,

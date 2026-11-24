@@ -11,7 +11,7 @@ import sys
 import time
 import uuid
 from .checkpoints import fileinfo, seal, validate, publish, source_budget
-from .limits import read_json, walk_files
+from .limits import DEFAULT_RECORD_SOURCE_BYTES, read_json, walk_files
 from .bundle import finish_bundle, load_bundle
 from flagprof.store.manifest import atomic_json, proc_key
 
@@ -156,7 +156,7 @@ def _seal_capture(directory, metadata, vendor):
 
 
 def record_final(command, *, store, vendor, preset='perf', config=None, timeout=1800,
-                 capture_only=False,source_max_bytes=1<<30,rank=0):
+                 capture_only=False,source_max_bytes=DEFAULT_RECORD_SOURCE_BYTES,rank=0):
     import math
     source_max_bytes=source_budget(source_max_bytes)
     if not math.isfinite(timeout) or timeout<=0:raise ValueError('positive finite timeout required')
