@@ -78,7 +78,7 @@
 | 训练 oracle 算子重放实车（PPU 钻取车 + 跨机重放，2026-11-24） | 通过 | 钻取车（rerank-0.6B FSDP 双卡，layers.0 单模块）：503 tensor 事件、226 op、blob 508 MB（输入上限 32 MiB/张量、输出 8 MiB，预算 1 GiB）；`aten::mm` 同设备（cuda:0）重放 **match=true 逐位**；CPU 重放 digest 不同（核累加顺序差异，作为敏感算子信号如实记录，两侧身份入档） |
 | 多卡报告索引（`flagprof.training.group`，PPU 2 rank 实车） | 通过 | 扫描 `rank-*/<run-id>`，缺报告即渲染，产出 `group.md/group.json`：逐 rank 的 run、状态、report.html 与 oracle.json 链接；不合并跨 rank 数值 |
 | preset/windowed 开放与 route 探针（PPU 实车，2026-11-24） | 通过 | `FLAGPROF_TRAIN_PRESET=perf-lite`、`FLAGPROF_TRAIN_CAPTURE=windowed`（active 2/windows 2）DDP2 分类观察 rc=0，manifest 记 `preset=perf-lite`、attachment 记 `capture_mode=windowed`、store complete；`preset=coverage` rc=0 且 route 探针启用（报告中 perf.op 173 行、route.coverage 如实 unavailable——该示例模型无组件路由事件） |
-| 训练侧 CTR 图导出（PPU 容器，2026-11-24） | 通过 | `flagprof.training.export_graph --ctr-arch dlrm --package ctr-train-1024`：status=completed，fx+onnx 双格式、index.html 阅读页、identity 记录 arch/包 oracle_id/权重摘要；派生标签按 forward 签名过滤不入图 |
+| 训练侧 CTR 图导出（三平台，2026-11-24） | 通过（PPU 完整；P800/Ascend 缺 onnx 包记 partial） | `flagprof.training.export_graph --ctr-arch dlrm --package ctr-train-1024`：PPU status=completed，fx+onnx 双格式、index.html 阅读页；P800（klx1 容器）与 Ascend（ascend1 容器）**fx 全部 completed**，onnx 因镜像缺 `onnx` 包 failed（环境缺口，与 libaio 同类），整体如实记 partial；identity 记录 arch/包 oracle_id/权重摘要，派生标签按 forward 签名过滤不入图 |
 | delivery 归档对训练 store（PPU，2026-11-24） | 通过 | `flagprof.delivery publish <训练 store>/rank-0 --out` 与 `verify` 双 rc=0——训练 store 与推理同格式，归档链路无需代码改动 |
 | 三平台最终回归（最终树 `f7d7a3cc` 前的 `5964f2b3` + 本批，2026-11-24） | 通过 | PPU 392 passed/1 failed（仅 TP2 libaio 镜像缺口）/1 skipped；Ascend 391 passed/0 failed/3 skipped；P800 391 passed/0 failed/3 skipped、84 subtests |
 
