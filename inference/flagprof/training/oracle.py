@@ -235,6 +235,33 @@ def _max_abs_from_probe(left, right):
     return max(diffs)
 
 
+def _blob_max_abs(run_left, run_right, l, r):
+    """Element-wise max abs/rel from both sides' blobs; None when either
+    side lacks a blob or the formats disagree."""
+    import torch
+    lb, rb = l.get('blob'), r.get('blob')
+    if not lb or not rb or lb.get('fmt') != rb.get('fmt') or lb['nbytes'] != rb['nbytes']:
+        return None
+    dtype_name = lb['fmt'].split(':')[1]
+    try:
+        torch_dtype = getattr(torch, dtype_name)
+    except AttributeError:
+        return None
+    out = []
+    for run, b in ((run_left, lb), (run_right, rb)):
+        path = Path(run)/b['path']
+        with path.open('rb') as stream:
+            stream.seek(b['offset'])
+            raw = stream.read(b['nbytes'])
+        out.append(torch.frombuffer(bytearray(raw), dtype=torch_dtype).double())
+    a, b = out
+    if a.numel() != b.numel() or not a.numel():
+        return None
+    diff = (a-b).abs()
+    denom = a.abs().clamp(min=1e-12)
+    return float(diff.max()), float((diff/denom).max())
+
+
 def join_runs(run_left, run_right, *, atol=0.0, rtol=0.0, out=None):
     """Join two training runs into the per-layer error table.
 
@@ -259,13 +286,18 @@ def join_runs(run_left, run_right, *, atol=0.0, rtol=0.0, out=None):
         if same_meta:
             rows.append(dict(step=step, key=key, kind='activation', verdict='exact', max_abs=0.0, max_rel=0.0))
             continue
-        max_abs = _max_abs_from_probe(l, r)
-        max_rel = None
-        if max_abs is not None and l.get('stats', {}).get('absmean'):
-            denom = max(l['stats']['absmean'], 1e-12)
-            max_rel = max_abs/denom
+        blob_diff = _blob_max_abs(run_left, run_right, l, r)
+        if blob_diff is not None:
+            max_abs, max_rel = blob_diff
+            basis = 'blob-elementwise'
+        else:
+            max_abs = _max_abs_from_probe(l, r)
+            max_rel = None
+            basis = 'probe-sampled'
+            if max_abs is not None and l.get('stats', {}).get('absmean'):
+                denom = max(l['stats']['absmean'], 1e-12)
+                max_rel = max_abs/denom
         verdict = 'differs' if (max_abs is not None and (max_abs > atol or (max_rel or 0) > rtol)) else 'within_tolerance'
-        basis = 'summarized' if (l.get('blob') and r.get('blob')) else 'summarized'
         rows.append(dict(step=step, key=key, kind='activation', verdict=verdict, basis=basis,
                          max_abs=max_abs, max_rel=max_rel,
                          shape=l['shape'], dtype=l['dtype'],
