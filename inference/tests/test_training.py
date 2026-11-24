@@ -2,6 +2,7 @@
 # Licensed under the Apache License, Version 2.0.
 """Training semantics: reference updates, accumulation and restart continuity."""
 import copy
+import importlib.util
 import json
 from pathlib import Path
 import random
@@ -236,6 +237,8 @@ class TestCommunicationProbeCoverage(unittest.TestCase):
                 pass
 
     @unittest.skipUnless(sys.platform == 'linux', 'Linux Store/attachment')
+    @unittest.skipUnless(all(importlib.util.find_spec(name) for name in ('torch', 'transformers')),
+                         'requires torch and Transformers (real capture attachment)')
     def test_driver_records_data_preparation_phase(self):
         """End to end through the driver: batch materialisation must surface as
         a training/1 span with phase=data, so layer-1 segment reports see it."""

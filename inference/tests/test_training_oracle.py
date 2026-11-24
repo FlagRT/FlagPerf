@@ -23,6 +23,24 @@ from flagprof.training.oracle import OracleCapture, join_runs
 
 HAVE_TORCH = torch is not None
 
+if nn is not None:
+    class Model(nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.embed = nn.Linear(8, 8)
+            self.blocks = nn.ModuleList([Block(), Block()])
+            self.head = nn.Linear(8, 4)
+
+        def forward(self, x):
+            h = self.embed(x)
+            for block in self.blocks:
+                h = block(h)
+            return self.head(h)
+
+
+class Block(nn.Module if nn is not None else object):
+    pass
+
 
 class Block(nn.Module):
     def __init__(self):
