@@ -24,7 +24,7 @@ from pathlib import Path
 
 def normalize_boundaries(configured):
     """Normalize selector strings to <root>.-prefixed module paths."""
-    return {p if p.startswith('<root>') else '<root>.'+p for p in configured}
+    return sorted(p if p.startswith('<root>') else '<root>.'+p for p in configured)
 
 
 def auto_boundaries(model):
@@ -43,21 +43,30 @@ def auto_boundaries(model):
 
 
 class OracleCapture:
-    """Forward-hook activation capture for one training run."""
+    """Forward-hook activation capture for one training run, with optional
+    op-level drilling inside one selected module (replay inputs)."""
 
-    def __init__(self, handle, boundaries=None, budget_bytes=1 << 26):
+    def __init__(self, handle, boundaries=None, budget_bytes=1 << 26, ops_module=None):
         self.handle = handle
         self.writer = handle.writer
         self.boundaries = boundaries
         self.budget_bytes = budget_bytes
+        self.ops_module = ops_module
         self.blob_bytes = 0
         self.blob_exhausted = False
         self.stream = None
         self.handles = []
         self.model = None
         self.paths = {}
-        self.metrics = dict(events=0, blob_bytes=0, blob_skipped=0, boundaries=0)
+        self.drilling = False
+        self.drill_path = None
+        self.op_calls = {}
+        self.mode = None
+        self.busy = False
+        self.metrics = dict(events=0, blob_bytes=0, blob_skipped=0, boundaries=0, ops=0)
         handle.state['oracle'] = self.metrics
+        self.identity = dict(torch=__import__('torch').__version__,
+                             cuda=__import__('torch').version.cuda if hasattr(__import__('torch').version, 'cuda') else None)
 
     def register_model(self, model):
         if self.model is model:
@@ -78,6 +87,111 @@ class OracleCapture:
                     lambda m, a, o, path=path: self.safe(self.capture, path, o)))
         self.handle.state['oracle_boundaries'] = sorted(self.boundaries)
         self.metrics['boundaries'] = len(self.boundaries)
+        if self.ops_module:
+            drill = normalize_boundaries([self.ops_module])[0]
+            if drill not in set(self.paths.values()):
+                raise ValueError('oracle ops scope is not a registered module path: '+drill)
+            self.drill_path = drill
+            self._install_drill()
+            self.handle.state['oracle_ops_module'] = drill
+            self.handle.state['oracle_identity'] = self.identity
+
+    def _install_drill(self):
+        import torch
+        from torch.utils._python_dispatch import TorchDispatchMode
+        owner = self
+
+        class Drill(TorchDispatchMode):
+            def __torch_dispatch__(self, func, types, args=(), kwargs=None):
+                if owner.busy or not owner.drilling:
+                    return func(*args, **(kwargs or {}))
+                return owner.invoke(func, args, kwargs or {})
+
+        self.mode = Drill()
+        self.mode.__enter__()
+        for name, module in self.model.named_modules():
+            if self.paths[id(module)] == self.drill_path:
+                self.handles.append(module.register_forward_pre_hook(
+                    lambda m, a, k: self.safe(self.drill_enter, a, k or {}), with_kwargs=True))
+                self.handles.append(module.register_forward_hook(
+                    lambda m, a, k, o: self.safe(self.drill_leave, o), with_kwargs=True, always_call=True))
+                break
+
+    def drill_enter(self, args, kwargs):
+        self.drilling = True
+        self.op_calls.clear()
+
+    def drill_leave(self, output):
+        self.drilling = False
+
+    def invoke(self, func, args, kwargs=None):
+        try:
+            schema = str(func._schema)
+            name = schema.split('(')[0]
+        except Exception:
+            name = str(func)
+        index = self.op_calls.get(name, 0)
+        self.op_calls[name] = index + 1
+        step = self._step()
+        base = self.drill_path+'#'+str(step)+'#op:'+name+'#'+str(index)
+        self.busy = True
+        try:
+            self._record_op_io(base, name, args, kwargs, output=None)
+        finally:
+            self.busy = False
+        output = func(*args, **(kwargs or {}))
+        self.busy = True
+        try:
+            self._record_op_io(base, name, (), {}, output=output)
+            self.metrics['ops'] += 1
+        finally:
+            self.busy = False
+        return output
+
+    def _emit_op_event(self, key, name, tensor, role):
+        from flagprof.probes.tensor import tensor_event
+        small = tensor.numel() * tensor.element_size() <= (1 << 20)
+        if role == 'out':
+            big = tensor.numel() * tensor.element_size() > (8 << 20)
+            if big:
+                small = False
+        event, raw, blob_fmt = tensor_event(key, self.drill_path, self._step(),
+                                            'op:'+name, role, tensor,
+                                            role=role, ext={'training_schema': 'training/1',
+                                                            'op_schema': name,
+                                                            'capture_scope': 'oracle-replay'})
+        store_blob = role == 'out' or small
+        if store_blob and not self.blob_exhausted and self.blob_bytes + len(raw) <= self.budget_bytes:
+            if self.stream is None:
+                folder = self.writer.run_dir/'blobs'
+                folder.mkdir(exist_ok=True)
+                self.stream = (folder/('train-oracle-'+str(os.getpid())+'-'+str(abs(id(self)))+'.bin')).open('xb')
+            offset = self.stream.tell()
+            self.stream.write(raw)
+            event['blob'] = dict(path=str(Path(self.stream.name).relative_to(self.writer.run_dir)),
+                                 offset=offset, nbytes=len(raw), hash=event['digest'], fmt=blob_fmt)
+            self.blob_bytes += len(raw)
+            self.metrics['blob_bytes'] = self.blob_bytes
+        elif not store_blob:
+            self.metrics['blob_skipped'] += 1
+        self.writer.emit(event)
+        self.metrics['events'] += 1
+
+    def _record_op_io(self, base, name, args, kwargs, output):
+        import torch
+        if output is not None:
+            if isinstance(output, torch.Tensor):
+                leaves = [('0', output)]
+            else:
+                leaves = list(_leaves(output))[:64]
+            for leafpath, tensor in leaves:
+                if isinstance(tensor, torch.Tensor):
+                    self._emit_op_event(base+'#out:'+leafpath, name, tensor, 'out')
+            return
+        items = list(_leaves(tuple(args))) + list(_leaves(tuple(sorted(kwargs.items()))))
+        for leafpath, tensor in items[:64]:
+            if isinstance(tensor, torch.Tensor):
+                self._emit_op_event(base+'#in:'+leafpath, name, tensor, 'in')
 
     def safe(self, fn, *args):
         try:
@@ -101,6 +215,15 @@ class OracleCapture:
             break
         if not isinstance(first, torch.Tensor):
             return
+        # Our own CPU-snapshot ops must not re-enter the drill mode.
+        self.busy = True
+        try:
+            self._capture_inner(path, output, first)
+        finally:
+            self.busy = False
+
+    def _capture_inner(self, path, output, first):
+        from flagprof.probes.tensor import tensor_event
         step = self._step()
         key = path+'#'+str(step)+'#out#0'
         if self.blob_exhausted:
@@ -128,6 +251,9 @@ class OracleCapture:
         for handle in reversed(self.handles):
             handle.remove()
         self.handles.clear()
+        if self.mode is not None:
+            self.mode.__exit__(None, None, None)
+            self.mode = None
         if self.stream is not None:
             self.stream.flush()
             os.fsync(self.stream.fileno())
@@ -262,17 +388,18 @@ def _blob_max_abs(run_left, run_right, l, r):
     return float(diff.max()), float((diff/denom).max())
 
 
-def join_runs(run_left, run_right, *, atol=0.0, rtol=0.0, out=None):
+def join_runs(run_left, run_right, *, atol=0.0, rtol=0.0, out=None, snaps_left=None, snaps_right=None):
     """Join two training runs into the per-layer error table.
 
     Activations join on tensor-event call_keys (step-level boundary outputs);
-    gradients join on (step, parameter name) from accuracy snapshots. Exact
-    when both sides carry blobs, summarized over the 256-probe samples
+    gradients join on (step, parameter name) from accuracy snapshots taken
+    from the snapshots dirs (the training outputs directories) when given.
+    Exact when both sides carry blobs, summarized over the 256-probe samples
     otherwise (rows carry the verdict basis explicitly).
     """
     run_left, run_right = _resolve_run(run_left), _resolve_run(run_right)
     left_events, right_events = _read_tensor_events(run_left), _read_tensor_events(run_right)
-    left_grads, right_grads = _read_gradient_snapshots(run_left), _read_gradient_snapshots(run_right)
+    left_grads, right_grads = _read_gradient_snapshots(snaps_left or run_left), _read_gradient_snapshots(snaps_right or run_right)
     rows = []
     for key in sorted(set(left_events) | set(right_events)):
         l, r = left_events.get(key), right_events.get(key)
@@ -333,6 +460,75 @@ def join_runs(run_left, run_right, *, atol=0.0, rtol=0.0, out=None):
     return result
 
 
+def _read_op_events(run):
+    from flagprof.store import StoreView
+    events = {}
+    identity = None
+    with StoreView(run) as view:
+        for stored in view.iter_events(types=('tensor',)):
+            e = stored.record
+            if e.get('ext', {}).get('capture_scope') == 'oracle-replay':
+                events[e['call_key']] = e
+    return events
+
+
+def replay(run, op_key, device='cpu'):
+    """Re-execute one drilled op from its captured inputs (blobs required) and
+    compare the replayed output against the captured output digest. Cross-vendor
+    replay = run this on the other vendor's stack against the same store copy;
+    identity fields record both capture-time and replay-time versions."""
+    import torch
+    run = _resolve_run(run)
+    events = _read_op_events(run)
+    if op_key not in events:
+        prefix = op_key.split('#out')[0]
+        outs = sorted(k for k in events if k.startswith(prefix + '#out'))
+        raise ValueError('unknown op key; sibling out keys: ' + ', '.join(outs[:4]))
+    out_event = events[op_key]
+    prefix = op_key.split('#out')[0]
+    ins = sorted((k, e) for k, e in events.items() if k.startswith(prefix + '#in:'))
+    if not ins:
+        raise ValueError('no captured inputs for '+op_key)
+    identity = json.loads((run/'manifest.json').read_text()).get('identity', {})
+    capture_identity = None
+    state = None
+    state_path = None
+    for att in sorted((run/'attachments').glob('*/state.json')) if (run/'attachments').is_dir() else []:
+        try:
+            state = json.loads(att.read_text())
+            capture_identity = state.get('oracle_identity')
+            break
+        except ValueError:
+            pass
+    missing = [k for k, e in ins if not e.get('blob')]
+    if missing:
+        raise ValueError('inputs without blobs (replay impossible): '+', '.join(missing[:3]))
+    args = []
+    for k, e in ins:
+        blob = e['blob']
+        dtype_name = blob['fmt'].split(':')[1]
+        torch_dtype = getattr(torch, dtype_name)
+        raw = (run/blob['path']).read_bytes()[blob['offset']:blob['offset']+blob['nbytes']]
+        args.append(torch.frombuffer(bytearray(raw), dtype=torch_dtype).view(e['shape']).to(device).requires_grad_(False))
+    name = out_event['ext']['op_schema']
+    ns, rest = name.split('::', 1)
+    op_name, _, overload = rest.partition('.')
+    namespace = getattr(torch.ops, ns)
+    opctor = getattr(namespace, op_name)
+    callable_op = getattr(opctor, overload) if overload else opctor.default
+    replayed = callable_op(*args)
+    replay_digest = 'sha256:'+hashlib.sha256(
+        replayed.detach().to('cpu').contiguous().reshape(-1).view(torch.uint8).numpy().tobytes()).hexdigest()
+    match = replay_digest == out_event['digest']
+    result = dict(schema='training-oracle-replay/1', op=name, key=op_key, device=device,
+                  captured_digest=out_event['digest'], replayed_digest=replay_digest,
+                  match=match, capture_identity=capture_identity,
+                  replay_identity=dict(torch=torch.__version__,
+                                       cuda=torch.version.cuda if hasattr(torch.version, 'cuda') else None),
+                  inputs=len(ins))
+    return result
+
+
 def _raw_max_abs(l, r):
     import torch
     dtype = l['dtype']
@@ -370,14 +566,27 @@ def _markdown(result):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('left')
-    parser.add_argument('right')
-    parser.add_argument('--out', required=True)
-    parser.add_argument('--atol', type=float, default=0.0)
-    parser.add_argument('--rtol', type=float, default=0.0)
+    verbs = parser.add_subparsers(dest='verb', required=True)
+    join = verbs.add_parser('join', help='join two training runs into the per-layer error table')
+    join.add_argument('left')
+    join.add_argument('right')
+    join.add_argument('--out', required=True)
+    join.add_argument('--atol', type=float, default=0.0)
+    join.add_argument('--rtol', type=float, default=0.0)
+    join.add_argument('--snapshots-left', help='accuracy snapshot outputs dir of the left run')
+    join.add_argument('--snapshots-right', help='accuracy snapshot outputs dir of the right run')
+    replay_p = verbs.add_parser('replay', help='re-execute one drilled op from captured inputs')
+    replay_p.add_argument('run')
+    replay_p.add_argument('--op-key', required=True, help='the out-event call key of the op call')
+    replay_p.add_argument('--device', default='cpu')
     args = parser.parse_args(argv)
-    result = join_runs(args.left, args.right, atol=args.atol, rtol=args.rtol, out=args.out)
-    print(json.dumps(result['counts'], ensure_ascii=False))
+    if args.verb == 'join':
+        result = join_runs(args.left, args.right, atol=args.atol, rtol=args.rtol, out=args.out,
+                           snaps_left=args.snapshots_left, snaps_right=args.snapshots_right)
+        print(json.dumps(result['counts'], ensure_ascii=False))
+        return 0
+    result = replay(args.run, args.op_key, device=args.device)
+    print(json.dumps(result, ensure_ascii=False))
     return 0
 
 

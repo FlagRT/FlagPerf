@@ -142,6 +142,8 @@ VALUES = {
 }
 
 PANELS = {
+    'training.oracle':('训练逐层精度差分（join）',('step','kind','key','verdict','basis','max_abs','max_rel')),
+    'training.oracle.first_divergence':('首个发散',('step','key','kind','verdict','max_abs')),
     'oracle.samples':('逐样本误差与尺度',('scope','boundary','sample','level','max_abs','absolute_error_quantiles','reference_rms','normalized_rmse','near_zero_reference_fraction')),
     'perf.op':('算子热点', ('name','calls','host_ns','device_work_ns','source','scope','sid')),
     'perf.layer':('逐层耗时', ('name','members','inclusive_ns','exclusive_ns','device_work_ns','op_calls')),

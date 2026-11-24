@@ -260,6 +260,20 @@ def generate(run, out=None, *, work=None, limits=None, op_kinds=None, runner_res
             quality.update(forward_quality)
             data = dict(schema='p1-result/1', limits=asdict(limits),quality=quality,
                         results={r.id: dict(status=r.status, data=r.data, coverage=r.coverage, notes=r.notes) for r in results})
+            oracle_file = run/'oracle.json'
+            if oracle_file.exists():
+                # Operator-placed training oracle join table (flagprof.training.oracle
+                # join --out <run>); rendered as training panels next to the run data.
+                try:
+                    payload = json.loads(oracle_file.read_text())
+                    data['results']['training.oracle'] = dict(status='ok', data=payload.get('rows', []),
+                        coverage={}, notes=['两侧 blob 齐全的行按逐元素精确比较；否则 256 采样口径（basis 列）。'])
+                    first = payload.get('first_divergence')
+                    data['results']['training.oracle.first_divergence'] = dict(status='ok',
+                        data=[first] if first else [], coverage={},
+                        notes=['全部行在容差内。' if not first else ''])
+                except ValueError:
+                    pass
             data['report_context']=dict(run=dict(run_id=run.name),
                 identity=next((s['oracle_identity'] for s in workspace.statuses if s.get('oracle_identity')),{}))
             if runner_results:

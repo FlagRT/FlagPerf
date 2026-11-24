@@ -110,6 +110,38 @@ class TrainingOracleTests(unittest.TestCase):
         self.assertEqual(len(grads), 1)
         self.assertEqual(grads[0]['verdict'], 'exact')
 
+    def test_ops_drill_capture_and_replay(self):
+        from flagprof.training.oracle import replay
+        run = create_run(self.root/'ops')
+        step = [0]
+        handle = make_handle(Writer(run), step)
+        handle.state['status'] = 'running'
+        capture = OracleCapture(handle, boundaries=['<root>.blocks.0'], ops_module='<root>.blocks.0')
+        model = Model()
+        torch.manual_seed(9)
+        capture.register_model(model)
+        x = torch.randn(4, 8)
+        with handle.writer:
+            model(x)
+        capture.close()
+        with StoreView(run) as view:
+            ops = [stored.record for stored in view.iter_events(types=('tensor',))
+                   if '#op:' in stored.record['call_key'] and '#out:' in stored.record['call_key']]
+        self.assertTrue(ops, 'no drilled op outputs captured')
+        replay_key = ops[0]['call_key']
+        result = replay(run, replay_key)
+        self.assertTrue(result['match'], 'same-machine replay must match the captured output')
+        self.assertEqual(result['inputs'] >= 1, True)
+        run_a = capture_run(self.root/'a', seed=5)
+        run_b = capture_run(self.root/'b', seed=5)
+        snap = {'gradients': {'blocks.0.layer.weight': torch.tensor([[0.5, 1.0]])}}
+        torch.save(snap, Path(run_a)/'step-0.pt')
+        torch.save({'gradients': {'blocks.0.layer.weight': torch.tensor([[0.5, 1.0]])}}, Path(run_b)/'step-0.pt')
+        result = join_runs(run_a, run_b)
+        grads = [r for r in result['rows'] if r['kind'] == 'gradient']
+        self.assertEqual(len(grads), 1)
+        self.assertEqual(grads[0]['verdict'], 'exact')
+
 
 if __name__ == '__main__':
     unittest.main()
