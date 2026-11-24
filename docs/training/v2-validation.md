@@ -75,6 +75,12 @@
 | 训练 oracle 跨厂商 join（rerank-0.6B FSDP 双卡，store 跨机汇总到 thead1，2026-11-24） | 完成 | **PPU↔Ascend**：87 行全 blob-elementwise（逐元素 256k-4096 样本张量级），exact 1（embed_tokens step0 逐位同）/differs 86，**首个发散 = step 0 `model.layers.0` 输出（max_abs 1.14e-05）**，逐步 max-of-max_abs 0.37→0.80→62.8；**PPU↔P800**：87 行全 blob-elementwise，exact 1/differs 86，首个发散同点（1.14e-05 同源量级），0.36→0.72→56.1——两厂商形态一致、量级可读，发散随深度与步数放大即为厂商核差异的直接量化；**P800↔Ascend**：87 行 exact 1/differs 86（第三对补齐） |
 | 训练 oracle 梯度通道与报告面板（PPU，2026-11-24） | 通过 | join `--snapshots-left/right` 指向 accuracy 快照目录：**310 参数 × 3 步 = 930 梯度行全部逐位 exact**（A/A）；跨厂商按行 verdict 标注。oracle.json 置于 run 目录后 `flagprof report` 重新渲染即出「训练逐层精度差分（join）」与「首个发散」面板（87 行，report.html/report.md 同套） |
 | 训练 oracle 算子钻取与重放（PPU 容器，2026-11-24） | 通过（A/A） | `FLAGPROF_TRAIN_ORACLE_OPS=<module>`：TorchDispatchMode 钻取该模块 forward 的逐算子输入/输出（busy 守卫隔离采集自身 CPU 快照操作，污染 0）；`oracle replay` 从输入 blob 重执行并与捕获输出 digest 对比——同机重放 match=True；跨厂商重放 = 在对方栈对同一 store 副本执行同一 CLI（输入即捕获值），输出 digest 对比即敏感算子判定；身份字段记录捕获/重放两侧 torch/cuda 版本 |
+| 训练 oracle 算子重放实车（PPU 钻取车 + 跨机重放，2026-11-24） | 通过 | 钻取车（rerank-0.6B FSDP 双卡，layers.0 单模块）：503 tensor 事件、226 op、blob 508 MB（输入上限 32 MiB/张量、输出 8 MiB，预算 1 GiB）；`aten::mm` 同设备（cuda:0）重放 **match=true 逐位**；CPU 重放 digest 不同（核累加顺序差异，作为敏感算子信号如实记录，两侧身份入档） |
+| 多卡报告索引（`flagprof.training.group`，PPU 2 rank 实车） | 通过 | 扫描 `rank-*/<run-id>`，缺报告即渲染，产出 `group.md/group.json`：逐 rank 的 run、状态、report.html 与 oracle.json 链接；不合并跨 rank 数值 |
+| preset/windowed 开放与 route 探针（PPU 实车，2026-11-24） | 通过 | `FLAGPROF_TRAIN_PRESET=perf-lite`、`FLAGPROF_TRAIN_CAPTURE=windowed`（active 2/windows 2）DDP2 分类观察 rc=0，manifest 记 `preset=perf-lite`、attachment 记 `capture_mode=windowed`、store complete；`preset=coverage` rc=0 且 route 探针启用（报告中 perf.op 173 行、route.coverage 如实 unavailable——该示例模型无组件路由事件） |
+| 训练侧 CTR 图导出（PPU 容器，2026-11-24） | 通过 | `flagprof.training.export_graph --ctr-arch dlrm --package ctr-train-1024`：status=completed，fx+onnx 双格式、index.html 阅读页、identity 记录 arch/包 oracle_id/权重摘要；派生标签按 forward 签名过滤不入图 |
+| delivery 归档对训练 store（PPU，2026-11-24） | 通过 | `flagprof.delivery publish <训练 store>/rank-0 --out` 与 `verify` 双 rc=0——训练 store 与推理同格式，归档链路无需代码改动 |
+| 三平台最终回归（最终树 `f7d7a3cc` 前的 `5964f2b3` + 本批，2026-11-24） | 通过 | PPU 392 passed/1 failed（仅 TP2 libaio 镜像缺口）/1 skipped；Ascend 391 passed/0 failed/3 skipped；P800 391 passed/0 failed/3 skipped、84 subtests |
 
 ## 保留的问题与范围
 
