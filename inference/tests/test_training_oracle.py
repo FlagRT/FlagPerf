@@ -11,11 +11,17 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 
-import torch
-import torch.nn as nn
+try:
+    import torch
+    import torch.nn as nn
+except ImportError:  # -S CPU smoke runs without site-packages
+    torch = None
+    nn = None
 
 from flagprof.store import StoreView, Writer, create_run, finalize
 from flagprof.training.oracle import OracleCapture, join_runs
+
+HAVE_TORCH = torch is not None
 
 
 class Block(nn.Module):
@@ -67,7 +73,8 @@ def capture_run(root, seed, *, perturb=False):
     return run
 
 
-@unittest.skipUnless(__import__('os').name == 'posix', 'store locking requires POSIX')
+@unittest.skipUnless(HAVE_TORCH and __import__('os').name == 'posix',
+                     'torch and POSIX store locking required')
 class TrainingOracleTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
