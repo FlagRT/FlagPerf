@@ -63,4 +63,7 @@ def register_model(model):
     handle = attachment()
     if handle is not None:
         handle.register_model(model)
+        pending = getattr(handle, '_oracle_pending', None)
+        if pending is not None and pending.model is None:
+            pending.register_model(model)
     return model

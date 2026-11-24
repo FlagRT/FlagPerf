@@ -348,6 +348,8 @@ def observation_start(args):
         handle.state['monitor_topology']=monitoring['topology']
         handle.state['monitor_diagnose']=monitoring['diagnose']
         handle._save()
+    from .oracle import start_from_env
+    handle._oracle_pending = start_from_env(handle)
     os.environ.setdefault('FLAGPROF_GROUP_ID',run.name)
     return dict(handle=handle,probe=None,rank=rank,world=world,run=run,monitoring=monitoring)
 
@@ -435,6 +437,11 @@ def execute(args):
             protocol['observation']=dict(diagnostic='flagprof-train-observe/1',
                                          vendor=observe['handle'].state.get('vendor'),
                                          preset='perf',attachment=observe['handle'].id)
+            oracle_at=observe['handle'].state.get('oracle_at')
+            if oracle_at:
+                protocol['observation']['oracle']=dict(diagnostic='training-oracle/1',
+                                                       boundaries=oracle_at,
+                                                       scope='activation capture; purely observational')
         if args.task=='classification':
             if args.model or args.inputs: raise ValueError('classification demo does not accept model or inputs')
             model=torch.nn.Sequential(torch.nn.Linear(16,32),torch.nn.ReLU(),torch.nn.Linear(32,4))
@@ -580,6 +587,8 @@ def execute(args):
     finally:
         if owned: dist.destroy_process_group()
         if observe:
+            capture=getattr(observe['handle'],'_oracle_pending',None)
+            if capture is not None: capture.close()
             observe['handle'].close(normal=not failed,returncode=1 if failed else 0)
             if not failed:
                 # Same-process finalize: the writer proxies belong to this PID
