@@ -403,7 +403,16 @@ def execute(args):
     try:
         if args.ddp:
             from datetime import timedelta
-            dist.init_process_group(args.backend or ('nccl' if device.startswith('cuda') else 'hccl' if device.startswith('npu') else 'gloo'),timeout=timedelta(seconds=120))
+            # The store timeout covers the whole process-group bootstrap,
+            # including the vendor stack's first-collective handshake (e.g.
+            # the FlagCX device-key exchange on XPU), so slow first-compile
+            # platforms need headroom. FLAGPROF_TRAIN_DIST_TIMEOUT seconds,
+            # default 120 unchanged.
+            try:
+                dist_timeout=float(os.environ.get('FLAGPROF_TRAIN_DIST_TIMEOUT','120'))
+            except ValueError:
+                dist_timeout=120.0
+            dist.init_process_group(args.backend or ('nccl' if device.startswith('cuda') else 'hccl' if device.startswith('npu') else 'gloo'),timeout=timedelta(seconds=dist_timeout))
             owned=True
             observe=observation_start(args)
             if observe:
