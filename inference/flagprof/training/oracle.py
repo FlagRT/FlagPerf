@@ -150,17 +150,17 @@ class OracleCapture:
 
     def _emit_op_event(self, key, name, tensor, role):
         from flagprof.probes.tensor import tensor_event
-        small = tensor.numel() * tensor.element_size() <= (1 << 20)
-        if role == 'out':
-            big = tensor.numel() * tensor.element_size() > (8 << 20)
-            if big:
-                small = False
+        # Input blobs are the replay material: keep them up to 32 MiB per
+        # tensor (the run-level budget still bounds the total); outputs are
+        # kept up to 8 MiB so the digest comparison has a reference.
+        size = tensor.numel() * tensor.element_size()
+        small = size <= (32 << 20) if role == 'in' else size <= (8 << 20)
         event, raw, blob_fmt = tensor_event(key, self.drill_path, self._step(),
                                             'op:'+name, role, tensor,
                                             role=role, ext={'training_schema': 'training/1',
                                                             'op_schema': name,
                                                             'capture_scope': 'oracle-replay'})
-        store_blob = role == 'out' or small
+        store_blob = small
         if store_blob and not self.blob_exhausted and self.blob_bytes + len(raw) <= self.budget_bytes:
             if self.stream is None:
                 folder = self.writer.run_dir/'blobs'
@@ -289,7 +289,8 @@ def start_from_env(handle):
         budget = int(os.environ.get('FLAGPROF_TRAIN_ORACLE_BYTES', str(1 << 26)))
     except ValueError:
         budget = 1 << 26
-    capture = OracleCapture(handle, boundaries=selectors, budget_bytes=budget)
+    ops_module = (os.environ.get('FLAGPROF_TRAIN_ORACLE_OPS') or '').strip() or None
+    capture = OracleCapture(handle, boundaries=selectors, budget_bytes=budget, ops_module=ops_module)
     handle.state['oracle_at'] = sorted(selectors) if selectors else 'auto'
     return capture
 
