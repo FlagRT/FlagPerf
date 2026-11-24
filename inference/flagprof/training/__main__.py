@@ -312,6 +312,16 @@ def observation_start(args):
     device_hint=str(getattr(args,'device',''))
     default_vendor='ascend' if device_hint.startswith('npu') else 'thead'
     vendor=os.environ.get('FLAGPROF_TRAIN_OBSERVE_VENDOR',default_vendor)
+    preset=os.environ.get('FLAGPROF_TRAIN_PRESET','perf')
+    if preset not in ('perf','perf-lite','coverage','modules'):
+        raise ValueError('FLAGPROF_TRAIN_PRESET must be one of perf/perf-lite/coverage/modules')
+    capture_mode=os.environ.get('FLAGPROF_TRAIN_CAPTURE','final')
+    if capture_mode not in ('final','windowed'):
+        raise ValueError('FLAGPROF_TRAIN_CAPTURE must be final or windowed')
+    capture_config={}
+    raw_capture=os.environ.get('FLAGPROF_TRAIN_CAPTURE_CONFIG')
+    if raw_capture:
+        capture_config=json.loads(raw_capture)
     world=int(os.environ.get('WORLD_SIZE','1'));rank=int(os.environ.get('RANK','0'))
     os.environ.setdefault('XPU_ENABLE_PROFILER_TRACING', '1')
     identity_path=os.environ.get('FLAGPROF_THEAD_IDENTITY')
@@ -327,11 +337,11 @@ def observation_start(args):
     elif vendor=='thead':
         identity_note='sourced'
     run=create_run(Path(root)/('rank-'+str(rank)),
-                   identity=dict(diagnostic='flagprof-train-observe/1',vendor=vendor,preset='perf',
+                   identity=dict(diagnostic='flagprof-train-observe/1',vendor=vendor,preset=preset,
                                  task=args.task,world_size=world,identity_source=identity_note))
     monitoring=monitor_start(root,vendor,world,rank)
-    handle=attach(run,vendor,preset='perf',rank=rank,
-                  config=monitoring['config'] if monitoring else None)
+    handle=attach(run,vendor,preset=preset,rank=rank,capture_mode=capture_mode,
+                  config=dict(capture_config,**(monitoring['config'] if monitoring else {})) or None)
     if handle.state['status']!='running':
         producer_errors=''
         for producer in sorted(Path(root).glob('rank-%d/*/capture-staging/*/producer.json' % rank))[-1:]:
