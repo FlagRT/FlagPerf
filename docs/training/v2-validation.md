@@ -68,6 +68,9 @@
 | P800 夜间全量口径（更宽，236 项） | 232 passed / 3 failed / 1 skipped | 3 项失败经 thead 同树对照定性为既有全量口径测试债（非 P800 平台差异、非本分支引入），如实保留未修；与上一行 230 项子集口径分别记录，不合并计数 |
 | 合并 dev-1.0（PR #15）后全量（PPU 容器，2026-11-23 @ `9b635461`） | 377 passed / 12 failed / 1 skipped | 12 项失败为 PR #15 自带 monitor/final-lifecycle/components 测试，在**未修改的 dev-1.0 `cc85edc8`** 同容器逐名复现同一批失败（上游环境性，非合并/训练侧引入）；训练观察监控/报告新测试（tests/test_training_observe.py 4 项）全绿 |
 | 合并后全量（Ascend 910C 容器，2026-11-23 @ `cddb2302`） | 376 passed / 11 failed / 3 skipped | 失败集为同一 PR #15 继承家族的 monitor/final-lifecycle 子集（PPU 12 项中的 11 项；TP2 components 项在本平台计入 skip），训练线与新增观察监控测试全绿；运行于租户共存的 flagrt 镜像（--privileged 重跑） |
+| 合并后全量（P800 新机 klx1 容器，2026-11-24 @ `8a9a9565` 树） | 377 passed / 15 failed / 3 skipped | 15 = 同一 PR #15 继承家族（monitor 5 + final_lifecycle 10 含 5 个 subtest），训练线与新增观察监控测试全绿；三平台失败集同族、均非训练侧引入 |
+| 训练观察态节点监控与 rank 级结果报告（P800 新机 DDP2 FSDP rerank-0.6B，2026-11-24） | 通过（三车：监控车/CTR 冒烟/守卫车） | P800 vendor=thead → local 拓扑：单监控会话 + 双 rank target 注册 + 每 rank `<run>-report/`（训练面板 ok、3 步全 ok、`perf.timeline ok`、11 面板同套）；`monitor_topology=local`/`monitor_diagnose=off` 如实落 state，`register_device` 记 unknown（thead vendor 无 `physical_identity`，与 thead 平台一致）；对照车零监控痕迹、报告照常；CTR 密封包单卡车 3/3 complete，`ctr_config/inputs/weight_sha256` 与 `oracle_id` 逐字记录——**同时验证了旧机 528 G 迁移数据的字节完整性**。DDP bootstrap 超时改为 `FLAGPROF_TRAIN_DIST_TIMEOUT` 可调（默认 120 不变） |
+| 新机空闲卡首内核挂死与多设备枚举不稳（klx1，2026-11-24） | 厂商级阻塞（与 TRAIN-P800-001 同族，新机复现） | 8 节点单节点隔离探针：**5/8 健康（xpu1/4/5/6/7，单卡 1.6 s 通过）、3/8 挂死（xpu0/2/3，首内核挂死且 SIGTERM 不免疫需 SIGKILL，rc=137）**；多设备容器枚举在卡空闲期不稳定（`invalid device ordinal`，唤醒后可复现通过）；单卡训练实测 `wait for noc idle timeout`（status 299）。操作口径：先探针唤醒再发车，选已验证健康节点。证据：klx1 `/data1/dzy-align/node-probe.log`、`align-e2e/` 各车 stderr 原文 |
 
 ## 保留的问题与范围
 
