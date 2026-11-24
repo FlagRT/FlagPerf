@@ -149,12 +149,16 @@ def _leaves(value, path='0'):
 
 def start_from_env(handle):
     """Instantiate a capture on this attachment when FLAGPROF_TRAIN_ORACLE_AT
-    is set; returns the capture or None. Called by register_model's caller
-    side (the training package) at attach time."""
+    is set ('auto' discovers boundaries); returns the capture or None."""
     configured = os.environ.get('FLAGPROF_TRAIN_ORACLE_AT')
     if not configured or handle.state.get('status') != 'running':
         return None
-    selectors = [p.strip() for p in configured.split(',') if p.strip()] or None
+    if configured.strip() == 'auto':
+        selectors = None
+    else:
+        selectors = [p.strip() for p in configured.split(',') if p.strip()]
+        if not selectors:
+            selectors = None
     try:
         budget = int(os.environ.get('FLAGPROF_TRAIN_ORACLE_BYTES', str(1 << 26)))
     except ValueError:
@@ -165,6 +169,19 @@ def start_from_env(handle):
 
 
 # --- cross-run join -------------------------------------------------------
+
+
+def _resolve_run(path):
+    """Accept either a run directory (with manifest.json) or its rank parent
+    holding exactly one run."""
+    p = Path(path)
+    if (p/'manifest.json').exists():
+        return p
+    if p.is_dir():
+        children = [c for c in sorted(p.iterdir()) if (c/'manifest.json').exists()]
+        if len(children) == 1:
+            return children[0]
+    raise ValueError('not a training store run (no manifest.json under '+str(p)+')')
 
 
 def _read_tensor_events(run):
@@ -226,6 +243,7 @@ def join_runs(run_left, run_right, *, atol=0.0, rtol=0.0, out=None):
     when both sides carry blobs, summarized over the 256-probe samples
     otherwise (rows carry the verdict basis explicitly).
     """
+    run_left, run_right = _resolve_run(run_left), _resolve_run(run_right)
     left_events, right_events = _read_tensor_events(run_left), _read_tensor_events(run_right)
     left_grads, right_grads = _read_gradient_snapshots(run_left), _read_gradient_snapshots(run_right)
     rows = []
