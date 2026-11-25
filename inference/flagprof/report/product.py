@@ -24,6 +24,7 @@ DESCRIPTIONS = {
     'oracle.replay':'先检查各侧原输入能否复现封存输出，再阅读相同输入的跨侧差异；最终模型输出影响需独立证据。',
     'memory':'各来源、allocated / reserved / device-used 分开。峰值为观测峰值；分配事件量不替代总占用。',
     'resource':'指标按观测对象、窗口和单位统计。分辨率不足时不给出统计；时间对应关系不自动证明因果。',
+    'training':'按训练步登记的主机区间。各阶段的主机区间与设备活动分别计时。',
     'generation':'step 0 为 prefill，后续为 decode。采集中的推进耗时与无插桩 runner 基准分别阅读。',
     'communication':'逻辑调用与设备表示分别计数；设备活动并集与时长和分别解释。主机返回不证明设备执行完成。',
 }
@@ -82,7 +83,9 @@ def add_table(model, ident, title, source, columns=None, description='', status=
         selected = [k for k in LABELS if k in present][:8]
     if not selected:
         selected = sorted(present)[:6]
-    model.section(ident, title, selected, description=description, status=status, kind=kind)
+    from .layout import filters
+    section=model.section(ident, title, selected, description=description, status=status, kind=kind)
+    section['filter_scope']=filters(ident,present)
     return model.rows(ident)
 
 
@@ -136,7 +139,7 @@ def _facts(model, doc, source):
             elif key in ('capture_window','software') and isinstance(value,dict):
                 value={k:v for k,v in value.items() if v is not None}
             model.meta['facts'].append(dict(label=title,value=value))
-    if not facts and not comparison_identity:
+    if not facts and not comparison_identity and doc.get('schema')!='monitor-report/1':
         model.meta['notices'].append('此历史报告未保存完整任务身份；页面仅解释已保存的结果。')
     elif facts.get('model_files') and not facts.get('model'):
         model.meta['facts'].insert(0,dict(label='模型名称',value='历史记录未提供；按模型文件身份核验'))
@@ -242,12 +245,16 @@ def _diagnosis(model, data):
                       ('在已观测执行区间未触发故障规则。' if not source_findings else '故障详情见事件列表。'),
                       'diagnosis.coverage')
     elif status == 'unavailable':
-        model.meta['notices'].append('本次未提供业务故障诊断：'+str(data.get('reason','未采集诊断来源')))
+        model.meta['notices'].append('本次未提供业务故障诊断：'+display(data.get('reason','未采集诊断来源')))
 
 
 def build(model, doc, source=None):
+    schema_modes={'device-comparison/1':'compare','oracle-three-way/1':'oracle-three-way','monitor-report/1':'monitor',
+                  'oracle-group/1':'group','flagprof-group-report/1':'group','runner-result/1':'baseline'}
+    if doc.get('schema') in schema_modes:model.meta['mode']=schema_modes[doc['schema']]
     _facts(model,doc,source)
-    _diagnosis(model,doc.get('diagnosis'))
+    if doc.get('schema')!='monitor-report/1' or (doc.get('diagnosis') or {}).get('findings') or (doc.get('diagnosis') or {}).get('progress_coverage'):
+        _diagnosis(model,doc.get('diagnosis'))
     panels = doc.get('results', {})
     oracle = any(key.startswith('oracle.') for key in panels)
     if oracle:
@@ -269,7 +276,7 @@ def build(model, doc, source=None):
             empty_reasons={'route.coverage':'本次未提供组件路由记录；未启用组件时此项不适用。',
                            'compile.health':'本次没有可汇总的编译观测；不据此判断没有编译。',
                            'memory':'本次未提供官方显存事件；设备资源观测另见资源结果。'}
-            model.meta['notices'].append(title+'：'+empty_reasons.get(ident,'；'.join(map(str,result.get('notes',[]))) or display(status)))
+            model.meta['notices'].append(title+'：'+empty_reasons.get(ident,'；'.join(display(v) for v in result.get('notes',[])) or display(status)))
             # Preserve identity and first-divergence sections even when unavailable.
             if ident not in ('oracle.identity_diff','oracle.first_divergence'):
                 continue
@@ -289,6 +296,8 @@ def build(model, doc, source=None):
             values = coverage.get(key)
             if values is None or isinstance(values,(str,dict)) or not len(values):
                 continue
+            if ident=='training' and key=='phases':
+                subtitle,subcolumns='逐阶段主机区间',('rank','step','phase','microstep','host_duration_ns')
             if key == 'headline' and ident == 'perf.device':
                 subtitle = '设备类别与关联概览'
                 subcolumns = ('dev','category','association_label','events','device_work_ns')
@@ -315,6 +324,10 @@ def build(model, doc, source=None):
         add_table(model,'forwards','前向与阶段登记',selected,
                   ('run_id','forward','phase','phase_source','compile_count','compile_ns','selected'),
                   '只使用已记录的阶段依据。未确定阶段不会被当成正式测量。')
+    if 'training' in panels and len(model.rows('training')):
+        steps=model.rows('training')
+        measured=sum(r.get('host_duration_ns') is not None for r in steps)
+        model.finding('训练步主机区间',str(len(steps))+' 条训练步记录，其中 '+str(measured)+' 条保存了主机区间长度。','training')
     if doc.get('schema') == 'monitor-report/1':
         _monitor(model,doc)
     if doc.get('schema') in ('flagprof-group-report/1','oracle-group/1'):
@@ -325,7 +338,7 @@ def build(model, doc, source=None):
         _three_way(model,doc)
     if source:
         _export_tables(model,Path(source))
-        _timeline(model,Path(source))
+        _timeline(model,Path(source),doc.get('diagnosis') or {})
     if doc.get('schema')=='runner-result/1':model.meta['title']='性能基准结果'
     if doc.get('runner_summary'):
         add_runner(model,doc['runner_summary'])
@@ -343,6 +356,8 @@ def build(model, doc, source=None):
     known={s['id'] for s in model.sections}
     for finding in model.meta['findings']:
         if finding.get('section') not in known:finding['section']=None
+    from .layout import decorate
+    decorate(model)
     return model
 
 
@@ -373,7 +388,7 @@ def _summarize(model, panels):
         model.finding('设备归属覆盖',
                       '设备事件 '+str(totals['events'])+' 条；原生框架归属 '+
                       str(totals.get('native_owned','未记录'))+' 条；已关联项目调用 '+
-                      str(totals.get('linked','未记录'))+' 条。未开启逐调用探针时，项目关联缺失不等于设备事件丢失。',
+                      str(totals.get('linked','未记录'))+' 条。项目调用关联和设备记录采用独立的计数口径。',
                       'perf.device.groups','coverage')
     p = panels.get('oracle.first_divergence')
     if p:
@@ -462,12 +477,20 @@ def _insights(model):
             '每项按同侧身份和精确签名核对；缺失、身份差异与路由不一致随记录给出。','oracle.perf_links')
 
 
-def _timeline(model,source):
+def _timeline(model,source,diagnosis):
     path=source/'exports/timeline.json'
     if not path.is_file():return
     from .curves import memory_envelope,unit
     doc=read_document(path,model)
     if doc.get('metadata',{}).get('clock')!='same_boot_monotonic_raw':return
+    origin=doc['metadata'].get('origin_raw_ns')
+    reference=diagnosis.get('coverage',{}).get('reference',{})
+    boot=reference.get('diagnostic_identity',{}).get('proc_key',{}).get('boot_id')
+    if boot and origin is not None:
+        times=(r['event_time_ns'] for r in model.rows('diagnosis')
+               if r.get('event_clock')=='host_mono:'+boot and r.get('event_time_ns') is not None)
+        first=min(times,default=None)
+        if first is not None:model.meta['resource_fault_ns']=first-origin
     events=doc.get('traceEvents',())
     def points():
         for event in events:
@@ -498,6 +521,12 @@ def _monitor(model, doc):
               '分钟观测均值不替代原始覆盖率或故障规则证据。')
     add_table(model,'monitor.findings','资源规则观测',doc.get('findings'),None,
               '节点资源事实与目标任务故障分别解释。')
+    series=model.rows('monitor.series')
+    if len(series):
+        entities={r.get('entity') for r in series if r.get('entity') is not None}
+        missing=sum(r.get('missing') or 0 for r in series)
+        model.finding(str(len(entities))+' 个观测对象 · '+str(len(series))+' 条指标序列',
+                      '各序列共登记 '+str(missing)+' 个缺失样本。按设备查看同一时间窗内的指标。','monitor.series')
     model.meta['monitor_window'] = doc.get('window')
     model.meta['notices'].extend(str(v) for v in doc.get('errors',[]))
 
@@ -565,7 +594,7 @@ def _comparison(model, doc):
         if source.get('local_report'):model.meta['links'].append(dict(label='来源 '+str(n+1)+' 完整结果',href=source['local_report']))
         add_table(model,'comparison.source.'+str(n),'来源 '+str(n+1)+' 的观测原值',
                   source.get('data'),PANELS['perf.device'][1],
-                  str(source.get('report',''))+'；'+display(source.get('comparison_status')))
+                  Path(str(source.get('report',''))).name+'；'+display(source.get('comparison_status')))
 
 
 def _three_way(model, doc):
@@ -644,6 +673,8 @@ def _redraw(source, out, *,  limits=None, runner_results=None, refresh_view=Fals
             build(model,document,out)
         elif snapshot.is_file() and not refresh_view:
             model.load(snapshot)
+            from .layout import decorate
+            decorate(model)
         else:
             build(model,read_document(source/'result.json',model),source)
         model.meta['rendered_from']=dict(path=str(source),sha256=digest(snapshot if snapshot.exists() and not refresh_view and not runner_results else source/'result.json'),refresh_view=refresh_view)

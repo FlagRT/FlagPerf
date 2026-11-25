@@ -111,7 +111,7 @@ def _generate(session, out, *, last):
         coverage=coverage,
         gaps=state['gaps'],capability_missing=state['inventory'].get('unavailable',{}),
         interpretation='Node observations and fact rules; no inferred workload hang or recovery action.')
-    from .diagnostic_report import panel, html as diagnostic_html
+    from .diagnostic_report import panel
     result['diagnosis']=panel(root)
     atomic_json(out/'result.json',result)
     from flagprof.report.product import write_report

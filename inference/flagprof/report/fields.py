@@ -4,6 +4,7 @@
 import math
 
 LABELS = {
+    'differences':'条件差异','left':'基准','right':'候选','input_tokens':'输入 token 数','batch':'批量','category_share':'同类别工作量占比','comm_backend':'通信后端','workload_identity':'负载身份',
     'source_label':'比较来源','left_label':'基准来源','right_label':'比较来源','report':'对应报告',
     'event_time_ns':'原始事件时刻','event_clock':'原始事件时钟','event_detail':'原始事件内容',
     'allocation_summary':'分配失败概况','logical_device':'逻辑设备','phyid':'物理设备编号',
@@ -19,20 +20,20 @@ LABELS = {
     'before':'前一边界','after':'后一边界','ratio':'变化倍数','change':'变化类型',
     'restricted_ns':'累计受限时间','observed_window':'有依据的观测时长','conclusion':'区间观察',
     'frequency_min_hz':'最低频率（Hz）','frequency_max_hz':'最高频率（Hz）',
-    'joules_per_token':'每 token 能耗（J）','token_reason':'能耗分母范围','coverage':'有效覆盖率',
+    'joules_per_token':'每 token 能耗（J）','token_reason':'能耗分母范围',
     'input_sources_ref':'参考侧输入生产者','input_sources_cmp':'比较侧输入生产者',
-    'input_side':'固定输入来自','valid':'输入与执行有效','self_reproduction':'各侧原输出复现',
+    'input_side':'固定输入来自','self_reproduction':'各侧原输出复现',
     'metrics':'同输入误差','routes':'两侧实际实现','performance_links':'独立性能证据',
     'trigger':'触发依据','location':'已记录活动位置','next_step':'接手方向',
     'reference_to_baseline':'参考→基线','reference_to_candidate':'参考→候选','baseline_to_candidate':'基线→候选',
-    'absolute_error_quantiles':'绝对误差分位数','reference_rms':'参考 RMS','rmse':'RMSE','normalized_rmse':'归一化 RMSE',
+    'rmse':'RMSE',
     'near_zero_reference_fraction':'近零参考占比','near_zero_reference_elements':'近零参考元素数',
     'weighting':'样本与元素权重对照','pair':'对照路径','parent_names':'已记录父层',
     'sample_equal_mae':'每样本等权 MAE','element_equal_mae':'每元素等权 MAE',
     'sample_equal_mse':'每样本等权 MSE','element_equal_mse':'每元素等权 MSE',
-    'cv_screening':'重复波动筛查','spike_screening':'尖峰筛查','observations':'有效观测数',
-    'minimum_ns':'最短时延','maximum_ns':'最长时延','independent_repeats':'独立进程数',
-    'instrumentation':'采集条件','semantics':'输出语义','load_s':'加载及准备（秒）',
+    'cv_screening':'重复波动筛查','spike_screening':'尖峰筛查',
+    'minimum_ns':'最短时延','maximum_ns':'最长时延',
+    'semantics':'输出语义','load_s':'加载及准备（秒）',
     'members':'层实例数','op_calls':'层内调用数','dispatch':'逐调用采集','forwards':'正式前向次数',
     'warmup':'预热次数','repeats':'进程内重复次数','profiler':'设备采集','window_kind':'窗口类型',
     'profile_memory':'官方显存采集','task':'任务类型','max_new_tokens':'生成 token 上限',
@@ -100,7 +101,12 @@ LABELS = {
     'compile_count':'已归属编译次数', 'compile_ns':'已归属编译耗时', 'phase_source':'阶段依据',
 }
 
+PANEL_LABELS = {'oracle.replay': {'valid':'输入与执行有效'}, 'monitor.series': {'valid':'有效样本'},
+                'training': {'step':'训练步'}, 'training.phases': {'step':'训练步','phase':'训练阶段'}}
+REASON_TEXT = {'reference_missing':'缺少参考记录','no_tensor_ops':'未记录张量算子',
+               'diagnostic monitor unavailable: []':'诊断监控未提供可用观测'}
 VALUES = {
+    **REASON_TEXT,
     'forward':'同步前向','request':'完整请求','group_request':'组请求','request_decode':'整次请求 decode',
     'source_window':'完整来源窗口','runner_synchronized':'runner 同步边界',
     'identity_mismatch':'身份不同','exact_signature_missing':'未找到精确签名',
@@ -142,6 +148,7 @@ VALUES = {
 }
 
 PANELS = {
+    'training':('训练步汇总',('step','owner','host_duration_ns','phase_counts','phase_host_ns','status','issues')),
     'oracle.samples':('逐样本误差与尺度',('scope','boundary','sample','level','max_abs','absolute_error_quantiles','reference_rms','normalized_rmse','near_zero_reference_fraction')),
     'perf.op':('算子热点', ('name','calls','host_ns','device_work_ns','source','scope','sid')),
     'perf.layer':('逐层耗时', ('name','members','inclusive_ns','exclusive_ns','device_work_ns','op_calls')),

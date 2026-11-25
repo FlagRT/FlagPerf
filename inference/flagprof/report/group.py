@@ -212,7 +212,7 @@ def _generate_group(manifest, out=None, *,  runner_results=None, limits=None):
     if runner_results:
         from .performance import summarize
         result['runner_summary']=summarize(runner_results,states[0]['identity'] if states else None,limits=limits)
-    from flagprof.monitor.diagnostic_report import panel, html as diagnostic_html
+    from flagprof.monitor.diagnostic_report import panel
     result['diagnosis']=panel(manifest.parent)
     (out/'result.json').write_text(json.dumps(result, indent=2)+'\n')
     from .product import write_report

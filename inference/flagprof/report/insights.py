@@ -18,7 +18,9 @@ def identity_text(identity):
     for key, label in (('model', '模型'), ('device', '设备'), ('dtype', '精度'),
                        ('comm_backend', '通信后端'), ('samples', '样本')):
         if identity.get(key) is not None:
-            parts.append(label+' '+display(identity[key]))
+            value = identity[key]
+            shown = str(len(value))+' 个 · '+display(value[:3])+'…' if key=='samples' and isinstance(value,list) and len(value)>4 else display(value)
+            parts.append(label+' '+shown)
     gems = identity.get('flaggems')
     if isinstance(gems, dict):
         parts.append('FlagGems '+display(gems.get('enabled')))
@@ -51,6 +53,10 @@ def comparison_facts(model, doc, source):
         path = source/pair/'result.json' if source else None
         if path and path.is_file():
             child = read_document(path, model)
+            if label=='参考侧':
+                layers=child.get('results',{}).get('oracle.layer',{}).get('data',())
+                model.meta['boundary_order']=[dict(scope=r.get('scope'),boundary=r.get('boundary'),order=r['order'])
+                                              for r in layers if isinstance(r.get('order'),int)]
             for row in child.get('results', {}).get('oracle.identity_diff', {}).get('data', ()):
                 if row.get(side) is not None:
                     identity[row['field']] = row[side]

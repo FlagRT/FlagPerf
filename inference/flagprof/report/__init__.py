@@ -115,99 +115,6 @@ def html_rows(stream,panel,rows,limit):
     stream.write('</tbody></table>')
 
 
-def memory_chart(stream, series, limit):
-    """A bounded first-source-window curve; full points remain in the export."""
-    groups={}
-    for point in itertools.islice(series,limit):
-        ts=point.get('source_time_ns')
-        if ts is None:continue
-        for metric in ('allocated_bytes','reserved_bytes','active_bytes','device_used_bytes'):
-            value=point['values'].get(metric)
-            if value is not None:groups.setdefault((point['dev'],point['component'],metric),[]).append((ts,value))
-    for key,values in groups.items():
-        values.sort();lo=values[0][0];span=max(1,values[-1][0]-lo);high=max(1,max(v for _,v in values))
-        points=' '.join(f'{30+700*(t-lo)/span:.2f},{190-160*v/high:.2f}' for t,v in values)
-        title=escape(' / '.join(key))
-        stream.write('<figure><figcaption>'+title+'；首 '+str(limit)+' 条记录内的来源时间曲线</figcaption>'
-            '<svg viewBox="0 0 760 220" width="760" role="img" aria-label="'+title+'">'
-            '<path d="M30 20 V190 H740" fill="none" stroke="#aab4c3"/>'
-            '<polyline points="'+points+'" fill="none" stroke="#1764bb" stroke-width="2"/>'
-            '<text x="35" y="18">'+str(high)+' bytes</text><text x="35" y="212">0 ns</text>'
-            '<text x="560" y="212">'+str(values[-1][0]-lo)+' ns</text></svg></figure>')
-
-
-def gap_chart(stream, coverage):
-    for kind, values in coverage.get('distributions',{}).items():
-        window=values['window_ns']['mean'];active=values['all_activity_union_ns']['mean'];blank=values['blank_ns']['mean']
-        if not window:continue
-        width=600*active/window
-        stream.write('<figure><figcaption>'+escape(kind)+'：均值贡献（活动并集＋空白）</figcaption>'
-            '<svg viewBox="0 0 640 75" width="640" role="img" aria-label="窗口内活动并集与空白的均值贡献">'
-            '<rect x="20" y="12" width="600" height="24" fill="#dce3ee"/>'
-            '<rect x="20" y="12" width="'+str(width)+'" height="24" fill="#1764bb"/>'
-            '<text x="20" y="62">活动 '+format(active/1e6,'.3f')+' ms；空白 '+format(blank/1e6,'.3f')+
-            ' ms；窗口 '+format(window/1e6,'.3f')+' ms</text></svg></figure>')
-
-
-def html(stream, results, limits, quality):
-    oracle=any(r.id.startswith('oracle.') for r in results)
-    title='训练负载分析' if any(r.id=='training' for r in results) else '推理负载分析'
-    stream.write('<!doctype html><html lang="zh"><meta charset="utf-8"><meta name="viewport" content="width=device-width">'
-        '<title>FlagProf '+title+'</title><style>body{font:15px system-ui;margin:32px;color:#172338;background:#f6f8fc}'
-        'section{background:white;padding:20px;margin:18px 0;border-radius:10px;overflow:auto}table{border-collapse:collapse}'
-        'th,td{padding:8px;border:1px solid #d9dfeb;text-align:left;max-width:400px;overflow-wrap:anywhere}'
-        'pre{white-space:pre-wrap}h1,h2{color:#17345c}</style><h1>'+title+'</h1>'
-        '<p>先查看各面板的可用性与原因，再阅读指标及其覆盖范围。</p>')
-    if oracle:
-        stream.write('<h2>Oracle—Device 精度差分</h2><p>完整值给出逐元素误差；抽样值只描述抽样位置。digest 相同用于判等。先看首个差异，再查看逐层误差与算子输入来源。</p>')
-        order=('oracle.identity_diff','oracle.generation','oracle.first_divergence','oracle.op_sensitivity','oracle.layer','oracle.replay')
-        results=sorted(results,key=lambda r:order.index(r.id) if r.id in order else len(order))
-    else:stream.write('<p>设备时长和表示记录的工作量，含重叠；区间并集表示指定窗口内的活动占用。跨来源时间轴能力见时钟依据。主机调用耗时与 runner 同步前向耗时分别解释。</p>')
-    for result in results:
-        panel = escape(result.id, quote=True)
-        stream.write('<section id="'+panel+'"><h2>'+panel+' · '+escape(result.status)+'</h2>')
-        if result.id in ('generation','oracle.generation'):
-            stream.write('<p>生成步从 0 编号：step 0 为 prefill，之后为 decode。首次不同 token 所在步仍由共同输入产生，包含在数值比较中；后续完整轨迹保留。</p>')
-        for note in result.notes:
-            stream.write('<p class="reason">'+escape(note)+'</p>')
-        displayed = result.coverage.get('headline', result.data)
-        if result.id=='route.coverage' and 'missing_ops' in result.coverage:
-            q=result.coverage;nonhit=sum(q.get(k,0) for k in ('fallback','excluded','error'))
-            stream.write('<p>调用 '+str(q.get('calls',0))+' 次；非命中 '+str(nonhit)+' 次（含策略与设备排除）。完整 sid 明细 '+str(len(result.data))+' 行，见 route-coverage.jsonl。</p>')
-            for section,title,note in [('main','回退主表','按前向内非命中次数、比例排序；主机时间为次要列。'),
-                    ('composite','组合算子','覆盖情况取决于分解后的算子。'),('view','视图类','别名/视图类别不直接代表需要新增计算实现；处理方向仍看 reason。')]:
-                stream.write('<h3>'+title+'</h3><p>'+note+'</p>')
-                html_rows(stream,panel,(r for r in q['missing_ops'] if r['section']==section),limits.html_rows)
-        else:
-            stream.write('<p>显示前 '+str(min(len(displayed),limits.html_rows))+' 行；完整表 '+str(len(result.data))+' 行。完整数据见 result.json 与 exports。</p>')
-            if result.id=='oracle.op_sensitivity':
-                stream.write('<p>ULP 是两侧值之间的可表示值距离；分布描述差异量级，具体成因结合实现证据或定点实验判断。不同元素占比以有效有限配对元素为分母；成对极值哨兵单独计数并排除。布局差异单独显示，路由列为预期实现。</p>')
-                for key,title in [('introduced','introduced：相同调用配置与完整相同输入上的数值差异'),('introduced_routes','按预期路由汇总的 introduced'),('amplification','可计算的误差放大 Top-10')]:
-                    rows=result.coverage.get(key,[])
-                    stream.write('<h3>'+title+' · '+str(len(rows))+' 行</h3>')
-                    html_rows(stream,panel+'.'+key,rows,min(10,limits.html_rows))
-                stream.write('<h3>按执行顺序的算子结果</h3>')
-            html_rows(stream,panel,displayed,limits.html_rows)
-        if result.id=='resource':
-            for key,title in [('stages','按阶段汇总'),('energy','能耗与功率域'),('memory','扣除基线后的分配器外显存估算'),('restrictions','区间内限制记录'),('frequency','观测频率低于标称值的区间')]:
-                stream.write('<h3>'+title+'</h3>')
-                html_rows(stream,panel+'.'+key,result.coverage.get(key,()),limits.html_rows)
-        if result.id=='perf.timeline':
-            stream.write('<p><a href="exports/timeline.json">下载 Chrome / Perfetto 时间线</a></p><pre>'+escape(encode(result.coverage))+'</pre>')
-        if result.id=='perf.gap':gap_chart(stream,result.coverage)
-        if result.id=='memory':memory_chart(stream,result.coverage.get('series',()),limits.html_rows)
-        if result.id in ('perf.device','perf.gap','communication','memory','generation','training'):
-            for name,table in result.coverage.items():
-                if isinstance(table,Table):
-                    stream.write('<details><summary>'+escape(name)+'（完整记录见 exports）</summary>')
-                    html_rows(stream,result.id+'.'+name,table,limits.html_rows)
-                    stream.write('</details>')
-        # Tables in coverage are exported, while scalar quality stays visible.
-        panel_quality = {k: v for k, v in result.coverage.items() if not isinstance(v, Table)}
-        stream.write('<details><summary>数据质量与覆盖范围</summary><pre>'+escape(encode(panel_quality))+'</pre></details></section>')
-    stream.write('<section id="data-quality"><h2>数据质量</h2><pre>'+escape(encode(quality))+'</pre></section></html>\n')
-
-
 def generate(run, out=None, *, limits=None, op_kinds=None, runner_results=None):
     from flagprof.offline.worker import output_operation
     target = out or Path(run).resolve().with_name(Path(run).name + '-report')
@@ -266,7 +173,7 @@ def _generate(run, out, *, limits=None, op_kinds=None, runner_results=None):
             if runner_results:
                 from .performance import summarize
                 data['runner_summary']=summarize(runner_results,data['report_context']['identity'],limits=limits)
-            from flagprof.monitor.diagnostic_report import panel, html as diagnostic_html
+            from flagprof.monitor.diagnostic_report import panel
             data['diagnosis'] = panel(run)
             with (out/'result.json').open('w') as stream:
                 write_json(stream, data)

@@ -1,7 +1,6 @@
 # Copyright 2026 FlagOS Contributors
 # Licensed under the Apache License, Version 2.0.
 """Pair corresponding rank Stores, preserving one logical sample count."""
-from html import escape
 import json
 from pathlib import Path
 import tempfile
@@ -10,27 +9,6 @@ from .group import validate_manifest, check_ranks, replicated_boundary
 from flagprof.store import StoreView
 from flagprof.analyzers.workspace import Workspace
 from flagprof.analyzers.oracle import identity
-
-
-def write_index(result,out):
-    out=Path(out)
-    status='完整' if result['status']=='ok' else '部分'
-    with (out/'report.html').open('w') as page:
-        page.write('<!doctype html><meta charset="utf-8"><title>TP2 精度对照</title>'
-            '<style>body{font:16px sans-serif;max-width:1000px;margin:32px auto;padding:0 20px}'
-            'table{border-collapse:collapse}td,th{border:1px solid #ccd;padding:10px}</style>'
-            '<h1>TP2 精度对照</h1><p>状态：'+status+'；逻辑输入样本：'+str(result['samples'])+
-            '；每侧 rank 数：'+str(result['world_size'])+'。</p><p>参考后端：'+escape(result['ref_backend'])+
-            '；比较后端：'+escape(result['cmp_backend'])+'。</p>'
-            '<p>复制的模型与 block 边界已核对跨 rank 一致。两侧内部算子按相同 rank 配对，'
-            '逻辑输入样本只计一次。打开各 rank 报告查看身份、首差异、逐层及算子结果。</p>'
-            '<table><tr><th>配对</th><th>详细报告</th></tr>')
-        for row in result['ranks']:
-            rank=str(row['rank'])
-            page.write('<tr><td>rank '+rank+' → rank '+rank+'</td><td><a href="'+row['report']+'">查看精度对照</a></td></tr>')
-        page.write('</table>')
-        if any(r['panels'].get('oracle.op_sensitivity')=='partial' for r in result['ranks']):
-            page.write('<p>部分算子的输入来源或调用配置不完整；数值配对继续保留，introduced 判断仅使用完整来源。请在对应 rank 面板核对原因。</p>')
 
 
 def inspect_group(path):
