@@ -110,6 +110,28 @@ class CtrTaskTests(unittest.TestCase):
                 self.assertTrue(grads)
                 self.assertTrue(all(bool(torch.isfinite(g).all()) for g in grads))
 
+    def test_dien_accepts_histories_shorter_than_the_full_width(self):
+        """Regression: pad_packed_sequence(total_length=hist_len) raised
+        'shape invalid for input' whenever the longest valid sequence in the
+        batch was shorter than the history width (batch-dependent, previously
+        hidden)."""
+        from flagprof.runner.ctr import Dien as DienNet, ARCH_CONFIG
+        net = DienNet(dict(dien=dict(profile_sparse=10, mlp_dims=[128, 64],
+                                     activation='dice', batchnorm=True)))
+        batch = 3
+        width = ARCH_CONFIG['hist_len']
+        dense = torch.zeros(batch, ARCH_CONFIG['dense_dim'])
+        sparse = torch.randint(1, ARCH_CONFIG['vocab'], (batch, 11))
+        hist = torch.zeros(batch, width, dtype=torch.long)
+        hist[0, :3] = 5
+        hist[1, :2] = 7
+        hist[2, :1] = 9
+        mask = hist != 0
+        with torch.no_grad():
+            out = net(dense, sparse, hist, mask)
+        self.assertEqual(tuple(out.shape), (batch,))
+        self.assertTrue(bool(torch.isfinite(out).all()))
+
     def test_logit_loss_matches_manual_bce_with_logits(self):
         net, batches, loss_fn, _ = self.prepare('dlrm')
         inputs = {k: v for k, v in batches[0].items() if not k.endswith('_label')}

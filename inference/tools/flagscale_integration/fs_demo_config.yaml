@@ -1,0 +1,41 @@
+train:
+  name: bge-m3-demo
+  task: embedding
+  seed: 42
+  deterministic: false
+  batch_size: 2
+  gradient_accumulation_steps: 1
+  epochs: 1
+  log_every: 5
+  temperature: 0.05
+  max_grad_norm: 1.0
+  output_dir: /w/fs-run/out
+  model:
+    model_type: bge_m3
+    model_path: /w/models/bge-m3
+    max_length: 64
+    torch_dtype: bf16
+    freeze_backbone: false
+  data:
+    path: /w/fs-tiny
+    validation_path: /w/fs-tiny
+    test_path: /w/fs-tiny
+    train_split: train
+    validation_split: validation
+    test_split: test
+    eval_max_samples: 16
+    split_modulo: 20
+    shuffle_buffer: 0
+    length_sort_window: 0
+    num_negatives: 1
+    max_samples: 60
+    num_workers: 0
+  optimizer:
+    lr: 2.0e-5
+    weight_decay: 0.01
+  hardware:
+    device_type: cuda
+    distributed_backend: auto
+  parallel: ddp
+  master_dtype: bf16
+  save_every_epoch: false

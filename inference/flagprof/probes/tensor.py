@@ -23,6 +23,39 @@ def arguments(args,kwargs):
     for key,value in sorted(kwargs.items()):yield from leaves(value,'kw:'+key)
 
 
+def tensor_event(key,path,iteration,boundary,sample,tensor,*,role='out',mask=None,**fields):
+    """Build the shared `t='tensor'` comparison payload; return (event, raw bytes).
+
+    Single implementation of the stats/chunks/probe/digest format consumed by
+    the oracle join; the training-side oracle capture reuses this so both
+    sides stay byte-compatible.
+    """
+    import math
+    import torch
+    cpu=tensor.detach().to('cpu').contiguous()
+    raw=cpu.reshape(-1).view(torch.uint8).numpy().tobytes()
+    digest='sha256:'+hashlib.sha256(raw).hexdigest()
+    flat=cpu.reshape(-1).double()
+    def statistics(values):
+        finite=values[torch.isfinite(values)]
+        return dict(count=values.numel(),nan=int(torch.isnan(values).sum()),inf=int(torch.isinf(values).sum()),
+            min=float(finite.min()) if finite.numel() else None,max=float(finite.max()) if finite.numel() else None,
+            mean=float(finite.mean()) if finite.numel() else None,absmean=float(finite.abs().mean()) if finite.numel() else None,
+            l2=float(torch.linalg.vector_norm(finite)) if finite.numel() else None)
+    n=flat.numel();k=min(64,n);width=n//k if k else 0
+    chunks=[statistics(flat[i*width:n if i==k-1 else (i+1)*width]) for i in range(k)]
+    m=min(256,n);step=n//m if m else 1
+    phase=int(hashlib.sha256(key.encode()).hexdigest()[:16],16)%step
+    probe=[]
+    for v in flat[phase:phase+step*m:step].tolist():
+        probe.append(v if math.isfinite(v) else 'nan' if math.isnan(v) else '+inf' if v>0 else '-inf')
+    event=dict(t='tensor',call_key=key,role=role,boundary=boundary,shape=list(cpu.shape),dtype=str(cpu.dtype),
+        stats=statistics(flat),chunks=chunks,probe=probe,probe_alg='p4v1',digest=digest,**fields)
+    if mask is not None:event['mask']=mask
+    blob_fmt='raw-le:'+str(cpu.dtype).removeprefix('torch.')+':'+str(list(cpu.shape))
+    return event,raw,blob_fmt
+
+
 class TensorProbe(Probe):
     id='tensor'
     produces=('tensor','sig')
@@ -210,29 +243,10 @@ class TensorProbe(Probe):
         busy=self.busy;self.busy=True
         try:
             key=path+'#'+str(iteration)+'#'+boundary+'#'+sample
-            cpu=tensor.detach().to('cpu').contiguous()
-            raw=cpu.reshape(-1).view(torch.uint8).numpy().tobytes()
-            digest='sha256:'+hashlib.sha256(raw).hexdigest()
-            flat=cpu.reshape(-1).double()
-            def statistics(values):
-                finite=values[torch.isfinite(values)]
-                return dict(count=values.numel(),nan=int(torch.isnan(values).sum()),inf=int(torch.isinf(values).sum()),
-                    min=float(finite.min()) if finite.numel() else None,max=float(finite.max()) if finite.numel() else None,
-                    mean=float(finite.mean()) if finite.numel() else None,absmean=float(finite.abs().mean()) if finite.numel() else None,
-                    l2=float(torch.linalg.vector_norm(finite)) if finite.numel() else None)
-            n=flat.numel();k=min(64,n);width=n//k if k else 0
-            chunks=[statistics(flat[i*width:n if i==k-1 else (i+1)*width]) for i in range(k)]
-            m=min(256,n);step=n//m if m else 1
-            phase=int(hashlib.sha256(key.encode()).hexdigest()[:16],16)%step
-            probe=[]
-            for v in flat[phase:phase+step*m:step].tolist():
-                probe.append(v if __import__('math').isfinite(v) else 'nan' if __import__('math').isnan(v) else '+inf' if v>0 else '-inf')
-            event=dict(t='tensor',call_key=key,role=role,boundary=boundary,shape=list(cpu.shape),dtype=str(cpu.dtype),
-                stats=statistics(flat),chunks=chunks,probe=probe,probe_alg='p4v1',digest=digest,**fields)
+            event,raw,blob_fmt=tensor_event(key,path,iteration,boundary,sample,tensor,role=role,mask=mask,**fields)
             generation=self.context.probe_state().get('generation')
             if generation:
                 event.setdefault('ext',{})['generation']={k:generation[k] for k in ('request_id','generation_step','phase','mode')}
-            if mask is not None:event['mask']=mask
             blob=self.config.get('tensor_blob','none')
             selected=blob=='all' or isinstance(blob,list) and any(key.startswith(prefix) for prefix in blob)
             if selected:
@@ -241,8 +255,8 @@ class TensorProbe(Probe):
                         folder=self.context.writer.run_dir/'blobs';folder.mkdir(exist_ok=True)
                         self.stream=(folder/('tensor-'+str(os.getpid())+'-'+self.manager.state['id']+'.bin')).open('xb')
                     offset=self.stream.tell();self.stream.write(raw)
-                    event['blob']=dict(path=str(Path(self.stream.name).relative_to(self.context.writer.run_dir)),offset=offset,nbytes=len(raw),hash=digest,
-                        fmt='raw-le:'+str(cpu.dtype).removeprefix('torch.')+':'+str(list(cpu.shape)))
+                    event['blob']=dict(path=str(Path(self.stream.name).relative_to(self.context.writer.run_dir)),offset=offset,nbytes=len(raw),hash=event['digest'],
+                        fmt=blob_fmt)
                     self.metrics['blob_bytes']+=len(raw)
                 else:
                     self.blob_exhausted=True

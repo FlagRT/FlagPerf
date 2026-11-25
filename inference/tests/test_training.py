@@ -2,12 +2,15 @@
 # Licensed under the Apache License, Version 2.0.
 """Training semantics: reference updates, accumulation and restart continuity."""
 import copy
+import importlib.util
 import json
+import os
 from pathlib import Path
 import random
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 try:
     import torch
@@ -85,6 +88,38 @@ class TrainingTests(unittest.TestCase):
             self.run_model('invalid', resume=checkpoint, accumulation=2)
         result = json.loads((self.root/'invalid/training-result.json').read_text())
         self.assertEqual(result['status'], 'failed')
+
+    def test_cli_resumes_v1_checkpoint_without_sharding_or_task_source(self):
+        from flagprof.training.__main__ import main
+        checkpoint = self.root/'v1.pt'
+        options = ['--task', 'classification', '--steps', '2']
+        main(options + ['--outputs', str(self.root/'paused'), '--stop-after', '1',
+                        '--checkpoint', str(checkpoint)])
+        saved = torch.load(checkpoint, weights_only=False)
+        del saved['protocol']['task_source']
+        del saved['protocol']['sharding']
+        torch.save(saved, checkpoint)
+        main(options + ['--outputs', str(self.root/'resumed'), '--resume', str(checkpoint)])
+        result = json.loads((self.root/'resumed/training-result.json').read_text())
+        self.assertEqual((result['status'], result['start_step']), ('complete', 1))
+
+    @unittest.skipUnless(sys.platform == 'linux', 'Linux Store/attachment')
+    def test_single_rank_observed_checkpoint_resumes_with_fresh_attachment(self):
+        from flagprof.training.__main__ import main
+        checkpoint = self.root/'observed.pt'
+        settings = dict(FLAGPROF_TRAIN_OBSERVE=str(self.root/'observations'),
+                        FLAGPROF_TRAIN_OBSERVE_VENDOR='ascend', FLAGPROF_TRAIN_PRESET='coverage',
+                        FLAGPROF_TRAIN_MONITOR='off', FLAGPROF_TRAIN_REPORT='off')
+        with patch.dict(os.environ, settings):
+            main(['--steps', '2', '--outputs', str(self.root/'paused'), '--stop-after', '1',
+                  '--checkpoint', str(checkpoint)])
+            main(['--steps', '2', '--outputs', str(self.root/'resumed'), '--resume', str(checkpoint)])
+        paused, resumed = [json.loads((self.root/name/'training-result.json').read_text())
+                           for name in ('paused', 'resumed')]
+        self.assertEqual((resumed['status'], resumed['start_step']), ('complete', 1))
+        self.assertEqual(paused['protocol']['observation'], resumed['protocol']['observation'])
+        self.assertEqual(resumed['protocol']['observation']['preset'], 'coverage')
+        self.assertNotEqual(paused['attachment_id'], resumed['attachment_id'])
 
     def test_failure_keeps_completed_steps_and_does_not_reuse_output(self):
         calls = [0]
@@ -196,6 +231,87 @@ class TrainingTests(unittest.TestCase):
         calls = [e for e in events if e['t']=='op']
         self.assertTrue(any(phases.get(e.get('scope'))=='backward' for e in calls))
         self.assertTrue(any(phases.get(e.get('scope'))=='optimizer' for e in calls))
+
+
+class SummaryTests(unittest.TestCase):
+    def test_rank_local_attachment_ids_preserve_summary_but_different_presets_do_not(self):
+        from flagprof.training.summary import summarize
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for rank in (0, 1):
+                path = root/('rank-' + str(rank))/'training-result.json'
+                path.parent.mkdir()
+                protocol = dict(task='classification', world_size=2, rank=rank, sharding='ddp-replica',
+                                observation=dict(preset='coverage', attachment=str(rank)))
+                result = dict(protocol=protocol, status='complete', next_step=1,
+                              steps=[dict(step=0)], final_model_sha256='equal-final')
+                path.write_text(json.dumps(result))
+            self.assertEqual(summarize(root)['status'], 'complete')
+            result['protocol']['observation']['preset'] = 'perf'
+            path.write_text(json.dumps(result))
+            self.assertEqual(summarize(root)['status'], 'partial')
+
+
+class TestCommunicationProbeCoverage(unittest.TestCase):
+    def test_fsdp_collectives_are_wrapped(self):
+        """FSDP2 bypasses torch.distributed: its functional entries must be wrapped."""
+        from flagprof.probes.communication import DIST_NAMES, FUNCTIONAL_NAMES, OP_BY_NAME
+        self.assertIn('reduce_scatter_tensor', DIST_NAMES)
+        self.assertIn('reduce_scatter_tensor', FUNCTIONAL_NAMES)
+        self.assertEqual(OP_BY_NAME['reduce_scatter_tensor'], 'reducescatter')
+        for name in ('all_reduce', 'all_gather_tensor'):
+            self.assertIn(name, FUNCTIONAL_NAMES)
+        for name in DIST_NAMES:
+            self.assertIn(name, OP_BY_NAME)
+        for name in FUNCTIONAL_NAMES:
+            self.assertIn(name, OP_BY_NAME)
+
+    def test_pipeline_and_p2p_entries_are_wrapped(self):
+        """Megatron-style pipeline parallelism moves activations over p2p entries;
+        rooted collectives beyond the FSDP pair must be visible too."""
+        from flagprof.probes.communication import DIST_NAMES, OP_BY_NAME, P2P_NAMES
+        for name in ('broadcast', 'reduce', 'scatter', 'gather', 'gather_object',
+                     'scatter_object_list', 'all_to_all', 'all_to_all_single',
+                     'send', 'recv', 'isend', 'irecv', 'batch_isend_irecv'):
+            self.assertIn(name, DIST_NAMES, name)
+        self.assertEqual(set(P2P_NAMES), {'send', 'recv', 'isend', 'irecv', 'batch_isend_irecv'})
+        self.assertTrue(set(P2P_NAMES).issubset(set(DIST_NAMES)))
+        self.assertEqual(OP_BY_NAME['batch_isend_irecv'], 'batch_p2p')
+        self.assertEqual(OP_BY_NAME['all_to_all_single'], 'alltoall')
+
+    def test_phase_accepts_data_and_rejects_unknown(self):
+        """The data-preparation phase is a first-class training/1 phase;
+        unknown names stay rejected so typos cannot silently drop spans."""
+        from flagprof.training import phase
+        with phase('data', step=0):
+            pass
+        with self.assertRaisesRegex(ValueError, 'unknown training phase'):
+            with phase('tokenize', step=0):
+                pass
+
+    @unittest.skipUnless(sys.platform == 'linux', 'Linux Store/attachment')
+    @unittest.skipUnless(all(importlib.util.find_spec(name) for name in ('torch', 'transformers')),
+                         'requires torch and Transformers (real capture attachment)')
+    def test_driver_records_data_preparation_phase(self):
+        """End to end through the driver: batch materialisation must surface as
+        a training/1 span with phase=data, so layer-1 segment reports see it."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            from flagprof import attach
+            from flagprof.store import create_run, finalize, StoreView
+            from flagprof.training.__main__ import main
+            run = create_run(root/'driver-store')
+            with attach(run, 'ascend', preset='coverage'):
+                rc = main(['--steps', '1', '--outputs', str(root/'driver-out')])
+            self.assertEqual(rc, 0)
+            finalize(run)
+            with StoreView(run) as view:
+                events = [dict(item.record) for item in view.iter_events()]
+            phases = [e['attrs']['phase'] for e in events
+                      if e['t'] == 'span' and e.get('attrs', {}).get('training_schema') == 'training/1']
+            self.assertIn('data', phases)
+            self.assertIn('step', phases)
+            self.assertIn('forward', phases)
 
 
 if __name__ == '__main__':

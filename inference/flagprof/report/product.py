@@ -12,6 +12,8 @@ from .model import opened_model, read_document, digest
 
 
 DESCRIPTIONS = {
+    'training.oracle':'逐层与逐参数比较。basis 列标明指纹、逐元素、采样或元数据依据。',
+    'training.oracle.first_divergence':'两跑对比中第一个超出容差的层或参数（step 与位置）。',
     'perf.op':'全采集窗口内可用的调用记录。主机区间含探针开销；设备工作量为关联事件时长之和，含重叠。',
     'perf.layer':'全采集窗口。含子层耗时与独占耗时分列；父子层不能相加。设备工作量不等于层的墙钟时延。',
     'perf.device':'来源窗口内的设备记录，按名称、签名和关联状态分组。工作量含事件重叠；跨厂商名称不直接配对。',
@@ -255,7 +257,10 @@ def build(model, doc, source=None):
         order = ('oracle.identity_diff','oracle.generation','oracle.first_divergence',
                  'oracle.op_sensitivity','oracle.layer','oracle.perf_links','oracle.replay')
     else:
-        order = ('perf.device','perf.op','perf.layer','perf.gap','generation',
+        if 'training' in panels:
+            model.meta['title'] = '训练运行结果'
+        order = ('training','training.oracle','training.oracle.first_divergence',
+                 'perf.device','perf.op','perf.layer','perf.gap','generation',
                  'route.coverage','compile.health','communication','memory','resource')
     for ident in list(order)+[key for key in panels if key not in order]:
         if ident not in panels or ident == 'perf.timeline':

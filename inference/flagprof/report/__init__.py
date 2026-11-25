@@ -260,6 +260,35 @@ def generate(run, out=None, *, work=None, limits=None, op_kinds=None, runner_res
             quality.update(forward_quality)
             data = dict(schema='p1-result/1', limits=asdict(limits),quality=quality,
                         results={r.id: dict(status=r.status, data=r.data, coverage=r.coverage, notes=r.notes) for r in results})
+            oracle_file = run/'oracle.json'
+            if oracle_file.exists():
+                # Operator-placed training oracle join table (flagprof.training.oracle
+                # join --out <run>); rendered as training panels next to the run data.
+                try:
+                    payload = json.loads(oracle_file.read_text())
+                    rows = payload.get('rows', [])
+                    first = payload.get('first_divergence')
+                    incomplete = sum(row.get('verdict') == 'incomparable' or
+                                     (row.get('verdict') == 'within_tolerance' and row.get('max_abs') is None)
+                                     for row in rows)
+                    capture_coverage = payload.get('coverage', {})
+                    partial = incomplete or capture_coverage.get('partial', False)
+                    status = 'unavailable' if not rows else 'partial' if partial else 'ok'
+                    coverage = dict(capture_coverage, rows=len(rows), incomparable=incomplete)
+                    data['results']['training.oracle'] = dict(status=status, data=rows,
+                        coverage=coverage, notes=['basis 列记录指纹、逐元素或采样比较的依据。'])
+                    if not rows:
+                        note = '两次运行没有可比较的记录。'
+                    elif partial:
+                        note = '部分采集记录缺失或无法比较，首个差异仅覆盖已判定的记录。'
+                    elif not first:
+                        note = '所有已比较记录均在容差内。'
+                    else:
+                        note = '按训练步与采集顺序定位。'
+                    data['results']['training.oracle.first_divergence'] = dict(status=status,
+                        data=[first] if first else [], coverage=coverage, notes=[note])
+                except ValueError:
+                    pass
             data['report_context']=dict(run=dict(run_id=run.name),
                 identity=next((s['oracle_identity'] for s in workspace.statuses if s.get('oracle_identity')),{}))
             if runner_results:

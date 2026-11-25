@@ -13,7 +13,7 @@ from pathlib import Path
 
 POOLS = ('last', 'cls', 'mean')
 SCORES = ('causal_yesno', 'sequence_logit')
-TASKS = ('embedding', 'rerank')
+TASKS = ('embedding', 'rerank', 'causal-lm')
 REGISTRY_PATH = Path(__file__).resolve().parents[2] / 'targets' / 'model_registry.json'
 
 
@@ -71,3 +71,9 @@ def resolve(value, source, *, kind, registry=None):
     if entry and entry.get('task') in ('embedding', 'rerank') and entry.get(kind):
         return entry[kind], 'registry'
     return None, None
+
+
+def resolve_task(source, registry=None):
+    """Registry task for a model, or None when the model is not adapted."""
+    entry = lookup(source, registry)
+    return entry.get('task') if entry else None

@@ -14,7 +14,7 @@ def analyze(work):
         if attrs.get('training_schema') != 'training/1':
             continue
         index, phase = attrs.get('step'), attrs.get('phase')
-        if type(index) is not int or index < 0 or phase not in ('step', 'zero_grad', 'forward', 'backward', 'optimizer'):
+        if type(index) is not int or index < 0 or phase not in ('data', 'step', 'zero_grad', 'forward', 'backward', 'optimizer'):
             raise ValueError('invalid training interval identity')
         row = dict(attrs, run_id=run, writer=writer, sequence=sequence,
                    rank=event.get('rank'), pid=event.get('pid'), tid=event.get('tid'),

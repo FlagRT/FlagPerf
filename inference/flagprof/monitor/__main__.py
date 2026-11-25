@@ -33,9 +33,16 @@ def sample(args):
     heartbeat = run/'heartbeat'
     heartbeat.touch()
     try:
-        provider, identity = Registry().create('telemetry.'+args.vendor, devices=args.devices, source=args.source)
-        host = Host()
-        inventory.update(provider.inventory)
+        host_only = args.vendor in ('thead', 'kunlunxin')
+        if host_only:
+            host, identity = Registry().create('telemetry.host')
+            inventory.update(device_telemetry='unavailable', source='host-procfs')
+            metrics, calls = host.metrics, host.calls()
+        else:
+            provider, identity = Registry().create('telemetry.'+args.vendor, devices=args.devices, source=args.source)
+            host = Host()
+            inventory.update(provider.inventory)
+            metrics, calls = provider.metrics + host.metrics, provider.calls() + host.calls()
         calibration = Path(args.root)/'telemetry-calibration.json'
         if calibration.exists():
             data = json.loads(calibration.read_text())
@@ -45,7 +52,7 @@ def sample(args):
             else:
                 inventory['calibration_status'] = 'identity_mismatch'
         inventory.update(source_identity=identity['shipped_source_closure'],
-                         descriptors=[m.snapshot() for m in provider.metrics+host.metrics])
+                         descriptors=[m.snapshot() for m in metrics])
         atomic_json(run/'inventory.json', inventory)
         leases.acquire(device_keys(dict(boot_id=inventory['boot_id'],vendor=args.vendor),inventory))
         leases.owner(proc_key())
@@ -55,7 +62,7 @@ def sample(args):
             raise ValueError('source round time exceeds 5000 ms monitoring interval')
         inventory.update(requested_interval_ms=args.interval_ms,effective_interval_ms=effective_ms)
         atomic_json(run/'inventory.json', inventory)
-        sampler = Sampler(provider.calls()+host.calls(), effective_ms,
+        sampler = Sampler(calls, effective_ms,
                           timeout=inventory.get('call_timeout_s', 3))
         known = {}; next_scan = 0
         awaiting_pre_sample = {e['entity'] for e in inventory['entities'] if e['entity'].startswith('chip:')}
@@ -69,7 +76,8 @@ def sample(args):
                     dev=point.entity, ts=point.start_ns, dur=point.end_ns-point.start_ns,
                     values=point.values, miss=point.miss,
                     ext=dict(telemetry=dict(point.detail, source=point.source, sample_times=point.sample_times))))
-                if not first_sample and point.values.get('memory.used') is not None:
+                sample_metric = 'host.memory.available' if host_only else 'memory.used'
+                if not first_sample and point.values.get(sample_metric) is not None:
                     awaiting_pre_sample.discard(point.entity)
                     if not awaiting_pre_sample:
                         atomic_json(run/'first-sample.json', dict(ts=point.start_ns, entities=[e['entity'] for e in inventory['entities'] if e['entity'].startswith('chip:')]))
@@ -159,7 +167,7 @@ def supervise(args):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--root', required=True)
-    parser.add_argument('--vendor', choices=('ascend','nvidia'), required=True)
+    parser.add_argument('--vendor', choices=('ascend','nvidia','thead','kunlunxin'), required=True)
     parser.add_argument('--devices', default='all')
     parser.add_argument('--interval-ms', type=int, default=1000)
     parser.add_argument('--source', choices=('auto','dcmi','npu-smi','nvml','nvidia-smi'), default='auto')

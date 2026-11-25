@@ -135,13 +135,17 @@ class TheadTests(unittest.TestCase):
                 host['devices'][0]['uuid'] = 'observed'
                 host['devices'][0].pop('driver')
                 path.write_text(json.dumps(host))
-                with self.assertRaisesRegex(ValueError, 'missing sourced PPU driver'):
+                with self.assertRaisesRegex(ValueError, 'missing sourced ppu-smi driver'):
                     hardware_identity()
                 host['devices'][0]['driver'] = '1.5.1-1d747a'
                 host['source'] = 'xpu-smi'
                 path.write_text(json.dumps(host))
-                with self.assertRaisesRegex(ValueError, 'sourced PPU-ZW810E'):
+                with self.assertRaisesRegex(ValueError, 'model mismatch'):
                     hardware_identity()
+                host['devices'][0]['model'] = 'P800 OAM'
+                host['devices'][0]['host_device_node'] = '/dev/xpu0'
+                path.write_text(json.dumps(host))
+                self.assertEqual(hardware_identity()['model'], 'P800 OAM')
 
     def test_explicit_collective_metadata_classifies_and_unknown_names_stay_compute(self):
         from flagprof.vendors.thead.analysis import activity
