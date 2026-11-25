@@ -18,8 +18,28 @@ error table with first-divergence location, written as oracle.json/oracle.md.
 import argparse
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
+
+
+# These overloads have positional tensor operands, one tensor result, and
+# no state or mutation. Only add.Tensor takes an additional scalar (alpha).
+REPLAY_ARITY = {'aten::mm': 2, 'aten::bmm': 2, 'aten::t': 1,
+                'aten::tanh': 1, 'aten::relu': 1, 'aten::mul.Tensor': 2,
+                'aten::add.Tensor': 2}
+
+
+def _replay_kwargs(name, args, kwargs):
+    import torch
+    if len(args) != REPLAY_ARITY.get(name) or not all(isinstance(arg, torch.Tensor) for arg in args):
+        return None
+    if not kwargs:
+        return {}
+    if (name == 'aten::add.Tensor' and set(kwargs) == {'alpha'} and
+            type(kwargs['alpha']) in (int, float) and math.isfinite(kwargs['alpha'])):
+        return {'alpha': kwargs['alpha']}
+    return None
 
 
 def normalize_boundaries(configured):
@@ -53,7 +73,10 @@ class OracleCapture:
         self.budget_bytes = budget_bytes
         self.ops_module = ops_module
         self.blob_bytes = 0
-        self.blob_exhausted = False
+        self.boundary_calls = {}
+        self.drill_calls = {}
+        self.call_step = None
+        self.drill_call_key = None
         self.stream = None
         self.handles = []
         self.model = None
@@ -63,7 +86,7 @@ class OracleCapture:
         self.op_calls = {}
         self.mode = None
         self.busy = False
-        self.metrics = dict(events=0, blob_bytes=0, blob_skipped=0, boundaries=0, ops=0)
+        self.metrics = dict(events=0, events_rejected=0, blob_bytes=0, blob_skipped=0, boundaries=0, ops=0)
         handle.state['oracle'] = self.metrics
         self.identity = dict(torch=__import__('torch').__version__,
                              cuda=__import__('torch').version.cuda if hasattr(__import__('torch').version, 'cuda') else None)
@@ -119,6 +142,7 @@ class OracleCapture:
 
     def drill_enter(self, args, kwargs):
         self.drilling = True
+        self.drill_call_key = self._invocation_key(self.drill_path, self.drill_calls)
         self.op_calls.clear()
 
     def drill_leave(self, output):
@@ -132,23 +156,23 @@ class OracleCapture:
             name = str(func)
         index = self.op_calls.get(name, 0)
         self.op_calls[name] = index + 1
-        step = self._step()
-        base = self.drill_path+'#'+str(step)+'#op:'+name+'#'+str(index)
+        base = self.drill_call_key+'#op:'+name+'#'+str(index)
         self.busy = True
         try:
-            self._record_op_io(base, name, args, kwargs, output=None)
+            self.safe(self._record_op_io, base, name, args, kwargs, None)
         finally:
             self.busy = False
         output = func(*args, **(kwargs or {}))
         self.busy = True
         try:
-            self._record_op_io(base, name, (), {}, output=output)
+            if output is not None:
+                self.safe(self._record_op_io, base, name, args, kwargs or {}, output)
             self.metrics['ops'] += 1
         finally:
             self.busy = False
         return output
 
-    def _emit_op_event(self, key, name, tensor, role):
+    def _emit_op_event(self, key, name, tensor, role, **replay_metadata):
         from flagprof.probes.tensor import tensor_event
         # Input blobs are the replay material: keep them up to 32 MiB per
         # tensor (the run-level budget still bounds the total); outputs are
@@ -159,9 +183,12 @@ class OracleCapture:
                                             'op:'+name, role, tensor,
                                             role=role, ext={'training_schema': 'training/1',
                                                             'op_schema': name,
-                                                            'capture_scope': 'oracle-replay'})
-        store_blob = small
-        if store_blob and not self.blob_exhausted and self.blob_bytes + len(raw) <= self.budget_bytes:
+                                                            'capture_scope': 'oracle-replay',
+                                                            **replay_metadata})
+        self._emit(event, raw, blob_fmt, keep_blob=small)
+
+    def _emit(self, event, raw, blob_fmt, *, keep_blob=True):
+        if keep_blob and self.blob_bytes + len(raw) <= self.budget_bytes:
             if self.stream is None:
                 folder = self.writer.run_dir/'blobs'
                 folder.mkdir(exist_ok=True)
@@ -172,26 +199,35 @@ class OracleCapture:
                                  offset=offset, nbytes=len(raw), hash=event['digest'], fmt=blob_fmt)
             self.blob_bytes += len(raw)
             self.metrics['blob_bytes'] = self.blob_bytes
-        elif not store_blob:
+        else:
             self.metrics['blob_skipped'] += 1
-        self.writer.emit(event)
-        self.metrics['events'] += 1
+        if self.writer.emit(event):
+            self.metrics['events'] += 1
+        else:
+            self.metrics['events_rejected'] += 1
 
     def _record_op_io(self, base, name, args, kwargs, output):
         import torch
         if output is not None:
+            replay_kwargs = _replay_kwargs(name, args, kwargs) if isinstance(output, torch.Tensor) else None
             if isinstance(output, torch.Tensor):
                 leaves = [('0', output)]
             else:
                 leaves = list(_leaves(output))[:64]
             for leafpath, tensor in leaves:
                 if isinstance(tensor, torch.Tensor):
-                    self._emit_op_event(base+'#out:'+leafpath, name, tensor, 'out')
+                    self._emit_op_event(base+'#out:'+leafpath, name, tensor, 'out', replay_kwargs=replay_kwargs)
             return
         items = list(_leaves(tuple(args))) + list(_leaves(tuple(sorted(kwargs.items()))))
         for leafpath, tensor in items[:64]:
             if isinstance(tensor, torch.Tensor):
-                self._emit_op_event(base+'#in:'+leafpath, name, tensor, 'in')
+                layout = 'unsupported'
+                if name in REPLAY_ARITY and tensor.layout == torch.strided:
+                    if tensor.is_contiguous():
+                        layout = 'contiguous'
+                    elif tensor.ndim >= 2 and tensor.transpose(-1, -2).is_contiguous():
+                        layout = 'transposed-last-two'
+                self._emit_op_event(base+'#in:'+leafpath, name, tensor, 'in', replay_layout=layout)
 
     def safe(self, fn, *args):
         try:
@@ -204,8 +240,23 @@ class OracleCapture:
         step = state.get('step')
         return step if type(step) is int and step >= 0 else -1
 
+    def _invocation_key(self, path, calls):
+        step = self._step()
+        if step != self.call_step:
+            self.boundary_calls.clear()
+            self.drill_calls.clear()
+            self.call_step = step
+        state = self.handle.context.probe_state().get('training') or {}
+        micro = state.get('microstep', 0)
+        index = calls.get((path, micro), 0)
+        calls[(path, micro)] = index + 1
+        key = f'{path}#{step}'
+        # Keep the existing key for the first forward of a simple step.
+        if micro or index:
+            key += f'#micro:{micro}#call:{index}'
+        return key
+
     def capture(self, path, output):
-        from flagprof.probes.tensor import tensor_event
         if output is None:
             return
         import torch
@@ -218,34 +269,17 @@ class OracleCapture:
         # Our own CPU-snapshot ops must not re-enter the drill mode.
         self.busy = True
         try:
-            self._capture_inner(path, output, first)
+            self._capture_inner(path, first)
         finally:
             self.busy = False
 
-    def _capture_inner(self, path, output, first):
+    def _capture_inner(self, path, first):
         from flagprof.probes.tensor import tensor_event
         step = self._step()
-        key = path+'#'+str(step)+'#out#0'
-        if self.blob_exhausted:
-            return
+        key = self._invocation_key(path, self.boundary_calls)+'#out#0'
         event, raw, blob_fmt = tensor_event(key, path, step, 'out', '0', first,
-                                            ext={'training_schema': 'training/1', 'capture_scope': 'oracle'})
-        if self.blob_bytes+len(raw) <= self.budget_bytes:
-            if self.stream is None:
-                folder = self.writer.run_dir/'blobs'
-                folder.mkdir(exist_ok=True)
-                self.stream = (folder/('train-oracle-'+str(os.getpid())+'-'+str(abs(id(self)))+'.bin')).open('xb')
-            offset = self.stream.tell()
-            self.stream.write(raw)
-            event['blob'] = dict(path=str(Path(self.stream.name).relative_to(self.writer.run_dir)),
-                                 offset=offset, nbytes=len(raw), hash=event['digest'], fmt=blob_fmt)
-            self.blob_bytes += len(raw)
-            self.metrics['blob_bytes'] = self.blob_bytes
-        else:
-            self.blob_exhausted = True
-            self.metrics['blob_skipped'] += 1
-        self.writer.emit(event)
-        self.metrics['events'] += 1
+                                           ext={'training_schema': 'training/1', 'capture_scope': 'oracle'})
+        self._emit(event, raw, blob_fmt)
 
     def close(self):
         for handle in reversed(self.handles):
@@ -311,82 +345,149 @@ def _resolve_run(path):
     raise ValueError('not a training store run (no manifest.json under '+str(p)+')')
 
 
-def _read_tensor_events(run):
+def _read_tensor_events(run, *, ops_only=False):
     from flagprof.store import StoreView
     rows = {}
     with StoreView(run) as view:
         for stored in view.iter_events(types=('tensor',)):
             event = stored.record
-            rows[event['call_key']] = event
+            if ops_only and event.get('ext', {}).get('capture_scope') != 'oracle-replay':
+                continue
+            key = event['call_key']
+            if key in rows:
+                raise ValueError(f'ambiguous repeated tensor key {key!r} in {run}; recapture with invocation keys')
+            rows[key] = event
     return rows
 
 
 def _read_gradient_snapshots(run):
     """(step, param-name) -> raw grad bytes, from accuracy step snapshots."""
     out = {}
-    import torch
     for path in sorted(Path(run).glob('step-*.pt')):
-        try:
-            snap = torch.load(path, map_location='cpu', weights_only=False)
-        except Exception:
-            continue
-        try:
-            step = int(path.stem.split('-')[1])
-        except (ValueError, IndexError):
-            continue
-        grads = snap.get('gradients') or snap.get('grads') or {}
+        import torch
+        step = int(path.stem.removeprefix('step-'))
+        snap = torch.load(path, map_location='cpu', weights_only=True)
+        grads = snap.get('gradients', snap.get('grads')) if isinstance(snap, dict) else None
+        if not isinstance(grads, dict):
+            raise ValueError(f'{path} does not contain a gradient mapping')
         for name, tensor in grads.items():
-            try:
-                raw = tensor.detach().to('cpu').contiguous().reshape(-1).view(torch.uint8).numpy().tobytes()
-            except Exception:
-                continue
-            out[(step, name)] = dict(raw=raw, shape=list(tensor.shape), dtype=str(tensor.dtype))
+            if not isinstance(name, str) or not isinstance(tensor, torch.Tensor):
+                raise ValueError(f'invalid gradient entry in {path}: {name!r}')
+            out[(step, name)] = tensor
     return out
 
 
-def _digest(raw):
-    return 'sha256:'+hashlib.sha256(raw).hexdigest()
+def _capture_coverage(run):
+    from flagprof.store.manifest import load_json, writer_fragments
+    rejected = errors = 0
+    for path in (run/'attachments').glob('*/state.json'):
+        oracle = load_json(path).get('oracle', {})
+        rejected += oracle.get('events_rejected', 0)
+        errors += len(oracle.get('errors', []))
+    # Includes all tensor producers on this rank and may overlap rejections.
+    drops = sum(fragment.get('dropped', {}).get('tensor', 0) for fragment in writer_fragments(run))
+    return dict(events_rejected=rejected, capture_errors=errors, writer_tensor_drops=drops)
 
 
-def _max_abs_from_probe(left, right):
-    """Summarized comparison when blobs are absent: compare the 256 probe
-    samples and per-chunk means; returns (max_abs, samples) or None."""
+def _probe_comparison(left, right, atol, rtol):
+    from flagprof.tensor_data import values
     lp, rp = left.get('probe'), right.get('probe')
-    if not lp or not rp or len(lp) != len(rp):
-        return None
-    def val(v):
-        return 0.0 if v == 'nan' else float('inf') if v == '+inf' else float('-inf') if v == '-inf' else v
-    diffs = [abs(val(a)-val(b)) for a, b in zip(lp, rp)]
-    if not diffs:
-        return None
-    return max(diffs)
+    dtype = left['dtype'].removeprefix('torch.')
+    # p4v1 serializes float64 samples even for complex and integer inputs.
+    # For equal shape/dtype integer arrays different digests prove an exact
+    # mismatch, even if the sample lost the differing bit or missed the index.
+    integer = dtype.startswith(('int', 'uint')) or dtype == 'bool'
+    different_integer_bytes = integer and left.get('digest') and right.get('digest') and left['digest'] != right['digest']
+    if different_integer_bytes and dtype in ('int64', 'uint64'):
+        return dict(verdict='differs', basis='digest', max_abs=None, max_rel=None)
+    if (not lp or not rp or len(lp) != len(rp) or
+            left.get('probe_alg') != 'p4v1' or right.get('probe_alg') != 'p4v1' or
+            dtype.startswith('complex') or dtype in ('int64', 'uint64')):
+        return dict(verdict='differs' if different_integer_bytes else 'incomparable',
+                    basis='digest' if different_integer_bytes else 'probe-sampled', max_abs=None, max_rel=None)
+    differs = False
+    absolute, relative = [], []
+    for a, b in zip(values(None, left, 'sampled'), values(None, right, 'sampled')):
+        if not (math.isfinite(a) and math.isfinite(b)):
+            differs |= not (a == b or (math.isnan(a) and math.isnan(b)))
+            continue
+        delta = abs(a-b)
+        absolute.append(delta)
+        relative.append(delta/max(abs(a), 1e-12))
+        differs |= a != b if integer else delta > atol + rtol*abs(a)
+    # A different digest and equal samples cannot certify the unobserved elements.
+    verdict = 'within_tolerance' if len(lp) == math.prod(left['shape']) else 'incomparable'
+    if differs:
+        verdict = 'differs'
+    elif different_integer_bytes:
+        return dict(verdict='differs', basis='digest', max_abs=None, max_rel=None)
+    return dict(verdict=verdict, basis='probe-sampled',
+                max_abs=max(absolute, default=None), max_rel=max(relative, default=None))
 
 
-def _blob_max_abs(run_left, run_right, l, r):
-    """Element-wise max abs/rel from both sides' blobs; None when either
-    side lacks a blob or the formats disagree."""
+def _tensor_comparison(left, right, atol, rtol):
     import torch
-    lb, rb = l.get('blob'), r.get('blob')
-    if not lb or not rb or lb.get('fmt') != rb.get('fmt') or lb['nbytes'] != rb['nbytes']:
-        return None
-    dtype_name = lb['fmt'].split(':')[1]
-    try:
-        torch_dtype = getattr(torch, dtype_name)
-    except AttributeError:
-        return None
-    out = []
-    for run, b in ((run_left, lb), (run_right, rb)):
-        path = Path(run)/b['path']
-        with path.open('rb') as stream:
-            stream.seek(b['offset'])
-            raw = stream.read(b['nbytes'])
-        out.append(torch.frombuffer(bytearray(raw), dtype=torch_dtype).double())
-    a, b = out
-    if a.numel() != b.numel() or not a.numel():
-        return None
-    diff = (a-b).abs()
-    denom = a.abs().clamp(min=1e-12)
-    return float(diff.max()), float((diff/denom).max())
+    if not left.numel():
+        return dict(verdict='within_tolerance', max_abs=0.0, max_rel=0.0)
+    integer = not (left.is_floating_point() or left.is_complex())
+    if integer and left.element_size() == 8:
+        # Python integer subtraction retains all 65 bits of a signed int64
+        # difference. Chunk conversion bounds the temporary Python objects.
+        max_abs, max_rel = 0, 0.0
+        a, b = left.reshape(-1), right.reshape(-1)
+        for offset in range(0, a.numel(), 8192):
+            for x, y in zip(a[offset:offset+8192].tolist(), b[offset:offset+8192].tolist()):
+                delta = abs(x - y)
+                max_abs = max(max_abs, delta)
+                max_rel = max(max_rel, delta / max(abs(x), 1e-12))
+        return dict(verdict='differs' if max_abs else 'within_tolerance', max_abs=max_abs, max_rel=max_rel)
+    dtype = torch.complex128 if left.is_complex() else torch.float64
+    a, b = left.to(dtype), right.to(dtype)
+    finite = torch.isfinite(a) & torch.isfinite(b)
+    delta = (a-b).abs()
+    same_special = (a == b) | (torch.isnan(a) & torch.isnan(b))
+    if integer:
+        differs = not torch.equal(left, right)
+    else:
+        differs = bool(torch.where(finite, delta > atol + rtol*a.abs(), ~same_special).any())
+    return dict(verdict='differs' if differs else 'within_tolerance',
+                max_abs=float(delta[finite].max()) if bool(finite.any()) else None,
+                max_rel=float((delta[finite]/a[finite].abs().clamp(min=1e-12)).max()) if bool(finite.any()) else None)
+
+
+def _blob_tensor(run, event):
+    import torch
+    from flagprof.tensor_data import blob_path
+    blob = event['blob']
+    dtype = getattr(torch, event['dtype'].removeprefix('torch.'))
+    expected = math.prod(event['shape']) * torch.empty((), dtype=dtype).element_size()
+    if blob['nbytes'] != expected or blob['offset'] < 0:
+        raise ValueError('invalid tensor blob range for '+event['call_key'])
+    with blob_path(run, blob).open('rb') as stream:
+        stream.seek(blob['offset'])
+        raw = stream.read(expected)
+    actual = 'sha256:'+hashlib.sha256(raw).hexdigest()
+    if len(raw) != expected or actual != blob['hash'] or actual != event['digest']:
+        raise ValueError('tensor blob differs from its recorded digest: '+event['call_key'])
+    tensor = torch.frombuffer(bytearray(raw), dtype=dtype) if raw else torch.empty(0, dtype=dtype)
+    return tensor.view(event['shape'])
+
+
+def _capture_order(left, right):
+    # Keep the reference stream order. Place a right-only event before its
+    # next common boundary so missing layers are located in execution order.
+    before = {}
+    pending = []
+    for key in right:
+        if key not in left:
+            pending.append(key)
+        elif pending:
+            before[key] = pending
+            pending = []
+    for key in left:
+        yield from before.get(key, ())
+        yield key
+    yield from pending
 
 
 def join_runs(run_left, run_right, *, atol=0.0, rtol=0.0, out=None, snaps_left=None, snaps_right=None):
@@ -398,57 +499,62 @@ def join_runs(run_left, run_right, *, atol=0.0, rtol=0.0, out=None, snaps_left=N
     Exact when both sides carry blobs, summarized over the 256-probe samples
     otherwise (rows carry the verdict basis explicitly).
     """
+    if any(not math.isfinite(t) or t < 0 for t in (atol, rtol)):
+        raise ValueError('atol and rtol must be finite and nonnegative')
+    for root in (snaps_left, snaps_right):
+        if root is not None and not any(Path(root).glob('step-*.pt')):
+            raise ValueError(f'no gradient snapshots in {root}')
     run_left, run_right = _resolve_run(run_left), _resolve_run(run_right)
     left_events, right_events = _read_tensor_events(run_left), _read_tensor_events(run_right)
     left_grads, right_grads = _read_gradient_snapshots(snaps_left or run_left), _read_gradient_snapshots(snaps_right or run_right)
     rows = []
-    for key in sorted(set(left_events) | set(right_events)):
+    for key in _capture_order(left_events, right_events):
         l, r = left_events.get(key), right_events.get(key)
         parts = key.split('#')
         step = int(parts[1]) if len(parts) > 1 and parts[1].lstrip('-').isdigit() else -1
+        row = dict(step=step, key=key, kind='activation')
         if l is None or r is None:
-            rows.append(dict(step=step, key=key, kind='activation', verdict='missing_side',
-                             present=['left' if l else None, 'right' if r else None]))
-            continue
-        same_meta = l['shape'] == r['shape'] and l['dtype'] == r['dtype'] and l['digest'] == r['digest']
-        if same_meta:
-            rows.append(dict(step=step, key=key, kind='activation', verdict='exact', max_abs=0.0, max_rel=0.0))
-            continue
-        blob_diff = _blob_max_abs(run_left, run_right, l, r)
-        if blob_diff is not None:
-            max_abs, max_rel = blob_diff
-            basis = 'blob-elementwise'
+            row.update(verdict='missing_side', present=['left' if l else 'right'])
+        elif l['shape'] != r['shape'] or l['dtype'] != r['dtype']:
+            row.update(verdict='differs', basis='metadata', shape=l['shape'], shape_right=r['shape'],
+                       dtype=l['dtype'], dtype_right=r['dtype'])
+        elif l.get('digest') and l['digest'] == r.get('digest'):
+            row.update(verdict='exact', basis='digest', max_abs=0.0, max_rel=0.0)
         else:
-            max_abs = _max_abs_from_probe(l, r)
-            max_rel = None
-            basis = 'probe-sampled'
-            if max_abs is not None and l.get('stats', {}).get('absmean'):
-                denom = max(l['stats']['absmean'], 1e-12)
-                max_rel = max_abs/denom
-        verdict = 'differs' if (max_abs is not None and (max_abs > atol or (max_rel or 0) > rtol)) else 'within_tolerance'
-        rows.append(dict(step=step, key=key, kind='activation', verdict=verdict, basis=basis,
-                         max_abs=max_abs, max_rel=max_rel,
-                         shape=l['shape'], dtype=l['dtype'],
-                         digest_left=l['digest'][:19], digest_right=r['digest'][:19]))
+            if l.get('blob') and r.get('blob'):
+                row.update(_tensor_comparison(_blob_tensor(run_left, l), _blob_tensor(run_right, r), atol, rtol),
+                           basis='blob-elementwise')
+            else:
+                row.update(_probe_comparison(l, r, atol, rtol))
+            row.update(shape=l['shape'], dtype=l['dtype'],
+                       digest_left=l.get('digest', '')[:19], digest_right=r.get('digest', '')[:19])
+        rows.append(row)
     for (step, name) in sorted(set(left_grads) | set(right_grads)):
         l, r = left_grads.get((step, name)), right_grads.get((step, name))
+        row = dict(step=step, key=name, kind='gradient')
         if l is None or r is None:
-            rows.append(dict(step=step, key=name, kind='gradient', verdict='missing_side'))
-            continue
-        if l['raw'] == r['raw'] and l['shape'] == r['shape']:
-            rows.append(dict(step=step, key=name, kind='gradient', verdict='exact', max_abs=0.0, max_rel=0.0))
-            continue
-        max_abs = _raw_max_abs(l, r)
-        rows.append(dict(step=step, key=name, kind='gradient', verdict='differs', max_abs=max_abs,
-                         shape=l['shape'], dtype=l['dtype']))
-    first = None
-    for row in sorted(rows, key=lambda r: (r['step'] if r['step'] >= 0 else 1 << 30, r['key'])):
-        if row['verdict'] in ('differs', 'missing_side'):
-            first = row
-            break
+            row.update(verdict='missing_side')
+        elif l.shape != r.shape or l.dtype != r.dtype:
+            row.update(verdict='differs', basis='metadata', shape=list(l.shape), shape_right=list(r.shape),
+                       dtype=str(l.dtype), dtype_right=str(r.dtype))
+        else:
+            import torch
+            if torch.equal(l.contiguous().reshape(-1).view(torch.uint8), r.contiguous().reshape(-1).view(torch.uint8)):
+                row.update(verdict='exact', basis='snapshot', max_abs=0.0, max_rel=0.0)
+            else:
+                row.update(_tensor_comparison(l, r, atol, rtol), basis='snapshot')
+        rows.append(row)
+    # Within an optimizer step the StoreView stream preserves reference capture order.
+    # Gradient snapshots are recorded after its forwards.
+    rows.sort(key=lambda row: row['step'] if row['step'] >= 0 else float('inf'))
+    first = next((r for r in rows if r['verdict'] in ('differs', 'missing_side')), None)
+    left_coverage, right_coverage = _capture_coverage(run_left), _capture_coverage(run_right)
     result = dict(schema='training-oracle/1', atol=atol, rtol=rtol,
                   runs=dict(left=str(run_left), right=str(run_right)),
+                  coverage=dict(partial=any(left_coverage.values()) or any(right_coverage.values()),
+                                left=left_coverage, right=right_coverage),
                   counts=dict(rows=len(rows),
+                              incomparable=sum(1 for r in rows if r['verdict'] == 'incomparable'),
                               exact=sum(1 for r in rows if r['verdict'] == 'exact'),
                               differs=sum(1 for r in rows if r['verdict'] == 'differs'),
                               missing=sum(1 for r in rows if r['verdict'] == 'missing_side')),
@@ -461,18 +567,6 @@ def join_runs(run_left, run_right, *, atol=0.0, rtol=0.0, out=None, snaps_left=N
     return result
 
 
-def _read_op_events(run):
-    from flagprof.store import StoreView
-    events = {}
-    identity = None
-    with StoreView(run) as view:
-        for stored in view.iter_events(types=('tensor',)):
-            e = stored.record
-            if e.get('ext', {}).get('capture_scope') == 'oracle-replay':
-                events[e['call_key']] = e
-    return events
-
-
 def replay(run, op_key, device='cpu'):
     """Re-execute one drilled op from its captured inputs (blobs required) and
     compare the replayed output against the captured output digest. Cross-vendor
@@ -480,20 +574,26 @@ def replay(run, op_key, device='cpu'):
     identity fields record both capture-time and replay-time versions."""
     import torch
     run = _resolve_run(run)
-    events = _read_op_events(run)
+    events = _read_tensor_events(run, ops_only=True)
     if op_key not in events:
         prefix = op_key.split('#out')[0]
         outs = sorted(k for k in events if k.startswith(prefix + '#out'))
         raise ValueError('unknown op key; sibling out keys: ' + ', '.join(outs[:4]))
     out_event = events[op_key]
-    prefix = op_key.split('#out')[0]
-    ins = sorted((k, e) for k, e in events.items() if k.startswith(prefix + '#in:'))
-    if not ins:
-        raise ValueError('no captured inputs for '+op_key)
-    identity = json.loads((run/'manifest.json').read_text()).get('identity', {})
+    name = out_event['ext']['op_schema']
+    if name not in REPLAY_ARITY or out_event.get('role') != 'out' or not op_key.endswith('#out:0'):
+        raise ValueError('unsupported replay overload or output: '+op_key)
+    prefix = op_key[:-len('#out:0')]
+    expected = [prefix + f'#in:0[{i}]' for i in range(REPLAY_ARITY[name])]
+    inputs = {k: e for k, e in events.items() if k.startswith(prefix + '#in:')}
+    if set(inputs) != set(expected):
+        raise ValueError('replay requires every positional tensor operand: '+op_key)
+    # Historical tensor-only overloads have no omitted scalar settings.
+    # Legacy add.Tensor did not record alpha and cannot be replayed faithfully.
+    kwargs = out_event['ext'].get('replay_kwargs', None if name == 'aten::add.Tensor' else {})
+    if not isinstance(kwargs, dict):
+        raise ValueError('unsupported or unrecorded replay arguments: '+op_key)
     capture_identity = None
-    state = None
-    state_path = None
     for att in sorted((run/'attachments').glob('*/state.json')) if (run/'attachments').is_dir() else []:
         try:
             state = json.loads(att.read_text())
@@ -501,47 +601,40 @@ def replay(run, op_key, device='cpu'):
             break
         except ValueError:
             pass
-    missing = [k for k, e in ins if not e.get('blob')]
+    missing = [k for k, e in inputs.items() if not e.get('blob')]
     if missing:
         raise ValueError('inputs without blobs (replay impossible): '+', '.join(missing[:3]))
     args = []
-    for k, e in ins:
-        blob = e['blob']
-        dtype_name = blob['fmt'].split(':')[1]
-        torch_dtype = getattr(torch, dtype_name)
-        raw = (run/blob['path']).read_bytes()[blob['offset']:blob['offset']+blob['nbytes']]
-        args.append(torch.frombuffer(bytearray(raw), dtype=torch_dtype).view(e['shape']).to(device).requires_grad_(False))
-    name = out_event['ext']['op_schema']
-    ns, rest = name.split('::', 1)
-    op_name, _, overload = rest.partition('.')
-    namespace = getattr(torch.ops, ns)
-    opctor = getattr(namespace, op_name)
+    layouts = []
+    for key in expected:
+        event = inputs[key]
+        if event.get('role') != 'in' or event['ext'].get('op_schema') != name:
+            raise ValueError('replay input does not match output overload: '+key)
+        layout = event['ext'].get('replay_layout', 'legacy-contiguous')
+        tensor = _blob_tensor(run, event).to(device)
+        if layout == 'transposed-last-two' and tensor.ndim >= 2:
+            tensor = tensor.transpose(-1, -2).contiguous().transpose(-1, -2)
+        elif layout not in ('contiguous', 'legacy-contiguous'):
+            raise ValueError('unsupported replay input layout: '+key)
+        args.append(tensor)
+        layouts.append(layout)
+    if _replay_kwargs(name, args, kwargs) is None:
+        raise ValueError('unsupported replay keyword arguments: '+op_key)
+    op_name, _, overload = name.removeprefix('aten::').partition('.')
+    opctor = getattr(torch.ops.aten, op_name)
     callable_op = getattr(opctor, overload) if overload else opctor.default
-    replayed = callable_op(*args)
+    replayed = callable_op(*args, **kwargs)
     replay_digest = 'sha256:'+hashlib.sha256(
         replayed.detach().to('cpu').contiguous().reshape(-1).view(torch.uint8).numpy().tobytes()).hexdigest()
-    match = replay_digest == out_event['digest']
+    match = (replay_digest == out_event['digest'] and list(replayed.shape) == out_event['shape']
+             and str(replayed.dtype) == out_event['dtype'])
     result = dict(schema='training-oracle-replay/1', op=name, key=op_key, device=device,
                   captured_digest=out_event['digest'], replayed_digest=replay_digest,
                   match=match, capture_identity=capture_identity,
                   replay_identity=dict(torch=torch.__version__,
                                        cuda=torch.version.cuda if hasattr(torch.version, 'cuda') else None),
-                  inputs=len(ins))
+                  inputs=len(args), input_layouts=layouts, kwargs=kwargs)
     return result
-
-
-def _raw_max_abs(l, r):
-    import torch
-    dtype = l['dtype']
-    try:
-        torch_dtype = getattr(torch, dtype.removeprefix('torch.'))
-    except AttributeError:
-        return None
-    a = torch.frombuffer(bytearray(l['raw']), dtype=torch_dtype).double()
-    b = torch.frombuffer(bytearray(r['raw']), dtype=torch_dtype).double()
-    if a.numel() != b.numel():
-        return None
-    return float((a-b).abs().max()) if a.numel() else 0.0
 
 
 def _markdown(result):
@@ -551,8 +644,12 @@ def _markdown(result):
              f"- 行数：{result['counts']['rows']}（exact {result['counts']['exact']} / "
              f"differs {result['counts']['differs']} / missing {result['counts']['missing']}）", '']
     first = result.get('first_divergence')
+    if result['coverage']['partial']:
+        lines += ['**采集记录不完整**：存在写入丢失或采集错误，以下结论仅覆盖已保留的记录。', '']
     if first:
         lines += [f"**首个发散**：step {first['step']} `{first['key']}`（{first['kind']}，verdict={first['verdict']}）", '']
+    elif result['counts']['incomparable'] or result['coverage']['partial'] or not result['rows']:
+        lines += ['**缺少可比较证据**：当前结果不能确认全部行在容差内。', '']
     else:
         lines += ['**未发现发散**：全部比较行在容差内。', '']
     lines += ['| step | kind | key | verdict | max_abs | max_rel |', '|---|---|---|---|---|---|']

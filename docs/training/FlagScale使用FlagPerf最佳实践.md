@@ -90,7 +90,7 @@
 ```bash
 # 你们的仓库（本文用分支 feat/retrieval-flagos）
 git clone https://github.com/wxj630/FlagScale.git && cd FlagScale
-git checkout feat/retrieval-flagos
+git switch --detach 1de74e8a3758bf7586b178f1658ef29a1a18a506
 # 我们的包（只需要 inference 子目录）
 git clone https://github.com/FlagRT/FlagPerf.git /path/to/FlagPerf
 git -C /path/to/FlagPerf checkout zhiyu/perf-train
@@ -233,11 +233,12 @@ microbatch 序号，保证每个相位计数可对齐。
 
 ```python
     obs = ObservationSession() if ObservationSession is not None else None
-    if obs is not None:
+    if obs is not None and obs.enabled:
         log('flagprof observation session active')
     with (obs if obs is not None else contextlib.nullcontext()):   # ← 会话生命周期
         for epoch in range(1, epochs + 1):
-            train_loss = train_epoch(..., obs=obs)                 # ← 传下去
+            train_loss = train_epoch(..., obs=obs)
+            # 原有调度器校准、验证、日志与每轮 checkpoint 仍在此循环内执行。
 ```
 
 为什么包在 epoch 循环外：会话要在所有训练步开始前 attach、结束后统一

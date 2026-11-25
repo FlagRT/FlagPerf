@@ -1,13 +1,15 @@
 # FlagScale 检索训练集成工件
 
 本目录是"在 FlagScale `feat/retrieval-flagos` 的 `flagscale/train/train_retrieval.py`
-里接入 FlagPerf 观察采集"的完整、可复现工件（已在 PPU 双卡实跑：
+里接入 FlagPerf 观察采集"的集成工件。补丁对应上游提交 `1de74e8a`。
 
 - `train_retrieval_observe.patch` — 对 `train_retrieval.py` 的六处改动（可选
   import、相位小工具、`obs` 参数、五相标记、会话包裹、透传）。apply 方式：
 
   ```bash
   cd /path/to/FlagScale
+  git switch --detach 1de74e8a3758bf7586b178f1658ef29a1a18a506
+  git apply --check /path/to/train_retrieval_observe.patch
   git apply /path/to/train_retrieval_observe.patch
   cp /path/to/FlagPerf/inference/tools/flagscale_adapter.py flagscale/train/
   ```

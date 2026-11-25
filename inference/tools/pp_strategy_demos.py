@@ -34,10 +34,6 @@ def main():
     world = int(os.environ.get('WORLD_SIZE', '1'))
     torch.cuda.set_device(rank)
     dist.init_process_group('nccl')
-    # Native isend/irecv references must be captured before the probe wraps
-    # them: torch validates P2POp entries against its own functions.
-    raw_send, raw_recv = dist.isend, dist.irecv
-
     generator = torch.Generator(device='cuda').manual_seed(531)
     losses = []
 
@@ -80,9 +76,9 @@ def main():
                     act = torch.zeros(8, act_size, device='cuda')
                     if rank == 0:
                         a = stage(x)
-                        ops = [dist.P2POp(raw_send, a, 1)]
+                        ops = [dist.P2POp(dist.isend, a, 1)]
                     else:
-                        ops = [dist.P2POp(raw_recv, act, 0)]
+                        ops = [dist.P2POp(dist.irecv, act, 0)]
                     for work in dist.batch_isend_irecv(ops):
                         work.wait()
                     if rank == 1:
@@ -93,12 +89,12 @@ def main():
                     if rank == 1:
                         loss.backward()
                         grad = act.grad if act.grad is not None else torch.ones_like(act)
-                        ops = [dist.P2POp(raw_send, grad.contiguous(), 0)]
+                        ops = [dist.P2POp(dist.isend, grad.contiguous(), 0)]
                         for work in dist.batch_isend_irecv(ops):
                             work.wait()
                     else:
                         gradbuf = torch.zeros(8, 64, device='cuda')
-                        ops = [dist.P2POp(raw_recv, gradbuf, 1)]
+                        ops = [dist.P2POp(dist.irecv, gradbuf, 1)]
                         for work in dist.batch_isend_irecv(ops):
                             work.wait()
                         a.backward(gradbuf)

@@ -2,6 +2,7 @@
 # Licensed under the Apache License, Version 2.0.
 """Adapted-model registry: lookup, resolution precedence and CLI defaults."""
 import json
+import importlib.util
 import sys
 import tempfile
 import unittest
@@ -167,6 +168,22 @@ class ExecuteErrorPathTests(unittest.TestCase):
                     self.execute(['--task', 'embedding', '--model', '/models/bge-m3', '--ddp', '--outputs', out])
                 with self.assertRaisesRegex(ValueError, 'explicit --package'):
                     self.execute(['--task', 'ctr', '--ctr-arch', 'dlrm', '--ddp', '--outputs', out])
+
+    @unittest.skipUnless(importlib.util.find_spec('transformers'), 'requires local Transformers runtime')
+    def test_causal_lm_default_corpus_fills_non_power_of_two_microbatches(self):
+        from transformers import GPT2Config, GPT2LMHeadModel
+        from flagprof.training.__main__ import main
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            model = root/'OneRec-tiny'
+            GPT2LMHeadModel(GPT2Config(vocab_size=32, n_layer=1, n_head=1, n_embd=8,
+                                       n_positions=64)).save_pretrained(model)
+            output = root/'out'
+            main(['--model', str(model), '--outputs', str(output), '--steps', '1', '--batch-size', '3'])
+            result = json.loads((output/'training-result.json').read_text())
+            self.assertEqual(result['status'], 'complete')
+            self.assertTrue(result['protocol']['default_corpus_generated'])
+            self.assertEqual(result['steps'][0]['samples'], 3)
 
 
 if __name__ == '__main__':

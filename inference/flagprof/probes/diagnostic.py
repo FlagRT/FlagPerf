@@ -18,7 +18,7 @@ class DiagnosticProbe:
         self.calls = {}
         self.seen = deque(maxlen=128)
         self.identity = dict(run_id=self.writer.run_id, rank=attachment.rank,
-                             group_id=os.environ.get('FLAGPROF_GROUP_ID'),
+                             group_id=attachment.state.get('group_id') or os.environ.get('FLAGPROF_GROUP_ID'),
                              proc_key=attachment.state['process'])
         self.period_ns = self.writer.config.heartbeat_period_ns
         self.old_hook = None

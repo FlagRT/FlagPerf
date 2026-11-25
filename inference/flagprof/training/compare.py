@@ -5,6 +5,7 @@ import argparse
 import json
 import math
 from pathlib import Path
+from .state import comparable_protocol
 
 
 def compare(left, right, *, atol=0., rtol=0., declare=()):
@@ -15,7 +16,7 @@ def compare(left, right, *, atol=0., rtol=0., declare=()):
     results = [json.loads((p/'training-result.json').read_text()) for p in roots]
     if any(r.get('status') != 'complete' for r in results):
         raise ValueError('comparison requires completed training runs')
-    a, b = [r['protocol'] for r in results]
+    a, b = [comparable_protocol(r['protocol']) for r in results]
     if results[0].get('observed_numerics') != results[1].get('observed_numerics'):
         raise ValueError('observed numerical backend settings differ')
     differences = [k for k in sorted(set(a) | set(b)) if a.get(k) != b.get(k)]

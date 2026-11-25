@@ -4,6 +4,7 @@
 import argparse
 import json
 from pathlib import Path
+from .state import comparable_protocol
 
 
 def summarize(path):
@@ -20,14 +21,15 @@ def summarize(path):
     complete = set(rank_ids) == set(range(world)) and len(rank_ids) == world
     # CLI runs record protocol['sharding']; the tree-external diagnostic
     # script form records check_mode (fsdp_cpu_check.py), treated the same.
-    shardings = {r['protocol'].get('sharding') or r['protocol'].get('check_mode') or 'none' for r in runs}
+    legacy_sharding = 'ddp-replica' if world > 1 else 'none'
+    shardings = {r['protocol'].get('sharding') or r['protocol'].get('check_mode') or legacy_sharding for r in runs}
     sharded = shardings == {'fsdp'}
     identities = []
     for run in runs:
         skip = {'rank', 'input_sha256'}
         if sharded:
             skip.add('initial_model_sha256')  # rank-local shard bytes, not a knob
-        identities.append({k:v for k,v in run['protocol'].items() if k not in skip})
+        identities.append({k:v for k,v in comparable_protocol(run['protocol']).items() if k not in skip})
     protocol_equal = all(p == identities[0] for p in identities)
     finals = [r.get('final_model_sha256') for r in runs]
     final_equal = bool(finals[0]) and len(set(finals)) == 1

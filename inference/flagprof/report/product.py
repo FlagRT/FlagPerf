@@ -12,7 +12,7 @@ from .model import opened_model, read_document, digest
 
 
 DESCRIPTIONS = {
-    'training.oracle':'两侧训练跑的逐层比较：两侧 blob 齐全的行按逐元素精确比较，否则 256 采样口径（basis 列）。',
+    'training.oracle':'逐层与逐参数比较。basis 列标明指纹、逐元素、采样或元数据依据。',
     'training.oracle.first_divergence':'两跑对比中第一个超出容差的层或参数（step 与位置）。',
     'perf.op':'全采集窗口内可用的调用记录。主机区间含探针开销；设备工作量为关联事件时长之和，含重叠。',
     'perf.layer':'全采集窗口。含子层耗时与独占耗时分列；父子层不能相加。设备工作量不等于层的墙钟时延。',

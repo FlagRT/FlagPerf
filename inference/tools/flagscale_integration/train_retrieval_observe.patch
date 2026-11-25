@@ -1,9 +1,9 @@
---- fs-orig/flagscale/train/train_retrieval.py	2026-11-16 11:56:36.000000000 +0800
-+++ FlagScale-feat-retrieval-flagos/flagscale/train/train_retrieval.py	2026-11-18 15:50:06.577863600 +0800
+--- a/flagscale/train/train_retrieval.py
++++ b/flagscale/train/train_retrieval.py
 @@ -60,6 +60,11 @@
              "with the CUDA-only training environment."
          ) from exc
- 
+
 +try:  # FlagPerf observation adapter (optional; active only when FLAGPROF_TRAIN_OBSERVE is set)
 +    from flagscale_adapter import ObservationSession
 +except Exception:  # noqa: BLE001 - adapter absence must not affect training
@@ -12,18 +12,18 @@
  import torch
  import torch.distributed as dist
  from omegaconf import DictConfig, OmegaConf
-@@ -94,6 +99,11 @@
+@@ -92,6 +97,11 @@
+ def log(message: str) -> None:
+     if rank_zero():
          print(message, flush=True)
- 
- 
++
++
 +def _phase(obs, name: str, step: int):
 +    """Phase marker for the optional observation session (no-op when off)."""
 +    return obs.phase(name, step=step) if obs is not None else contextlib.nullcontext()
-+
-+
+
+
  def init_distributed(
-     hardware: DictConfig | None = None,
- ) -> tuple[int, int, torch.device, Any]:
 @@ -625,6 +635,7 @@
      step_state: dict[str, int] | None = None,
      lr_scheduler: Any = None,
@@ -94,7 +94,7 @@
          if step_state is not None:
              step_state["optimizer_step"] = step_state.get("optimizer_step", 0) + 1
          micro_count = 0
-@@ -1275,13 +1293,17 @@
+@@ -1275,62 +1293,66 @@
      training_started = time.time()
      last_train_loss = None
      last_validation_loss = None
@@ -105,8 +105,24 @@
 -            wandb_run=wandb_run, step_state=wandb_step,
 -            lr_scheduler=lr_scheduler, warmup_steps=warmup_steps,
 -        )
+-        # Re-anchor the schedule once the real epoch length is known. Without
+-        # this a streaming dataset would decay against a placeholder total, so
+-        # the cosine would either finish early or never reach min_lr.
+-        # Re-anchor at every epoch boundary: the streaming dataset's epoch
+-        # length is only measurable by running one, and re-measuring keeps a
+-        # short first epoch from fixing a wrong total for the whole run.
+-        steps_done = int(wandb_step["optimizer_step"])
+-        if steps_done > 0:
+-            refined = max(1, round(steps_done / epoch * epochs))
+-            if refined != lr_sched_state["total_steps"]:
+-                lr_sched_state["total_steps"] = refined
+-                lr_sched_state["known"] = True
+-                if rank_zero():
+-                    log(
+-                        f"lr schedule anchored at epoch {epoch}: {steps_done} steps so far "
+-                        f"-> total {refined} for {epochs} epochs"
 +    obs = ObservationSession() if ObservationSession is not None else None
-+    if obs is not None:
++    if obs is not None and obs.enabled:
 +        log('flagprof observation session active')
 +    with (obs if obs is not None else contextlib.nullcontext()):
 +        for epoch in range(1, epochs + 1):
@@ -116,6 +132,86 @@
 +                wandb_run=wandb_run, step_state=wandb_step,
 +                lr_scheduler=lr_scheduler, warmup_steps=warmup_steps, obs=obs,
 +            )
-         # Re-anchor the schedule once the real epoch length is known. Without
-         # this a streaming dataset would decay against a placeholder total, so
-         # the cosine would either finish early or never reach min_lr.
++            # Re-anchor the schedule once the real epoch length is known. Without
++            # this a streaming dataset would decay against a placeholder total, so
++            # the cosine would either finish early or never reach min_lr.
++            # Re-anchor at every epoch boundary: the streaming dataset's epoch
++            # length is only measurable by running one, and re-measuring keeps a
++            # short first epoch from fixing a wrong total for the whole run.
++            steps_done = int(wandb_step["optimizer_step"])
++            if steps_done > 0:
++                refined = max(1, round(steps_done / epoch * epochs))
++                if refined != lr_sched_state["total_steps"]:
++                    lr_sched_state["total_steps"] = refined
++                    lr_sched_state["known"] = True
++                    if rank_zero():
++                        log(
++                            f"lr schedule anchored at epoch {epoch}: {steps_done} steps so far "
++                            f"-> total {refined} for {epochs} epochs"
++                        )
++            validation_loss = evaluate_epoch(
++                model, processor, validation_loader, task, device, temperature, dtype_name
++            )
++            last_train_loss = train_loss
++            last_validation_loss = validation_loss
++            if rank_zero():
++                log(
++                    f"epoch={epoch}/{epochs} train_loss={train_loss:.6f} "
++                    f"validation_loss={validation_loss:.6f} device={device}"
++                )
++                if wandb_run is not None:
++                    wandb_run.log(
++                        {
++                            "train/loss": train_loss,
++                            "train/optimizer_step": wandb_step["optimizer_step"],
++                            "validation/loss": validation_loss,
++                            "epoch": epoch,
++                        }
+                     )
+-        validation_loss = evaluate_epoch(
+-            model, processor, validation_loader, task, device, temperature, dtype_name
+-        )
+-        last_train_loss = train_loss
+-        last_validation_loss = validation_loss
+-        if rank_zero():
+-            log(
+-                f"epoch={epoch}/{epochs} train_loss={train_loss:.6f} "
+-                f"validation_loss={validation_loss:.6f} device={device}"
+-            )
+-            if wandb_run is not None:
+-                wandb_run.log(
+-                    {
+-                        "train/loss": train_loss,
+-                        "train/optimizer_step": wandb_step["optimizer_step"],
+-                        "validation/loss": validation_loss,
+-                        "epoch": epoch,
+-                    }
++
++            # Snapshot after every epoch. These runs take hours to days, so a crash
++            # between epochs previously cost the entire run: the only save happened
++            # after all epochs finished.
++            if save_every_epoch:
++                epoch_dir = output_dir / f"checkpoint-epoch-{epoch}"
++                if dist.is_initialized():
++                    dist.barrier()
++                save_model(
++                    model, processor, epoch_dir, task, final=False,
++                    source_dir=model_cfg.model_path, sharded=(parallel_mode == "fsdp2"),
+                 )
+-
+-        # Snapshot after every epoch. These runs take hours to days, so a crash
+-        # between epochs previously cost the entire run: the only save happened
+-        # after all epochs finished.
+-        if save_every_epoch:
+-            epoch_dir = output_dir / f"checkpoint-epoch-{epoch}"
+-            if dist.is_initialized():
+-                dist.barrier()
+-            save_model(
+-                model, processor, epoch_dir, task, final=False,
+-                source_dir=model_cfg.model_path, sharded=(parallel_mode == "fsdp2"),
+-            )
+-            log(f"saved epoch {epoch} checkpoint to {epoch_dir}")
++                log(f"saved epoch {epoch} checkpoint to {epoch_dir}")
+
+     test_loss = evaluate_epoch(model, processor, test_loader, task, device, temperature, dtype_name)
+     if rank_zero():

@@ -10,6 +10,42 @@ import unittest
 from unittest.mock import patch
 
 
+def observed_batch_transfer(rank, directory):
+    from datetime import timedelta
+    import torch
+    import torch.distributed as dist
+    from flagprof.probes.communication import CommunicationProbe
+    from flagprof.training import observation_group
+    dist.init_process_group('gloo', init_method='file://'+str(Path(directory)/'init'),
+                            rank=rank, world_size=2, timeout=timedelta(seconds=30))
+    try:
+        with patch.dict(os.environ):
+            os.environ.pop('FLAGPROF_GROUP_ID', None)
+            group_id, control = observation_group(rank, 2)
+            ids = [None, None]
+            dist.all_gather_object(ids, group_id, group=control)
+            assert ids == [group_id, group_id]
+            rows = []
+            context = SimpleNamespace(closed=False, diagnostic=None, current_scope=lambda: None,
+                                      probe_state=lambda: {}, writer=SimpleNamespace(emit=rows.append))
+            manager = SimpleNamespace(context=context, config={}, state=dict(probes={}, group_id=group_id))
+            probe = CommunicationProbe(manager, control)
+            try:
+                probe.install()
+                tensor = torch.tensor([5 if rank == 0 else 0])
+                op = dist.P2POp(dist.isend if rank == 0 else dist.irecv, tensor, 1-rank)
+                for work in dist.batch_isend_irecv([op]):
+                    work.wait()
+                assert tensor.item() == 5
+                assert [row['group'] for row in rows] == [group_id+'/p2p']
+                assert rows[0]['ext']['communication']['batch_ops'] == [['isend'], ['irecv']][rank]
+                assert 'FLAGPROF_GROUP_ID' not in os.environ
+            finally:
+                probe.uninstall()
+    finally:
+        dist.destroy_process_group()
+
+
 @unittest.skipUnless(importlib.util.find_spec('torch') is not None, 'optional torch CPU runtime')
 class CommunicationCoverageTests(unittest.TestCase):
     def test_spec_fields_match_live_torch_signatures(self):
@@ -79,6 +115,52 @@ class CommunicationTests(unittest.TestCase):
         self.assertEqual([r['ext']['communication']['peer'] for r in rows], [0, 0, 0, 0, None])
         self.assertEqual([r['group'] for r in rows], ['test-group/model'] * 5)
         self.assertEqual(tuple(getattr(dist, name) for name in names), originals)
+
+    def test_two_rank_observed_batch_transfer_shares_group_id(self):
+        import torch.multiprocessing as mp
+        with tempfile.TemporaryDirectory() as directory:
+            mp.spawn(observed_batch_transfer, args=(directory,), nprocs=2)
+
+    def test_install_error_restores_public_api(self):
+        import torch.distributed as dist
+        import torch.distributed._functional_collectives as functional
+        from flagprof.probes.communication import CommunicationProbe
+        manager = SimpleNamespace(context=SimpleNamespace(), config={}, state=dict(probes={}))
+        probe = CommunicationProbe(manager, control=object())
+        before = (dist.isend, dist.P2POp.__new__, dist.P2POp.__init__, functional.all_reduce)
+        wrap = probe._wrap
+        def inject(name, native, functional=False):
+            if functional:
+                raise RuntimeError('injected wrapper failure')
+            return wrap(name, native)
+        with patch.object(probe, '_wrap', side_effect=inject), self.assertRaisesRegex(RuntimeError, 'injected'):
+            probe.install()
+        self.assertFalse(probe.installed)
+        self.assertEqual((dist.isend, dist.P2POp.__new__, dist.P2POp.__init__, functional.all_reduce), before)
+
+    def test_p2p_op_preserves_native_identity_and_restores_constructor(self):
+        import torch
+        import torch.distributed as dist
+        from flagprof.probes.communication import CommunicationProbe
+        context = SimpleNamespace(closed=False)
+        manager = SimpleNamespace(context=context, config={}, state=dict(probes={}, group_id='job'))
+        methods = (dist.P2POp.__new__, dist.P2POp.__init__)
+        native_send, native_recv = dist.isend, dist.irecv
+        with tempfile.TemporaryDirectory() as directory:
+            dist.init_process_group('gloo', init_method='file://'+str(Path(directory)/'rendezvous'),
+                                    rank=0, world_size=1)
+            probe = CommunicationProbe(manager, control=object())
+            try:
+                probe.install()
+                tensor = torch.empty(1)
+                for candidate, native in ((dist.isend, native_send), (dist.irecv, native_recv),
+                                          (native_send, native_send), (native_recv, native_recv)):
+                    self.assertIs(dist.P2POp(op=candidate, tensor=tensor, peer=0).op, native)
+            finally:
+                probe.uninstall()
+                dist.destroy_process_group()
+        self.assertEqual((dist.P2POp.__new__, dist.P2POp.__init__), methods)
+        self.assertEqual((dist.isend, dist.irecv), (native_send, native_recv))
 
     def test_functional_group_identity_payload_and_restore(self):
         import torch

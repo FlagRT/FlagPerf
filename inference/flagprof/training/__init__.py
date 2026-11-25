@@ -6,7 +6,41 @@ Importing this module does not import torch. Observation never calls backward,
 changes model mode, or selects a numerical policy on the application's behalf.
 """
 from contextlib import contextmanager
+import os
 import sys
+import uuid
+
+
+def observation_group(rank, world):
+    """Share the launch identity before any rank constructs its probes."""
+    group_id = os.environ.get('FLAGPROF_GROUP_ID') or uuid.uuid4().hex
+    if world == 1:
+        return group_id, None
+    import torch.distributed as dist
+    control = dist.new_group(backend='gloo')
+    message = [group_id if rank == 0 else None]
+    dist.broadcast_object_list(message, src=0, group=control)
+    return message[0], control
+
+
+@contextmanager
+def coordinated_start(control, rank, world):
+    """Propagate preparation errors before any peer enters the next collective."""
+    if control is None:
+        yield
+        return
+    import torch.distributed as dist
+    error = None
+    try:
+        yield
+    except Exception as exc:
+        error = exc
+    detail = f'rank {rank}: {type(error).__name__}: {error}' if error is not None else None
+    details = [None] * world
+    dist.all_gather_object(details, detail, group=control)
+    failures = [item for item in details if item]
+    if failures:
+        raise RuntimeError('training observation startup failed: ' + '; '.join(failures)) from error
 
 
 def attachment():

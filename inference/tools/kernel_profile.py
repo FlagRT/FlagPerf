@@ -10,6 +10,7 @@ import json
 import statistics
 import sys
 from collections import defaultdict
+from decimal import Decimal
 from pathlib import Path
 
 
@@ -22,11 +23,12 @@ def main():
     trace_path = Path(sys.argv[1])
     out_path = Path(sys.argv[2])
     data = json.loads(trace_path.read_text())
-    events = data.get('traceEvents', data)
+    events = data['traceEvents'] if isinstance(data, dict) else data
     agg = defaultdict(list)
     for event in events:
-        if event.get('cat') == 'kernel':
-            agg[str(event.get('name'))].append(float(event.get('dur') or 0))
+        if event.get('cat') == 'kernel' and event.get('dur') is not None:
+            duration_ns = int(Decimal(str(event['dur'])) * 1000)
+            agg[str(event.get('name'))].append(duration_ns)
     total_calls = sum(len(v) for v in agg.values())
     total_ns = sum(sum(v) for v in agg.values())
     rows = []

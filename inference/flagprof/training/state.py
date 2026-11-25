@@ -66,6 +66,23 @@ def raw_model(model):
     return model.module if isinstance(model, DistributedDataParallel) else model
 
 
+def comparable_protocol(protocol):
+    """Compare the resolved training settings, including pre-sharding v1 records."""
+    settings = dict(protocol)
+    # Whether a task was selected by a flag or by the registry is provenance.
+    settings.pop('task_source', None)
+    if 'task' in settings and 'world_size' in settings:
+        # The CLI only supported single-process and replicated DDP in v1.
+        implicit = 'ddp-replica' if settings['world_size'] > 1 else 'none'
+        if settings.get('sharding') == implicit:
+            del settings['sharding']
+    if isinstance(settings.get('observation'), dict):
+        observation = settings['observation'].copy()
+        observation.pop('attachment', None)  # legacy rank-/process-local UUID
+        settings['observation'] = observation
+    return settings
+
+
 def assert_replicated(model):
     """Checkpoint paths need identical full-state replicas.
 
@@ -108,7 +125,8 @@ def restore(path, model, optimizer, *, protocol, device, scaler=None):
     import torch
     assert_replicated(model)
     state=torch.load(path,map_location='cpu',weights_only=False)
-    if state.get('schema')!='training-checkpoint/1' or state['protocol']!=protocol:
+    if (state.get('schema')!='training-checkpoint/1' or
+            comparable_protocol(state['protocol']) != comparable_protocol(protocol)):
         raise ValueError('checkpoint training protocol differs')
     if bool(state['scaler'] is not None)!=bool(scaler is not None):
         raise ValueError('checkpoint scaler differs')

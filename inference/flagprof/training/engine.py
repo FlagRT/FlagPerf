@@ -64,17 +64,18 @@ def train(model, optimizer, batches, loss_fn, *, outputs, steps=3, accumulation=
                   initial_optimizer_sha256=fingerprint(optimizer.state_dict()),
                   initial_model_sha256=fingerprint(raw_model(model).state_dict()))
     scaler=torch.amp.GradScaler('cuda') if amp=='float16' else None
+    handle=attachment()
     result=dict(schema='training-result/1',status='running',protocol=protocol,
                 device=str(device),torch_version=torch.__version__,steps=[],next_step=0,
                 observed_numerics=dict(float32_matmul_precision=torch.get_float32_matmul_precision(),
                     cuda_matmul_allow_tf32=torch.backends.cuda.matmul.allow_tf32,
                     cudnn_allow_tf32=torch.backends.cudnn.allow_tf32,
                     deterministic_algorithms=torch.are_deterministic_algorithms_enabled()),
-                attachment=bool(attachment()),snapshot_mode=mode,
+                attachment=bool(handle),snapshot_mode=mode,
                 timing_scope='synchronized optimizer-step wall time; accuracy includes pre-update gradient capture; excludes post-update snapshots/checkpoint/output',
                 qualification='not_qualified',reason='functional training workload; no convergence or exclusive performance qualification')
-    handle=attachment()
     if handle:
+        result['attachment_id']=handle.id
         handle.writer.emit(dict(t='meta',kind='env',data=dict(training=protocol)))
     start_step=0
     try:

@@ -3,6 +3,7 @@
 """Standard PyTorch training examples, observed by the existing flagprof record."""
 import argparse
 import atexit
+from contextlib import ExitStack
 import hashlib
 import json
 import os
@@ -164,7 +165,7 @@ def apply_sharding(model, device_type, world_size):
     return model, ('per-block+root' if wrapped else 'root-only'), mesh
 
 
-def monitor_start(root,vendor,world,rank):
+def monitor_start(root,vendor,world,rank, *, control=None, reference=None):
     """Opt-in node monitoring and online diagnosis; FLAGPROF_TRAIN_MONITOR=on.
 
     Mirrors the inference semantics per platform. When the vendor has device
@@ -189,98 +190,139 @@ def monitor_start(root,vendor,world,rank):
         interval=1000
     interval=max(100,min(5000,interval))
     monitor_root=str(Path(os.environ.get('FLAGPROF_TRAIN_MONITOR_ROOT') or root).resolve())
-    reference=str((Path(root)/'monitor-ref.json').resolve())
-    agent=vendor in ('ascend','nvidia')
-    handshake=owner=supervisor=None
-    topology='local'; diagnose='off'
-    def start_local():
-        owner=Monitor(root,reference,vendor,dict(monitor='on',monitor_interval_ms=interval))
-        os.environ['FLAGPROF_MONITOR_REFERENCE']=reference
-        return owner
+    reference = str(Path(reference or Path(root)/'monitor-ref.json').resolve())
+    owner = supervisor = None
+
+    def stop_child(child):
+        if child is None or child.poll() is not None:
+            return
+        child.terminate()
+        try:
+            child.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            child.kill()
+            child.wait()
+
     def start_agent():
-        """Reuse an independent session when one is supervised under the
-        monitor root; otherwise host one for this run and return the child."""
+        nonlocal supervisor, owner
         from flagprof.monitor.subscriptions import request
         try:
-            request(monitor_root,dict(action='hello'))
-            return None
-        except (OSError,ValueError):
-            pass
-        child=subprocess.Popen([sys.executable,'-B','-S','-m','flagprof','watch','start',
-                                '--root',monitor_root,'--vendor',vendor],
-                               stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,
-                               start_new_session=True)
-        deadline=time.monotonic()+10
-        while time.monotonic()<deadline:
-            try:
-                request(monitor_root,dict(action='hello'))
-                return child
-            except (OSError,ValueError):
-                if child.poll() is not None: return None
-                time.sleep(.2)
-        child.terminate()
-        return None
-    def agent_attempt():
-        nonlocal supervisor,topology,diagnose
-        supervisor=start_agent()
-        Monitor(root,reference,vendor,dict(monitor='on',monitor_topology='agent',
-                monitor_root=monitor_root,monitor_interval_ms=interval))
-        os.environ['FLAGPROF_MONITOR_REFERENCE']=reference
-        diagnose='on' if os.environ.get('FLAGPROF_TRAIN_DIAGNOSE','on')=='on' else 'off'
-        topology='agent'
-        return dict(topology=topology,diagnose=diagnose)
-    def local_attempt():
-        nonlocal owner,topology,diagnose
-        owner=start_local()
-        topology='local';diagnose='off'
-        return dict(topology=topology,diagnose=diagnose)
-    if world>1:
-        # One decision on global rank 0, one session owner, every rank binds
-        # into the same session through the shared reference at attach time.
-        import torch.distributed as dist
-        handshake=dist.new_group(backend='gloo')
-        decision=[None]
-        if rank==0:
-            try:
-                decision=[agent_attempt() if agent else local_attempt()]
-            except Exception:
-                if supervisor is not None:
-                    supervisor.terminate();supervisor=None
+            request(monitor_root, dict(action='hello'))
+        except (OSError, ValueError):
+            supervisor = subprocess.Popen(
+                [sys.executable, '-B', '-S', '-m', 'flagprof', 'watch', 'start',
+                 '--root', monitor_root, '--vendor', vendor],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+            deadline = time.monotonic() + 10
+            while True:
                 try:
-                    decision=[local_attempt()]
-                except Exception:
-                    decision=[None]
-        dist.broadcast_object_list(decision,src=0,group=handshake)
-        if decision[0] is not None:
-            topology=decision[0]['topology'];diagnose=decision[0]['diagnose']
-            os.environ['FLAGPROF_MONITOR_REFERENCE']=reference
-    else:
+                    request(monitor_root, dict(action='hello'))
+                    break
+                except (OSError, ValueError) as exc:
+                    if supervisor.poll() is not None or time.monotonic() >= deadline:
+                        raise RuntimeError('watch supervisor failed to become ready') from exc
+                    time.sleep(.2)
+        owner = Monitor(root, reference, vendor, dict(monitor='on', monitor_topology='agent',
+                        monitor_root=monitor_root, monitor_interval_ms=interval))
+        receipt = json.loads(Path(reference).read_text())
+        if receipt.get('status') != 'running' or not receipt.get('session_id'):
+            raise RuntimeError('watch session unavailable: ' + str(receipt.get('errors')))
+        return dict(topology='agent', reference=reference,
+                    diagnose='on' if os.environ.get('FLAGPROF_TRAIN_DIAGNOSE','on')=='on' else 'off')
+
+    def start_local(path):
+        nonlocal owner
+        owner = Monitor(root, path, vendor, dict(monitor='on', monitor_topology='local',
+                        monitor_interval_ms=interval))
+        receipt = json.loads(Path(path).read_text())
+        if not receipt.get('monitor_run_id') or receipt.get('status') == 'failed':
+            raise RuntimeError('local monitor unavailable: ' + str(receipt.get('errors')))
+        if owner.child is not None and owner.child.poll() is not None:
+            raise RuntimeError('local monitor exited during startup')
+        return dict(topology='local', diagnose='off', reference=path)
+
+    decision = None
+    if rank == 0:
+        errors = []
+        if vendor in ('ascend', 'nvidia'):
+            try:
+                decision = start_agent()
+            except (OSError, ValueError, RuntimeError) as error:
+                errors.append(str(error))
+                if owner:
+                    owner.close()
+                stop_child(supervisor)
+                owner = supervisor = None
+        if decision is None:
+            try:
+                local_reference = str(Path(reference).with_suffix('.local.json')) if errors else reference
+                decision = start_local(local_reference)
+            except (OSError, ValueError, RuntimeError) as error:
+                errors.append(str(error))
+                if owner:
+                    owner.close()
+                    owner = None
+                decision = dict(topology='unavailable', diagnose='off', reference=None)
+        decision['errors'] = errors
+    def close():
         try:
-            if agent: agent_attempt()
-            else: local_attempt()
-        except Exception:
-            if supervisor is not None:
-                supervisor.terminate();supervisor=None
-            try:
-                local_attempt()
-            except Exception:
-                topology='local';diagnose='off'
+            if owner is not None:
+                owner.close()
+        finally:
+            stop_child(supervisor)
+
+    if world > 1:
+        import torch.distributed as dist
+        try:
+            if control is None:
+                control = dist.new_group(backend='gloo')
+            message = [decision]
+            dist.broadcast_object_list(message, src=0, group=control)
+            decision = message[0]
+        except BaseException:
+            close()
+            raise
     if supervisor is not None:
-        def stop_supervisor():
-            try:
-                supervisor.terminate();supervisor.wait(timeout=5)
-            except OSError:
-                pass
-        atexit.register(stop_supervisor)
-    if topology=='agent':
-        config=dict(monitor='on',diagnose=diagnose,monitor_topology='agent',monitor_root=monitor_root)
+        atexit.register(stop_child, supervisor)
+    topology = decision['topology']
+    if topology == 'agent':
+        config = dict(monitor='on', diagnose=decision['diagnose'], monitor_topology='agent',
+                      monitor_root=monitor_root)
+    elif topology == 'local':
+        config = dict(monitor='on', monitor_topology='local')
     else:
-        config=dict(monitor='on',monitor_topology='local')
-    return dict(owner=owner,supervisor=supervisor,handshake=handshake,topology=topology,
-                diagnose=diagnose,config=config)
+        config = dict(monitor='off', diagnose='off')
+    return dict(decision, owner=owner, supervisor=supervisor, handshake=control, config=config, close=close)
 
 
-def observation_start(args):
+def record_monitor_status(handle, monitoring, device):
+    topology = monitoring['topology']
+    diagnose = monitoring['diagnose']
+    errors = list(monitoring['errors'])
+    if handle.monitor_enabled and topology != 'unavailable':
+        handle.register_device(device)
+        try:
+            receipt = json.loads(handle.monitor_reference.read_text())
+            if receipt.get('worker_proc_key') != handle.state['process']:
+                raise ValueError('monitor registration missing this rank')
+            if topology == 'agent':
+                if receipt.get('subscription_status') != 'registered' or not receipt.get('target_id'):
+                    raise ValueError(receipt.get('reason') or 'agent target registration unavailable')
+            elif not receipt.get('monitor_run_id') or handle.state.get('monitor_errors'):
+                raise ValueError('local target registration unavailable')
+        except (OSError, ValueError) as exc:
+            errors.append(str(exc))
+            topology, diagnose = 'unavailable', 'off'
+        if diagnose == 'on' and (handle.diagnostic is None or handle.state.get('diagnostic_status')):
+            errors.append(handle.state.get('diagnostic_status') or 'diagnostic probe unavailable')
+            diagnose = 'off'
+    if errors:
+        handle.state['monitor_start_errors'] = errors
+    handle.state.update(monitor_topology=topology, monitor_diagnose=diagnose)
+    handle._save()
+
+
+def observation_start(args, *, default_vendor=None, diagnostic='flagprof-train-observe/1'):
     """Opt-in diagnostic collector attach; FLAGPROF_TRAIN_OBSERVE names a store root.
 
     Unset keeps plain runs byte-identical to production. Attaches the existing
@@ -310,58 +352,125 @@ def observation_start(args):
     # session; everything else keeps the historical thead default. The env
     # variable still overrides explicitly.
     device_hint=str(getattr(args,'device',''))
-    default_vendor='ascend' if device_hint.startswith('npu') else 'thead'
-    vendor=os.environ.get('FLAGPROF_TRAIN_OBSERVE_VENDOR',default_vendor)
-    preset=os.environ.get('FLAGPROF_TRAIN_PRESET','perf')
-    if preset not in ('perf','perf-lite','coverage','modules'):
-        raise ValueError('FLAGPROF_TRAIN_PRESET must be one of perf/perf-lite/coverage/modules')
-    capture_mode=os.environ.get('FLAGPROF_TRAIN_CAPTURE','final')
-    if capture_mode not in ('final','windowed'):
-        raise ValueError('FLAGPROF_TRAIN_CAPTURE must be final or windowed')
-    capture_config={}
-    raw_capture=os.environ.get('FLAGPROF_TRAIN_CAPTURE_CONFIG')
-    if raw_capture:
-        capture_config=json.loads(raw_capture)
-    world=int(os.environ.get('WORLD_SIZE','1'));rank=int(os.environ.get('RANK','0'))
-    os.environ.setdefault('XPU_ENABLE_PROFILER_TRACING', '1')
-    identity_path=os.environ.get('FLAGPROF_THEAD_IDENTITY')
-    if vendor!='thead':
-        identity_note='vendor-session'
-    elif not identity_path:
-        from flagprof.vendors.thead.session import generate_identity_file
-        (Path(root)/('rank-'+str(rank))).mkdir(parents=True,exist_ok=True)
-        identity_path=str(Path(root)/('rank-'+str(rank))/'identity-autogenerated.json')
-        generate_identity_file(identity_path, rank=rank)
-        os.environ['FLAGPROF_THEAD_IDENTITY']=identity_path
-        identity_note='autogenerated'
-    elif vendor=='thead':
-        identity_note='sourced'
-    run=create_run(Path(root)/('rank-'+str(rank)),
-                   identity=dict(diagnostic='flagprof-train-observe/1',vendor=vendor,preset=preset,
-                                 task=args.task,world_size=world,identity_source=identity_note))
-    monitoring=monitor_start(root,vendor,world,rank)
-    handle=attach(run,vendor,preset=preset,rank=rank,capture_mode=capture_mode,
-                  config=dict(capture_config,**(monitoring['config'] if monitoring else {})) or None)
-    if handle.state['status']!='running':
-        producer_errors=''
-        for producer in sorted(Path(root).glob('rank-%d/*/capture-staging/*/producer.json' % rank))[-1:]:
-            try:
-                record=json.loads(producer.read_text(encoding='utf-8'))
-                if record.get('errors'):
-                    producer_errors='; producer: '+json.dumps(record['errors'], ensure_ascii=False)
-            except (OSError, ValueError):
-                pass
-        raise RuntimeError('train observation attachment did not start: %s%s'
-                           % (handle.state.get('errors'), producer_errors))
-    if monitoring and handle.monitor_enabled:
-        handle.register_device(str(getattr(args,'device','')))
-        handle.state['monitor_topology']=monitoring['topology']
-        handle.state['monitor_diagnose']=monitoring['diagnose']
+    default_vendor = default_vendor or ('ascend' if device_hint.startswith('npu') else 'thead')
+    vendor = os.environ.get('FLAGPROF_TRAIN_OBSERVE_VENDOR', default_vendor)
+    world = int(os.environ.get('WORLD_SIZE', '1'))
+    rank = int(os.environ.get('RANK', '0'))
+    from . import coordinated_start, observation_group
+    group_id, control = observation_group(rank, world)
+    cleanup = ExitStack()
+    handle = None
+    try:
+        with coordinated_start(control, rank, world):
+            preset = os.environ.get('FLAGPROF_TRAIN_PRESET', 'perf')
+            if preset not in ('perf', 'perf-lite', 'coverage', 'modules'):
+                raise ValueError('FLAGPROF_TRAIN_PRESET must be one of perf/perf-lite/coverage/modules')
+            capture_mode = os.environ.get('FLAGPROF_TRAIN_CAPTURE', 'final')
+            if capture_mode not in ('final', 'windowed'):
+                raise ValueError('FLAGPROF_TRAIN_CAPTURE must be final or windowed')
+            capture_config = json.loads(os.environ.get('FLAGPROF_TRAIN_CAPTURE_CONFIG') or '{}')
+            identity_note = 'vendor-session'
+            if vendor == 'thead':
+                identity_note = 'sourced' if os.environ.get('FLAGPROF_THEAD_IDENTITY') else 'autogenerated'
+            run = create_run(Path(root)/('rank-'+str(rank)), identity=dict(
+                diagnostic=diagnostic, vendor=vendor, preset=preset, task=args.task, group_id=group_id,
+                world_size=world, identity_source=identity_note))
+            if 'XPU_ENABLE_PROFILER_TRACING' not in os.environ:
+                os.environ['XPU_ENABLE_PROFILER_TRACING'] = '1'
+                cleanup.callback(os.environ.pop, 'XPU_ENABLE_PROFILER_TRACING', None)
+            if identity_note == 'autogenerated':
+                from flagprof.vendors.thead.session import generate_identity_file
+                identity_path = run/'identity-autogenerated.json'
+                generate_identity_file(identity_path, rank=rank)
+                os.environ['FLAGPROF_THEAD_IDENTITY'] = str(identity_path)
+                cleanup.callback(os.environ.pop, 'FLAGPROF_THEAD_IDENTITY', None)
+        monitoring = monitor_start(root, vendor, world, rank, control=control, reference=run.parent/('monitor-ref-'+run.name+'.json'))
+        if monitoring:
+            cleanup.callback(monitoring['close'])
+        with coordinated_start(control, rank, world):
+            handle = attach(run, vendor, preset=preset, rank=rank, capture_mode=capture_mode,
+                            group_id=group_id, monitor_parent=monitoring['reference'] if monitoring else None,
+                            config=dict(capture_config, **(monitoring['config'] if monitoring else {})) or None)
+            if handle.state['status'] != 'running':
+                errors = list(handle.state.get('errors', []))
+                for producer in sorted(run.glob('capture-staging/*/producer.json')):
+                    try:
+                        errors.extend(json.loads(producer.read_text(encoding='utf-8')).get('errors', []))
+                    except (OSError, ValueError):
+                        pass
+                raise RuntimeError('train observation attachment did not start: ' + str(errors))
+            if monitoring:
+                record_monitor_status(handle, monitoring, device_hint)
+            from .oracle import start_from_env
+            handle._oracle_pending = start_from_env(handle)
+        probe = None
+        with coordinated_start(control, rank, world):
+            if control is not None and handle.state['effective_config']['probes'] != 'none':
+                from flagprof.probes.communication import CommunicationProbe
+                probe = CommunicationProbe(handle.probe_manager, control)
+                handle.probe_manager.communication = probe
+                probe.install()
+        return dict(handle=handle, probe=probe, control=control, rank=rank, world=world, run=run,
+                    monitoring=monitoring, cleanup=cleanup)
+    except BaseException:
+        try:
+            if handle is not None:
+                try:
+                    capture = getattr(handle, '_oracle_pending', None)
+                    if capture is not None:
+                        capture.close()
+                finally:
+                    handle.close(normal=False, returncode=1)
+        finally:
+            cleanup.close()
+            if control is not None:
+                import torch.distributed as dist
+                dist.destroy_process_group(control)
+        raise
+
+
+def observation_close(observe, *, failed=False, report=True):
+    from contextlib import nullcontext
+    from . import coordinated_start
+    handle = observe['handle']
+    control = observe['control']
+    def finish_phase():
+        if failed or not observe['monitoring']:
+            return nullcontext()
+        return coordinated_start(control, observe['rank'], observe['world'])
+    try:
+        try:
+            with finish_phase():
+                try:
+                    capture = getattr(handle, '_oracle_pending', None)
+                    if capture is not None:
+                        capture.close()
+                finally:
+                    handle.close(normal=not failed, returncode=1 if failed else 0)
+        finally:
+            # Rank 0 stops its monitor after target handles finish. Peers read
+            # the monitor inventory after the owner completes reclamation.
+            with finish_phase():
+                observe['cleanup'].close()
+    finally:
+        if control is not None:
+            import torch.distributed as dist
+            dist.destroy_process_group(control)
+    if failed:
+        return
+    from flagprof.store.manifest import finalize
+    try:
+        observe['manifest'] = finalize(observe['run'])
+    except Exception as error:
+        handle.state['finalize_error'] = type(error).__name__ + ': ' + str(error)
         handle._save()
-    from .oracle import start_from_env
-    handle._oracle_pending = start_from_env(handle)
-    os.environ.setdefault('FLAGPROF_GROUP_ID',run.name)
-    return dict(handle=handle,probe=None,rank=rank,world=world,run=run,monitoring=monitoring)
+    if report and os.environ.get('FLAGPROF_TRAIN_REPORT') != 'off':
+        from flagprof.report import generate
+        try:
+            observe['report'] = generate(observe['run'])
+        except Exception as error:
+            handle.state['report_error'] = type(error).__name__ + ': ' + str(error)
+            handle._save()
 
 
 def execute(args):
@@ -426,18 +535,12 @@ def execute(args):
                 dist_timeout=120.0
             dist.init_process_group(args.backend or ('nccl' if device.startswith('cuda') else 'hccl' if device.startswith('npu') else 'gloo'),timeout=timedelta(seconds=dist_timeout))
             owned=True
-            observe=observation_start(args)
-            if observe:
-                control=dist.new_group(backend='gloo')
-                if observe['handle'].state.get('effective_config',{}).get('probes')!='none':
-                    from flagprof.probes.communication import CommunicationProbe
-                    probe=CommunicationProbe(observe['handle'].probe_manager,control)
-                    probe.install()
-                    observe['handle'].probe_manager.communication=probe
-                    observe['probe']=probe
-                observe['handle'].state['parallel']=dict(rank=observe['rank'],world_size=observe['world'],
-                                                         backend=dist.get_backend())
-                observe['handle']._save()
+        args.device=device
+        observe=observation_start(args)
+        if args.ddp and observe:
+            observe['handle'].state['parallel']=dict(rank=observe['rank'],world_size=observe['world'],
+                                                     backend=dist.get_backend())
+            observe['handle']._save()
         protocol=dict(task=args.task,seed=args.seed,lr=args.lr,batch_size_per_rank=args.batch_size,
                       data='synthetic labelled classification' if args.task=='classification' else 'explicit pretokenized local input',
                       task_source=task_source,
@@ -446,7 +549,7 @@ def execute(args):
         if observe:
             protocol['observation']=dict(diagnostic='flagprof-train-observe/1',
                                          vendor=observe['handle'].state.get('vendor'),
-                                         preset='perf',attachment=observe['handle'].id)
+                                         preset=observe['handle'].state['preset'])
             oracle_at=observe['handle'].state.get('oracle_at')
             if oracle_at:
                 protocol['observation']['oracle']=dict(diagnostic='training-oracle/1',
@@ -557,8 +660,11 @@ def execute(args):
                 if args.ddp: raise ValueError('DDP ranks must share an explicit --inputs; default corpus generation is single-process only')
                 config=json.loads((Path(source)/'config.json').read_text(encoding='utf-8'))
                 vocab=int(config.get('vocab_size') or 65536)
-                inputs=ensure_generated('lm-corpus',args.outputs,args.seed,vocab=vocab,
-                                        rows=max(16,4*args.batch_size*world))
+                # Keep at least four full microbatches and sixteen sample rows.
+                batch_count=max(4, (16 + args.batch_size - 1) // args.batch_size)
+                corpus=ensure_generated('lm-corpus',args.outputs,args.seed,vocab=vocab,
+                                        rows=batch_count*args.batch_size)
+                inputs=Path(corpus)/'tokens.jsonl'
                 protocol['data']='deterministic synthetic LM tokens generated next to --outputs (make_lm_corpus)'
                 protocol['default_corpus_generated']=True
             model=AutoModelForCausalLM.from_pretrained(source,local_files_only=True,trust_remote_code=False,
@@ -595,33 +701,12 @@ def execute(args):
         failed=True
         raise
     finally:
-        if owned: dist.destroy_process_group()
-        if observe:
-            capture=getattr(observe['handle'],'_oracle_pending',None)
-            if capture is not None: capture.close()
-            observe['handle'].close(normal=not failed,returncode=1 if failed else 0)
-            if not failed:
-                # Same-process finalize: the writer proxies belong to this PID
-                # namespace and have shut down with the attachment, so the
-                # store manifest reaches its terminal status here. A failure is
-                # recorded on the attachment and never fails the training run.
-                try:
-                    from flagprof.store.manifest import finalize
-                    observe['manifest']=finalize(observe['run'])
-                except BaseException as error:
-                    observe['handle'].state['finalize_error']=type(error).__name__+': '+str(error)
-                    observe['handle']._save()
-                if os.environ.get('FLAGPROF_TRAIN_REPORT')!='off':
-                    # Same reading experience as inference: a browsable
-                    # report.html/report.md per rank run, rendered after the
-                    # manifest reaches its terminal status. Generation is a
-                    # pure post-run read and never fails the training run.
-                    try:
-                        from flagprof.report import generate
-                        observe['report']=generate(observe['run'])
-                    except BaseException as error:
-                        observe['handle'].state['report_error']=type(error).__name__+': '+str(error)
-                        observe['handle']._save()
+        try:
+            if observe:
+                observation_close(observe, failed=failed)
+        finally:
+            if owned:
+                dist.destroy_process_group()
 
 
 def main(argv=None):

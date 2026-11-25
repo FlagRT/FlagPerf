@@ -4,11 +4,13 @@
 import copy
 import importlib.util
 import json
+import os
 from pathlib import Path
 import random
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 try:
     import torch
@@ -86,6 +88,38 @@ class TrainingTests(unittest.TestCase):
             self.run_model('invalid', resume=checkpoint, accumulation=2)
         result = json.loads((self.root/'invalid/training-result.json').read_text())
         self.assertEqual(result['status'], 'failed')
+
+    def test_cli_resumes_v1_checkpoint_without_sharding_or_task_source(self):
+        from flagprof.training.__main__ import main
+        checkpoint = self.root/'v1.pt'
+        options = ['--task', 'classification', '--steps', '2']
+        main(options + ['--outputs', str(self.root/'paused'), '--stop-after', '1',
+                        '--checkpoint', str(checkpoint)])
+        saved = torch.load(checkpoint, weights_only=False)
+        del saved['protocol']['task_source']
+        del saved['protocol']['sharding']
+        torch.save(saved, checkpoint)
+        main(options + ['--outputs', str(self.root/'resumed'), '--resume', str(checkpoint)])
+        result = json.loads((self.root/'resumed/training-result.json').read_text())
+        self.assertEqual((result['status'], result['start_step']), ('complete', 1))
+
+    @unittest.skipUnless(sys.platform == 'linux', 'Linux Store/attachment')
+    def test_single_rank_observed_checkpoint_resumes_with_fresh_attachment(self):
+        from flagprof.training.__main__ import main
+        checkpoint = self.root/'observed.pt'
+        settings = dict(FLAGPROF_TRAIN_OBSERVE=str(self.root/'observations'),
+                        FLAGPROF_TRAIN_OBSERVE_VENDOR='ascend', FLAGPROF_TRAIN_PRESET='coverage',
+                        FLAGPROF_TRAIN_MONITOR='off', FLAGPROF_TRAIN_REPORT='off')
+        with patch.dict(os.environ, settings):
+            main(['--steps', '2', '--outputs', str(self.root/'paused'), '--stop-after', '1',
+                  '--checkpoint', str(checkpoint)])
+            main(['--steps', '2', '--outputs', str(self.root/'resumed'), '--resume', str(checkpoint)])
+        paused, resumed = [json.loads((self.root/name/'training-result.json').read_text())
+                           for name in ('paused', 'resumed')]
+        self.assertEqual((resumed['status'], resumed['start_step']), ('complete', 1))
+        self.assertEqual(paused['protocol']['observation'], resumed['protocol']['observation'])
+        self.assertEqual(resumed['protocol']['observation']['preset'], 'coverage')
+        self.assertNotEqual(paused['attachment_id'], resumed['attachment_id'])
 
     def test_failure_keeps_completed_steps_and_does_not_reuse_output(self):
         calls = [0]
@@ -197,6 +231,25 @@ class TrainingTests(unittest.TestCase):
         calls = [e for e in events if e['t']=='op']
         self.assertTrue(any(phases.get(e.get('scope'))=='backward' for e in calls))
         self.assertTrue(any(phases.get(e.get('scope'))=='optimizer' for e in calls))
+
+
+class SummaryTests(unittest.TestCase):
+    def test_rank_local_attachment_ids_preserve_summary_but_different_presets_do_not(self):
+        from flagprof.training.summary import summarize
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for rank in (0, 1):
+                path = root/('rank-' + str(rank))/'training-result.json'
+                path.parent.mkdir()
+                protocol = dict(task='classification', world_size=2, rank=rank, sharding='ddp-replica',
+                                observation=dict(preset='coverage', attachment=str(rank)))
+                result = dict(protocol=protocol, status='complete', next_step=1,
+                              steps=[dict(step=0)], final_model_sha256='equal-final')
+                path.write_text(json.dumps(result))
+            self.assertEqual(summarize(root)['status'], 'complete')
+            result['protocol']['observation']['preset'] = 'perf'
+            path.write_text(json.dumps(result))
+            self.assertEqual(summarize(root)['status'], 'partial')
 
 
 class TestCommunicationProbeCoverage(unittest.TestCase):

@@ -84,24 +84,51 @@ class CommunicationProbe(Probe):
 
     def __init__(self, manager, control):
         super().__init__(manager)
+        self.group_id = manager.state.get('group_id') or os.environ.get('FLAGPROF_GROUP_ID')
         self.control = control
         self.model_groups = []
         self.native = {}
         self.functional_native = {}
+        self.p2p_methods = {}
         self.sequences = defaultdict(int)
         self.busy = False
 
     def install(self):
         import torch.distributed as dist
-        self.installed = True
-        for name in DIST_NAMES:
-            native = getattr(dist, name)
-            self.native[name] = native
-            setattr(dist, name, self._wrap(name, native))
         import torch.distributed._functional_collectives as functional
+        # Verify the installed version's surface before publishing a wrapper.
+        self.native = {name: getattr(dist, name) for name in DIST_NAMES}
+        self.functional_native = {name: getattr(functional, name) for name in FUNCTIONAL_NAMES}
+        self.p2p_methods = {name: dist.P2POp.__dict__[name] for name in ('__new__', '__init__')}
+        self.installed = True
+        try:
+            self._install_wrappers(dist, functional)
+        except BaseException:
+            self.uninstall()
+            raise
+
+    def _install_wrappers(self, dist, functional):
+        for name in DIST_NAMES:
+            native = self.native[name]
+            setattr(dist, name, self._wrap(name, native))
+        # P2POp checks the native function identity in __new__ and stores
+        # the callable in __init__. Preserve both contracts for callers using
+        # the public dist.isend/irecv entries while the probe is installed.
+        send, recv = dist.isend, dist.irecv
+        def canonicalize(method):
+            @functools.wraps(method)
+            def invoke(instance, op, *args, **kwargs):
+                if op is send:
+                    op = self.native['isend']
+                elif op is recv:
+                    op = self.native['irecv']
+                return method(instance, op, *args, **kwargs)
+            return invoke
+        for name in ('__new__', '__init__'):
+            method = canonicalize(getattr(dist.P2POp, name))
+            setattr(dist.P2POp, name, staticmethod(method) if name == '__new__' else method)
         for name in FUNCTIONAL_NAMES:
-            native = getattr(functional, name)
-            self.functional_native[name] = native
+            native = self.functional_native[name]
             setattr(functional, name, self._wrap(name, native, functional=True))
         self.manager.state['probes'][self.id] = dict(status='available', descriptor=self.descriptor())
 
@@ -127,7 +154,7 @@ class CommunicationProbe(Probe):
                     'control' if group is self.control else
                     'model' if group is None or group is dist.group.WORLD or any(group is g for g in self.model_groups)
                     else 'unknown')
-            group_id = os.environ['FLAGPROF_GROUP_ID'] + '/' + role
+            group_id = self.group_id + '/' + role
             seq = self.sequences[group_id]
             self.sequences[group_id] += 1
             tensors = payload_items(bound.get(payload_field))
@@ -171,7 +198,7 @@ class CommunicationProbe(Probe):
                                       payload_status='tensor' if tensors else 'object_or_control',
                                       peer=peer if isinstance(peer, int) else None,
                                       batch_peers=([p.peer for p in batch] if batch else None),
-                                      batch_ops=([str(p.op).rsplit('.', 1)[-1] for p in batch] if batch else None),
+                                      batch_ops=([p.op.__name__ for p in batch] if batch else None),
                                       runtime_padding_bytes=None, device_wire_bytes=None,
                                       device_link_status='explicit_link_unavailable', error=error,
                                       generation=dict(generation))))
@@ -187,6 +214,8 @@ class CommunicationProbe(Probe):
         if not self.installed:
             return
         import torch.distributed as dist
+        for name, method in self.p2p_methods.items():
+            setattr(dist.P2POp, name, method)
         for name, native in self.native.items():
             setattr(dist, name, native)
         import torch.distributed._functional_collectives as functional

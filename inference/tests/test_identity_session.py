@@ -68,13 +68,17 @@ class SourcedIdentityTests(unittest.TestCase):
                                      name='GPU', uuid='GPU-AAA-%d' % i)))
         with tempfile.TemporaryDirectory() as directory:
             out = str(Path(directory) / 'identity.json')
-            with patch.dict(sys.modules, torch=fake_torch), patch.dict(os.environ, {'CUDA_VISIBLE_DEVICES': ''}):
+            with patch.dict(sys.modules, torch=fake_torch), patch.dict(os.environ, {'CUDA_VISIBLE_DEVICES': '5,3'}):
                 session.generate_identity_file(out, rank=0, smi='xpu-smi')
             host = json.loads(Path(out).read_text(encoding='utf-8'))
         self.assertEqual(host['source'], session.AUTO_SOURCE)
         self.assertEqual(len(host['devices']), 2)
         self.assertEqual(host['devices'][0]['uuid'], 'aaa-0')
-        self.assertTrue(host['devices'][1]['host_device_node'].startswith('/dev/xpu'))
+        self.assertEqual(host['devices'][1]['logical_device'], 1)
+        self.assertNotIn('driver', host)
+        for device in host['devices']:
+            for field in ('driver', 'pci_bdf', 'physical', 'minor', 'host_device_node'):
+                self.assertNotIn(field, device)
 
     def test_missing_sourced_field_rejected(self):
         from flagprof.vendors.thead.session import validate_sourced_identity
@@ -93,12 +97,14 @@ class GenIdentityMergeTests(unittest.TestCase):
             uuid = 'GPU-ABCD-1234'
 
         devices = gen_identity.build_devices([Props()], '5.0.21.47', '/dev/xpu',
-                                             ['00000000:1c:00.0'])
+                                             ['00000000:1c:00.0'], [5])
         self.assertEqual(len(devices), 1)
         self.assertEqual(devices[0]['uuid'], 'abcd-1234')
         self.assertEqual(devices[0]['model'], 'P800 OAM')
         self.assertEqual(devices[0]['pci_bdf'], '00000000:1c:00.0')
-        self.assertEqual(devices[0]['host_device_node'], '/dev/xpu0')
+        self.assertEqual(devices[0]['host_device_node'], '/dev/xpu5')
+        self.assertEqual(devices[0]['physical'], '5')
+        self.assertNotIn('minor', devices[0])
 
 
 if __name__ == '__main__':
