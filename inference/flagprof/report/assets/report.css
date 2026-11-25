@@ -95,6 +95,22 @@ th{position:sticky;top:0;font-size:12px}.table-scroll{max-height:65vh}.numeric,.
 @media(max-width:960px){.filters{position:static}.workspace{padding:10px}.table-tools select,.chart-controls select{max-width:75vw}}
 @media print{.tabs,.workspace button,.more-findings,.fault-banner button{display:none!important}.workspace .panel[hidden]{display:block!important}.table-scroll{max-height:none;overflow:visible}td,th{max-width:none;white-space:normal!important;overflow-wrap:anywhere}.workspace{break-inside:auto}}
 .relationship{width:100%;max-height:360px;background:var(--bg-subtle);display:block;font:12px var(--font-sans);margin:.5rem 0;color:var(--text-secondary)}[data-point]{cursor:pointer}
+.metric-chart{container-type:inline-size;background:var(--bg-subtle);margin:.5rem 0}
+.metric-chart-row,.metric-chart-axis{display:grid;grid-template-columns:minmax(0,32fr) minmax(0,48fr) minmax(0,20fr);gap:4px 14px;align-items:center;width:100%;padding:6px 10px;font-size:13px}
+.metric-chart-row{grid-template-areas:"name track reading";border:0;border-radius:0;background:transparent;text-align:left;color:var(--text-primary)}
+.metric-chart-row+.metric-chart-row{border-top:1px solid var(--border-subtle)}
+.metric-chart-row:hover,.metric-chart-row:focus-visible{background:var(--accent-soft)}
+.metric-chart-label{grid-area:name;overflow-wrap:anywhere}
+.metric-chart-row svg{grid-area:track;display:block;width:100%;height:18px;overflow:visible}
+.metric-chart-reading{grid-area:reading;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.metric-chart-axis>div{grid-column:2;display:flex;justify-content:space-between;color:var(--text-secondary);font-variant-numeric:tabular-nums}
+.plot select[data-chart-choice]{max-width:100%}
+@container (max-width:34rem){
+ .metric-chart-row,.metric-chart-axis{grid-template-columns:minmax(0,1fr)}
+ .metric-chart-row{grid-template-areas:"name" "reading" "track"}
+ .metric-chart-axis>div{grid-column:1}
+}
+@media print{.workspace .metric-chart-row{display:grid!important;break-inside:avoid}}
 .tooltip{position:fixed;z-index:8;max-width:min(440px,90vw);overflow-wrap:anywhere;background:white;color:var(--text-primary);border:1px solid var(--border-default);padding:5px 9px;font:12px var(--font-sans);pointer-events:none}
 .layer-tree details{border-left:1px solid var(--border-default);padding-left:16px}.layer-tree summary{font-size:13px}
 #row-detail{position:fixed;inset:0 0 0 auto;margin:0;width:min(560px,92vw);height:100dvh;max-height:none;border:0;border-left:1px solid var(--border-default);border-radius:0;box-shadow:var(--shadow-drawer);z-index:9;overflow:auto;background:white}

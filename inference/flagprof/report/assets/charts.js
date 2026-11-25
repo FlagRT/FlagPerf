@@ -17,6 +17,32 @@ function line(x,y,end,bottom,color,width=1,extra=''){
 function mark(index,tip,shape){
  return '<g data-point="'+index+'" data-tip="'+esc(tip)+'" tabindex="0">'+shape+'</g>';
 }
+function metricChartRow(index,name,lines,reading,tip){
+ return '<button type="button" class="metric-chart-row" data-point="'+index+'" data-tip="'+esc(tip)+'" aria-label="'+esc(name+' · '+tip)+'">'+
+   '<span class="metric-chart-label">'+esc(name)+'</span><svg aria-hidden="true">'+lines+'</svg>'+
+   '<span class="metric-chart-reading">'+esc(reading)+'</span></button>';
+}
+function metricChart(title,rows,axis=''){
+ return '<div class="metric-chart" role="group" aria-label="'+esc(title)+'">'+rows+axis+'</div>';
+}
+function baselineLabel(r){
+ const parts=['rank '+(r.rank??'—'),fmt(r.phase)];
+ if(r.instrumentation!=null)parts.push(fmt(r.instrumentation,'instrumentation'));
+ if(r.generation_step!=null)parts.push('step '+r.generation_step);
+ const shape=r.shape,ids=shape?.samples?.samples??shape?.samples;
+ if(shape?.batch!=null)parts.push('批量 '+fmt(shape.batch));
+ if(shape?.input_tokens!=null)parts.push('输入 token 数 '+fmt(shape.input_tokens));
+ if(Array.isArray(ids)&&ids.length&&ids.every(v=>typeof v==='string'||typeof v==='number')){
+   const first=Number(ids[0]);
+   const consecutive=ids.length>2&&Number.isSafeInteger(first+ids.length-1)&&ids.every((v,i)=>String(v)===String(first+i));
+   const samples=consecutive?ids[0]+'–'+ids[ids.length-1]:
+     ids.slice(0,4).join('、')+(ids.length>4?'…（共 '+ids.length+' 个）':'');
+   parts.push('样本 '+samples);
+ }else if(shape!=null&&shape.batch==null&&shape.input_tokens==null){
+   parts.push(brief(shape,'shape'));
+ }
+ return parts.join(' · ');
+}
 function trend(rows,series,options={}){
  if(!rows.length)return '';
  const values=[];
@@ -80,15 +106,30 @@ function comparisonPlot(items,state){
  }
  const selected=items.filter(({r})=>Number.isFinite(r.relative_change)).slice(0,12);
  const scale=selected.reduce((m,{r})=>Math.max(m,Math.abs(r.relative_change)),0)||1;
- let body=line(405,0,405,selected.length*28,'#94a3b8');
- selected.forEach(({r,i},j)=>{
-   const v=r.relative_change,w=Math.abs(v)/scale*160,y=j*28+17;
+ const rows=selected.map(({r,i})=>{
+   const v=r.relative_change,end=(50+50*v/scale)+'%';
    const throughput=/per_second|throughput/.test(r.metric),latency=/_ns$/.test(r.metric);
    const color=(!throughput&&!latency)||v===0?'#64748b':(throughput?v>0:v<0)?'#18794e':'#b83227';
-   body+=mark(i,fmt(r.metric,'metric')+' · '+fmt(v,'relative_change'),label(4,y,'rank '+(r.rank??'—')+' · '+fmt(r.metric,'metric'))+
-     line(v<0?405-w:405,y-4,v<0?405:405+w,y-4,color,9)+label(585,y,fmt(v,'relative_change')+' · '+fmt(r.baseline,r.metric)+' → '+fmt(r.candidate,r.metric)));
- });
- return controls+(selected.length?svgFrame(body,selected.length*28+8,'变化率，以 0% 为中心'):'')+pivot;
+   const reading=fmt(v,'relative_change')+' · '+fmt(r.baseline,r.metric)+' → '+fmt(r.candidate,r.metric);
+   return metricChartRow(i,'rank '+(r.rank??'—')+' · '+fmt(r.metric,'metric'),
+     line('50%',0,'50%',18,'#94a3b8')+line('50%',9,end,9,color,9),reading,reading);
+ }).join('');
+ return controls+(rows?metricChart('变化率，以 0% 为中心',rows):'')+pivot;
+}
+function baselineDistribution(items){
+ const keys=['minimum_ns','median_ns','p95_ns','maximum_ns'];
+ const rows=items.filter(({r})=>keys.every(k=>Number.isFinite(r[k]))).slice(0,12);
+ if(!rows.length)return '';
+ const end=rows.reduce((max,{r})=>Math.max(max,r.maximum_ns),0);
+ const x=v=>(end?100*v/end:0)+'%';
+ const body=rows.map(({r,i})=>{
+   const stats=keys.map(k=>cfg.labels[k]+' '+fmt(r[k],k));
+   const lines=line(0,9,'100%',9,'#e2e8f0')+line(x(r.minimum_ns),9,x(r.maximum_ns),9,'#64748b',2)+
+     line(x(r.median_ns),9,x(r.p95_ns),9,'#155e8a',7)+line(x(r.median_ns),2,x(r.median_ns),16,'#10263a',2);
+   return metricChartRow(i,baselineLabel(r),lines,stats[1],stats.join(' · '));
+ }).join('');
+ const axis='<div class="metric-chart-axis"><div><span>0 ns</span><span>'+esc(fmt(end,'duration_ns'))+'</span></div></div>';
+ return metricChart('最小值、中位数、p95 与最大值',body,axis);
 }
 function relationship(section,indices){
  const id=section.id,panel=$(id),plot=panel.querySelector('.plot');if(!plot)return;
@@ -135,16 +176,7 @@ function relationship(section,indices){
    if(top&&Array.isArray(top.r.rank_device_union_ns))graphic+=rankBars(top);
    note='各 rank 设备活动并集的最大值减最小值。点位保留来源通信序号和各 rank 占用。';
  }else if(id==='performance.baseline'){
-   const rows=items.filter(o=>Number.isFinite(o.r.maximum_ns)).slice(0,12);
-   const end=rows.reduce((m,o)=>Math.max(m,o.r.maximum_ns),1),x=v=>270+510*v/end;
-   let body='';
-   rows.forEach(({r,i},j)=>{
-     const y=j*26+17;
-     if(![r.minimum_ns,r.median_ns,r.p95_ns].every(Number.isFinite))return;
-     body+=mark(i,[r.minimum_ns,r.median_ns,r.p95_ns,r.maximum_ns].map(v=>fmt(v,'duration_ns')).join(' / '),
-       label(4,y,'rank '+(r.rank??'—')+' · '+fmt(r.phase)+' · '+fmt(r.shape,'shape'))+line(x(r.minimum_ns),y-4,x(r.maximum_ns),y-4,'#64748b',2)+line(x(r.median_ns),y-4,x(r.p95_ns),y-4,'#155e8a',7)+line(x(r.median_ns),y-10,x(r.median_ns),y+2,'#10263a',2));
-   });
-   if(rows.length)graphic=svgFrame(body+label(270,rows.length*26+14,'0 ns')+label(780,rows.length*26+14,fmt(end,'duration_ns'),'end'),rows.length*26+24,'最小值、中位数、p95 与最大值');
+   graphic=baselineDistribution(items);
    const steps=items.filter(o=>Number.isInteger(o.r.generation_step));
    if(steps.length){
      const cohort=r=>[r.source,r.instrumentation,r.rank,r.scope,fmt(r.shape,'shape')].join(' · ');
@@ -153,7 +185,7 @@ function relationship(section,indices){
        [{name:'中位数',color:'#155e8a',get:r=>r.median_ns},{name:'p95',color:'#0f766e',get:r=>r.p95_ns}],
        {unit:'duration_ns',x:r=>r.generation_step,name:r=>'step '+r.generation_step});
    }
-   note='细线为最小至最大观测，粗线为中位数至 p95。';
+   note='细线从最小值延伸到最大值，粗线从中位数延伸到 p95。选择一行可查看完整输入形状和时延。';
  }else if(id==='perf.gap'){
    for(const {r,i} of items.slice(0,8)){
      if(!(r.window_ns>0))continue;
@@ -171,12 +203,11 @@ function relationship(section,indices){
    for(const {r} of items)totals.set(r.category,(totals.get(r.category)||0)+(r[key]||0));
    const rows=items.filter(o=>Number.isFinite(o.r[key])).sort((a,b)=>b.r[key]-a.r[key]).slice(0,12);
    const max=rows[0]?.r[key]||1;
-   let body='';
-   rows.forEach(({r,i},j)=>{
-     const y=j*24+17,tip=r.name+' · '+fmt(r[key],key);
-     body+=mark(i,tip,label(4,y,String(r.name).slice(0,36))+line(315,y-4,315+300*r[key]/max,y-4,palette[r.category]||'#155e8a',10)+label(625,y,fmt(r[key],key)+' · '+(totals.get(r.category)?fmt(r[key]/totals.get(r.category),'time_share'):'分母为零')));
-   });
-   if(rows.length)graphic=svgFrame(body,rows.length*24+4,'热点与类别内占比');
+   const body=rows.map(({r,i})=>{
+     const reading=fmt(r[key],key)+' · '+(totals.get(r.category)?fmt(r[key]/totals.get(r.category),'time_share'):'分母为零');
+     return metricChartRow(i,r.name,line(0,9,(100*r[key]/max)+'%',9,palette[r.category]||'#155e8a',10),reading,reading);
+   }).join('');
+   if(body)graphic=metricChart('热点与类别内占比',body);
    note='按当前筛选内同类别的工作量求占比。设备工作量包含多流重叠。';
  }else if(id==='route.coverage'){
    const totals=new Map();
