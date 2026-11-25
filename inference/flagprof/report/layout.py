@@ -61,6 +61,7 @@ SUMMARY_COLUMNS = {
 
 CHARTS = {
     'perf.device':'pareto_bars', 'perf.op':'pareto_bars', 'perf.layer':'layer_tree',
+    'perf.layer.forwards':'forward_layer_ranking',
     'perf.gap':'window_union', 'route.coverage':'route_share', 'oracle.layer':'oracle_layer_curve',
     'oracle.three_way':'oracle_three_way', 'comparison.metrics':'compare_diverging',
     'performance.baseline':'latency_range', 'generation.steps':'step_latency',

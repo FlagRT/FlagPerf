@@ -41,6 +41,34 @@ class ResultReportTests(unittest.TestCase):
         self.assertIn('没有有效执行进度观测',text)
         self.assertIn('未记录告警不能据此判断执行过程正常',text)
 
+    def test_forward_layer_ranking_on_new_reports_and_legacy_redraw(self):
+        section_id = 'perf.layer.forwards'
+        source = self.root / 'source'
+        exports = source / 'exports'
+        exports.mkdir(parents=True)
+        row = dict(name='attention', calls=1, exclusive_ns=7, inclusive_ns=12)
+        (exports / 'perf-layer-forwards.jsonl').write_text(json.dumps(row)+'\n')
+        (source / 'result.json').write_text(json.dumps(dict(schema='p1-result/1', results={})))
+        write_report(source)
+
+        # Snapshots written by the previous renderer contain rows but no chart declaration.
+        records = self.snapshot(source)
+        for record in records:
+            if record['type']=='section' and record['value']['id']==section_id:
+                del record['value']['chart']
+        (source/'report-data.jsonl').write_text(''.join(json.dumps(r)+'\n' for r in records))
+        for entry in ('new','snapshot','exports'):
+            with self.subTest(entry=entry):
+                out = source if entry=='new' else self.root/entry
+                if entry!='new':
+                    redraw(source,out,refresh_view=entry=='exports')
+                html = (out/'report.html').read_text()
+                panel = html.split('id="'+section_id+'"',1)[1].split('</section>',1)[0]
+                self.assertIn('<div class="plot"',panel)
+                config = html.split('<script id="report-config" type="application/json">',1)[1].split('</script>',1)[0]
+                section = next(s for s in json.loads(config)['sections'] if s['id']==section_id)
+                self.assertEqual(section['chart']['type'],'forward_layer_ranking')
+
     def test_route_summary_columns_and_performance_link_are_visible(self):
         out=self.generate(dict(results={
             'oracle.op_sensitivity':dict(status='ok',data=[dict(boundary='pow',introduced=True)],coverage=dict(

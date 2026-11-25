@@ -1,9 +1,9 @@
 // Each datum keeps its source row ordinal. Axes use the units of that row.
 const palette={compute:'#1D6FA5',memcpy:'#D97706',comm:'#0F766E',wait:'#7C6F9F'};
-function picker(state,key,values,label){
+function picker(state,key,values,label,display=v=>cfg.labels[v]||fmt(v)){
  if(!values.includes(state[key]))state[key]=values[0];
  if(values.length<2)return '';
- return '<label>'+esc(label)+' <select data-chart-choice="'+key+'">'+values.map(v=>'<option '+(state[key]===v?'selected ':'')+'value="'+esc(v)+'">'+esc(cfg.labels[v]||fmt(v))+'</option>').join('')+'</select></label> ';
+ return '<label>'+esc(label)+' <select data-chart-choice="'+key+'">'+values.map(v=>'<option '+(state[key]===v?'selected ':'')+'value="'+esc(v)+'">'+esc(display(v))+'</option>').join('')+'</select></label> ';
 }
 function svgFrame(body,height,label){
  return '<svg class="relationship" viewBox="0 0 840 '+height+'" role="img" aria-label="'+esc(label)+'">'+body+'</svg>';
@@ -131,11 +131,46 @@ function baselineDistribution(items){
  const axis='<div class="metric-chart-axis"><div><span>0 ns</span><span>'+esc(fmt(end,'duration_ns'))+'</span></div></div>';
  return metricChart('最小值、中位数、p95 与最大值',body,axis);
 }
+function forwardLayerRanking(items,state,sampled){
+ const metricPicker=picker(state,'layerMetric',['exclusive_ns','inclusive_ns'],'耗时口径');
+ const metric=state.layerMetric,metricName=cfg.labels[metric];
+ const groups=new Map();
+ for(const item of items){
+   const {run_id,forward,root_corr,phase}=item.r;
+   const key=JSON.stringify([run_id,forward,root_corr,phase]);
+   if(!groups.has(key))groups.set(key,[]);
+   groups.get(key).push(item);
+ }
+ function groupLabel(key){
+   const [run,forward,root,phase]=JSON.parse(key);
+   const label=forward==null||forward==='unknown'?'前向序号未记录':'前向 '+forward;
+   return [label,phase&&phase!=='unknown'?fmt(phase):null,run,root!=null?'根调用 '+root:null].filter(Boolean).join(' · ');
+ }
+ const groupPicker=picker(state,'layerForward',[...groups.keys()],'前向范围',groupLabel);
+ const group=groups.get(state.layerForward)||[];
+ const ranked=group.filter(({r})=>r.name!=='<root>'&&Number.isFinite(r[metric])&&r[metric]>=0)
+   .sort((a,b)=>b.r[metric]-a.r[metric]||a.i-b.i).slice(0,10);
+ const max=ranked[0]?.r[metric]||1;
+ const bars=ranked.map(({i,r})=>'<button type="button" class="bar" data-point="'+i+'">'+
+   '<span class="bar-label" title="'+esc(r.name)+'">'+esc(r.name)+'</span>'+
+   '<span class="bar-track"><span class="bar-fill" style="width:'+100*(r[metric]/max)+'%"></span></span>'+
+   '<span>'+esc(fmt(r[metric],metric))+'</span></button>').join('');
+ const roots=group.filter(({r})=>r.name==='<root>').map(({i,r})=>
+   '<button type="button" data-point="'+i+'">整模型 &lt;root&gt; · '+esc(metricName)+' '+esc(fmt(r[metric],metric))+'</button>');
+ const scope=groups.size===1?'<p class="description">'+esc(groupLabel(state.layerForward))+'</p>':'';
+ const definition=metric==='exclusive_ns'?'扣除与已记录直接子层重叠的区间。':'包含子层执行时间，父子层的数值不能相加。';
+ return '<div class="layer-ranking"><h3>'+esc(metricName)+' Top 10</h3><div class="chart-controls">'+metricPicker+groupPicker+'</div>'+scope+
+   '<p class="description">'+(sampled?'范围为本页证据样本。':'')+'按当前筛选内各层的累计时间排列。'+definition+'选择一行可查看对应明细。</p>'+
+   (bars?'<div class="bars">'+bars+'</div>':'<p>当前范围没有可排名的子层耗时记录。</p>')+
+   (roots.length?'<p>'+roots.join(' ')+'</p>':'')+'</div>';
+}
 function relationship(section,indices){
  const id=section.id,panel=$(id),plot=panel.querySelector('.plot');if(!plot)return;
  const state=states[id],items=indices.map(i=>({i,r:data[id][i]}));
  let controls='',graphic='',note='';
- if(id==='comparison.metrics'){
+ if(id==='perf.layer.forwards'){
+   graphic=forwardLayerRanking(items,state,section.evidence_index);
+ }else if(id==='comparison.metrics'){
    graphic=comparisonPlot(items,state);note='变化率以基准值为分母。绿色表示时延下降或吞吐上升。';
    panel.querySelector(':scope > .table-scroll').hidden=state.view==='条件透视';
  }else if(id==='oracle.layer'||id==='oracle.three_way'){
@@ -242,7 +277,7 @@ function relationship(section,indices){
  }else if(id==='group.ranks'){
    graphic=items.map(({r,i})=>'<button data-point="'+i+'">rank '+esc(r.rank)+' · '+esc(fmt(r.status))+'</button>').join(' ');
  }else{bars(panel,section,indices);return;}
- plot.innerHTML=controls+graphic+(graphic?'<p class="description">'+esc(note)+'</p>':'');
+ plot.innerHTML=controls+graphic+(graphic&&note?'<p class="description">'+esc(note)+'</p>':'');
  plot.querySelectorAll('[data-chart-choice]').forEach(select=>select.onchange=()=>{const key=select.dataset.chartChoice;state[key]=typeof state[key]==='number'?Number(select.value):select.value;relationship(section,indices);});
 }
 function rankBars({r,i}){
@@ -263,7 +298,11 @@ function initChartEvents(){
  const open=event=>{
    const point=event.target.closest('[data-point]');if(!point)return;
    const panel=point.closest('.panel');
-   if(panel){tooltip.hidden=true;detail(panel.id,Number(point.dataset.point));}
+   if(panel){
+     tooltip.hidden=true;
+     if(point.closest('.layer-ranking'))focusRow(panel.id,Number(point.dataset.point),false);
+     else detail(panel.id,Number(point.dataset.point));
+   }
  };
  document.addEventListener('click',open);
  document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.matches('g[data-point]'))open(e);});
