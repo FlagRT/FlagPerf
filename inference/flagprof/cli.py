@@ -35,6 +35,12 @@ def main(argv=None):
     workflow.add_argument('--json', action='store_true')
     from .graph.command import add_parser as add_export_parser
     add_export_parser(verbs)
+    telemetry=verbs.add_parser('telemetry',help='inspect the device telemetry stack')
+    tele_actions=telemetry.add_subparsers(dest='telemetry_action',required=True)
+    tele_check=tele_actions.add_parser('check',help='resolve the provider and print its inventory')
+    tele_check.add_argument('--vendor',required=True,choices=('ascend','nvidia','thead','kunlunxin'))
+    tele_check.add_argument('--devices',default='all')
+    tele_check.add_argument('--json',action='store_true')
     watch=verbs.add_parser('watch',help='independent node monitoring')
     actions=watch.add_subparsers(dest='watch_action',required=True)
     start=actions.add_parser('start'); start.add_argument('--root',required=True)
@@ -187,6 +193,9 @@ def _dispatch(args, parser):
         except (OSError, ValueError) as error:
             print('flagprof export: '+str(error),file=sys.stderr)
             return 2
+    if args.verb=='telemetry':
+        from .telemetry.check import run as telemetry_check
+        return telemetry_check(args.vendor,args.devices,args.json)
     if args.verb=='watch':
         try:
             from .monitor.session import configuration,load

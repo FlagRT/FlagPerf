@@ -20,6 +20,24 @@ from .supervision import Heartbeat, reclaim
 from .leases import Leases, device_keys
 
 
+def device_provider(registry, vendor, devices, source, inventory):
+    """Create the vendor device-telemetry provider, or (None, None).
+
+    Device telemetry is best-effort. On a node where the NVML-compatible
+    library is unreachable the sidecar still samples host/procfs, and the
+    provider error is recorded in the run inventory so the gap is
+    diagnosable instead of silent.
+    """
+    if vendor not in monitored_vendors():
+        return None, None
+    try:
+        return registry.create('telemetry.' + vendor, devices=devices, source=source)
+    except Exception as error:
+        inventory.setdefault('errors', []).append(
+            'device telemetry unavailable: ' + type(error).__name__ + ': ' + str(error))
+        return None, None
+
+
 def sample(args):
     run = Path(args.run)
     inventory = dict(version=1, status='running', started_raw_ns=raw_clock(), ended_raw_ns=None,
@@ -35,15 +53,15 @@ def sample(args):
     heartbeat = run/'heartbeat'
     heartbeat.touch()
     try:
-        host_only = args.vendor not in monitored_vendors()
         registry = Registry()
+        provider, identity = device_provider(registry, args.vendor, args.devices, args.source, inventory)
+        host_only = provider is None
         if host_only:
             host, identity = registry.create('telemetry.host')
             provider = host
             metrics, calls = host.metrics, host.calls()
             inventory.update(device_telemetry='unavailable', source='host-procfs')
         else:
-            provider, identity = registry.create('telemetry.' + args.vendor, devices=args.devices, source=args.source)
             host = Host()
             inventory.update(provider.inventory)
             metrics, calls = provider.metrics + host.metrics, provider.calls() + host.calls()

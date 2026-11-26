@@ -1,12 +1,12 @@
 # 资源监控与在线诊断
 
-资源监控把主机、设备和任务阶段放在同一条可核验的时间线上；在线诊断消费心跳、执行进度、异常和同步通信事件，输出带原始证据的 Finding。普通采集默认关闭两者。Ascend 和 NVIDIA 提供设备遥测，可通过 `flagprof watch start` 启动独立节点会话。平头哥 PPU 和昆仑芯 P800 在 `record --monitor on` 和训练观测中默认启动本地旁路进程，采集主机可用内存及目标进程 CPU/RSS。清单记录 `source=host-procfs` 和 `device_telemetry=unavailable`，这两个平台的本地拓扑不启用在线诊断。
+资源监控把主机、设备和任务阶段放在同一条可核验的时间线上；在线诊断消费心跳、执行进度、异常和同步通信事件，输出带原始证据的 Finding。普通采集默认关闭两者。Ascend（DCMI）、NVIDIA（NVML）以及平头哥 PPU、昆仑芯 P800（两者的 CUDA 兼容栈都提供 NVML-ABI 兼容库）都提供设备遥测，可通过 `flagprof watch start` 启动独立节点会话，并支持 agent 拓扑与在线诊断。PPU 的兼容库在宿主机（`/usr/lib64/libnvidia-ml.so`），容器需挂载或设置 `FLAGPROF_TELEMETRY_LIBRARY`；P800 的库随镜像 Python 包提供（`triton/backends/*/*/so/libxpunvidia-ml.so`，经 sysconfig 自动发现），无需额外挂载。库不可得时会话回退本地旁路：继续采集主机可用内存与目标进程 CPU/RSS，清单记 `source=host-procfs`、`device_telemetry=unavailable`，并把 provider 原因写入清单 `errors`，诊断如实关闭而不是静默缺失。
 
 ```mermaid
 flowchart LR
   T[目标进程：阶段、显存边界、进度、异常] --> S[目标 Store]
   T -->|登记进程和设备| N[独立节点监控]
-  N --> C[隔离采集：DCMI / NVML / SMI]
+  N --> C[隔离采集：DCMI / NVML（含兼容 ABI）/ SMI]
   C --> M[滚动监控 Store]
   S --> R[规则引擎]
   M --> R
@@ -60,7 +60,17 @@ NVIDIA 使用 `--vendor nvidia --devices all`。`launch` 支持同样的监控�
 
 单次任务会探测本地采集能力。Ascend 在容器内优先使用 `npu-smi info`。当命令不可用或无法枚举板卡时，自动采集改用 DSMI 驱动接口，枚举容器可见的逻辑设备并核实对应的物理芯片编号。任务报告按物理编号关联显存、芯片温度、健康状态和 AI Core 利用率。监控清单的 `source` 和 `initial_source_failure` 分别记录实际采集来源和切换原因。板级功耗需由能识别功率域的来源采集。
 
-Ascend 宿主可使用 DCMI，NVIDIA 可使用 NVML 或 `nvidia-smi`。探测到相应接口时选择 `local`，缺少接口时选择 `host`，由宿主侧运行 `python3 -m flagprof.monitor --root ROOT --vendor ascend --devices all`。同一节点长期接多个任务时采用 `agent`，避免每个目标重复读取设备指标。
+Ascend 宿主可使用 DCMI，NVIDIA 可使用 NVML 或 `nvidia-smi`；PPU/P800 经各自的 NVML-ABI 兼容库读取（PPU 主机库需挂载进容器，P800 用镜像内 triton 包），默认选择 `local`，设备库不可得时按上文降级。Ascend/NVIDIA 探测到相应接口时选择 `local`，缺少接口时选择 `host`，由宿主侧运行 `python3 -m flagprof.monitor --root ROOT --vendor ascend --devices all`。同一节点长期接多个任务时采用 `agent`，避免每个目标重复读取设备指标。
+
+换机或换镜像时先体检：
+
+```bash
+python3 -B -S -m flagprof telemetry check --vendor thead      # 或 kunlunxin / ascend / nvidia
+# 成功：source、实际库路径、驱动版本、逐实体（UUID+型号）与全部指标（含读取 API）
+# 失败：逐条候选路径及错误原因，并给出该厂商的挂载/环境变量提示；--json 供巡检
+```
+
+库发现顺序为 `FLAGPROF_TELEMETRY_LIBRARY` → 厂商专有路径 → 标准 soname → 当前解释器 sysconfig 推导的 triton 包路径；监控 worker 以 `-S` 启动，因此发现不依赖 importlib。target 注册的设备身份与遥测实体由同一库的 `nvmlDeviceGetUUID` 读出，按 UUID 主体匹配（忽略 `GPU-`/`PPU-`/`P800-` 前缀差异），保证两侧实体字符串逐一对应；库不可得时身份如实记 `unknown` 并附原因。
 
 ## 节点监控、YAML 采集与离线重放
 
