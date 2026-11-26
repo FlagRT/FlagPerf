@@ -17,16 +17,17 @@ def _candidate_libraries():
     The image ships it under the triton XPU backend
     (site-packages/triton/backends/xpu/xpu3/so/libxpunvidia-ml.so*) and in
     the torch_xmlir dependency tree; host installs may also provide it.
+    The monitor worker runs with -S (no site-packages), so discovery uses
+    plain filesystem globs.
     """
     import glob
-    from pathlib import Path
-    import importlib.util
     candidates = []
-    spec = importlib.util.find_spec('triton')
-    if spec and spec.origin:
-        root = Path(spec.origin).parent
-        candidates += sorted(glob.glob(str(root/'backends'/'*'/'*'/'so'/'libxpunvidia-ml.so'), recursive=True))
-        candidates += sorted(glob.glob(str(root/'backends/**/so/libxpunvidia-ml.so*'), recursive=True))
+    patterns = ('/root/miniconda/envs/*/lib/python*/site-packages/triton/backends/*/*/so/libxpunvidia-ml.so*',
+                '/opt/conda/envs/*/lib/python*/site-packages/triton/backends/*/*/so/libxpunvidia-ml.so*',
+                '/usr/local/lib/python*/site-packages/triton/backends/*/*/so/libxpunvidia-ml.so*',
+                '/usr/lib/python*/site-packages/triton/backends/*/*/so/libxpunvidia-ml.so*')
+    for pattern in patterns:
+        candidates += sorted(glob.glob(pattern))
     candidates += ['/usr/local/xpu/lib/libxpunvidia-ml.so', 'libxpunvidia-ml.so']
     return candidates
 
