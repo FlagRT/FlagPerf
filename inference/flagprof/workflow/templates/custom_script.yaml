@@ -1,0 +1,51 @@
+# ==============================================================================
+# FlagPerf Inference 自定义推理脚本采集模板 (custom-script)
+#
+# 适用场景：你已有自己的 Python 推理程序，不修改业务代码直接挂载观测并出报告。
+#
+# 注意（D32 注入边界）：
+#   - command 的第一项必须是直接启动 Python（如 python3 / python），
+#     不支持套一层 bash/sh 脚本；
+#   - 若你的服务由 shell 包装或自行 fork/spawn 推理子进程，请在真正执行推理的
+#     Python 进程中直接调用 flagprof.attach()（参见 docs/02-architecture.md）。
+# ==============================================================================
+
+schema_version: 1
+mode: single
+name: custom-script-perf
+
+target:
+  type: command
+  # 替换为你自己的 Python 启动命令（以列表形式拆分参数）
+  command:
+    - python3
+    - ./your_inference.py
+    - --batch-size
+    - "1"
+  # 可选：脚本工作目录，省略时用配置文件所在目录
+  # cwd: .
+
+hardware:
+  vendor: auto             # auto | ascend | nvidia | thead | kunlunxin
+  nproc: 1                 # 单卡填 1；若脚本本身支持 TP2 分布式（读 RANK/WORLD_SIZE），可改 2
+  # comm_backend: auto     # 仅 nproc=2 时有效：auto | hccl | nccl | flagcx
+
+profile:
+  # perf（完整官方 profiler）| perf-lite（轻量）| modules | coverage | monitor
+  preset: perf
+
+components:
+  flaggems:
+    enabled: false
+    include: []
+  flagtree: inherit
+
+collection:
+  profile_memory: false    # 需分析显存分配峰值时改为 true（仅 perf / modules 可用）
+  # capture_only: true     # final 只返回封存 capture，随后可导入；本次跳过 Store 校验与报告
+  timeout: 1800
+
+output:
+  dir: ./flagprof-results
+  verify: true
+  report: true

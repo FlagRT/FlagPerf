@@ -1,0 +1,46 @@
+# ==============================================================================
+# FlagPerf Inference 独立 CPU 计算图导出模板 (export)
+#
+# 适用场景：在独立 CPU 进程中导出固定形状的 FX / ONNX 计算图与离线 HTML 查看器，
+#          供架构阅读、算子统计或编译器导入消费（当前内置入口支持 Qwen3-Embedding）。
+# 环境要求：PyTorch、Transformers、onnx、onnxscript（若开启 verify_onnx 还需 onnxruntime）。
+# ==============================================================================
+
+schema_version: 1
+mode: export
+name: qwen3-graph-export
+
+target:
+  type: builtin
+  task: embedding
+  model: /path/to/Qwen3-Embedding-0.6B
+  # 可用 texts、inputs（JSONL）或 inputs_from（固定输入参考包）
+  texts:
+    - "Sample text 1 for static graph export."
+    - "Sample text 2 for static graph export."
+
+runner:
+  # 导出精度：bfloat16（轻量结构常用）| float32（开启 verify_onnx 时必须使用 float32）
+  dtype: bfloat16
+  batch_size: 2
+  max_length: 256
+  pooling: last            # 导出支持：auto | last | mean
+  padding_side: left       # left | right
+
+export:
+  # 导出格式：["fx"] | ["onnx"] | ["fx", "onnx"]
+  formats:
+    - fx
+    - onnx
+  # 产物类型：
+  #   structure - 轻量结构包（含 index.html 与结构 JSON，不含大体积权重文件，推荐先用）
+  #   full      - 完整可执行包（保留 model.pt2 / model.onnx / 权重与样例张量，供编译器导入）
+  bundle: structure  # 摘要链接 manifest，分格式显示导出及验证状态
+  # 是否使用 CPU ONNX Runtime 做数值一致性校验（仅 dtype=float32 且包含 onnx 时可设为 true）
+  verify_onnx: false
+  # 仅使用 target.inputs_from 时有效：选择参考包中的第几个 batch（从 0 开始）
+  batch_index: 0
+  timeout: 1800
+
+output:
+  dir: ./flagprof-results

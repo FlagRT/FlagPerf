@@ -55,6 +55,11 @@ def change(a,b,allowed):
                 reason=None if valid and a else 'zero_baseline' if valid else 'not_comparable_or_missing')
 
 
+def runner_group_key(row):
+    fields = ('rank','instrumentation','scope','shape','phase','generation_step')
+    return json.dumps([row.get(k) for k in fields],sort_keys=True)
+
+
 def generate(reports, out, *, declare=None, limits=None):
     from flagprof.offline.worker import output_operation
     return output_operation(out, reports, _generate, reports, declare=declare, limits=limits)
@@ -79,7 +84,8 @@ def _generate(reports,out,*,declare=None,limits=None):
             if not panel and runner:
                 identity=dict(runner.get('condition') or {})
                 identity['device']={str(s['rank']):s.get('identity',{}).get('device') for s in runner.get('sources',[])}
-                groups=runner.get('groups',[]);source_rows=runner.get('sources',[])
+                groups=sorted(runner.get('groups',[]),key=runner_group_key)
+                source_rows=sorted(runner.get('sources',[]),key=lambda row:row['rank'])
                 context=dict(workload_identity=identity,window_identity=dict(window_kind='runner_synchronized',
                     warmup=[s.get('warmup_excluded') for s in source_rows],
                     forwards=[g.get('observations') for g in groups],repeats=len(source_rows),
@@ -114,10 +120,9 @@ def _generate(reports,out,*,declare=None,limits=None):
                                 **change(distribution(av)[stat],distribution(bv)[stat],check['status']=='comparable')))
                 if i==0:
                     if left.get('runner') and right.get('runner'):
-                        def key(row):return json.dumps([row.get(k) for k in ('rank','instrumentation','scope','shape','phase','generation_step')],sort_keys=True)
-                        left_groups={key(r):r for r in left['runner']['groups']}
+                        left_groups={runner_group_key(r):r for r in left['runner']['groups']}
                         for row in right['runner']['groups']:
-                            baseline=left_groups.get(key(row),{})
+                            baseline=left_groups.get(runner_group_key(row),{})
                             for metric in ('mean_ns','median_ns','p95_ns','samples_per_second','generated_tokens_per_second'):
                                 allowed=checked['status']=='comparable' and bool(baseline)
                                 metrics.append(dict(source=right['report'],rank=row.get('rank'),scope=row.get('scope'),

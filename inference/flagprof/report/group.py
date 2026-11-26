@@ -28,22 +28,34 @@ def validate_manifest(path):
     if state.get('schema') != 'flagprof-group/1' or state.get('world_size') != 2:
         raise ValueError('unsupported group manifest')
     rows = state.get('ranks', [])
-    if [r['rank'] for r in rows] != [0, 1]:
+    if [r['rank'] for r in rows] != [0, 1] or any(type(r['rank']) is not int for r in rows):
         raise ValueError('missing, duplicate or unordered group ranks')
+    seen = set()
     for row in rows:
         if row.get('group_id') != state['group_id']:
             raise ValueError('worker group identity mismatch')
-        if row.get('run'):
-            run = Path(row['run'])
-            if run.is_absolute() or '..' in run.parts or not (path.parent/run).resolve().is_relative_to(path.parent):
-                raise ValueError('group Store path must stay relative to its delivery')
+        for field in ('run', 'capture'):
+            if not row.get(field):
+                continue
+            entry = Path(row[field])
+            resolved = (path.parent / entry).resolve()
+            if entry.is_absolute() or '..' in entry.parts or path.parent not in resolved.parents:
+                raise ValueError(f'group {field} path must stay relative to its delivery')
+            if resolved in seen:
+                raise ValueError(f'duplicate group {field} path for rank {row["rank"]}')
+            seen.add(resolved)
     return state
 
 
 def check_ranks(states, group):
     if len(states) != 2:
         raise ValueError('two rank states required')
-    if states[0]['identity'] != states[1]['identity']:
+    from flagprof.components.flaggems import gems_identity
+    identities = [dict(state['identity']) for state in states]
+    components = [gems_identity(identity.pop('flaggems', None)) for identity in identities]
+    (left_switch, left_hash), (right_switch, right_hash) = components
+    if (identities[0] != identities[1] or left_switch != right_switch
+            or left_hash and right_hash and left_hash != right_hash):
         raise ValueError('rank workload identity mismatch')
     if states[0]['trajectories'] != states[1]['trajectories']:
         raise ValueError('rank token or step control mismatch')
@@ -79,6 +91,7 @@ def _generate_group(manifest, out=None, *,  runner_results=None, limits=None):
         raise ValueError('group report must be outside input delivery')
     out.mkdir(parents=True, exist_ok=True)
     states, issues, reports = [], [], []
+    rank_identities = {}
     if group.get('status')!='complete':
         issues.append('group execution did not complete')
     for row in group['ranks']:
@@ -101,6 +114,10 @@ def _generate_group(manifest, out=None, *,  runner_results=None, limits=None):
                 workspace.ingest()
                 from flagprof.analyzers.oracle import identity
                 observed = identity(workspace)
+                if observed and observed.get('rank', rank) != rank:
+                    raise ValueError(f'rank {rank} Store identity does not match group manifest')
+                if observed:
+                    rank_identities[rank] = dict(observed)
                 observed.pop('device', None)
                 observed.pop('rank', None)
                 backend=observed.get('comm_backend');world=observed.get('parallelism',{}).get('world_size')
@@ -230,7 +247,9 @@ def _generate_group(manifest, out=None, *,  runner_results=None, limits=None):
         for row in control_calls:stream.write(json.dumps(row,ensure_ascii=False)+'\n')
     if runner_results:
         from .performance import summarize
-        result['runner_summary']=summarize(runner_results,states[0]['identity'] if states else None,limits=limits)
+        if set(rank_identities) != {0, 1}:
+            raise ValueError('group runner attachment requires both Store workload identities')
+        result['runner_summary']=summarize(runner_results,limits=limits,rank_identities=rank_identities)
     from flagprof.monitor.diagnostic_report import panel
     result['diagnosis']=panel(manifest.parent)
     (out/'result.json').write_text(json.dumps(result, indent=2)+'\n')

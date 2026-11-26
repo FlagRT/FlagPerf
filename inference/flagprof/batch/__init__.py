@@ -1,2 +1,6 @@
 """Batch runner for user-supplied inference workloads."""
-from .batch_driver import main
+
+
+def main(argv=None):
+    from .batch_driver import main as run
+    return run(argv)

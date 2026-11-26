@@ -1,0 +1,99 @@
+# ==============================================================================
+# FlagPerf Inference A/B 组件对照模板 (compare)
+#
+# 适用场景：
+#   1. FlagTree on vs off 精度或性能对照（下例默认展示此场景）
+#   2. FlagGems on vs off 对照
+#   3. TP2 下 FlagCX vs HCCL / NCCL 对照（两侧均用 TP2，固定组件并分别指定通信后端）
+#   4. 跨硬件精度对照（如对比已有的 NVIDIA A100 参考 Store，见下方注释示例）
+#
+# 工作原理：
+#   - 上半部分定义两侧共享的模型、输入与数值设置，运行后核对实际身份与报告口径；
+#   - compare.ref 与 compare.cmp 只写「变化的那几项」；
+#   - 程序自动双跑、自动推导 declare.json，并一键生成 Oracle（精度）或 Compare（性能）报告。
+# ==============================================================================
+
+schema_version: 1
+mode: compare
+name: flagtree-accuracy-ab
+
+# ======================== 一、两侧共享的基础条件 ========================
+
+target:
+  type: builtin
+  task: embedding
+  model: /path/to/Qwen3-Embedding-0.6B
+  # 建议精度对照使用固定输入参考包（也可用 inputs 或 texts）
+  inputs_from: /path/to/oracle-inputs
+
+hardware:
+  vendor: auto             # auto | ascend | nvidia | thead | kunlunxin
+  nproc: 1                 # 对比 FlagCX vs HCCL 时改为 2
+
+profile:
+  # accuracy -> 自动调用 flagprof report oracle（含逐层/首差异/算子误差）
+  # 切到 perf / perf-lite / modules / "none" 时移除下方 accuracy 专用的 collection.tensor_* 项；
+  # 工作流改为生成性能对照，结果中保留各指标的可比性。
+  preset: accuracy
+
+runner:
+  dtype: bfloat16
+  batch_size: 1
+  warmup: 0                # 精度对齐推荐 0；性能对照推荐 >= 1
+  forwards: 1              # 精度对齐推荐 1；性能对照推荐 >= 3
+  pooling: auto
+  padding_side: auto
+
+components:
+  # 测 FlagTree 编译器对照时，需固定开启 FlagGems 并共享同一份 include 算子清单
+  flaggems:
+    enabled: true
+    include: ./inputs/include.json
+
+collection:
+  # 精度采集范围：model（仅终点）| layer（逐层，推荐）| 模块列表
+  tensor_boundaries: layer
+  # auto 请求保存全部 blob，实际覆盖受每 rank 的字节预算约束
+  tensor_blob: auto
+  # 如需深入定位某一层内每个算子的误差（要求 batch_size=1），取消下行注释：
+  # tensor_ops_in: "<root>.layers.0"
+
+# ======================== 二、对照双方（只写差异项） ========================
+
+compare:
+  # 基准侧（ref）
+  ref:
+    label: vendor-triton
+    components:
+      flagtree: "off"
+      vendor_compiler: ./vendor-compiler
+    # 【跨机器/跨芯片对照用法】如果你已有现成的参考侧 Store（例如 NVIDIA A100 跑好的目录），
+    # 删除本侧 components，改用下行并显式声明预期差异。示例 cmp 是单卡，参考也须是单卡 Store。
+    # existing_run: /path/to/nvidia-a100-accuracy-run
+
+  # 可选第三侧（baseline）：填写后自动升级为「三路精度对照 (ref / baseline / cmp)」
+  # baseline:
+  #   label: flaggems-off
+  #   components:
+  #     flaggems:
+  #       enabled: false
+  #       include: []
+
+  # 对比侧（cmp）
+  cmp:
+    label: flagtree-on
+    components:
+      flagtree: "on"
+
+  # 声明允许变化的身份字段：
+  #   auto - 根据 ref 与 cmp 的配置差异自动推导（本例自动生成 ["compiler", "software.triton"]）
+  #   跨机时显式列出预期变化，例如 ["device", "software", "compiler"]。
+  #   运行后分别看实际组件身份和 Oracle 状态；三路须全是 Store 或全是完整 group。
+  #   性能对照结果为 not_comparable 时，摘要列出原因、指标差值保留为空。
+  declare: auto
+  note: "固定模型、输入、数值口径与 FlagGems include，仅对比编译器变化。"
+
+output:
+  dir: ./flagprof-results
+  verify: true
+  report: true

@@ -8,15 +8,42 @@ from pathlib import Path
 import statistics
 
 from flagprof.analyzers.gap import distribution
+from flagprof.components.flaggems import gems_identity
 
 FORWARD_TIMING_NOTE = '各 rank 分别统计同步前向时延。插桩扰动需要有共同配对标识和测量协议的回执。'
 GROUP_TIMING_NOTE = 'rank 分别计时；组时延仅使用同主机时钟和组执行回执，取最早开始至最晚结束，逻辑 token 只计一次。插桩扰动仅使用有 pair_id 与 measurement_protocol 的配对回执。'
 
-def summarize(paths, identity=None, limits=None):
+def runner_rank(value, recorded, *, required=False):
+    ranks = [v['rank'] for v in (value, recorded) if v.get('rank') is not None]
+    if any(type(r) is not int or r < 0 for r in ranks) or len(set(ranks)) > 1:
+        raise ValueError('runner rank identity conflict')
+    if required and not ranks:
+        raise ValueError('runner rank identity missing')
+    return ranks[0] if ranks else 0
+
+
+def match_runner(recorded, expected, component, rank):
+    for key in ('model_files','inputs_sha256','samples','batches','dtype','attention','pooling','generation',
+                'device','software','numerics','compiler','communication','comm_backend','parallelism',
+                'task','oracle_id','padding_side','score_semantics','arch','seed'):
+        if key in expected and recorded.get(key) != expected[key]:
+            raise ValueError(f'rank {rank} runner/report identity mismatch: {key}')
+    if 'include' in expected and (recorded.get('include') or []) != (expected['include'] or []):
+        raise ValueError(f'rank {rank} runner/report identity mismatch: include')
+    if 'flaggems' in expected:
+        es, eh = gems_identity(expected['flaggems'])
+        rs, rh = gems_identity(recorded.get('flaggems'), component)
+        if es != rs or (eh and rh and eh != rh):
+            raise ValueError(f'rank {rank} runner/report FlagGems mismatch: {(es, eh)} vs {(rs, rh)}')
+
+
+def summarize(paths, identity=None, limits=None, *, rank_identities=None):
     from flagprof.analyzers.workspace import Limits
     from flagprof.store.analysis_read import ResourceLimit
     limits=limits if isinstance(limits,Limits) else Limits(**(limits or {}));observation_count=0
     groups={};sources=[];notes=[];spikes=[];seen=set();condition=None;group_requests={};paired={};group_windows=[]
+    paired_ranks = set()
+    known_hash = None
     for filename in paths:
         path=Path(filename).resolve()
         if path.stat().st_size>limits.cache_bytes:raise ResourceLimit('runner input exceeds cache_bytes')
@@ -30,26 +57,43 @@ def summarize(paths, identity=None, limits=None):
             fingerprint=hashlib.sha256(raw).hexdigest();value=json.loads(raw)
         process_key=tuple(receipt.get(k) for k in ('boot_id','pid','start_ticks'))
         dedup_key=(fingerprint,process_key if all(v is not None for v in process_key) else None)
+        recorded=value.get('oracle_identity') or {}
+        rank=runner_rank(value, recorded, required=rank_identities is not None)
+        if rank_identities is not None:
+            if rank not in rank_identities or rank in paired_ranks:
+                raise ValueError(f'unexpected or duplicate runner rank {rank}')
+            paired_ranks.add(rank)
         if dedup_key in seen:
             notes.append('重复 runner 内容只计一次：'+str(path));continue
         seen.add(dedup_key)
-        recorded=value.get('oracle_identity') or {}
         if not recorded:raise ValueError('runner workload identity missing: '+str(path))
         # rank/device-local ordinal may differ, all other recorded workload facts must agree.
         comparable={k:v for k,v in recorded.items() if k not in ('rank','device')}
+        switch, source_hash = gems_identity(recorded.get('flaggems'),value.get('component_identity'))
+        if 'flaggems' in comparable:
+            comparable['flaggems'] = switch
+        if known_hash and source_hash and source_hash != known_hash:
+            raise ValueError('runner inputs contain different FlagGems source_sha256')
+        known_hash = source_hash or known_hash
         if condition is None:condition=comparable
         elif comparable!=condition:raise ValueError('runner inputs contain different workload conditions; report separately')
-        if identity:
-            for key in ('model_files','inputs_sha256','samples','dtype','attention','pooling','generation','device','software','numerics','flaggems','compiler','comm_backend','parallelism'):
-                if key in identity and recorded.get(key)!=identity[key]:
-                    raise ValueError('runner/report identity mismatch: '+key)
+        expected = rank_identities[rank] if rank_identities is not None else identity
+        if expected:
+            match_runner(recorded,expected,value.get('component_identity'),rank)
+            store_switch, store_hash = gems_identity(expected.get('flaggems'))
+            if (store_switch == 'on' or source_hash or store_hash) and not (source_hash and store_hash):
+                missing = ', '.join(label for label, digest in (('runner', source_hash), ('Store', store_hash)) if not digest)
+                notes.append(f'rank {rank} {missing} 缺少 FlagGems 源码摘要，仅核对了双方已知的身份字段。')
         independent=(tuple(receipt[k] for k in ('boot_id','pid','start_ticks'))
                      if all(receipt.get(k) is not None for k in ('boot_id','pid','start_ticks')) else None)
-        rank=value.get('rank',recorded.get('rank',0));instrumentation=value.get('instrumentation','unknown')
+        instrumentation=value.get('instrumentation','unknown')
         source=dict(warmup_excluded=(sum(bool(r.get('warmup')) for r in value.get('requests',[])) if value.get('schema')=='generation-runner/1' else sum(r.get('warmup',0) for r in value.get('runs',[]))),source=str(path),sha256=fingerprint,rank=rank,instrumentation=instrumentation,
                     execution=receipt,identity=recorded,load_s=value.get('load_s'),
                     semantics=value.get('semantics'),status=value.get('status','not_recorded'))
         sources.append(source)
+        source['flaggems_source_sha256'] = source_hash
+        if rank_identities is not None:
+            source['store_identity'] = expected
         def add(scope,phase,step,shape,latency,repeat,index,numerator=0,token_count=0):
             nonlocal observation_count
             observation_count+=1
@@ -112,6 +156,8 @@ def summarize(paths, identity=None, limits=None):
         group_windows.append(dict(group_execution=identity[0],boot_id=identity[1],request_id=identity[2],rank='group',
             start_ns=min(starts),end_ns=max(ends),latency_ns=latency,ranks=ranks,
             rule='same boot and declared perf_counter_ns clock; min(rank start) to max(rank end); logical tokens counted once'))
+    if rank_identities is not None and paired_ranks != set(rank_identities):
+        raise ValueError('missing runner ranks: '+str(sorted(set(rank_identities)-paired_ranks)))
     perturbations=[]
     for pair in paired.values():
         groups_by_mode=pair.pop('conditions');base=groups_by_mode.get('none',{});candidate=groups_by_mode.get('attachment',{})
@@ -155,6 +201,8 @@ def summarize(paths, identity=None, limits=None):
         'CV 使用独立进程均值，至少三次才筛查 >10%；尖峰超过中位数五倍，至少二十个有效观测才筛查。',
         '未保存进程身份的历史输入只能提供进程内重复分布；文件数量不作为独立重复依据。',
         FORWARD_TIMING_NOTE if result and all(g['scope']=='forward' for g in result) else GROUP_TIMING_NOTE])
+    if known_hash and condition is not None:
+        condition['flaggems'] = dict(enabled=condition.get('flaggems'), source_sha256=known_hash)
     return dict(schema='runner-summary/1',groups=result,spikes=spikes,sources=sources,notes=notes,
                 condition=condition,group_windows=group_windows,instrumentation_pairs=perturbations)
 

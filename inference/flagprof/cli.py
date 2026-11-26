@@ -13,6 +13,19 @@ def main(argv=None):
     vendors = vendor_names()
     parser=argparse.ArgumentParser(prog='flagprof')
     verbs=parser.add_subparsers(dest='verb',required=True)
+    init = verbs.add_parser('init', help='生成单卡、双卡或对照工作流配置')
+    init.add_argument('--list', action='store_true', help='列出已交付的模板')
+    init.add_argument('--template', default='quickstart')
+    init.add_argument('-o', '--out')
+    init.add_argument('--force', action='store_true')
+    workflow = verbs.add_parser('run', help='检查或执行推理工作流')
+    workflow.add_argument('config')
+    workflow.add_argument('--set', dest='overrides', metavar='KEY=VALUE', action='append', default=[])
+    workflow.add_argument('--out', metavar='JOB_DIR')
+    preview = workflow.add_mutually_exclusive_group()
+    preview.add_argument('--check', action='store_true')
+    preview.add_argument('--dry-run', action='store_true')
+    workflow.add_argument('--json', action='store_true')
     from .graph.command import add_parser as add_export_parser
     add_export_parser(verbs)
     watch=verbs.add_parser('watch',help='independent node monitoring')
@@ -121,6 +134,9 @@ def main(argv=None):
         entry.add_argument('--monitor-interval-ms', type=int, help='fast sampling interval, 100..5000 ms; default 1000')
     args=parser.parse_args(argv)
     from pathlib import Path
+    if args.verb in ('init', 'run'):
+        from .workflow import dispatch
+        return dispatch(args)
     if args.verb=='export':
         try:
             from .graph.command import run

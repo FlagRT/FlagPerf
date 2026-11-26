@@ -31,6 +31,7 @@ namespaces = false
 [tool.setuptools.package-data]
 "flagprof.vendors" = ["validation-index.json"]
 "flagprof.targets" = ["model_registry.json"]
+"flagprof.workflow" = ["templates/*.yaml"]
 "flagprof.batch" = ["*.yaml"]
 "flagprof.report" = ["assets/*.css", "assets/*.js"]
 "flagprof.vendors.ascend" = ["registry.json", "contracts/*.json"]

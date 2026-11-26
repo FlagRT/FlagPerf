@@ -53,7 +53,9 @@ def identity(work):
     if len(rows)!=1:return {}
     value=dict(rows[0])
     state=next(s for s in work.statuses if s.get('oracle_identity'))
-    value['flaggems']=dict(enabled=value.get('flaggems'),source_sha256=(state.get('flaggems_identity') or {}).get('source_sha256'))
+    from flagprof.components.flaggems import gems_identity
+    switch, source = gems_identity(value.get('flaggems'), state.get('flaggems_identity'))
+    value['flaggems']=dict(enabled=switch,source_sha256=source)
     return value
 
 
