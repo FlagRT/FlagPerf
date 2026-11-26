@@ -2,7 +2,7 @@
 # Licensed under the Apache License, Version 2.0.
 """FlagPerf inference v2: independent profiling infrastructure."""
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 
 def attach(*args, **kwargs):
@@ -13,6 +13,17 @@ def attach(*args, **kwargs):
 def current_attachment():
     from .runtime import current_attachment as implementation
     return implementation()
+
+
+def declare_execution_mode(mode):
+    """Record the workload's selected mode for an active final profiler session."""
+    import sys
+    from .vendors.final_session import FinalSession
+    handle = current_attachment()
+    session = getattr(handle, 'session', None)
+    if isinstance(session, FinalSession):
+        caller = sys._getframe(1)
+        session.declare_execution_mode(mode, caller.f_code, caller.f_lineno)
 
 
 def scope(name, **attrs):

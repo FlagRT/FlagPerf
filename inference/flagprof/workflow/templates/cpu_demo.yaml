@@ -1,0 +1,46 @@
+# ==============================================================================
+# FlagPerf Inference 零权重 CPU 体验模板 (cpu-demo)
+#
+# 适用场景：刚安装好环境，手头还没有大模型权重或 GPU/NPU，希望用固定的小样本
+#          跑通完整配置校验、CTR 推理执行与离线 HTML 报告查看流程。
+# 环境要求：仅需当前 Python 环境已安装 PyTorch（CPU 版即可）与 PyYAML。
+#
+# 运行命令：
+#   flagprof run cpu_demo.yaml
+# ==============================================================================
+
+schema_version: 1
+mode: single
+name: cpu-ctr-demo
+
+target:
+  type: builtin
+  # 使用内置 CTR 推荐模型模板（随机固定种子初始化，无需下载外部权重）
+  task: ctr
+
+hardware:
+  vendor: auto
+  nproc: 1
+  # 强制在 CPU 上运行
+  device: cpu
+
+profile:
+  # 用 runner.json 生成基准报告。此任务没有 Store，跳过 inspect。
+  # 临时选择同一预设可写 --set profile.preset=none
+  preset: "none"
+
+runner:
+  # auto 表示自动调用 flagprof-make-ctr 生成 8 条固定合成样本，无需提前制作输入文件
+  package: auto
+  # 可选架构：dlrm | din | widedeep | deepfm | dcn | esmm | mmoe | ple | bst | dien | dcnmix | dssm | sasrec | lightgcn
+  arch: dlrm
+  seed: 531
+  dtype: float32
+  batch_size: 4
+  warmup: 1
+  forwards: 3
+
+output:
+  dir: ./flagprof-results
+  verify: false
+  report: true

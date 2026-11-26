@@ -18,9 +18,7 @@ import hashlib
 import json
 from pathlib import Path
 
-import sys
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from rerank_common import sha
+from flagprof.runner.rerank_common import sha
 
 SCHEMA = dict(dense_dim=13, sparse_dim=26, vocab=1000, hist_len=20, pad_id=0)
 SCHEMA_SPEC = dict(

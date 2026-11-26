@@ -7,17 +7,18 @@ from .comparison import change
 from .model import opened_model,read_document
 
 
-def generate(ref,baseline,cmp,out=None,*,declare=None,work=None,limits=None,**options):
+def generate(ref,baseline,cmp,out=None,*,declare=None,limits=None,delivery_root=None,**options):
     from . import generate_oracle,write_json
     from .product import write_report
     out=Path(out).resolve() if out else Path(ref).resolve().parent/(Path(ref).name+'-three-way')
     for source in (ref,baseline,cmp):
         path=Path(source).resolve();path=path.parent if path.is_file() else path
         if out==path or path in out.parents or out in path.parents:raise ValueError('three-way output must be outside inputs')
-    out.mkdir(parents=True,exist_ok=False)
+    from flagprof.offline.worker import new_output
+    new_output(out)
     pairs=(('reference-baseline',ref,baseline,{}),('reference-candidate',ref,cmp,options),('baseline-candidate',baseline,cmp,{}))
-    for label,a,b,linked in pairs:generate_oracle(a,b,out/label,declare=declare,work=work,limits=limits,**linked)
-    with opened_model(work,limits) as model:
+    for label,a,b,linked in pairs:generate_oracle(a,b,out/label,declare=declare,limits=limits,_delivery_root=delivery_root or out,**linked)
+    with opened_model(limits=limits) as model:
         db=model.db;db.execute('create table pair_samples(pair text,rank integer,key text,payload text,primary key(pair,rank,key))')
         statuses=[]
         for label,_,_,_ in pairs:
@@ -26,7 +27,9 @@ def generate(ref,baseline,cmp,out=None,*,declare=None,work=None,limits=None,**op
                 rank=int(root.name.split('-')[1]) if root.name.startswith('rank-') else -1
                 document=read_document(root/'result.json',model)
                 identity=document.get('results',{}).get('oracle.identity_diff',{})
-                statuses.append(dict(pair=label,rank=rank,status=identity.get('status')))
+                statuses.append(dict(pair=label,rank=rank,status=identity.get('status'),
+                                     comparison_status=document['comparison_status'],blocking_fields=document['blocking_fields'],
+                                     paired_tensors=document['paired_tensors'],paired_boundaries=document['paired_boundaries']))
                 path=root/'exports/oracle.samples.jsonl'
                 if path.is_file():
                     with path.open() as stream:
@@ -51,5 +54,5 @@ def generate(ref,baseline,cmp,out=None,*,declare=None,work=None,limits=None,**op
                     reports={label:label+'/report.html' for label,_,_,_ in pairs},
                     note='同一参考下逐样本比较；余弦越接近 1 越相似，其余误差指标越小越接近。数值变化不自动证明组件因果。')
         with (out/'result.json').open('w') as stream:write_json(stream,result);stream.write('\n')
-        write_report(out,result,limits=limits,work=work)
+        write_report(out,result,limits=limits)
     return dict(output=str(out),schema='oracle-three-way/1',pairs=statuses)

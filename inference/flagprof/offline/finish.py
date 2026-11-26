@@ -11,9 +11,11 @@ import hashlib
 import json
 from .bounded_verify import Document,verify_open
 from .disk import Sink,streaming,scratch_path
+from flagprof.progress import phase
 from flagprof.store.reader import Reader
 
 class BoundedView:
+    @phase("打开并核验 Store")
     def __init__(self,run,work,*,cache_root=None):
         self.run=Path(run);self.work=Path(work);self.work.mkdir(exist_ok=True)
         self.pagers={};self.summary_value=None;self.pager=None;self.doc=None
@@ -21,15 +23,16 @@ class BoundedView:
         from .verification_cache import VerificationCache
         preflight_store(self.run)
         self.identities=self.snapshot()
-        self.cache=VerificationCache(self.run,cache_root)
+        self.cache=VerificationCache(self.run,cache_root or self.work)
         self._cache_binding=self.cache.binding()
         self.verified=self.cache.load(self._cache_binding)
         self.verification_reused=self.verified is not None
         try:
             if self.verification_reused:
-                self.doc=Document(self.work/'descriptor.sqlite');paths=list((self.run/'traces').glob('*.json'))
-                if len(paths)!=1:raise ValueError('bounded view requires one trace')
-                root,_,_=self.doc.parse(paths[0]);self.descriptor=self.doc.get(root)
+                with phase('复用完整性核验回执'):
+                    self.doc=Document(self.work/'descriptor.sqlite');paths=list((self.run/'traces').glob('*.json'))
+                    if len(paths)!=1:raise ValueError('bounded view requires one trace')
+                    root,_,_=self.doc.parse(paths[0]);self.descriptor=self.doc.get(root)
             else:
                 self.verified,self.doc=verify_open(self.run,self.work/'verify.sqlite')
                 self.descriptor=self.doc.get(self.doc.descriptor_root)
@@ -86,7 +89,9 @@ class BoundedView:
             self.pagers[name]=streaming.JSONLPage(self.run/info['path'],scratch_path(self.work/(name+'-page.sqlite')),info['sha256'])
         result=self.pagers[name].page(offset,limit);self.check();return result
     def device_analysis_context(self):
-        return deepcopy(self.summary().get('device_analysis',dict(schema='device-analysis/1',status='unavailable',reason='projection_not_recorded')))
+        from .device_analysis import read_capture_context
+        context = deepcopy(self.summary().get('device_analysis',dict(schema='device-analysis/1',status='unavailable',reason='projection_not_recorded')))
+        return read_capture_context(self.run, self.descriptor.get('capture'), context)
     def iter_device_events(self,*,trace_uid=None,category=None,projection='events'):
         if trace_uid is not None and trace_uid!=self.descriptor['trace_uid']:raise ValueError('unknown trace uid')
         if projection not in ('events','analysis'):raise ValueError('unknown device projection')

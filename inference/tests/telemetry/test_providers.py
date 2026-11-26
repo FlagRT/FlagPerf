@@ -121,6 +121,52 @@ class DCMITests(unittest.TestCase):
         self.assertEqual(sum('power.draw' in c.metrics for c in provider.calls()),1)
         card=next(e for e in provider.inventory['entities'] if e['entity']=='card:6')
         self.assertEqual(card['members'],['chip:12','chip:13'])
-        self.assertFalse(next(m for m in provider.metrics if m.name=='ascend.npu.activity').profiler_conflict)
+        self.assertTrue(next(m for m in provider.metrics if m.name=='ascend.npu.activity').profiler_conflict)
         self.assertTrue(next(m for m in provider.metrics if m.name=='ascend.aicore.activity').profiler_conflict)
-        self.assertGreaterEqual(provider.inventory['minimum_interval_ms'],150.37796)
+        self.assertEqual(provider.inventory['minimum_interval_ms'],100)
+        self.assertNotIn('type13_calibration', provider.inventory)
+
+
+class PortableCalibrationTests(unittest.TestCase):
+    def test_reuse_requires_same_topology_driver_and_hardware(self):
+        import tempfile
+        from unittest.mock import Mock
+        from flagprof.monitor.calibration import calibrate
+        inventory = dict(boot_id='boot', source='dcmi', calibration_rounds=3, source_identity={'sha256':'code'},
+                         entities=[{'entity':'chip:1'}], descriptors=[], driver_version='v1')
+        call = types.SimpleNamespace(group='fast', read=Mock())
+        provider = types.SimpleNamespace(calls=lambda:[call])
+        with tempfile.TemporaryDirectory() as root:
+            measured = calibrate(root, 'ascend','agent', provider, inventory.copy())
+            self.assertEqual(call.read.call_count, 3)
+            saved = inventory.copy()
+            self.assertEqual(calibrate(root, 'ascend','agent',provider,saved), measured)
+            self.assertEqual(saved['calibration_status'], 'matched')
+            self.assertEqual(call.read.call_count, 3)
+            for change in ({'driver_version':'v2'}, {'entities':[{'entity':'chip:2'}]}):
+                calibrate(root,'ascend','agent',provider,dict(inventory, **change))
+            calibrate(root,'ascend','local',provider,inventory.copy())
+            self.assertEqual(call.read.call_count, 12)
+
+    def test_local_smi_probes_join_uuid_minor_and_pci(self):
+        import os
+        import stat
+        import sys
+        from flagprof.vendors.smi_identity import hardware_identity
+        for prefix,model,tool in [('PPU','PPU-ZW810E','ppu-smi'),('XPU','P800','xpu-smi')]:
+            record = (f'Driver Version : 1\nXPU-RT Version : 2\n{prefix} 0000:01:00.0\n'
+                      f'Product Name : {model}\n{prefix} UUID : observed\n'
+                      'Minor Number : 3\nBus Id : 0000:01:00.0\n')
+            props = types.SimpleNamespace(uuid='GPU-observed',pci_bus_id='0000:01:00.0')
+            cuda = types.SimpleNamespace(get_device_properties=lambda _:props,get_device_name=lambda _:model)
+            kwargs = dict(command=tool,prefix=prefix,env_key='TEST_SMI_INVENTORY',node_pattern='test*',
+                          model_names={model:model},runtime='XPU-RT Version' if prefix=='XPU' else None)
+            node = Path('/dev/test3')
+            with patch.dict(sys.modules,torch=types.SimpleNamespace(cuda=cuda)), patch.dict(os.environ, TEST_SMI_INVENTORY=''), \
+                 patch('flagprof.vendors.smi_identity.subprocess.run',return_value=types.SimpleNamespace(stdout=record)), \
+                 patch.object(Path,'glob',return_value=[node]), patch.object(Path,'stat', return_value=types.SimpleNamespace(st_mode=stat.S_IFCHR,st_rdev=os.makedev(42,3))):
+                result=hardware_identity(0,**kwargs)
+                self.assertEqual((result['model'],result['host_device_node']), (model,str(node)))
+                props.pci_bus_id='0000:02:00.0'
+                with self.assertRaisesRegex(ValueError,'PCI'):
+                    hardware_identity(0,**kwargs)

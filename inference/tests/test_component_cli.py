@@ -5,6 +5,7 @@ import contextlib
 import io
 import json
 from pathlib import Path
+import shlex
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -15,6 +16,48 @@ from flagprof.probes.config import resolve
 
 
 class ComponentCLITests(unittest.TestCase):
+    def test_window_option_correction_preserves_target_arguments(self):
+        target = ['python', 'my script.py', '--windows', "a b'$", '--capture-mode=final']
+        cases = [
+            (['--preset', 'accuracy', '--capture-mod=final', '--act=1'], True),
+            (['--preset', 'accuracy', '--capture-only', '--active', '1'], True),
+            (['--capture-mode', 'windowed', '--capture-mode', 'final', '--act', '1'], True),
+            (['--capture-only', '--act', '1', '--win=2', '--invalid-pol=continue',
+              '--log-file', 'a b', '--log-file=--looks-like-a-path', '--plugins=unused'], False),
+        ]
+        for options, windowed in cases:
+            error = io.StringIO()
+            args = ['record', '--vendor', 'nvidia', '--store=--windows', *options, '--', *target]
+            with self.subTest(options=options), contextlib.redirect_stderr(error), self.assertRaises(SystemExit) as failure:
+                main(args)
+            self.assertEqual(failure.exception.code, 2)
+            self.assertIn('--active', error.getvalue())
+            corrected = shlex.split(error.getvalue().splitlines()[-1])
+            controls = corrected[corrected.index('record'):corrected.index('--')]
+            self.assertEqual(corrected[corrected.index('--')+1:], target)
+            self.assertIn('--store=--windows', controls)
+            backend = 'flagprof.record.record' if windowed else 'flagprof.offline.capture.record_final'
+            with patch(backend, return_value=0) as capture:
+                self.assertEqual(main(corrected[corrected.index('record'):]), 0)
+                self.assertEqual(capture.call_args.args, (target,))
+                if windowed:
+                    self.assertEqual(capture.call_args.kwargs['capture_mode'], 'windowed')
+                    self.assertEqual(capture.call_args.kwargs['config']['active'], 1)
+                    self.assertNotIn('final', controls)
+                else:
+                    self.assertTrue(capture.call_args.kwargs['capture_only'])
+
+    def test_final_record_source_budget(self):
+        for options, expected in [
+            ([], 4 << 30),
+            (['--source-max-bytes', str(1 << 30)], 1 << 30),
+            (['--source-max-bytes', str(8 << 30)], 8 << 30),
+        ]:
+            with self.subTest(options=options), patch('flagprof.offline.capture.record_final', return_value=0) as capture:
+                self.assertEqual(main(['record', '--store', 'unused', '--vendor', 'ascend',
+                                       *options, '--', 'python', 'target.py']), 0)
+                self.assertEqual(capture.call_args.kwargs['source_max_bytes'], expected)
+
     def test_accuracy_boundaries_and_drill_forward_to_both_entries(self):
         with tempfile.TemporaryDirectory() as tmp:
             custom = Path(tmp)/'boundaries.json'
@@ -45,26 +88,20 @@ class ComponentCLITests(unittest.TestCase):
         self.assertEqual(options['preset'], 'coverage')
         self.assertEqual(options['config'], dict(flaggems='on', flaggems_include='/inputs/include.json', flagtree='on'))
 
-    def test_shortcut_conflicts_fail_before_launching_workers(self):
-        for options, reason in [
-            (dict(flagcx='on', comm_backend='hccl'), 'conflicts'),
-            (dict(flagcx='on', vendor='kunlunxin'), 'shortcut requires Ascend'),
-            (dict(flagcx='on', vendor='thead'), 'shortcut requires Ascend'),
-            (dict(flagcx='off', vendor='nvidia'), 'shortcut requires Ascend'),
-        ]:
-            with self.subTest(options=options), patch('flagprof.launch.subprocess.Popen') as process:
-                with self.assertRaisesRegex(ValueError, reason):
-                    launch(['python', 'target.py'], store='/unused', **options)
+    def test_incompatible_backend_fails_before_launching_workers(self):
+        for vendor, backend in [('ascend','nccl'), ('nvidia','hccl'), ('thead','hccl'), ('kunlunxin','hccl')]:
+            with self.subTest(vendor=vendor), patch('flagprof.launch.subprocess.Popen') as process:
+                with self.assertRaisesRegex(ValueError, 'supports --comm-backend'):
+                    launch(['python', 'target.py'], store='/unused', vendor=vendor, comm_backend=backend)
                 process.assert_not_called()
 
-    def test_launch_default_and_shortcuts_select_backend(self):
+    def test_selected_vendor_chooses_its_backend(self):
         class StopBeforeOutput(Exception):
             pass
-        for options, backend in [({}, 'hccl'), (dict(flagcx='off'), 'hccl'),
-                                 (dict(flagcx='on'), 'flagcx')]:
+        for options, backend in [(dict(vendor='ascend'), 'hccl'), (dict(vendor='nvidia'), 'nccl'),
+                                 (dict(vendor='kunlunxin', comm_backend='flagcx'), 'flagcx')]:
             with self.subTest(options=options), tempfile.TemporaryDirectory() as tmp:
-                with patch('flagprof.offline.workspace.check_disk'), \
-                     patch('flagprof.launch.socket.socket') as socket_factory, \
+                with patch('flagprof.launch.socket.socket') as socket_factory, \
                      patch('flagprof.launch.atomic_json', side_effect=StopBeforeOutput) as save:
                     socket_factory.return_value.__enter__.return_value.getsockname.return_value = ('127.0.0.1', 12345)
                     with self.assertRaises(StopBeforeOutput):
@@ -83,12 +120,11 @@ class ComponentCLITests(unittest.TestCase):
             pass
         for preset in ('perf', 'modules'):
             with self.subTest(preset=preset), tempfile.TemporaryDirectory() as tmp:
-                with patch('flagprof.offline.workspace.check_disk'), \
-                     patch('flagprof.launch.socket.socket') as socket_factory, \
+                with patch('flagprof.launch.socket.socket') as socket_factory, \
                      patch('flagprof.launch.atomic_json', side_effect=StopBeforeWorkers) as save:
                     socket_factory.return_value.__enter__.return_value.getsockname.return_value = ('127.0.0.1', 12345)
                     with self.assertRaises(StopBeforeWorkers):
-                        main(['launch', '--store', str(Path(tmp)/'launch'), '--preset', preset,
+                        main(['launch', '--vendor', 'ascend', '--store', str(Path(tmp)/'launch'), '--preset', preset,
                               '--profile-memory', '--flagtree', 'on', '--', 'python', 'target.py'])
                 config = save.call_args.args[1]['config']
                 sdk, probes = resolve(preset, config)

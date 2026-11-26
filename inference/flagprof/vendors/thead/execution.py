@@ -1,6 +1,12 @@
 # Copyright 2026 FlagOS Contributors
 # Licensed under the Apache License, Version 2.0.
 """PPU worker device binding; no tracing gate variable exists on the locked stack."""
+TORCH_DEVICE = 'cuda'
+MODEL_MARKERS = ('PPU',)
+SMI = 'ppu-smi'
+BACKENDS = ('nccl', 'flagcx')
+
+
 def initialize(rank):
     import torch
     device='cuda:'+str(rank)

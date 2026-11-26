@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parent.parent
 def _build_package(tmp):
     pkg = Path(tmp) / 'ctr'
     env = dict(os.environ, PYTHONPATH=str(ROOT))
-    subprocess.run([sys.executable, '-B', str(ROOT / 'targets' / 'make_ctr_package.py'),
+    subprocess.run([sys.executable, '-B', '-m', 'flagprof.targets.make_ctr_package',
                     '--samples', '8', '--seed', '531', '--out', str(pkg)],
                    check=True, capture_output=True, env=env)
     return pkg

@@ -29,29 +29,33 @@ def copy_checked(source, destination, *, max_bytes=1<<30):
         raise ValueError('source changed while snapshotting')
 
 def make_bundle(raw, trace, destination, *, vendor, metadata, occurrence=None):
-    if vendor not in ('nvidia', 'ascend', 'thead', 'kunlunxin'):
+    from flagprof.vendors import vendor_names
+    if vendor not in vendor_names():
         raise ValueError('unsupported final vendor')
     if metadata.get('normal_close') is not True or metadata.get('target_returncode') != 0:
         raise ValueError('normal producer close required')
     destination = Path(destination).resolve()
-    from .workspace import check_disk
-    for path in (raw, trace, destination):
-        check_disk(path)
-    destination.mkdir(parents=True, exist_ok=False)
+    if destination.is_relative_to(Path(raw).resolve()):
+        raise ValueError('sealed output must be outside the raw input')
+    if destination.exists():
+        raise FileExistsError(str(destination))
+    from .workspace import attempt, publish_run
     occurrence = occurrence or uuid.uuid4().hex
-    raw_manifest = seal(raw, destination/'sealed-raw', occurrence, max_bytes=source_budget(metadata.get('source_max_bytes',1<<30)))
-    return finish_bundle(destination, trace, vendor=vendor, metadata=metadata,
-                         occurrence=occurrence, raw_manifest=raw_manifest)
+    with attempt(destination.parent) as (temporary, _lease):
+        stage = temporary/'capture'
+        stage.mkdir()
+        raw_manifest = seal(raw, stage/'sealed-raw', occurrence, max_bytes=source_budget(metadata.get('source_max_bytes',1<<30)))
+        capture = finish_bundle(stage, trace, vendor=vendor, metadata=metadata,
+                                occurrence=occurrence, raw_manifest=raw_manifest)
+        publish_run(stage, destination)
+    return capture
 
 
-def finish_bundle(destination, trace, *, vendor, metadata, occurrence, raw_manifest):
+def finish_bundle(destination, trace, *, vendor, metadata, occurrence, raw_manifest, derive_identities=False):
     if metadata.get('normal_close') is not True or metadata.get('target_returncode')!=0:
         raise ValueError('normal producer close required')
     destination = Path(destination).resolve()
     trace = Path(trace)
-    from .workspace import check_disk
-    check_disk(destination)
-    check_disk(trace)
     # Keep official memory derivatives beside the trace before analysis scratch
     # is removed. They share the immutable capture occurrence.
     trace_input = destination/'trace-input'
@@ -61,8 +65,18 @@ def finish_bundle(destination, trace, *, vendor, metadata, occurrence, raw_manif
     copy_checked(trace,trace_input/'trace.json',max_bytes=limit)
     from .memory import seal_artifacts
     memory_files = seal_artifacts(trace, trace_input, vendor, metadata)
+    if derive_identities:
+        from flagprof.vendors import adapter
+        stage = getattr(adapter(vendor, 'evidence'), 'stage_format_evidence', None)
+        if stage:
+            remaining = limit - sum(p.stat().st_size for p in trace_input.iterdir())
+            stage(trace, trace_input, remaining)
     sealed = seal(trace_input, destination/'sealed-trace', occurrence,max_bytes=limit)
     source = sealed['files']['data/trace.json']
+    if derive_identities:
+        from .final_evidence import identities
+        metadata = dict(metadata, identities=identities(destination, metadata, vendor,
+                        destination/'sealed-trace/data/trace.json', occurrence, raw_manifest))
     capture = dict(schema='plan-b-capture/1', occurrence=occurrence, vendor=vendor,
                    metadata=metadata, normal_close=True,
                    raw=dict(path='sealed-raw', manifest=fileinfo(destination/'sealed-raw/committed.json')),
@@ -81,12 +95,11 @@ def finish_bundle(destination, trace, *, vendor, metadata, occurrence, raw_manif
 
 def load_bundle(directory):
     directory = Path(directory).resolve()
-    from .workspace import check_disk
-    check_disk(directory)
     capture = read_json(directory/'capture.json')
     if capture.get('schema') != 'plan-b-capture/1' or capture.get('normal_close') is not True:
         raise ValueError('capture protocol/normal close')
-    if capture['vendor'] not in ('nvidia', 'ascend', 'thead', 'kunlunxin') or not isinstance(capture['occurrence'], str) or not capture['occurrence']:
+    from flagprof.vendors import vendor_names
+    if capture['vendor'] not in vendor_names() or not isinstance(capture['occurrence'], str) or not capture['occurrence']:
         raise ValueError('capture identity')
     meta = capture['metadata']
     if meta.get('normal_close') is not True or meta.get('target_returncode') != 0:
@@ -128,10 +141,10 @@ def verify_registration(run, reference, source_sha):
     if fileinfo(path)['sha256'] != reference['registration_sha256']:
         raise ValueError('capture registration changed')
     registration = read_json(path)
-    bundle = Path(registration['bundle_path'])
-    if registration.get('format_version')==2:
-        if bundle.is_absolute():raise ValueError('relative capture registration required')
-        bundle=(Path(run)/bundle).resolve()
+    from flagprof.delivery_refs import resolve
+    if registration.get('format_version') == 2 and Path(registration['bundle_path']).is_absolute():
+        raise ValueError('relative capture registration required')
+    bundle = resolve(path, registration['bundle_path'])
     if fileinfo(bundle/'capture.json') != registration['envelope']:
         raise ValueError('capture envelope changed')
     capture = load_bundle(bundle)

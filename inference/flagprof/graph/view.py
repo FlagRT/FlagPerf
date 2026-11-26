@@ -18,11 +18,11 @@ def write_view(out, manifest, graphs):
                        ('；ORT '+row.get('runtime',{}).get('status','not_run') if fmt=='onnx' else ''))
     body = '''<!doctype html><html lang="zh"><meta charset="utf-8"><meta name="viewport" content="width=device-width">
 <title>FlagProf · 模型计算图</title><style>
-body{font:15px system-ui;margin:0;color:#172b39;background:#f5f7fa}header,main{padding:22px;max-width:1300px;margin:auto}
+body{font:15px system-ui,-apple-system,"Segoe UI","PingFang SC","Noto Sans CJK SC","Microsoft YaHei",sans-serif;margin:0;color:#172b39;background:#f5f7fa}header,main{padding:22px;max-width:1300px;margin:auto}
 h1{margin:0 0 10px}p{line-height:1.65}input,select,button{font:inherit;padding:7px;border:1px solid #afbac6;border-radius:5px}
 button{cursor:pointer;background:#fff;color:#18547a;margin:3px}#layout{display:grid;grid-template-columns:minmax(280px,1fr) 2fr;gap:18px}
 #nodes{max-height:70vh;overflow:auto}details,article{background:white;padding:14px;border-radius:8px;margin:8px 0}
-pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}summary{cursor:pointer}#nodes button{display:block;text-align:left;width:98%}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;font:12px ui-monospace,SFMono-Regular,Consolas,"Liberation Mono","Noto Sans Mono CJK SC","Noto Sans CJK SC",monospace}summary{cursor:pointer}#nodes button{display:block;text-align:left;width:98%}
 .muted{color:#566673}@media(max-width:750px){#layout{grid-template-columns:1fr}}.selected{background:#def1ff}
 </style><header><h1>模型计算图</h1><p>阅读路径：选择格式 → 展开模块 → 选择节点 → 沿输入与使用者查看数据依赖。</p>
 <p class="muted">这是固定输入形状下的 CPU 原生计算结构。图中节点编号只在本图有效；设备执行耗时与 profiling 关联将在后续提供。</p>

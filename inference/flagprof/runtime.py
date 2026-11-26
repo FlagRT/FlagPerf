@@ -32,6 +32,12 @@ def current_attachment():
         return live[-1] if live else None
 
 
+def startup_error(state):
+    component_error = state.get('component', {}).get('error')
+    errors = [*state.get('collector_errors', []), *state.get('errors', [])]
+    return component_error or '; '.join(dict.fromkeys(errors)) or state['status']
+
+
 def configuration(preset='perf', **options):
     from .probes.config import resolve
     options, _ = resolve(preset, options)
@@ -42,8 +48,8 @@ def configuration(preset='perf', **options):
 
 class Attachment:
     def __init__(self, run, vendor, *, preset='perf', config=None, registry=None, rank=0,
-                 node_index=None, identity=None, backend_options=None, log_reader=None,capture_mode='final',capture_filesystem='ext4',
-                 group_id=None, monitor_parent=None):
+                 node_index=None, identity=None, backend_options=None, log_reader=None, capture_mode='final',
+                 group_id=None, monitor_parent=None, _compiler_store=None):
         registry = registry or Registry()
         descriptor = registry.describe(vendor)
         if descriptor['kind'] != 'vendor':
@@ -51,15 +57,16 @@ class Attachment:
         if capture_mode not in ('final','windowed'):raise ValueError('unknown capture mode')
         if capture_mode=='final' and set(config or {}) & {'active','windows','log_files','invalid_policy'}:
             raise ValueError('window settings require capture_mode=windowed')
-        if capture_mode == 'final' and preset in ('perf', 'modules'):
-            from .offline.workspace import check_capture_disk
-            check_capture_disk(run,descriptor['format_vendor'],capture_filesystem)
         self.rank = rank
         self.capture_mode=capture_mode
         from .probes.config import resolve
         session_options, probe_options = resolve(preset, config)
+        from .devices import validate_target_device
+        self.target_device = probe_options.get('target_device')
+        validate_target_device(self.target_device, descriptor['format_vendor'])
+        self.device_lock = threading.RLock()
         from .components.compiler import select
-        select(probe_options, cache_root=Path(run).parent/'component-cache')
+        select(probe_options, cache_root=_compiler_store or Path(run).parent, target=vendor)
         official = preset in ('perf', 'modules')
         config = configuration(preset, **session_options)
         self.pid = os.getpid()
@@ -76,9 +83,8 @@ class Attachment:
         self.monitor_reference = self.run/'monitor-ref.json'
         self.monitor_parent = monitor_parent or os.environ.get('FLAGPROF_MONITOR_REFERENCE')
         self.state = dict(id=self.id, process=proc_key(), vendor=vendor, format_vendor=descriptor['format_vendor'],
-                          preset=preset, capture=str(self.capture), capture_relative=str(self.capture.relative_to(self.run)),
+                          preset=preset, capture_relative=str(self.capture.relative_to(self.run)),
                           capture_mode=capture_mode,status='starting',
-                          capture_filesystem=capture_filesystem,
                           capabilities=dict(enabled=['official_session', 'writer', 'explicit_context'],
                               unavailable=['module_probe', 'dispatch_probe', 'route_probe', 'compile_probe', 'eager_module_tree']),
                           import_status='pending_owner_exit')
@@ -104,8 +110,11 @@ class Attachment:
             raise
         try:
             backend_options=dict(backend_options or {})
+            from .vendors import adapter
+            profile = adapter(descriptor['format_vendor'], 'session')
             if official:
-                if capture_mode=='final' and descriptor['format_vendor']=='ascend':backend_options.setdefault('data_simplification',False)
+                if capture_mode == 'final':
+                    backend_options = {**getattr(profile, 'FINAL_OPTIONS', {}), **backend_options}
                 backend, implementation = registry.create(vendor, **backend_options)
                 self.state['descriptor'] = implementation
                 from .vendors.final_session import FinalSession
@@ -113,17 +122,16 @@ class Attachment:
                 if capture_mode=='final':self.session.meta['source_run_id']=self.writer.run_id
                 self.state['status'] = 'running' if self.session.start() else 'failed'
             else:
-                if descriptor['format_vendor']=='thead':
-                    from .vendors.thead.session import hardware_identity
-                    self.state['hardware_identity']=hardware_identity()
-                if descriptor['format_vendor']=='kunlunxin':
-                    from .vendors.kunlunxin.session import hardware_identity
-                    self.state['hardware_identity']=hardware_identity()
+                identify = getattr(profile, 'hardware_identity', None)
+                if identify:
+                    self.state['hardware_identity'] = identify()
                 self.state.update(status='running', collector_status='not_requested', capture_status='not_requested')
                 self.state['capabilities']['enabled'].remove('official_session')
             from .probes.manager import ProbeManager
             self.probe_manager = ProbeManager(self.context, probe_options, self.state, official=official,state_callback=self._save)
             self.probe_manager.install()
+            if self.target_device is not None:
+                self._register_device(self.target_device, declared=True)
             if probe_options.get('diagnose') == 'on':
                 from .probes.diagnostic import DiagnosticProbe
                 self.diagnostic = DiagnosticProbe(self)
@@ -176,13 +184,37 @@ class Attachment:
     def register_device(self, device):
         if not self.monitor_enabled:
             return
+        with self.device_lock:
+            self._register_device(device, declared=False)
+
+    def _register_device(self, device, *, declared):
+        previous = self.state.get('device_identity', {})
+        if previous.get('status') == 'conflict':
+            return
+        logical = str(device)
         try:
             from importlib import import_module
             provider = import_module('flagprof.vendors.'+self.state['format_vendor']+'.execution')
+            family = device.split(':', 1)[0] if isinstance(device, str) else getattr(device, 'type', None)
+            if family and family != provider.TORCH_DEVICE:
+                raise ValueError('expected a '+provider.TORCH_DEVICE+' device')
             identity = provider.physical_identity(device)
-            identity.update(rank=self.rank, logical_device=str(device), status='available')
+            identity.update(rank=self.rank, logical_device=logical, status='available')
         except Exception as error:
-            identity = dict(rank=self.rank, logical_device=str(device), status='unknown', reason=str(error))
+            identity = dict(rank=self.rank, logical_device=logical, status='unknown', reason=str(error))
+        identity['source'] = 'declaration' if declared else 'registration'
+        if self.target_device is not None:
+            identity['declared_device'] = self.target_device
+            if declared or logical == self.target_device and identity.get('entity'):
+                identity['declared_entity'] = identity.get('entity')
+            else:
+                identity['declared_entity'] = previous.get('declared_entity')
+            expected = previous.get('declared_entity')
+            if not declared and expected and identity.get('entity') and expected != identity['entity']:
+                identity.update(status='conflict', declared_entity=expected,
+                                reason='registered device differs from declared physical device')
+            elif not declared and not expected and logical != self.target_device:
+                identity.update(status='unknown', reason='declared physical device could not be confirmed')
         self.state['device_identity'] = identity
         self._monitor_bind([identity])
         self._save()
@@ -287,9 +319,13 @@ class Attachment:
             self._save()
         return model
 
-    def bind_tensor_inputs(self, sample_ids, inputs, *, identity=None):
+    def bind_tensor_inputs(self, sample_ids, inputs, *, identity=None, model_name=None):
         if identity is not None:
             self.state['oracle_identity'] = dict(identity, boundaries=self.state.get('tensor_boundaries',[]))
+            if model_name:
+                self.state['model_name'] = str(model_name)
+            else:
+                self.state.pop('model_name', None)
             self._save()
         if self.probe_manager and self.probe_manager.tensor:
             self.probe_manager.tensor.bind(sample_ids, inputs)

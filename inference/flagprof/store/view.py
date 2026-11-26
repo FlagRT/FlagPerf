@@ -67,11 +67,11 @@ class StoreView:
         from flagprof.monitor.reading import minutes
         yield from minutes(self.run)
 
-    def iter_monitor_events(self, types=None, *, work=None, limits=None):
+    def iter_monitor_events(self, types=None, *, limits=None):
         """Normalized monitor records with stable evidence IDs; no vendor imports."""
         from flagprof.monitor.reading import events
         self.monitor_read_report = dict(errors=[])
-        yield from events(self.run, types, work=work, limits=limits,report=self.monitor_read_report)
+        yield from events(self.run, types, limits=limits,report=self.monitor_read_report)
 
     def monitor_coverage(self):
         state = self.monitor_status()
@@ -81,15 +81,13 @@ class StoreView:
                     window_coverage=window_coverage(state),
                     read_report=getattr(self,'monitor_read_report',dict(errors=[])))
 
-    def iter_events(self, types=None, *, work=None, limits=None):
+    def iter_events(self, types=None, *, limits=None):
         """Strict streaming records with disk-backed signature/control state."""
         import sqlite3
         import tempfile
         from .analysis_read import AnalysisReader
         limits = limits or {}
-        if work:
-            Path(work).mkdir(parents=True, exist_ok=True)
-        with tempfile.TemporaryDirectory(prefix='reader-', dir=work) as directory:
+        with tempfile.TemporaryDirectory(prefix='reader-') as directory:
             db = sqlite3.connect(str(Path(directory)/'state.sqlite'))
             try:
                 with AnalysisReader(self.run, db, **{k:limits[k] for k in ('record_bytes','cache_bytes','scratch_bytes') if k in limits}) as reader:
@@ -120,7 +118,7 @@ class StoreView:
                 route_table=state.get('route_table'), flaggems_identity=state.get('flaggems_identity'),
                 compiler_identity=state.get('compiler_identity'), compiler_execution=state.get('compiler_execution'),
                 op_kinds=state.get('op_kinds'), torch_version=state.get('torch_version'),
-                oracle_identity=state.get('oracle_identity'), tensor=state.get('tensor'),
+                oracle_identity=state.get('oracle_identity'), model_name=state.get('model_name'), tensor=state.get('tensor'),
                 tensor_boundaries=state.get('tensor_boundaries'), module_selection=state.get('module_selection'), route_unobserved=state.get('route_unobserved', 0),
                 errors=state.get('errors', [])))
         return dict(status='available' if rows else 'unavailable', attachments=rows,
@@ -167,7 +165,8 @@ class StoreView:
         if registration.stat().st_size > 16 << 20:
             raise ResourceLimit('resource_limit: capture reference')
         ref = load_json(registration)
-        directory = (self.run/ref['bundle_path']).resolve()
+        from flagprof.delivery_refs import resolve
+        directory = resolve(registration, ref['bundle_path'])
         from ..offline.bundle import load_bundle
         from ..offline.checkpoints import fileinfo
         if fileinfo(directory/'capture.json') != ref['envelope']:
@@ -177,6 +176,8 @@ class StoreView:
             raise ValueError('registered capture metadata mismatch')
         lineage = read_lineage(self.run)
         source = capture['metadata'].get('source_run_id')
+        if not source and not capture['metadata'].get('collection_run'):
+            return dict(status='unavailable', reason='external_capture_has_no_collection', capture_directory=str(directory))
         if not source or lineage.get('source_run_id') != source:
             raise ValueError('analysis source_run_id mismatch')
         relative = Path(capture['metadata']['collection_run'])
@@ -194,7 +195,7 @@ class StoreView:
             raise ValueError(source['reason'])
         return StoreView(source['collection_run'])
 
-    def iter_native_relations(self, trace_uid=None, *, limits=None, work=None):
+    def iter_native_relations(self, trace_uid=None, *, limits=None):
         """Verified bounded native rows, owner names and interpretation state."""
         from .native_read import rows
         from .analysis_read import ResourceLimit
@@ -202,9 +203,9 @@ class StoreView:
             for index,path in enumerate(sorted((self.run/'traces').glob('*.json'))):
                 if index>=256:
                     raise ResourceLimit('resource_limit: traces')
-                yield from rows(self,path.stem,limits=limits,work=work)
+                yield from rows(self,path.stem,limits=limits)
         else:
-            yield from rows(self,_uid(trace_uid),limits=limits,work=work)
+            yield from rows(self,_uid(trace_uid),limits=limits)
 
     def _bounded(self):
         if self._closed:raise ValueError('view is closed')

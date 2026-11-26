@@ -35,7 +35,7 @@ def configuration(path=None):
     for key in ('max_targets','max_segments','max_history','queue_capacity','max_record_bytes'):
         if type(result[key]) is not int or result[key] < 1:
             raise ValueError('positive integer required: '+key)
-    if result['source'] not in ('auto','dcmi','nvml','npu-smi','nvidia-smi'):
+    if result['source'] not in ('auto','dcmi','dsmi','nvml','npu-smi','nvidia-smi'):
         raise ValueError('unsupported telemetry source')
     if result['restart_backoff_s'] != [1, 2, 4]:
         raise ValueError('restart contract is 1, 2, 4 seconds')

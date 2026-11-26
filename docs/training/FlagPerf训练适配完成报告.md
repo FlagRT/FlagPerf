@@ -122,8 +122,7 @@
 ### 5.2 推荐集成路径（按成本从低到高）
 
 1. **零侵入（立即可用）**：训练脚本原样跑，加环境变量
-   `FLAGPROF_TRAIN_OBSERVE=<store>`；vendor 自动识别（cuda→thead/nvidia、
-   npu→ascend）。前提：脚本用标准 `torch.distributed` 进程组（Megatron/FSDP2 均满足）。
+   `FLAGPROF_TRAIN_OBSERVE=<store>`；集成后的 vendor 识别见[现行训练指南](v2.md#自有训练程序)。前提：脚本用标准 `torch.distributed` 进程组（Megatron/FSDP2 均满足）。
 2. **包依赖（推荐落点，已交付适配器并实跑验证）**：**2026-11-18 已在 FlagScale 自身训练入口
    （`flagscale/train/train_retrieval.py`，bge-m3、DDP 双卡、PPU）实跑通过**：
    train_loss 0.116918 / validation 0.000107；store 1.6 GB complete；

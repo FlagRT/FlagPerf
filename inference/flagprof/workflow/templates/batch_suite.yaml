@@ -1,0 +1,43 @@
+# ==============================================================================
+# FlagPerf Inference 多模型批量验收模板 (batch)
+#
+# 适用场景：按模型名册批量执行 A/A 双跑一致性验证，汇总 passed/failed/blocked 状态表。
+# 底层桥接 flagprof-batch；摘要保留 battery-summary.json 的 passed/failed/blocked 计数。
+# ==============================================================================
+
+schema_version: 1
+mode: batch
+name: batch-acceptance
+
+hardware:
+  # 可选：指定执行设备（如 npu:0 / cuda:0 / cpu）；auto 省略底层 --device
+  device: auto
+
+batch:
+  # 方式 A：删除下方 models 区块，再引用已有模型名册 YAML 或内置名册（builtin:cpu | builtin:models | builtin:hf2）
+  # config: "builtin:cpu"  # 先按名册路径准备 package；builtin 名册的相对资源基于本配置目录
+
+  # 方式 B：直接在此文件内联列出要验证的模型（与上方 config 二选一）
+  models:
+    - id: ctr-dlrm
+      task: ctr
+      package: ./packages/ctr-v1
+      arch: dlrm
+      seed: 531
+      dtype: float32
+      forwards: 1
+      status: active
+    - id: ctr-din
+      task: ctr
+      package: ./packages/ctr-v1
+      arch: din
+      seed: 531
+      dtype: float32
+      forwards: 1
+      status: active
+
+  # 可选：按模型 id 子串过滤，只跑匹配项（如 "dlrm"）
+  # filter: dlrm
+
+output:
+  dir: ./flagprof-results

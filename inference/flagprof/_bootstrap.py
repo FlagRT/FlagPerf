@@ -26,6 +26,7 @@ def bootstrap(injection):
         chain_sitecustomize(injection)
         return
     config = json.loads(Path(config_path).read_bytes())
+    config['run'] = str((Path(config_path).resolve().parent / config['run']).resolve())
     from .store.manifest import atomic_json, proc_key
     expected = config.get('wrapper_process')
     try:
@@ -37,7 +38,7 @@ def bootstrap(injection):
     if not expected or not all(v is not None for v in parent.values()) or parent != expected:
         chain_sitecustomize(injection)
         return
-    from .runtime import attach
+    from .runtime import attach, startup_error
     from .registry import Registry
     import uuid
     handshake = Path(config['run'])/'handshakes'/uuid.uuid4().hex
@@ -46,12 +47,14 @@ def bootstrap(injection):
     atomic_json(handshake, state)
     try:
         from .components.compiler import select
-        select(config['config'], cache_root=Path(config['run']).parent/'component-cache')
+        select(config['config'], cache_root=Path(config['run']).parent, target=config['vendor'])
         chain_sitecustomize(injection)
         handle = attach(config['run'], config['vendor'], preset=config['preset'], config=config['config'],
                         registry=Registry(config.get('descriptors')), identity=config.get('identity'),
                         backend_options=config.get('backend_options'),capture_mode=config.get('capture_mode','windowed'))
         state.update(attachment=handle.id, status=handle.state['status'])
+        if state['status'] != 'running':
+            state['error'] = startup_error(handle.state)
     except Exception as error:
         state.update(status='failed', error=repr(error))
     atomic_json(handshake, state)

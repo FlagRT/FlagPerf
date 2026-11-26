@@ -111,6 +111,22 @@ class CliDefaultTests(unittest.TestCase):
             self.assertEqual(again, path)
             self.assertEqual(hashlib.sha256((Path(again) / 'groups.jsonl').read_bytes()).hexdigest(), digest)
 
+    def test_default_lm_rows_use_packaged_generator_outside_checkout(self):
+        import os
+        from unittest.mock import patch
+        from flagprof.training.__main__ import ensure_generated
+        cwd = Path.cwd()
+        with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ):
+            try:
+                os.chdir(directory)
+                os.environ.pop('PYTHONPATH', None)
+                corpus = Path(ensure_generated('lm-corpus', 'out', 72, vocab=4, rows=6))
+                rows = [json.loads(line) for line in (corpus/'tokens.jsonl').read_text().splitlines()]
+                self.assertEqual(len(rows), 6)
+                self.assertTrue(all(len(row['input_ids']) == 64 and max(row['input_ids']) < 4 for row in rows))
+            finally:
+                os.chdir(cwd)
+
     def test_ensure_generated_reuses_existing_package_marker(self):
         from flagprof.training.__main__ import ensure_generated
         with tempfile.TemporaryDirectory() as directory:

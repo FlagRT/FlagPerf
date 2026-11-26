@@ -1,0 +1,5 @@
+# CPU example. Generate packages/ctr-v1 beside this file with flagprof-make-ctr.
+models:
+  - { id: ctr-dlrm, task: ctr, package: packages/ctr-v1, arch: dlrm,  seed: 531, dtype: float32, forwards: 1, status: active }
+  - { id: ctr-din,  task: ctr, package: packages/ctr-v1, arch: din,   seed: 531, dtype: float32, forwards: 1, status: active }
+  - { id: blocked-example, task: ctr, package: packages/ctr-v1, arch: dlrm, seed: 531, dtype: float32, forwards: 1, status: blocked }

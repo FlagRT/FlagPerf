@@ -79,7 +79,15 @@ def resource(work, params):
         if device.get('power_domain'):
             selected.add(device['power_domain'])
     if not selected:
-        return Result('resource','unavailable',work.table('resource'),coverage,['target device identity unknown or conflicting'])
+        registrations = ref.get('devices', [])
+        if not registrations:
+            notes.append('target device not registered')
+        for item in registrations:
+            if item.get('status') == 'conflict':
+                notes.append(f"声明设备 {item.get('declared_device')} 对应 {item.get('declared_entity')}，目标登记 {item.get('logical_device')} 对应 {item.get('entity')}。请核对任务使用的设备与可见设备映射。")
+            elif item.get('status') != 'available':
+                notes.append(f"无法确认逻辑设备 {item.get('logical_device')} 的物理身份。{item.get('reason', '')}")
+        return Result('resource','unavailable',work.table('resource'),coverage,notes)
     work.db.executescript('''create table if not exists telemetry(entity text,metric text,ts integer,payload text);
         create index if not exists telemetry_lookup on telemetry(entity,metric,ts);''')
     descriptors = {d['name']:d for d in inventory['descriptors']}
@@ -87,7 +95,7 @@ def resource(work, params):
     count = 0
     with StoreView(work.view.run) as view:
         try:
-            for event in view.iter_monitor_events(types=('counter',), work=work.directory, limits=asdict(work.limits)):
+            for event in view.iter_monitor_events(types=('counter',), limits=asdict(work.limits)):
                 if event.get('ts') is None:
                     continue
                 entity = event['dev']

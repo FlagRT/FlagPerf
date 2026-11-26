@@ -1,0 +1,64 @@
+# ==============================================================================
+# FlagPerf Inference 单机双卡 TP2 采集模板 (tp2)
+#
+# 适用场景：使用 flagprof launch 在单机 2 张卡上运行张量并行（TP2）推理，
+#          自动完成双 rank 采集、逐 rank 校验、通信对齐与组报告生成。
+# ==============================================================================
+
+schema_version: 1
+mode: single
+name: qwen3-tp2-perf
+
+target:
+  type: builtin
+  # 支持 embedding（Qwen3-Embedding）或 generate（OneRec 等受支持生成模型）
+  task: embedding
+  model: /path/to/Qwen3-Embedding-0.6B
+  inputs_from: /path/to/oracle-inputs
+  # 可选：只抽取参考包中的指定样本 ID，如 ["en-short"]
+  # samples: ["en-short"]
+
+hardware:
+  vendor: auto             # auto | ascend | nvidia | thead | kunlunxin
+  nproc: 2                 # 固定 2，底层自动调度 flagprof launch --nproc-per-node 2
+  # 双卡通信后端：auto（按厂商选默认）| hccl（昇腾）| nccl（NVIDIA/P800）| flagcx
+  comm_backend: auto
+
+profile:
+  # perf | accuracy | coverage | modules | perf-lite | monitor | none
+  preset: perf
+  # 改为 "none" 时，内置 runner 在两个 rank 分别接收 FlagGems 开关与 include；产出 runner baseline。
+
+runner:
+  dtype: bfloat16
+  batch_size: 1
+  warmup: 1
+  forwards: 2
+  pooling: auto
+  padding_side: auto
+  # 改为 generate 时，移除 pooling，使用登记的模型和固定输入包，再填写以下两项（注意 generate 的 accuracy 模式要求 warmup=0, forwards=1）：
+  # generation_mode: performance
+  # max_new_tokens: 32
+
+components:
+  flaggems:
+    enabled: false
+    include: []
+  flagtree: inherit
+
+collection:
+  profile_memory: false
+  timeout: 1800
+  # TP2 每 rank 原始采集上限（默认 1 GiB）
+  # source_max_bytes: 1073741824
+
+output:
+  dir: ./flagprof-results
+  verify: true
+  report: true
+  # B 批身份匹配验收后启用 auto，配齐两个 rank 的 runner 才挂接。
+  # 结果看组状态、每 rank 观测与缺证原因；源码摘要冲突会终止挂接。
+  # 无插桩 FlagGems 试验可用下列覆盖（准备该模型的 include 文件）：
+  # --set profile.preset=none --set components.flaggems.enabled=true --set components.flaggems.include=./include.json
+  # 两个 rank 的实际开关与 include 见 runner.json，基准报告直接读取这两份文件。
+  attach_runner_results: auto

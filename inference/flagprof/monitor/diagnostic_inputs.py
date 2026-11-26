@@ -3,6 +3,7 @@ import json
 import time
 from pathlib import Path
 from flagprof.store import Reader
+from flagprof.delivery_refs import resolve
 from flagprof.telemetry.contract import raw_clock
 from .retention import CapacityError
 
@@ -28,7 +29,7 @@ class Inputs:
                 row=json.loads(registration.read_text())
                 if not row.get('diagnostic_identity'):continue
                 for relative in row.get('references',[]):
-                    paths[(self.root/relative).resolve().parent]=row['diagnostic_identity']['run_id']
+                    paths[resolve(registration, relative, base=self.root).parent]=row['diagnostic_identity']['run_id']
         for path in set(self.readers)-set(paths):
             self.readers.pop(path).close()
         for run_id in paths.values():sources[run_id]='unavailable'

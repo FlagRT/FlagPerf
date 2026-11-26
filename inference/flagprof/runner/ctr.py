@@ -4,7 +4,7 @@
 
 This module is the single implementation shared by
 
-  * the attach target (targets/template_ctr.py -> attach_main, writes
+  * the attach target (flagprof.targets.template_ctr -> attach_main, writes
     target-result.json), and
   * the runner task (flagprof.runner --task ctr -> execute, writes runner.json).
 
@@ -1073,7 +1073,7 @@ def _run_ctr(*, package, arch, seed, device, dtype, outputs, samples=None,
                     handle.record_tensor('scores', scores)
                 return scores
             if handle:
-                handle.bind_tensor_inputs(sample_ids, inputs, identity=identity)
+                handle.bind_tensor_inputs(sample_ids, inputs, identity=identity, model_name='template:' + arch)
             folder = out / (str(repeat)+'-'+str(batch_index)) if repeats > 1 else (out / str(batch_index) if len(batches) > 1 else out)
             run_rows.append(dict(samples=sample_ids,
                 run=run_prepared(model, inputs, warmup=warmup,
@@ -1118,13 +1118,13 @@ def execute(args):
 
 
 def attach_main():
-    """Attach CLI (targets/template_ctr.py delegates here); target-result.json
+    """Attach CLI (flagprof.targets.template_ctr delegates here); target-result.json
     surface, byte-identical contract."""
     p = argparse.ArgumentParser()
     p.add_argument('--package', required=True)
     p.add_argument('--arch', choices=ARCH_CHOICES, required=True)
     p.add_argument('--seed', type=int, default=531)
-    p.add_argument('--device', default='cuda:0')
+    p.add_argument('--device')
     p.add_argument('--dtype', choices=['bfloat16', 'float16', 'float32'], default='bfloat16')
     p.add_argument('--outputs', required=True)
     p.add_argument('--samples')
@@ -1132,6 +1132,8 @@ def attach_main():
     p.add_argument('--warmup', type=int, default=0)
     p.add_argument('--forwards', type=int, default=3)
     args = p.parse_args()
+    from flagprof.devices import execution_device
+    args.device = execution_device(args.device)
     result = run_ctr(package=args.package, arch=args.arch, seed=args.seed,
                      device=args.device, dtype=args.dtype, outputs=args.outputs,
                      samples=args.samples.split(',') if args.samples else None,

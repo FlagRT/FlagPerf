@@ -54,7 +54,7 @@
 
 ### L2 当前读取实现（2026-10-30）
 
-Reader 默认 retain=True 保持快照；retain=False 的 stream 逐条交付普通在线事件，生成器耗尽后更新 report。提前关闭保留进度，同一 Reader 只允许一个活动 stream。T9.6 消除了登记画像下普通在线事件的全量常驻；随后 D33 将完整 B 链路的导入、finalize、默认 inspect 与设备分页/迭代接入有界路径，工作区显式准入实际 ext4。
+Reader 默认 retain=True 保持快照；retain=False 的 stream 逐条交付普通在线事件，生成器耗尽后更新 report。提前关闭保留进度，同一 Reader 只允许一个活动 stream。T9.6 消除了登记画像下普通在线事件的全量常驻；随后 D33 将完整 B 链路的导入、finalize、默认 inspect 与设备分页/迭代接入有界路径，采集与导入的工作区跟随输出盘，查询使用系统临时目录。
 
 T9.6 的 M1/M2 三次峰值均低于 128 MiB，见 [验收](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-318933687dbe)，该数字绑定当时的读取画像。显式列表 API、原生关系整读、签名/控制状态及 compact 仍有随规模增长的部分。T10.2 已按 D48 为分析与报告交付有界读取、磁盘索引与流式导出，见 [P1 交接](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-f4f11a91c40b)。T12.2 合并重复 prepare 工作，T12.3 合并校验遍历并通过 Store 外的身份绑定凭据复用成功校验；文件或校验器身份变化时重验，Reader 仍校验实际事件分片，见 [读取复用](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-4921dede4be3)。P0 的退出结论沿用 [D45](DECISIONS.md#d45)。
 
@@ -68,7 +68,7 @@ T9.6 的 M1/M2 三次峰值均低于 128 MiB，见 [验收](https://github.com/F
 
 > **当前实现（2026-10-30）**：默认 final 在关闭时导出，目标无需调用 `step()`；显式 windowed 保留。`record-config.json` 向 final 目标传入生效配置，runner 与普通脚本共用 attachment。module／dispatch／route／compile 以及 P4 tensor 采集已交付；`perf`／`perf-lite` 默认不启用逐调用 dispatch，精确项目调用连接可显式选择 `each-window`。具体默认值与参数见 [P1 使用说明](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-0a9e456a7414) 和 [设备／显存／replay 使用说明](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-5ef59ff0c610)。自动接入范围仍遵循 D32 的直接 Python 目标。
 >
-> 官方显存通过显式 `--profile-memory` 启用；分析侧经公共 StoreView 读取设备与显存证据。replay 通过冻结输入包产生新的标准 Store，再与独立性能 run 按精确签名连接。导入与查询使用 ext4；D52 的 A100 独立 overlay 采集例外须显式 `--capture-only --capture-filesystem overlay`，传输校验后仍在 ext4 消费。工程验收与 P2／P4 阶段状态见 [联合交付](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-9596bcfb2a96)。
+> 官方显存通过显式 `--profile-memory` 启用；分析侧经公共 StoreView 读取设备与显存证据。replay 通过冻结输入包产生新的标准 Store，再与独立性能 run 按精确签名连接。检查点位于输出盘，报告使用报告输出盘。历史工程验收与 P2／P4 阶段状态见 [联合交付](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-9596bcfb2a96)。
 
 <details>
 <summary>2026-10-27 P1 实施前的实现快照（原文）</summary>
@@ -79,7 +79,7 @@ T9.6 的 M1/M2 三次峰值均低于 128 MiB，见 [验收](https://github.com/F
 > - **接入范围**：D32 已于 D45 获用户确认。final 由 `offline.capture.capture_target` 在执行直接 Python 目标前调用 attach；windowed 的 bootstrap 用完整 proc_key 核对目标父进程。后代 worker 不自动采集，fork 继承的 Writer/Context 不可用；多进程由 P5 设计。
 > - **配置传递**：windowed 经 `record-config.json`、`FLAGPROF_RECORD_CONFIG` 与 bootstrap。当前 final 单独传 vendor/preset，并清除该环境变量；T10.1 按 D48 补齐同源配置的显式传递与生效记录。
 > - **进程内 API**：`attach(run, vendor, ..., capture_mode='final')` 返回管理 Writer、Context 和官方会话的句柄。final 在关闭后导出，不要求目标调用 `step()`；显式 windowed 仍按 step 推进。自动 module/dispatch/route/compile 探针目前列为 unavailable，待 T10.1 实现。
-> - **导入与位置**：目标退出后由独立进程完成导入。完整 B 链路使用实际 ext4 的 capture/Store/work/scratch，默认有界读取；旧窗口路径仍显式可选。
+> - **导入与位置**：目标退出后由独立进程完成导入。封存和导入使用所选输出盘，默认有界读取；旧窗口路径仍显式可选。
 
 </details>
 

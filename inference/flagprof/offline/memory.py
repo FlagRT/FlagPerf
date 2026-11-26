@@ -1,26 +1,21 @@
 # Copyright 2026 FlagOS Contributors
 # Licensed under the Apache License, Version 2.0.
 """Supplemental official memory import with sealed sources and a bounded ledger."""
-import importlib
+from flagprof.vendors import adapter, is_kineto
 from contextlib import nullcontext
 import json
 from pathlib import Path
+from flagprof.progress import phase
 from .checkpoints import fileinfo, publish
 from flagprof.store.manifest import atomic_json
 from flagprof.store._offline_writer import offline_writer
-
-
-def adapter(vendor):
-    if vendor not in ('ascend','nvidia','thead','kunlunxin'):
-        raise ValueError('unsupported memory vendor')
-    return importlib.import_module('flagprof.vendors.'+vendor+'.memory')
 
 
 def seal_artifacts(trace, destination, vendor, metadata):
     if not metadata.get('requested_configuration',{}).get('profile_memory'):
         return []
     from .bundle import copy_checked
-    paths = adapter(vendor).artifacts(trace)
+    paths = adapter(vendor, 'memory').artifacts(trace)
     for path in paths:
         copy_checked(path, destination/path.name,max_bytes=metadata.get('source_max_bytes',1<<30))
     return [p.name for p in paths]
@@ -37,7 +32,7 @@ def import_memory(directory, run, capture, *, writer=None, prepared=None):
         publish(run/'memory.json', state)
         return state
     root = Path(directory)/'sealed-trace/data'
-    names = ['trace.json'] if capture['vendor'] in ('nvidia','thead','kunlunxin') else capture.get('memory_files',[])
+    names = ['trace.json'] if is_kineto(capture['vendor']) else capture.get('memory_files',[])
     state['sources'] = [dict(path='sealed-trace/data/'+name, **fileinfo(root/name)) for name in names]
     state['status'] = 'incomplete'
     atomic_json(run/'memory.json', state)
@@ -45,13 +40,13 @@ def import_memory(directory, run, capture, *, writer=None, prepared=None):
     # A writer is closed before success. Receipts bind every accepted memory
     # record to the ledger; independent verification runs once at import time.
     owns_writer = writer is None
-    with ledger.open('x') as output, (offline_writer(run) if owns_writer else nullcontext(writer)) as writer:
+    with phase('处理官方显存记录', unit='条') as records_progress, ledger.open('x') as output, (offline_writer(run) if owns_writer else nullcontext(writer)) as writer:
         if not writer.flush(120):raise ValueError('memory writer initial barrier failed')
         for source, name in zip(state['sources'], names):
             if prepared is not None and hasattr(__import__('flagprof.vendors.'+capture['vendor']+'.importer',fromlist=['memory_record']),'memory_record'):
                 if 'memory' not in prepared.files:raise ValueError('prepared memory derivative missing')
                 records=prepared.arrays('memory')
-            else:records=adapter(capture['vendor']).records(root/name)
+            else:records=adapter(capture['vendor'], 'memory').records(root/name)
             for row in records:
                 state['records'] += 1
                 entry = dict(source=source['path'], **row)
@@ -73,7 +68,10 @@ def import_memory(directory, run, capture, *, writer=None, prepared=None):
                     entry.update(status='excluded',reason=row.get('reason','no_occupancy_fields'))
                     state['excluded'] += 1
                 output.write(json.dumps(entry, sort_keys=True)+'\n')
+                if state['records'] % 256 == 0:
+                    records_progress.update(state['records'])
         if not writer.flush(120):raise ValueError('memory writer final barrier failed')
+        records_progress.update(state['records'])
     state['ledger'] = dict(path=ledger.name, **fileinfo(ledger))
     if owns_writer:return finish_memory(run,state)
     return state
@@ -117,7 +115,7 @@ class MemoryVerifier:
         registration=run/'plan-b-capture.json'
         if registration.exists():
             capture=read_json(registration)['capture']
-            expected=({'trace.json':{k:capture['trace'][k] for k in ('bytes','sha256')}} if capture['vendor'] in ('nvidia','thead','kunlunxin')
+            expected=({'trace.json':{k:capture['trace'][k] for k in ('bytes','sha256')}} if is_kineto(capture['vendor'])
                       else capture.get('memory_sources',{}))
             if self.sources!={'sealed-trace/data/'+name:dict(path='sealed-trace/data/'+name,**info) for name,info in expected.items()}:
                 raise ValueError('memory source/capture mismatch')
@@ -147,11 +145,11 @@ def verify_memory(run,state):
     import sqlite3
     import tempfile
     from flagprof.store import StoreView
-    with tempfile.TemporaryDirectory(prefix='memory-verify-',dir=run.parent) as directory:
+    with tempfile.TemporaryDirectory(prefix='memory-verify-',dir=None) as directory:
         db=sqlite3.connect(Path(directory)/'receipts.sqlite')
         try:
             verifier=MemoryVerifier(run,db,state)
             with StoreView(run) as view:
-                for stored in view.iter_events(types=('counter',),work=directory):verifier.accept(stored)
+                for stored in view.iter_events(types=('counter',)):verifier.accept(stored)
             verifier.finish()
         finally:db.close()

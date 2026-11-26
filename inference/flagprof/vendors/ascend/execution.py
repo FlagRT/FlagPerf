@@ -3,6 +3,12 @@
 """NPU worker setup, imported only inside an executing worker."""
 
 
+TORCH_DEVICE = 'npu'
+TORCH_EXTENSION = 'torch_npu'
+SMI = 'npu-smi'
+BACKENDS = ('hccl', 'flagcx')
+
+
 def prepare_components():
     # Component registration uses torch.npu even before a runner selects a device.
     import torch_npu
@@ -25,6 +31,7 @@ def allocator_memory(device):
 def physical_identity(device):
     import ctypes as C
     import torch
+    import torch_npu
     library = C.CDLL('libascendcl.so')
     function = library.aclrtGetPhyDevIdByLogicDevId
     function.argtypes = [C.c_int, C.POINTER(C.c_int)]

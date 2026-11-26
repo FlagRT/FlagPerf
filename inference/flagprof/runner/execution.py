@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 
-def select_compiler(handle, *, flagtree=None, vendor_compiler=None, outputs):
+def select_compiler(handle, *, flagtree=None, vendor_compiler=None, outputs, device=None):
     requested = dict(flagtree=flagtree, vendor_compiler=vendor_compiler)
     if handle:
         for key, value in requested.items():
@@ -16,7 +16,7 @@ def select_compiler(handle, *, flagtree=None, vendor_compiler=None, outputs):
                 raise ValueError('runner compiler configuration conflicts with attachment')
     else:
         from flagprof.components.compiler import select
-        select(requested, cache_root=Path(outputs).parent/'component-cache')
+        select(requested, cache_root=Path(outputs), target=device)
 
 
 @contextmanager
@@ -25,7 +25,7 @@ def execution(*, device, outputs, numerics='default', flaggems=None,
     from flagprof import current_attachment
     from flagprof.probes.config import resolve
     handle = current_attachment()
-    select_compiler(handle, flagtree=flagtree, vendor_compiler=vendor_compiler, outputs=outputs)
+    select_compiler(handle, flagtree=flagtree, vendor_compiler=vendor_compiler, outputs=outputs, device=device)
     component = None
     if handle:
         effective = handle.state['effective_config']
@@ -41,15 +41,8 @@ def execution(*, device, outputs, numerics='default', flaggems=None,
     from .fixed import numerics as configure_numerics, software
     numeric_settings = configure_numerics(device, numerics)
     import torch
-    if device.startswith('npu'):
-        import torch_npu
-        torch.npu.set_device(device)
-        sync = torch.npu.synchronize
-    elif device.startswith('cuda'):
-        torch.cuda.set_device(device)
-        sync = torch.cuda.synchronize
-    else:
-        sync = lambda: None
+    from flagprof.devices import synchronize_device
+    sync = synchronize_device(device)
     try:
         if not handle and effective['flaggems'] == 'on':
             from flagprof.components.flaggems import FlagGems

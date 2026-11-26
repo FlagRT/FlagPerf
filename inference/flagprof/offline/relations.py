@@ -1,6 +1,7 @@
 # Copyright 2026 FlagOS Contributors
 # Licensed under the Apache License, Version 2.0.
 """SQL lookups preserve full rule unions; per-device sets spill to scratch."""
+from flagprof.vendors import is_kineto
 from .disk import Rows,key,unpack
 from flagprof.correlate.linker import ref,registry_match
 from flagprof.correlate.native import contains
@@ -14,12 +15,21 @@ def device_hits(db,event,vendor):
     yield from db.edge_hits(event,vendor)
 
 
+def queue_pairs(db, launch, mode='dequeue'):
+    """Look up CANN enqueue sites for this launch within the capture and host process."""
+    for dequeue in db.contains(launch, mode):
+        corr = dequeue['ext']['chrome.args'].get('correlation_id')
+        if queue_key_valid(corr):
+            for enqueue in records(db, 'enqueue', (dequeue['host_pid'], corr)):
+                yield dequeue, enqueue
+
+
 def host_hits(db,launch,vendor,native=False):
-    prefix='cuda' if vendor in ('nvidia','thead','kunlunxin') else 'cann'
+    prefix='cuda' if is_kineto(vendor) else 'cann'
     for n in db.contains(launch,'call' if native else 'project'):
         yield prefix+('.native_nesting' if native else '.same_thread'),n,()
     args=launch['ext']['chrome.args']
-    if vendor in ('nvidia','thead','kunlunxin'):
+    if is_kineto(vendor):
         ext=args.get('External id')
         if ext is not None:
             for source in records(db,'native_external' if native else 'project_external',(launch['host_pid'],str(ext))):
@@ -31,12 +41,9 @@ def host_hits(db,launch,vendor,native=False):
         mode='dequeue' if native else 'project_dequeue'
         if not native:
             launch=dict(launch)  # no point-duration substitution for project
-        for dequeue in db.contains(launch,mode):
-            corr=dequeue['ext']['chrome.args'].get('correlation_id')
-            if queue_key_valid(corr):
-                for enqueue in records(db,'enqueue',(dequeue['host_pid'],corr)):
-                    for owner in db.contains(enqueue,'call' if native else 'project'):
-                        yield prefix+('.native_enqueue' if native else '.enqueue_corr'),owner,(dequeue,enqueue)
+        for dequeue,enqueue in queue_pairs(db,launch,mode):
+            for owner in db.contains(enqueue,'call' if native else 'project'):
+                yield prefix+('.native_enqueue' if native else '.enqueue_corr'),owner,(dequeue,enqueue)
 
 
 def copyset(db,source,target):
@@ -87,7 +94,7 @@ def native(db,event,vendor,registry,single_pid):
             for n in proof:db.add('evidence',n)
         db.innermost('host_candidates','host_owners');unknown |= db.count('host_owners')==0
         copyset(db,'host_owners','candidates')
-    if vendor in ('nvidia','thead','kunlunxin') and single_pid[0]:
+    if is_kineto(vendor) and single_pid[0]:
         ext=event['ext']['chrome.args'].get('External id')
         if ext is not None:
             for n in records(db,'native_external',(single_pid[1],str(ext))):

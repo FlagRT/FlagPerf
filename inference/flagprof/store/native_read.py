@@ -104,8 +104,10 @@ def rows(view, uid, *, limits=None, work=None):
             if 'summary' in checked and source_state['import_status']=='complete':
                 bindings.append(checked['summary'])
                 if any(stat_identity(path)!=before for path,before in bindings):raise ValueError('analysis metadata changed during read')
+                from flagprof.offline.device_analysis import read_capture_context
+                context = summary.get('device_analysis',dict(schema='device-analysis/1',status='unavailable',reason='projection_not_recorded'))
                 view._analysis_verified[uid]=dict(trace_uid=uid,bindings=bindings,
-                    context=summary.get('device_analysis',dict(schema='device-analysis/1',status='unavailable',reason='projection_not_recorded')),
+                    context=read_capture_context(view.run, descriptor.get('capture'), context),
                     intervals=derived.get('analysis_intervals'))
         except sqlite3.Error as error:
             raise ResourceLimit('resource_limit: native scratch: '+str(error)) from error

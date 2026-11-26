@@ -47,13 +47,16 @@ class Provider:
             ('temperature.chip','C'),('ascend.aicore.activity','%'),('ascend.health','code')]]
         self.metrics.append(Metric('power.draw','W','card','npu-smi info',roles=('power',)))
         self.inventory=dict(entities=entities,source='npu-smi',container_safe=False,initial_round_ns=elapsed,
-                            minimum_interval_ms=max(100,2*elapsed/1e6),call_timeout_s=max(3,5*elapsed/1e9),
+                            interval_quantum_ms=1000, minimum_interval_ms=max(100,2*elapsed/1e6),call_timeout_s=max(3,5*elapsed/1e9),
                             unavailable={'clock.compute':'not_in_fallback_table','clock.memory':'not_in_fallback_table',
                                          'process.device_memory':'not_in_fallback_table','device.error_codes':'not_in_fallback_table'})
 
     def query(self):
-        return subprocess.run(['npu-smi','info'],stdout=subprocess.PIPE,stderr=subprocess.STDOUT,
-                              text=True,timeout=3,check=True).stdout
+        result = subprocess.run(['npu-smi','info'],stdout=subprocess.PIPE,stderr=subprocess.STDOUT,
+                                text=True,timeout=3)
+        if result.returncode:
+            raise ReadError('read_error', f'npu-smi info exited {result.returncode}: {result.stdout.strip()[:256]}')
+        return result.stdout
 
     def calls(self):
         return [Call('npu-smi','node','node',(),self.read,source_api='npu-smi info')]
@@ -62,6 +65,7 @@ class Provider:
         start=raw_clock();reason=None
         try:rows=parse(self.query())
         except ValueError:rows=[];reason='fallback_unparsable'
+        except ReadError as error:rows=[];reason=error.reason
         except subprocess.TimeoutExpired:rows=[];reason='timeout'
         except (subprocess.SubprocessError,OSError):rows=[];reason='read_error'
         end=raw_clock();byid={r['entity']:r for r in rows};points=[]

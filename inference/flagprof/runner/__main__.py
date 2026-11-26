@@ -46,7 +46,7 @@ def _main():
     p.add_argument('--warmup', type=int, default=0)
     p.add_argument('--forwards', type=int)
     p.add_argument('--repeats', type=int, default=1)
-    p.add_argument('--device', default='npu:0')
+    p.add_argument('--device', help='PyTorch device (default: assigned rank or available runtime)')
     p.add_argument('--outputs', required=True)
     p.add_argument('--flaggems', choices=['off','on'], default=None)
     p.add_argument('--flaggems-include')
@@ -64,9 +64,6 @@ def _main():
     args = p.parse_args()
     if args.forwards is None:args.forwards=1 if args.task=='generate' else 3
     if args.padding_side is None:args.padding_side='right' if args.pooling=='cls' else 'left'
-    if __import__('os').environ.get('FLAGPROF_DEVICE'):
-        args.device=__import__('os').environ['FLAGPROF_DEVICE']
-        args.outputs=str(Path(args.outputs)/('rank-'+__import__('os').environ['RANK']))
     if args.trust_remote_code and args.task not in ('embedding','rerank'):
         p.error('--trust-remote-code is only supported for --task embedding/rerank')
     if args.task=='rerank':
@@ -95,7 +92,12 @@ def _main():
         if not args.inputs and not args.inputs_from:p.error('--inputs or --inputs-from required')
     from flagprof import current_attachment
     handle = current_attachment()
-    select_compiler(handle, flagtree=args.flagtree, vendor_compiler=args.vendor_compiler, outputs=args.outputs)
+    select_compiler(handle, flagtree=args.flagtree, vendor_compiler=args.vendor_compiler, outputs=args.outputs, device=args.device)
+    from flagprof.devices import execution_device
+    import os
+    args.device = execution_device(args.device)
+    if int(os.environ.get('WORLD_SIZE', '1')) > 1:
+        args.outputs = str(Path(args.outputs) / ('rank-' + str(int(os.environ['RANK']))))
     if args.task=='rerank':
         from .rerank import execute
         return execute(args)
@@ -110,15 +112,8 @@ def _main():
     import torch
     from .fixed import numerics, software
     numeric_settings=numerics(args.device,args.numerics)
-    if args.device.startswith('npu'):
-        import torch_npu
-        torch.npu.set_device(args.device)
-        sync = torch.npu.synchronize
-    elif args.device.startswith('cuda'):
-        torch.cuda.set_device(args.device)
-        sync = torch.cuda.synchronize
-    else:
-        sync = lambda: None
+    from flagprof.devices import synchronize_device
+    sync = synchronize_device(args.device)
     if handle:handle.register_device(args.device)
     torch.set_num_threads(4)
     torch.manual_seed(531)
@@ -196,11 +191,8 @@ def _main():
         input_identity.setdefault('samples',[s for ids,_ in batches for s in ids])
         input_identity.setdefault('batches',[dict(samples=ids,shape=list(v['input_ids'].shape),valid_tokens=v['attention_mask'].sum(1).tolist()) for ids,v in batches])
         if 'oracle_id' not in input_identity:
-            oracle_keys=['model_files','inputs_sha256','dtype','attention','pooling','padding_side']
-            if input_identity.get('code_files'):oracle_keys.append('code_files')
-            input_identity['oracle_id']=hashlib.sha256(json.dumps(
-                {k:input_identity[k] for k in oracle_keys},
-                sort_keys=True).encode()).hexdigest()
+            from .fixed import direct_oracle_id
+            input_identity['oracle_id'] = direct_oracle_id(input_identity)
         from flagprof.components.compiler import identity as compiler_identity
         input_identity['compiler']=handle.state['compiler_identity'] if handle else compiler_identity()
         if parallel:
@@ -216,7 +208,7 @@ def _main():
                 if parallel:parallel.barrier()
                 inputs.update(return_dict=True)
                 if 'use_cache' in inspect.signature(model.forward).parameters:inputs['use_cache']=False
-                if handle:handle.bind_tensor_inputs(sample_ids,inputs,identity=input_identity)
+                if handle:handle.bind_tensor_inputs(sample_ids,inputs,identity=input_identity,model_name=model_path)
                 def transform(output):
                     pooled,result=embedding_outputs(output.last_hidden_state,inputs['attention_mask'],mean=args.pooling=='mean',cls=args.pooling=='cls')
                     if handle:

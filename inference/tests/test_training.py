@@ -121,6 +121,29 @@ class TrainingTests(unittest.TestCase):
         self.assertEqual(resumed['protocol']['observation']['preset'], 'coverage')
         self.assertNotEqual(paused['attachment_id'], resumed['attachment_id'])
 
+    def test_zero_drift_comparison_explicitly_declares_observation_only(self):
+        from flagprof.training.__main__ import main
+        from flagprof.training.compare import compare
+        base, observed = self.root/'base', self.root/'observed'
+        options = ['--device', 'cpu', '--task', 'classification', '--steps', '1']
+        main(options + ['--outputs', str(base)])
+        with patch.dict(os.environ, FLAGPROF_TRAIN_OBSERVE=str(self.root/'store'),
+                        FLAGPROF_TRAIN_OBSERVE_VENDOR='ascend', FLAGPROF_TRAIN_PRESET='coverage',
+                        FLAGPROF_TRAIN_MONITOR='off', FLAGPROF_TRAIN_REPORT='off'):
+            main(options + ['--outputs', str(observed)])
+        with self.assertRaisesRegex(ValueError, 'protocol differs: observation'):
+            compare(base, observed)
+        result = compare(base, observed, declare=['observation'])
+        self.assertEqual(result['declared_protocol_differences'], ['observation'])
+        self.assertEqual(result['status'], 'pass')
+        self.assertEqual(result['environments'][1]['observation']['preset'], 'coverage')
+        metadata = observed/'training-result.json'
+        run = json.loads(metadata.read_text())
+        run['protocol']['lr'] *= 2
+        metadata.write_text(json.dumps(run))
+        with self.assertRaisesRegex(ValueError, 'protocol differs: lr'):
+            compare(base, observed, declare=['observation'])
+
     def test_failure_keeps_completed_steps_and_does_not_reuse_output(self):
         calls = [0]
         def fail_second(model, batch):

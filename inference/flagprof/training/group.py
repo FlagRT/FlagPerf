@@ -4,13 +4,15 @@
 
 Scans a training observation store root (rank-*/<run-id>), renders each
 rank's report when missing (same generate() the finalize path uses), and
-writes group.html/group.md linking every rank report, the run manifests and
+writes a Markdown index and a JSON inventory linking every rank report, the run manifests and
 any operator-placed oracle.json. Deliberately NOT the inference TP2
 delivery group format: training ranks are arbitrary world_size and their
 reports are read per rank.
 """
 import argparse
 import json
+from os.path import relpath
+from urllib.parse import quote
 from pathlib import Path
 
 
@@ -42,15 +44,14 @@ def build(store_root, out=None):
                 row['status'] = 'rendered'
     out = Path(out) if out else root.parent/(root.name+'-group')
     out.mkdir(parents=True, exist_ok=True)
-    lines = ['# 训练多卡报告索引', '', f"- Store：`{root}`", f"- Rank 数：{len(ranks)}", '']
+    lines = ['# 训练多卡报告索引', '', f"- Store：`{relpath(root, out)}`", f"- Rank 数：{len(ranks)}", '']
     lines += ['| rank | run | 状态 | 报告 | oracle |', '|---|---|---|---|---|']
     for row in ranks:
-        rel = row['report'].relative_to(out) if row['report'].is_relative_to(out) else row['report']
-        oracle_rel = ''
-        if row['oracle']:
-            oracle_rel = f"[oracle.json]({row['oracle'].relative_to(out) if row['oracle'].is_relative_to(out) else row['oracle']})"
-        lines.append('| {} | `{}` | {} | [report]({}) | {} |'.format(
-            row['rank'].removeprefix('rank-'), row['run'].name, row['status'] or '-', rel, oracle_rel))
+        report = quote(relpath(row['report']/'report.html', out))
+        manifest = quote(relpath(row['manifest'], out))
+        oracle = f"[oracle.json]({quote(relpath(row['oracle'], out))})" if row['oracle'] else ''
+        lines.append('| {} | [`{}`]({}) | {} | [report]({}) | {} |'.format(
+            row['rank'].removeprefix('rank-'), row['run'].name, manifest, row['status'] or '-', report, oracle))
     lines += ['', '逐 rank 的 loss/吞吐/协议见各 rank 目录 `training-result.json`；'
               '跨 rank 汇总见 store 旁 `summary.json`（`flagprof.training.summary` 生成）。'
               '本页不合并数值：跨 rank 数值不相加，一致性判据见 summary 的字段语义。']

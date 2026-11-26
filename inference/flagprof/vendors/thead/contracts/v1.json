@@ -59,13 +59,13 @@
   "notes": {
     "assessment_limit": "T-Head PPU torch.profiler 2.10 observed Kineto structure; not capture completeness, occupancy metrics, or NVIDIA hardware semantics.",
     "evidence_sources": [
-      "docs/thead/inference-v2.md"
+      "validation:PPU-INF"
     ],
     "labels": [],
     "conditional_dependencies": []
   },
   "open_unknown": true,
-  "revision": 1,
+  "revision": 2,
   "roles": {
     "allowed_non_device_categories": [
       "gpu_user_annotation"

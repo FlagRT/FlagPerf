@@ -96,6 +96,19 @@ def identity_facts(identities: dict[str, Any]) -> dict[str, Any]:
                 execution=collector.get('execution',{}) if collector.get('source') else {})
 
 
+def condition_source(identities, path):
+    collector = identities.get('collector', {})
+    configuration = collector.get('configuration', {})
+    return {
+        'hardware': identities.get('hardware', {}).get('source'),
+        'collector': collector.get('source'),
+        'actual': configuration,
+        'sdk': configuration.get('actual', {}).get('sources', []),
+        'execution': collector.get('execution', {}).get('source', collector.get('source')),
+        'exporter': identities.get('exporter', identities.get('parser', {}).get('exporter', {})),
+    }.get(path.split('.')[0])
+
+
 def evaluate_conditions(conditions: list[dict], facts: dict) -> list[dict]:
     result=[]
     for condition in conditions:
@@ -217,12 +230,7 @@ def assess(events: list[dict], identities: dict, ledger: list[dict], taxonomy: A
     contract=taxonomy.contract;context=taxonomy.context(events)
     conditions=evaluate_conditions(contract['conditions'],identity_facts(identities))
     for row in conditions:
-        row['source']={'hardware':identities.get('hardware',{}).get('source'),
-            'collector':identities.get('collector',{}).get('source'),
-            'actual':identities.get('collector',{}).get('configuration',{}),
-            'sdk':identities.get('collector',{}).get('configuration',{}).get('actual',{}).get('sources',[]),
-            'execution':identities.get('collector',{}).get('source'),
-            'exporter':identities.get('exporter',identities.get('parser',{}).get('exporter',{}))}.get(row['path'].split('.')[0])
+        row['source']=condition_source(identities, row['path'])
     tracks=track_roles(events,taxonomy,context)
     structural=structure_conditions(contract,tracks)
     conditions.extend(structural)

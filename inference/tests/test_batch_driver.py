@@ -12,15 +12,13 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / 'tools'))
-
-import batch_driver  # noqa: E402
+from flagprof.batch import batch_driver
 
 
 class ConfigTests(unittest.TestCase):
     @unittest.skipUnless(importlib.util.find_spec('yaml'), 'pyyaml required for batch_driver')
     def test_load_local_yaml(self):
-        rows = batch_driver.load_config(str(ROOT / 'tools' / 'models_local.yaml'))
+        rows = batch_driver.load_config(str(ROOT / 'flagprof/batch/models_local.yaml'))
         self.assertEqual([r['id'] for r in rows],
                          ['ctr-dlrm', 'ctr-din', 'blocked-example'])
         self.assertEqual(rows[2]['status'], 'blocked')
@@ -59,7 +57,7 @@ class CmdTests(unittest.TestCase):
         self.assertEqual(cmd[cmd.index('--trust-remote-code') + 1], '--batch-size')
 
     def test_ctr_cmd_shape(self):
-        row = dict(id='ctr-dlrm', task='ctr', package='/w/packages/ctr-v1',
+        row = dict(id='ctr-dlrm', task='ctr', package='/example/packages/ctr-v1',
                    arch='dlrm', seed=531)
         cmd, out = batch_driver.build_cmd(row, 2, '/out', device='cuda:0')
         self.assertEqual(cmd[:4], ['-B', '-m', 'flagprof.runner',
@@ -70,18 +68,18 @@ class CmdTests(unittest.TestCase):
         self.assertTrue(out.endswith('ctr-dlrm-run2'))
 
     def test_rerank_cmd_shape(self):
-        row = dict(id='rk', task='rerank', model='hf:/w/models/r',
-                   package='/w/packages/p', score='sequence_logit',
+        row = dict(id='rk', task='rerank', model='hf:/example/models/r',
+                   package='/example/packages/p', score='sequence_logit',
                    batch_size=4)
         cmd, _ = batch_driver.build_cmd(row, 1, '/out')
         self.assertEqual(cmd[cmd.index('--score') + 1], 'sequence_logit')
         self.assertEqual(cmd[cmd.index('--batch-size') + 1], '4')
-        self.assertIn('hf:/w/models/r', cmd)
+        self.assertIn('hf:/example/models/r', cmd)
 
     def test_attach_cmd_shape(self):
         row = dict(id='jina', task='attach',
-                   target='/w/FlagPerf/inference/targets/target_embedder.py',
-                   args={'model': 'hf:/w/models/jina', 'pooling': 'mean',
+                   target='/example/my_inference.py',
+                   args={'model': 'hf:/example/models/jina', 'pooling': 'mean',
                          'max-length': 256})
         cmd, out = batch_driver.build_cmd(row, 1, '/out', dtype='bfloat16')
         self.assertEqual(cmd[1], row['target'])
@@ -93,17 +91,13 @@ class CmdTests(unittest.TestCase):
 class BatteryE2E(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.pkg = Path('/tmp/localtest-ctr-v1')
-        if not cls.pkg.exists():
-            env = dict(os.environ, PYTHONPATH=str(ROOT))
-            subprocess.run(
-                [sys.executable, '-B', str(ROOT / 'targets' / 'make_ctr_package.py'),
-                 '--samples', '8', '--seed', '531', '--out', str(cls.pkg)],
-                check=True, capture_output=True, env=env)
-
-    @classmethod
-    def tearDownClass(cls):
-        shutil.rmtree(cls.pkg, ignore_errors=True)
+        directory = tempfile.TemporaryDirectory()
+        cls.addClassCleanup(directory.cleanup)
+        cls.pkg = Path(directory.name) / 'ctr-v1'
+        env = dict(os.environ, PYTHONPATH=str(ROOT))
+        subprocess.run([sys.executable, '-B', '-m', 'flagprof.targets.make_ctr_package',
+                        '--samples', '8', '--seed', '531', '--out', str(cls.pkg)],
+                       check=True, capture_output=True, env=env)
 
     def test_battery_ctr_cpu_passed(self):
         row = dict(id='ctr-dlrm', task='ctr', package=str(self.pkg),

@@ -158,6 +158,8 @@ v1 用独立的 preview 阶段（5 个模块、专门的搜索流程）找出 Fl
 
 ### 3.3 精度（R52、R86/R88）
 
+Oracle 默认要求执行 dtype 一致。显式声明 `dtype` 后，异类型浮点张量分别解码，首差异按数值定位，ULP 只在同类型的完整浮点张量上计算。逐样本导出用 `ref_dtype`、`cmp_dtype` 记录实际类型，`numeric_equal` 的 true、false、null 分别表示已确认相等、已观测到差异、证据不足。配置见[跨精度对照用法](usage.md#比较-fp32-与-bf16-的逐层数值差异)。
+
 > **P4.1 实现口径（2026-10-29）**：full 浮点配对按原 dtype 单次读取数值与 ULP；相等极值作为成对哨兵排除，有限极值失配另计。层级直方图与分母累加；max_abs／ULP／样本／位置同源。张量 stride/contiguous 单列，ULP 描述量级，具体成因结合实现或定点实验。[T11.3 验收](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md#ref-4ea9cd3ce263)。
 
 

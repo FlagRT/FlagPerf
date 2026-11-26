@@ -6,9 +6,49 @@ import json
 from collections import Counter, defaultdict
 from pathlib import Path
 
+from flagprof.correlate.linker import ref
+from flagprof.vendors.native_common import launch_interval
 from .disk import Sink, key, pack, unpack
+from .relations import queue_pairs
 from flagprof.vendors.chrome import nanoseconds
 from .clock_bridge import collect, request_windows
+
+
+def external_context(context, metadata):
+    """External seals attest to the supplied trace, not to the runner arguments."""
+    if metadata.get('origin') != 'external-export':
+        return context
+    context['capture_provenance'] = dict(origin='external-export',
+        normal_close_evidence=metadata.get('normal_close_evidence'))
+    # Keep the declared value alongside its origin. A declaration alone cannot
+    # establish a complete project request in clock_bridge.request_windows.
+    context['capture_normal_close'] = metadata.get('normal_close')
+    context['metadata_sources'] = ['capture.json metadata', 'imported trace']
+    window = dict(context.get('window_identity') or {}, profiler=None, repeats=None, window_kind=None)
+    context['window_identity'] = window
+    for interval in context.get('windows', ()):
+        if interval.get('kind') == 'official_capture':
+            interval['kind'] = 'exported_capture_interval'
+        interval['window_identity'] = dict(interval.get('window_identity') or window,
+            repeats=None, profiler=None, window_kind=interval['kind'])
+    return context
+
+
+def read_capture_context(run, reference, context):
+    """Correct early external projections using the registration bound to the trace."""
+    if (not reference or reference.get('registration_path') != 'plan-b-capture.json'
+            or context.get('source_run_id') or 'capture_provenance' in context):
+        return context
+    import hashlib
+    from .limits import METADATA_BYTES
+    path = Path(run)/'plan-b-capture.json'
+    if path.is_symlink() or not path.is_file():
+        raise ValueError('invalid capture registration file')
+    with path.open('rb') as stream:
+        raw = stream.read(METADATA_BYTES + 1)
+    if len(raw) > METADATA_BYTES or hashlib.sha256(raw).hexdigest() != reference['registration_sha256']:
+        raise ValueError('capture registration changed')
+    return external_context(context, json.loads(raw)['capture']['metadata'])
 
 
 def capture_context(directory, capture):
@@ -21,7 +61,8 @@ def capture_context(directory, capture):
                                   and not meta.get('closed_before_target_return') and not meta.get('errors')))
     collection=meta.get('collection_run');argv=[];identity={};config={};steps=[]
     if collection:
-        run=directory/collection
+        from .checkpoints import checked_relative
+        run=directory/checked_relative(collection)
         manifest=read_json(run/'manifest.json');argv=manifest.get('identity',{}).get('argv',[])
         out['source_run_id']=manifest['run_id']
         from flagprof.store.manifest import writer_fragments
@@ -55,7 +96,7 @@ def capture_context(directory, capture):
         profile_memory=meta.get('requested_configuration',{}).get('profile_memory')),
         workload_identity=identity,steps=steps,metadata_sources=['collection manifest argv','attachment state','generation_step_complete'],
         clock=importlib.import_module('flagprof.vendors.'+capture['vendor']+'.analysis').clock(directory,capture))
-    return out
+    return external_context(out, meta)
 
 
 class Builder:
@@ -71,7 +112,9 @@ class Builder:
         facts=self.adapter.activity(event,self.context,self.db.get('labels',event.get('pid'),''))
         if event.get('ph')=='X' and event.get('name','').startswith('PyTorch Profiler'):
             if record['ts'] is not None and record['dur'] is not None:
-                self.explicit_windows.append(dict(kind='official_capture',start_ns=record['ts'],end_ns=record['ts']+record['dur'],
+                external = (self.inputs.get('capture_provenance') or {}).get('origin') == 'external-export'
+                self.explicit_windows.append(dict(kind='exported_capture_interval' if external else 'official_capture',
+                    start_ns=record['ts'],end_ns=record['ts']+record['dur'],
                     boundary_source=dict(trace_uid=self.uid,loc=record['loc'])))
         if facts is None:return
         row=dict(facts,source=dict(trace_uid=self.uid,loc=record['loc']),source_clock=self.uid,
@@ -82,21 +125,45 @@ class Builder:
             self.markers.append(dict(end_ns=record['ts']+record['dur'],dev=facts['dev'],source=row['source']))
         self.db.enqueue('insert into device_analysis values(?,?)',(i,pack(row)))
 
-    def communication(self,record):
-        """Flow ID joins first, then the launch's same-thread lexical scope."""
-        from flagprof.vendors.native_common import launch_interval
-        candidates={};proof=[];launch_count=0;unresolved=False
-        for rule,launch,edges in self.db.edge_hits(record,self.vendor):
-            launch_count+=1;found=False
-            for owner in self.db.contains(launch_interval(launch),'scope'):
-                for call in self.calls.get(owner['name'],[]):
-                    found=True;k=(call['group'],call['group_seq'],call.get('rank'))
-                    candidates[k]=call
-                    if len(proof)<8:proof.append(dict(rule=rule,launch={'trace_uid':self.uid,'loc':launch['loc']},
-                        marker={'trace_uid':self.uid,'loc':owner['loc']},flow=[{'trace_uid':self.uid,'loc':e['loc']} for e in edges]))
+    def communication_sites(self, launch):
+        yield launch_interval(launch), None
+        if self.vendor == 'ascend':
+            for dequeue, enqueue in queue_pairs(self.db, launch):
+                yield enqueue, dequeue
+
+    def communication(self, record, collective):
+        """Resolve device launches to registered calls on the launch or submitting thread."""
+        candidates = {}
+        proof = []
+        launch_count = 0
+        unresolved = mismatch = False
+        for rule, launch, edges in self.db.edge_hits(record, self.vendor):
+            launch_count += 1
+            found = False
+            for site, dequeue in self.communication_sites(launch):
+                site_matched = False
+                for owner in self.db.contains(site, 'scope'):
+                    for call in self.calls.get(owner['name'], ()):
+                        if self.vendor == 'ascend' and collective and call['op'] != collective:
+                            mismatch = True
+                            continue
+                        candidates[call['group'], call['group_seq'], call['rank']] = call
+                        site_matched = found = True
+                        if len(proof) < 8:
+                            path = dict(rule=rule, launch=ref(launch), marker=ref(owner),
+                                        flow=[ref(edge) for edge in edges])
+                            if dequeue is not None:
+                                path.update(enqueue=ref(site), dequeue=ref(dequeue),
+                                            correlation_id=dequeue['ext']['chrome.args']['correlation_id'])
+                            proof.append(path)
+                # A second queue candidate without a marker leaves ownership uncertain.
+                if dequeue is not None and not site_matched:
+                    unresolved = True
             unresolved |= not found
+        unresolved |= mismatch
         status='linked' if len(candidates)==1 and not unresolved else 'ambiguous' if candidates else 'explicit_link_unavailable'
         return dict(status=status,reason=None if status=='linked' else 'conflicting_or_missing_marker' if candidates else
+                    'collective_op_mismatch' if mismatch else
                     'flow_has_no_registered_marker' if launch_count else 'explicit_device_key_missing',
                     call=next(iter(candidates.values())) if status=='linked' else None,evidence=proof)
 
@@ -107,7 +174,7 @@ class Builder:
             row=unpack(payload);row['canonical']=not(row['representation']=='auxiliary_kernel' and row['collective'] in self.primary)
             if row['category']=='comm' and row['canonical']:
                 record=unpack(self.db.c.execute('select payload from norm where id=?',(i,)).fetchone()[0])
-                row['communication']=self.communication(record)
+                row['communication']=self.communication(record, row['collective'])
             counts['raw_records']+=1;counts['canonical_records']+=row['canonical']
             if row['category']=='unknown':unknown[str(row['task_type'])]+=1
             sink.row(row)

@@ -5,6 +5,7 @@
 Lookups still cover the whole source. The budget bounds one device's candidates,
 not the trace or a time window. No source candidate is dropped on overflow.
 """
+from flagprof.vendors import is_kineto
 from flagprof.correlate.linker import ref, identity, ref_sort, corr_sort, registry_match
 from flagprof.correlate.native import contains, innermost
 from .relations import device_hits, host_hits
@@ -63,7 +64,7 @@ def native(db,event,vendor,registry,single_pid):
             for n in extra:b.add(proof,n)
         chosen=innermost(list(owners.values()));unknown|=not chosen
         for n in chosen:b.add(candidates,n)
-    if vendor in ('nvidia','thead','kunlunxin') and single_pid[0]:
+    if is_kineto(vendor) and single_pid[0]:
         ext=event['ext']['chrome.args'].get('External id')
         if ext is not None:
             for i in db.ids('native_external',(single_pid[1],str(ext))):

@@ -136,6 +136,7 @@ def device(work, params):
             work.row('perf.device.headline',encode((dev,kind,'linked')),row)
     coverage = dict(work.coverage(), totals=totals, phases=work.table('perf.device.phases'), groups=work.table('perf.device.coverage'),
                     op_groups=work.table('perf.op.devices'), layer_groups=work.table('perf.layer.devices'),headline=work.table('perf.device.headline'),
+                    capture_provenance=context.get('capture_provenance'),
                     window_identity=context.get('window_identity'),workload_identity=context.get('workload_identity'))
     uncertain = any(q.get('format_status') != 'within' or q.get('import_status') != 'complete'
                     for q in work.qualities.values())

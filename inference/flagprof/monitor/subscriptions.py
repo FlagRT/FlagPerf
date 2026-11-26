@@ -128,10 +128,11 @@ class Server:
                         return dict(status='ended',target_id=ident)
                     previous['exit'] = receipt
                     pending = self.root/'notifications'; pending.mkdir(exist_ok=True)
-                    if len(list(pending.glob('*.json'))) >= state['config']['queue_capacity']:
+                    notification = pending/(ident+'.json')
+                    if not notification.exists() and len(list(pending.glob('*.json'))) >= state['config']['queue_capacity']:
                         state.update(status='capacity',worker_error='exit_notification_queue')
                     else:
-                        control_json(self.root,state,pending/(ident+'.json'),dict(t='health',ts=raw_clock(),kind='process_exit',
+                        control_json(self.root,state,notification,dict(t='health',ts=raw_clock(),kind='process_exit',
                             sev='info' if receipt['returncode']==0 else 'error',detail=dict(
                                 entity='proc:{pid_ns}:{pid}:{proc_start_ticks}'.format(**key),
                                 target_id=ident,returncode=receipt['returncode'],source='subprocess.wait',

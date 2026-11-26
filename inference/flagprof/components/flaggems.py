@@ -7,6 +7,18 @@ import json
 from pathlib import Path
 
 
+def gems_identity(value, component=None):
+    """Return the switch and known source hash from either persisted representation."""
+    item = value if isinstance(value, dict) else {'enabled': value}
+    hashes = {v for v in (item.get('source_sha256'), (component or {}).get('source_sha256')) if v}
+    if len(hashes) > 1:
+        raise ValueError('conflicting FlagGems source_sha256 within one identity')
+    enabled = item.get('enabled')
+    if isinstance(enabled, bool):
+        enabled = 'on' if enabled else 'off'
+    return enabled, next(iter(hashes), None)
+
+
 def aten_key(name, overload=''):
     name = name.removeprefix('aten::').removeprefix('aten.')
     return name + ('.' + overload if overload and overload != 'default' else '')

@@ -13,19 +13,17 @@ import json
 import statistics
 import time
 
-import torch
-import torch.nn.functional as F
 
 
-def bench(fn, warmup=10, iters=50):
+def bench(fn, sync, warmup=10, iters=50):
     for _ in range(warmup):
         fn()
-    torch.cuda.synchronize()
+    sync()
     samples = []
     for _ in range(iters):
         start = time.perf_counter()
         fn()
-        torch.cuda.synchronize()
+        sync()
         samples.append((time.perf_counter() - start) * 1000.0)
     return statistics.median(samples)
 
@@ -34,11 +32,16 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--out', required=True)
     ap.add_argument('--label', required=True)
-    ap.add_argument('--device', default='cuda')
+    ap.add_argument('--device')
     ap.add_argument('--iters', type=int, default=50)
     args = ap.parse_args()
+    import torch
+    import torch.nn.functional as F
 
+    from flagprof.devices import execution_device, synchronize_device
+    args.device = execution_device(args.device)
     dev = torch.device(args.device)
+    sync = synchronize_device(args.device)
     dt = torch.bfloat16
     B, S, H, I, V = 8, 512, 1024, 4096, 151669
     x = torch.randn(B, S, H, device=dev, dtype=dt)
@@ -71,7 +74,7 @@ def main():
     out = {}
     for name, fn in ops.items():
         try:
-            out[name] = bench(fn, iters=args.iters)
+            out[name] = bench(fn, sync, iters=args.iters)
         except Exception as exc:
             out[name] = None
             print(f'  {name}: SKIP ({type(exc).__name__}: {str(exc)[:60]})')

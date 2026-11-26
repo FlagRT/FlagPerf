@@ -189,3 +189,13 @@ def Provider(devices='all', source='auto', **kwargs):
         result=SMI(devices=devices)
         result.inventory['initial_source_failure']=str(error)
         return result
+
+
+def default_topology():
+    from ctypes.util import find_library
+    import shutil
+    try:
+        C.CDLL(find_library('nvidia-ml') or 'libnvidia-ml.so.1')
+    except OSError:
+        return 'local' if shutil.which('nvidia-smi') else 'host'
+    return 'local'

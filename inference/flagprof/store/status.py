@@ -45,7 +45,7 @@ def run_status(run):
                 if attachment.get('capture_status') == 'not_requested':
                     captures.append(dict(status='not_requested', label='未请求采集', windows=[]))
                 else:
-                    captures.append(capture_summary(inspect_capture(attachment['capture'])))
+                    captures.append(capture_summary(inspect_capture(run / attachment['capture_relative'] if attachment.get('capture_relative') else attachment['capture'])))
             except (OSError,ValueError,KeyError,TypeError) as error:
                 captures.append(dict(status='unavailable', reason=str(error)))
         for fragment in writer_fragments(run):
@@ -60,7 +60,7 @@ def run_status(run):
                 manifest_status=manifest.get('status','unavailable'), writers=writers, captures=captures,
                 log_check=log_counts(captures), record_status=record.get('status','unavailable'),
                 record_error=record_error,
-                exits=dict(target=_exit(record.get('target_exit',{}).get('returncode')),
+                exits=dict(target=_exit((record.get('target_exit') or {}).get('returncode')),
                            importer=_exit(record.get('importer_exit')), record=_exit(record.get('exit_code'))),
                 capture_loss=dict(count=None,count_semantics='unknown',reason='collector_loss_not_certified'))
 

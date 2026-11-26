@@ -6,6 +6,7 @@ import subprocess
 import sys
 import time
 from .reference import bind, relocate, resolve_reference
+from flagprof._process import module_environment
 from flagprof.store.manifest import atomic_json, proc_key
 
 
@@ -21,9 +22,23 @@ class Monitor:
         self.root = Path(options.get('monitor_root') or root).resolve()
         self.vendor = vendor
         self.interval = options.get('monitor_interval_ms', 1000)
-        self.topology = options.get('monitor_topology') or ('host' if vendor == 'ascend' else 'local')
+        self.topology = options.get('monitor_topology')
         if not self.enabled:
             return
+        if self.topology is None:
+            from flagprof.vendors import monitored_vendors, vendor_names
+            if vendor in monitored_vendors():
+                from flagprof.registry import Registry
+                import importlib
+                provider = Registry().describe('telemetry.' + vendor)
+                self.topology = importlib.import_module(provider['module']).default_topology()
+            elif vendor in vendor_names():
+                self.topology = 'local'
+            else:
+                bind(self.path, root=self.root, topology='unavailable')
+                self.error('unknown monitoring vendor: ' + vendor)
+                self.enabled = False
+                return
         shared = os.environ.get('FLAGPROF_MONITOR_REFERENCE')
         try:
             if shared:
@@ -44,8 +59,9 @@ class Monitor:
                     monitor = create_run(self.root/'monitor', identity=dict(kind='monitor', vendor=vendor))
                     bind(self.path, monitor=monitor)
                     self.log = (monitor/'logs/sidecar.log').open('wb')
-                    env = dict(os.environ); env.pop('FLAGPROF_RECORD_CONFIG', None)
-                    self.child = subprocess.Popen([sys.executable, '-B', '-S', '-m', 'flagprof.monitor',
+                    env = module_environment()
+                    env.pop('FLAGPROF_RECORD_CONFIG', None)
+                    self.child = subprocess.Popen([sys.executable, '-B', '-m', 'flagprof.monitor',
                         '--root', str(self.root), '--run', str(monitor), '--vendor', vendor,
                         '--interval-ms', str(self.interval)], env=env, stdout=self.log, stderr=subprocess.STDOUT)
                     deadline = time.monotonic()+max(2, 2*self.interval/1000)

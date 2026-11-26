@@ -230,10 +230,6 @@ class Reader:
             return None
         return StoredRecord(self.run_id, shard.writer_id, shard.index, record)
 
-    def _consume(self, shard: _Shard, updates: list[StoredRecord]) -> None:
-        """Compatibility entrypoint for the registered bounded business reader."""
-        updates.extend(self._consume_iter(shard))
-
     def _consume_iter(self, shard: _Shard) -> Iterator[StoredRecord]:
         if shard.unreadable:
             return

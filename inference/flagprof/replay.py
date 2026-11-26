@@ -3,11 +3,13 @@
 """Portable pure-operator replay. Preparation/reporting never imports torch."""
 import hashlib
 import json
+import math
+import struct
 from pathlib import Path
 import tempfile
 from .store import StoreView
 from .store.manifest import atomic_json
-from .tensor_data import blob_path, verify_blob, compare
+from .tensor_data import FORMATS, blob_path, verify_blob, compare
 
 SUPPORTED = {('aten::mean','dim'),('aten::softmax','int'),('aten::rsqrt',''),('aten::pow','Tensor_Scalar')}
 
@@ -17,78 +19,167 @@ def digest(path):
     return fileinfo(path)
 
 
+# Persist these stable codes in oracle-result/1. Preparing the package additionally
+# verifies blob content, so exporting a row never needs to hash its inputs again.
+READY = 'replay_ready'
+TENSOR_BYTES = 64 << 20
+REASONS = {
+    'replay_partial': 'replay source read is partial or Store is incomplete',
+    'replay_identity': 'replay source identity mismatch or incomplete execution identity',
+    'replay_call': 'replay requires exactly one tensor per side for this call',
+    'replay_operator': 'replay unsupported operator',
+    'replay_config': 'replay call configuration mismatch or unknown',
+    'replay_sources': 'replay unknown, misaligned or unsupported input sources',
+    'replay_metadata': 'replay input metadata mismatch',
+    'replay_layout': 'replay layout or argument kind cannot be reconstructed',
+    'replay_blob': 'replay full blob missing',
+    'replay_range': 'replay blob metadata, digest or range mismatch',
+    'replay_size': 'replay input/output exceeds 64 MiB per tensor',
+    'replay_same_input': 'replay target requires already different actual inputs',
+}
+
+
 def find(work, key):
     rows = work.db.execute("select payload from events where type='tensor' and json_extract(payload,'$.call_key')=? limit 2",(key,)).fetchall()
-    if len(rows)!=1:
-        raise ValueError('replay requires exactly one tensor: '+key)
-    return json.loads(rows[0][0])
+    return json.loads(rows[0][0]) if len(rows) == 1 else None
+
+
+def source_status(stores, identities):
+    from .analyzers.oracle import required_fields
+    if any(ws.partial() or ws.view.run_status()['manifest_status'] != 'complete' for ws in stores.values()):
+        return 'replay_partial'
+    a, b = identities['ref'], identities['cmp']
+    required = required_fields(a, b) + tuple(k for k in ('parallelism', 'rank', 'code_files', 'padding_side', 'adapter_names') if k in a or k in b)
+    if any(k not in a or k not in b or a[k] != b[k] for k in required):
+        return 'replay_identity'
+    for value in identities.values():
+        device, software, numerics = (value.get(k) for k in ('device', 'software', 'numerics'))
+        gems = value['flaggems']
+        if (not isinstance(device, str) or not device or not isinstance(software, dict) or not software.get('torch')
+                or not isinstance(numerics, dict) or not numerics.get('mode') or gems.get('enabled') not in ('on', 'off')
+                or gems['enabled'] == 'on' and (not gems.get('source_sha256') or not isinstance(value.get('include'), list))):
+            return 'replay_identity'
+    return READY
+
+
+def blob_status(run, item):
+    blob = item.get('blob')
+    if not blob:
+        return 'replay_blob'
+    nbytes, offset = blob['nbytes'], blob['offset']
+    if nbytes > TENSOR_BYTES:
+        return 'replay_size'
+    fmt = FORMATS.get(item['dtype'].removeprefix('torch.'))
+    if (blob['hash'] != item['digest'] or offset < 0 or fmt is None
+            or nbytes != math.prod(item['shape']) * struct.calcsize(fmt)):
+        return 'replay_range'
+    try:
+        if blob_path(run, blob).stat().st_size < offset + nbytes:
+            return 'replay_range'
+    except (OSError, ValueError):
+        return 'replay_blob'
+    return READY
+
+
+def assess_call(stores, outputs, lookup):
+    """Use indexed events and blob descriptors from already ingested Stores."""
+    from .analyzers.oracle import call_config
+    if any(not event for event in outputs.values()):
+        return 'replay_call', {}
+    entries = {}
+    for side, ws in stores.items():
+        event = outputs[side]
+        sig = ws.signature(event.get('sid'))
+        if not sig or (sig['name'], sig['overload']) not in SUPPORTED:
+            return 'replay_operator', {}
+        sources = event.get('src') or []
+        if len(sources) != 1 or sources[0] == 'unknown' or outputs['ref'].get('src') != outputs['cmp'].get('src'):
+            return 'replay_sources', {}
+        tensor = lookup(ws, sources[0])
+        if tensor is None:
+            return 'replay_sources', {}
+        nodes = [n for n in sig['tree'] if n['k'] == 'tensor']
+        if len(nodes) != 1 or nodes[0]['shape'] != tensor['shape'] or nodes[0]['dtype'] != tensor['dtype']:
+            return 'replay_metadata', {}
+        node = nodes[0]
+        if node['layout'] != 'torch.strided' or any(n['k'] not in ('tensor','none','bool','int','float','list','tuple','dtype') for n in sig['tree']):
+            return 'replay_layout', {}
+        if not node.get('contiguous'):
+            stride = node.get('stride', [])
+            if len(stride) != len(tensor['shape']) or any(v <= 0 for v in stride):
+                return 'replay_layout', {}
+            span = 1 + sum((dim - 1) * step for dim, step in zip(tensor['shape'], stride))
+            fmt = FORMATS.get(tensor['dtype'].removeprefix('torch.'))
+            if fmt and span * struct.calcsize(fmt) > TENSOR_BYTES:
+                return 'replay_size', {}
+        for item in (event, tensor):
+            status = blob_status(ws.view.run, item)
+            if status != READY:
+                return status, {}
+        entries[side] = dict(signature=sig, input=tensor, expected_output=event)
+    a, b = (entries[s]['signature'] for s in ('ref', 'cmp'))
+    config = call_config(outputs['ref'])
+    if (a['name'], a['overload']) != (b['name'], b['overload']) or not config or config != call_config(outputs['cmp']):
+        return 'replay_config', {}
+    if entries['ref']['input']['digest'] == entries['cmp']['input']['digest']:
+        return 'replay_same_input', {}
+    return READY, entries
 
 
 def copy_blob(run, event, out, name):
-    if 'blob' not in event:
-        raise ValueError('replay requires a full blob: '+event['call_key'])
-    verify_blob(run,event)
+    checksum=hashlib.sha256()
     blob=event['blob']
-    if blob['hash']!=event['digest']:raise ValueError('replay blob/digest mismatch')
-    if blob['nbytes']>64<<20:
-        raise ValueError('replay input/output exceeds 64 MiB per tensor')
     target=out/name
     with blob_path(run,blob).open('rb') as source,target.open('xb') as dest:
         source.seek(blob['offset']);remaining=blob['nbytes']
         while remaining:
             block=source.read(min(65536,remaining))
             if not block:raise ValueError('truncated replay blob')
+            checksum.update(block)
             dest.write(block);remaining-=len(block)
+    if 'sha256:'+checksum.hexdigest()!=blob['hash']:
+        raise ValueError('tensor blob hash mismatch: '+event['call_key'])
     return dict(event,blob=dict(blob,path=name,offset=0))
 
 
-def prepare(ref, cmp, call_key, out, *, work=None):
+def prepare(ref, cmp, call_key, out):
+    from .offline.worker import output_operation
+    return output_operation(out, [ref, cmp], _prepare, ref, cmp, call_key)
+
+
+def _prepare(ref, cmp, call_key, out):
     from .analyzers.workspace import Workspace
-    from .analyzers.oracle import identity, REQUIRED, call_config
+    from .analyzers.oracle import identity
     out=Path(out).resolve()
     for source in (Path(ref).resolve(),Path(cmp).resolve()):
         if out.is_relative_to(source) or source.is_relative_to(out):
             raise ValueError('replay package must be outside source Stores')
-    if work:Path(work).mkdir(parents=True,exist_ok=True)
-    with StoreView(ref) as av,StoreView(cmp) as bv,tempfile.TemporaryDirectory(prefix='replay-',dir=work) as temp:
+    with StoreView(ref) as av,StoreView(cmp) as bv,tempfile.TemporaryDirectory(prefix='replay-') as temp:
         a=Workspace(av,Path(temp)/'a');b=Workspace(bv,Path(temp)/'b')
         try:
             a.ingest();b.ingest()
-            if a.partial() or b.partial():raise ValueError('replay source read is partial')
-            identities={side:identity(ws) for side,ws in (('ref',a),('cmp',b))}
-            required=REQUIRED+tuple(k for k in ('parallelism','rank') if k in identities['ref'] or k in identities['cmp'])
-            if any(k not in identities['ref'] or identities['ref'][k]!=identities['cmp'].get(k) for k in required):
-                raise ValueError('replay source identity mismatch')
-            outputs={side:find(ws,call_key) for side,ws in (('ref',a),('cmp',b))}
-            configs=[call_config(outputs[side]) for side in ('ref','cmp')]
-            if not configs[0] or configs[0]!=configs[1]:raise ValueError('replay call configuration mismatch or unknown')
-            entries={}
-            for side,ws in (('ref',a),('cmp',b)):
-                event=outputs[side];sig=ws.signature(event.get('sid'))
-                if not sig or (sig['name'],sig['overload']) not in SUPPORTED:
-                    raise ValueError('replay unsupported operator')
-                sources=event.get('src',[])
-                if len(sources)!=1 or sources[0]=='unknown':raise ValueError('replay unknown or unsupported input sources')
-                tensor=find(ws,sources[0])
-                nodes=[n for n in sig['tree'] if n['k']=='tensor']
-                if len(nodes)!=1 or nodes[0]['shape']!=tensor['shape'] or nodes[0]['dtype']!=tensor['dtype']:
-                    raise ValueError('replay input metadata mismatch')
-                if nodes[0]['layout']!='torch.strided' or any(n['k'] not in ('tensor','none','bool','int','float','list','tuple','dtype') for n in sig['tree']):
-                    raise ValueError('replay unsupported argument layout or kind')
-                if not nodes[0].get('contiguous') and (len(nodes[0].get('stride',[]))!=len(tensor['shape']) or any(v<=0 for v in nodes[0]['stride'])):
-                    raise ValueError('replay layout cannot be reconstructed')
-                for item in (event,tensor):
-                    if 'blob' not in item:raise ValueError('replay full blob missing')
-                    verify_blob(ws.view.run,item)
-                entries[side]=dict(source_run=str(ws.view.run.resolve()),source_manifest=digest(ws.view.run/'manifest.json'),
-                    signature=sig,config=event['ext']['call_config'],input=tensor,expected_output=event,
-                    identity=identities[side])
-            if entries['ref']['input']['digest']==entries['cmp']['input']['digest']:
-                raise ValueError('replay target requires already different actual inputs')
-            out.mkdir(parents=True,exist_ok=False)
-            for side,ws in (('ref',a),('cmp',b)):
-                for field in ('input','expected_output'):
-                    entries[side][field]=copy_blob(ws.view.run,entries[side][field],out,side+'-'+field+'.bin')
+            stores = dict(ref=a, cmp=b)
+            identities = {side: identity(ws) for side, ws in stores.items()}
+            status = source_status(stores, identities)
+            if status != READY:
+                raise ValueError(REASONS[status])
+            outputs = {side: find(ws, call_key) for side, ws in stores.items()}
+            status, entries = assess_call(stores, outputs, find)
+            if status != READY:
+                raise ValueError(REASONS[status] + ': ' + call_key)
+            for side, entry in entries.items():
+                ws = stores[side]
+                entry.update(source_run_id=ws.view.run_status()['run_id'], source_manifest=digest(ws.view.run/'manifest.json'),
+                             config=outputs[side]['ext']['call_config'], identity=identities[side])
+            from .offline.worker import new_output
+            new_output(out)
+            with tempfile.TemporaryDirectory(dir=out) as stage:
+                staged = Path(stage)
+                for side, ws in stores.items():
+                    for field in ('input', 'expected_output'):
+                        entries[side][field] = copy_blob(ws.view.run, entries[side][field], staged, side+'-'+field+'.bin')
+                for blob in staged.iterdir():
+                    blob.replace(out/blob.name)
             packet=dict(schema='operator-replay/1',call_key=call_key,sides=entries)
             atomic_json(out/'replay.json',packet)
             return dict(package=str(out),manifest=digest(out/'replay.json'),call_key=call_key)
@@ -116,7 +207,7 @@ def arguments(tree, tensor):
     return args,kwargs
 
 
-def run(package, *, side, device, store):
+def run(package, *, side, device, store, vendor_compiler=None):
     from .offline.limits import read_json
     from .store import create_run,Writer,finalize
     package=Path(package).resolve();packet=read_json(package/'replay.json')
@@ -131,10 +222,9 @@ def run(package, *, side, device, store):
         import os
         provider=compiler_expected['provider']
         config=dict(flagtree='on' if provider=='flagtree' else 'off')
-        if provider!='flagtree':
-            config['vendor_compiler']=os.environ.get('FLAGPROF_VENDOR_COMPILER') or str(Path(compiler_expected['module_path']).parents[1])
-        if provider=='flagtree' or (Path(config['vendor_compiler'])/'manifest.json').is_file():
-            select(config,cache_root=Path(store).resolve().parent/'component-cache')
+        if vendor_compiler is not None:
+            config['vendor_compiler'] = vendor_compiler
+        select(config, cache_root=Path(store).resolve(), target=device)
         actual_compiler=compiler_identity()
         if any(actual_compiler.get(k)!=compiler_expected.get(k) for k in ('provider','version','source_sha256')):
             raise ValueError('replay compiler source mismatch')
@@ -169,7 +259,7 @@ def run(package, *, side, device, store):
                 verify_blob(package,tensor)
                 raw=blob_path(package,tensor['blob']).read_bytes()
                 dtype=getattr(torch,tensor['dtype'].removeprefix('torch.'))
-                cpu=torch.frombuffer(bytearray(raw),dtype=dtype).clone().reshape(tensor['shape'])
+                cpu=(torch.frombuffer(bytearray(raw),dtype=dtype).clone() if raw else torch.empty(0,dtype=dtype)).reshape(tensor['shape'])
                 node=next(n for n in sig['tree'] if n['k']=='tensor')
                 if node['contiguous']:
                     value=cpu.to(device)

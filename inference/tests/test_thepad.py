@@ -147,6 +147,26 @@ class TheadTests(unittest.TestCase):
                 path.write_text(json.dumps(host))
                 self.assertEqual(hardware_identity()['model'], 'P800 OAM')
 
+    def test_framework_inventory_joins_by_unique_uuid_and_omits_host_claims(self):
+        import tempfile
+        from types import SimpleNamespace
+        from flagprof.vendors.thead.session import AUTO_SOURCE, hardware_identity
+        torch = SimpleNamespace(cuda=SimpleNamespace(get_device_properties=lambda i: SimpleNamespace(uuid='GPU-abc'),
+                                                      get_device_name=lambda i: 'PPU-ZW810E'))
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory)/'identity.json'
+            rows = [dict(uuid='def'), dict(uuid='abc', model='untrusted', driver='unverified', pci_bdf='wrong')]
+            with patch.dict(sys.modules, torch=torch), patch.dict(os.environ, FLAGPROF_THEAD_IDENTITY=str(path)):
+                path.write_text(json.dumps(dict(source=AUTO_SOURCE, devices=rows)))
+                identity = hardware_identity(0)
+                self.assertEqual((identity['model'], identity['uuid'], identity['logical_device']),
+                                 ('PPU-ZW810E', 'abc', 0))
+                self.assertNotIn('driver', identity)
+                self.assertNotIn('pci_bdf', identity)
+                path.write_text(json.dumps(dict(source=AUTO_SOURCE, devices=rows + [dict(uuid='GPU-ABC')])))
+                with self.assertRaisesRegex(ValueError, 'ambiguous'):
+                    hardware_identity(0)
+
     def test_explicit_collective_metadata_classifies_and_unknown_names_stay_compute(self):
         from flagprof.vendors.thead.analysis import activity
         row = activity(dict(ph='X', cat='kernel', name='some_all_reduce_impl',

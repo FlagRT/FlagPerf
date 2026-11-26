@@ -13,20 +13,22 @@ import subprocess
 import sys
 import time
 
+from flagprof._process import module_environment
+
 
 def parser():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--task',choices=('classification','causal-lm','ctr','embedding','rerank'),default=None,
-                   help='Training task; optional for adapted models in targets/model_registry.json (otherwise required); defaults to the classification demo when no model is given')
+                   help='Training task; optional for adapted models in the installed model registry (otherwise required); defaults to the classification demo when no model is given')
     p.add_argument('--sharding',choices=('none','fsdp'),default='none',
                    help='Multi-rank strategy: none=DistributedDataParallel full replica per rank; fsdp=fully_shard shards parameters/gradients/optimizer state so models too large for one card can train')
     p.add_argument('--model',help='Trusted local HF model directory; no network download')
     p.add_argument('--inputs',help='JSONL of token IDs (causal-lm) or triplet groups (embedding)')
     p.add_argument('--ctr-arch',help='CTR architecture (dlrm din widedeep deepfm dcn sasrec lightgcn bst dien dcnmix esmm mmoe ple dssm); required')
     p.add_argument('--package',help='Sealed package directory (ctr/rerank task); digests verified, corpus unchanged; ctr may omit it to generate the deterministic default corpus')
-    p.add_argument('--pooling',choices=('last','cls','mean'),default=None,help='Embedding pooling; optional for adapted models in targets/model_registry.json, otherwise required')
+    p.add_argument('--pooling',choices=('last','cls','mean'),default=None,help='Embedding pooling; optional for adapted models in the installed model registry, otherwise required')
     p.add_argument('--temperature',type=float,default=.05,help='InfoNCE temperature (embedding task)')
-    p.add_argument('--rerank-score',choices=('causal_yesno','sequence_logit'),default=None,help='Rerank scoring semantics; optional for adapted models in targets/model_registry.json, otherwise required; must match the package manifest')
+    p.add_argument('--rerank-score',choices=('causal_yesno','sequence_logit'),default=None,help='Rerank scoring semantics; optional for adapted models in the installed model registry, otherwise required; must match the package manifest')
     p.add_argument('--outputs',required=True)
     p.add_argument('--device',default='cpu')
     p.add_argument('--steps',type=int,default=3,help='Total optimizer steps, including resumed steps')
@@ -58,25 +60,23 @@ def local_files(model):
 def ensure_generated(kind, outputs, seed, vocab=None, rows=None):
     """Generate the deterministic default corpus or package next to --outputs.
 
-    The generators are the sealed, seeded CLI tools under inference/targets/;
+    The generators are the installed flagprof.targets modules;
     an existing result is reused untouched. Single-process only: DDP ranks
     must share an explicit --inputs/--package instead of racing on creation.
     kind: 'corpus' (embedding triplets), 'lm-corpus' (pretokenized LM rows),
     or 'ctr-package'. rows defaults so a full batch grid is always possible.
     """
     base=Path(outputs)
-    suffix, marker, script_name = {
-        'corpus': ('-default-corpus','groups.jsonl','make_embedding_corpus.py'),
-        'lm-corpus': ('-default-corpus','tokens.jsonl','make_lm_corpus.py'),
-        'ctr-package': ('-default-package','manifest.json','make_ctr_package.py'),
+    suffix, marker, generator = {
+        'corpus': ('-default-corpus','groups.jsonl','make_embedding_corpus'),
+        'lm-corpus': ('-default-corpus','tokens.jsonl','make_lm_corpus'),
+        'ctr-package': ('-default-package','manifest.json','make_ctr_package'),
     }[kind]
     target=base.with_name(base.name+suffix)
     if (target/marker).exists(): return str(target)
-    script=Path(__file__).resolve().parents[2]/'targets'/script_name
-    if not script.is_file(): raise ValueError('generator script missing: %s' % script)
+    module = 'flagprof.targets.' + generator
     target.mkdir(parents=True, exist_ok=True)
-    import subprocess, sys
-    cmd=[sys.executable,'-B',str(script),'--seed',str(seed)]
+    cmd=[sys.executable,'-B','-m',module,'--seed',str(seed)]
     if kind=='corpus':
         cmd += ['--groups','32','--negs','3','--out',str(target/'groups.jsonl')]
     elif kind=='lm-corpus':
@@ -84,7 +84,7 @@ def ensure_generated(kind, outputs, seed, vocab=None, rows=None):
                 '--out',str(target/'tokens.jsonl')]
     else:
         cmd += ['--samples','1024','--out',str(target)]
-    done=subprocess.run(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    done=subprocess.run(cmd,env=module_environment(),stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     if done.returncode!=0:
         raise ValueError('default %s generation failed: %s' % (
             kind, done.stderr.decode(errors='replace')[-400:]))
@@ -165,7 +165,7 @@ def apply_sharding(model, device_type, world_size):
     return model, ('per-block+root' if wrapped else 'root-only'), mesh
 
 
-def monitor_start(root,vendor,world,rank, *, control=None, reference=None):
+def monitor_start(root,vendor,world,rank, *, control=None, reference=None, preset='perf'):
     """Opt-in node monitoring and online diagnosis; FLAGPROF_TRAIN_MONITOR=on.
 
     Mirrors the inference semantics per platform. When the vendor has device
@@ -209,10 +209,12 @@ def monitor_start(root,vendor,world,rank, *, control=None, reference=None):
         try:
             request(monitor_root, dict(action='hello'))
         except (OSError, ValueError):
+            env = module_environment()
+            env.pop('FLAGPROF_RECORD_CONFIG', None)
             supervisor = subprocess.Popen(
-                [sys.executable, '-B', '-S', '-m', 'flagprof', 'watch', 'start',
+                [sys.executable, '-B', *(['-S'] if sys.flags.no_site else []), '-m', 'flagprof', 'watch', 'start',
                  '--root', monitor_root, '--vendor', vendor],
-                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+                env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
             deadline = time.monotonic() + 10
             while True:
                 try:
@@ -227,8 +229,13 @@ def monitor_start(root,vendor,world,rank, *, control=None, reference=None):
         receipt = json.loads(Path(reference).read_text())
         if receipt.get('status') != 'running' or not receipt.get('session_id'):
             raise RuntimeError('watch session unavailable: ' + str(receipt.get('errors')))
-        return dict(topology='agent', reference=reference,
-                    diagnose='on' if os.environ.get('FLAGPROF_TRAIN_DIAGNOSE','on')=='on' else 'off')
+        from flagprof.probes.config import DIAGNOSE_PRESETS
+        requested = os.environ.get('FLAGPROF_TRAIN_DIAGNOSE', 'on') == 'on'
+        decision = dict(topology='agent', reference=reference,
+                        diagnose='on' if requested and preset in DIAGNOSE_PRESETS else 'off')
+        if requested and preset not in DIAGNOSE_PRESETS:
+            decision['diagnose_reason'] = 'online diagnosis unavailable for preset ' + preset
+        return decision
 
     def start_local(path):
         nonlocal owner
@@ -241,10 +248,11 @@ def monitor_start(root,vendor,world,rank, *, control=None, reference=None):
             raise RuntimeError('local monitor exited during startup')
         return dict(topology='local', diagnose='off', reference=path)
 
+    from flagprof.vendors import monitored_vendors
     decision = None
     if rank == 0:
         errors = []
-        if vendor in ('ascend', 'nvidia'):
+        if vendor in monitored_vendors():
             try:
                 decision = start_agent()
             except (OSError, ValueError, RuntimeError) as error:
@@ -318,8 +326,47 @@ def record_monitor_status(handle, monitoring, device):
             diagnose = 'off'
     if errors:
         handle.state['monitor_start_errors'] = errors
+    if monitoring.get('diagnose_reason'):
+        handle.state['monitor_diagnose_reason'] = monitoring['diagnose_reason']
     handle.state.update(monitor_topology=topology, monitor_diagnose=diagnose)
     handle._save()
+
+
+def observation_platform(device, default_vendor):
+    from flagprof.devices import execution_device
+    from flagprof.vendors import adapter, observation_candidate
+    vendor = os.environ.get('FLAGPROF_TRAIN_OBSERVE_VENDOR') or default_vendor
+    if not device:
+        device = adapter(vendor, 'execution').TORCH_DEVICE if vendor else execution_device()
+    if not vendor:
+        vendor = observation_candidate(device, inspect_runtime=True)
+    if not vendor:
+        raise ValueError(f'cannot identify observation vendor for {device}; set FLAGPROF_TRAIN_OBSERVE_VENDOR')
+    return vendor, device
+
+
+def prepare_observation_environment(vendor, device, cleanup, *, index=None):
+    from flagprof.vendors import adapter
+    prepare = getattr(adapter(vendor, 'execution'), 'prepare_capture_environment', None)
+    if not prepare:
+        return
+    if index is None:
+        family, _, logical = device.partition(':')
+        if logical:
+            index = int(logical)
+        else:
+            import torch
+            index = getattr(torch, family).current_device()
+    required = {}
+    prepare(required, index)
+    for key, value in required.items():
+        if os.environ.get(key) == value:
+            continue
+        if key in os.environ:
+            cleanup.callback(os.environ.__setitem__, key, os.environ[key])
+        else:
+            cleanup.callback(os.environ.pop, key, None)
+        os.environ[key] = value
 
 
 def observation_start(args, *, default_vendor=None, diagnostic='flagprof-train-observe/1'):
@@ -348,12 +395,6 @@ def observation_start(args, *, default_vendor=None, diagnostic='flagprof-train-o
     if not root: return None
     from flagprof.runtime import attach
     from flagprof.store import create_run
-    # Vendor auto-detection: npu devices always run the built-in ascend
-    # session; everything else keeps the historical thead default. The env
-    # variable still overrides explicitly.
-    device_hint=str(getattr(args,'device',''))
-    default_vendor = default_vendor or ('ascend' if device_hint.startswith('npu') else 'thead')
-    vendor = os.environ.get('FLAGPROF_TRAIN_OBSERVE_VENDOR', default_vendor)
     world = int(os.environ.get('WORLD_SIZE', '1'))
     rank = int(os.environ.get('RANK', '0'))
     from . import coordinated_start, observation_group
@@ -362,6 +403,8 @@ def observation_start(args, *, default_vendor=None, diagnostic='flagprof-train-o
     handle = None
     try:
         with coordinated_start(control, rank, world):
+            vendor, device_hint = observation_platform(getattr(args, 'device', None), default_vendor)
+            prepare_observation_environment(vendor, device_hint, cleanup)
             preset = os.environ.get('FLAGPROF_TRAIN_PRESET', 'perf')
             if preset not in ('perf', 'perf-lite', 'coverage', 'modules'):
                 raise ValueError('FLAGPROF_TRAIN_PRESET must be one of perf/perf-lite/coverage/modules')
@@ -375,16 +418,14 @@ def observation_start(args, *, default_vendor=None, diagnostic='flagprof-train-o
             run = create_run(Path(root)/('rank-'+str(rank)), identity=dict(
                 diagnostic=diagnostic, vendor=vendor, preset=preset, task=args.task, group_id=group_id,
                 world_size=world, identity_source=identity_note))
-            if 'XPU_ENABLE_PROFILER_TRACING' not in os.environ:
-                os.environ['XPU_ENABLE_PROFILER_TRACING'] = '1'
-                cleanup.callback(os.environ.pop, 'XPU_ENABLE_PROFILER_TRACING', None)
             if identity_note == 'autogenerated':
                 from flagprof.vendors.thead.session import generate_identity_file
                 identity_path = run/'identity-autogenerated.json'
                 generate_identity_file(identity_path, rank=rank)
                 os.environ['FLAGPROF_THEAD_IDENTITY'] = str(identity_path)
                 cleanup.callback(os.environ.pop, 'FLAGPROF_THEAD_IDENTITY', None)
-        monitoring = monitor_start(root, vendor, world, rank, control=control, reference=run.parent/('monitor-ref-'+run.name+'.json'))
+        monitoring = monitor_start(root, vendor, world, rank, control=control, preset=preset,
+                                   reference=run.parent/('monitor-ref-'+run.name+'.json'))
         if monitoring:
             cleanup.callback(monitoring['close'])
         with coordinated_start(control, rank, world):
@@ -484,7 +525,7 @@ def execute(args):
             args.task=resolve_task(args.model)
             task_source='registry'
             if not args.task:
-                raise ValueError('--task is required: model %r is not in inference/targets/model_registry.json; '
+                raise ValueError('--task is required: model %r is not in the installed model registry; '
                                  'pass one of: classification, causal-lm, ctr, embedding, rerank' % args.model)
         else:
             args.task='classification'
@@ -591,7 +632,7 @@ def execute(args):
             pooling,pooling_source=resolve(args.pooling,args.model,kind='pooling')
             if not pooling:
                 raise ValueError('embedding requires --pooling (last|cls|mean); model %r is not in '
-                                 'inference/targets/model_registry.json, so no default pooling is known' % args.model)
+                                 'the installed flagprof.targets model registry, so no default pooling is known' % args.model)
             protocol['pooling_source']=pooling_source
             inputs=args.inputs
             if not inputs:
@@ -623,7 +664,7 @@ def execute(args):
             score,score_source=resolve(args.rerank_score,args.model,kind='rerank_score')
             if not score:
                 raise ValueError('rerank requires --rerank-score (causal_yesno|sequence_logit); model %r is not in '
-                                 'inference/targets/model_registry.json, so no default scoring semantics is known' % args.model)
+                                 'the installed flagprof.targets model registry, so no default scoring semantics is known' % args.model)
             protocol['rerank_score_source']=score_source
             from transformers import AutoTokenizer
             source=args.model.removeprefix('hf:')
@@ -711,7 +752,17 @@ def execute(args):
 
 def main(argv=None):
     args=parser().parse_args(argv)
-    return execute(args)
+    if not os.environ.get('FLAGPROF_TRAIN_OBSERVE'):
+        return execute(args)
+    # XPyTorch reads tracing switches on import. Resolve the launcher-visible
+    # adapter and logical device before execute() initializes the framework.
+    from flagprof.vendors import observation_candidate
+    with ExitStack() as cleanup:
+        vendor = os.environ.get('FLAGPROF_TRAIN_OBSERVE_VENDOR') or observation_candidate(args.device)
+        if vendor:
+            index = int(os.environ.get('LOCAL_RANK', '0')) if args.ddp else int(args.device.partition(':')[2] or 0)
+            prepare_observation_environment(vendor, args.device, cleanup, index=index)
+        return execute(args)
 
 
 if __name__=='__main__':

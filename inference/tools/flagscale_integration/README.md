@@ -29,7 +29,6 @@ docker run --rm --shm-size=16g \
   -v <FlagPerf>:/workspace/FlagPerf \
   -v <数据+配置+store 目录>:/data \
   -e PYTHONPATH=/workspace/FlagScale:/workspace/FlagPerf/inference:/workspace/FlagPerf/inference/tools \
-  -e FLAGPROF_SCRATCH=/data/scratch \
   -e FLAGPROF_TRAIN_OBSERVE=/data/fs-obs-store \
   1ba7ead15378 bash -c "torchrun --standalone --nproc-per-node=2 \
       flagscale/train/train_retrieval.py --config-file /data/fs_demo_config.yaml"

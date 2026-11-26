@@ -8,8 +8,7 @@ import unittest
 from pathlib import Path
 
 import sys
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'targets'))
-from target_embedder import code_files_identity, load_with_vendor_code
+from flagprof.targets.target_embedder import code_files_identity, load_with_vendor_code
 
 
 STUB_FILES = {
