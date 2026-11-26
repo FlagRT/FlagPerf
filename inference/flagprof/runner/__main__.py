@@ -191,11 +191,8 @@ def _main():
         input_identity.setdefault('samples',[s for ids,_ in batches for s in ids])
         input_identity.setdefault('batches',[dict(samples=ids,shape=list(v['input_ids'].shape),valid_tokens=v['attention_mask'].sum(1).tolist()) for ids,v in batches])
         if 'oracle_id' not in input_identity:
-            oracle_keys=['model_files','inputs_sha256','dtype','attention','pooling','padding_side']
-            if input_identity.get('code_files'):oracle_keys.append('code_files')
-            input_identity['oracle_id']=hashlib.sha256(json.dumps(
-                {k:input_identity[k] for k in oracle_keys},
-                sort_keys=True).encode()).hexdigest()
+            from .fixed import direct_oracle_id
+            input_identity['oracle_id'] = direct_oracle_id(input_identity)
         from flagprof.components.compiler import identity as compiler_identity
         input_identity['compiler']=handle.state['compiler_identity'] if handle else compiler_identity()
         if parallel:

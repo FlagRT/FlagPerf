@@ -96,6 +96,8 @@ LABELS = {
     'requirement':'比较要求', 'declared':'已声明变化', 'wording':'首差异判定',
     'max_abs':'最大绝对误差', 'max_abs_ulp':'该位置 ULP 距离', 'relative_l2':'相对 L2 误差',
     'cosine_similarity':'余弦相似度', 'digest_equal':'数值摘要相同', 'differing_fraction':'不同元素占比',
+    'numeric_equal':'数值一致', 'ref_dtype':'参考张量类型', 'cmp_dtype':'候选张量类型',
+    'ulp_unavailable_reason':'ULP 统计条件',
     'valid_elements':'有效配对元素', 'ulp_histogram':'ULP 分布', 'ulp_max':'最大 ULP 距离',
     'input_status':'输入来源', 'call_config_status':'调用配置', 'layout_differs':'布局不同',
     'error_in':'输入相对 L2', 'error_out':'输出相对 L2', 'amplification':'误差放大倍数',
@@ -155,6 +157,7 @@ REASON_TEXT = {'reference_missing':'缺少参考记录','no_tensor_ops':'未记�
                'monitor and target source identities differ':'节点监控与目标采集记录的代码版本摘要不同',
                'diagnostic monitor unavailable: []':'诊断监控未提供可用观测'}
 VALUES = {
+    'different_dtypes':'两侧浮点类型的 ULP 刻度不同', 'requires_full_float_pair':'需要同类型的完整浮点张量',
     'exported_capture_interval':'外部文件记录的采集区间',
     'recorded_capture_interval':'文件中记录的采集区间',
     'root_module_spans':'根模块前向记录','generation_steps':'已完成的生成步',
@@ -235,6 +238,7 @@ def number(value):
 
 # Shared by static HTML, the interactive tables and Markdown.
 MISSING_TEXT = {
+    'numeric_equal':'现有证据不足以判定整个张量的数值是否相等',
     'report':'缺少该 rank 的子报告，无法下钻到采集明细',
     'scope':'缺少统计范围记录，无法确定该项覆盖哪些调用',
     'source':'缺少统计来源，无法核对该指标的采集口径',

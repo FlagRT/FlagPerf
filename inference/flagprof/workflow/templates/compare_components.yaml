@@ -6,6 +6,7 @@
 #   2. FlagGems on vs off 对照
 #   3. TP2 下 FlagCX vs HCCL / NCCL 对照（两侧均用 TP2，固定组件并分别指定通信后端）
 #   4. 跨硬件精度对照（如对比已有的 NVIDIA A100 参考 Store，见下方注释示例）
+#   5. 跨精度对照：固定模型、输入和组件，比较不同执行 dtype 的逐层数值误差
 #
 # 工作原理：
 #   - 上半部分定义两侧共享的模型、输入与数值设置，运行后核对实际身份与报告口径；
@@ -88,6 +89,11 @@ compare:
   # 声明允许变化的身份字段：
   #   auto - 根据 ref 与 cmp 的配置差异自动推导（本例自动生成 ["compiler", "software.triton"]）
   #   跨机时显式列出预期变化，例如 ["device", "software", "compiler"]。
+  #   跨精度时使用 accuracy 预设，将本 compare 段替换为以下三项：
+  #     ref: {runner: {dtype: float32}}
+  #     cmp: {runner: {dtype: bfloat16}}
+  #     declare: [dtype]
+  #   两侧已有精度 Store 时，ref/cmp 可分别写为 {existing_run: /path/to/store}。
   #   运行后分别看实际组件身份和 Oracle 状态；三路须全是 Store 或全是完整 group。
   #   性能对照结果为 not_comparable 时，摘要列出原因、指标差值保留为空。
   declare: auto

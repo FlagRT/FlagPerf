@@ -7,6 +7,14 @@ import json
 from pathlib import Path
 
 
+def direct_oracle_id(identity):
+    """Stable embedding identity used for direct inputs, including older Stores."""
+    keys = ['model_files', 'inputs_sha256', 'dtype', 'attention', 'pooling', 'padding_side']
+    if identity.get('code_files'):
+        keys.append('code_files')
+    return hashlib.sha256(json.dumps({k: identity[k] for k in keys}, sort_keys=True).encode()).hexdigest()
+
+
 def sha(path):
     digest=hashlib.sha256()
     with Path(path).open('rb') as stream:

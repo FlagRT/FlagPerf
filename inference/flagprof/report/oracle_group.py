@@ -87,7 +87,7 @@ def generate(ref,cmp,out,*,declare=None,limits=None,**options):
                           paired_tensors=result['paired_tensors'], paired_boundaries=result['paired_boundaries']))
     status='ok' if all(all(v in ('ok','unavailable') for v in r['panels'].values()) and
                        r['panels'].get('oracle.identity_diff')=='ok' for r in ranks) else 'partial'
-    result=dict(schema='oracle-group/1',status=status,samples=len(ai.get('samples',[])),world_size=2,
+    result=dict(schema='oracle-group/1',declaration=declare or {},status=status,samples=len(ai.get('samples',[])),world_size=2,
                 ref_backend=a['backend'],cmp_backend=b['backend'],ranks=ranks,
                 sample_count_scope='logical input samples, counted once; operator shards compare within the same rank')
     (out/'result.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n')

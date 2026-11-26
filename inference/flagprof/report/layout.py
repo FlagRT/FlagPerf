@@ -87,7 +87,7 @@ def filters(ident,keys):
     if 'scopes' in keys or (ident.startswith('perf.layer') and 'name' in keys) or (
             ident.startswith(('oracle.','perf.op','perf.device')) and 'scope' in keys and ident!='oracle.identity_diff'):
         scope.add('layer')
-    if ident.startswith('oracle.') and keys.intersection(('introduced','digest_equal')):scope.add('diff_status')
+    if ident.startswith('oracle.') and keys.intersection(('introduced','digest_equal','numeric_equal')):scope.add('diff_status')
     if ident in ('perf.gap','resource.series'):scope.add('phase')
     return sorted(scope)
 

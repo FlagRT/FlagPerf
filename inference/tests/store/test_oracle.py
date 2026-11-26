@@ -16,19 +16,28 @@ class OracleTests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup);self.root=Path(self.temp.name)
 
-    def fixture(self,label,*,delta=0,input_delta=0,config=1,omit=False,source='input',blob=True):
+    def fixture(self,label,*,delta=0,input_delta=0,config=1,omit=False,source='input',blob=True,
+                dtype='float32',layer_outputs=False):
         run=create_run(self.root/label)
-        identity=dict(model_files={'model':'same'},oracle_id='fixture',inputs_sha256='same',samples=['s'],batches=[[1]],dtype='float32',attention='eager',
+        identity=dict(model_files={'model':'same'},oracle_id='fixture',inputs_sha256='same',samples=['s'],batches=[[1]],dtype=dtype,attention='eager',
             pooling='fixture',boundaries=['<root>.layer'],probe_alg='p4v1',device='cpu',software={},numerics={},flaggems='off',include=None)
         state=run/'attachments/f/state.json';state.parent.mkdir(parents=True)
         state.write_text(json.dumps(dict(id='f',probes={},oracle_identity=identity)))
         with Writer(run) as writer:
-            for name,values in [('input',[1.,2.+input_delta]),('op:aten.mul/0/0',[2.,4.+delta])]:
+            observations=[('input',[1.,2.+input_delta]),('op:aten.mul/0/0',[2.,4.+delta])]
+            if layer_outputs:
+                observations.extend([('intermediate',[1.,2.]),('output',[2.,4.+delta])])
+            for name,values in observations:
                 if omit and name.startswith('op:'):continue
-                key='<root>.layer#0#'+name+'#s';raw=struct.pack('<2f',*values);path=run/'blobs'/('input.bin' if name=='input' else 'output.bin');path.write_bytes(raw)
-                row=dict(t='tensor',call_key=key,role='in' if name=='input' else 'out',boundary=name,shape=[2],dtype='torch.float32',
+                key='<root>.layer#0#'+name+'#s'
+                raw=struct.pack('<2f',*values)
+                if dtype=='bfloat16':
+                    raw=struct.pack('<2H',*(bits>>16 for bits in struct.unpack('<2I',raw)))
+                path=run/'blobs'/(('op-output' if name.startswith('op:') else name)+'.bin')
+                path.write_bytes(raw)
+                row=dict(t='tensor',call_key=key,role='in' if name=='input' else 'out',boundary=name,shape=[2],dtype='torch.'+dtype,
                     stats={},chunks=[],probe=values,probe_alg='p4v1',digest='sha256:'+hashlib.sha256(raw).hexdigest())
-                if blob:row['blob']=dict(path=str(path.relative_to(run)),offset=0,nbytes=len(raw),hash=row['digest'],fmt='raw-le:float32:[2]')
+                if blob:row['blob']=dict(path=str(path.relative_to(run)),offset=0,nbytes=len(raw),hash=row['digest'],fmt='raw-le:'+dtype+':[2]')
                 if name.startswith('op:'):row.update(src=['unknown' if source=='unknown' else '<root>.layer#0#'+source+'#s'],ext={'call_config':config if isinstance(config,list) else {'scale':config}})
                 writer.emit(row)
         finalize(run);return run
@@ -67,6 +76,84 @@ class OracleTests(unittest.TestCase):
         c=self.fixture('c',delta=.5,blob=False)
         row=self.report(a,c,'sampled')['oracle.op_sensitivity']['data'][0]
         self.assertEqual(row['level'],'sampled');self.assertFalse(row['introduced'])
+
+    def test_cross_precision_requires_opt_in_and_preserves_identity(self):
+        def tensor_config(dtype):
+            return [dict(name='x',value=[dict(k='tensor',p='0',dtype=dtype,shape=[2])])]
+        a=self.fixture('ref',layer_outputs=True,config=tensor_config('torch.float32'))
+        b=self.fixture('cmp',dtype='bfloat16',delta=.125,layer_outputs=True,config=tensor_config('torch.bfloat16'))
+        def set_direct_id(run, **changes):
+            path=run/'attachments/f/state.json'
+            state=json.loads(path.read_text())
+            identity=state['oracle_identity']
+            identity.update(padding_side='right',**changes)
+            keys=('model_files','inputs_sha256','dtype','attention','pooling','padding_side')
+            contract={k:identity[k] for k in keys}
+            identity['oracle_id']=hashlib.sha256(json.dumps(contract,sort_keys=True).encode()).hexdigest()
+            path.write_text(json.dumps(state))
+        set_direct_id(a)
+        set_direct_id(b)
+        def compare(label,declare):
+            out=self.root/label
+            generate_oracle(a,b,out,declare=declare)
+            return json.loads((out/'result.json').read_text())
+        self.assertCountEqual(compare('strict',None)['blocking_fields'],['dtype','oracle_id'])
+        declared={'differences':['dtype']}
+        doc=compare('cross',declared)
+        self.assertEqual(doc['comparison_status'],'comparable')
+        self.assertEqual(doc['paired_boundaries'],2)
+        first=doc['results']['oracle.first_divergence']['data'][0]['first_inequal']
+        self.assertEqual(first['last_equal_boundary'],'<root>.layer#0#intermediate#s')
+        self.assertEqual(first['boundary'],'output')
+        self.assertEqual((first['ref_dtype'],first['cmp_dtype']),('torch.float32','torch.bfloat16'))
+        self.assertFalse(first['numeric_equal'])
+        self.assertIsNone(first['digest_equal'])
+        self.assertEqual(first['max_abs'],.125)
+        self.assertEqual(first['differing_fraction'],.5)
+        self.assertEqual(first['ulp_unavailable_reason'],'different_dtypes')
+        self.assertNotIn('ulp_histogram',first)
+        self.assertTrue(doc['results']['oracle.op_sensitivity']['data'][0]['introduced'])
+        self.assertIn('跨精度对照结果',(self.root/'cross/report.html').read_text())
+        set_direct_id(b,inputs_sha256='changed')
+        self.assertIn('inputs_sha256',compare('wrong-input',declared)['blocking_fields'])
+        other=self.fixture('package',dtype='bfloat16')
+        out=self.root/'unrelated-id'
+        generate_oracle(a,other,out,declare=declared)
+        self.assertIn('oracle_id',json.loads((out/'result.json').read_text())['blocking_fields'])
+
+    def test_cross_precision_sampled_matches_are_inconclusive(self):
+        a=self.fixture('ref',layer_outputs=True)
+        b=self.fixture('cmp',dtype='bfloat16',blob=False,layer_outputs=True)
+        out=self.root/'sampled'
+        generate_oracle(a,b,out,declare={'differences':['dtype']})
+        doc=json.loads((out/'result.json').read_text())
+        self.assertEqual(doc['comparison_status'],'partial')
+        layers=doc['results']['oracle.layer']['data']
+        self.assertEqual(len(layers),2)
+        self.assertTrue(all(row['numeric_equal'] is None and row['levels']==['sampled'] for row in layers))
+        self.assertIsNone(doc['results']['oracle.first_divergence']['data'][0]['first_inequal'])
+
+    def test_cross_precision_decodes_identical_bytes_and_checks_pairing(self):
+        from flagprof.tensor_data import compare
+        (left,right),_=self.bit_pair('float16',[0x3c00],[0x3c00])
+        right['dtype']='torch.bfloat16'
+        def measured():return compare(self.root,left,self.root,right,cross_precision=True)
+        result=measured()
+        self.assertIsNone(result['digest_equal'])
+        self.assertEqual(result['max_abs'],1.-2.**-7)
+        right['mask']={'valid':1}
+        self.assertEqual(measured()['status'],'misaligned_semantics')
+        del right['mask']
+        right['dtype']='torch.int16'
+        self.assertEqual(measured()['status'],'misaligned_dtype')
+        right['dtype']='torch.bfloat16'
+        del right['blob']
+        self.assertEqual(measured()['status'],'missing_numeric_evidence')
+        left.update(probe=[1.],probe_alg='p4v1')
+        right.update(probe=[0.],probe_alg='other')
+        self.assertEqual(measured()['status'],'missing_numeric_evidence')
+        right.update(probe_alg='p4v1')
+        self.assertEqual(measured()['max_abs'],1.)
 
     def test_hand_computed_metrics(self):
         import math

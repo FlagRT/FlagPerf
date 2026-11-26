@@ -16,8 +16,11 @@ function valuesFor(id,row,key) {
    if (/^(oracle\.|perf\.(op|device))/.test(id) && id!=='oracle.identity_diff') values.push(row.scope);
    break;
  case 'scope': values=/^(performance\.|comparison\.metrics)/.test(id)?[row.scope]:[];break;
- case 'diff_status':
-   values=id.startsWith('oracle.')?[row.introduced===true?'同输入引入':row.digest_equal===true?'相等':row.digest_equal===false?'不等':null]:[];break;
+ case 'diff_status': {
+   const equal='numeric_equal' in row?row.numeric_equal:row.digest_equal;
+   const status=equal===true?'相等':equal===false?'不等':'numeric_equal' in row?'证据不足':null;
+   values=id.startsWith('oracle.')?[row.introduced===true?'同输入引入':status]:[];break;
+ }
  case 'level':values=Array.isArray(row.levels)?row.levels:[row.level];break;
  case 'sid': values=[row.sid,row.sid_ref,row.sid_cmp];break;
  case 'phase':

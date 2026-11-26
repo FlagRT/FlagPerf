@@ -4,7 +4,7 @@
 import json
 from . import Result
 from .workspace import encode
-from flagprof.tensor_data import compare, ULP_BUCKETS
+from flagprof.tensor_data import compare, FLOATS, ULP_BUCKETS
 
 REQUIRED=('model_files','oracle_id','inputs_sha256','samples','batches','dtype','attention','pooling','boundaries','probe_alg')
 DECLARABLE=('device','software','numerics','flaggems','include')
@@ -24,14 +24,17 @@ def required_fields(a, b):
     return tuple(k for k in REQUIRED if k!='pooling')+('task','generation') if 'generate' in tasks else REQUIRED
 
 
-def call_config(event):
+def call_config(event, cross_precision=False):
     value=event.get('ext',{}).get('call_config')
     if isinstance(value,list) and any(n.get('k')=='other' for arg in value for n in arg.get('value',[])):
         return None
     def without_layout(node):
         if isinstance(node,list):return [without_layout(n) for n in node]
         if not isinstance(node,dict):return node
-        return {k:without_layout(v) for k,v in node.items() if not (node.get('k')=='tensor' and k in ('contiguous','stride'))}
+        result = {k:without_layout(v) for k,v in node.items() if not (node.get('k')=='tensor' and k in ('contiguous','stride'))}
+        if cross_precision and node.get('k') == 'tensor' and str(node.get('dtype')).removeprefix('torch.') in FLOATS:
+            result['dtype'] = 'floating'
+        return result
     return without_layout(value)
 
 
@@ -49,6 +52,22 @@ def _numeric_difference(result):
     return bool((result.get('max_abs') or 0)>0 or result.get('nonfinite_pair_mismatches',0)>0)
 
 
+def _numeric_equal(result):
+    if result.get('status') != 'ok':
+        return None
+    if _numeric_difference(result):
+        return False
+    if result['level'] == 'full' or result.get('digest_equal'):
+        return True
+    return None
+
+
+def _all_equal(previous, current):
+    if previous is False or current is False:
+        return False
+    return True if previous is True and current is True else None
+
+
 def identity(work):
     rows=[s['oracle_identity'] for s in work.statuses if s.get('oracle_identity')]
     if len(rows)!=1:return {}
@@ -60,12 +79,12 @@ def identity(work):
     return value
 
 
-def _operator(ref,cmp,left,right,row,result,find,mismatch,ordinal):
+def _operator(ref,cmp,left,right,row,result,find,mismatch,ordinal,cross_precision):
     key=row['call_key']
     sources_a=left.get('src');sources_b=right.get('src')
     unknown=sources_a is None or sources_b is None or 'unknown' in (sources_a or [])+(sources_b or [])
     paired=not unknown and len(sources_a)==len(sources_b) and sources_a==sources_b
-    config_a=call_config(left);config_b=call_config(right)
+    config_a=call_config(left,cross_precision);config_b=call_config(right,cross_precision)
     config_equal=config_a is not None and config_b is not None and config_a==config_b
     if config_a is None or config_b is None:mismatch('call_config_unknown',key)
     elif not config_equal:mismatch('call_config_mismatch',key)
@@ -76,8 +95,10 @@ def _operator(ref,cmp,left,right,row,result,find,mismatch,ordinal):
             ea,eb=find(ref,source_a),find(cmp,source_b)
             if ea is None or eb is None:unknown=True;all_equal=False;continue
             cached=ref.db.execute("select payload from rows where panel='oracle.samples' and key=?",(source_a,)).fetchone()
-            comparison=json.loads(cached[0]) if cached else compare(ref.view.run,ea,cmp.view.run,eb,work=ref.directory,limits=ref.limits)
-            same=comparison.get('digest_equal',False);all_equal &= same
+            comparison=json.loads(cached[0]) if cached else compare(ref.view.run,ea,cmp.view.run,eb,work=ref.directory,limits=ref.limits,cross_precision=cross_precision)
+            same=_numeric_equal(comparison) if cross_precision else comparison.get('digest_equal',False)
+            if same is None:unknown=True
+            all_equal = all_equal and same is True
             errors.append(0. if same else comparison.get('relative_l2'))
     if unknown:mismatch('source_unknown',key)
     error_in=max(errors) if paired and not unknown and errors and all(v is not None for v in errors) else None
@@ -106,7 +127,9 @@ def _layer_sample(summaries,row,result,ordinal):
     summary=summaries.setdefault(group,dict(scope=scope,boundary=boundary,sample_pass=int(iteration),samples=0,digest_equal=True,worst={},cosines=[],order=ordinal))
     if 'generation_step' in row:
         summary.update(generation_step=row['generation_step'],phase=row['phase'])
-    summary['samples']+=1;summary['digest_equal'] &= result['digest_equal']
+    summary['samples']+=1;summary['digest_equal'] = _all_equal(summary['digest_equal'],result['digest_equal'])
+    if 'numeric_equal' in row:
+        summary['numeric_equal'] = _all_equal(summary.get('numeric_equal',True),row['numeric_equal'])
     weights=summary.setdefault('weighting',dict(valid_samples=0,valid_elements=0,sample_mae_sum=0.,sample_mse_sum=0.,element_abs_sum=0.,element_square_sum=0.))
     n=result.get('valid_elements',0)
     if n and result.get('mae') is not None and result.get('mse') is not None:
@@ -127,17 +150,22 @@ def _layer_sample(summaries,row,result,ordinal):
     if 'ulp_histogram' in result:
         histogram=summary.setdefault('ulp_histogram',dict.fromkeys(ULP_BUCKETS,0))
         for bucket,count in result['ulp_histogram'].items():histogram[bucket]+=count
-        for field in ('valid_elements','differing_elements','paired_sentinel','finite_extreme_pair_mismatches'):
-            summary[field]=summary.get(field,0)+result.get(field,0)
         summary['ulp_samples']=summary.get('ulp_samples',0)+1
         if result.get('ulp_max') is not None:summary['ulp_max']=max(summary.get('ulp_max',0),result['ulp_max'])
+    if 'ulp_histogram' in result or 'numeric_equal' in row:
+        for field in ('valid_elements','differing_elements','paired_sentinel','finite_extreme_pair_mismatches','nonfinite_pair_mismatches'):
+            summary[field]=summary.get(field,0)+result.get(field,0)
 
 
-def _identity_result(ref,cmp,declare):
+def _identity_result(ref,cmp,declare,cross_precision):
     declared=set((declare or {}).get('differences',[]))
     a,b=identity(ref),identity(cmp);blocked=None
     generation=a.get('task')=='generate' or b.get('task')=='generate'
     required=required_fields(a,b)
+    if cross_precision and 'task' not in required and ('task' in a or 'task' in b):
+        for side in (a,b):
+            side.setdefault('task','embedding')
+        required+=('task',)
     required += tuple(k for k in ('code_files','padding_side','adapter_names')
                       if k not in required and (k in a or k in b))
     declarable=DECLARABLE+('parallelism','comm_backend') if generation else DECLARABLE
@@ -146,7 +174,26 @@ def _identity_result(ref,cmp,declare):
     declarable += extra
     if not generation:
         required += tuple(k for k in ('parallelism','rank') if k in a or k in b)
+    derived_id = False
+    if cross_precision and all(side.get('dtype') in FLOATS for side in (a,b)):
+        required=tuple(k for k in required if k!='dtype')
+        declarable+=('dtype',)
+        if (a['dtype']!=b['dtype'] and a.get('oracle_id')!=b.get('oracle_id')
+                and all(side.get('task','embedding')=='embedding' for side in (a,b))):
+            # Only relax an ID derived by the direct-input runner. Package and
+            # custom IDs may encode additional contracts and must still match.
+            from flagprof.runner.fixed import direct_oracle_id
+            try:
+                derived_id=(a['oracle_id']==direct_oracle_id(a)
+                            and b['oracle_id']==direct_oracle_id(b)
+                            and a['oracle_id']==direct_oracle_id(dict(b,dtype=a['dtype'])))
+            except KeyError:
+                pass
+            if derived_id:
+                required=tuple(k for k in required if k!='oracle_id')
+                declarable+=('oracle_id',)
     def permitted(field, left, right):
+        if field=='oracle_id':return derived_id
         if field in declared:return True
         if isinstance(left,dict) and isinstance(right,dict):
             return all(permitted(field+'.'+key,left.get(key),right.get(key))
@@ -155,6 +202,8 @@ def _identity_result(ref,cmp,declare):
         return False
     for field in required+declarable:
         equal=field in a and field in b and a[field]==b[field]
+        if cross_precision and field=='oracle_id' and not a.get(field):
+            equal=False
         allowed=field in declarable
         # Optional absent software components are values inside software, not missing identity fields.
         if not equal:
@@ -172,7 +221,7 @@ def _identity_result(ref,cmp,declare):
 
 
 def _results(ref,cmp,mismatches,first,jumps,identity_result,panels):
-    partial=any(mismatches[k] for k in ('only_ref','only_cmp','misaligned_shape','unscoped')) or ref.partial() or cmp.partial()
+    partial=any(mismatches.get(k) for k in ('only_ref','only_cmp','misaligned_shape','misaligned_dtype','misaligned_semantics','missing_numeric_evidence','limited_numeric_evidence','unscoped')) or ref.partial() or cmp.partial()
     op_partial=partial or any(mismatches[k] for k in ('misaligned_producer','call_config_mismatch','call_config_unknown','source_unknown'))
     status='partial' if partial else 'ok'
     if first:
@@ -185,9 +234,11 @@ def _results(ref,cmp,mismatches,first,jumps,identity_result,panels):
         route=row.get('expected_route',{})
         if not route.get('registered'):continue
         impl=route.get('impl','unknown')
-        group=routes.setdefault(impl,dict(impl=impl,occurrences=0,scopes=set(),ulp_histogram=dict.fromkeys(ULP_BUCKETS,0)))
+        group=routes.setdefault(impl,dict(impl=impl,occurrences=0,scopes=set()))
         group['occurrences']+=1;group['scopes'].add(row['scope'])
-        for bucket,count in row.get('ulp_histogram',{}).items():group['ulp_histogram'][bucket]+=count
+        if 'ulp_histogram' in row:
+            histogram=group.setdefault('ulp_histogram',dict.fromkeys(ULP_BUCKETS,0))
+            for bucket,count in row['ulp_histogram'].items():histogram[bucket]+=count
     for impl,group in sorted(routes.items()):
         group['scopes']=sorted(group['scopes']);ref.row('oracle.introduced_routes',impl,group)
     quality=dict(alignment=mismatches,alignment_samples=ref.table('oracle.alignment'),introduced=ref.table('oracle.introduced'),amplification=ref.table('oracle.amplification'),introduced_routes=ref.table('oracle.introduced_routes'))
@@ -199,7 +250,11 @@ def _results(ref,cmp,mismatches,first,jumps,identity_result,panels):
     return results
 
 def analyze(ref,cmp,declare=None):
-    identity_result,blocked,panels=_identity_result(ref,cmp,declare)
+    differences=(declare or {}).get('differences',[])
+    if not isinstance(differences,list):
+        raise ValueError('Oracle differences must be a list of identity fields')
+    cross_precision='dtype' in differences
+    identity_result,blocked,panels=_identity_result(ref,cmp,declare,cross_precision)
     if blocked:return [identity_result]+[Result(panel,'unavailable',ref.table(panel),{},[blocked]) for panel in panels]
     generation_limits=None
     if identity(ref).get('task')=='generate':
@@ -214,7 +269,7 @@ def analyze(ref,cmp,declare=None):
         if len(rows)>1:raise ValueError('duplicate tensor call_key: '+key)
         return json.loads(rows[0][0]) if rows else None
     def mismatch(kind,key):
-        mismatches[kind]+=1
+        mismatches[kind]=mismatches.get(kind,0)+1
         if mismatches[kind]<=ref.limits.evidence_samples:ref.row('oracle.alignment',kind+':'+str(mismatches[kind]),dict(kind=kind,call_key=key))
     for run,w,seq,left in ref.events(('tensor',)):
         key=left.get('call_key')
@@ -230,22 +285,27 @@ def analyze(ref,cmp,declare=None):
             binding=right.get('ext',{}).get('generation',{})
             if binding.get('generation_step')!=step or binding.get('phase')!=left['ext']['generation']['phase']:
                 raise ValueError('paired generation tensor step binding mismatch: '+key)
-        result=compare(ref.view.run,left,cmp.view.run,right,work=ref.directory,limits=ref.limits)
-        if result['status']!='ok':mismatch('misaligned_shape',key);continue
+        result=compare(ref.view.run,left,cmp.view.run,right,work=ref.directory,limits=ref.limits,cross_precision=cross_precision)
+        if result['status']!='ok':mismatch(result['status'],key);continue
         scope,iteration,boundary,sample=key.split('#',3)
         row=dict(call_key=key,scope=scope,boundary=boundary,sample=sample,sample_pass=int(iteration),shape=left['shape'],dtype=left['dtype'],**result)
+        if cross_precision:
+            row.update(ref_dtype=left['dtype'],cmp_dtype=right['dtype'],numeric_equal=_numeric_equal(result))
+            if result['level']!='full' and not result['digest_equal']:
+                mismatch('limited_numeric_evidence',key)
         if generation_limits is not None:
             row.update(generation_step=step,phase=left['ext']['generation']['phase'])
         ref.row('oracle.samples',key,row)
         ordinal+=1
         ref.db.execute("update rows set metric=? where panel='oracle.samples' and key=?",(-ordinal,key))
         if boundary.startswith('op:'):
-            _operator(ref,cmp,left,right,row,result,find,mismatch,ordinal)
+            _operator(ref,cmp,left,right,row,result,find,mismatch,ordinal,cross_precision)
         elif left['role']=='out':
             _layer_sample(summaries,row,result,ordinal)
             sample_key=(sample,iteration)
-            if result['digest_equal']:last_equal[sample_key]=key
-            elif first is None:
+            same=row.get('numeric_equal',result['digest_equal'])
+            if same is True:last_equal[sample_key]=key
+            elif same is False and first is None:
                 first=dict(row,last_equal_boundary=last_equal.get(sample_key),numeric_difference_observed=_numeric_difference(result))
             current=result.get('relative_l2');prev=previous.get(sample_key)
             if prev and current is not None and prev[1] is not None and current != prev[1]:
@@ -270,7 +330,7 @@ def analyze(ref,cmp,declare=None):
             scope='paired finite elements; sampled and full levels remain explicitly labelled')
         cosines=summary.pop('cosines');summary['sample_cosine_mean']=sum(cosines)/len(cosines) if cosines else None
         summary['sample_cosine_min']=min(cosines) if cosines else None;summary['levels']=sorted(summary['levels'])
-        if 'ulp_histogram' in summary:summary['differing_fraction']=summary['differing_elements']/summary['valid_elements'] if summary['valid_elements'] else None
+        if 'differing_elements' in summary:summary['differing_fraction']=summary['differing_elements']/summary['valid_elements'] if summary['valid_elements'] else None
         ref.row('oracle.layer',encode(group),summary)
         ref.db.execute("update rows set metric=? where panel='oracle.layer' and key=?",(-summary['order'],encode(group)))
     results=_results(ref,cmp,mismatches,first,jumps,identity_result,panels)

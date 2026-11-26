@@ -328,7 +328,8 @@ def build(model, doc, source=None):
     panels = doc.get('results', {})
     oracle = any(key.startswith('oracle.') for key in panels)
     if oracle:
-        model.meta['title'] = '精度对照结果'
+        cross_precision = 'dtype' in doc.get('declaration', {}).get('differences', ())
+        model.meta['title'] = '跨精度对照结果' if cross_precision else '精度对照结果'
         identities = list(panels.get('oracle.identity_diff', {}).get('data', ()))
         route_note = oracle_view.route_note(identities)
         first_panel = panels.get('oracle.first_divergence', {})
@@ -344,6 +345,8 @@ def build(model, doc, source=None):
             continue
         result = panels[ident]
         title, columns = PANELS.get(ident,(ident,()))
+        if oracle and cross_precision:
+            columns = tuple('numeric_equal' if c == 'digest_equal' else c for c in columns)
         coverage = result.get('coverage',{})
         data = result.get('data',())
         status = result.get('status','unavailable')
@@ -360,6 +363,8 @@ def build(model, doc, source=None):
             if ident not in ('oracle.identity_diff','oracle.first_divergence'):
                 continue
         description = DESCRIPTIONS.get(ident,'')
+        if ident == 'oracle.layer' and cross_precision:
+            description += ' 不同浮点类型按各自格式解码后比较数值。ULP 仅统计同类型的完整浮点张量。'
         if ident in ('perf.op','perf.layer'):
             description += ' 前向摘要范围：'+str(coverage.get('headline_note','未记录'))+'。'
         if ident == 'resource':
@@ -376,6 +381,8 @@ def build(model, doc, source=None):
         elif ident == 'oracle.op_sensitivity':
             data = (oracle_view.operator_row(r, route_note) for r in data)
             description = route_note + '先看调用前的输入，再看输出。同输入、同配置且完整输出出现数值差异的调用优先显示。'
+            if cross_precision:
+                description = route_note + '优先显示输入数值一致、完整输出出现差异的调用。输入张量允许浮点类型不同，标量参数和显式类型参数须一致。'
         elif ident == 'oracle.replay':
             data = (dict(r, fixed_input={'ref':'参考侧保存的输入','cmp':'候选侧保存的输入'}.get(r.get('input_side')),
                          replay_max_abs=(r.get('metrics') or {}).get('max_abs'),
@@ -412,6 +419,8 @@ def build(model, doc, source=None):
             note = (str(coverage.get('headline_note','来源已选范围')) if key == 'headline' else description)
             if ident == 'oracle.op_sensitivity' and key in ('introduced','amplification'):
                 values = (oracle_view.operator_row(r, route_note) for r in values)
+                if key == 'introduced':
+                    subcolumns = columns
             add_table(model,ident+'.'+key,subtitle,values,subcolumns or columns,note,status)
         if ident == 'memory':
             from .curves import memory_envelope
@@ -447,7 +456,7 @@ def build(model, doc, source=None):
     if doc.get('schema') == 'oracle-three-way/1':
         _three_way(model,doc)
     if source:
-        _export_tables(model,Path(source))
+        _export_tables(model,Path(source),cross_precision=oracle and cross_precision)
         _timeline(model,Path(source),doc.get('diagnosis') or {})
     if oracle:
         if first_record:
@@ -528,7 +537,7 @@ def _summarize(model, panels):
                       'oracle.op_sensitivity.introduced')
 
 
-def _export_tables(model, source):
+def _export_tables(model, source, *, cross_precision=False):
     extras = (
         ('oracle.perf_links','oracle.perf_links.jsonl'),
         ('oracle.samples','oracle.samples.jsonl'),('oracle.alignment','oracle.alignment.jsonl'),
@@ -551,6 +560,8 @@ def _export_tables(model, source):
                     if len(line.encode())>model.limits.record_bytes:raise ValueError('report export record exceeds budget')
                     yield json.loads(line)
         title, columns = PANELS.get(ident,(titles.get(ident,ident),()))
+        if ident == 'oracle.samples' and cross_precision:
+            columns = ('scope','boundary','sample','ref_dtype','cmp_dtype','level','numeric_equal','max_abs','relative_l2')
         add_table(model,ident,title,records(),columns,DESCRIPTIONS.get(ident,'完整来源记录；按表内条件筛选。'))
     path = source/'exports/timeline.json'
     if path.is_file():
@@ -665,6 +676,8 @@ def _rank_summary(receipt):
 def _group(model, doc, source):
     oracle = doc.get('schema') == 'oracle-group/1'
     model.meta['title'] = '多 rank 精度结果' if oracle else '多 rank 通信与推理结果'
+    if oracle and 'dtype' in doc.get('declaration', {}).get('differences', ()):
+        model.meta['title'] = '多 rank 跨精度对照结果'
     model.meta['facts'].extend(dict(label=LABELS.get(k,k),value=doc[k])
                               for k in ('backend','ref_backend','cmp_backend','samples','status') if k in doc)
     if oracle:model.finding('逻辑输入样本：'+str(doc.get('samples','未记录')),'对应 rank 分别比较内部算子；复制边界与逻辑样本只计一次。','group.ranks')
@@ -790,7 +803,8 @@ def _comparison(model, doc):
 
 
 def _three_way(model, doc):
-    model.meta['title']='三路精度对照结果'
+    cross_precision = 'dtype' in doc.get('declaration', {}).get('differences', ())
+    model.meta['title']='三路跨精度对照结果' if cross_precision else '三路精度对照结果'
     add_table(model,'oracle.three_way','相同参考下的误差变化',doc.get('comparisons'),
               ('scope','boundary','sample','rank','metric','reference_to_baseline','reference_to_candidate',
                'baseline_to_candidate','delta','relative_change','reason'))

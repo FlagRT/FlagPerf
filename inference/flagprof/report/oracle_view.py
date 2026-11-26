@@ -50,13 +50,18 @@ def route_note(identities):
     return ''
 
 
+def observed_equal(row):
+    return row.get('numeric_equal', row.get('digest_equal'))
+
+
 def operator_row(original, note):
     row = dict(original)
     if row.get('introduced'):
-        verdict, priority = '同输入下出现数值差异', 0
+        verdict = '输入数值一致，输出出现差异' if 'numeric_equal' in row else '同输入下出现数值差异'
+        priority = 0
     elif row.get('input_status') == 'different':
         verdict, priority = '进入算子前输入已不同', 1
-    elif row.get('call_config_status') == 'equal' and row.get('input_status') == 'equal' and row.get('digest_equal') is True:
+    elif row.get('call_config_status') == 'equal' and row.get('input_status') == 'equal' and observed_equal(row) is True:
         verdict, priority = '观测输入与输出均一致', 3
     else:
         verdict, priority = '需核对配置或张量证据', 2
@@ -101,7 +106,9 @@ def first_message(panel, layer_count, *, found=False):
     if panel.get('status') == 'ok' and layer_count:
         return f'{layer_count} 个已配对边界中未观测到差异。'
     parts = [f'{label} {gaps[key]} 条' for key, label in [('only_ref', '仅参考侧有记录'),
-             ('only_cmp', '仅候选侧有记录'), ('misaligned_shape', '形状无法配对'), ('unscoped', '缺少位置标识')]
+             ('only_cmp', '仅候选侧有记录'), ('misaligned_shape', '形状无法配对'), ('unscoped', '缺少位置标识'),
+             ('misaligned_dtype', '数据类型无法配对'), ('misaligned_semantics', '角色或掩码不同'),
+             ('missing_numeric_evidence', '缺少可配对数值'), ('limited_numeric_evidence', '仅有局部数值证据')]
              if gaps.get(key)]
     detail = ('该位置是已配对记录中的首个差异，缺失位置与它的先后关系尚未确定。' if found else
               f'已配对 {layer_count} 个边界，证据不足以确定整个范围的首个差异。')
@@ -115,6 +122,9 @@ def overview(model, panels, paired_tensors=None):
         detail = '阻断条件为' + ('、'.join(blockers) or '比较身份与缺失记录') + '。实际配对 0 条张量记录。'
         if any(r['field'] == 'inputs_sha256' and r.get('equal') is False for r in identities):
             detail += '请核对两次运行使用的输入文件，使用同一份输入重新采集后比较。'
+        if any(r['field'] == 'dtype' and r.get('equal') is False and r.get('requirement') == 'must_equal'
+               and not r.get('declared') for r in identities):
+            detail += '若目的是比较不同浮点精度，请在 accuracy 工作流的 compare.declare 中显式列出 dtype。'
         return dict(title='比较条件未满足，无法判断精度差异', detail=detail, section='oracle.identity_diff')
 
     layers = model.rows('oracle.layer')
@@ -131,7 +141,7 @@ def overview(model, panels, paired_tensors=None):
         details.append(f'实际配对 {paired_tensors:,} 条张量记录。')
     if final:
         full = final.get('levels') == ['full']
-        same = final.get('digest_equal')
+        same = observed_equal(final)
         scope = '最终输出' if outputs == 1 else '最后一次观测的模型输出'
         if not full:
             scope += '的已观测位置'
@@ -141,7 +151,7 @@ def overview(model, panels, paired_tensors=None):
         if same is True:
             title = scope + '一致'
         elif same is False:
-            title = scope + ('存在数值差异' if (maximum or 0) > 0 or final.get('nonfinite_pair_mismatches')
+            title = scope + ('存在数值差异' if 'numeric_equal' in final or (maximum or 0) > 0 or final.get('nonfinite_pair_mismatches')
                              else '的张量摘要不同')
         if final.get('samples') is not None:
             details.append(f"比较了 {final['samples']} 个样本。")
@@ -150,8 +160,12 @@ def overview(model, panels, paired_tensors=None):
         if maximum is not None:
             details.append('最大绝对误差为 ' + display(maximum) + '。')
     if len(layers):
-        equal = sum(r.get('digest_equal') is True for r in layers)
-        if equal == len(layers):
+        equal = sum(observed_equal(r) is True for r in layers)
+        if any('numeric_equal' in r for r in layers):
+            different = sum(observed_equal(r) is False for r in layers)
+            details.append(f'已配对 {len(layers)} 个边界，{equal} 个数值一致，{different} 个观测到差异，'
+                           f'{len(layers)-equal-different} 个证据不足以判定。')
+        elif equal == len(layers):
             details.append(f'{equal} 个已配对边界的张量摘要全部一致。')
         else:
             details.append(f'已检查 {len(layers)} 个配对边界，其中 {equal} 个张量摘要一致。')

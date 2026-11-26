@@ -183,6 +183,14 @@ def declaration(config, local, oracle):
     from flagprof.report.comparison import DECLARABLE
     compare=config['compare']
     value=compare.get('declare','auto')
+    automatic=value=='auto'
+    if isinstance(value,str) and not automatic:
+        value=json.loads(Path(value).read_text())
+    data={'differences':value} if isinstance(value,list) else deepcopy(value)
+    if not automatic and (not isinstance(data,dict) or set(data)-{'differences','note'}
+                          or not isinstance(data.get('differences'),list)):
+        raise ValueError('compare.declare 需要 differences 数组和可选 note')
+    cross_precision=oracle and not automatic and 'dtype' in data['differences']
     fields=set()
     maps={'hardware.vendor':('device',),'hardware.device':('device',),'hardware.nproc':('parallelism',),
           'hardware.comm_backend':('comm_backend','communication'),'components.flaggems.enabled':('flaggems','include'),
@@ -196,6 +204,10 @@ def declaration(config, local, oracle):
         for block in ('target','runner'):
             l,r=left.get(block,{}),right.get(block,{})
             for k in sorted(set(l)|set(r)):
+                if oracle and block=='runner' and k=='dtype' and l.get(k)!=r.get(k):
+                    if cross_precision:
+                        continue
+                    raise ValueError(f'{a}/{b} 工作负载不一致 runner.dtype。跨精度对照须在 compare.declare 中显式列出 dtype')
                 if k!='numerics' and l.get(k)!=r.get(k):
                     raise ValueError(f'{a}/{b} 工作负载不一致 {block}.{k}')
         for key,names in maps.items():
@@ -203,18 +215,14 @@ def declaration(config, local, oracle):
                 if key=='runner.numerics' and not oracle:
                     raise ValueError('性能对照禁止改变 runner.numerics')
                 fields.update(names)
-    if value=='auto':
+    if automatic:
         data=dict(differences=sorted(fields))
-    else:
-        if isinstance(value,str):
-            value=json.loads(Path(value).read_text())
-        data={'differences':value} if isinstance(value,list) else deepcopy(value)
-    if not isinstance(data,dict) or set(data)-{'differences','note'} or not isinstance(data.get('differences'),list):
-        raise ValueError('compare.declare 需要 differences 数组和可选 note')
     if 'note' in data and not isinstance(data['note'],str):
         raise ValueError('compare.declare.note 需要字符串')
     allowed=set(DECLARABLE) | ({'numerics'} if oracle else set())
     for name in data['differences']:
+        if oracle and name=='dtype':
+            continue
         if not isinstance(name,str) or name.split('.')[0] not in allowed or any(not x for x in name.split('.')):
             raise ValueError(f'compare.declare 不允许 {name}')
         if oracle and name.split('.')[0]=='parallelism' and any(s['target'].get('task')!='generate' for s in local.values()):

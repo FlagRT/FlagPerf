@@ -50,6 +50,20 @@ class WorkflowTests(unittest.TestCase):
             self.assertEqual((ROOT/'configs'/filename).read_bytes(),
                              (ROOT/'flagprof/workflow/templates'/filename).read_bytes())
 
+    def test_local_cross_precision_requires_explicit_accuracy_declaration(self):
+        config=dict(self.config,mode='compare',profile={'preset':'accuracy'},
+                    hardware={'vendor':'nvidia'},compare={
+                        'ref':{'runner':{'dtype':'float32'}},'cmp':{'runner':{'dtype':'bfloat16'}}})
+        self.assertIn('runner.dtype',self.cli(config,'--dry-run',code=2)['error'])
+        config['compare']['declare']=['dtype']
+        plan=self.cli(config,'--dry-run')
+        self.assertEqual(plan['declaration']['differences'],['dtype'])
+        config['compare']['cmp']['runner']['warmup']=1
+        self.assertIn('runner.warmup',self.cli(config,'--dry-run',code=2)['error'])
+        config['profile']['preset']='perf'
+        config['compare']['cmp']['runner']={'dtype':'float32'}
+        self.assertIn('dtype',self.cli(config,'--dry-run',code=2)['error'])
+
     def test_export_dry_run_and_invalid_combinations(self):
         out = self.cli(self.config,'--set','export.formats=onnx,fx','--set','runner.dtype=float32',
                        '--set','export.verify_onnx=true','--dry-run')

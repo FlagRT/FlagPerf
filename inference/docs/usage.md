@@ -68,6 +68,26 @@ bash oracle-first/commands.sh oracle-repeat
 
 单侧文件在 `runs/<侧>/`，最终报告在 `compare-report/report.html`。摘要列出实际采集的 Store、已有来源和声明的差异。复跑会生成新的本机 Store，参考侧继续使用配置中指定的路径。
 
+### 比较 FP32 与 BF16 的逐层数值差异
+
+在 `profile.preset: accuracy` 下，用 `compare.declare: [dtype]` 显式开启跨精度对照。已有两份精度 Store 时，将下面的 YAML 保存为 `cross-precision.yaml`，填入路径后运行 `flagprof run cross-precision.yaml --out precision-result`。离线比较可在 CPU 上完成。
+
+```yaml
+schema_version: 1
+mode: compare
+profile: {preset: accuracy}
+compare:
+  ref: {existing_run: /path/to/fp32-store}
+  cmp: {existing_run: /path/to/bf16-store}
+  declare: [dtype]
+```
+
+需要现场采集时，共享同一模型、输入和采集边界，将上例两侧分别改为 `ref: {runner: {dtype: float32}}` 和 `cmp: {runner: {dtype: bfloat16}}`。用 `collection: {tensor_boundaries: layer, tensor_blob: all}` 采集逐层完整张量。输入包若封存了执行 dtype，运行仍须符合该包的约定。
+
+打开 `precision-result/compare-report/report.html` 查看最终输出误差、首个观测到数值差异的边界和对应样本。默认的 `declare: auto` 要求两侧执行精度一致。其他允许变化的条件也需显式列入，例如跨设备对照可写 `[dtype, device]`，软件栈同时变化时再加入 `software`。模型、输入、分批与输出语义仍须匹配。
+
+### 组件与性能对照
+
 做组件实验可用 `flagprof init --template compare`。共享参数写在顶层，变体差异写在 `compare.ref` 或 `compare.cmp`。例如在共享 FlagGems 关闭的 TP2 无插桩配置上，加 `--set compare.cmp.components.flaggems.enabled=true --set 'compare.cmp.components.flaggems.include=["mul","rsqrt"]'`。先用 `--dry-run` 查看两侧实际命令和允许变化的字段。此时目标 runner 注册 FlagGems，launch worker 选择编译器，报告保留每个 rank 的组件身份。
 
 已有性能报告可通过 `existing_report` 传入。各组都有经身份核对的 runner 时比较其逐 rank 基准；需要对齐子报告时，结果分别在 `compare-report/rank-0/` 和 `rank-1/`。组内缺少通信记录会得到 `partial` 和具体原因。两份基准的 dtype、输入或计时条件不一致时可得到 `not_comparable`，对应差值为空。结果文件保留完整指标及单位，报告的执行退出码和指标的可比性分别见 `steps` 和 `evidence`。
@@ -227,6 +247,8 @@ flagprof replay prepare \
 ```
 
 算子重放需要两侧完整张量 blob，生成包后在相应设备环境执行 `flagprof replay run "$FP_WORKSPACE/replay-input" --side ref --device "$DEVICE" --store "$FP_WORKSPACE/replay-runs"`。设置 `DEVICE` 为与该侧匹配的设备，对比侧使用 `--side cmp`。输出误差、传播误差和 replay 新引入误差按各自证据读取。详细契约见 [分析器与报告](07-analyzers-and-reports.md)。
+
+已有 Store 也可直接用 `flagprof report oracle --ref /path/to/ref-store --cmp /path/to/cmp-store --declare differences.json --out precision-result`。跨精度对照的 `differences.json` 内容为 `{"differences":["dtype"]}`。
 
 ## 设备最小验收
 
