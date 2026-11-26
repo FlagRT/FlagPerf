@@ -159,9 +159,23 @@ class DCMI:
 
 
 def Provider(devices='all', source='auto', **kwargs):
+    import subprocess
+    from .telemetry_dsmi import Provider as DSMI
     from .telemetry_smi import Provider as SMI
-    if source == 'npu-smi' or (source == 'auto' and _in_container()):
+    if source == 'dsmi':
+        return DSMI(devices=devices)
+    if source == 'npu-smi':
         return SMI(devices=devices)
+    if source == 'auto' and _in_container():
+        try:
+            return SMI(devices=devices)
+        except (OSError, subprocess.SubprocessError, ReadError, ValueError) as smi_error:
+            try:
+                result = DSMI(devices=devices)
+            except (OSError, AttributeError, ReadError, ValueError) as dsmi_error:
+                raise ReadError('read_error', f'npu-smi: {smi_error}; DSMI: {dsmi_error}') from dsmi_error
+            result.inventory['initial_source_failure'] = str(smi_error)
+            return result
     try:
         return DCMI(devices=devices, source=source, **kwargs)
     except (OSError, ReadError) as error:
@@ -178,10 +192,9 @@ def _in_container():
 
 
 def default_topology():
-    if _in_container():
-        return 'local' if __import__('shutil').which('npu-smi') else 'host'
+    from .telemetry_dsmi import LIBRARY
     try:
-        C.CDLL('libdcmi.so')
+        C.CDLL(LIBRARY if _in_container() else 'libdcmi.so')
         return 'local'
     except OSError:
         return 'local' if __import__('shutil').which('npu-smi') else 'host'

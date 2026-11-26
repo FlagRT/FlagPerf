@@ -168,7 +168,7 @@ def main():
     parser.add_argument('--vendor', choices=vendor_names(), required=True)
     parser.add_argument('--devices', default='all')
     parser.add_argument('--interval-ms', type=int, default=1000)
-    parser.add_argument('--source', choices=('auto','dcmi','npu-smi','nvml','nvidia-smi'), default='auto')
+    parser.add_argument('--source', choices=('auto','dcmi','dsmi','npu-smi','nvml','nvidia-smi'), default='auto')
     parser.add_argument('--run', help=argparse.SUPPRESS)
     parser.add_argument('--sample', action='store_true', help=argparse.SUPPRESS)
     args = parser.parse_args()

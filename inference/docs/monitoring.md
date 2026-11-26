@@ -58,7 +58,9 @@ NVIDIA 使用 `--vendor nvidia --devices all`。`launch` 支持同样的监控�
 
 `--diagnose on` 只用于 `perf-lite/perf/modules`，会选择 `monitor=on`、`topology=agent`，需要 `--monitor-root`。只看设备资源时省略 diagnose；`--preset monitor` 可采资源而不启用性能探针。快组默认 1000 ms，可通过 `--monitor-interval-ms 100..5000` 调整。独立 watch 的采样间隔与保留配置由启动时的 `--config` JSON 决定。
 
-单次任务会探测本地采集能力。Ascend 在容器内优先使用可见的 `npu-smi`，宿主可使用 DCMI；NVIDIA 可使用 NVML 或 `nvidia-smi`。探测到相应接口时选择 `local`，缺少接口时选择 `host`，由宿主侧运行 `python3 -m flagprof.monitor --root ROOT --vendor ascend --devices all`。同一节点长期接多个任务时采用 `agent`，避免每个目标重复读取设备指标。
+单次任务会探测本地采集能力。Ascend 在容器内优先使用 `npu-smi info`。当命令不可用或无法枚举板卡时，自动采集改用 DSMI 驱动接口，枚举容器可见的逻辑设备并核实对应的物理芯片编号。任务报告按物理编号关联显存、芯片温度、健康状态和 AI Core 利用率。监控清单的 `source` 和 `initial_source_failure` 分别记录实际采集来源和切换原因。板级功耗需由能识别功率域的来源采集。
+
+Ascend 宿主可使用 DCMI，NVIDIA 可使用 NVML 或 `nvidia-smi`。探测到相应接口时选择 `local`，缺少接口时选择 `host`，由宿主侧运行 `python3 -m flagprof.monitor --root ROOT --vendor ascend --devices all`。同一节点长期接多个任务时采用 `agent`，避免每个目标重复读取设备指标。
 
 ## 节点监控、YAML 采集与离线重放
 
