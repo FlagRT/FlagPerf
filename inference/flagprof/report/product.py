@@ -152,7 +152,7 @@ def _facts(model, doc, source):
     model.meta['links'].extend([dict(label='完整机器结果',href='result.json')])
 
 
-def _diagnosis(model, data):
+def _diagnosis(model, data, node=None):
     if not data:
         return
     observations = list(rows(data.get('progress_coverage')))
@@ -160,13 +160,10 @@ def _diagnosis(model, data):
     valid = sum(row.get('registered_execution',0) for row in observations)
     gaps = sum(row.get('source_gap',0)+row.get('probe_gap',0) for row in observations)
     status = data.get('status','unavailable')
-    add_table(model, 'diagnosis.coverage', '故障观测范围', observations,
-              ('run_id','rank','registered_execution','load_or_warmup_excluded','no_active_interval','source_gap','probe_gap'),
-              '这些数值为观测次数，不是墙钟覆盖率。读取状态：'+display(status)+
-              '。有效执行观测 '+str(valid)+' 次；来源 / 探针缺口 '+str(gaps)+' 次。')
     source_findings = []
     evidence = {tuple(r['identity']): r['record'] for r in rows(data.get('evidence'))}
-    starts = {}
+    starts = {(r.get('run_id'), r['start_clock']): r['started_ns'] for r in observations
+              if r.get('start_clock') and r.get('started_ns') is not None}
     for record in evidence.values():
         detail = record.get('detail', {})
         if detail.get('started_ns') is not None:
@@ -219,36 +216,37 @@ def _diagnosis(model, data):
             'proc.exit':'核对退出码、信号和先前事件；退出记录与根因分别解释。',
         }.get(row.get('rule'),'从引用的原始事件核对触发值、观测范围和最后活动。')
         source_findings.append(row)
-    add_table(model,'diagnosis',PANELS['diagnosis'][0],source_findings,
-              ('occurrence_task_relative_ns','task_relative_ns','first_detected_relative_ns','rule','rank','trigger','location','next_step'),
-              '先看异常、任务与 rank，再查看事件证据。通信超时表示主机调用超过观测期限；不自动推断设备或链路根因。',
+    from .diagnosis import by_task, conclusion, node_axis
+    tasks, timing = by_task(observations, source_findings)
+    model.meta['diagnosis_layout_version'] = 3
+    duration = node_axis(node, evidence.values(), tasks, source_findings) if node is not None else None
+    if duration is not None:
+        model.meta['diagnosis_session_ns'] = duration
+    add_table(model, 'diagnosis.coverage', '任务与观测范围', tasks,
+              ('task_label','exit_summary','alert_count','registered_execution','source_gap','probe_gap','run_id'),
+              '每个运行标识对应一个任务。有效执行观测按心跳计数。')
+    time_note = '时间从各任务的诊断探针启动算起。'
+    if duration is not None:
+        time_note = '横轴从节点监控会话启动算起。横条从任务诊断探针启动延伸到进程退出回执。'
+    elif node is not None:
+        time_note = '缺少可核对的节点会话时间基准，以下时刻从各任务的诊断探针启动算起。'
+    add_table(model,'diagnosis','告警与状态变化',source_findings,
+              ('task_label','event_label','node_event_ns' if duration is not None else 'diagnostic_time_ns','rank'),
+              time_note+'选择告警可查看原始证据。',
               status=status)
     from flagprof.monitor.diagnostic_report import anchor
     add_table(model,'diagnosis.evidence','故障的原始观测记录',
               (dict(r,anchor=anchor(r['identity'])) for r in rows(data.get('evidence'))),
               ('identity','record'), '证据引用随报告保存，展开记录可核对触发条件与时间。')
-    if source_findings:
-        first = min(source_findings, key=lambda r:r.get('task_relative_ns') if r.get('task_relative_ns') is not None else float('inf'))
-        kind = display(first.get('rule'))
-        exits = [r for r in source_findings if r.get('rule') == 'proc.exit']
-        exit_text = ('；退出记录 '+ '、'.join(display(r['trigger']) for r in exits)) if exits else ''
-        model.finding(kind+'；'+str(len(source_findings))+' 条相关事件记录',
-                      kind+'；rank '+str(first.get('rank','未记录'))+'；任务内时刻 '+
-                      display(first.get('task_relative_ns'),'task_relative_ns')+
-                      '。'+(first.get('allocation_summary') or '触发信息（原文）：'+display(first['trigger']))+exit_text+
-                      '。位置：'+display(first['location'])+'。'+str(first['next_step'])+
-                      ' 故障和退出记录描述事件过程，不按条数计算独立根因。',
-                      'diagnosis','fault',row_index=source_findings.index(first))
+    if source_findings or valid or any('exit_summary' in t for t in tasks):
+        conclusion(model, tasks, source_findings, timing)
     if status != 'unavailable' and valid == 0:
         model.finding('本次没有有效执行进度观测',
                       '诊断结果可读取，但有效执行观测为 0。'+
                       ('未记录告警不能据此判断执行过程正常。' if not source_findings else '故障事件与进度观测分别解释。'),
                       'diagnosis.coverage','coverage')
-    elif valid:
-        model.finding('执行进度观测 '+str(valid)+' 次',
-                      '已登记来源 / 探针缺口 '+str(gaps)+' 次。'+
-                      ('在已观测执行区间未触发故障规则。' if not source_findings else '故障详情见事件列表。'),
-                      'diagnosis.coverage')
+    elif gaps:
+        model.finding('执行观测存在缺口', f'来源或探针记录了 {gaps} 次采集缺口。', 'diagnosis.coverage','coverage')
     elif status == 'unavailable':
         model.meta['notices'].append('本次未提供业务故障诊断：'+display(data.get('reason','未采集诊断来源'))+'。无法据此判断执行期间是否发生业务故障。')
 
@@ -265,7 +263,7 @@ def build(model, doc, source=None):
                                   not task and bool(identity.get('pooling')) and not identity.get('generation'))
     _facts(model,doc,source)
     if doc.get('schema')!='monitor-report/1' or (doc.get('diagnosis') or {}).get('findings') or (doc.get('diagnosis') or {}).get('progress_coverage'):
-        _diagnosis(model,doc.get('diagnosis'))
+        _diagnosis(model,doc.get('diagnosis'),doc if doc.get('schema')=='monitor-report/1' else None)
     panels = doc.get('results', {})
     oracle = any(key.startswith('oracle.') for key in panels)
     if oracle:
@@ -532,8 +530,13 @@ def _monitor(model, doc):
     add_table(model,'monitor.minutes','分钟观测均值',doc.get('minute_trends'),
               ('entity','metric','count','missing','total'),
               '分钟观测均值不替代原始覆盖率或故障规则证据。')
-    add_table(model,'monitor.findings','资源规则观测',doc.get('findings'),None,
-              '节点资源事实与目标任务故障分别解释。')
+    business = {(r.get('id'), r.get('revision'), r.get('run_id'), r.get('rule'))
+                for r in model.rows('diagnosis') if r.get('id')}
+    node_findings = (r for r in rows(doc.get('findings'))
+                     if (r.get('id'), r.get('revision'), r.get('run_id'), r.get('rule')) not in business)
+    add_table(model,'monitor.findings','节点资源告警',node_findings,None)
+    if len(model.rows('diagnosis.coverage')):
+        model.meta['title'] = '节点任务诊断与资源监控'
     series=model.rows('monitor.series')
     if len(series):
         entities={r.get('entity') for r in series if r.get('entity') is not None}
@@ -730,7 +733,10 @@ def _redraw(source, out, *,  limits=None, runner_results=None, refresh_view=Fals
             if len(header.encode()) <= model.limits.record_bytes:
                 page = json.loads(header).get('value', {}) if header.strip() else {}
                 refresh_view = (page.get('field_display_version') != FIELD_DISPLAY_VERSION or
-                                page.get('mode') == 'monitor' and 'monitor_gaps' not in page)
+                                page.get('mode') == 'monitor' and 'monitor_gaps' not in page or
+                                page.get('mode') == 'monitor' and page.get('diagnosis_layout_version') == 2 or
+                                'diagnosis_layout_version' not in page and any(
+                                    (f.get('section') or '').startswith('diagnosis') for f in page.get('findings', [])))
         if runner_results:
             from .performance import summarize
             from . import write_json

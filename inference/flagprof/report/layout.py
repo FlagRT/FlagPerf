@@ -9,7 +9,7 @@ from .fields import display, cell
 
 # Longer prefixes win over their parent workspace.
 GROUPS = [
-    ('diagnosis', '业务故障与诊断', ('diagnosis',)),
+    ('diagnosis', '任务诊断', ('diagnosis',)),
     ('compare', '比较条件', ('comparisons', 'window.comparisons')),
     ('metrics', '指标对照', ('comparison',)),
     ('identity', '比较条件与生成轨迹', ('oracle.identity_diff', 'oracle.generation')),
@@ -39,7 +39,7 @@ MODE_SECTIONS = [('group.ranks','group'), ('monitor.series','monitor'), ('compar
                  ('performance.baseline','baseline')]
 SORT = {'perf.device':'device_work_ns', 'perf.op':'host_ns', 'perf.layer':'inclusive_ns',
         'oracle.propagation':'ratio', 'route.coverage.missing_ops':'forward_non_hit_calls',
-        'diagnosis':'task_relative_ns', 'communication.aligned':'group_seq'}
+        'communication.aligned':'group_seq'}
 EXCERPTS = {
     'profile': ('perf.gap','perf.device','perf.layer','route.coverage.missing_ops','compile.health'),
     'training': ('training','training.phases','perf.device'),
@@ -54,7 +54,7 @@ SUMMARY_COLUMNS = {
     'oracle.three_way':'sample scope boundary metric reference_to_baseline reference_to_candidate relative_change',
     'perf.device':'category name events device_work_ns category_share',
     'perf.gap':'kind request_id window_ns all_activity_union_ns blank_ns',
-    'diagnosis':'task_relative_ns rank rule allocation_summary location next_step',
+    'diagnosis':'task_label event_label node_event_ns diagnostic_time_ns trigger location',
     'monitor.series':'entity metric unit mean maximum p95 coverage valid missing',
 }
 
@@ -75,6 +75,7 @@ SHORTCUTS = [('category','compute','仅看计算'),('category','memcpy','仅看�
 
 def filters(ident,keys):
     scope = keys & FILTER_KEYS
+    if ident.startswith('diagnosis') and 'task_label' in keys:scope.add('task_label')
     for dim,fields in [('step',('generation_step','step')),('shape',('input_shape','shape')),
                        ('sid',('sid','sid_cmp','sid_ref')),('level',('levels',)),('phase',('phase',))]:
         if keys.intersection(fields):scope.add(dim)
@@ -100,6 +101,8 @@ def decorate(model):
     meta['mode'] = mode
     if mode=='training':
         meta['title']='训练步与阶段观测'
+    if mode=='diagnosis' and meta['title']=='推理运行结果':
+        meta['title']='任务执行与告警'
     context = []
     for fact in meta['facts']:
         label, value = fact['label'], fact['value']
@@ -125,6 +128,8 @@ def decorate(model):
                                for n in meta['notices'] if n][:2]
     kpis = []
     for finding in meta['findings']:
+        if meta['banners'] and finding == meta['banners'][0] and finding['section']=='diagnosis':
+            continue
         sid, ordinal = finding.get('section'), finding.get('row_index')
         row = {}
         if ordinal is not None and sid:
@@ -155,6 +160,7 @@ def decorate(model):
             s['filter_scope']=filters(ident,keys)
         s['quick_filters']=[dict(field=k,value=v,label=label) for k,v,label in SHORTCUTS if k in s['filter_scope']]
         if ident in CHARTS:s['chart']=dict(type=CHARTS[ident])
+        if ident=='diagnosis.coverage' and 'diagnosis' not in ids:s['chart']=dict(type='fault_timeline')
         s.update(group=group,group_title=title,tab_label=s['title'],default_sort=SORT.get(ident),
                  default_desc=ident not in ('diagnosis','communication.aligned'),preserve_order=ident not in SORT)
     # Stable ordering also retains the source ordinal of every record.

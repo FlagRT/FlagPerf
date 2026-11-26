@@ -134,6 +134,8 @@ def _generate(session, out, *, last):
         gaps=state['gaps'],capability_missing=state['inventory'].get('unavailable',{}),
         interpretation='Node observations and fact rules; no inferred workload hang or recovery action.')
     from .diagnostic_report import panel
+    if state.get('boot_id'):
+        result['session_clock'] = 'host_mono:' + state['boot_id']
     result['diagnosis']=panel(root)
     atomic_json(out/'result.json',result)
     from flagprof.report.product import write_report

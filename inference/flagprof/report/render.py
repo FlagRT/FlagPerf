@@ -104,7 +104,7 @@ def render(model, out, *, filename='report.html'):
         if section.get('kind')=='evidence':
             section['evidence_index']=evidence_pages(model,out,section,filename)
     fingerprint=hashlib.sha256()
-    for name in ('render.py','fields.py','product.py','layout.py','assets/report.css','assets/report.js','assets/workspaces.js','assets/charts.js','assets/monitor.js'):
+    for name in ('render.py','fields.py','product.py','layout.py','diagnosis.py','assets/report.css','assets/report.js','assets/workspaces.js','assets/charts.js','assets/monitor.js'):
         fingerprint.update((Path(__file__).parent/name).read_bytes())
     (out/'renderer.json').write_text(json.dumps(dict(schema='report-renderer/1',sha256=fingerprint.hexdigest(),
         presentation_schema=meta['schema']),indent=2)+'\n')
@@ -118,7 +118,10 @@ def render(model, out, *, filename='report.html'):
         stream.write('<a href="#availability">观测范围与未提供内容</a><a href="#sources">来源与导出</a></nav></aside><main>')
         stream.write('<header id="overview"><h1><small>'+MODES[meta['mode']]+'</small> '+escape(meta['title'])+'</h1>')
         for notice in meta['banners'][:1]:
-            stream.write('<aside class="fault-banner"><strong>'+escape(notice['title'])+'</strong> '+escape(reader_text(notice['detail']))+'</aside>')
+            stream.write('<aside class="fault-banner"><strong>'+escape(notice['title'])+'</strong> '+escape(reader_text(notice['detail'])))
+            if notice.get('section')=='diagnosis':
+                stream.write(' <a href="#diagnosis">查看各任务的事件</a>')
+            stream.write('</aside>')
         if meta['context_summary']:
             stream.write('<div class="context">')
             priority=('模型','模型文件身份','设备','精度','输入样本','FlagGems','并行配置','通信后端','采集窗口与配置')

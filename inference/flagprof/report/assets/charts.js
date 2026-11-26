@@ -164,6 +164,111 @@ function forwardLayerRanking(items,state,sampled){
    (bars?'<div class="bars">'+bars+'</div>':'<p>当前范围没有可排名的子层耗时记录。</p>')+
    (roots.length?'<p>'+roots.join(' ')+'</p>':'')+'</div>';
 }
+function nodeTaskTimeline(tasks,groups,duration){
+ if(!tasks.length)return '';
+ const seconds=t=>(Number(t)/1e9).toLocaleString('zh-CN',{maximumFractionDigits:3})+' s';
+ const percent=t=>100*Number(t)/duration;
+ const stepBase=10**Math.floor(Math.log10(duration/5));
+ const step=stepBase*[1,2,5,10].find(n=>n*stepBase>=duration/5);
+ const ticks=[];
+ for(let i=0;i*step<=duration;i++)ticks.push(i*step);
+ const ticksHtml=ticks.map(t=>'<span style="left:'+percent(t)+'%">'+esc(seconds(t))+'</span>').join('');
+ const guides=ticks.map(t=>'<i class="node-guide" style="left:'+percent(t)+'%"></i>').join('');
+ function inSession(t){return t!=null&&Number.isFinite(Number(t))&&t>=0&&t<=duration;}
+ const lanes=tasks.map(task=>{
+   const events=groups.get(task.task_label)||[];
+   const points=[];
+   if(task.started_ns!=null)points.push({name:'启动',t:task.node_start_ns,kind:'start'});
+   for(const {r,i} of events){
+     points.push({name:r.event_label,t:r.node_event_ns,index:i,kind:r.rule==='proc.exit'?'exit':'alert'});
+   }
+   if(task.exit_summary&&!events.some(({r})=>r.rule==='proc.exit'&&inSession(r.node_event_ns))){
+     points.push({name:task.exit_summary,t:task.node_exit_ns,kind:'exit'});
+   }
+   const band=inSession(task.node_start_ns)&&inSession(task.node_exit_ns)&&task.node_exit_ns>=task.node_start_ns?
+     '<i class="node-run" style="left:'+percent(task.node_start_ns)+'%;width:'+percent(task.node_exit_ns-task.node_start_ns)+'%"></i>':'';
+   const marks=[],unmapped=[];
+   for(const point of points.sort((a,b)=>(a.t??Infinity)-(b.t??Infinity))){
+     const timed=inSession(point.t);
+     const text=esc(point.name)+(timed?' <small>'+esc(seconds(point.t))+'</small>':'');
+     const action=point.index==null?'<span class="node-event-label">'+text+'</span>':
+       '<button type="button" class="node-event-label" data-point="'+point.index+'">'+text+'</button>';
+     if(!timed){
+       unmapped.push(action+(point.t==null?'（缺少节点时钟对应关系）':'（在会话区间外）'));
+       continue;
+     }
+     marks.push('<div class="node-mark '+point.kind+'" data-node-ns="'+Number(point.t)+'" style="left:'+percent(point.t)+'%">'+
+       '<i class="node-pin" aria-hidden="true"></i>'+action+'</div>');
+   }
+   const identity=[task.rank==null?'':'rank '+task.rank,task.pid==null?'':'PID '+task.pid].filter(Boolean).join(' · ');
+   const count=task.alert_count?task.alert_count+' 条告警':'未记录告警';
+   return '<div class="diagnostic-lane node-lane"><div class="node-task-name"><strong>'+esc(task.task_label)+'</strong><small>'+esc(identity)+
+     '</small><span class="diagnostic-count'+(task.alert_count?' has-alert':'')+'">'+esc(count)+'</span></div>'+
+     '<div class="node-lane-body"><div class="node-track">'+guides+band+marks.join('')+'</div>'+
+     (unmapped.length?'<div class="node-unmapped">'+unmapped.join(' · ')+'</div>':'')+'</div></div>';
+ }).join('');
+ return '<div class="node-task-timeline" role="group" aria-label="节点会话时间轴"><h3>节点会话时间轴</h3>'+
+   '<div class="node-axis"><span>会话全长 '+esc(seconds(duration))+'</span><div class="node-ticks">'+ticksHtml+'</div></div>'+lanes+'</div>';
+}
+
+// Place the labels in the fewest non-overlapping levels while keeping every
+// marker anchored at its timestamp, even when a tab opens or a panel resizes.
+function layoutNodeLabels(plot){
+ for(const track of plot.querySelectorAll('.node-track')){
+   const width=track.clientWidth;
+   if(!width)continue;
+   const ends=[];
+   for(const mark of track.querySelectorAll('.node-mark')){
+     const text=mark.querySelector('.node-event-label'),x=parseFloat(mark.style.left)*width/100;
+     const left=Math.max(0,Math.min(width-text.offsetWidth,x-text.offsetWidth/2));
+     let level=ends.findIndex(end=>end+6<=left);
+     if(level<0)level=ends.length;
+     ends[level]=left+text.offsetWidth;
+     mark.style.setProperty('--label-x',(left-x)+'px');
+     mark.style.setProperty('--label-y',(12+level*27)+'px');
+   }
+   track.style.height=(22+27*Math.max(ends.length,1))+'px';
+ }
+}
+const nodeTimelineResize=window.ResizeObserver&&new ResizeObserver(entries=>entries.forEach(entry=>layoutNodeLabels(entry.target)));
+
+function diagnosticLanes(sectionId,items){
+ const coverageId='diagnosis.coverage', roster=data[coverageId]||[];
+ const groups=new Map();
+ if(sectionId==='diagnosis'){
+   for(const item of items){
+     const key=item.r.task_label;
+     if(!groups.has(key))groups.set(key,[]);
+     groups.get(key).push(item);
+   }
+ }
+ const coverage=cfg.sections.find(section=>section.id===coverageId);
+ const tasks=sectionId===coverageId?items.map(item=>item.r):roster.filter(task=>
+   groups.has(task.task_label)||accepts(coverage,task));
+ if(cfg.meta.diagnosis_session_ns!=null)return nodeTaskTimeline(tasks,groups,Number(cfg.meta.diagnosis_session_ns));
+ const lanes=tasks.map(task=>{
+   const events=(groups.get(task.task_label)||[]).sort((a,b)=>
+     (a.r.diagnostic_time_ns??Infinity)-(b.r.diagnostic_time_ns??Infinity)||a.i-b.i);
+   const chips=[];
+   function stage(name,when,index){
+     const seconds=Number.isFinite(when)?(when/1e9).toLocaleString('zh-CN',{maximumFractionDigits:3})+' s':'时刻未记录';
+     const content='<b>'+esc(name)+'</b><small>'+esc(seconds)+'</small>';
+     chips.push('<li>'+(index==null?'<span>'+content+'</span>':'<button data-point="'+index+'">'+content+'</button>')+'</li>');
+   }
+   if(task.started_ns!=null)stage('诊断启动',0);
+   for(const {r,i} of events)stage(r.event_label,r.diagnostic_time_ns,i);
+   if(task.exit_summary&&!events.some(({r})=>r.rule==='proc.exit')){
+     stage(task.exit_summary,task.receipt_relative_ns);
+   }
+   const identity=[task.rank==null?'':'rank '+task.rank,task.pid==null?'':'PID '+task.pid].filter(Boolean).join(' · ');
+   const count=task.alert_count?task.alert_count+' 条告警':'未记录告警';
+   return '<div class="diagnostic-lane"><div><strong>'+esc(task.task_label)+'</strong><small>'+esc(identity)+'</small>'+
+     '<span class="diagnostic-count'+(task.alert_count?' has-alert':'')+'">'+esc(count)+'</span></div>'+
+     (chips.length?'<ol>'+chips.join('')+'</ol>':'<span>没有可定位时刻的记录</span>')+'</div>';
+ }).join('');
+ return lanes?'<div class="diagnostic-lanes" role="group" aria-label="各任务的事件顺序">'+lanes+'</div>':'';
+}
+
 function relationship(section,indices){
  const id=section.id,panel=$(id),plot=panel.querySelector('.plot');if(!plot)return;
  const state=states[id],items=indices.map(i=>({i,r:data[id][i]}));
@@ -253,22 +358,8 @@ function relationship(section,indices){
      x=next;
    }
    graphic=svgFrame(body,40,'路由调用分布');note=[...totals].map(([k,v])=>fmt(k)+' '+v+' 次').join(' · ');
- }else if(id==='diagnosis'){
-   const events=[];
-   for(const {r,i} of items){
-     const when=r.occurrence_task_relative_ns??r.task_relative_ns;
-     if(Number.isFinite(when))events.push({t:when,i,name:fmt(r.rule)});
-     if(Number.isFinite(r.first_detected_relative_ns))events.push({t:r.first_detected_relative_ns,i,name:'首次检出'});
-   }
-   if(events.length){
-     events.push({t:0,i:events[0].i,name:'任务启动'});events.sort((a,b)=>a.t-b.t);
-     const end=Math.max(1,events[events.length-1].t);let body=line(75,25,755,25,'#94a3b8',2);
-     events.forEach(({i,t,name},j)=>{
-       const x=75+680*t/end,y=52+22*j;
-       body+=mark(i,name+' · '+fmt(t,'duration_ns'),line(x,25,x,y-8,'#cbd5e1')+'<circle cx="'+x+'" cy="25" r="4" fill="#b83227"/>'+label(x,y,name+' '+fmt(t,'duration_ns'),'middle'));
-     });graphic=svgFrame(body,66+events.length*22,'任务内事件时间线');
-   }
-   note='按可映射的任务内时刻排列，原始事件时钟和检出记录见详情。';
+ }else if(section.chart?.type==='fault_timeline'){
+   graphic=diagnosticLanes(id,items);
  }else if(id==='generation.steps'){
    controls=picker(state,'request',[...new Set(items.map(o=>o.r.request_id))],'请求');
    const rows=items.filter(o=>o.r.request_id===state.request&&Number.isInteger(o.r.generation_step)).sort((a,b)=>a.r.generation_step-b.r.generation_step);
@@ -278,6 +369,7 @@ function relationship(section,indices){
    graphic=items.map(({r,i})=>'<button data-point="'+i+'">rank '+esc(r.rank)+' · '+esc(r.execution_summary||'查看 rank 报告')+'</button>').join(' ');
  }else{bars(panel,section,indices);return;}
  plot.innerHTML=controls+graphic+(graphic&&note?'<p class="description">'+esc(note)+'</p>':'');
+ if(plot.querySelector('.node-task-timeline')){layoutNodeLabels(plot);nodeTimelineResize?.observe(plot);}
  plot.querySelectorAll('[data-chart-choice]').forEach(select=>select.onchange=()=>{const key=select.dataset.chartChoice;state[key]=typeof state[key]==='number'?Number(select.value):select.value;relationship(section,indices);});
 }
 function rankBars({r,i}){

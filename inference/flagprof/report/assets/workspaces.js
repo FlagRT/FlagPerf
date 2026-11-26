@@ -5,6 +5,7 @@ const dimensions = {
  entity:'设备实体', group:'通信域', comparison_status:'可比性', rule:'异常类型', state:'事件状态',
  introduced:'同输入引入', equal:'条件一致', instrumentation:'采集条件', scope:'计时范围'
 };
+dimensions.task_label='所属任务';
 const workspaceTabs = new Map();
 function valuesFor(id,row,key) {
  let values;

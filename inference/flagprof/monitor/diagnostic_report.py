@@ -41,11 +41,24 @@ def coverage(run):
                 for key,health in detail['sources'].items():
                     if key in rows and health!='ready':rows[key]['source_gap']+=1
                 continue
-            if detail.get('scope')!='business_input':continue
-            source=detail['record'];data=source['detail'];identity=data['identity']
-            if not matches(identity):continue
-            row=rows.setdefault(identity['run_id'],dict(run_id=identity['run_id'],rank=identity['rank'],
+            receipt = event.get('kind') == 'process_exit' and detail.get('source') == 'subprocess.wait'
+            if receipt:
+                identity = detail.get('diagnostic_identity') or {}
+            elif detail.get('scope') == 'business_input':
+                source = detail['record']
+                data = source['detail']
+                identity = data['identity']
+            else:
+                continue
+            if not identity.get('run_id') or not matches(identity):continue
+            row=rows.setdefault(identity['run_id'],dict(run_id=identity['run_id'],rank=identity.get('rank'),
                 registered_execution=0,load_or_warmup_excluded=0,no_active_interval=0,source_gap=0,probe_gap=0))
+            row['pid'] = (identity.get('proc_key') or {}).get('pid')
+            if receipt:
+                row.update(returncode=detail['returncode'], exit_ns=event['ts'], exit_clock=event.get('clk'))
+                continue
+            if data.get('started_ns') is not None:
+                row.update(started_ns=data['started_ns'], start_clock=source.get('clk'))
             if data['action']=='gap':row['probe_gap']+=1
             if data['action']!='heartbeat':continue
             if detail.get('source_status','ready')!='ready':row['source_gap']+=1
