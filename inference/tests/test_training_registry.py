@@ -2,13 +2,14 @@
 # Licensed under the Apache License, Version 2.0.
 """Adapted-model registry: lookup, resolution precedence and CLI defaults."""
 import json
+import importlib.util
 import sys
 import tempfile
 import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from flagprof.training.registry import SCORES, load_registry, lookup, resolve
+from flagprof.training.registry import SCORES, load_registry, lookup, resolve, resolve_task
 
 
 def write_registry(root, data):
@@ -65,6 +66,25 @@ class RegistryContractTests(unittest.TestCase):
         self.assertEqual(resolve(None, '/models/unknown', kind='pooling', registry=data), (None, None))
         self.assertEqual(tuple(sorted(SCORES)), ('causal_yesno', 'sequence_logit'))
 
+    def test_task_resolution_and_causal_lm_entries(self):
+        data = load_registry()
+        self.assertEqual(resolve_task('/models/bge-m3', data), 'embedding')
+        self.assertEqual(resolve_task('hf:Qwen3-Reranker-8B', data), 'rerank')
+        self.assertIsNone(resolve_task('/models/chinese-roberta-wwm-ext', data))
+        causal = {name: entry for name, entry in data['entries'].items()
+                  if entry.get('task') == 'causal-lm'}
+        for name, entry in causal.items():
+            self.assertIn(entry['provenance'], ('trained-verified', 'official-default'), name)
+            self.assertNotIn('pooling', entry, name)
+            self.assertNotIn('rerank_score', entry, name)
+
+    def test_causal_lm_entry_resolves_task_without_extra_options(self):
+        with tempfile.TemporaryDirectory() as directory:
+            custom = dict(schema='model-registry-v1', entries={
+                'some-generative-rec': dict(task='causal-lm', provenance='official-default')})
+            data = load_registry(write_registry(directory, custom))
+            self.assertEqual(resolve_task('/models/some-generative-rec', data), 'causal-lm')
+
 
 class CliDefaultTests(unittest.TestCase):
     def test_parser_defaults_leave_options_resolvable(self):
@@ -90,6 +110,22 @@ class CliDefaultTests(unittest.TestCase):
             again = ensure_generated('corpus', str(outputs), 531)
             self.assertEqual(again, path)
             self.assertEqual(hashlib.sha256((Path(again) / 'groups.jsonl').read_bytes()).hexdigest(), digest)
+
+    def test_default_lm_rows_use_packaged_generator_outside_checkout(self):
+        import os
+        from unittest.mock import patch
+        from flagprof.training.__main__ import ensure_generated
+        cwd = Path.cwd()
+        with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ):
+            try:
+                os.chdir(directory)
+                os.environ.pop('PYTHONPATH', None)
+                corpus = Path(ensure_generated('lm-corpus', 'out', 72, vocab=4, rows=6))
+                rows = [json.loads(line) for line in (corpus/'tokens.jsonl').read_text().splitlines()]
+                self.assertEqual(len(rows), 6)
+                self.assertTrue(all(len(row['input_ids']) == 64 and max(row['input_ids']) < 4 for row in rows))
+            finally:
+                os.chdir(cwd)
 
     def test_ensure_generated_reuses_existing_package_marker(self):
         from flagprof.training.__main__ import ensure_generated
@@ -148,6 +184,22 @@ class ExecuteErrorPathTests(unittest.TestCase):
                     self.execute(['--task', 'embedding', '--model', '/models/bge-m3', '--ddp', '--outputs', out])
                 with self.assertRaisesRegex(ValueError, 'explicit --package'):
                     self.execute(['--task', 'ctr', '--ctr-arch', 'dlrm', '--ddp', '--outputs', out])
+
+    @unittest.skipUnless(importlib.util.find_spec('transformers'), 'requires local Transformers runtime')
+    def test_causal_lm_default_corpus_fills_non_power_of_two_microbatches(self):
+        from transformers import GPT2Config, GPT2LMHeadModel
+        from flagprof.training.__main__ import main
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            model = root/'OneRec-tiny'
+            GPT2LMHeadModel(GPT2Config(vocab_size=32, n_layer=1, n_head=1, n_embd=8,
+                                       n_positions=64)).save_pretrained(model)
+            output = root/'out'
+            main(['--model', str(model), '--outputs', str(output), '--steps', '1', '--batch-size', '3'])
+            result = json.loads((output/'training-result.json').read_text())
+            self.assertEqual(result['status'], 'complete')
+            self.assertTrue(result['protocol']['default_corpus_generated'])
+            self.assertEqual(result['steps'][0]['samples'], 3)
 
 
 if __name__ == '__main__':

@@ -9,6 +9,7 @@ import signal
 import subprocess
 import sys
 import time
+from flagprof._process import module_environment
 from flagprof.registry import Registry
 from flagprof.store.manifest import atomic_json, proc_key, process_alive
 from flagprof.telemetry.contract import raw_clock
@@ -192,7 +193,7 @@ def start(root, vendor, devices='all', config=None, *, module='flagprof.monitor.
             for name in ('probe.json','worker-grant.json','heartbeat'): (root/name).unlink(missing_ok=True)
             with edit(root) as state: state['status'] = 'starting'
             child = subprocess.Popen([sys.executable,'-B','-m',module,'--worker','--root',str(root)],
-                                     stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+                                     env=module_environment(), stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
             child_key = proc_key(child.pid)
             with edit(root) as state: state['worker_process']=child_key
             heartbeat = Heartbeat(root/'heartbeat',max(10,3*state['config']['interval_ms']/1000))

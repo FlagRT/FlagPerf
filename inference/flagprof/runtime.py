@@ -48,7 +48,8 @@ def configuration(preset='perf', **options):
 
 class Attachment:
     def __init__(self, run, vendor, *, preset='perf', config=None, registry=None, rank=0,
-                 node_index=None, identity=None, backend_options=None, log_reader=None,capture_mode='final', _compiler_store=None):
+                 node_index=None, identity=None, backend_options=None, log_reader=None, capture_mode='final',
+                 group_id=None, monitor_parent=None, _compiler_store=None):
         registry = registry or Registry()
         descriptor = registry.describe(vendor)
         if descriptor['kind'] != 'vendor':
@@ -80,13 +81,15 @@ class Attachment:
         self.capture = self.run/'capture-staging'/self.id
         self.monitor_enabled = probe_options.get('monitor') == 'on'
         self.monitor_reference = self.run/'monitor-ref.json'
-        self.monitor_parent = os.environ.get('FLAGPROF_MONITOR_REFERENCE')
+        self.monitor_parent = monitor_parent or os.environ.get('FLAGPROF_MONITOR_REFERENCE')
         self.state = dict(id=self.id, process=proc_key(), vendor=vendor, format_vendor=descriptor['format_vendor'],
                           preset=preset, capture_relative=str(self.capture.relative_to(self.run)),
                           capture_mode=capture_mode,status='starting',
                           capabilities=dict(enabled=['official_session', 'writer', 'explicit_context'],
                               unavailable=['module_probe', 'dispatch_probe', 'route_probe', 'compile_probe', 'eager_module_tree']),
                           import_status='pending_owner_exit')
+        if group_id is not None:
+            self.state['group_id'] = group_id
         # Writer duplicate-run guard errors remain explicit, before any SDK action.
         # Normal atexit follows concurrent.futures shutdown. No deferred
         # compression jobs may be submitted then; offline import can compress.

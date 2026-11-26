@@ -8,10 +8,32 @@ from pathlib import Path
 import random
 
 
+def local_shard(value):
+    """FSDP2 parameters/gradients arrive as DTensor; keep the local shard.
+
+    Plain tensors pass through untouched, so DDP and single-device paths
+    behave exactly as before. Shard placement is intentionally NOT collapsed:
+    saved states and fingerprints are per-rank shard states under sharding.
+    """
+    try:
+        from torch.distributed.tensor import DTensor
+    except Exception:
+        return value
+    if isinstance(value, DTensor):
+        return value.to_local()
+    return value
+
+
 def fingerprint(value):
     import torch
     h = hashlib.sha256()
     def visit(v):
+        placements = getattr(v, 'placements', None)
+        if placements is not None:
+            # Sorted for run-stable ordering; assumes the 1-D device mesh used
+            # across this codebase (a multi-D mesh would need order-aware hashing).
+            h.update(json.dumps(['DTensor', sorted(str(p) for p in placements)]).encode())
+            v = local_shard(v)
         if isinstance(v, torch.Tensor):
             t = v.detach().cpu().contiguous()
             h.update(json.dumps([str(t.dtype), list(t.shape)]).encode())
@@ -32,7 +54,7 @@ def fingerprint(value):
 
 def cpu_state(value):
     import torch
-    if isinstance(value, torch.Tensor): return value.detach().cpu().clone()
+    if isinstance(value, torch.Tensor): return local_shard(value).detach().cpu().clone()
     if isinstance(value, dict): return {k:cpu_state(v) for k,v in value.items()}
     if isinstance(value, list): return [cpu_state(v) for v in value]
     if isinstance(value, tuple): return tuple(cpu_state(v) for v in value)
@@ -44,8 +66,39 @@ def raw_model(model):
     return model.module if isinstance(model, DistributedDataParallel) else model
 
 
+def comparable_protocol(protocol):
+    """Compare the resolved training settings, including pre-sharding v1 records."""
+    settings = dict(protocol)
+    # Whether a task was selected by a flag or by the registry is provenance.
+    settings.pop('task_source', None)
+    if 'task' in settings and 'world_size' in settings:
+        # The CLI only supported single-process and replicated DDP in v1.
+        implicit = 'ddp-replica' if settings['world_size'] > 1 else 'none'
+        if settings.get('sharding') == implicit:
+            del settings['sharding']
+    if isinstance(settings.get('observation'), dict):
+        observation = settings['observation'].copy()
+        observation.pop('attachment', None)  # legacy rank-/process-local UUID
+        settings['observation'] = observation
+    return settings
+
+
+def assert_replicated(model):
+    """Checkpoint paths need identical full-state replicas.
+
+    Sharded (FSDP) parameters only exist per rank; persisting them would
+    produce a checkpoint that cannot restore across topologies. Recorded
+    limitation: fail loudly here so script-form callers cannot silently
+    write per-rank shard checkpoints.
+    """
+    from torch.distributed.tensor import DTensor
+    if any(isinstance(p, DTensor) for p in raw_model(model).parameters()):
+        raise ValueError('checkpoint/resume is not supported for sharded (FSDP) parameters; per-rank shard checkpoints are a recorded limitation')
+
+
 def save(path, model, optimizer, *, next_step, protocol, device, scaler=None):
     import torch
+    assert_replicated(model)
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     state = dict(schema='training-checkpoint/1', next_step=next_step, protocol=protocol,
@@ -54,6 +107,8 @@ def save(path, model, optimizer, *, next_step, protocol, device, scaler=None):
                  accelerator_rng=None, scaler=scaler.state_dict() if scaler else None)
     if str(device).startswith('cuda'):
         state['accelerator_rng'] = torch.cuda.get_rng_state(device)
+    elif str(device).startswith('npu'):
+        state['accelerator_rng'] = torch.npu.get_rng_state(device)
     elif not str(device).startswith('cpu'):
         raise ValueError('checkpoint RNG unsupported for device: '+str(device))
     temporary=path.with_name(path.name+'.tmp')
@@ -68,8 +123,10 @@ def save(path, model, optimizer, *, next_step, protocol, device, scaler=None):
 def restore(path, model, optimizer, *, protocol, device, scaler=None):
     """Only call on a user-selected, trusted local checkpoint (pickle)."""
     import torch
+    assert_replicated(model)
     state=torch.load(path,map_location='cpu',weights_only=False)
-    if state.get('schema')!='training-checkpoint/1' or state['protocol']!=protocol:
+    if (state.get('schema')!='training-checkpoint/1' or
+            comparable_protocol(state['protocol']) != comparable_protocol(protocol)):
         raise ValueError('checkpoint training protocol differs')
     if bool(state['scaler'] is not None)!=bool(scaler is not None):
         raise ValueError('checkpoint scaler differs')
@@ -83,6 +140,9 @@ def restore(path, model, optimizer, *, protocol, device, scaler=None):
     if str(device).startswith('cuda'):
         if state['accelerator_rng'] is None: raise ValueError('checkpoint missing accelerator RNG')
         torch.cuda.set_rng_state(state['accelerator_rng'],device)
+    elif str(device).startswith('npu'):
+        if state['accelerator_rng'] is None: raise ValueError('checkpoint missing accelerator RNG')
+        torch.npu.set_rng_state(state['accelerator_rng'],device)
     elif state['accelerator_rng'] is not None:
         raise ValueError('checkpoint accelerator differs')
     return state['next_step']

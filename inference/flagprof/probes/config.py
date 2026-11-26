@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 PRESETS = ('perf', 'modules', 'coverage', 'perf-lite', 'accuracy', 'monitor')
+DIAGNOSE_PRESETS = ('perf-lite', 'perf', 'modules')
 KEYS = {'diagnose', 'monitor', 'monitor_interval_ms', 'monitor_topology', 'monitor_root', 'target_device', 'flaggems', 'flaggems_include', 'flagtree', 'vendor_compiler', 'dispatch', 'layers', 'probes',
         'each_start', 'each_count', 'fallback_calls', 'summary_seconds',
         'tensor_blob','tensor_blob_bytes','tensor_ops_in','tensor_boundaries'}
@@ -32,8 +33,8 @@ def resolve(preset, config=None):
     if result['diagnose'] not in ('on', 'off'):
         raise ValueError('diagnose requires on/off')
     if result['diagnose'] == 'on':
-        if preset not in ('perf-lite', 'perf', 'modules'):
-            raise ValueError('diagnose supports perf-lite/perf/modules')
+        if preset not in DIAGNOSE_PRESETS:
+            raise ValueError('diagnose supports ' + '/'.join(DIAGNOSE_PRESETS))
         if options.get('monitor', 'on') != 'on' or options.get('monitor_topology', 'agent') != 'agent':
             raise ValueError('diagnose requires monitor on and agent topology')
         result.update(monitor='on', monitor_topology='agent')

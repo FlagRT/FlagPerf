@@ -10,7 +10,7 @@ import sqlite3
 import sys
 
 from .workspace import attempt
-from flagprof.progress import child_env
+from flagprof._process import module_environment
 
 _active = None
 _lease = None
@@ -40,11 +40,8 @@ def on_disk(volume, function, *args, **kwargs):
     with attempt(volume) as (directory, lease):
         request = dict(module=function.__module__, function=function.__name__, args=args, kwargs=kwargs)
         (directory / 'request.json').write_text(json.dumps(request, default=_encode))
-        env = child_env()
+        env = module_environment()
         env.update(TMPDIR=str(directory), SQLITE_TMPDIR=str(directory))
-        # Also support the source-tree entry point from an arbitrary cwd.
-        root = str(Path(__file__).resolve().parents[2])
-        env['PYTHONPATH'] = os.pathsep.join(filter(None, (root, env.get('PYTHONPATH'))))
         with subprocess.Popen([sys.executable, '-B', '-m', 'flagprof.offline.worker', str(directory), str(lease)],
                               env=env, pass_fds=(lease,)) as child:
             try:

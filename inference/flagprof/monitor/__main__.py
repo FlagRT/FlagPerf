@@ -8,7 +8,9 @@ import signal
 import subprocess
 import sys
 import time
+from flagprof._process import module_environment
 from flagprof.registry import Registry
+from flagprof.vendors import monitored_vendors, vendor_names
 from flagprof.store import Writer, WriterConfig, create_run, finalize
 from flagprof.store.manifest import atomic_json, proc_key
 from flagprof.telemetry.contract import raw_clock
@@ -33,11 +35,20 @@ def sample(args):
     heartbeat = run/'heartbeat'
     heartbeat.touch()
     try:
-        provider, identity = Registry().create('telemetry.'+args.vendor, devices=args.devices, source=args.source)
-        host = Host()
-        inventory.update(provider.inventory)
+        host_only = args.vendor not in monitored_vendors()
+        registry = Registry()
+        if host_only:
+            host, identity = registry.create('telemetry.host')
+            provider = host
+            metrics, calls = host.metrics, host.calls()
+            inventory.update(device_telemetry='unavailable', source='host-procfs')
+        else:
+            provider, identity = registry.create('telemetry.' + args.vendor, devices=args.devices, source=args.source)
+            host = Host()
+            inventory.update(provider.inventory)
+            metrics, calls = provider.metrics + host.metrics, provider.calls() + host.calls()
         inventory.update(source_identity=identity['shipped_source_closure'],
-                         descriptors=[m.snapshot() for m in provider.metrics+host.metrics])
+                         descriptors=[metric.snapshot() for metric in metrics])
         leases.acquire(device_keys(dict(boot_id=inventory['boot_id'],vendor=args.vendor),inventory))
         leases.owner(proc_key())
         from .calibration import calibrate
@@ -49,7 +60,7 @@ def sample(args):
             raise ValueError('source round time exceeds 5000 ms monitoring interval')
         inventory.update(requested_interval_ms=args.interval_ms,effective_interval_ms=effective_ms)
         atomic_json(run/'inventory.json', inventory)
-        sampler = Sampler(provider.calls()+host.calls(), effective_ms,
+        sampler = Sampler(calls, effective_ms,
                           timeout=inventory.get('call_timeout_s', 3))
         known = {}; next_scan = 0
         awaiting_pre_sample = {e['entity'] for e in inventory['entities'] if e['entity'].startswith('chip:')}
@@ -63,7 +74,8 @@ def sample(args):
                     dev=point.entity, ts=point.start_ns, dur=point.end_ns-point.start_ns,
                     values=point.values, miss=point.miss,
                     ext=dict(telemetry=dict(point.detail, source=point.source, sample_times=point.sample_times))))
-                if not first_sample and point.values.get('memory.used') is not None:
+                sample_metric = 'host.memory.available' if host_only else 'memory.used'
+                if not first_sample and point.values.get(sample_metric) is not None:
                     awaiting_pre_sample.discard(point.entity)
                     if not awaiting_pre_sample:
                         atomic_json(run/'first-sample.json', dict(ts=point.start_ns, entities=[e['entity'] for e in inventory['entities'] if e['entity'].startswith('chip:')]))
@@ -127,7 +139,7 @@ def supervise(args):
     command = [sys.executable, '-B', '-m', 'flagprof.monitor', '--sample', '--root', str(root),
                '--run', str(run), '--vendor', args.vendor, '--devices', args.devices,
                '--interval-ms', str(args.interval_ms), '--source', args.source]
-    child = subprocess.Popen(command)
+    child = subprocess.Popen(command, env=module_environment())
     stopping = False
     def terminate(*_):
         nonlocal stopping
@@ -151,10 +163,9 @@ def supervise(args):
 
 
 def main():
-    from flagprof.vendors import monitored_vendors
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--root', required=True)
-    parser.add_argument('--vendor', choices=monitored_vendors(), required=True)
+    parser.add_argument('--vendor', choices=vendor_names(), required=True)
     parser.add_argument('--devices', default='all')
     parser.add_argument('--interval-ms', type=int, default=1000)
     parser.add_argument('--source', choices=('auto','dcmi','npu-smi','nvml','nvidia-smi'), default='auto')

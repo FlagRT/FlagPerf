@@ -1,6 +1,6 @@
 # 资源监控与在线诊断
 
-资源监控把主机、设备和任务阶段放在同一条可核验的时间线上；在线诊断消费心跳、执行进度、异常和同步通信事件，输出带原始证据的 Finding。普通采集默认关闭两者。设备遥测目前支持 Ascend 和 NVIDIA，其他厂商仍使用既有采集与离线分析入口。
+资源监控把主机、设备和任务阶段放在同一条可核验的时间线上；在线诊断消费心跳、执行进度、异常和同步通信事件，输出带原始证据的 Finding。普通采集默认关闭两者。Ascend 和 NVIDIA 提供设备遥测，可通过 `flagprof watch start` 启动独立节点会话。平头哥 PPU 和昆仑芯 P800 在 `record --monitor on` 和训练观测中默认启动本地旁路进程，采集主机可用内存及目标进程 CPU/RSS。清单记录 `source=host-procfs` 和 `device_telemetry=unavailable`，这两个平台的本地拓扑不启用在线诊断。
 
 ```mermaid
 flowchart LR

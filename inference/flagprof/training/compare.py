@@ -5,6 +5,9 @@ import argparse
 import json
 import math
 from pathlib import Path
+from .state import comparable_protocol
+
+DECLARABLE = ('backend', 'world_size', 'rank', 'observation')
 
 
 def compare(left, right, *, atol=0., rtol=0., declare=()):
@@ -15,13 +18,12 @@ def compare(left, right, *, atol=0., rtol=0., declare=()):
     results = [json.loads((p/'training-result.json').read_text()) for p in roots]
     if any(r.get('status') != 'complete' for r in results):
         raise ValueError('comparison requires completed training runs')
-    a, b = [r['protocol'] for r in results]
+    a, b = [comparable_protocol(r['protocol']) for r in results]
     if results[0].get('observed_numerics') != results[1].get('observed_numerics'):
         raise ValueError('observed numerical backend settings differ')
     differences = [k for k in sorted(set(a) | set(b)) if a.get(k) != b.get(k)]
-    allowed = {'backend', 'world_size', 'rank'}
-    if set(declare) - allowed:
-        raise ValueError('only backend/world_size/rank differences may be declared')
+    if set(declare).difference(DECLARABLE):
+        raise ValueError('only ' + '/'.join(DECLARABLE) + ' differences may be declared')
     if set(differences) - set(declare):
         raise ValueError('training protocol differs: '+', '.join(differences))
     if any(r.get('snapshot_mode') != 'accuracy' for r in results):
@@ -76,6 +78,7 @@ def compare(left, right, *, atol=0., rtol=0., declare=()):
     return dict(schema='training-comparison/1', status='pass' if all(r['status']=='pass' for r in rows) else 'different',
                 atol=atol, rtol=rtol, declared_protocol_differences=differences, rows=rows,
                 environments=[dict(device=r['device'],torch_version=r['torch_version'],
+                                   observation=r['protocol'].get('observation'),
                                    observed_numerics=r.get('observed_numerics')) for r in results],
                 scope='observed loss, gradients, model buffers/parameters and optimizer state; not convergence certification')
 
@@ -84,7 +87,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('ref'); parser.add_argument('cmp'); parser.add_argument('--out', required=True)
     parser.add_argument('--atol', type=float, default=0.); parser.add_argument('--rtol', type=float, default=0.)
-    parser.add_argument('--declare', action='append', default=[], choices=('backend','world_size','rank'))
+    parser.add_argument('--declare', action='append', default=[], choices=DECLARABLE)
     args = parser.parse_args(argv)
     out = Path(args.out).resolve()
     for source in (args.ref, args.cmp):

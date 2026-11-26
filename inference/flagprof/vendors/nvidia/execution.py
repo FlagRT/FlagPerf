@@ -4,6 +4,7 @@
 
 
 TORCH_DEVICE = 'cuda'
+MODEL_MARKERS = ('NVIDIA', 'GEFORCE', 'TESLA', 'QUADRO')
 SMI = 'nvidia-smi'
 BACKENDS = ('nccl',)
 

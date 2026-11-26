@@ -6,7 +6,41 @@ Importing this module does not import torch. Observation never calls backward,
 changes model mode, or selects a numerical policy on the application's behalf.
 """
 from contextlib import contextmanager
+import os
 import sys
+import uuid
+
+
+def observation_group(rank, world):
+    """Share the launch identity before any rank constructs its probes."""
+    group_id = os.environ.get('FLAGPROF_GROUP_ID') or uuid.uuid4().hex
+    if world == 1:
+        return group_id, None
+    import torch.distributed as dist
+    control = dist.new_group(backend='gloo')
+    message = [group_id if rank == 0 else None]
+    dist.broadcast_object_list(message, src=0, group=control)
+    return message[0], control
+
+
+@contextmanager
+def coordinated_start(control, rank, world):
+    """Propagate preparation errors before any peer enters the next collective."""
+    if control is None:
+        yield
+        return
+    import torch.distributed as dist
+    error = None
+    try:
+        yield
+    except Exception as exc:
+        error = exc
+    detail = f'rank {rank}: {type(error).__name__}: {error}' if error is not None else None
+    details = [None] * world
+    dist.all_gather_object(details, detail, group=control)
+    failures = [item for item in details if item]
+    if failures:
+        raise RuntimeError('training observation startup failed: ' + '; '.join(failures)) from error
 
 
 def attachment():
@@ -18,7 +52,7 @@ def attachment():
 @contextmanager
 def phase(name, *, step, microstep=None, **attrs):
     """Optional training interval; host duration, not device completion time."""
-    if name not in ('step', 'zero_grad', 'forward', 'backward', 'optimizer'):
+    if name not in ('data', 'step', 'zero_grad', 'forward', 'backward', 'optimizer'):
         raise ValueError('unknown training phase: '+name)
     if type(step) is not int or step < 0:
         raise ValueError('step must be a nonnegative integer')
@@ -63,4 +97,7 @@ def register_model(model):
     handle = attachment()
     if handle is not None:
         handle.register_model(model)
+        pending = getattr(handle, '_oracle_pending', None)
+        if pending is not None and pending.model is None:
+            pending.register_model(model)
     return model

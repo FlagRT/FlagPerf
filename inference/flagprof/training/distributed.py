@@ -38,7 +38,7 @@ def main(argv=None):
             from flagprof.offline.capture import record_final
             code = record_final([sys.executable,'-B','-m','flagprof.training',*arguments],
                                 store=destination/'store', vendor=args.vendor, preset=args.preset,
-                                rank=rank, timeout=args.timeout, scratch=destination/'scratch')
+                                rank=rank, timeout=args.timeout)
         else:
             if args.preset != 'none':
                 from flagprof.store import create_run

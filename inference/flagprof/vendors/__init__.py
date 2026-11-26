@@ -3,6 +3,7 @@
 """Standard-library correlation and recorded trace support."""
 
 import importlib
+import os
 from functools import lru_cache
 import shutil
 
@@ -32,6 +33,28 @@ def torch_runtimes():
         execution = adapter(vendor, 'execution')
         runtimes[execution.TORCH_DEVICE] = getattr(execution, 'TORCH_EXTENSION', None)
     return runtimes
+
+
+def observation_candidate(device, *, inspect_runtime=False):
+    """Identify a registered adapter using evidence for the selected logical device."""
+    family, _, index = device.partition(':')
+    profiles = {v: adapter(v, 'execution') for v in vendor_names()}
+    compatible = {v: p for v, p in profiles.items() if p.TORCH_DEVICE == family}
+    if len(compatible) <= 1:
+        return next(iter(compatible), None)
+    if inspect_runtime:
+        import torch
+        runtime = getattr(torch, family, None)
+        if runtime and runtime.is_available():
+            model = runtime.get_device_name(int(index) if index else runtime.current_device()).upper()
+            matches = [v for v, p in compatible.items()
+                       if any(marker in model for marker in getattr(p, 'MODEL_MARKERS', ()))]
+            if matches:
+                return matches[0] if len(matches) == 1 else None
+    candidates = [v for v, p in compatible.items() if os.environ.get(getattr(p, 'VISIBLE_DEVICES_ENV', ''))]
+    if not candidates:
+        candidates = [v for v, p in compatible.items() if shutil.which(p.SMI)]
+    return candidates[0] if len(candidates) == 1 else None
 
 
 def launch_backend(vendor, backend):

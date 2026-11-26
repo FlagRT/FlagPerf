@@ -14,6 +14,7 @@ import uuid
 from .checkpoints import fileinfo, seal, validate, publish, source_budget
 from .limits import DEFAULT_RECORD_SOURCE_BYTES, read_json, walk_files
 from .bundle import finish_bundle, load_bundle
+from flagprof._process import module_environment
 from flagprof.store.manifest import atomic_json, proc_key
 from flagprof.progress import child_env, finish_display, phase
 
@@ -43,7 +44,8 @@ def capture_target(directory, vendor, preset, arguments, config=None, rank=0):
     import traceback
     if os.environ.get('FLAGPROF_LAUNCH_WORKER') == '1':
         import importlib
-        os.environ['FLAGPROF_DEVICE']=importlib.import_module('flagprof.vendors.'+vendor+'.execution').initialize(rank)
+        local_rank = int(os.environ.get('LOCAL_RANK', rank))
+        os.environ['FLAGPROF_DEVICE']=importlib.import_module('flagprof.vendors.'+vendor+'.execution').initialize(local_rank)
     directory=Path(directory)
     run=create_run(directory/'collection',identity=dict(route='final-capture',argv=list(arguments)))
     handle=attach(run,vendor,preset=preset,config=config,capture_mode='final',rank=rank, _compiler_store=directory.parent)
@@ -191,14 +193,14 @@ def record_final(command, *, store, vendor, preset='perf', config=None, timeout=
         **{k:v for k,v in probe_options.items() if k != 'include_sha256'})))
     from flagprof.monitor.lifecycle import Monitor
     monitor = Monitor(store, destination/'monitor-ref.json', vendor, probe_options, preset=preset)
-    root=str(Path(__file__).resolve().parents[2]);env=dict(os.environ)
+    env = module_environment()
     from flagprof.vendors import adapter
     prepare = getattr(adapter(vendor, 'execution'), 'prepare_capture_environment', None)
     if prepare:
-        prepare(env, rank if os.environ.get('FLAGPROF_LAUNCH_WORKER') == '1' else None)
+        local_rank = int(env.get('LOCAL_RANK', rank)) if env.get('FLAGPROF_LAUNCH_WORKER') == '1' else None
+        prepare(env, local_rank)
     monitor.environment(env)
     env.pop('FLAGPROF_RECORD_CONFIG',None)
-    env['PYTHONPATH']=os.pathsep.join([root]+([env['PYTHONPATH']] if env.get('PYTHONPATH') else []))
     started=time.perf_counter();deadline=time.monotonic()+timeout
     state=dict(schema='plan-b-record/1',status='incomplete',capture=str(destination),target_exit=None,
                importer_exit=None,import_completion='not_started',finalize='not_started',

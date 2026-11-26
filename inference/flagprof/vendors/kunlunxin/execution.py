@@ -2,6 +2,8 @@
 # Licensed under the Apache License, Version 2.0.
 """Reuse the explicitly shared Kineto execution syntax; P800 identity remains separate."""
 TORCH_DEVICE = 'cuda'
+MODEL_MARKERS = ('P800', 'KUNLUN')
+VISIBLE_DEVICES_ENV = 'XPU_VISIBLE_DEVICES'
 SMI = 'xpu-smi'
 BACKENDS = ('nccl', 'flagcx')
 

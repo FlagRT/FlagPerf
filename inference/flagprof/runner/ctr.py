@@ -644,8 +644,20 @@ class Dien(torch.nn.Module):
             packed = pack_padded_sequence(history[has_hist], seq_lens[has_hist].clamp(min=1),
                                           batch_first=True, enforce_sorted=False)
             packed_out, _ = self.interest_extractor(packed)
-            unpacked, _ = pad_packed_sequence(packed_out, batch_first=True,
-                                              total_length=history.size(1))
+            # Pad back to the full history width manually. Passing
+            # total_length=history.size(1) to pad_packed_sequence raises
+            # "shape invalid for input" when the longest valid sequence in
+            # the packed subset is shorter than the history width (a
+            # data-dependent latent bug that stayed hidden on batches that
+            # happened to contain a full-length row). Augru's mask gives
+            # padded positions exactly zero attention, so the zeros here are
+            # numerically inert. Note: on some Ascend 910C CANN stacks the
+            # fused DynamicGRUV2 operator behind this GRU is not available -
+            # a vendor operator gap, not a framework issue.
+            unpacked, _ = pad_packed_sequence(packed_out, batch_first=True)
+            if unpacked.size(1) < history.size(1):
+                unpacked = torch.nn.functional.pad(
+                    unpacked, (0, 0, 0, history.size(1) - unpacked.size(1)))
             outs[has_hist] = unpacked.to(outs.dtype)
         _, h = self.interest_evolving(outs, target, mask)
         mlp_in = torch.cat([h, target, profile], dim=1)

@@ -11,18 +11,10 @@ import time
 import uuid
 
 from flagprof.store.manifest import atomic_json
-from flagprof.progress import child_env, phase
+from flagprof._process import IMPORT_ROOT, module_environment as execution_environment
+from flagprof.progress import phase
 from .loader import snapshot
 from .planner import CONTROL, RUN
-
-IMPORT_ROOT = str(Path(__file__).resolve().parents[2])
-
-
-def execution_environment():
-    env = child_env()
-    env['PYTHONPATH'] = os.pathsep.join(filter(None, (IMPORT_ROOT, env.get('PYTHONPATH'))))
-    return env
-
 
 def error_detail(stream):
     stream.seek(0, os.SEEK_END)
@@ -382,4 +374,3 @@ class Execution:
 
 def execute(config,source,origins,job,plan,assets,*,progress=None):
     return Execution(config,source,origins,job,plan,progress).run(assets)
-
