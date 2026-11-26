@@ -46,6 +46,24 @@ class NvmlCompatTests(unittest.TestCase):
         for path in candidates:
             self.assertIn(path, message)
 
+    def test_check_command_is_success_or_diagnosable(self):
+        """`flagprof telemetry check` must either resolve the provider or
+        report every attempted path plus an actionable hint."""
+        import contextlib
+        import io
+        from flagprof.telemetry import check
+        stream = io.StringIO()
+        with contextlib.redirect_stdout(stream), contextlib.redirect_stderr(stream):
+            code = check.run('thead', 'all', True)
+        output = stream.getvalue()
+        self.assertIn(code, (0, 2), 'exit code must signal success or failure')
+        if code == 0:
+            self.assertIn('source', output)
+            self.assertIn('library', output)
+        else:
+            self.assertIn('tried', output)
+            self.assertIn('hint', output)
+
     def test_match_uuid_rejects_unknown_and_empty(self):
         candidates = ['GPU-011ef111-aaa']
         self.assertEqual(match_uuid(candidates, 'deadbeef'), (None, None))
