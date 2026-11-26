@@ -7,7 +7,7 @@ import types
 import unittest
 from unittest.mock import patch
 from flagprof.monitor.lifecycle import Monitor
-from flagprof.monitor.__main__ import supervise
+from flagprof.monitor.__main__ import device_provider, supervise
 from flagprof.monitor.reference import bind
 from flagprof.store import create_run
 
@@ -22,6 +22,19 @@ class FailureTests(unittest.TestCase):
             owner.child=child;owner.close()
             self.assertTrue(json.loads(path.read_text())['reclaim']['timed_out'])
             owner.close()  # Teardown remains idempotent.
+
+    def test_device_telemetry_failure_degrades_to_host_procfs(self):
+        class Broken:
+            def create(self, ident, **kwargs):
+                self.ident = ident
+                raise OSError('NVML-compatible library unavailable')
+        inventory = dict(errors=[])
+        provider, identity = device_provider(Broken(), 'thead', 'all', 'auto', inventory)
+        self.assertIsNone(provider)
+        self.assertIsNone(identity)
+        self.assertEqual(len(inventory['errors']), 1)
+        self.assertIn('device telemetry unavailable', inventory['errors'][0])
+        self.assertIn('NVML-compatible library unavailable', inventory['errors'][0])
 
     def test_watchdog_terminates_then_kills_stuck_sampler(self):
         with tempfile.TemporaryDirectory() as folder:

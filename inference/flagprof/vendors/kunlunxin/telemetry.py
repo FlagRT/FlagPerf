@@ -19,6 +19,17 @@ unreachable library with ``flagprof telemetry check --vendor kunlunxin``.
 XPU_LIBRARY_PATHS = ('/usr/local/xpu/lib/libxpunvidia-ml.so', 'libxpunvidia-ml.so')
 
 
+def default_topology():
+    """The monitor sidecar always runs on the training node.
+
+    With the NVML-compatible library reachable it samples chip telemetry;
+    without it the sidecar still samples host/procfs and records
+    device_telemetry=unavailable plus the provider error, so a node without
+    the library keeps host-level monitoring instead of none.
+    """
+    return 'local'
+
+
 def Provider(devices='all', source='auto', **kwargs):
     from ..nvidia.telemetry import NVML
     from flagprof.telemetry.contract import ReadError
