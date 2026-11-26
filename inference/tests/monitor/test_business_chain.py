@@ -11,6 +11,7 @@ from flagprof.monitor.commands import publish
 from flagprof.delivery import restore
 from flagprof.monitor.report import generate
 from tests.monitor import test_agent
+from tests.store.html_cells import Cells
 
 
 class ChainTests(unittest.TestCase):
@@ -155,6 +156,8 @@ for i in range(1600):
             self.assertEqual(sum(e['detail']['record']['detail']['action']=='leave' for e in inputs),1600)
 
     def test_real_target_scope_to_restored_replay(self):
+        from flagprof.monitor.session import load
+        from flagprof.store import StoreView
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory)
             agent=self.start_agent(root/'node',diagnosis={'progress_timeout_s':.1})
@@ -174,15 +177,43 @@ time.sleep(1.2)
 """
             code=record([sys.executable,'-c',body],store=root/'targets',vendor='nvidia',preset='perf-lite',
                 config=dict(diagnose='on',monitor_root=str(root/'node')))
-            self.assertEqual(code,0)
-            time.sleep(.5);self.stop(agent)
+            try:
+                self.assertEqual(code,0)
+                reference,=(root/'targets').glob('*/monitor-ref.json')
+                target=reference.parent
+                ref=json.loads(reference.read_text())
+                identity=ref['diagnostic_identity']
+                self.assertEqual(identity['run_id'],target.name)
+                self.assertTrue(identity.get('proc_key'))
+                self.assertEqual(identity['proc_key'],ref['worker_proc_key'])
+                deadline=time.monotonic()+15
+                with StoreView(target) as view:
+                    while True:
+                        states={r['state'] for r in view.iter_diagnostic_findings()
+                                if r['rule']=='hang.no_progress' and r['run_id']==target.name
+                                and r['proc_key']==identity['proc_key']}
+                        coverage=list(view.iter_diagnostic_coverage())
+                        if 'resolved' in states and any(row['run_id']==target.name and row.get('returncode')==code
+                                                        for row in coverage):
+                            break
+                        if agent.poll() is not None or time.monotonic()>=deadline:
+                            self.fail(f"run={target.name} proc={identity['proc_key']} stall_states={states} "
+                                      f"coverage={coverage} agent_exit={agent.poll()} "
+                                      f"subscription_errors={ref.get('errors')}")
+                        time.sleep(.1)
+            finally:
+                self.stop(agent)
+            session=load(root/'node')
+            self.assertEqual((agent.returncode,session['status']),(0,'stopped'),
+                             (session.get('supervisor_error'),session.get('worker_error'),session['segments']))
+            self.assertTrue(session['segments'] and all(s['status']=='closed' for s in session['segments']),
+                            session['segments'])
             online=[json.loads(p.read_text()) for p in (root/'node/findings').glob('*/*.json')]
             self.assertTrue(any(x['rule']=='hang.no_progress' for x in online),online)
             replay(root/'node',root/'replay')
             actual=[json.loads(s) for s in (root/'replay/findings.jsonl').read_text().splitlines()]
             order=lambda x:(x['id'],x['revision'])
             self.assertEqual(sorted(online,key=order),sorted(actual,key=order))
-            target=next((root/'targets').glob('*/monitor-ref.json')).parent
             publish(target,root/'archive')
             result=restore(root/'archive',root/'restore')
             from flagprof.monitor.reference import resolve_reference
@@ -191,7 +222,21 @@ time.sleep(1.2)
             actual=[json.loads(s) for s in (root/'restored-replay/findings.jsonl').read_text().splitlines()]
             self.assertEqual(sorted(online,key=order),sorted(actual,key=order))
             generate(restored,root/'report')
-            self.assertIn('业务故障诊断',(root/'report/index.html').read_text())
+            diagnosis=json.loads((root/'report/result.json').read_text())['diagnosis']
+            online_stalls=[row for row in online if row['rule']=='hang.no_progress']
+            reported_stalls=[row for row in diagnosis['findings'] if row['rule']=='hang.no_progress']
+            self.assertEqual(sorted(reported_stalls,key=order),sorted(online_stalls,key=order))
+            references={tuple(ref) for row in reported_stalls for ref in row['evidence']}
+            self.assertTrue(references)
+            self.assertLessEqual(references,{tuple(row['identity']) for row in diagnosis['evidence']})
+
+            page=Cells()
+            page.feed((root/'report/index.html').read_text())
+            labels=[''.join(text) for (panel,_,field),(_,text) in page.values.items()
+                    if panel=='diagnosis' and field=='event_label']
+            self.assertIn('执行进度停滞',labels)
+            self.assertIn('执行进度停滞 · 已解除',labels)
+            self.assertGreater(page.rows.get('diagnosis.evidence',0),0)
 
 
 if __name__=='__main__':unittest.main()

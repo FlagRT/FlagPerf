@@ -65,6 +65,7 @@ def publish(reference, destination, *, max_bytes=30 << 30):
     segments,diagnostic_sources=checkpoint_closure(root,state,segments)
     if any(s['status']!='closed' for s in segments):raise ValueError('incident post window still open')
     state=dict(state,segments=segments,pins=pins,status='archived',ended_raw_ns=max(s['window'][1] for s in segments),reserved_bytes=0)
+    state.pop('retiring_segments', None)  # Local directory ownership belongs to the live collector.
     consumer=read(root/'consumer.json') if (root/'consumer.json').exists() else None
     amount=2*(len(json.dumps(state).encode())+len(json.dumps(consumer).encode())+reference.stat().st_size)+65536
     with edit(root) as live:reserve(root,live,amount)
