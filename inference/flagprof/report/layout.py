@@ -47,7 +47,7 @@ EXCERPTS = {
     'compare': ('comparison.metrics','window.comparisons'),
     'oracle': ('oracle.layer','oracle.first_divergence','oracle.propagation','oracle.op_sensitivity.introduced','oracle.replay'),
     'oracle-three-way': ('oracle.three_way',), 'diagnosis': ('diagnosis','diagnosis.coverage'),
-    'monitor': ('monitor.series','monitor.findings'), 'group': ('group.ranks','group.counts','communication.aligned')}
+    'monitor': ('monitor.series','monitor.findings'), 'group': ('group.ranks','group.counts','communication.aligned','group.control_calls')}
 SUMMARY_COLUMNS = {
     'performance.baseline':'shape phase observations median_ns p95_ns samples_per_second repeat_cv',
     'comparison.metrics':'rank phase metric baseline candidate delta relative_change',

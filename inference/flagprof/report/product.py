@@ -549,11 +549,18 @@ def _group(model, doc, source):
               kind='communication')
     add_table(model,'group.counts','模型通信计数与阶段',doc.get('rank_counts'),
               ('rank','forwards','steps','forward_phases','allreduce','allgather','model_count_matches'))
+    if doc.get('control_calls'):
+        add_table(model,'group.control_calls','控制组通信',doc['control_calls'],
+                  ('backend','op','rank','group_seq','host_duration_ns','device_union_ns'),
+                  '每行记录一个 rank 的控制调用。主机耗时从进入通信 API 到返回。设备时长留空表示没有对应设备区间。')
     add_table(model,'group.execution','各 rank 执行结果',doc.get('rank_execution'),('rank','status','exit_code','signal'))
     add_table(model,'group.request_windows','各 rank 请求窗口',doc.get('request_windows'),
               ('rank','request_id','coverage_status','window_ns','all_activity_union_ns','blank_ns'))
     aligned=list(rows(doc.get('device_calls')))
     usable=[(i,r) for i,r in enumerate(aligned) if r.get('cross_rank_difference_ns') is not None]
+    if doc.get('model_call_count'):
+        model.finding(f"模型通信已配对 {doc['paired_model_calls']} / {doc['model_call_count']} 次",
+                      '每次按通信组和调用序号核对两个 rank 的设备区间。','communication.aligned')
     if usable:
         index,worst=max(usable,key=lambda pair:pair[1]['cross_rank_difference_ns'])
         model.finding('跨 rank 通信占用差最大的已配对调用',

@@ -162,7 +162,22 @@ def _generate_group(manifest, out=None, *,  runner_results=None, limits=None):
         rows=out/('rank-'+str(report['rank']))/'exports/communication-device-calls.jsonl'
         device_calls[report['rank']]={(r['group'],r['group_seq']):r for r in map(json.loads,rows.read_text().splitlines())}
     comparison=comparable(contexts.get(0,{}),contexts.get(1,{}));aligned=[]
-    keys=set(device_calls.get(0,{})) | set(device_calls.get(1,{}))
+    control_calls = []
+    control_keys = set()
+    model_keys = set()
+    for state in states:
+        rank = state['rank']
+        for key, event in state['calls'].items():
+            role = event.get('ext', {}).get('communication', {}).get('role')
+            if role == 'model':
+                model_keys.add(key)
+            elif role == 'control':
+                control_keys.add(key)
+                device = device_calls.get(rank, {}).get(key, {})
+                control_calls.append(dict(rank=rank, group=key[0], group_seq=key[1],
+                    backend=event['lib'], op=event['op'], host_duration_ns=event['dur'],
+                    device_union_ns=device.get('device_union_ns')))
+    keys=(set(device_calls.get(0,{})) | set(device_calls.get(1,{}))) - control_keys
     for key in sorted(keys):
         a=device_calls.get(0,{}).get(key);b=device_calls.get(1,{}).get(key)
         values=[r['device_union_ns'] if r else None for r in (a,b)]
@@ -196,11 +211,13 @@ def _generate_group(manifest, out=None, *,  runner_results=None, limits=None):
             issues.append('rank '+str(state['rank'])+' model forward evidence missing')
         elif not matches:
             issues.append('rank '+str(state['rank'])+' model collective count mismatch')
+    paired_keys = {(r['group'], r['group_seq']) for r in aligned if 'cross_rank_min_observed_ns' in r}
     result = dict(schema='flagprof-group-report/1', group_id=group['group_id'], backend=group['backend'],
                   execution_status=group['status'], status='partial' if issues else 'complete', issues=issues,
                   rank_counts=counts, ranks=reports, rank_execution=group['ranks'],
-                  device_link_status='linked' if aligned and all('cross_rank_min_observed_ns' in r for r in aligned) else 'partial' if aligned else 'explicit_link_unavailable', device_duration_ns=None,
-                  device_link_scope='explicitly_linked_collectives; control calls retain unavailable state in rank reports',
+                  device_link_status='linked' if aligned and paired_keys == keys and model_keys <= paired_keys else 'partial' if aligned else 'explicit_link_unavailable', device_duration_ns=None,
+                  device_link_scope='explicitly_linked_collectives; control calls are listed separately',
+                  model_call_count=len(model_keys), paired_model_calls=len(model_keys & paired_keys), control_calls=control_calls,
                   unlinked_logical_calls={s['rank']:len(s['calls'])-len(device_calls.get(s['rank'],{})) for s in states},
                   device_calls=aligned,comparison=comparison,clocks={rank:value.get('clock') for rank,value in contexts.items()},
                   request_windows=request_rows,
@@ -209,6 +226,8 @@ def _generate_group(manifest, out=None, *,  runner_results=None, limits=None):
     (out/'exports').mkdir(exist_ok=True)
     with (out/'exports/communication-aligned.jsonl').open('w') as stream:
         for row in aligned:stream.write(json.dumps(row,ensure_ascii=False)+'\n')
+    with (out/'exports/communication-control-calls.jsonl').open('w') as stream:
+        for row in control_calls:stream.write(json.dumps(row,ensure_ascii=False)+'\n')
     if runner_results:
         from .performance import summarize
         result['runner_summary']=summarize(runner_results,states[0]['identity'] if states else None,limits=limits)

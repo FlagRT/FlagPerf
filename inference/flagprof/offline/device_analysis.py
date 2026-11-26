@@ -6,7 +6,10 @@ import json
 from collections import Counter, defaultdict
 from pathlib import Path
 
+from flagprof.correlate.linker import ref
+from flagprof.vendors.native_common import launch_interval
 from .disk import Sink, key, pack, unpack
+from .relations import queue_pairs
 from flagprof.vendors.chrome import nanoseconds
 from .clock_bridge import collect, request_windows
 
@@ -83,21 +86,45 @@ class Builder:
             self.markers.append(dict(end_ns=record['ts']+record['dur'],dev=facts['dev'],source=row['source']))
         self.db.enqueue('insert into device_analysis values(?,?)',(i,pack(row)))
 
-    def communication(self,record):
-        """Flow ID joins first, then the launch's same-thread lexical scope."""
-        from flagprof.vendors.native_common import launch_interval
-        candidates={};proof=[];launch_count=0;unresolved=False
-        for rule,launch,edges in self.db.edge_hits(record,self.vendor):
-            launch_count+=1;found=False
-            for owner in self.db.contains(launch_interval(launch),'scope'):
-                for call in self.calls.get(owner['name'],[]):
-                    found=True;k=(call['group'],call['group_seq'],call.get('rank'))
-                    candidates[k]=call
-                    if len(proof)<8:proof.append(dict(rule=rule,launch={'trace_uid':self.uid,'loc':launch['loc']},
-                        marker={'trace_uid':self.uid,'loc':owner['loc']},flow=[{'trace_uid':self.uid,'loc':e['loc']} for e in edges]))
+    def communication_sites(self, launch):
+        yield launch_interval(launch), None
+        if self.vendor == 'ascend':
+            for dequeue, enqueue in queue_pairs(self.db, launch):
+                yield enqueue, dequeue
+
+    def communication(self, record, collective):
+        """Resolve device launches to registered calls on the launch or submitting thread."""
+        candidates = {}
+        proof = []
+        launch_count = 0
+        unresolved = mismatch = False
+        for rule, launch, edges in self.db.edge_hits(record, self.vendor):
+            launch_count += 1
+            found = False
+            for site, dequeue in self.communication_sites(launch):
+                site_matched = False
+                for owner in self.db.contains(site, 'scope'):
+                    for call in self.calls.get(owner['name'], ()):
+                        if self.vendor == 'ascend' and collective and call['op'] != collective:
+                            mismatch = True
+                            continue
+                        candidates[call['group'], call['group_seq'], call['rank']] = call
+                        site_matched = found = True
+                        if len(proof) < 8:
+                            path = dict(rule=rule, launch=ref(launch), marker=ref(owner),
+                                        flow=[ref(edge) for edge in edges])
+                            if dequeue is not None:
+                                path.update(enqueue=ref(site), dequeue=ref(dequeue),
+                                            correlation_id=dequeue['ext']['chrome.args']['correlation_id'])
+                            proof.append(path)
+                # A second queue candidate without a marker leaves ownership uncertain.
+                if dequeue is not None and not site_matched:
+                    unresolved = True
             unresolved |= not found
+        unresolved |= mismatch
         status='linked' if len(candidates)==1 and not unresolved else 'ambiguous' if candidates else 'explicit_link_unavailable'
         return dict(status=status,reason=None if status=='linked' else 'conflicting_or_missing_marker' if candidates else
+                    'collective_op_mismatch' if mismatch else
                     'flow_has_no_registered_marker' if launch_count else 'explicit_device_key_missing',
                     call=next(iter(candidates.values())) if status=='linked' else None,evidence=proof)
 
@@ -108,7 +135,7 @@ class Builder:
             row=unpack(payload);row['canonical']=not(row['representation']=='auxiliary_kernel' and row['collective'] in self.primary)
             if row['category']=='comm' and row['canonical']:
                 record=unpack(self.db.c.execute('select payload from norm where id=?',(i,)).fetchone()[0])
-                row['communication']=self.communication(record)
+                row['communication']=self.communication(record, row['collective'])
             counts['raw_records']+=1;counts['canonical_records']+=row['canonical']
             if row['category']=='unknown':unknown[str(row['task_type'])]+=1
             sink.row(row)

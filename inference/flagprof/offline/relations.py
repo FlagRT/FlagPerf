@@ -15,6 +15,15 @@ def device_hits(db,event,vendor):
     yield from db.edge_hits(event,vendor)
 
 
+def queue_pairs(db, launch, mode='dequeue'):
+    """Look up CANN enqueue sites for this launch within the capture and host process."""
+    for dequeue in db.contains(launch, mode):
+        corr = dequeue['ext']['chrome.args'].get('correlation_id')
+        if queue_key_valid(corr):
+            for enqueue in records(db, 'enqueue', (dequeue['host_pid'], corr)):
+                yield dequeue, enqueue
+
+
 def host_hits(db,launch,vendor,native=False):
     prefix='cuda' if is_kineto(vendor) else 'cann'
     for n in db.contains(launch,'call' if native else 'project'):
@@ -32,12 +41,9 @@ def host_hits(db,launch,vendor,native=False):
         mode='dequeue' if native else 'project_dequeue'
         if not native:
             launch=dict(launch)  # no point-duration substitution for project
-        for dequeue in db.contains(launch,mode):
-            corr=dequeue['ext']['chrome.args'].get('correlation_id')
-            if queue_key_valid(corr):
-                for enqueue in records(db,'enqueue',(dequeue['host_pid'],corr)):
-                    for owner in db.contains(enqueue,'call' if native else 'project'):
-                        yield prefix+('.native_enqueue' if native else '.enqueue_corr'),owner,(dequeue,enqueue)
+        for dequeue,enqueue in queue_pairs(db,launch,mode):
+            for owner in db.contains(enqueue,'call' if native else 'project'):
+                yield prefix+('.native_enqueue' if native else '.enqueue_corr'),owner,(dequeue,enqueue)
 
 
 def copyset(db,source,target):
