@@ -244,7 +244,7 @@ def monitor_start(root,vendor,world,rank, *, control=None, reference=None):
     decision = None
     if rank == 0:
         errors = []
-        if vendor in ('ascend', 'nvidia'):
+        if vendor in ('ascend', 'nvidia', 'thead', 'kunlunxin'):
             try:
                 decision = start_agent()
             except (OSError, ValueError, RuntimeError) as error:
