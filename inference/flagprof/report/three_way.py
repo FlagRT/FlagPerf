@@ -27,7 +27,9 @@ def generate(ref,baseline,cmp,out=None,*,declare=None,limits=None,**options):
                 rank=int(root.name.split('-')[1]) if root.name.startswith('rank-') else -1
                 document=read_document(root/'result.json',model)
                 identity=document.get('results',{}).get('oracle.identity_diff',{})
-                statuses.append(dict(pair=label,rank=rank,status=identity.get('status')))
+                statuses.append(dict(pair=label,rank=rank,status=identity.get('status'),
+                                     comparison_status=document['comparison_status'],blocking_fields=document['blocking_fields'],
+                                     paired_tensors=document['paired_tensors'],paired_boundaries=document['paired_boundaries']))
                 path=root/'exports/oracle.samples.jsonl'
                 if path.is_file():
                     with path.open() as stream:

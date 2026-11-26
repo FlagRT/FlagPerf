@@ -168,8 +168,10 @@ def _generate(run, out, *, limits=None, op_kinds=None, runner_results=None):
             quality.update(forward_quality)
             data = dict(schema='p1-result/1', limits=asdict(limits),quality=quality,
                         results={r.id: dict(status=r.status, data=r.data, coverage=r.coverage, notes=r.notes) for r in results})
-            data['report_context']=dict(run=dict(run_id=run.name),
-                identity=next((s['oracle_identity'] for s in workspace.statuses if s.get('oracle_identity')),{}))
+            attachment = next((s for s in workspace.statuses if s.get('oracle_identity')), {})
+            data['report_context']=dict(run=dict(run_id=run.name),identity=attachment.get('oracle_identity',{}))
+            if attachment.get('model_name'):
+                data['report_context']['model_name'] = attachment['model_name']
             if runner_results:
                 from .performance import summarize
                 data['runner_summary']=summarize(runner_results,data['report_context']['identity'],limits=limits)
@@ -241,6 +243,20 @@ def _generate_oracle(ref, cmp, out, *, declare, limits, perf_ref_run, perf_cmp_r
         a=Workspace(av,Path(directory)/'ref',limits);b=Workspace(bv,Path(directory)/'cmp',limits)
         try:
             a.ingest();b.ingest();results=analyze(a,b,declare)
+            identity_panel = next(r for r in results if r.id == 'oracle.identity_diff')
+            blocking_fields = [row['field'] for row in identity_panel.data if row['equal'] is False
+                               and (row['requirement'] == 'must_equal' or not row['declared'])]
+            paired_tensors = len(a.table('oracle.samples'))
+            if identity_panel.status != 'ok':
+                comparison_status = 'not_comparable'
+            elif not paired_tensors:
+                comparison_status = 'no_pairs'
+            elif any(r.status == 'partial' for r in results):
+                comparison_status = 'partial'
+            else:
+                comparison_status = 'comparable'
+            comparison = dict(comparison_status=comparison_status, blocking_fields=blocking_fields,
+                              paired_tensors=paired_tensors, paired_boundaries=len(a.table('oracle.layer')))
             from flagprof.analyzers.perf_links import link
             links=link(a,b,dict(ref=perf_ref_run,cmp=perf_cmp_run),directory,limits)
             if links['requested']:
@@ -251,7 +267,15 @@ def _generate_oracle(ref, cmp, out, *, declare, limits, perf_ref_run, perf_cmp_r
                 from flagprof.replay import panel
                 results.append(panel(a,ref,cmp,replay_ref_run,replay_cmp_run))
             quality=dict(ref=a.coverage(),cmp=b.coverage(),perf_links=links)
-            data=dict(schema='oracle-result/1',declaration=declare or {},quality=quality,results={r.id:dict(status=r.status,data=r.data,coverage=r.coverage,notes=r.notes) for r in results})
+            data=dict(schema='oracle-result/1',declaration=declare or {},quality=quality,**comparison,
+                      results={r.id:dict(status=r.status,data=r.data,coverage=r.coverage,notes=r.notes) for r in results})
+            model_names = {}
+            for side,workspace in (('ref',a),('cmp',b)):
+                sources = [s for s in workspace.statuses if s.get('oracle_identity')]
+                if len(sources) == 1 and sources[0].get('model_name'):
+                    model_names[side] = sources[0]['model_name']
+            if model_names:
+                data['report_context'] = dict(model_names=model_names)
             with (out/'result.json').open('w') as stream:write_json(stream,data);stream.write('\n')
             for panel in ('oracle.identity_diff','oracle.layer','oracle.first_divergence','oracle.op_sensitivity','oracle.samples','oracle.alignment','oracle.introduced','oracle.amplification','oracle.perf_links','oracle.introduced_routes','oracle.replay','oracle.generation'):
                 with (out/'exports'/(panel+'.jsonl')).open('w') as stream:
@@ -262,7 +286,7 @@ def _generate_oracle(ref, cmp, out, *, declare, limits, perf_ref_run, perf_cmp_r
             resources=dict(elapsed_s=time.perf_counter()-started,peak_rss_kib=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
                 scratch_bytes=sum(p.stat().st_size for p in Path(directory).rglob('*') if p.is_file()))
             (out/'resources.json').write_text(json.dumps(resources,indent=2)+'\n')
-            return dict(output=str(out),panels={r.id:r.status for r in results})
+            return dict(output=str(out),panels={r.id:r.status for r in results},**comparison)
         finally:a.close();b.close()
 
 

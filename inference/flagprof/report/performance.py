@@ -13,6 +13,7 @@ from flagprof.components.flaggems import gems_identity
 FORWARD_TIMING_NOTE = '各 rank 分别统计同步前向时延。插桩扰动需要有共同配对标识和测量协议的回执。'
 GROUP_TIMING_NOTE = 'rank 分别计时；组时延仅使用同主机时钟和组执行回执，取最早开始至最晚结束，逻辑 token 只计一次。插桩扰动仅使用有 pair_id 与 measurement_protocol 的配对回执。'
 
+
 def runner_rank(value, recorded, *, required=False):
     ranks = [v['rank'] for v in (value, recorded) if v.get('rank') is not None]
     if any(type(r) is not int or r < 0 for r in ranks) or len(set(ranks)) > 1:
@@ -25,7 +26,7 @@ def runner_rank(value, recorded, *, required=False):
 def match_runner(recorded, expected, component, rank):
     for key in ('model_files','inputs_sha256','samples','batches','dtype','attention','pooling','generation',
                 'device','software','numerics','compiler','communication','comm_backend','parallelism',
-                'task','oracle_id','padding_side','score_semantics','arch','seed'):
+                'task','oracle_id','padding_side','score_semantics','arch','seed','kind','init','config_sha256','weight_sha256'):
         if key in expected and recorded.get(key) != expected[key]:
             raise ValueError(f'rank {rank} runner/report identity mismatch: {key}')
     if 'include' in expected and (recorded.get('include') or []) != (expected['include'] or []):
@@ -91,6 +92,8 @@ def summarize(paths, identity=None, limits=None, *, rank_identities=None):
                     execution=receipt,identity=recorded,load_s=value.get('load_s'),
                     semantics=value.get('semantics'),status=value.get('status','not_recorded'))
         sources.append(source)
+        if value.get('model'):
+            source['model'] = value['model']
         source['flaggems_source_sha256'] = source_hash
         if rank_identities is not None:
             source['store_identity'] = expected

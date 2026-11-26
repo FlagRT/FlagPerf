@@ -211,7 +211,7 @@ def _main():
                 if parallel:parallel.barrier()
                 inputs.update(return_dict=True)
                 if 'use_cache' in inspect.signature(model.forward).parameters:inputs['use_cache']=False
-                if handle:handle.bind_tensor_inputs(sample_ids,inputs,identity=input_identity)
+                if handle:handle.bind_tensor_inputs(sample_ids,inputs,identity=input_identity,model_name=model_path)
                 def transform(output):
                     pooled,result=embedding_outputs(output.last_hidden_state,inputs['attention_mask'],mean=args.pooling=='mean',cls=args.pooling=='cls')
                     if handle:

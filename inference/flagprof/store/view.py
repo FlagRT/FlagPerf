@@ -118,7 +118,7 @@ class StoreView:
                 route_table=state.get('route_table'), flaggems_identity=state.get('flaggems_identity'),
                 compiler_identity=state.get('compiler_identity'), compiler_execution=state.get('compiler_execution'),
                 op_kinds=state.get('op_kinds'), torch_version=state.get('torch_version'),
-                oracle_identity=state.get('oracle_identity'), tensor=state.get('tensor'),
+                oracle_identity=state.get('oracle_identity'), model_name=state.get('model_name'), tensor=state.get('tensor'),
                 tensor_boundaries=state.get('tensor_boundaries'), module_selection=state.get('module_selection'), route_unobserved=state.get('route_unobserved', 0),
                 errors=state.get('errors', [])))
         return dict(status='available' if rows else 'unavailable', attachments=rows,

@@ -5,6 +5,7 @@ from pathlib import Path
 import json
 import os
 import runpy
+import shlex
 import shutil
 import subprocess
 import sys
@@ -35,7 +36,7 @@ def execute_target(arguments):
 def capture_target(directory, vendor, preset, arguments, config=None, rank=0):
     from flagprof.components.compiler import select
     select(config or {},cache_root=Path(directory).parent, target=vendor)
-    from flagprof.runtime import attach
+    from flagprof.runtime import attach, startup_error
     from flagprof.store.manifest import create_run
     import signal
     import traceback
@@ -54,7 +55,7 @@ def capture_target(directory, vendor, preset, arguments, config=None, rank=0):
     def stop_signal(signum,frame):raise SystemExit(128+signum)
     try:
         for sig in (signal.SIGINT,signal.SIGTERM):previous[sig]=signal.signal(sig,stop_signal)
-        if handle.state['status']!='running':raise RuntimeError('official profiler failed to start: '+repr(handle.state))
+        if handle.state['status']!='running':raise RuntimeError('official profiler failed to start: '+startup_error(handle.state))
         try:execute_target(arguments)
         except SystemExit as exc:code=exc.code if isinstance(exc.code,int) else 0 if exc.code is None else 1
         if target_file and fileinfo(target_file)!=target_before:raise ValueError('target source changed')
@@ -172,10 +173,12 @@ def record_final(command, *, store, vendor, preset='perf', config=None, timeout=
     from flagprof.vendors import vendor_names
     if vendor not in vendor_names():
         raise ValueError('unsupported capture vendor: ' + str(vendor))
-    store.mkdir(parents=True,exist_ok=True)
-    destination=store/capture_id;destination.mkdir()
     from flagprof.probes.config import resolve
     session_options, probe_options = resolve(preset, config)
+    from flagprof.devices import validate_target_device
+    validate_target_device(probe_options.get('target_device'), vendor)
+    store.mkdir(parents=True,exist_ok=True)
+    destination=store/capture_id;destination.mkdir()
     atomic_json(destination/'record-config.json', dict(preset=preset,rank=rank, config=dict(session_options,
         **{k:v for k,v in probe_options.items() if k != 'include_sha256'})))
     from flagprof.monitor.lifecycle import Monitor
@@ -214,7 +217,15 @@ def record_final(command, *, store, vendor, preset='perf', config=None, timeout=
             if proxy_timeout:
                 state['writer_failure']='proxy_wait_timeout'
                 code=code or 2
-        if code:return code
+        if code:
+            state.update(failed_stage='target', error=f'target exited {code}; see {destination / "target.log"}')
+            try:
+                producer = read_json(destination/'producer.json')
+            except (OSError, ValueError):
+                producer = {}
+            if isinstance(producer, dict) and producer.get('target_error'):
+                state['error'] = f"{producer['target_error']} (log: {destination / 'target.log'})"
+            return code
         code=2
         metadata=read_json(destination/'producer.json');metadata['producer_exited_before_analysis']=True
         metadata['source_max_bytes']=source_max_bytes
@@ -225,7 +236,13 @@ def record_final(command, *, store, vendor, preset='perf', config=None, timeout=
             state.update(status='sealed',import_completion='deferred')
             code=0
             return code
-        finish_capture(destination,timeout=max(.01,deadline-time.monotonic()))
+        import_command = ['flagprof', 'import', str(destination), '--store', str(store/'runs')]
+        try:
+            finish_capture(destination,timeout=max(.01,deadline-time.monotonic()))
+        except (ValueError, OSError, RuntimeError):
+            state.update(failed_stage='analyse', recovery_commands=[
+                shlex.join(['flagprof', 'analyse', str(destination)]), shlex.join(import_command)])
+            raise
         result=destination/'import-result.json'
         cmd=[sys.executable,'-B','-m','flagprof','import',str(destination),'--store',str(store/'runs')]
         with result.open('xb') as output,(destination/'importer.log').open('xb') as errors:
@@ -233,6 +250,8 @@ def record_final(command, *, store, vendor, preset='perf', config=None, timeout=
         state['importer_exit']=child.returncode
         if child.returncode:
             code=128-child.returncode if child.returncode<0 else child.returncode
+            state.update(failed_stage='import', recovery_commands=[shlex.join(import_command)],
+                         error=f"import exited {code}; see {destination / 'importer.log'}")
             return code
         summary=read_json(result);state.update(summary)
         atomic_json(result, dict(summary, capture='.', run=os.path.relpath(summary['run'], destination)))

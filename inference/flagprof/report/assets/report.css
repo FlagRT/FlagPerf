@@ -130,6 +130,12 @@ th{position:sticky;top:0;font-size:12px}.table-scroll{max-height:65vh}.numeric,.
 th[aria-sort=ascending] button:after{content:' ↑'}th[aria-sort=descending] button:after{content:' ↓'}
 .rank-cards{display:flex;flex-wrap:wrap;gap:8px}.rank-cards a{padding:8px 12px;background:white;border:1px solid var(--border-default)}
 @media(min-width:901px) and (max-width:960px){.sidebar{position:static;width:100%;padding:12px}.sidebar nav{display:flex;overflow:auto}.sidebar a{white-space:nowrap}main{margin:0;padding:16px}}
+.oracle-verdict{margin:1rem 0;padding:1rem 1.25rem;border-left:4px solid #197297;background:#edf5fa;color:#163349}
+.oracle-verdict h2{margin:0}.oracle-verdict p{max-width:78ch;line-height:1.7;margin:.4rem 0}
+.oracle-message{font-weight:650}.panel>.panel{margin:1rem 0 0}
+table[data-panel="oracle.identity_diff"] :is(th,td):is([data-field="equal"],[data-field="requirement"]){background:#eaf2f8;color:#183c56;font-weight:650}
+table[data-panel="oracle.identity_diff"] .condition-blocked td:is([data-field="equal"],[data-field="requirement"]){background:#fff0da;color:#793e05}
+td[data-field="first_observed"]:not(:empty){font-weight:650;color:#793e05}
 
 .diagnostic-lane {padding:.85rem 0;border-bottom:1px solid #dbe2e8}
 .diagnostic-lane small {display:block;color:#526477}

@@ -17,6 +17,21 @@ from .planner import CONTROL, RUN
 IMPORT_ROOT = str(Path(__file__).resolve().parents[2])
 
 
+def execution_environment():
+    env = dict(os.environ)
+    env['PYTHONPATH'] = os.pathsep.join(filter(None, (IMPORT_ROOT, env.get('PYTHONPATH'))))
+    return env
+
+
+def error_detail(stream):
+    stream.seek(0, os.SEEK_END)
+    stream.seek(max(0, stream.tell() - 16384))
+    lines = stream.read().decode(errors='replace').splitlines()
+    reasons = [line for line in lines if line and not line[0].isspace() and
+               ('Error:' in line or 'Exception:' in line or line.startswith('SystemExit:'))]
+    return ' / '.join(dict.fromkeys(reasons[-3:] or lines[-1:]))[:2000]
+
+
 def reserve(job, automatic):
     job.parent.mkdir(parents=True, exist_ok=True)
     while True:
@@ -125,8 +140,7 @@ class Execution:
             self.summary['declaration']=plan['declaration']
             self.summary['declaration_source']=plan.get('declaration_source','auto')
         self.locations={}
-        self.env=dict(os.environ)
-        self.env['PYTHONPATH']=os.pathsep.join(filter(None,(IMPORT_ROOT,self.env.get('PYTHONPATH'))))
+        self.env=execution_environment()
 
     def initialize(self,assets):
         atomic_json(self.job/'resolved-config.json',snapshot(self.config))
@@ -170,7 +184,9 @@ class Execution:
                 if key=='run':
                     found[0]=path
                     self.locations[RUN if role=='single' else f'<{role}.run>']=path
-        evidence(self.summary,'record',receipt['status'],[receipt['error']] if receipt.get('error') else [],source,variant=role)
+        reasons = [receipt['error']] if receipt.get('error') else []
+        reasons.extend(receipt.get('recovery_commands', []))
+        evidence(self.summary,'record',receipt['status'],reasons,source,variant=role)
         want='sealed' if side['output_type']=='capture' else 'complete'
         if not code and (receipt['status']!=want or not receipt.get('capture' if want=='sealed' else 'run')):
             raise ValueError('record 回执与预期产物不匹配 '+str(source))
@@ -260,7 +276,15 @@ class Execution:
                     raise
                 step['receipt_error']=str(error)
         if code:
-            self.summary['error']=f"{spec['id']} 返回 {code}，详见 {errors}"
+            reasons = [reason for row in self.summary['evidence']
+                       if row.get('variant') == role and row['subject'] in ('record', 'launch.rank')
+                       and row['status'] not in ('ok','complete') for reason in row['reasons']]
+            if not reasons:
+                with errors.open('rb') as stream:
+                    detail = error_detail(stream)
+                if detail:
+                    reasons.append(detail)
+            step['error'] = self.summary['error'] = '；'.join([f"{spec['id']} 返回 {code}", *reasons, str(errors)])
             return code
         if action in ('record','launch','runner'):
             if action=='runner' and not Path(side['runners'][0]).is_file():

@@ -22,6 +22,26 @@ def replicated_boundary(event):
         r'<root>\.(?:model\.)?(?:layers\.\d+|embedding|embed_tokens|norm|lm_head)',scope))
 
 
+def collective_forward_phase(workspace, run, writer, corr):
+    """A host collective belongs to a phase only through its recorded module ancestry."""
+    seen = set()
+    while corr and corr not in seen:
+        seen.add(corr)
+        matches = workspace.db.execute(
+            "select payload from events where run=? and w=? and corr=? and type='span' limit 2",
+            (run, writer, str(corr))).fetchall()
+        if len(matches) != 1:
+            break
+        span = json.loads(matches[0][0])
+        if span.get('ph') != 'x' or span.get('cat') != 'module':
+            break
+        if span.get('name') == '<root>':
+            phase = span.get('attrs', {}).get('phase')
+            return phase if phase in ('warmup', 'measure') else 'unknown'
+        corr = span.get('parent')
+    return 'unknown'
+
+
 def validate_manifest(path):
     path = Path(path).resolve()
     state = json.loads(path.read_text())
@@ -129,6 +149,7 @@ def _generate_group(manifest, out=None, *,  runner_results=None, limits=None):
                 sequences = {}
                 tensors = {}
                 forward_counts = dict(warmup=0, measure=0, unknown=0)
+                model_call_phases = dict(warmup=0, measure=0, unknown=0)
                 for _, _, _, event in workspace.events(('span',)):
                     if event.get('cat') == 'module' and event.get('ph') == 'x' and event.get('name') == '<root>':
                         phase = event.get('attrs', {}).get('phase', 'unknown')
@@ -140,7 +161,7 @@ def _generate_group(manifest, out=None, *,  runner_results=None, limits=None):
                     tensors[key]={k:event.get(k) for k in ('shape','dtype','digest','mask')}
                 if observed.get('generation',{}).get('mode')=='accuracy' and not tensors:
                     raise ValueError('rank accuracy tensor evidence missing')
-                for _, _, _, event in workspace.events(('comm',)):
+                for run_id, writer, _, event in workspace.events(('comm',)):
                     if event.get('rank') != rank:
                         raise ValueError('event rank differs from group manifest')
                     key = event['group'], event['group_seq']
@@ -152,10 +173,14 @@ def _generate_group(manifest, out=None, *,  runner_results=None, limits=None):
                     calls[key] = event
                     if event.get('ext',{}).get('communication',{}).get('role')=='unknown':
                         issues.append('rank '+str(rank)+' has an unregistered communication group')
-                    if event.get('ext',{}).get('communication',{}).get('role')=='model' and event['lib']!=group['backend']:
-                        raise ValueError('actual collective backend differs from group manifest')
+                    if event.get('ext',{}).get('communication',{}).get('role')=='model':
+                        if event['lib']!=group['backend']:
+                            raise ValueError('actual collective backend differs from group manifest')
+                        phase = collective_forward_phase(workspace, run_id, writer, event.get('corr'))
+                        model_call_phases[phase] += 1
                 states.append(dict(rank=rank, identity=observed, trajectories=trajectories(workspace),
-                                   calls=calls, tensors=tensors, forward_counts=forward_counts))
+                                   calls=calls, tensors=tensors, forward_counts=forward_counts,
+                                   model_call_phases=model_call_phases))
             except (OSError,ValueError,KeyError) as error:
                 if group.get('status')=='complete':raise
                 issues.append('rank '+str(rank)+' incomplete execution evidence: '+str(error))
@@ -215,17 +240,28 @@ def _generate_group(manifest, out=None, *,  runner_results=None, limits=None):
         # Perf does not capture tensors. Count actual root calls, including warmup,
         # rather than inferring execution from precision output/sample records.
         forwards=sum(state['forward_counts'].values())
-        expected_reduce=72*steps if generation else 56*forwards if forwards else None
-        expected_gather=steps if generation else 0
+        basis_count = steps if generation else forwards
+        expected_reduce = (72 if generation else 56)*basis_count if basis_count else None
+        expected_gather = (steps if generation else 0) if basis_count else None
         matches=None if expected_reduce is None else allreduce==expected_reduce and allgather==expected_gather
+        rank = state['rank']
+        controls = sum(e.get('ext', {}).get('communication', {}).get('role') == 'control'
+                       for e in state['calls'].values())
+        timed = len(state['calls'].keys() & device_calls.get(rank, {}).keys())
         counts.append(dict(rank=state['rank'], steps=steps, forwards=forwards,
                            forward_phases=state['forward_counts'],
                            count_basis='generation_steps' if generation else 'root_module_spans',
+                           model_call_phases=state['model_call_phases'],
+                           logical_calls=len(state['calls']), model_calls=len(model),
+                           control_calls_count=controls, other_calls=len(state['calls'])-len(model)-controls,
+                           device_linked_calls=timed,
+                           allreduce_per_basis=allreduce/basis_count if basis_count else None,
                            allreduce=allreduce, allgather=allgather,
                            expected_allreduce=expected_reduce, expected_allgather=expected_gather,
                            model_count_matches=matches))
         if matches is None:
-            issues.append('rank '+str(state['rank'])+' model forward evidence missing')
+            missing = 'generation step' if generation else 'model forward'
+            issues.append(f"rank {rank} {missing} evidence missing")
         elif not matches:
             issues.append('rank '+str(state['rank'])+' model collective count mismatch')
     paired_keys = {(r['group'], r['group_seq']) for r in aligned if 'cross_rank_min_observed_ns' in r}
@@ -235,7 +271,7 @@ def _generate_group(manifest, out=None, *,  runner_results=None, limits=None):
                   device_link_status='linked' if aligned and paired_keys == keys and model_keys <= paired_keys else 'partial' if aligned else 'explicit_link_unavailable', device_duration_ns=None,
                   device_link_scope='explicitly_linked_collectives; control calls are listed separately',
                   model_call_count=len(model_keys), paired_model_calls=len(model_keys & paired_keys), control_calls=control_calls,
-                  unlinked_logical_calls={s['rank']:len(s['calls'])-len(device_calls.get(s['rank'],{})) for s in states},
+                  unlinked_logical_calls={r['rank']:r['logical_calls']-r['device_linked_calls'] for r in counts},
                   device_calls=aligned,comparison=comparison,clocks={rank:value.get('clock') for rank,value in contexts.items()},
                   request_windows=request_rows,
                   device_timing_note='跨 rank 最小观测占用、最大值与差值；差值不等于额外等待，最小值不代表纯通信下界',

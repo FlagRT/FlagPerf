@@ -226,7 +226,7 @@ def execute(args):
         from flagprof.components.compiler import identity as compiler_identity
         identity['compiler'] = handle.state['compiler_identity'] if handle else compiler_identity()
         if handle:
-            handle.bind_tensor_inputs([], {}, identity=identity)
+            handle.bind_tensor_inputs([], {}, identity=identity, model_name=model_path)
         out = Path(args.outputs)
         out.mkdir(parents=True, exist_ok=False)
         requests = []
@@ -260,7 +260,7 @@ def execute(args):
                     if handle:
                         handle.step()
                 if phase is not None:end_phase(phase)
-        result = dict(schema='generation-runner/1', oracle_identity=identity, requests=requests,
+        result = dict(schema='generation-runner/1', model=model_path, oracle_identity=identity, requests=requests,
                       load_s=load_s, instrumentation='attachment' if handle else 'none',
                       rank=int(os.environ.get('RANK','0')), status='complete')
         (out/'runner.json').write_text(json.dumps(result, indent=2)+'\n')

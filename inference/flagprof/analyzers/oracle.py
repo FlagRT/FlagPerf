@@ -8,8 +8,9 @@ from flagprof.tensor_data import compare, ULP_BUCKETS
 
 REQUIRED=('model_files','oracle_id','inputs_sha256','samples','batches','dtype','attention','pooling','boundaries','probe_alg')
 DECLARABLE=('device','software','numerics','flaggems','include')
+CTR_MODEL_FIELDS = ('kind','arch','config_sha256','weight_sha256','seed','init')
 TASK_REQUIRED = {
-    'ctr': ('task','kind','arch','config_sha256','weight_sha256','seed','init','score_semantics'),
+    'ctr': ('task', *CTR_MODEL_FIELDS, 'score_semantics'),
     'rerank': ('task','model_files','attention','score_semantics','template_sha','yes_token_id','no_token_id','code_files'),
 }
 
@@ -176,7 +177,8 @@ def _results(ref,cmp,mismatches,first,jumps,identity_result,panels):
     status='partial' if partial else 'ok'
     if first:
         first['wording']=('已对齐边界中最早观测到的差异；' if partial else '')+('首个数值不等边界' if first['numeric_difference_observed'] else '首个字节不等边界，数值差异未确认')
-    ref.row('oracle.first_divergence','first',dict(first_inequal=first,largest_jumps=sorted(jumps,key=lambda j:j['ratio'] or 0,reverse=True)[:5],
+    ref.row('oracle.first_divergence','first',dict(first_inequal=first,largest_jumps=sorted(
+        (j for j in jumps if j['ratio'] is not None),key=lambda j:j['ratio'],reverse=True)[:5],
         zero_to_nonzero=[j for j in jumps if j['change']=='0_to_nonzero'][:ref.limits.evidence_samples]))
     routes={}
     for row in ref.table('oracle.introduced'):
@@ -246,8 +248,9 @@ def analyze(ref,cmp,declare=None):
             elif first is None:
                 first=dict(row,last_equal_boundary=last_equal.get(sample_key),numeric_difference_observed=_numeric_difference(result))
             current=result.get('relative_l2');prev=previous.get(sample_key)
-            if prev and current is not None and prev[1] is not None:
-                jumps.append(dict(sample=sample,before=prev[0],after=key,ratio=current/prev[1] if prev[1]>0 else None,
+            if prev and current is not None and prev[1] is not None and current != prev[1]:
+                jumps.append(dict(sample=sample,before=prev[0],after=key,before_l2=prev[1],after_l2=current,
+                    ratio=current/prev[1] if prev[1]>0 else None,
                     change='0_to_nonzero' if prev[1]==0 and current>0 else 'ratio'))
             previous[sample_key]=(key,current)
     for _,_,_,right in cmp.events(('tensor',)):

@@ -287,7 +287,7 @@ function relationship(section,indices){
    let rows=items,series;
    if(three){
      rows=items.filter(o=>o.r.metric===state.metric);
-     controls+=picker(state,'sample',[...new Set(rows.map(o=>o.r.sample))],'样本');
+     controls+=picker(state,'sample',[...new Set(rows.map(o=>o.r.sample))],'样本',String);
      rows=rows.filter(o=>o.r.sample===state.sample);
      const boundary=r=>JSON.stringify([r.scope,r.boundary]);
      const layerOrder=new Map((cfg.meta.boundary_order||[]).map(r=>[boundary(r),r.order]));

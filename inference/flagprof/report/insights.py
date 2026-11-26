@@ -14,12 +14,13 @@ def scalar(value):
 
 
 def identity_text(identity):
+    identity = identity or {}
     parts = []
     for key, label in (('model', '模型'), ('device', '设备'), ('dtype', '精度'),
                        ('comm_backend', '通信后端'), ('samples', '样本')):
         if identity.get(key) is not None:
             value = identity[key]
-            shown = str(len(value))+' 个 · '+display(value[:3])+'…' if key=='samples' and isinstance(value,list) and len(value)>4 else display(value)
+            shown = str(len(value))+' 个 · '+display(value[:3],key)+'…' if key=='samples' and isinstance(value,list) and len(value)>4 else display(value,key)
             parts.append(label+' '+shown)
     gems = identity.get('flaggems')
     if isinstance(gems, dict):
@@ -30,7 +31,7 @@ def identity_text(identity):
 def comparison_sources(doc):
     result = {}
     for i, row in enumerate(doc.get('sources', ())):
-        identity = row.get('context', {}).get('workload_identity', {})
+        identity = row.get('context', {}).get('workload_identity') or {}
         if row.get('report'):
             result[row['report']] = '来源 '+str(i+1)+' · '+' / '.join(display(identity[k]) for k in ('comm_backend','device') if identity.get(k))
     return result
@@ -104,16 +105,6 @@ def performance_comparison(model, doc):
 
 
 def accuracy(model):
-    for index, row in enumerate(model.rows('oracle.layer')):
-        if row.get('scope') != '<root>' or row.get('boundary') not in ('output', 'pooled'):
-            continue
-        max_abs = row.get('max_abs') or row.get('worst', {}).get('max_abs')
-        l2 = row.get('relative_l2') or row.get('worst', {}).get('relative_l2')
-        model.finding('模型 '+str(row['boundary'])+' 边界的误差',
-            '覆盖 '+str(row.get('samples', '未记录'))+' 个配对样本，证据 '+display(row.get('levels'))+
-            '；最大绝对误差 '+display(max_abs)+'；相对 L2 '+display(l2)+
-            '。最差指标分别保留对应样本；数值差异是否满足业务要求需结合任务精度标准。',
-            'oracle.layer', level='result', row_index=index)
     for index, row in enumerate(model.rows('oracle.three_way')):
         if row.get('scope') != '<root>' or row.get('boundary') != 'output' or row.get('metric') not in ('max_abs', 'relative_l2'):
             continue
@@ -130,23 +121,18 @@ def accuracy(model):
         model.finding('最终 output：'+metric, detail, 'oracle.three_way', level='result', row_index=index)
     for index, row in enumerate(model.rows('oracle.propagation')):
         if row.get('ratio') is not None:
-            model.finding('误差传播中最大的相对 L2 倍数线索',
-                '样本 '+str(row.get('sample'))+'；'+str(row.get('before'))+' → '+str(row.get('after'))+
-                '，'+display(row['ratio'])+' 倍。这里只定位变化边界；输入差异与同输入引入的差异需继续核对。',
+            model.finding('相邻位置的误差变化',
+                '样本 '+str(row.get('sample'))+' 从 '+str(row.get('before'))+' 到 '+str(row.get('after'))+
+                '，后一处的相对 L2 为前一处的 '+display(row['ratio'])+' 倍。',
                 'oracle.propagation', row_index=index)
             break  # Producer orders largest_jumps before zero-to-nonzero transitions.
-    replay = list(model.rows('oracle.replay'))
-    for index, row in enumerate(replay):
-        if not row.get('valid'):
-            continue
-        metric = row.get('metrics', {})
-        self_results = row.get('self_reproduction', {})
-        model.finding('回放实际结果：'+str(row.get('call_key')),
-            '原输出复现：'+ '；'.join(side+' 最大绝对误差 '+display(v.get('max_abs')) for side,v in self_results.items())+
-            '。同输入跨侧最大绝对误差 '+display(metric.get('max_abs'))+'，不同元素 '+str(metric.get('differing_elements'))+
-            ' / 有效元素 '+str(metric.get('valid_elements'))+'。这是隔离调用的观测。',
-            'oracle.replay', row_index=index)
-        if index >= 2:
+    for index, row in enumerate(model.rows('oracle.op_sensitivity')):
+        if row.get('input_status') == 'different':
+            name = str(row.get('boundary','')).removeprefix('op:').split('/')[0]
+            model.finding(name+' 收到的输入已经不同',
+                '输入相对 L2 为 '+display(row.get('error_in'))+'，输出相对 L2 为 '+
+                display(row.get('error_out'))+'。打开本次调用可追踪两侧输入的来源。',
+                'oracle.op_sensitivity',row_index=index)
             break
 
 

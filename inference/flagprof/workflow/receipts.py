@@ -121,6 +121,9 @@ def report_rows(doc, path):
     rows=[]
     def add(subject,status,reasons=(),**details):
         rows.append(dict(subject=subject,status=status,reasons=list(reasons or []),source=str(path),**details))
+    if doc.get('schema') == 'oracle-result/1' and 'comparison_status' in doc:
+        add('oracle.comparison',doc['comparison_status'],doc.get('blocking_fields'),
+            paired_tensors=doc.get('paired_tensors'),paired_boundaries=doc.get('paired_boundaries'))
     for key, panel in doc.get('results',{}).items():
         add(key,panel['status'],panel.get('notes'))
     for group in (doc.get('runner_summary') or {}).get('groups',[]):

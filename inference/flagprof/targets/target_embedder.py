@@ -118,7 +118,7 @@ def main():
 
     call = forward_row()
     if handle:
-        handle.bind_tensor_inputs(sample_ids, call, identity=identity)
+        handle.bind_tensor_inputs(sample_ids, call, identity=identity, model_name=model_path)
     run_payload = run_prepared(model, call, warmup=args.warmup, forwards=args.forwards,
                                outputs=out, sync=sync, transform=transform)
     embed_sha = hashlib.sha256(json.dumps(run_payload['outputs'], sort_keys=True).encode()).hexdigest()

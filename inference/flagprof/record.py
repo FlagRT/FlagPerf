@@ -40,6 +40,8 @@ def record(command, *, store, vendor, preset='perf', config=None, descriptors=No
     descriptor = Registry(descriptors).describe(vendor)
     if descriptor['kind'] != 'vendor':
         raise ValueError('record needs a vendor')
+    from .devices import validate_target_device
+    validate_target_device(probe_config.get('target_device'), descriptor['format_vendor'])
     run = create_run(store, identity=dict(argv=list(command), cwd=os.getcwd(), vendor=vendor, preset=preset)).resolve()
     from .monitor.lifecycle import Monitor
     monitor = Monitor(store, run/'monitor-ref.json', vendor, config, preset=preset)
@@ -113,6 +115,12 @@ def record(command, *, store, vendor, preset='perf', config=None, descriptors=No
                state['importer_exit']==0 and state['import_completion']=='complete')
     state['status'] = 'complete' if success else 'incomplete'
     state['exit_code'] = (128-code if code < 0 else code) if code else (0 if success else 2)
+    receipt = dict(run=str(run), status=state['status'], exit_code=state['exit_code'])
+    if not success:
+        reason = next((item['error'] for item in handshakes
+                       if item.get('error') and item.get('process') == key), None)
+        if reason:
+            state['error'] = receipt['error'] = reason
     atomic_json(run/'record-status.json', dict(state, run='.'))
-    print(json.dumps(dict(run=str(run), status=state['status'], exit_code=state['exit_code'])))
+    print(json.dumps(receipt))
     return state['exit_code']

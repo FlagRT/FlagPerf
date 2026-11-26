@@ -48,6 +48,7 @@ def main(argv=None):
     record_parser=verbs.add_parser('record',help='capture one complete official Python session')
     record_parser.add_argument('--store',required=True,help='output root; final mode keeps the Store under <store>/runs')
     record_parser.add_argument('--vendor',required=True,help='vendor adapter, e.g. ascend or nvidia')
+    record_parser.add_argument('--target-device',help='logical device used by a monitored target, e.g. npu:0 or cuda:0')
     record_parser.add_argument('--preset',choices=['perf','modules','perf-lite','coverage','accuracy','monitor'],default='perf',help='collection preset (default perf); perf/modules use the official profiler in final mode')
     record_parser.add_argument('--flaggems', choices=['off','on'],help='FlagGems component (preset default off)')
     record_parser.add_argument('--flaggems-include',help='JSON array of FlagGems function names to register')
@@ -306,7 +307,7 @@ def main(argv=None):
         try:
             if args.capture_only and (args.capture_mode!='final' or args.preset not in ('perf','modules')):
                 raise ValueError('--capture-only requires official final mode')
-            config = {name:getattr(args,name) for name in ('flaggems','flaggems_include','flagtree','vendor_compiler','layers','probes','monitor','monitor_topology','monitor_root','monitor_interval_ms','diagnose') if getattr(args,name) is not None}
+            config = {name:getattr(args,name) for name in ('flaggems','flaggems_include','flagtree','vendor_compiler','layers','probes','monitor','monitor_topology','monitor_root','monitor_interval_ms','diagnose','target_device') if getattr(args,name) is not None}
             if args.profile_memory:
                 if args.preset not in ('perf','modules'):
                     raise ValueError('--profile-memory requires an official profiler preset (perf or modules)')

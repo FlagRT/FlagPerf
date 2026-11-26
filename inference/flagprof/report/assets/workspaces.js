@@ -3,7 +3,7 @@ const dimensions = {
  dev:'设备',diff_status:'差异状态', rank:'rank', layer:'层 / 模块', phase:'阶段', shape:'输入规模', sid:'签名', step:'生成步',
  sample:'样本', level:'证据等级', metric:'指标', category:'事件类别', route_decision:'路由',
  entity:'设备实体', group:'通信域', comparison_status:'可比性', rule:'异常类型', state:'事件状态',
- introduced:'同输入引入', equal:'条件一致', instrumentation:'采集条件', scope:'计时范围'
+ introduced:'同输入引入', equal:'条件一致', instrumentation:'采集条件', scope:'计时范围',op_verdict:'算子调用的判断'
 };
 dimensions.task_label='所属任务';
 const workspaceTabs = new Map();
@@ -60,6 +60,7 @@ function accepts(section,row){
 function setupWorkspaces(){
  for(const section of cfg.sections){
    const panel=$(section.id);
+   if(section.quality_for){$(section.quality_for).append(panel);continue;}
    let tabs=workspaceTabs.get(section.group);
    if(!tabs){
      const box=document.createElement('section'),title=document.createElement('h2'),bar=document.createElement('div');
@@ -73,7 +74,7 @@ function setupWorkspaces(){
  for(const {items,bar} of workspaceTabs.values()){
    bar.hidden=items.length===1;
    if(items.length===1&&items[0].title===items[0].group_title)$(items[0].id).querySelector('h2')?.setAttribute('hidden','');
-   const first=items.find(s=>['diagnosis','oracle.op_sensitivity.introduced','perf.layer','route.coverage.missing_ops'].includes(s.id));
+   const first=items.find(s=>['diagnosis','oracle.op_sensitivity','perf.layer','route.coverage.missing_ops'].includes(s.id));
    activate((first||items[0]).id);
  }
  if('IntersectionObserver' in window){
@@ -86,6 +87,7 @@ function setupWorkspaces(){
 function activate(id){
  const section=cfg.sections.find(s=>s.id===id);
  if(!section)return;
+ if(section.quality_for){activate(section.quality_for);$(id).open=true;return;}
  const tabs=workspaceTabs.get(section.group);if(!tabs)return;
  for(const s of tabs.items)$(s.id).hidden=s.id!==id;
  for(const button of tabs.bar.children)button.setAttribute('aria-pressed',String(button.dataset.tab===id));
@@ -133,10 +135,13 @@ function selectedElement(key,value){const select=$('filter-'+key);return select&
 
 function tableCell(section,state,row,key,index){
  const value=val(row,key),scalarValue=scalar(value),numeric=typeof scalarValue==='number';
- const field=row.unit==='ns'&&['baseline','candidate','delta'].includes(key)?'duration_ns':key;
+ let field=row.unit==='ns'&&['baseline','candidate','delta'].includes(key)?'duration_ns':key;
+ if(row.field==='samples'&&['ref','cmp'].includes(key))field='samples';
  const shown=fieldText(row,key,field);
  let content=esc(shown.length<=140?shown:shown.slice(0,137)+'…'),style='',tone='';
- if(key==='name'&&typeof value==='string'&&value.length>64&&/[<(]/.test(value)){
+ if(key==='first_observed'){
+   content=value?'<a href="#oracle.first_divergence">'+esc(value)+'</a>':'';
+ }else if(key==='name'&&typeof value==='string'&&value.length>64&&/[<(]/.test(value)){
    const stem=value.split(/[<(]/)[0].split(/\s+/).pop();content=esc(stem.slice(-72)+'…');
  }else if(key==='ulp_histogram'&&value&&typeof value==='object'){
    const entries=Object.entries(value).filter(([,n])=>Number.isFinite(n));

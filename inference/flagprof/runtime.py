@@ -32,6 +32,12 @@ def current_attachment():
         return live[-1] if live else None
 
 
+def startup_error(state):
+    component_error = state.get('component', {}).get('error')
+    errors = [*state.get('collector_errors', []), *state.get('errors', [])]
+    return component_error or '; '.join(dict.fromkeys(errors)) or state['status']
+
+
 def configuration(preset='perf', **options):
     from .probes.config import resolve
     options, _ = resolve(preset, options)
@@ -54,6 +60,10 @@ class Attachment:
         self.capture_mode=capture_mode
         from .probes.config import resolve
         session_options, probe_options = resolve(preset, config)
+        from .devices import validate_target_device
+        self.target_device = probe_options.get('target_device')
+        validate_target_device(self.target_device, descriptor['format_vendor'])
+        self.device_lock = threading.RLock()
         from .components.compiler import select
         select(probe_options, cache_root=_compiler_store or Path(run).parent, target=vendor)
         official = preset in ('perf', 'modules')
@@ -117,6 +127,8 @@ class Attachment:
             from .probes.manager import ProbeManager
             self.probe_manager = ProbeManager(self.context, probe_options, self.state, official=official,state_callback=self._save)
             self.probe_manager.install()
+            if self.target_device is not None:
+                self._register_device(self.target_device, declared=True)
             if probe_options.get('diagnose') == 'on':
                 from .probes.diagnostic import DiagnosticProbe
                 self.diagnostic = DiagnosticProbe(self)
@@ -169,13 +181,37 @@ class Attachment:
     def register_device(self, device):
         if not self.monitor_enabled:
             return
+        with self.device_lock:
+            self._register_device(device, declared=False)
+
+    def _register_device(self, device, *, declared):
+        previous = self.state.get('device_identity', {})
+        if previous.get('status') == 'conflict':
+            return
+        logical = str(device)
         try:
             from importlib import import_module
             provider = import_module('flagprof.vendors.'+self.state['format_vendor']+'.execution')
+            family = device.split(':', 1)[0] if isinstance(device, str) else getattr(device, 'type', None)
+            if family and family != provider.TORCH_DEVICE:
+                raise ValueError('expected a '+provider.TORCH_DEVICE+' device')
             identity = provider.physical_identity(device)
-            identity.update(rank=self.rank, logical_device=str(device), status='available')
+            identity.update(rank=self.rank, logical_device=logical, status='available')
         except Exception as error:
-            identity = dict(rank=self.rank, logical_device=str(device), status='unknown', reason=str(error))
+            identity = dict(rank=self.rank, logical_device=logical, status='unknown', reason=str(error))
+        identity['source'] = 'declaration' if declared else 'registration'
+        if self.target_device is not None:
+            identity['declared_device'] = self.target_device
+            if declared or logical == self.target_device and identity.get('entity'):
+                identity['declared_entity'] = identity.get('entity')
+            else:
+                identity['declared_entity'] = previous.get('declared_entity')
+            expected = previous.get('declared_entity')
+            if not declared and expected and identity.get('entity') and expected != identity['entity']:
+                identity.update(status='conflict', declared_entity=expected,
+                                reason='registered device differs from declared physical device')
+            elif not declared and not expected and logical != self.target_device:
+                identity.update(status='unknown', reason='declared physical device could not be confirmed')
         self.state['device_identity'] = identity
         self._monitor_bind([identity])
         self._save()
@@ -280,9 +316,13 @@ class Attachment:
             self._save()
         return model
 
-    def bind_tensor_inputs(self, sample_ids, inputs, *, identity=None):
+    def bind_tensor_inputs(self, sample_ids, inputs, *, identity=None, model_name=None):
         if identity is not None:
             self.state['oracle_identity'] = dict(identity, boundaries=self.state.get('tensor_boundaries',[]))
+            if model_name:
+                self.state['model_name'] = str(model_name)
+            else:
+                self.state.pop('model_name', None)
             self._save()
         if self.probe_manager and self.probe_manager.tensor:
             self.probe_manager.tensor.bind(sample_ids, inputs)

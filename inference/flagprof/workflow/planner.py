@@ -81,6 +81,8 @@ def compile_plan(config, job, vendor, attach, *, variant='single'):
         argv = CONTROL + [producer,'--vendor',vendor,'--preset',preset,'--store',str(raw)]
         if tp:
             argv += ['--nproc-per-node','2','--comm-backend',config['hardware']['comm_backend']]
+        elif not builtin and monitor.get('enabled') and config['hardware']['device'] != 'auto':
+            argv += ['--target-device', config['hardware']['device']]
         argv += flags(settings, ('capture_mode','timeout','source_max_bytes','capture_only','profile_memory',
                                  'active','windows','invalid_policy','plugins','tensor_blob','tensor_blob_bytes',
                                  'tensor_boundaries','tensor_ops_in','dispatch','layers','probes'))

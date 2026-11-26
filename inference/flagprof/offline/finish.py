@@ -86,7 +86,9 @@ class BoundedView:
             self.pagers[name]=streaming.JSONLPage(self.run/info['path'],scratch_path(self.work/(name+'-page.sqlite')),info['sha256'])
         result=self.pagers[name].page(offset,limit);self.check();return result
     def device_analysis_context(self):
-        return deepcopy(self.summary().get('device_analysis',dict(schema='device-analysis/1',status='unavailable',reason='projection_not_recorded')))
+        from .device_analysis import read_capture_context
+        context = deepcopy(self.summary().get('device_analysis',dict(schema='device-analysis/1',status='unavailable',reason='projection_not_recorded')))
+        return read_capture_context(self.run, self.descriptor.get('capture'), context)
     def iter_device_events(self,*,trace_uid=None,category=None,projection='events'):
         if trace_uid is not None and trace_uid!=self.descriptor['trace_uid']:raise ValueError('unknown trace uid')
         if projection not in ('events','analysis'):raise ValueError('unknown device projection')

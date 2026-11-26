@@ -12,7 +12,7 @@ from .fields import PANELS, LABELS, VALUES, display, prepare_fields
 from .model import opened_model, read_document, digest
 
 
-FIELD_DISPLAY_VERSION = 2
+FIELD_DISPLAY_VERSION = 3
 
 
 DESCRIPTIONS = {
@@ -41,7 +41,7 @@ EXTRAS = {
     'layer_groups':('层对应的设备工作量', ('name','dev','category','route_decision','events','missing_durations','device_work_ns')),
     'introduced':('同输入引入的差异', PANELS['oracle.op_sensitivity'][1]),
     'introduced_routes':('引入差异的预期实现', ('impl','occurrences','scopes','ulp_histogram')),
-    'amplification':('误差放大观测', PANELS['oracle.op_sensitivity'][1]),
+    'amplification':('误差放大观测', ('boundary','error_in','error_out','amplification','op_verdict')),
     'steps':('逐生成步', ('request_id','generation_step','phase','host_duration_ns','kv_length_before','input_shape')),
     'kv':('KV 生命周期', ('event','request_id','generation_step','length','bytes')),
     'streams':('设备流与空白区间', ('window_id','kind','step','dev','stream','window_ns','all_activity_union_ns','blank_ns')),
@@ -65,10 +65,12 @@ def add_table(model, ident, title, source, columns=None, description='', status=
     present = set()
     for original in rows(source):
         row = dict(original) if isinstance(original, dict) else dict(value=original)
-        if ident == 'oracle.first_divergence':
-            first = row.get('first_inequal')
-            row = dict(first or {}, alignment_gaps=row.get('alignment_gaps'),
-                       source_result=original)
+        if model.meta.get('unverified_capture_source') and ident.startswith('perf.'):
+            if row.get('kind') == 'official_capture':
+                row['kind'] = 'recorded_capture_interval'
+            if 'window_identity' in row and isinstance(row['window_identity'], dict):
+                row['window_identity'] = dict(row['window_identity'], repeats=None, profiler=None,
+                    window_kind=row.get('kind') if row.get('boundary_source') else None)
         prepare_fields(ident, row, model.meta.get('forward_only',False))
         if 'scope_samples' in row and not row.get('scopes'):
             row['scope_evidence']=row['scope_samples']
@@ -98,26 +100,66 @@ def _scalar(value):
     return value.get('value') if isinstance(value, dict) else value
 
 
+def _model_label(name):
+    return Path(name.removeprefix('hf:')).name or name
+
+
 def _facts(model, doc, source):
     from .insights import comparison_facts
+    from .oracle_view import identity_priority
     comparison_identity = comparison_facts(model, doc, Path(source) if source else None)
     context = doc.get('report_context', {})
     facts = dict(context.get('identity') or {})
     context_run = context.get('run', {})
+    names_seen = set()
+    if isinstance(context.get('model_name'),str) and context['model_name']:
+        names_seen.add(context['model_name'])
     if doc.get('runner_summary'):
-        identities=[r.get('identity',{}) for r in doc['runner_summary'].get('sources',[])]
+        sources = doc['runner_summary'].get('sources',[])
+        names_seen.update(r['model'] for r in sources if isinstance(r.get('model'),str) and r['model'])
+        identities=[r.get('identity',{}) for r in sources]
         devices=sorted(set(str(r['device']) for r in identities if r.get('device')))
         if devices:facts['device']=devices
+    if names_seen:
+        labels = sorted({_model_label(name) for name in names_seen})
+        facts['model'] = ' / '.join(labels)
+    elif facts.get('kind') == 'ctr-template-v1' and facts.get('arch'):
+        facts.setdefault('model', 'template:' + facts['arch'])
+    paired_names = context.get('model_names',{})
+    if paired_names:
+        left,right = (_model_label(paired_names[k]) if paired_names.get(k) else '未记录' for k in ('ref','cmp'))
+        facts['model'] = left if left == right else '参考侧 '+left+' · 候选侧 '+right
     if context_run:
         facts['run_id'] = context_run.get('run_id')
         facts['execution_status'] = context_run.get('state')
     diagnostic = doc.get('diagnosis', {}).get('coverage', {}).get('reference', {})
     if diagnostic.get('diagnostic_identity'):
         facts.setdefault('run_id', diagnostic['diagnostic_identity'].get('run_id'))
-    if diagnostic.get('devices'):
-        facts.setdefault('device', diagnostic['devices'])
+    devices = diagnostic.get('devices') or doc.get('results', {}).get('resource', {}).get('coverage', {}).get('reference', {}).get('devices', [])
+    mappings = []
+    for info in devices:
+        if not isinstance(info, dict):
+            mappings.append(str(info))
+        elif info.get('status') == 'available' and info.get('entity'):
+            source = '声明' if info.get('source') == 'declaration' else '登记'
+            mappings.append(f"{source} {info.get('logical_device', '逻辑设备未记录')} → {info['entity']}")
+        elif info.get('status') == 'conflict':
+            mappings.append(f"归属冲突。声明 {info.get('declared_device')} → {info.get('declared_entity')}，目标登记 {info.get('logical_device')} → {info.get('entity')}")
+        elif info.get('status') == 'unknown':
+            mappings.append(f"{info.get('logical_device', '逻辑设备未记录')} 的物理身份待确认")
+        else:
+            mappings.append(display(info))
+    if mappings:
+        facts.setdefault('device', mappings)
     for panel in doc.get('results', {}).values():
         coverage = panel.get('coverage', {})
+        provenance = coverage.get('capture_provenance') or {}
+        if provenance.get('origin') == 'external-export':
+            facts['capture_origin'] = '外部导入'
+            facts['normal_close_evidence'] = ('调用者声明' if provenance.get('normal_close_evidence') == 'caller assertion'
+                                              else provenance.get('normal_close_evidence') or '未记录')
+        elif provenance.get('origin') == 'unrecorded':
+            facts['capture_origin'] = '旧报告未记录来源，可用原 Store 重新生成报告'
         identity = coverage.get('workload_identity') or {}
         for key in ('model','model_files','device','dtype','samples','attention','pooling','flaggems',
                     'software','parallelism','comm_backend'):
@@ -126,24 +168,36 @@ def _facts(model, doc, source):
         window = coverage.get('window_identity') or {}
         if window:
             facts.setdefault('capture_window', window)
-    for row in rows(doc.get('results', {}).get('oracle.identity_diff', {}).get('data')):
-        if row.get('field') in ('device','dtype','samples','flaggems','attention','pooling'):
-            facts[row['field']] = dict(ref=row.get('ref'),cmp=row.get('cmp'))
-    names = dict(model='模型',model_files='模型文件身份',device='设备',dtype='精度',samples='输入样本',
+    names = dict(capture_origin='采集来源',normal_close_evidence='正常关闭依据',
+                 model='模型',model_files='模型文件身份',device='设备',dtype='精度',samples='样本标识',
                  attention='Attention',pooling='输出语义',flaggems='FlagGems',software='软件版本',
                  parallelism='并行配置',comm_backend='通信后端',capture_window='采集窗口与配置',
                  run_id='运行标识',execution_status='运行状态')
+    missing_identity = set()
+    for row in rows(doc.get('results', {}).get('oracle.identity_diff', {}).get('data')):
+        field = row['field']
+        if field in ('device','dtype','samples','flaggems','attention','pooling') or identity_priority(row) == 0:
+            facts[field] = dict(ref=row.get('ref'),cmp=row.get('cmp'))
+            names.setdefault(field, display(field,'field'))
+            if row.get('equal') is False and (row.get('ref') is None or row.get('cmp') is None):
+                missing_identity.add(field)
     for key, title in names.items():
         if facts.get(key) is not None:
             value=facts[key]
-            if key=='model_files' and isinstance(value,dict):
+            if key=='model_files' and isinstance(value,dict) and not ('ref' in value and 'cmp' in value):
                 fingerprint=hashlib.sha256(json.dumps(value,sort_keys=True).encode()).hexdigest()[:16]
                 add_table(model,'identity.files','模型文件身份',({'name':k,'value':v} for k,v in value.items()),
                           ('name','value'),'用于核对模型文件一致性；不是模型名称。',kind='quality')
                 value=str(len(value))+' 个文件 · 身份 '+fingerprint
             elif key in ('capture_window','software') and isinstance(value,dict):
                 value={k:v for k,v in value.items() if v is not None}
-            model.meta['facts'].append(dict(label=title,value=value))
+                if key == 'capture_window' and 'capture_origin' in facts:
+                    for field in ('profiler', 'repeats', 'window_kind'):
+                        value.setdefault(field, '未记录')
+            fact = dict(label=title,value=value,field=key)
+            if key in missing_identity:
+                fact['status_text'] = '缺少记录'
+            model.meta['facts'].append(fact)
     if not facts and not comparison_identity and doc.get('schema')!='monitor-report/1':
         model.meta['notices'].append('此历史报告未保存完整任务身份；页面仅解释已保存的结果。')
     elif facts.get('model_files') and not facts.get('model'):
@@ -246,8 +300,21 @@ def _diagnosis(model, data, node=None):
 
 
 def build(model, doc, source=None):
+    from . import oracle_view
     schema_modes={'device-comparison/1':'compare','oracle-three-way/1':'oracle-three-way','monitor-report/1':'monitor',
                   'oracle-group/1':'group','flagprof-group-report/1':'group','runner-result/1':'baseline'}
+    # Early result-only deliveries used runner defaults even without a collection.
+    panels = dict(doc.get('results', {}))
+    gap = panels.get('perf.gap', {}).get('coverage', {})
+    if (gap.get('capture_occurrence') and not gap.get('capture_provenance') and not gap.get('source_run_id')
+            and not gap.get('capture_process')):
+        model.meta['unverified_capture_source'] = True
+        for key in ('perf.gap','perf.device'):
+            if key in panels:
+                coverage = dict(panels[key].get('coverage', {}), capture_provenance=dict(origin='unrecorded'))
+                coverage['window_identity'] = dict(coverage.get('window_identity') or {}, profiler=None, repeats=None, window_kind=None)
+                panels[key] = dict(panels[key], coverage=coverage)
+        doc = dict(doc, results=panels)
     if doc.get('schema') in schema_modes:model.meta['mode']=schema_modes[doc['schema']]
     model.meta['field_display_version'] = FIELD_DISPLAY_VERSION
     identity = ((doc.get('report_context') or {}).get('identity') or
@@ -262,8 +329,13 @@ def build(model, doc, source=None):
     oracle = any(key.startswith('oracle.') for key in panels)
     if oracle:
         model.meta['title'] = '精度对照结果'
-        order = ('oracle.identity_diff','oracle.generation','oracle.first_divergence',
-                 'oracle.op_sensitivity','oracle.layer','oracle.perf_links','oracle.replay')
+        identities = list(panels.get('oracle.identity_diff', {}).get('data', ()))
+        route_note = oracle_view.route_note(identities)
+        first_panel = panels.get('oracle.first_divergence', {})
+        first_record = next(iter(rows(first_panel.get('data'))), {})
+        first = first_record.get('first_inequal')
+        order = ('oracle.identity_diff','oracle.generation','oracle.layer','oracle.first_divergence',
+                 'oracle.op_sensitivity','oracle.perf_links','oracle.replay')
     else:
         order = ('perf.device','perf.op','perf.layer','perf.gap','generation',
                  'route.coverage','compile.health','communication','memory','resource')
@@ -292,11 +364,40 @@ def build(model, doc, source=None):
             description += ' 前向摘要范围：'+str(coverage.get('headline_note','未记录'))+'。'
         if ident == 'resource':
             columns = ('name','entity','metric','unit','mean','maximum','p95','coverage','status')
+        if ident == 'oracle.identity_diff':
+            data = (oracle_view.identity_row(r) for r in identities)
+            if not any(r.get('equal') is False and r.get('requirement')=='declarable' for r in identities):
+                columns = tuple(c for c in columns if c!='declared')
+            description = oracle_view.identity_summary(identities)
+        elif ident == 'oracle.first_divergence':
+            data = [first] if first else []
+            if first and status == 'partial':
+                description = oracle_view.first_message(result, len(model.rows('oracle.layer')), found=True)
+        elif ident == 'oracle.op_sensitivity':
+            data = (oracle_view.operator_row(r, route_note) for r in data)
+            description = route_note + '先看调用前的输入，再看输出。同输入、同配置且完整输出出现数值差异的调用优先显示。'
+        elif ident == 'oracle.replay':
+            data = (dict(r, fixed_input={'ref':'参考侧保存的输入','cmp':'候选侧保存的输入'}.get(r.get('input_side')),
+                         replay_max_abs=(r.get('metrics') or {}).get('max_abs'),
+                         replay_different=(r.get('metrics') or {}).get('differing_elements'),
+                         replay_elements=(r.get('metrics') or {}).get('valid_elements')) for r in data)
+            description = '每行固定一份保存的输入，分别交给参考侧和候选侧执行。有效回放通过原输出复现检查。'
+        elif ident == 'oracle.layer' and first:
+            def mark_first(records):
+                for r in records:
+                    matched = all(r.get(k) == first.get(k) for k in ('scope','sample_pass','boundary'))
+                    yield dict(r, first_observed='首次观测到差异') if matched else r
+            data = mark_first(data)
         add_table(model,ident,title,data,columns,description,status)
-        if ident=='oracle.first_divergence':
-            for record in data:
-                add_table(model,'oracle.propagation','逐层误差变化线索',record.get('largest_jumps',[])+record.get('zero_to_nonzero',[]),
-                    ('sample','before','after','ratio','change'),'按已观测边界记录误差变化；变化线索不等于算子因果。')
+        if ident == 'oracle.first_divergence' and not first:
+            section = model.sections[-1]
+            layers = model.rows('oracle.layer')
+            section['message'] = ('两侧比较条件未满足，未执行逐层数值比较。'
+                if panels.get('oracle.identity_diff', {}).get('status') == 'unavailable'
+                else oracle_view.first_message(result, len(layers)))
+            if status=='ok' and len(layers) and all(_scalar(r.get('relative_l2'))==0 for r in layers):
+                section['message'] += '各观测位置的相对 L2 误差均为 0。'
+            section['evidence_href'] = 'result.json'
         for key, (subtitle, subcolumns) in EXTRAS.items():
             if ident.startswith('oracle.') and key in ('introduced','introduced_routes','amplification') and 'oracle.op_sensitivity' in panels and ident!='oracle.op_sensitivity':
                 continue
@@ -309,6 +410,8 @@ def build(model, doc, source=None):
                 subtitle = '设备类别与关联概览'
                 subcolumns = ('dev','category','association_label','events','device_work_ns')
             note = (str(coverage.get('headline_note','来源已选范围')) if key == 'headline' else description)
+            if ident == 'oracle.op_sensitivity' and key in ('introduced','amplification'):
+                values = (oracle_view.operator_row(r, route_note) for r in values)
             add_table(model,ident+'.'+key,subtitle,values,subcolumns or columns,note,status)
         if ident == 'memory':
             from .curves import memory_envelope
@@ -346,6 +449,13 @@ def build(model, doc, source=None):
     if source:
         _export_tables(model,Path(source))
         _timeline(model,Path(source),doc.get('diagnosis') or {})
+    if oracle:
+        if first_record:
+            add_table(model,'oracle.propagation','相邻观测位置的误差变化',
+                      oracle_view.changes(first_record, model.rows('oracle.samples')),
+                      ('sample','before','before_l2','after','after_l2','change_label','ratio'),
+                      '同一样本相邻位置的相对 L2。倍数等于后一处误差除以前一处误差，前值为零时只展示前后值。')
+        model.meta['oracle_overview'] = oracle_view.overview(model, panels, doc.get('paired_tensors'))
     if doc.get('schema')=='runner-result/1':model.meta['title']='性能基准结果'
     if doc.get('runner_summary'):
         add_runner(model,doc['runner_summary'])
@@ -359,7 +469,7 @@ def build(model, doc, source=None):
     for section in model.sections:
         if section['id'] in ('oracle.samples','perf.op.forwards','perf.layer.forwards') and len(model.rows(section['id']))>2000:
             section['kind']='evidence'
-    model.sections = [s for s in model.sections if len(model.rows(s['id']))]
+    model.sections = [s for s in model.sections if s.get('message') or len(model.rows(s['id']))]
     known={s['id'] for s in model.sections}
     for finding in model.meta['findings']:
         if finding.get('section') not in known:finding['section']=None
@@ -370,6 +480,8 @@ def build(model, doc, source=None):
 
 def _summarize(model, panels):
     device = model.rows('perf.device')
+    origin = panels.get('perf.device',{}).get('coverage',{}).get('capture_provenance') or {}
+    scope = '导入文件内的' if origin.get('origin')=='external-export' else '已记录的' if origin else '全采集窗口'
     maxima = {};category_totals={}
     positions = {}
     for index, row in enumerate(device):
@@ -385,7 +497,7 @@ def _summarize(model, panels):
         name=maximum.get('native_owner') or maximum.get('name','未命名活动')
         short=name if len(name)<=90 else name[:87]+'…'
         share=maximum['device_work_ns']/category_totals[category] if category_totals[category] else None
-        model.finding('全采集窗口'+display(category)+'热点',
+        model.finding(scope+display(category)+'热点',
                       short+'；设备工作量 '+display(maximum['device_work_ns'],'device_work_ns')+
                       '，占同类别已记录时长和 '+display(share,'duration_share')+
                       '；记录 '+str(maximum.get('events',0))+' 次。完整名称与来源见对应聚合项。','perf.device',row_index=positions[category])
@@ -401,18 +513,14 @@ def _summarize(model, panels):
     if p:
         first = next(iter(rows(p.get('data'))),{}).get('first_inequal')
         if first:
-            model.finding('首个已观测差异：'+str(first.get('scope',first.get('boundary','未记录位置'))),
-                          '样本 '+str(first.get('sample','未记录'))+'；最大绝对误差 '+
-                          display(first.get('max_abs'))+'；相对 L2 '+display(first.get('relative_l2'))+
-                          '；不同 / 有效元素 '+str(first.get('differing_elements','未记录'))+' / '+str(first.get('valid_elements','未记录'))+
-                          '；证据 '+display(first.get('level'))+'。上一个相等边界：'+str(first.get('last_equal_boundary','未记录'))+
-                          '。首差异描述已配对的观测顺序。','oracle.first_divergence',row_index=0)
-        elif p.get('status') == 'ok':
-            model.finding('已配对观测中未发现数值差异',
-                          '比较范围、样本和完整 / 抽样证据见下方；该结果不替代任务精度标准。','oracle.layer')
-        else:
-            model.finding('首差异结论尚不完整',
-                          '需要先查看比较身份、未配对项和数值证据范围。','oracle.identity_diff','coverage')
+            previous = first.get('last_equal_boundary')
+            model.finding('首个已观测差异位于 '+str(first.get('scope',''))+' / '+str(first.get('boundary','')),
+                          '样本 '+str(first.get('sample','未记录'))+' 的最大绝对误差为 '+
+                          display(first.get('max_abs'))+'，相对 L2 为 '+display(first.get('relative_l2'))+'。'+
+                          ('上一处观测一致的位置为 '+previous+'。' if previous else '在此之前没有已记录的一致边界。'),
+                          'oracle.first_divergence',row_index=0)
+        elif p.get('status') == 'partial':
+            model.finding('部分位置无法配对', '请在首差异页核对缺失位置和覆盖范围。','oracle.first_divergence','coverage')
     introduced = model.rows('oracle.op_sensitivity.introduced')
     if len(introduced):
         model.finding('同输入引入差异的调用：'+str(len(introduced))+' 条',
@@ -472,11 +580,6 @@ def _insights(model):
         else:valid+=1
     if unavailable or valid:
         model.finding('资源统计可用范围',str(valid)+' 个指标窗口有均值；'+str(unavailable)+' 个窗口缺少有效统计。先查看覆盖与采样分辨率，再阅读阶段功率、能耗或频率。','resource','coverage')
-    replay=list(model.rows('oracle.replay'))
-    if replay:
-        valid=sum(bool(r.get('valid')) for r in replay)
-        model.finding('同输入回放：'+str(valid)+' / '+str(len(replay))+' 组有效',
-            '各侧原输出复现、输入签名与同输入误差分别保留。这里检验隔离调用，不直接推导最终模型输出变化。','oracle.replay')
     links=list(model.rows('oracle.perf_links'))
     if links:
         joined=sum(bool(r.get('matched_rows')) for r in links)
@@ -577,13 +680,44 @@ def _group(model, doc, source):
         if not oracle:
             row['execution_summary'] = _rank_summary({**row, **receipts.get(rank,{})})
         ranks.append(row)
-    add_table(model,'group.ranks','各 rank 报告',ranks,('rank','execution_summary','report'))
+    rank_columns = ('rank','execution_summary','comparison_status','paired_tensors','blocking_fields','report') if oracle else ('rank','execution_summary','report')
+    add_table(model,'group.ranks','各 rank 报告',ranks,rank_columns)
     add_table(model,'communication.aligned','同次通信的跨 rank 对照',doc.get('device_calls'),
               ('group','group_seq','rank_device_union_ns','cross_rank_min_observed_ns','cross_rank_max_observed_ns','cross_rank_difference_ns','reason'),
               '按通信域与序号配对；差值是观测占用差，不等于额外等待。缺少时钟关系时不画共同绝对时间轴。',
               kind='communication')
-    add_table(model,'group.counts','模型通信计数与阶段',doc.get('rank_counts'),
-              ('rank','forwards','steps','forward_phases','allreduce','allgather','model_count_matches'))
+    rank_counts = []
+    for record in rows(doc.get('rank_counts')):
+        row = dict(record)
+        phases = row.get('forward_phases') or {}
+        for phase in ('warmup','measure','unknown'):
+            row[phase+'_forwards'] = phases.get(phase)
+        if not phases:
+            row['_field_notes'] = dict.fromkeys(('warmup_forwards','measure_forwards','unknown_forwards'),
+                                                '原结果未记录阶段拆分')
+        basis = row.get('count_basis')
+        denominator = {'root_module_spans': 'forwards', 'generation_steps': 'steps'}.get(basis)
+        if denominator and row.get(denominator) and row.get('allreduce') is not None:
+            n = row[denominator]
+            unit = '生成步' if denominator=='steps' else '前向'
+            row['allreduce_average'] = f"{row['allreduce']} ÷ {n} = {display(row['allreduce']/n)} 次/{unit}"
+        elif denominator and not row.get(denominator):
+            row.update(expected_allreduce=None, expected_allgather=None, model_count_matches=None)
+            row.setdefault('_field_notes', {})['model_count_matches'] = (
+                '缺少已完成的生成步，无法核对理论次数' if denominator=='steps' else '缺少前向记录，无法核对理论次数')
+        if 'model_call_phases' in row and not row['model_call_phases']['unknown']:
+            row['measured_model_calls'] = row['model_call_phases']['measure']
+        rank_counts.append(row)
+    add_table(model,'group.counts','模型通信计数与阶段',rank_counts,
+              ('rank','forwards','warmup_forwards','measure_forwards','unknown_forwards','steps',
+               'allreduce','allgather','allreduce_average','model_count_matches'),
+              '每行对应一个 rank。模型通信总数覆盖本次运行，均值的分母见算式。')
+    if any('logical_calls' in row for row in rank_counts):
+        columns = ('rank','logical_calls','model_calls','control_calls_count','other_calls',
+                   'measured_model_calls','device_linked_calls')
+        coverage = ({k:r[k] for k in (*columns, 'model_call_phases') if k in r} for r in rank_counts)
+        add_table(model,'group.communication_coverage','各 rank 的逻辑通信与设备计时',coverage,columns,
+                  '正式阶段调用数来自通信记录关联的根模块阶段。每次设备计时均需有明确关联的设备活动区间。')
     if doc.get('control_calls'):
         add_table(model,'group.control_calls','控制组通信',doc['control_calls'],
                   ('backend','op','rank','group_seq','host_duration_ns','device_union_ns'),
@@ -595,8 +729,9 @@ def _group(model, doc, source):
     aligned=list(rows(doc.get('device_calls')))
     usable=[(i,r) for i,r in enumerate(aligned) if r.get('cross_rank_difference_ns') is not None]
     if doc.get('model_call_count'):
-        model.finding(f"模型通信已配对 {doc['paired_model_calls']} / {doc['model_call_count']} 次",
-                      '每次按通信组和调用序号核对两个 rank 的设备区间。','communication.aligned')
+        model.finding(f"有双端设备计时的模型通信 {doc['paired_model_calls']} / {doc['model_call_count']} 次",
+                      '每次按通信组和调用序号核对两个 rank 的设备区间。',
+                      'communication.aligned' if aligned else 'group.counts')
     if usable:
         index,worst=max(usable,key=lambda pair:pair[1]['cross_rank_difference_ns'])
         model.finding('跨 rank 通信占用差最大的已配对调用',
@@ -611,8 +746,9 @@ def _group(model, doc, source):
                       'group.control_calls','coverage')
     elif unlinked:
         counts = '、'.join(f'rank {rank} 有 {n} 次' for rank,n in sorted(unlinked.items()) if n)
-        detail = counts+'逻辑通信调用缺少对应的设备活动区间，无法比较这些调用在各 rank 上的设备耗时。'
-        model.finding('通信设备耗时的观测范围',detail,'group.counts','coverage')
+        detail = counts+'逻辑通信调用缺少对应的设备活动区间，这些调用的设备耗时未测得。'
+        model.finding('通信设备耗时的观测范围',detail,
+                      'group.communication_coverage' if any('logical_calls' in r for r in rank_counts) else 'group.counts','coverage')
     model.meta['notices'].extend(str(v) for v in doc.get('issues',[]))
     if source:
         for rank in ranks:
@@ -658,8 +794,15 @@ def _three_way(model, doc):
     add_table(model,'oracle.three_way','相同参考下的误差变化',doc.get('comparisons'),
               ('scope','boundary','sample','rank','metric','reference_to_baseline','reference_to_candidate',
                'baseline_to_candidate','delta','relative_change','reason'))
-    add_table(model,'oracle.pair_statuses','三路比较的身份核对',doc.get('pair_statuses'),('pair','rank','status'))
-    model.finding('三组精度证据已分别计算','先核对三路身份状态，再沿同一样本和调用键比较误差变化；缺侧或证据范围不同的行不计算变化量。','oracle.three_way')
+    statuses = list(rows(doc.get('pair_statuses')))
+    add_table(model,'oracle.pair_statuses','三路比较的身份核对',statuses,
+              ('pair','rank','status','comparison_status','paired_tensors','blocking_fields'))
+    blocked = [r for r in statuses if r.get('comparison_status') == 'not_comparable' or r.get('status') == 'unavailable']
+    if blocked:
+        labels = '、'.join(dict.fromkeys(display(r['pair']) for r in blocked))
+        model.finding('部分精度对照未满足比较条件',labels+' 缺少可比较的张量。逐对查看阻断条件和实际配对数。','oracle.pair_statuses','coverage')
+    else:
+        model.finding('三组精度证据已分别计算','先核对三路身份状态，再沿同一样本和调用键比较误差变化；缺侧或证据范围不同的行不计算变化量。','oracle.three_way')
     for label,href in doc.get('reports',{}).items():
         model.meta['links'].append(dict(label=label,href=href))
 
@@ -729,6 +872,7 @@ def _redraw(source, out, *,  limits=None, runner_results=None, refresh_view=Fals
             if len(header.encode()) <= model.limits.record_bytes:
                 page = json.loads(header).get('value', {}) if header.strip() else {}
                 refresh_view = (page.get('field_display_version') != FIELD_DISPLAY_VERSION or
+                                page.get('mode') == 'oracle' and 'oracle_overview' not in page or
                                 page.get('mode') == 'monitor' and 'monitor_gaps' not in page or
                                 page.get('mode') == 'monitor' and page.get('diagnosis_layout_version') in (2, 3) or
                                 'diagnosis_layout_version' not in page and any(

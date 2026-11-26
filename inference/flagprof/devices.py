@@ -15,6 +15,17 @@ def accelerator(dev):
     return bool(device_types(dev) - {'cpu', 'meta'})
 
 
+def validate_target_device(device, vendor):
+    """Validate a declaration without importing the accelerator runtime."""
+    if device is None:
+        return
+    from .vendors import adapter
+    family = adapter(vendor, 'execution').TORCH_DEVICE
+    prefix, _, index = str(device).partition(':')
+    if prefix != family or not index.isascii() or not index.isdecimal() or (len(index) > 1 and index[0] == '0'):
+        raise ValueError(f'--target-device for {vendor} needs an indexed logical device, e.g. {family}:0')
+
+
 def execution_device(requested=None):
     """Resolve the PyTorch device only when executing a workload."""
     import os

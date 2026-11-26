@@ -92,7 +92,8 @@ def request_windows(inputs, capture_windows):
         steps = sorted((s for s in inputs.get('request_steps', [])
                         if all(s.get(k) == request.get(k) for k in ('request_id','writer_id','rank','pid','clk'))
                         and s.get('parent') == request['corr']), key=lambda s: s['generation_step'])
-        complete = bool(inputs.get('capture_normal_close') and steps and steps[-1].get('done')
+        producer_observed = (inputs.get('capture_provenance') or {}).get('origin') != 'external-export'
+        complete = bool(producer_observed and inputs.get('capture_normal_close') and steps and steps[-1].get('done')
                         and [s['generation_step'] for s in steps] == list(range(len(steps)))
                         and all(request['start_ns'] <= s['start_ns'] <= s['end_ns'] <= request['end_ns'] for s in steps))
         for bridge in candidates:

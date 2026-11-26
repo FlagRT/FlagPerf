@@ -149,6 +149,10 @@ def check(config, source, job):
             expected = adapter(vendor, 'execution').TORCH_DEVICE
             if device.split(':', 1)[0] != expected:
                 raise ValueError(f'hardware.device={device} 与 {vendor} 的设备类型 {expected} 不匹配')
+    if target['type'] == 'command' and config.get('monitor', {}).get('enabled') and hardware['device'] != 'auto':
+        from flagprof.devices import validate_target_device
+        format_vendor = next(d['format_vendor'] for d in descriptors if d['id'] == vendor) if plugins else vendor
+        validate_target_device(hardware['device'], format_vendor)
     if hardware['device'] == 'cpu' and not plugins:
         raise ValueError('CPU 基准使用 profile.preset=none')
     for path in c.get('log_files', []):

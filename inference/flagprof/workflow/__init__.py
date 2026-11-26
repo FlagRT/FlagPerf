@@ -39,6 +39,8 @@ def display(result):
         print(f"产物 {result['output_type']}   组件执行者 {result['component_owner']}   厂商 {result['vendor'] or '无需探测'}")
     if result.get('action') in ('check','dry-run'):
         print(f"[OK] 输入 {result['input_type']}")
+        for row in result.get('dependencies', []):
+            print(f"[OK] {row['step']}  {row['python']}  {', '.join(row['imports'])}")
         if 'model_ids' in result:
             print(f"     名册 {result['roster_source']}  模型 {', '.join(result['model_ids']) or '无匹配项'}")
             for item in result['missing_inputs']:
@@ -106,6 +108,8 @@ def dispatch(args):
             if args.dry_run:
                 result.update(config=config,value_sources=origins,job_dir=str(job))
             else:
+                from .dependencies import check_dependencies
+                result['dependencies'] = check_dependencies(config, plan, assets)
                 result['planned_steps'] = [s['id'] for s in result.pop('steps')]
         else:
             reserved = reserve(job, not out.get('job_dir'))

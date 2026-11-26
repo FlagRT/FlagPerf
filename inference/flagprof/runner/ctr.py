@@ -1061,7 +1061,7 @@ def _run_ctr(*, package, arch, seed, device, dtype, outputs, samples=None,
                     handle.record_tensor('scores', scores)
                 return scores
             if handle:
-                handle.bind_tensor_inputs(sample_ids, inputs, identity=identity)
+                handle.bind_tensor_inputs(sample_ids, inputs, identity=identity, model_name='template:' + arch)
             folder = out / (str(repeat)+'-'+str(batch_index)) if repeats > 1 else (out / str(batch_index) if len(batches) > 1 else out)
             run_rows.append(dict(samples=sample_ids,
                 run=run_prepared(model, inputs, warmup=warmup,

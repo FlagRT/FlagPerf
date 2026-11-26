@@ -14,7 +14,7 @@ GROUPS = [
     ('compare', '比较条件', ('comparisons', 'window.comparisons')),
     ('metrics', '指标对照', ('comparison',)),
     ('identity', '比较条件与生成轨迹', ('oracle.identity_diff', 'oracle.generation')),
-    ('layers', '首差异与逐层传播', ('oracle.first_divergence', 'oracle.propagation', 'oracle.layer')),
+    ('layers', '逐层数值差异与首差异', ('oracle.layer', 'oracle.first_divergence', 'oracle.propagation')),
     ('operators', '算子差异归因', ('oracle.op_sensitivity',)),
     ('verify', '回放与独立性能', ('oracle.replay', 'oracle.perf_links')),
     ('samples', '样本与配对', ('oracle.samples', 'oracle.alignment')),
@@ -48,8 +48,9 @@ EXCERPTS = {
     'compare': ('comparison.metrics','window.comparisons'),
     'oracle': ('oracle.layer','oracle.first_divergence','oracle.propagation','oracle.op_sensitivity.introduced','oracle.replay'),
     'oracle-three-way': ('oracle.three_way',), 'diagnosis': ('diagnosis','diagnosis.coverage'),
-    'monitor': ('monitor.series','monitor.findings'), 'group': ('group.ranks','group.counts','communication.aligned','group.control_calls','performance.baseline')}
+    'monitor': ('monitor.series','monitor.findings'), 'group': ('group.ranks','group.counts','group.communication_coverage','communication.aligned','group.control_calls','performance.baseline')}
 SUMMARY_COLUMNS = {
+    'group.counts':'rank forwards warmup_forwards measure_forwards unknown_forwards steps allreduce allgather allreduce_average',
     'performance.baseline':'rank shape phase observations median_ns p95_ns samples_per_second independent_repeats repeat_cv',
     'comparison.metrics':'rank phase metric baseline candidate delta relative_change',
     'oracle.three_way':'sample scope boundary metric reference_to_baseline reference_to_candidate relative_change',
@@ -69,9 +70,10 @@ CHARTS = {
     'communication.aligned':'rank_sequence', 'group.ranks':'rank_cards', 'diagnosis':'fault_timeline',
     'monitor.series':'monitor_grid', 'memory.series':'memory_curve', 'resource.series':'resource_curve',
     'resource':'resource_statistics', 'resource.stages':'resource_statistics'}
-FILTER_KEYS = set('dev rank sample level metric category route_decision entity group comparison_status rule state introduced equal instrumentation'.split())
+FILTER_KEYS = set('dev rank sample level metric category route_decision entity group comparison_status rule state introduced equal instrumentation op_verdict'.split())
 SHORTCUTS = [('category','compute','仅看计算'),('category','memcpy','仅看搬运'),('category','comm','仅看通信'),
              ('route_decision','fallback','仅看回退'),('introduced','true','仅看同输入引入'),
+             ('op_verdict','进入算子前输入已不同','仅看输入已不同的调用'),
              ('equal','false','仅看不同项'),('comparison_status','not_comparable','仅看不可比项')]
 
 
@@ -90,10 +92,10 @@ def filters(ident,keys):
     return sorted(scope)
 
 
-def compact(value):
+def compact(value, key=''):
     if isinstance(value,list) and len(value)>4:
-        return str(len(value))+' 项 · '+display(value[:3])+'…'
-    return display(value)
+        return str(len(value))+' 项 · '+display(value[:3],key)+'…'
+    return display(value,key)
 
 
 def decorate(model):
@@ -112,18 +114,32 @@ def decorate(model):
     context = []
     for fact in meta['facts']:
         label, value = fact['label'], fact['value']
+        field = fact.get('field', '')
         if isinstance(value,dict) and 'ref' in value and 'cmp' in value:
-            context.append(dict(label=label,left=compact(value['ref']),right=compact(value['cmp']),
-                                different=value['ref']!=value['cmp']))
+            def fact_text(v):
+                if field == 'samples' and isinstance(v, list):
+                    return str(len(v))+' 个（'+display(v[:3], 'samples')+('…' if len(v)>3 else '')+'）'
+                if field in ('inputs_sha256','oracle_id') and isinstance(v,str) and len(v) == 64:
+                    other = value['cmp'] if v == value['ref'] else value['ref']
+                    if v == other or not isinstance(other,str) or (v[:12],v[-6:]) != (other[:12],other[-6:]):
+                        return v[:12]+'…'+v[-6:]
+                if label == 'FlagGems' and isinstance(v, dict) and v.get('enabled') is not None:
+                    return display(v['enabled'])
+                return compact(v, field)
+            context.append(dict(label=label,field=field,left=fact_text(value['ref']),right=fact_text(value['cmp']),
+                                different=bool(fact.get('status_text')) or value['ref']!=value['cmp'],
+                                status_text=fact.get('status_text')))
         else:
-            context.append(dict(label=label,value=compact(value)))
+            context.append(dict(label=label,field=field,value=compact(value, field)))
     if not any(f['label'] in ('设备','参考侧','来源 1') for f in context) and mode=='profile':
         context.append(dict(label='设备与模型身份',value='历史记录未提供'))
     for row in model.rows('comparisons'):
         for diff in row.get('differences') or ():
             if isinstance(diff,dict):
-                context.append(dict(label=display(diff.get('field'),'field'),left=compact(diff.get('left')),
-                                    right=compact(diff.get('right')),different=True))
+                field = diff.get('field') or ''
+                key = field.rsplit('.',1)[-1]
+                context.append(dict(label=display(field,'field'),left=compact(diff.get('left'),key),
+                                    right=compact(diff.get('right'),key),different=True))
     meta['context_summary'] = sorted(context,key=lambda f:not f.get('different'))
     meta['banners'] = [f for f in meta['findings'] if f['level']=='fault']
     meta['credibility'] = [dict(label=f['title'],detail=f['detail'],section=f.get('section'))
@@ -169,6 +185,11 @@ def decorate(model):
                                               for k in s['columns']))
         group,title,_ = next((g for g in GROUPS if any(ident==p or ident.startswith(p+'.') for p in g[2])),
                              (ident,s['title'],()))
+        if group == 'identity' and 'oracle.generation' not in ids:
+            title = '比较条件'
+        parent = ident.removesuffix('.quality')
+        if group in ('layers','operators') and parent != ident and parent in ids:
+            s['quality_for'] = parent
         if ident.rpartition('.')[0] in descriptions and descriptions[ident.rpartition('.')[0]]==s.get('description'):
             s['description']=''
         if 'filter_scope' not in s:
@@ -192,9 +213,12 @@ def decorate(model):
                     'compare':['compare','metrics'],'monitor':['monitor'],'training':['training']}.get(mode,[])
     priority = (['diagnosis'] if meta['banners'] else []) + first_groups
     order = list(dict.fromkeys(priority+[s['group'] for s in model.sections]))
+    layer_tabs = ['oracle.layer','oracle.first_divergence','oracle.propagation']
     def tab_order(s):
         if s['group'] == 'resource':
             return curve_order.get(s['id'], float('inf'))
+        if s['group'] == 'layers':
+            return layer_tabs.index(s['id']) if s['id'] in layer_tabs else len(layer_tabs)
         return int(s['id'] in ('diagnosis.coverage','diagnosis.evidence'))
     model.sections.sort(key=lambda s:(order.index(s['group']),tab_order(s)))
 

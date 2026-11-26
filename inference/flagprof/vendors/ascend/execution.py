@@ -31,6 +31,7 @@ def allocator_memory(device):
 def physical_identity(device):
     import ctypes as C
     import torch
+    import torch_npu
     library = C.CDLL('libascendcl.so')
     function = library.aclrtGetPhyDevIdByLogicDevId
     function.argtypes = [C.c_int, C.POINTER(C.c_int)]

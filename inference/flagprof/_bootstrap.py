@@ -38,7 +38,7 @@ def bootstrap(injection):
     if not expected or not all(v is not None for v in parent.values()) or parent != expected:
         chain_sitecustomize(injection)
         return
-    from .runtime import attach
+    from .runtime import attach, startup_error
     from .registry import Registry
     import uuid
     handshake = Path(config['run'])/'handshakes'/uuid.uuid4().hex
@@ -53,6 +53,8 @@ def bootstrap(injection):
                         registry=Registry(config.get('descriptors')), identity=config.get('identity'),
                         backend_options=config.get('backend_options'),capture_mode=config.get('capture_mode','windowed'))
         state.update(attachment=handle.id, status=handle.state['status'])
+        if state['status'] != 'running':
+            state['error'] = startup_error(handle.state)
     except Exception as error:
         state.update(status='failed', error=repr(error))
     atomic_json(handshake, state)

@@ -15,9 +15,8 @@ def conditions(left,right,declare=None):
         result=comparable(a,b)
         for side,value in (('left',a),('right',b)):
             identity=value.get('workload_identity') or {}
-            if identity.get('task')=='generate':
-                if not identity.get('generation'):result['reasons'].append(side+':output_semantics_missing')
-            elif not identity.get('pooling'):result['reasons'].append(side+':output_semantics_missing')
+            semantics = {'ctr':'score_semantics','generate':'generation'}.get(identity.get('task'),'pooling')
+            if not identity.get(semantics):result['reasons'].append(side+':output_semantics_missing')
         if result['reasons']:result['status']='not_comparable'
         return result
     original=checked(left,right)

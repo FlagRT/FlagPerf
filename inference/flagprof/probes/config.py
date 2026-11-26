@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 PRESETS = ('perf', 'modules', 'coverage', 'perf-lite', 'accuracy', 'monitor')
-KEYS = {'diagnose', 'monitor', 'monitor_interval_ms', 'monitor_topology', 'monitor_root', 'flaggems', 'flaggems_include', 'flagtree', 'vendor_compiler', 'dispatch', 'layers', 'probes',
+KEYS = {'diagnose', 'monitor', 'monitor_interval_ms', 'monitor_topology', 'monitor_root', 'target_device', 'flaggems', 'flaggems_include', 'flagtree', 'vendor_compiler', 'dispatch', 'layers', 'probes',
         'each_start', 'each_count', 'fallback_calls', 'summary_seconds',
         'tensor_blob','tensor_blob_bytes','tensor_ops_in','tensor_boundaries'}
 
@@ -43,6 +43,8 @@ def resolve(preset, config=None):
     result.setdefault('monitor_topology', None)
     if result['monitor'] not in ('on','off') or (preset == 'monitor' and result['monitor'] == 'off'):
         raise ValueError('monitor requires on/off; monitor preset requires on')
+    if result.get('target_device') is not None and result['monitor'] != 'on':
+        raise ValueError('--target-device requires monitoring (--monitor on or --preset monitor)')
     if result['monitor_topology'] not in (None,'host','local','agent'):
         raise ValueError('monitor topology requires host, local or agent')
     if result['monitor_topology']=='agent' and not result.get('monitor_root'):

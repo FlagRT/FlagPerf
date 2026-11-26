@@ -82,7 +82,9 @@ def generate(ref,cmp,out,*,declare=None,limits=None,**options):
     for rank,(left,right) in enumerate(zip(ar,br)):
         result=generate_oracle(left,right,out/('rank-'+str(rank)),declare=declare,limits=limits,
             **{k:v.get(rank) for k,v in mapped.items()})
-        ranks.append(dict(rank=rank,report='rank-'+str(rank)+'/report.html',panels=result['panels']))
+        ranks.append(dict(rank=rank, report='rank-'+str(rank)+'/report.html', panels=result['panels'],
+                          comparison_status=result['comparison_status'], blocking_fields=result['blocking_fields'],
+                          paired_tensors=result['paired_tensors'], paired_boundaries=result['paired_boundaries']))
     status='ok' if all(all(v in ('ok','unavailable') for v in r['panels'].values()) and
                        r['panels'].get('oracle.identity_diff')=='ok' for r in ranks) else 'partial'
     result=dict(schema='oracle-group/1',status=status,samples=len(ai.get('samples',[])),world_size=2,

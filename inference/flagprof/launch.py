@@ -19,7 +19,7 @@ from .store.manifest import atomic_json, proc_key
 
 def worker(settings, rank):
     from .offline.capture import execute_target
-    from .runtime import attach
+    from .runtime import attach, startup_error
     from .store import create_run
     root = Path(settings['root'])/('rank-'+str(rank))
     root.mkdir()
@@ -52,7 +52,7 @@ def worker(settings, rank):
                                 _compiler_store=Path(settings['root']))
                 handle.register_device(device)
                 if handle.state['status'] != 'running':
-                    raise RuntimeError('worker attachment did not start')
+                    raise RuntimeError('worker attachment did not start: '+startup_error(handle.state))
             execute_target(args)
             code = 0
     except SystemExit as error:

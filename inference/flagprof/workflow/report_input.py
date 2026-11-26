@@ -84,7 +84,7 @@ def report_info(path, *, record_bytes=16<<20, details=False):
     result=dict(results={},runner_summary={},comparisons=[],metric_status_counts=Counter(),missing_deltas=Counter())
     try:
         for field in fields(stream):
-            if field in ('schema','status','issues','pair_statuses'):
+            if field in ('schema','status','issues','pair_statuses','comparison_status','blocking_fields','paired_tensors','paired_boundaries'):
                 result[field]=stream.value()[0]
             elif field=='results':
                 for panel in fields(stream):

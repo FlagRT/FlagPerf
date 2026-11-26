@@ -14,6 +14,43 @@ from flagprof.vendors.chrome import nanoseconds
 from .clock_bridge import collect, request_windows
 
 
+def external_context(context, metadata):
+    """External seals attest to the supplied trace, not to the runner arguments."""
+    if metadata.get('origin') != 'external-export':
+        return context
+    context['capture_provenance'] = dict(origin='external-export',
+        normal_close_evidence=metadata.get('normal_close_evidence'))
+    # Keep the declared value alongside its origin. A declaration alone cannot
+    # establish a complete project request in clock_bridge.request_windows.
+    context['capture_normal_close'] = metadata.get('normal_close')
+    context['metadata_sources'] = ['capture.json metadata', 'imported trace']
+    window = dict(context.get('window_identity') or {}, profiler=None, repeats=None, window_kind=None)
+    context['window_identity'] = window
+    for interval in context.get('windows', ()):
+        if interval.get('kind') == 'official_capture':
+            interval['kind'] = 'exported_capture_interval'
+        interval['window_identity'] = dict(interval.get('window_identity') or window,
+            repeats=None, profiler=None, window_kind=interval['kind'])
+    return context
+
+
+def read_capture_context(run, reference, context):
+    """Correct early external projections using the registration bound to the trace."""
+    if (not reference or reference.get('registration_path') != 'plan-b-capture.json'
+            or context.get('source_run_id') or 'capture_provenance' in context):
+        return context
+    import hashlib
+    from .limits import METADATA_BYTES
+    path = Path(run)/'plan-b-capture.json'
+    if path.is_symlink() or not path.is_file():
+        raise ValueError('invalid capture registration file')
+    with path.open('rb') as stream:
+        raw = stream.read(METADATA_BYTES + 1)
+    if len(raw) > METADATA_BYTES or hashlib.sha256(raw).hexdigest() != reference['registration_sha256']:
+        raise ValueError('capture registration changed')
+    return external_context(context, json.loads(raw)['capture']['metadata'])
+
+
 def capture_context(directory, capture):
     from .limits import read_json
     from flagprof.store import StoreView
@@ -59,7 +96,7 @@ def capture_context(directory, capture):
         profile_memory=meta.get('requested_configuration',{}).get('profile_memory')),
         workload_identity=identity,steps=steps,metadata_sources=['collection manifest argv','attachment state','generation_step_complete'],
         clock=importlib.import_module('flagprof.vendors.'+capture['vendor']+'.analysis').clock(directory,capture))
-    return out
+    return external_context(out, meta)
 
 
 class Builder:
@@ -75,7 +112,9 @@ class Builder:
         facts=self.adapter.activity(event,self.context,self.db.get('labels',event.get('pid'),''))
         if event.get('ph')=='X' and event.get('name','').startswith('PyTorch Profiler'):
             if record['ts'] is not None and record['dur'] is not None:
-                self.explicit_windows.append(dict(kind='official_capture',start_ns=record['ts'],end_ns=record['ts']+record['dur'],
+                external = (self.inputs.get('capture_provenance') or {}).get('origin') == 'external-export'
+                self.explicit_windows.append(dict(kind='exported_capture_interval' if external else 'official_capture',
+                    start_ns=record['ts'],end_ns=record['ts']+record['dur'],
                     boundary_source=dict(trace_uid=self.uid,loc=record['loc'])))
         if facts is None:return
         row=dict(facts,source=dict(trace_uid=self.uid,loc=record['loc']),source_clock=self.uid,

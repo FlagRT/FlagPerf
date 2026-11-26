@@ -3,11 +3,31 @@
 """Shared vocabulary and display units for production result reports."""
 import math
 
+# Absolute clock readings are lookup keys in traces and kernel logs.
+# Relative times and durations retain their scaled units.
+RAW_CLOCK_FIELDS = frozenset({
+    'ts', 'first_detected', 'observed_at', 'start_ns', 'end_ns', 'started_ns',
+    'exit_ns', 'event_time_ns', 'source_time_ns', 'started_raw_ns', 'ended_raw_ns',
+    'origin_raw_ns', 'sampling_epoch_ns', 'epoch_ns', 'monotonic_ns', 'mono_ns',
+    'st_mtime_ns', 'st_ctime_ns', 'raw_ts_ns', 'raw_start_ns', 'raw_end_ns',
+    'raw_before_ns', 'raw_after_ns', 'mapped_start_ns', 'mapped_end_ns',
+    'mapped_raw_start_ns', 'mapped_raw_end_ns', 'original_start_ns', 'original_end_ns',
+    'base_time_ns', 'wall_ns', 'peak_source_time_ns', 'release_source_time_ns',
+    'host_monotonic_ns', 'start_monotonic_ns', 'device_workers_exited_monotonic_ns',
+})
+
 LABELS = {
     'execution_summary':'执行结果','process_returncode':'进程退出码','exit_code':'退出码',
     'measure':'正式测量','unknown':'阶段未知','valid_tokens':'有效输入 token 数',
     'forward_phases':'各阶段前向次数','model_count_matches':'模型通信次数符合预期',
     'allreduce':'AllReduce 次数','allgather':'AllGather 次数',
+    'warmup_forwards':'预热前向','measure_forwards':'正式前向','unknown_forwards':'阶段未知前向',
+    'allreduce_average':'模型 AllReduce 均值（算式）','logical_calls':'逻辑调用总数',
+    'model_calls':'模型通信','control_calls_count':'控制通信','other_calls':'角色未确定的调用',
+    'measured_model_calls':'正式阶段模型通信','model_call_phases':'按前向阶段归属的模型通信',
+    'allreduce_per_basis':'按计数分母的 AllReduce 均值',
+    'count_basis':'通信计数分母来源','expected_allreduce':'理论 AllReduce 次数',
+    'expected_allgather':'理论 AllGather 次数',
     'differences':'条件差异','left':'基准','right':'候选','input_tokens':'输入 token 数','batch':'批量','category_share':'同类别工作量占比','comm_backend':'通信后端','workload_identity':'负载身份',
     'source_label':'比较来源','left_label':'基准来源','right_label':'比较来源','report':'对应报告',
     'event_time_ns':'原始事件时刻','event_clock':'原始事件时钟','event_detail':'原始事件内容',
@@ -20,6 +40,7 @@ LABELS = {
     'native_owned_time_ratio':'原生归属时长占比','project_resolved_time_ratio':'项目归属时长占比','linked_time_ratio':'关联事件时长占比',
     'native_owned_ratio':'原生归属计数占比','project_resolved_ratio':'项目归属计数占比','linked_ratio':'关联事件计数占比',
     'count_denominator':'计数分母','time_denominator':'时长分母','warmup_excluded':'已排除预热观测',
+    'blocking_fields':'阻断条件','paired_tensors':'已配对张量记录','paired_boundaries':'已配对逐层边界',
     'process_repeat_distributions':'进程内重复分布','timing_boundary':'计时边界',
     'before':'前一边界','after':'后一边界','ratio':'变化倍数','change':'变化类型',
     'restricted_ns':'累计受限时间','observed_window':'有依据的观测时长','conclusion':'区间观察',
@@ -63,6 +84,15 @@ LABELS = {
     'input_shape':'输入形状', 'shape':'形状', 'dtype':'数值类型', 'strides':'步长',
     'backend':'后端', 'ver':'版本', 'total_ns':'总耗时', 'cache_hit_ratio':'缓存命中率',
     'field':'条件', 'ref':'参考侧', 'cmp':'比较侧', 'equal':'是否相同',
+    'inputs_sha256':'输入内容摘要', 'oracle_id':'精度对照身份', 'communication':'通信配置',
+    'batches':'分批与输入形状','boundaries':'采集位置','model_files':'模型文件摘要','pooling':'输出汇聚方式',
+    'probe_alg':'采样算法','include':'指定算子清单','numerics':'数值计算配置','padding_side':'填充方向',
+    'attention':'Attention 实现','compiler':'编译器','software':'软件版本','device':'设备','flaggems':'FlagGems',
+    'before_l2':'前一处相对 L2','after_l2':'后一处相对 L2','change_label':'误差如何变化',
+    'last_equal_boundary':'上一个已观测一致的位置','first_observed':'首次差异',
+    'op_verdict':'本次调用的判断','candidate_rule':'候选侧 FlagGems 路由规则',
+    'fixed_input':'固定使用的输入','replay_max_abs':'同输入最大绝对误差',
+    'replay_different':'不同元素数','replay_elements':'有效元素数',
     'requirement':'比较要求', 'declared':'已声明变化', 'wording':'首差异判定',
     'max_abs':'最大绝对误差', 'max_abs_ulp':'该位置 ULP 距离', 'relative_l2':'相对 L2 误差',
     'cosine_similarity':'余弦相似度', 'digest_equal':'数值摘要相同', 'differing_fraction':'不同元素占比',
@@ -112,12 +142,22 @@ LABELS = {
 }
 
 PANEL_LABELS = {'group.counts': {'forwards':'前向总次数（含预热）'},
+                'group.communication_coverage': {'device_linked_calls':'有设备计时的调用数'},
+                'group.control_calls': {'host_duration_ns':'主机调用耗时','device_union_ns':'关联设备占用时长'},
                 'group.execution': {'status':'执行状态','returncode':'worker 自报退出码'},
+                'oracle.op_sensitivity': {'boundary':'算子调用','input_status':'两侧输入','digest_equal':'输出摘要相同'},
                 'oracle.replay': {'valid':'输入与执行有效'}, 'monitor.series': {'valid':'有效样本'},
                 'training': {'step':'训练步'}, 'training.phases': {'step':'训练步','phase':'训练阶段'}}
 REASON_TEXT = {'reference_missing':'缺少参考记录','no_tensor_ops':'未记录张量算子',
+               'target device not registered':'目标未登记设备。以 --target-device 声明任务实际使用的逻辑设备，或在选卡后调用 current_attachment().register_device(device)。',
+               'target device identity unknown or conflicting':'目标设备身份缺失或冲突。核对设备映射后，在下次采集时用 --target-device 或 register_device(device) 登记。',
+               'device identity conflict: ':'节点清单中找不到任务设备 ',
+               'monitor and target source identities differ':'节点监控与目标采集记录的代码版本摘要不同',
                'diagnostic monitor unavailable: []':'诊断监控未提供可用观测'}
 VALUES = {
+    'exported_capture_interval':'外部文件记录的采集区间',
+    'recorded_capture_interval':'文件中记录的采集区间',
+    'root_module_spans':'根模块前向记录','generation_steps':'已完成的生成步',
     'failed':'失败','running':'运行中','missing':'缺少 worker 回执，无法确认执行状态',
     'unreadable':'worker 回执无法读取，无法确认执行状态',
     **REASON_TEXT,
@@ -127,7 +167,7 @@ VALUES = {
     'performance_read_partial':'独立性能记录只读到一部分','source_gap':'来源读取缺口',
     'missing_rank_device_link':'缺少某个 rank 的设备关联','identity_not_comparable':'身份或窗口不满足比较条件',
     'root':'根层','recorded_parent':'父层关系已记录','parent_unavailable':'父层关系未记录',
-    '0_to_nonzero':'误差由零变为非零','ratio':'已有误差的倍数变化',
+    '0_to_nonzero':'误差由零变为非零','ratio':'相邻位置的相对 L2 比值',
     'incomplete_energy_coverage':'能耗覆盖未达到完整窗口','token_denominator_unavailable':'缺少 token 分母',
     'power_domain_includes_other_chips':'功率域包含任务之外的芯片','preexisting_usage':'存在启动前占用',
     'framework_unobserved':'未观测到分配器数据','no_pre_sample_or_baseline':'缺少启动前样本或空闲基线',
@@ -141,7 +181,7 @@ VALUES = {
     'on':'开启','off':'关闭','flaggems_off':'未启用 FlagGems',
     'ok':'可用', 'available':'可读取', 'complete':'完成', 'completed':'完成',
     'partial':'部分可用', 'unavailable':'未提供', 'unknown':'未确定', 'not_recorded':'未记录',
-    'not_comparable':'条件不满足比较', 'comparable':'条件可比', 'declared_comparison':'已声明对照条件',
+    'not_comparable':'条件不满足比较', 'comparable':'条件可比', 'no_pairs':'没有可配对张量', 'declared_comparison':'已声明对照条件',
     'linked':'已关联项目调用', 'unlinked':'未关联项目调用', 'ambiguous':'关联不唯一',
     'hit':'命中', 'fallback':'回退', 'excluded':'策略 / 设备排除', 'error':'执行错误',
     'not_registered':'实现未注册', 'device_unsupported':'设备不支持', 'policy_excluded':'策略排除',
@@ -170,12 +210,12 @@ PANELS = {
     'perf.gap':('请求与设备窗口', ('kind','request_id','step','dev','window_ns','all_activity_union_ns','blank_ns','coverage_status')),
     'route.coverage':('组件路由与回退', ('name','sid','route_decision','reason','calls','host_ns','impl','scopes')),
     'compile.health':('编译观测', ('backend','ver','count','total_ns','median_ns','cache_hit_ratio')),
-    'oracle.identity_diff':('比较条件', ('field','ref','cmp','equal','requirement','declared')),
-    'oracle.first_divergence':('首个已观测差异', ('wording','scope','boundary','sample','max_abs','max_abs_ulp','differing_fraction')),
-    'oracle.layer':('逐层数值差异', ('scope','boundary','samples','digest_equal','relative_l2','cosine_similarity','max_abs','differing_fraction','ulp_histogram')),
-    'oracle.op_sensitivity':('算子输入与输出差异', ('boundary','input_status','call_config_status','error_in','error_out','amplification','introduced','expected_route')),
+    'oracle.identity_diff':('比较条件', ('field','equal','requirement','ref','cmp','declared')),
+    'oracle.first_divergence':('首个已观测差异', ('sample','last_equal_boundary','scope','boundary','wording','max_abs','relative_l2','differing_fraction')),
+    'oracle.layer':('逐层数值差异', ('scope','boundary','first_observed','samples','digest_equal','relative_l2','max_abs','differing_fraction','ulp_histogram')),
+    'oracle.op_sensitivity':('算子输入与输出差异', ('boundary','input_status','digest_equal','op_verdict','error_in','error_out','candidate_rule')),
     'oracle.perf_links':('同签名的独立性能证据', ('side','call_key','sid','matched_rows','route_agrees','reasons')),
-    'oracle.replay':('同输入回放', ('call_key','input_side','valid','self_reproduction','metrics','routes','reasons')),
+    'oracle.replay':('同输入回放', ('fixed_input','valid','replay_max_abs','replay_different','replay_elements','call_key','reasons')),
     'oracle.generation':('生成轨迹差异', ('sample','first_token_divergence','compare_steps','ref_steps','cmp_steps','lengths_equal')),
     'memory':('显存峰值', ('dev','component','metric','peak_bytes','peak_source_time_ns')),
     'resource':('资源观测', ('entity','metric','unit','mean','maximum','p95','coverage_ratio','status')),
@@ -230,6 +270,9 @@ def display(value, key=''):
         return MISSING_TEXT.get(key, '缺少'+LABELS.get(key,key or '该字段')+'记录')
     if isinstance(value, bool):
         return '是' if value else '否'
+    if key == 'pid_ns' or key in RAW_CLOCK_FIELDS:
+        if isinstance(value, int) or isinstance(value, str) and value.removeprefix('-').isascii() and value.removeprefix('-').isdecimal():
+            return str(value) + (' ns' if key in RAW_CLOCK_FIELDS and key.endswith('_ns') else '')
     if isinstance(value, (int, float)):
         if key.endswith('_ns'):
             if abs(value) >= 1e9: return number(value/1e9)+' s'
@@ -242,8 +285,9 @@ def display(value, key=''):
             return number(value)+' B'
         if key.endswith(('_ratio','_share','_fraction')) or key in ('relative_change','repeat_cv'):
             return number(value*100)+'%'
-        return number(value)
+        return str(value) if isinstance(value, int) else number(value)
     if isinstance(value, str):
+        if key in ('sample','samples','model'):return value
         if key=='instrumentation' and value=='none':return '无插桩'
         if key in ('field','metric'):
             return ' / '.join(LABELS.get(part,VALUES.get(part,part)) for part in value.split('.'))
@@ -259,11 +303,13 @@ def display(value, key=''):
     if isinstance(value, (list, tuple)):
         if 'shape' in key and all(isinstance(v,int) for v in value):
             return ' × '.join(map(str,value))
-        return '、'.join(display(v) for v in value) if value else '无'
+        return '、'.join(display(v, key if key=='samples' else '') for v in value) if value else '无'
     return str(value)
 
 
 def cell(row, key):
+    if key in ('ref','cmp') and 'paired_preview' in row:
+        return row['paired_preview']
     if key in ('max_abs','relative_l2','cosine_similarity') and key not in row:
         return row.get('worst',{}).get(key)
     return row.get(key)
@@ -323,6 +369,12 @@ def prepare_fields(ident, row, forward_only):
             row['_field_notes'] = dict(repeat_cv=f'仅能识别 {count} 次独立进程测量，至少需要 2 次才能量化跨进程时延波动')
 
 
+def value_field(row, key):
+    if key in ('ref','cmp') and row.get('field') == 'samples':
+        return 'samples'
+    return key
+
+
 def field_text(row, key):
     value = cell(row,key)
     if value is None:
@@ -331,7 +383,7 @@ def field_text(row, key):
             return note
         if key == 'generation_step' and key not in row:
             return '按完整计时范围汇总'
-    unit = key
+    unit = value_field(row, key)
     if row.get('unit')=='ns' and key in ('baseline','candidate','delta') and value is not None:
         unit = 'duration_ns'
     return display(value,unit)

@@ -128,7 +128,7 @@ def _run_rerank(*, package, model_path, score, device, dtype, outputs,
             if 'use_cache' in inspect.signature(model.forward).parameters:
                 inputs['use_cache'] = False
             if handle:
-                handle.bind_tensor_inputs(sample_ids, inputs, identity=identity)
+                handle.bind_tensor_inputs(sample_ids, inputs, identity=identity, model_name=model_path)
 
             def transform(output, _mask=inputs['attention_mask']):
                 if score == 'causal_yesno':
