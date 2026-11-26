@@ -119,11 +119,10 @@ function seriesFor(section){
  var result={},rows=data[section.id]||[];
  if(section.kind==='memory'){
   rows.forEach(function(r){if(r.source_time_ns==null)return;Object.keys(r.values||{}).forEach(function(metric){var id=[r.dev,r.component,metric].join(' / ');(result[id]||(result[id]={unit:r.unit===undefined?'B':r.unit,points:[]})).points.push([Number(r.source_time_ns),r.values[metric],r]);});});
+  Object.keys(result).forEach(function(k){result[k].points.sort(function(a,b){return a[0]-b[0];});});
  }else{
-  var window=cfg.meta.monitor_window||[0,256e9],span=window[1]-window[0];
-  rows.forEach(function(r){var id=r.entity+' / '+r.metric,points=r.samples_points||Array.from({length:256},function(_,k){return [Number(window[0])+k*span/256,r.points&&Object.prototype.hasOwnProperty.call(r.points,k)?r.points[k]:null];});result[id]={unit:r.unit||'',points:points.map(function(p){return [Number(p[0]),p[1],r];})};});
+  for(const r of rows)result[r.entity+' / '+r.metric]=monitorSeries(r,cfg.meta.monitor_window);
  }
- Object.keys(result).forEach(function(k){result[k].points.sort(function(a,b){return a[0]-b[0];});});
  return result;
 }
 function axisValue(value,unit){return unit==='B'?fmt(value,'bytes'):fmt(value)+' '+unit;}

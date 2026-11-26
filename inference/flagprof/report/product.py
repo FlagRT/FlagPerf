@@ -528,7 +528,7 @@ def _monitor(model, doc):
     add_table(model,'monitor.series','资源趋势',
               (dict(r,unit=('无量纲' if r['unit']=='' else r['unit']) if r.get('unit') is not None else '历史记录未保存单位') for r in rows(doc.get('series'))),
               ('entity','metric','unit','valid','missing','minimum','maximum'),
-              '每条曲线保留来源单位与时间。缺失区间断线；不同指标的纵轴分别标注。',kind='monitor')
+              '实心点标出保留的读数，悬停可看时间和值。细线连接相邻读数，状态码和位掩码只画点。采样缺失、监控中断或间隔超过通常采样周期的 2.5 倍时断线。',kind='monitor')
     add_table(model,'monitor.minutes','分钟观测均值',doc.get('minute_trends'),
               ('entity','metric','count','missing','total'),
               '分钟观测均值不替代原始覆盖率或故障规则证据。')
@@ -541,6 +541,11 @@ def _monitor(model, doc):
         model.finding(str(len(entities))+' 个观测对象 · '+str(len(series))+' 条指标序列',
                       '各序列共登记 '+str(missing)+' 个缺失样本。按设备查看同一时间窗内的指标。','monitor.series')
     model.meta['monitor_window'] = doc.get('window')
+    coverage = (doc.get('coverage') or {}).get('window_coverage') or {}
+    model.meta['monitor_gaps'] = [dict(window=gap.get('window') or [gap['ts'], gap['ts']], label='监控中断')
+                                  for gap in doc.get('gaps', []) if gap.get('window') or gap.get('ts') is not None]
+    model.meta['monitor_gaps'].extend(dict(window=w, label='此段无留存采集记录')
+                                      for w in coverage.get('missing_segment_intervals') or [])
     model.meta['notices'].extend(str(v) for v in doc.get('errors',[]))
 
 
@@ -724,7 +729,8 @@ def _redraw(source, out, *,  limits=None, runner_results=None, refresh_view=Fals
                 header = stream.readline(model.limits.record_bytes + 1)
             if len(header.encode()) <= model.limits.record_bytes:
                 page = json.loads(header).get('value', {}) if header.strip() else {}
-                refresh_view = page.get('field_display_version') != FIELD_DISPLAY_VERSION
+                refresh_view = (page.get('field_display_version') != FIELD_DISPLAY_VERSION or
+                                page.get('mode') == 'monitor' and 'monitor_gaps' not in page)
         if runner_results:
             from .performance import summarize
             from . import write_json
