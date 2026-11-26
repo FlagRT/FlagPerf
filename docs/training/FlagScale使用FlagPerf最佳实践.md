@@ -515,16 +515,18 @@ rank-1 manifest= complete comm= {'model/allreduce': 2} phases= {'data': 28, 'for
 
 - **是什么**：观察态跑完即得两件事。其一，store 根下的节点监控会话
   （`monitor-ref.json` + `monitor/` + `targets/`）：旁路采样的资源曲线与
-  health 事件；ascend/nvidia 平台附加在线诊断（心跳/进度/通信超时/OOM 规则，
-  与推理同阈值）。其二，每个 rank 的 run 目录旁自动生成 `<run>-report/`
+  health 事件；四个厂商都先尝试 agent 拓扑并附加在线诊断（心跳/进度/通信
+  超时/OOM 规则，与推理同阈值；会话起不来时回退本地采样并如实记 off）。
+  其二，每个 rank 的 run 目录旁自动生成 `<run>-report/`
   （`report.html`/`report.md`），训练面板给出逐步相位区间，perf/通信/显存/
   时间线面板与推理同一套。
 - **怎么开**：进程环境加 `FLAGPROF_TRAIN_MONITOR=on`（其余旋钮见 v2.md
   「节点监控与在线诊断」）。适配器（`ObservationSession`）路径同样适用：
   环境变量在适配器发车前设置即可，会话属主与 rank 无关的全局 rank 0 绑定。
 - **怎么读**：报告先看 `result.json` 各面板 status 与覆盖，`report.md` 供
-  交接留档；thead 平台设备身份如实记 `unknown`，诊断在该平台保持 off——
-  与推理当日能力一致，不虚报。
+  交接留档；设备身份由该厂商遥测库读出（PPU/P800 走 NVML 兼容库的 UUID，
+  昇腾走 DCMI 物理编号），与遥测实体逐一对应；库不可得时记 `unknown`
+  并附原因，不编造前缀。
 
 ### 4.14 功能：训练结果数值对比（compare）
 
