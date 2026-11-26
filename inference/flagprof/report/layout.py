@@ -47,9 +47,9 @@ EXCERPTS = {
     'compare': ('comparison.metrics','window.comparisons'),
     'oracle': ('oracle.layer','oracle.first_divergence','oracle.propagation','oracle.op_sensitivity.introduced','oracle.replay'),
     'oracle-three-way': ('oracle.three_way',), 'diagnosis': ('diagnosis','diagnosis.coverage'),
-    'monitor': ('monitor.series','monitor.findings'), 'group': ('group.ranks','group.counts','communication.aligned','group.control_calls')}
+    'monitor': ('monitor.series','monitor.findings'), 'group': ('group.ranks','group.counts','communication.aligned','group.control_calls','performance.baseline')}
 SUMMARY_COLUMNS = {
-    'performance.baseline':'shape phase observations median_ns p95_ns samples_per_second repeat_cv',
+    'performance.baseline':'rank shape phase observations median_ns p95_ns samples_per_second independent_repeats repeat_cv',
     'comparison.metrics':'rank phase metric baseline candidate delta relative_change',
     'oracle.three_way':'sample scope boundary metric reference_to_baseline reference_to_candidate relative_change',
     'perf.device':'category name events device_work_ns category_share',
@@ -193,4 +193,4 @@ def excerpts(model):
                 if total and r.get('device_work_ns') is not None:r['category_share']=r['device_work_ns']/total
         if result:
             columns = SUMMARY_COLUMNS.get(ident,'').split() or section['columns'][:7]
-            yield section, [k for k in columns if any(cell(r,k) is not None for r in result)], result
+            yield section, [k for k in columns if any(cell(r,k) is not None or k in r.get('_field_notes',{}) for r in result)], result

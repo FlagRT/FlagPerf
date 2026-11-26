@@ -9,6 +9,8 @@ import statistics
 
 from flagprof.analyzers.gap import distribution
 
+FORWARD_TIMING_NOTE = '各 rank 分别统计同步前向时延。插桩扰动需要有共同配对标识和测量协议的回执。'
+GROUP_TIMING_NOTE = 'rank 分别计时；组时延仅使用同主机时钟和组执行回执，取最早开始至最晚结束，逻辑 token 只计一次。插桩扰动仅使用有 pair_id 与 measurement_protocol 的配对回执。'
 
 def summarize(paths, identity=None, limits=None):
     from flagprof.analyzers.workspace import Limits
@@ -152,7 +154,7 @@ def summarize(paths, identity=None, limits=None):
     notes.extend(['预热不进入时延、吞吐与分布；runner latencies_ns 已由采集端排除预热。',
         'CV 使用独立进程均值，至少三次才筛查 >10%；尖峰超过中位数五倍，至少二十个有效观测才筛查。',
         '未保存进程身份的历史输入只能提供进程内重复分布；文件数量不作为独立重复依据。',
-        'rank 分别计时；组时延仅使用同主机时钟和组执行回执，取最早开始至最晚结束，逻辑 token 只计一次。插桩扰动仅使用有 pair_id 与 measurement_protocol 的配对回执。'])
+        FORWARD_TIMING_NOTE if result and all(g['scope']=='forward' for g in result) else GROUP_TIMING_NOTE])
     return dict(schema='runner-summary/1',groups=result,spikes=spikes,sources=sources,notes=notes,
                 condition=condition,group_windows=group_windows,instrumentation_pairs=perturbations)
 

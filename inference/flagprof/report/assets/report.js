@@ -13,7 +13,7 @@ document.querySelectorAll('.report-records').forEach(script=>{
 });
 function num(n){if(!Number.isFinite(n))return '无有限值';return n===0?'0':Number(n.toPrecision(6)).toString();}
 function fmt(v,k){
- if(v===null||v===undefined)return '未记录 / 不适用';
+ if(v===null||v===undefined)return cfg.missing_text[k]||('缺少'+(cfg.labels[k]||k||'该字段')+'记录');
  if(typeof v==='boolean')return v?'是':'否';
  if(typeof v==='number'){
   if(/_ns$/.test(k||'')){if(Math.abs(v)>=1e9)return num(v/1e9)+' s';if(Math.abs(v)>=1e6)return num(v/1e6)+' ms';if(Math.abs(v)>=1e3)return num(v/1e3)+' μs';return num(v)+' ns';}
@@ -27,6 +27,15 @@ function fmt(v,k){
  return Object.keys(v).map(function(x){return (cfg.labels[x]||x)+'：'+fmt(v[x],x);}).join('；');
 }
 function brief(v,k){var text=fmt(v,k);return text.length<=140?text:text.slice(0,137)+'…';}
+function fieldText(row,key,unit=key){
+ const value=val(row,key);
+ if(value==null){
+   if(row._field_notes?.[key])return row._field_notes[key];
+   if(key==='generation_step'&&!(key in row))return '按完整计时范围汇总';
+   return fmt(value,key);
+ }
+ return fmt(value,unit);
+}
 function val(row,k){return row[k]===undefined&&row.worst?row.worst[k]:row[k];}
 function scalar(v){return v&&typeof v==='object'&&!Array.isArray(v)&&'value' in v?v.value:v;}
 function detail(id,index){
@@ -58,7 +67,7 @@ function detail(id,index){
  body.append(summary,copyBar);
  body.appendChild(links);
  var dl=document.createElement('dl');
- Object.keys(row).filter(function(k){return k!=='source_result'&&k!=='_evidence_links';}).forEach(function(k){var dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=cfg.labels[k]||k;dd.textContent=fmt(row[k],k);dl.append(dt,dd);});
+ Object.keys(row).filter(function(k){return k!=='source_result'&&k!=='_evidence_links'&&k!=='_field_notes';}).forEach(function(k){var dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=cfg.labels[k]||k;dd.textContent=row[k]==null?fieldText(row,k):fmt(row[k],k);dl.append(dt,dd);});
  body.appendChild(dl);
  var numeric=row.metrics||row,hist=numeric.ulp_histogram,quantiles=numeric.absolute_error_quantiles;
  function mini(values,title){var entries=Object.keys(values).map(function(k){return [k,values[k]];}).filter(function(p){return typeof p[1]==='number';});if(!entries.length)return;var max=Math.max.apply(null,entries.map(function(p){return p[1];}).concat([1e-300])),chart=document.createElement('div');chart.className='plot';chart.innerHTML='<h3>'+esc(title)+'</h3><div class=bars>'+entries.map(function(p){return '<div class=bar><span>'+esc(p[0])+'</span><span class=bar-track><span class=bar-fill style="display:block;width:'+100*p[1]/max+'%"></span></span><span>'+esc(fmt(p[1]))+'</span></div>';}).join('')+'</div>';body.appendChild(chart);}

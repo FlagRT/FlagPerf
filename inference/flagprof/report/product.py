@@ -1,14 +1,18 @@
 # Copyright 2026 FlagOS Contributors
 # Licensed under the Apache License, Version 2.0.
 """Evidence-led result views shared by all public report entrypoints."""
+from collections import Counter
 import json
 import hashlib
 from pathlib import Path
 import shutil
 import re
 
-from .fields import PANELS, LABELS, VALUES, display
+from .fields import PANELS, LABELS, VALUES, display, prepare_fields
 from .model import opened_model, read_document, digest
+
+
+FIELD_DISPLAY_VERSION = 2
 
 
 DESCRIPTIONS = {
@@ -65,6 +69,7 @@ def add_table(model, ident, title, source, columns=None, description='', status=
             first = row.get('first_inequal')
             row = dict(first or {}, alignment_gaps=row.get('alignment_gaps'),
                        source_result=original)
+        prepare_fields(ident, row, model.meta.get('forward_only',False))
         if 'scope_samples' in row and not row.get('scopes'):
             row['scope_evidence']=row['scope_samples']
         if 'observed_peak_bytes' in row:
@@ -245,13 +250,19 @@ def _diagnosis(model, data):
                       ('在已观测执行区间未触发故障规则。' if not source_findings else '故障详情见事件列表。'),
                       'diagnosis.coverage')
     elif status == 'unavailable':
-        model.meta['notices'].append('本次未提供业务故障诊断：'+display(data.get('reason','未采集诊断来源')))
+        model.meta['notices'].append('本次未提供业务故障诊断：'+display(data.get('reason','未采集诊断来源'))+'。无法据此判断执行期间是否发生业务故障。')
 
 
 def build(model, doc, source=None):
     schema_modes={'device-comparison/1':'compare','oracle-three-way/1':'oracle-three-way','monitor-report/1':'monitor',
                   'oracle-group/1':'group','flagprof-group-report/1':'group','runner-result/1':'baseline'}
     if doc.get('schema') in schema_modes:model.meta['mode']=schema_modes[doc['schema']]
+    model.meta['field_display_version'] = FIELD_DISPLAY_VERSION
+    identity = ((doc.get('report_context') or {}).get('identity') or
+                (doc.get('runner_summary') or {}).get('condition') or {})
+    task = identity.get('task')
+    model.meta['forward_only'] = (task in ('embedding','rerank','ctr') or
+                                  not task and bool(identity.get('pooling')) and not identity.get('generation'))
     _facts(model,doc,source)
     if doc.get('schema')!='monitor-report/1' or (doc.get('diagnosis') or {}).get('findings') or (doc.get('diagnosis') or {}).get('progress_coverage'):
         _diagnosis(model,doc.get('diagnosis'))
@@ -273,6 +284,8 @@ def build(model, doc, source=None):
         data = result.get('data',())
         status = result.get('status','unavailable')
         if not len(data):
+            if model.meta['forward_only'] and ident in ('generation','oracle.generation'):
+                continue
             empty_reasons={'route.coverage':'本次未提供组件路由记录；未启用组件时此项不适用。',
                            'compile.health':'本次没有可汇总的编译观测；不据此判断没有编译。',
                            'memory':'本次未提供官方显存事件；设备资源观测另见资源结果。'}
@@ -531,18 +544,36 @@ def _monitor(model, doc):
     model.meta['notices'].extend(str(v) for v in doc.get('errors',[]))
 
 
+def _rank_summary(receipt):
+    status = receipt.get('status')
+    outcome = display(status) if status is not None else '缺少该 rank 的状态回执，无法确认执行是否完成'
+    if status in ('complete','completed','failed'):
+        outcome = '执行'+outcome
+    for field, label in (('process_returncode','退出码'),('exit_code','退出码'),('returncode','worker 自报退出码')):
+        if receipt.get(field) is not None:
+            return f'{outcome} · {label} {receipt[field]}'
+    return outcome+' · '+display(None,'process_returncode')
+
+
 def _group(model, doc, source):
     oracle = doc.get('schema') == 'oracle-group/1'
     model.meta['title'] = '多 rank 精度结果' if oracle else '多 rank 通信与推理结果'
     model.meta['facts'].extend(dict(label=LABELS.get(k,k),value=doc[k])
                               for k in ('backend','ref_backend','cmp_backend','samples','status') if k in doc)
     if oracle:model.finding('逻辑输入样本：'+str(doc.get('samples','未记录')),'对应 rank 分别比较内部算子；复制边界与逻辑样本只计一次。','group.ranks')
-    ranks = list(rows(doc.get('ranks')))
-    add_table(model,'group.ranks','各 rank 报告',
-              (dict(r,report=r.get('report') or 'rank-'+str(r['rank'])+'/report.html') for r in ranks),('rank','report','status'))
-    for rank in ranks:
-        href = rank.get('report') or 'rank-'+str(rank['rank'])+'/report.html'
-        model.meta['links'].append(dict(label='rank '+str(rank['rank'])+' 结果',href=href))
+    reports = {r['rank']:r for r in rows(doc.get('ranks'))}
+    receipts = {r['rank']:r for r in rows(doc.get('rank_execution'))}
+    ranks = []
+    for rank in sorted(reports.keys() | receipts.keys()):
+        row = dict(reports.get(rank, {}), rank=rank)
+        if rank in reports:
+            href = row.get('report') or f'rank-{rank}/report.html'
+            row['report'] = href
+            model.meta['links'].append(dict(label=f'rank {rank} 结果',href=href))
+        if not oracle:
+            row['execution_summary'] = _rank_summary({**row, **receipts.get(rank,{})})
+        ranks.append(row)
+    add_table(model,'group.ranks','各 rank 报告',ranks,('rank','execution_summary','report'))
     add_table(model,'communication.aligned','同次通信的跨 rank 对照',doc.get('device_calls'),
               ('group','group_seq','rank_device_union_ns','cross_rank_min_observed_ns','cross_rank_max_observed_ns','cross_rank_difference_ns','reason'),
               '按通信域与序号配对；差值是观测占用差，不等于额外等待。缺少时钟关系时不画共同绝对时间轴。',
@@ -552,8 +583,9 @@ def _group(model, doc, source):
     if doc.get('control_calls'):
         add_table(model,'group.control_calls','控制组通信',doc['control_calls'],
                   ('backend','op','rank','group_seq','host_duration_ns','device_union_ns'),
-                  '每行记录一个 rank 的控制调用。主机耗时从进入通信 API 到返回。设备时长留空表示没有对应设备区间。')
-    add_table(model,'group.execution','各 rank 执行结果',doc.get('rank_execution'),('rank','status','exit_code','signal'))
+                  '每行记录一个 rank 的控制调用。主机耗时从进入通信 API 到返回，设备占用仅统计已关联的设备区间。')
+    add_table(model,'group.execution','各 rank 执行结果',receipts.values(),
+              ('rank','status','process_returncode','returncode','exit_code','signal'))
     add_table(model,'group.request_windows','各 rank 请求窗口',doc.get('request_windows'),
               ('rank','request_id','coverage_status','window_ns','all_activity_union_ns','blank_ns'))
     aligned=list(rows(doc.get('device_calls')))
@@ -565,6 +597,18 @@ def _group(model, doc, source):
         index,worst=max(usable,key=lambda pair:pair[1]['cross_rank_difference_ns'])
         model.finding('跨 rank 通信占用差最大的已配对调用',
             '通信序号 '+str(worst.get('group_seq'))+'；占用差 '+display(worst['cross_rank_difference_ns'],'cross_rank_difference_ns')+'。该差值不等于额外等待；从该序号进入各 rank 详情。','communication.aligned',row_index=index)
+    unlinked = {str(rank): n for rank,n in (doc.get('unlinked_logical_calls') or {}).items() if n}
+    host_barriers = Counter(str(row['rank']) for row in rows(doc.get('control_calls'))
+                            if row.get('backend')=='gloo' and row.get('op')=='barrier'
+                            and row.get('host_duration_ns') is not None and row.get('device_union_ns') is None)
+    if unlinked and unlinked == host_barriers:
+        model.finding('Gloo 控制组屏障仅记录主机耗时',
+                      '控制组表列出各 rank 从进入屏障到返回的耗时。模型通信的设备区间配对情况单独统计。',
+                      'group.control_calls','coverage')
+    elif unlinked:
+        counts = '、'.join(f'rank {rank} 有 {n} 次' for rank,n in sorted(unlinked.items()) if n)
+        detail = counts+'逻辑通信调用缺少对应的设备活动区间，无法比较这些调用在各 rank 上的设备耗时。'
+        model.finding('通信设备耗时的观测范围',detail,'group.counts','coverage')
     model.meta['notices'].extend(str(v) for v in doc.get('issues',[]))
     if source:
         for rank in ranks:
@@ -589,7 +633,8 @@ def _comparison(model, doc):
     add_table(model,'window.comparisons','窗口定义与完成情况',doc.get('window_comparisons'),
               ('left','right','kind','status','differences','reasons'))
     add_table(model,'comparison.metrics','同口径指标变化',
-              (dict(r,source_label=names.get(r.get('source'),'来源未记录')) for r in rows(doc.get('metric_comparisons'))),
+              (dict(r,source_label=names.get(r.get('source'),'来源未记录')) for r in rows(doc.get('metric_comparisons'))
+               if not (r.get('scope')=='forward' and r.get('metric')=='generated_tokens_per_second')),
               ('source_label','rank','scope','phase','generation_step','metric','unit','baseline','candidate','delta','relative_change','comparison_status'))
     model.meta['notices'].append(doc.get('note',''))
     comparable=[r for r in rows(doc.get('metric_comparisons')) if r.get('delta') is not None]
@@ -616,6 +661,7 @@ def _three_way(model, doc):
 
 
 def add_runner(model, summary):
+    from .performance import GROUP_TIMING_NOTE, FORWARD_TIMING_NOTE
     add_table(model,'performance.baseline','无插桩与采集条件下的性能',summary.get('groups'),
               ('instrumentation','rank','scope','shape','phase','generation_step','observations',
                'mean_ns','median_ns','p95_ns','samples_per_second','generated_tokens_per_second',
@@ -632,7 +678,10 @@ def add_runner(model, summary):
         if group.get('scope') not in ('forward','request','group_request'):continue
         model.finding(('无插桩' if group.get('instrumentation')=='none' else '采集条件下')+' '+str(group.get('scope'))+' 时延',
             'rank '+str(group.get('rank'))+'；有效观测 '+str(group.get('observations'))+' 次；中位数 '+display(group.get('median_ns'),'median_ns')+'，p95 '+display(group.get('p95_ns'),'p95_ns')+'。'+('需要复查重复波动。' if group.get('cv_screening')=='unstable' else ''),'performance.baseline',row_index=index)
-    model.meta['notices'].extend(summary.get('notes',[]))
+    groups = rows(summary.get('groups'))
+    forward_only = bool(groups) and all(row.get('scope')=='forward' for row in groups)
+    model.meta['notices'].extend(FORWARD_TIMING_NOTE if forward_only and note == GROUP_TIMING_NOTE else note
+                                 for note in summary.get('notes',[]))
 
 
 def write_report(out, document=None, *, limits=None,  source=None, filename='report.html'):
@@ -670,6 +719,12 @@ def _redraw(source, out, *,  limits=None, runner_results=None, refresh_view=Fals
     filename='index.html' if (source/'index.html').exists() and not (source/'report.html').exists() else 'report.html'
     with opened_model(limits=limits) as model:
         snapshot=source/'report-data.jsonl'
+        if snapshot.is_file() and not refresh_view and not runner_results and (source/'result.json').is_file():
+            with snapshot.open() as stream:
+                header = stream.readline(model.limits.record_bytes + 1)
+            if len(header.encode()) <= model.limits.record_bytes:
+                page = json.loads(header).get('value', {}) if header.strip() else {}
+                refresh_view = page.get('field_display_version') != FIELD_DISPLAY_VERSION
         if runner_results:
             from .performance import summarize
             from . import write_json

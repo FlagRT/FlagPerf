@@ -9,7 +9,7 @@ import re
 from pathlib import Path
 from urllib.parse import urlencode
 
-from .fields import LABELS, VALUES, REASON_TEXT, PANEL_LABELS, cell, display
+from .fields import LABELS, VALUES, REASON_TEXT, PANEL_LABELS, MISSING_TEXT, cell, display, field_text
 from .layout import MODES, decorate, excerpts
 
 
@@ -56,8 +56,7 @@ def _row(stream, section, index, row):
     stream.write('<tr data-row="'+str(index)+'">')
     for key in section['columns']:
         value=cell(row,key)
-        shown=display(value,'duration_ns' if row.get('unit')=='ns' and key in ('baseline','candidate','delta') else key)
-        shown=reader_text(shown)
+        shown=reader_text(field_text(row,key))
         brief=shown if len(shown)<=140 else shown[:137]+'…'
         content = escape(brief)
         if key == 'report' and isinstance(value,str) and not value.startswith('/') and ':' not in value and '..' not in Path(value).parts:
@@ -105,7 +104,7 @@ def render(model, out, *, filename='report.html'):
         if section.get('kind')=='evidence':
             section['evidence_index']=evidence_pages(model,out,section,filename)
     fingerprint=hashlib.sha256()
-    for name in ('render.py','fields.py','layout.py','assets/report.css','assets/report.js','assets/workspaces.js','assets/charts.js','assets/monitor.js'):
+    for name in ('render.py','fields.py','product.py','layout.py','assets/report.css','assets/report.js','assets/workspaces.js','assets/charts.js','assets/monitor.js'):
         fingerprint.update((Path(__file__).parent/name).read_bytes())
     (out/'renderer.json').write_text(json.dumps(dict(schema='report-renderer/1',sha256=fingerprint.hexdigest(),
         presentation_schema=meta['schema']),indent=2)+'\n')
@@ -132,8 +131,11 @@ def render(model, out, *, filename='report.html'):
             stream.write('<div class="rank-cards">')
             for row in model.rows('group.ranks'):
                 href=row.get('report','')
+                content='<b>rank '+escape(str(row['rank']))+'</b> '+escape(row.get('execution_summary','查看 rank 报告'))
                 if href and not href.startswith('/') and ':' not in href and '..' not in Path(href).parts:
-                    stream.write('<a href="'+escape(href,quote=True)+'"><b>rank '+escape(str(row['rank']))+'</b> '+escape(display(row.get('status')))+'</a>')
+                    stream.write('<a href="'+escape(href,quote=True)+'">'+content+'</a>')
+                else:
+                    stream.write('<span>'+content+'</span>')
             stream.write('</div>')
         if meta['facts']:
             stream.write('<details class="identity"><summary>本次任务与比较条件（展开核对）</summary><dl>')
@@ -199,7 +201,7 @@ def render(model, out, *, filename='report.html'):
             if not href.startswith(('/','http:','https:','javascript:')) and '..' not in Path(href).parts:
                 stream.write('<li><a href="'+escape(href,quote=True)+'">'+escape(link['label'])+'</a></li>')
         stream.write('</ul></section></main><dialog id="row-detail"><button id="close-detail">关闭</button><div id="detail-body"></div></dialog>')
-        stream.write('<script id="report-config" type="application/json">'+safe_json(_web_value(dict(meta={k:v for k,v in meta.items() if k not in ('kpis','findings','facts','banners','context_summary','notices','rendered_from')},sections=sections,labels=LABELS,values=VALUES,page_size=model.limits.html_rows)))+'</script>')
+        stream.write('<script id="report-config" type="application/json">'+safe_json(_web_value(dict(meta={k:v for k,v in meta.items() if k not in ('kpis','findings','facts','banners','context_summary','notices','rendered_from')},sections=sections,labels=LABELS,values=VALUES,missing_text=MISSING_TEXT,page_size=model.limits.html_rows)))+'</script>')
         # Batches bound Python memory; only aggregate/curated records are delivered.
         for section in sections:
             iterator=iter(itertools.islice(model.rows(section['id']),model.limits.html_rows) if section.get('evidence_index') else model.rows(section['id']))
@@ -233,7 +235,10 @@ def evidence_pages(model,out,section,filename):
             nav()
             for n,row in enumerate(itertools.islice(iterator,size),page*size):
                 stream.write('<details id="row-'+str(n)+'"><summary>'+str(n+1)+' · '+escape(str(row.get('call_key') or row.get('name') or row.get('scope') or '证据记录'))+'</summary><dl>')
-                for key,value in row.items():stream.write('<dt>'+escape(LABELS.get(key,key))+'</dt><dd>'+escape(reader_text(display(value,key)))+'</dd>')
+                for key,value in row.items():
+                    if key != '_field_notes':
+                        shown = field_text(row,key) if value is None else display(value,key)
+                        stream.write('<dt>'+escape(LABELS.get(key,key))+'</dt><dd>'+escape(reader_text(shown))+'</dd>')
                 stream.write('</dl>')
                 for link in evidence_links(model,row).get('_evidence_links',[]):
                     stream.write('<p><a href="'+escape(link['href'].removeprefix('evidence/'),quote=True)+'">'+escape(link['label'])+'</a></p>')
@@ -268,9 +273,10 @@ def write_markdown(model,out,filename):
         if not model.meta['findings']:
             stream.write('本次已保存结果见下方功能索引；尚无可形成总览的派生结论。\n')
         for section,columns,rows in excerpts(model):
-            stream.write('\n### '+text(section['title'])+'\n\n| '+' | '.join(LABELS.get(k,k) for k in columns)+' |\n|'+ '---|'*len(columns)+'\n')
+            panel_labels = PANEL_LABELS.get(section['id'],{})
+            stream.write('\n### '+text(section['title'])+'\n\n| '+' | '.join(panel_labels.get(k,LABELS.get(k,k)) for k in columns)+' |\n|'+ '---|'*len(columns)+'\n')
             for row in rows:
-                values=[display(cell(row,k),'duration_ns' if row.get('unit')=='ns' and k in ('baseline','candidate','delta') else k) for k in columns]
+                values=[field_text(row,k) for k in columns]
                 stream.write('| '+' | '.join(text(v) for v in values)+' |\n')
         stream.write('\n## 结果入口\n\n| 功能 | 记录数 | 统计范围 |\n|---|---:|---|\n')
         for section in model.sections:

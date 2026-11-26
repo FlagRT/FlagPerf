@@ -4,6 +4,10 @@
 import math
 
 LABELS = {
+    'execution_summary':'执行结果','process_returncode':'进程退出码','exit_code':'退出码',
+    'measure':'正式测量','unknown':'阶段未知','valid_tokens':'有效输入 token 数',
+    'forward_phases':'各阶段前向次数','model_count_matches':'模型通信次数符合预期',
+    'allreduce':'AllReduce 次数','allgather':'AllGather 次数',
     'differences':'条件差异','left':'基准','right':'候选','input_tokens':'输入 token 数','batch':'批量','category_share':'同类别工作量占比','comm_backend':'通信后端','workload_identity':'负载身份',
     'source_label':'比较来源','left_label':'基准来源','right_label':'比较来源','report':'对应报告',
     'event_time_ns':'原始事件时刻','event_clock':'原始事件时钟','event_detail':'原始事件内容',
@@ -101,11 +105,15 @@ LABELS = {
     'compile_count':'已归属编译次数', 'compile_ns':'已归属编译耗时', 'phase_source':'阶段依据',
 }
 
-PANEL_LABELS = {'oracle.replay': {'valid':'输入与执行有效'}, 'monitor.series': {'valid':'有效样本'},
+PANEL_LABELS = {'group.counts': {'forwards':'前向总次数（含预热）'},
+                'group.execution': {'status':'执行状态','returncode':'worker 自报退出码'},
+                'oracle.replay': {'valid':'输入与执行有效'}, 'monitor.series': {'valid':'有效样本'},
                 'training': {'step':'训练步'}, 'training.phases': {'step':'训练步','phase':'训练阶段'}}
 REASON_TEXT = {'reference_missing':'缺少参考记录','no_tensor_ops':'未记录张量算子',
                'diagnostic monitor unavailable: []':'诊断监控未提供可用观测'}
 VALUES = {
+    'failed':'失败','running':'运行中','missing':'缺少 worker 回执，无法确认执行状态',
+    'unreadable':'worker 回执无法读取，无法确认执行状态',
     **REASON_TEXT,
     'forward':'同步前向','request':'完整请求','group_request':'组请求','request_decode':'整次请求 decode',
     'source_window':'完整来源窗口','runner_synchronized':'runner 同步边界',
@@ -179,9 +187,41 @@ def number(value):
     return format(value, '.6g')
 
 
+# Shared by static HTML, the interactive tables and Markdown.
+MISSING_TEXT = {
+    'report':'缺少该 rank 的子报告，无法下钻到采集明细',
+    'scope':'缺少统计范围记录，无法确定该项覆盖哪些调用',
+    'source':'缺少统计来源，无法核对该指标的采集口径',
+    'dev':'缺少设备编号，无法将该项归属到具体设备',
+    'status':'缺少状态记录，无法确认该项结果',
+    'process_returncode':'缺少进程退出码，无法核实进程退出结果',
+    'returncode':'缺少 worker 返回码，无法核实 worker 的执行结果',
+    'repeat_cv':'缺少独立进程均值的变异系数，无法量化跨进程时延波动',
+    'device_sum_ns':'缺少已关联通信调用的设备时长，无法计算通信设备工作量',
+    'device_union_ns':'缺少调用对应的设备区间，无法计算设备占用时长',
+    'cross_rank_difference_ns':'缺少两侧可比的设备占用时长，无法计算 rank 间差值',
+    'device_work_ns':'缺少可归属的设备时长，无法计算该项设备工作量',
+    'host_ns':'缺少主机调用计时，无法判断主机侧耗时',
+    'native_owner':'缺少框架归属记录，无法确定发起该活动的框架调用',
+    'sid':'缺少项目调用签名，无法按签名定位具体调用',
+    'generated_tokens_per_second':'缺少可用于计算吞吐的生成 token 数或耗时，无法给出生成速率',
+    'generation_step':'缺少步序号，无法定位到具体生成步',
+    'median_ns':'缺少有效时延观测，无法计算中位数',
+    'p95_ns':'缺少有效时延观测，无法计算 p95',
+    'task_relative_ns':'缺少事件时刻与任务起点的时钟对应关系，无法定位到任务时间线',
+    'first_detected_relative_ns':'缺少可映射的检出时刻，无法确定任务启动后多久检出',
+    'last_equal_boundary':'此前未观测到一致的边界，无法进一步缩小差异出现的范围',
+    'p95':'缺少足够的有效采样，无法判断高分位水平',
+    'observed_bytes':'缺少显存观测值，无法核算该部分用量',
+    'preexisting_usage':'缺少启动前占用依据，无法区分已有显存和本次新增用量',
+    'baseline':'缺少基准侧指标值，无法计算两侧变化',
+    'candidate':'缺少候选侧指标值，无法计算两侧变化',
+}
+
+
 def display(value, key=''):
     if value is None:
-        return '未记录 / 不适用'
+        return MISSING_TEXT.get(key, '缺少'+LABELS.get(key,key or '该字段')+'记录')
     if isinstance(value, bool):
         return '是' if value else '否'
     if isinstance(value, (int, float)):
@@ -221,3 +261,71 @@ def cell(row, key):
     if key in ('max_abs','relative_l2','cosine_similarity') and key not in row:
         return row.get('worst',{}).get(key)
     return row.get(key)
+
+
+def prepare_fields(ident, row, forward_only):
+    """Project applicable fields into the reader view; preserve machine results."""
+    scope = row.get('scope')
+    if ident.startswith('performance.') or ident == 'comparison.metrics':
+        if scope == 'forward':
+            for key in ('generation_step','generated_tokens','generated_tokens_per_second'):
+                row.pop(key, None)
+        elif scope in ('request','request_decode','group_request') and row.get('generation_step') is None:
+            row.pop('generation_step', None)
+        if ident == 'performance.spikes' and row.get('phase') == 'measure' and row.get('generation_step') is None:
+            row.pop('generation_step', None)
+    if ident == 'group.counts' and (row.get('count_basis') == 'root_module_spans' or
+                                  not row.get('count_basis') and forward_only):
+        row.pop('steps', None)
+    if ident == 'resource.energy' and forward_only:
+        for key in ('generated_tokens','joules_per_token','token_reason'):
+            row.pop(key, None)
+    elif ident == 'resource.energy' and row.get('token_reason') and row.get('joules_per_token') is None:
+        row['_field_notes'] = dict(joules_per_token=display(row['token_reason'])+'，无法计算本任务的每生成 token 能耗')
+    if ident in ('resource','resource.stages') and row.get('p95') is None and isinstance(row.get('samples'),int) and row['samples']<20:
+        row['_field_notes'] = dict(p95=f"有效采样 {row['samples']} 个，少于 20 个，无法估计 p95")
+    if ident == 'monitor.findings' and row.get('entity') == 'node' and not row.get('run_id'):
+        row['_field_notes'] = {}
+        for key in ('rank','run_id','task_relative_ns'):
+            if row.get(key) is None:
+                row.pop(key, None)
+                row['_field_notes'][key] = '节点级观测'
+    if ident == 'oracle.identity_diff':
+        field = display(row.get('field'),'field')
+        if row.get('equal') is None:
+            row['_field_notes'] = {key:f'缺少{side}的{field}记录，无法核对该条件'
+                                   for key,side in (('ref','参考侧'),('cmp','比较侧')) if row.get(key) is None}
+            row['_field_notes']['equal'] = '比较条件记录不完整，无法判定两侧是否一致'
+        elif row.get('field')=='include' and row.get('equal') and row.get('ref') is None and row.get('cmp') is None:
+            row['_field_notes'] = dict(ref='未指定算子清单',cmp='未指定算子清单')
+    if ident in ('perf.gap','perf.gap.streams') and row.get('kind') in ('official_capture','project_request') and row.get('step') is None:
+        row.pop('step', None)
+    if (ident == 'group.control_calls' and row.get('backend') == 'gloo' and row.get('op') == 'barrier'
+            and row.get('host_duration_ns') is not None and row.get('device_union_ns') is None):
+        row['_field_notes'] = dict(device_union_ns='此 Gloo 屏障仅记录主机耗时')
+    if ident == 'comparison.metrics' and row.get('delta') is None:
+        missing = '、'.join(label for key,label in (('baseline','基准侧'),('candidate','候选侧')) if row.get(key) is None)
+        reason = ('缺少'+missing+'指标值' if missing else '两侧指标口径未通过可比性核对')
+        row['_field_notes'] = dict(delta=reason+'，无法计算差值',relative_change=reason+'，无法计算变化率')
+    elif ident == 'comparison.metrics' and row.get('reason') == 'zero_baseline':
+        row['_field_notes'] = dict(relative_change='基准值为 0，无法计算相对变化率')
+    if ident == 'performance.baseline' and row.get('repeat_cv') is None:
+        count = row.get('independent_repeats')
+        if count == 0 and row.get('observations'):
+            row['_field_notes'] = dict(repeat_cv='有效观测缺少可区分独立进程的身份，无法量化跨进程时延波动')
+        elif count in (0,1):
+            row['_field_notes'] = dict(repeat_cv=f'仅能识别 {count} 次独立进程测量，至少需要 2 次才能量化跨进程时延波动')
+
+
+def field_text(row, key):
+    value = cell(row,key)
+    if value is None:
+        note = row.get('_field_notes',{}).get(key)
+        if note:
+            return note
+        if key == 'generation_step' and key not in row:
+            return '按完整计时范围汇总'
+    unit = key
+    if row.get('unit')=='ns' and key in ('baseline','candidate','delta') and value is not None:
+        unit = 'duration_ns'
+    return display(value,unit)

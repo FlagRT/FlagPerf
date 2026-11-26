@@ -96,9 +96,9 @@ function comparisonPlot(items,state){
      pivot+='<tr><th>'+esc(keys.filter(k=>r[k]!=null).map(k=>fmt(r[k],k)).join(' · '))+'</th>';
      for(const m of metrics){
        const entry=values.get(m);
-       if(!entry){pivot+='<td>未记录</td>';continue;}
+       if(!entry){pivot+='<td>当前条件无此对照项</td>';continue;}
        const item=entry.r;
-       pivot+='<td><button data-point="'+entry.i+'">'+esc(fmt(item.baseline,m)+' → '+fmt(item.candidate,m)+' · '+fmt(item.relative_change,'relative_change'))+'</button></td>';
+       pivot+='<td><button data-point="'+entry.i+'">'+esc(fieldText(item,'baseline',m)+' → '+fieldText(item,'candidate',m)+' · '+fieldText(item,'relative_change'))+'</button></td>';
      }
      pivot+='</tr>';
    }
@@ -275,7 +275,7 @@ function relationship(section,indices){
    graphic=trend(rows,[{name:'采集中的主机推进耗时',color:'#155e8a',get:r=>r.host_duration_ns}],{unit:'duration_ns',x:r=>r.generation_step,name:r=>'step '+r.generation_step});
    note='使用当前请求各生成步的主机推进区间。';
  }else if(id==='group.ranks'){
-   graphic=items.map(({r,i})=>'<button data-point="'+i+'">rank '+esc(r.rank)+' · '+esc(fmt(r.status))+'</button>').join(' ');
+   graphic=items.map(({r,i})=>'<button data-point="'+i+'">rank '+esc(r.rank)+' · '+esc(r.execution_summary||'查看 rank 报告')+'</button>').join(' ');
  }else{bars(panel,section,indices);return;}
  plot.innerHTML=controls+graphic+(graphic&&note?'<p class="description">'+esc(note)+'</p>':'');
  plot.querySelectorAll('[data-chart-choice]').forEach(select=>select.onchange=()=>{const key=select.dataset.chartChoice;state[key]=typeof state[key]==='number'?Number(select.value):select.value;relationship(section,indices);});

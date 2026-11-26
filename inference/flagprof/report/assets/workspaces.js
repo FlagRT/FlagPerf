@@ -102,7 +102,9 @@ function columnTools(section,state){
    const b=document.createElement('button');b.textContent=head.textContent;head.replaceChildren(b);
    b.onclick=()=>{state.desc=state.sort===key?!state.desc:true;state.sort=key;sort.value=key;state.page=0;panel.querySelector('.direction').textContent=state.desc?'降序':'升序';draw(section);};
    const value=val(rows[0]||{},key);
-   if(rows.every(r=>val(r,key)==null||val(r,key)===''))empty.push(key);
+   if(rows.every(r=>val(r,key)==null||val(r,key)==='')){
+     if(!cfg.missing_text[key]&&!rows.some(r=>r._field_notes?.[key]))empty.push(key);
+   }
    else if(rows.length>1 && constantKeys.has(key) && rows.every(r=>val(r,key)===value)){
      context.push(b.textContent+' '+fmt(value,key));state.omit.add(key);
    }
@@ -124,7 +126,8 @@ function selectedElement(key,value){const select=$('filter-'+key);return select&
 function tableCell(section,state,row,key,index){
  const value=val(row,key),scalarValue=scalar(value),numeric=typeof scalarValue==='number';
  const field=row.unit==='ns'&&['baseline','candidate','delta'].includes(key)?'duration_ns':key;
- let content=esc(brief(value,field)),style='',tone='';
+ const shown=fieldText(row,key,field);
+ let content=esc(shown.length<=140?shown:shown.slice(0,137)+'…'),style='',tone='';
  if(key==='name'&&typeof value==='string'&&value.length>64&&/[<(]/.test(value)){
    const stem=value.split(/[<(]/)[0].split(/\s+/).pop();content=esc(stem.slice(-72)+'…');
  }else if(key==='ulp_histogram'&&value&&typeof value==='object'){
@@ -144,5 +147,5 @@ function tableCell(section,state,row,key,index){
    const duration=/_ns$/.test(row.metric),rate=/per_second|throughput/.test(row.metric);
    if(duration||rate)tone+=(duration?value<0:value>0)?' better':' worse';
  }
- return '<td data-panel="'+esc(section.id)+'" data-row="'+index+'" data-field="'+esc(key)+'" data-unit="'+(/_ns$/.test(key)?'ns':'')+'" class="'+(numeric?'numeric':'')+tone+'"'+style+' title="'+esc(fmt(value,field))+'">'+content+'</td>';
+ return '<td data-panel="'+esc(section.id)+'" data-row="'+index+'" data-field="'+esc(key)+'" data-unit="'+(/_ns$/.test(key)?'ns':'')+'" class="'+(numeric?'numeric':'')+tone+'"'+style+' title="'+esc(shown)+'">'+content+'</td>';
 }
