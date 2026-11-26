@@ -38,10 +38,10 @@ function fieldText(row,key,unit=key){
 }
 function val(row,k){return row[k]===undefined&&row.worst?row.worst[k]:row[k];}
 function scalar(v){return v&&typeof v==='object'&&!Array.isArray(v)&&'value' in v?v.value:v;}
-function detail(id,index){
+function detail(id,index,eventTitle){
  var row=data[id][index],body=$('detail-body');
  var section=cfg.sections.find(function(s){return s.id===id;});
- body.innerHTML='<h2>'+esc(section.title)+' · 详情与证据</h2><p>'+esc(section.description)+'</p>';
+ body.innerHTML='<h2>'+esc(eventTitle||section.title)+' · 详情与证据</h2><p>'+esc(section.description)+'</p>';
  var links=document.createElement('p');
  [['sid','查看同签名记录'],['sid_ref','查看参考侧签名'],['sid_cmp','查看比较侧签名'],['call_key','查看同调用记录']].forEach(function(p){if(row[p[0]]){var b=document.createElement('button');b.textContent=p[1];b.onclick=function(){related(row[p[0]],p[0]==='call_key'?'call_key':'sid',id,index);};links.appendChild(b);}});
  (Array.isArray(row.evidence)?row.evidence:[]).forEach(function(ref){if(!Array.isArray(ref))return;var target=(data['diagnosis.evidence']||[]).find(function(r){return JSON.stringify(r.identity)===JSON.stringify(ref);});if(target){var a=document.createElement('a');a.href='#diagnosis.evidence';a.textContent='查看触发事件 '+ref.join(' / ');a.onclick=function(e){e.preventDefault();focusRow('diagnosis.evidence',data['diagnosis.evidence'].indexOf(target),true);};links.appendChild(a);}});
@@ -118,7 +118,14 @@ function draw(section){
 function seriesFor(section){
  var result={},rows=data[section.id]||[];
  if(section.kind==='memory'){
-  rows.forEach(function(r){if(r.source_time_ns==null)return;Object.keys(r.values||{}).forEach(function(metric){var id=[r.dev,r.component,metric].join(' / ');(result[id]||(result[id]={unit:r.unit===undefined?'B':r.unit,points:[]})).points.push([Number(r.source_time_ns),r.values[metric],r]);});});
+  rows.forEach((r,index)=>{
+   if(r.source_time_ns==null)return;
+   for(const [metric,value] of Object.entries(r.values||{})){
+    const id=[r.dev,r.component,metric].join(' / ');
+    const series=result[id]??={device:r.dev,component:r.component,metric,unit:r.unit??(section.id==='memory.series'?'B':''),points:[]};
+    series.points.push([Number(r.source_time_ns),value,r,index]);
+   }
+  });
   Object.keys(result).forEach(function(k){result[k].points.sort(function(a,b){return a[0]-b[0];});});
  }else{
   for(const r of rows)result[r.entity+' / '+r.metric]=monitorSeries(r,cfg.meta.monitor_window);
@@ -129,11 +136,11 @@ function axisValue(value,unit){return unit==='B'?fmt(value,'bytes'):fmt(value)+'
 function drawCurve(section){
  if(section.id==='monitor.series')return monitorGrid(section);
  var panel=$(section.id),state=states[section.id],select=panel.querySelector('.series-select');
- if(!state.series){state.series=seriesFor(section);Object.keys(state.series).forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=k;select.appendChild(o);});}
+ if(!state.series){state.series=seriesFor(section);resourceOptions(section,select,state.series);}
  const allowed=new Set(state.selected.map(i=>data[section.id][i]));
  for(const opt of select.options)opt.hidden=!state.series[opt.value].points.some(p=>allowed.has(p[2]));
- if(select.selectedOptions[0]?.hidden)select.value=Array.from(select.options).find(o=>!o.hidden)?.value||'';
- var s=state.series[select.value];if(!s||!s.points.length){panel.querySelector('.timeline').replaceChildren();return;}
+ if(!select.selectedOptions.length||select.selectedOptions[0].hidden)select.value=Array.from(select.options).find(o=>!o.hidden)?.value||'';
+ var s=state.series[select.value];if(!s||!s.points.length){state.peak=null;panel.querySelector('.timeline').textContent='当前筛选下没有曲线采样。';return;}
  var points=s.points.filter(p=>allowed.has(p[2])),origin=s.points[0][0],end=(points[points.length-1][0]-origin)/1e9;
  var loInput=panel.querySelector('.time-low'),hiInput=panel.querySelector('.time-high');
  if(state.curveKey!==select.value){loInput.value=0;hiInput.value=end||1;state.curveKey=select.value;}
@@ -147,7 +154,7 @@ function drawCurve(section){
  var svg='<svg viewBox="0 0 950 260" role="img" aria-label="'+esc(select.value)+'">'+bands+'<text x="8" y="22">'+esc(axisValue(high,s.unit))+'</text><text x="8" y="216">'+esc(axisValue(low,s.unit))+'</text><path d="M65 35 V215 H920" stroke="#c5d3df" fill="none"/><path class="curve" d="'+path+'"/>';
  // Points selected for the plot retain their actual timestamps and values.
  var shown=valid.length<=2048?valid:valid.filter(function(p,i){return i%Math.ceil(valid.length/2048)===0||p[1]===high;});
- shown.forEach(function(p){const i=(data[section.id]||[]).indexOf(p[2]),tip=num((p[0]-origin)/1e9)+' s · '+axisValue(p[1],s.unit);
+ shown.forEach(function(p){const i=p[3],tip=num((p[0]-origin)/1e9)+' s · '+axisValue(p[1],s.unit);
    svg+=mark(i,tip,'<circle class="sample" cx="'+x(p)+'" cy="'+y(p)+'" r="2"/>');});
  const marker=section.id==='resource.series'?cfg.meta.resource_fault_ns:null;
  if(Number.isFinite(marker)){
@@ -155,10 +162,10 @@ function drawCurve(section){
    if(t>=lo&&t<=hi)svg+=line(x([marker]),32,x([marker]),215,'#b83227',2,'stroke-dasharray="4 3"')+label(x([marker]),28,'异常触发','middle');
    if(!panel.querySelector('.fault-focus')){
      const btn=document.createElement('button');btn.className='fault-focus';btn.textContent='聚焦故障前窗口';
-     btn.onclick=()=>{const series=state.series[select.value];const end=(marker-series.points[0][0])/1e9;hiInput.value=end;loInput.value=Math.max(0,end-Math.max(1,end*0.15));drawCurve(section);};panel.querySelector('.chart-controls').append(btn);
+     btn.onclick=()=>{const series=state.series[select.value];if(!series)return;const end=(marker-series.points[0][0])/1e9;hiInput.value=end;loInput.value=Math.max(0,end-Math.max(1,end*0.15));drawCurve(section);};panel.querySelector('.resource-time-tools > div').append(btn);
    }
  }
- svg+='<text x="65" y="245">'+esc(num(lo))+' s</text><text x="835" y="245">'+esc(num(hi))+' s</text></svg><p class="chart-readout">来源时间相对首点；当前窗口 '+valid.length+' 个有效显示点。悬停查看原始观测；精确统计以统计表为准。</p>';
+ svg+='<text x="65" y="245">'+esc(num(lo))+' s</text><text x="835" y="245">'+esc(num(hi))+' s</text></svg><p class="chart-readout">'+esc(resourceReading(valid,s.unit))+'</p>';
  panel.querySelector('.timeline').innerHTML=svg;
  state.peak=function(){var p=points.filter(function(x){return x[1]!=null&&(!phase||section.id!=='resource.series'||phaseBands.some(function(b){return x[0]>=b.start_ns&&x[0]<=b.end_ns;}));}).reduce(function(a,b){return !a||b[1]>a[1]?b:a;},null);if(!p)return;var t=(p[0]-origin)/1e9,span=Math.max(end*.05,1e-6);loInput.value=Math.max(0,t-span);hiInput.value=Math.min(end||1,t+span);drawCurve(section);};
 }
@@ -184,6 +191,7 @@ function focusRow(id,index,clear){
  var section=cfg.sections.find(function(s){return s.id===id;});if(!section||!data[id]||!data[id][index])return false;
  activate(id);if(clear){clearFilters();apply();}var panel=$(id),state=states[id],position=state.selected.indexOf(index);if(position<0)return false;
  state.page=Math.floor(position/cfg.page_size);draw(section);if(panel.tagName==='DETAILS')panel.open=true;
+ panel.querySelector('.resource-records-toggle')?.setAttribute('aria-expanded','true');
  document.querySelectorAll('tr.focused').forEach(function(r){r.classList.remove('focused');});var node=panel.querySelector(':scope > .table-scroll tr[data-row="'+index+'"]');node.classList.add('focused');node.scrollIntoView({block:'center'});detail(id,index);return true;
 }
 function related(key,kind,currentId,currentIndex){
@@ -209,6 +217,8 @@ cfg.sections.forEach(function(section){
  direction.onclick=function(){var s=states[section.id];s.desc=!s.desc;direction.textContent=s.desc?'降序':'升序';draw(section);};
  panel.querySelector('.previous').onclick=function(){states[section.id].page--;draw(section);};
  panel.querySelector('.next').onclick=function(){states[section.id].page++;draw(section);};
+ const records=panel.querySelector('.resource-records-toggle');
+ if(records)records.onclick=()=>records.setAttribute('aria-expanded',String(records.getAttribute('aria-expanded')!=='true'));
  if(section.kind==='memory'||section.kind==='monitor'){
   panel.querySelectorAll('.series-select,.time-low,.time-high').forEach(function(e){e.onchange=function(){drawCurve(section);};});
   panel.querySelector('.chart-peak').onclick=function(){if(states[section.id].peak)states[section.id].peak();};

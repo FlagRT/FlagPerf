@@ -164,51 +164,72 @@ function forwardLayerRanking(items,state,sampled){
    (bars?'<div class="bars">'+bars+'</div>':'<p>当前范围没有可排名的子层耗时记录。</p>')+
    (roots.length?'<p>'+roots.join(' ')+'</p>':'')+'</div>';
 }
-function nodeTaskTimeline(tasks,groups,duration){
+function taskTimeline(tasks,groups,axis){
  if(!tasks.length)return '';
- const seconds=t=>(Number(t)/1e9).toLocaleString('zh-CN',{maximumFractionDigits:3})+' s';
- const percent=t=>100*Number(t)/duration;
- const stepBase=10**Math.floor(Math.log10(duration/5));
- const step=stepBase*[1,2,5,10].find(n=>n*stepBase>=duration/5);
- const ticks=[];
- for(let i=0;i*step<=duration;i++)ticks.push(i*step);
+ // Reports preserve large nanosecond fields as decimal strings.
+ const ns=value=>value==null?null:Number(value);
+ const node=axis.origin==='node', duration=ns(axis.duration_ns);
+ const hasScale=Number.isFinite(duration)&&duration>=0;
+ const seconds=t=>t>0&&t<1e6?fmt(t,'duration_ns'):(t/1e9).toLocaleString('zh-CN',{maximumFractionDigits:3})+' s';
+ const percent=t=>duration>0?100*t/duration:0;
+ const ticks=hasScale?[0]:[];
+ if(duration>0){
+   const base=10**Math.floor(Math.log10(duration/5));
+   const step=Math.max(1,base*[1,2,5,10].find(n=>n*base>=duration/5));
+   for(let i=1;i*step<=duration;i++)ticks.push(i*step);
+ }
  const ticksHtml=ticks.map(t=>'<span style="left:'+percent(t)+'%">'+esc(seconds(t))+'</span>').join('');
  const guides=ticks.map(t=>'<i class="node-guide" style="left:'+percent(t)+'%"></i>').join('');
- function inSession(t){return t!=null&&Number.isFinite(Number(t))&&t>=0&&t<=duration;}
- const lanes=tasks.map(task=>{
-   const events=groups.get(task.task_label)||[];
+ function inRange(t){return hasScale&&Number.isFinite(t)&&t>=0&&t<=duration;}
+ const lanes=tasks.map(({r:task,i:coverageIndex})=>{
+   const events=groups.get(task.task_label||task.run_id)||[], offset=ns(axis.starts?.[task.task_label]);
+   const localTime=t=>t!=null&&offset!=null?offset+Number(t):null;
+   const start=node?ns(task.node_start_ns):localTime(0);
+   const end=node?ns(task.node_exit_ns):localTime(task.receipt_relative_ns);
    const points=[];
-   if(task.started_ns!=null)points.push({name:'启动',t:task.node_start_ns,kind:'start'});
+   function taskPoint(name,t,kind,local){
+     points.push({name,t,kind,local,index:coverageIndex,section:'diagnosis.coverage'});
+   }
+   if(task.started_ns!=null)taskPoint('诊断启动',start,'start',0);
    for(const {r,i} of events){
-     points.push({name:r.event_label,t:r.node_event_ns,index:i,kind:r.rule==='proc.exit'?'exit':'alert'});
+     const exit=r.rule==='proc.exit';
+     const t=(node?ns(r.node_event_ns):localTime(r.diagnostic_time_ns))??(exit?end:null);
+     points.push({name:r.event_label||fmt(r.rule,'rule'),t,local:r.diagnostic_time_ns,index:i,section:'diagnosis',
+       kind:exit?'exit':r.state==='resolved'?'resolved':'alert'});
    }
-   if(task.exit_summary&&!events.some(({r})=>r.rule==='proc.exit'&&inSession(r.node_event_ns))){
-     points.push({name:task.exit_summary,t:task.node_exit_ns,kind:'exit'});
+   if(task.exit_summary&&!events.some(({r})=>r.rule==='proc.exit')){
+     taskPoint(task.exit_summary,end,'exit',task.receipt_relative_ns);
    }
-   const band=inSession(task.node_start_ns)&&inSession(task.node_exit_ns)&&task.node_exit_ns>=task.node_start_ns?
-     '<i class="node-run" style="left:'+percent(task.node_start_ns)+'%;width:'+percent(task.node_exit_ns-task.node_start_ns)+'%"></i>':'';
+   const band=task.started_ns!=null&&inRange(start)&&inRange(end)&&end>=start?
+     '<i class="node-run" style="left:'+percent(start)+'%;width:'+percent(end-start)+'%"></i>':'';
    const marks=[],unmapped=[];
    for(const point of points.sort((a,b)=>(a.t??Infinity)-(b.t??Infinity))){
-     const timed=inSession(point.t);
+     const timed=inRange(point.t);
      const text=esc(point.name)+(timed?' <small>'+esc(seconds(point.t))+'</small>':'');
-     const action=point.index==null?'<span class="node-event-label">'+text+'</span>':
-       '<button type="button" class="node-event-label" data-point="'+point.index+'">'+text+'</button>';
+     const target=' data-point-section="'+point.section+'" data-point="'+point.index+'"';
+     const action='<button type="button" class="node-event-label"'+(timed?'':target)+'>'+text+'</button>';
      if(!timed){
-       unmapped.push(action+(point.t==null?'（缺少节点时钟对应关系）':'（在会话区间外）'));
+       const reason=point.t!=null&&hasScale?'超出观测区间':
+         point.local!=null?'距本任务启动 '+seconds(point.local)+'，缺少共同时间基准':'时刻未记录或时钟无法对齐';
+       unmapped.push(action+'（'+esc(reason)+'）');
        continue;
      }
-     marks.push('<div class="node-mark '+point.kind+'" data-node-ns="'+Number(point.t)+'" style="left:'+percent(point.t)+'%">'+
+     marks.push('<div class="node-mark '+point.kind+'"'+target+' data-time-ns="'+point.t+'"'+
+       (node?' data-node-ns="'+point.t+'"':'')+' style="left:'+percent(point.t)+'%">'+
        '<i class="node-pin" aria-hidden="true"></i>'+action+'</div>');
    }
    const identity=[task.rank==null?'':'rank '+task.rank,task.pid==null?'':'PID '+task.pid].filter(Boolean).join(' · ');
-   const count=task.alert_count?task.alert_count+' 条告警':'未记录告警';
-   return '<div class="diagnostic-lane node-lane"><div class="node-task-name"><strong>'+esc(task.task_label)+'</strong><small>'+esc(identity)+
-     '</small><span class="diagnostic-count'+(task.alert_count?' has-alert':'')+'">'+esc(count)+'</span></div>'+
-     '<div class="node-lane-body"><div class="node-track">'+guides+band+marks.join('')+'</div>'+
+   const count=task.alert_count??new Set(events.map(({r,i})=>r.id??i)).size;
+   return '<div class="diagnostic-lane node-lane"><div class="node-task-name"><strong>'+esc(task.task_label||task.run_id||'归属未记录')+'</strong><small>'+esc(identity)+
+     '</small><span class="diagnostic-count'+(count?' has-alert':'')+'">'+(count?esc(count)+' 条告警':'未记录告警')+'</span></div>'+
+     '<div class="node-lane-body">'+(hasScale?'<div class="node-track">'+guides+band+marks.join('')+'</div>':'')+
      (unmapped.length?'<div class="node-unmapped">'+unmapped.join(' · ')+'</div>':'')+'</div></div>';
  }).join('');
- return '<div class="node-task-timeline" role="group" aria-label="节点会话时间轴"><h3>节点会话时间轴</h3>'+
-   '<div class="node-axis"><span>会话全长 '+esc(seconds(duration))+'</span><div class="node-ticks">'+ticksHtml+'</div></div>'+lanes+'</div>';
+ const title=node?'节点会话时间轴':axis.origin==='task'?'任务诊断时间轴':'多任务诊断时间轴';
+ const ruler=hasScale?'<div class="node-axis"><span>'+(node?'会话全长 ':'观测至 ')+esc(seconds(duration))+
+   '</span><div class="node-ticks">'+ticksHtml+'</div></div>':'<p class="description">缺少可定位事件的时间基准。</p>';
+ return '<div class="node-task-timeline" data-time-origin="'+esc(axis.origin)+'" role="group" aria-label="'+title+'"><h3>'+
+   title+'</h3>'+ruler+lanes+'</div>';
 }
 
 // Place the labels in the fewest non-overlapping levels while keeping every
@@ -237,43 +258,24 @@ function diagnosticLanes(sectionId,items){
  const groups=new Map();
  if(sectionId==='diagnosis'){
    for(const item of items){
-     const key=item.r.task_label;
+     const key=item.r.task_label||item.r.run_id;
      if(!groups.has(key))groups.set(key,[]);
      groups.get(key).push(item);
    }
  }
  const coverage=cfg.sections.find(section=>section.id===coverageId);
- const tasks=sectionId===coverageId?items.map(item=>item.r):roster.filter(task=>
-   groups.has(task.task_label)||accepts(coverage,task));
- if(cfg.meta.diagnosis_session_ns!=null)return nodeTaskTimeline(tasks,groups,Number(cfg.meta.diagnosis_session_ns));
- const lanes=tasks.map(task=>{
-   const events=(groups.get(task.task_label)||[]).sort((a,b)=>
-     (a.r.diagnostic_time_ns??Infinity)-(b.r.diagnostic_time_ns??Infinity)||a.i-b.i);
-   const chips=[];
-   function stage(name,when,index){
-     const seconds=Number.isFinite(when)?(when/1e9).toLocaleString('zh-CN',{maximumFractionDigits:3})+' s':'时刻未记录';
-     const content='<b>'+esc(name)+'</b><small>'+esc(seconds)+'</small>';
-     chips.push('<li>'+(index==null?'<span>'+content+'</span>':'<button data-point="'+index+'">'+content+'</button>')+'</li>');
-   }
-   if(task.started_ns!=null)stage('诊断启动',0);
-   for(const {r,i} of events)stage(r.event_label,r.diagnostic_time_ns,i);
-   if(task.exit_summary&&!events.some(({r})=>r.rule==='proc.exit')){
-     stage(task.exit_summary,task.receipt_relative_ns);
-   }
-   const identity=[task.rank==null?'':'rank '+task.rank,task.pid==null?'':'PID '+task.pid].filter(Boolean).join(' · ');
-   const count=task.alert_count?task.alert_count+' 条告警':'未记录告警';
-   return '<div class="diagnostic-lane"><div><strong>'+esc(task.task_label)+'</strong><small>'+esc(identity)+'</small>'+
-     '<span class="diagnostic-count'+(task.alert_count?' has-alert':'')+'">'+esc(count)+'</span></div>'+
-     (chips.length?'<ol>'+chips.join('')+'</ol>':'<span>没有可定位时刻的记录</span>')+'</div>';
- }).join('');
- return lanes?'<div class="diagnostic-lanes" role="group" aria-label="各任务的事件顺序">'+lanes+'</div>':'';
+ const tasks=sectionId===coverageId?items:roster.map((r,i)=>({r,i})).filter(({r})=>
+   groups.has(r.task_label||r.run_id)||accepts(coverage,r));
+ return taskTimeline(tasks,groups,cfg.meta.diagnosis_axis||{origin:'unmapped',duration_ns:null});
 }
 
 function relationship(section,indices){
  const id=section.id,panel=$(id),plot=panel.querySelector('.plot');if(!plot)return;
  const state=states[id],items=indices.map(i=>({i,r:data[id][i]}));
  let controls='',graphic='',note='';
- if(id==='perf.layer.forwards'){
+ if(section.chart?.type==='resource_statistics'){
+   graphic=resourceStatistics(section,items);
+ }else if(id==='perf.layer.forwards'){
    graphic=forwardLayerRanking(items,state,section.evidence_index);
  }else if(id==='comparison.metrics'){
    graphic=comparisonPlot(items,state);note='变化率以基准值为分母。绿色表示时延下降或吞吐上升。';
@@ -393,9 +395,10 @@ function initChartEvents(){
    if(panel){
      tooltip.hidden=true;
      if(point.closest('.layer-ranking'))focusRow(panel.id,Number(point.dataset.point),false);
-     else detail(panel.id,Number(point.dataset.point));
+     else detail(point.dataset.pointSection||panel.id,Number(point.dataset.point),
+       point.dataset.pointSection?point.textContent.trim():undefined);
    }
  };
  document.addEventListener('click',open);
- document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.matches('g[data-point]'))open(e);});
+ document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.matches('g[data-point]')){e.preventDefault();open(e);}});
 }

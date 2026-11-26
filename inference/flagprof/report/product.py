@@ -218,21 +218,15 @@ def _diagnosis(model, data, node=None):
         source_findings.append(row)
     from .diagnosis import by_task, conclusion, node_axis
     tasks, timing = by_task(observations, source_findings)
-    model.meta['diagnosis_layout_version'] = 3
+    model.meta['diagnosis_layout_version'] = 4
     duration = node_axis(node, evidence.values(), tasks, source_findings) if node is not None else None
     if duration is not None:
         model.meta['diagnosis_session_ns'] = duration
     add_table(model, 'diagnosis.coverage', '任务与观测范围', tasks,
               ('task_label','exit_summary','alert_count','registered_execution','source_gap','probe_gap','run_id'),
               '每个运行标识对应一个任务。有效执行观测按心跳计数。')
-    time_note = '时间从各任务的诊断探针启动算起。'
-    if duration is not None:
-        time_note = '横轴从节点监控会话启动算起。横条从任务诊断探针启动延伸到进程退出回执。'
-    elif node is not None:
-        time_note = '缺少可核对的节点会话时间基准，以下时刻从各任务的诊断探针启动算起。'
     add_table(model,'diagnosis','告警与状态变化',source_findings,
-              ('task_label','event_label','node_event_ns' if duration is not None else 'diagnostic_time_ns','rank'),
-              time_note+'选择告警可查看原始证据。',
+              ('task_label','event_label','node_event_ns','diagnostic_time_ns','rank'),
               status=status)
     from flagprof.monitor.diagnostic_report import anchor
     add_table(model,'diagnosis.evidence','故障的原始观测记录',
@@ -281,7 +275,9 @@ def build(model, doc, source=None):
         coverage = result.get('coverage',{})
         data = result.get('data',())
         status = result.get('status','unavailable')
-        if not len(data):
+        resource_children = ((ident == 'resource' and coverage.get('stages')) or
+                             (ident == 'memory' and coverage.get('series')))
+        if not len(data) and not resource_children:
             if model.meta['forward_only'] and ident in ('generation','oracle.generation'):
                 continue
             empty_reasons={'route.coverage':'本次未提供组件路由记录；未启用组件时此项不适用。',
@@ -734,7 +730,7 @@ def _redraw(source, out, *,  limits=None, runner_results=None, refresh_view=Fals
                 page = json.loads(header).get('value', {}) if header.strip() else {}
                 refresh_view = (page.get('field_display_version') != FIELD_DISPLAY_VERSION or
                                 page.get('mode') == 'monitor' and 'monitor_gaps' not in page or
-                                page.get('mode') == 'monitor' and page.get('diagnosis_layout_version') == 2 or
+                                page.get('mode') == 'monitor' and page.get('diagnosis_layout_version') in (2, 3) or
                                 'diagnosis_layout_version' not in page and any(
                                     (f.get('section') or '').startswith('diagnosis') for f in page.get('findings', [])))
         if runner_results:

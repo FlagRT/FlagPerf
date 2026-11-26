@@ -104,7 +104,7 @@ def render(model, out, *, filename='report.html'):
         if section.get('kind')=='evidence':
             section['evidence_index']=evidence_pages(model,out,section,filename)
     fingerprint=hashlib.sha256()
-    for name in ('render.py','fields.py','product.py','layout.py','diagnosis.py','assets/report.css','assets/report.js','assets/workspaces.js','assets/charts.js','assets/monitor.js'):
+    for name in ('render.py','fields.py','product.py','layout.py','curves.py','diagnosis.py','assets/report.css','assets/report.js','assets/workspaces.js','assets/charts.js','assets/monitor.js','assets/resource.js'):
         fingerprint.update((Path(__file__).parent/name).read_bytes())
     (out/'renderer.json').write_text(json.dumps(dict(schema='report-renderer/1',sha256=fingerprint.hexdigest(),
         presentation_schema=meta['schema']),indent=2)+'\n')
@@ -178,7 +178,15 @@ def render(model, out, *, filename='report.html'):
                 stream.write('<p>本页提供前 '+str(model.limits.html_rows)+' 条证据样本，筛选仅作用于这些样本。<a href="'+section['evidence_index']+'">阅读全部 '+str(section['count'])+' 条证据（独立分页）</a>。</p>')
             if section.get('status') not in ('ok','complete','available'):
                 stream.write('<p class="status">'+escape(display(section['status']))+' · 此状态描述数据可用范围。</p>')
-            if section['kind'] in ('memory','monitor'):
+            if ident in ('resource.series','memory.series'):
+                stream.write('<div class="chart-controls"><label>曲线<select class="series-select"></select></label>'
+                             '<details class="resource-time-tools"><summary>时间范围与峰值</summary><div>'
+                             '<label>起点（秒）<input class="time-low" type="number" step="any"></label>'
+                             '<label>终点（秒）<input class="time-high" type="number" step="any"></label>'
+                             '<button class="chart-peak">定位峰值</button></div></details></div><div class="timeline"></div>'
+                             '<button type="button" class="resource-records-toggle" aria-expanded="false" aria-controls="'+
+                             ident+'-rows">全部指标采样明细（'+format(section['count'],',')+' 条）</button>')
+            elif section['kind'] in ('memory','monitor'):
                 stream.write('<div class="chart-controls"><label>曲线<select class="series-select"></select></label><label>起点（秒）<input class="time-low" type="number" step="any"></label><label>终点（秒）<input class="time-high" type="number" step="any"></label><button class="chart-peak">定位峰值</button></div><div class="timeline"></div>')
             elif section.get('chart'):
                 stream.write('<div class="plot" aria-label="结果图"></div>')
@@ -186,7 +194,7 @@ def render(model, out, *, filename='report.html'):
             for key in section['columns']:
                 stream.write('<option value="'+escape(key,quote=True)+'">'+escape(PANEL_LABELS.get(ident,{}).get(key,LABELS.get(key,key)))+'</option>')
             stream.write('</select></label><button class="direction" title="切换排序方向">降序</button></div>')
-            stream.write('<div class="table-scroll"><table data-panel="'+escape(ident,quote=True)+'"><thead><tr>')
+            stream.write('<div class="table-scroll" id="'+escape(ident,quote=True)+'-rows"><table data-panel="'+escape(ident,quote=True)+'"><thead><tr>')
             for key in section['columns']:
                 stream.write('<th scope="col">'+escape(PANEL_LABELS.get(ident,{}).get(key,LABELS.get(key,key)))+'</th>')
             stream.write('<th scope="col">证据与关联</th></tr></thead><tbody>')
@@ -213,6 +221,8 @@ def render(model, out, *, filename='report.html'):
                 if not batch:break
                 stream.write('<script class="report-records" data-section="'+escape(section['id'],quote=True)+'" type="application/json">'+records_json(_web_value([evidence_links(model,row) for row in batch]))+'</script>')
         scripts=['workspaces.js','charts.js']
+        if any(s['group']=='resource' for s in sections):
+            scripts.append('resource.js')
         if any(s['id']=='monitor.series' for s in sections):
             scripts.append('monitor.js')
         scripts.append('report.js')

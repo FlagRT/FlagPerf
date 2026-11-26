@@ -22,6 +22,7 @@ function valuesFor(id,row,key) {
  case 'sid': values=[row.sid,row.sid_ref,row.sid_cmp];break;
  case 'phase':
    values=[row.phase,id==='perf.gap'?row.kind:null];
+   if(id==='resource'||id==='resource.stages')values.push(row.name);
    if(id==='resource.series')for(const band of cfg.meta.phase_bands||[])if(row.source_time_ns>=band.start_ns&&row.source_time_ns<=band.end_ns)values.push(band.name);
    break;
  case 'step': values=[row.generation_step??row.step];break;
@@ -72,7 +73,7 @@ function setupWorkspaces(){
  for(const {items,bar} of workspaceTabs.values()){
    bar.hidden=items.length===1;
    if(items.length===1&&items[0].title===items[0].group_title)$(items[0].id).querySelector('h2')?.setAttribute('hidden','');
-   const first=items.find(s=>['diagnosis','oracle.op_sensitivity.introduced','resource.series','perf.layer','route.coverage.missing_ops'].includes(s.id));
+   const first=items.find(s=>['diagnosis','oracle.op_sensitivity.introduced','perf.layer','route.coverage.missing_ops'].includes(s.id));
    activate((first||items[0]).id);
  }
  if('IntersectionObserver' in window){
@@ -91,8 +92,14 @@ function activate(id){
  if($(id).tagName==='DETAILS')$(id).open=true;
 }
 function revealHash(){
- const id=decodeURIComponent(location.hash.slice(1));if(!$(id))return;
- activate(id);if(id)$(id).scrollIntoView();
+ const id=decodeURIComponent(location.hash.slice(1)),panel=$(id);
+ if(!panel)return;
+ activate(id);
+ if(id==='diagnosis'||id==='diagnosis.coverage'){
+   const filters=document.querySelector('.filters');
+   panel.style.scrollMarginTop=filters&&getComputedStyle(filters).position==='sticky'?(filters.offsetHeight+12)+'px':'';
+ }
+ panel.scrollIntoView();
 }
 function columnTools(section,state){
  const panel=$(section.id),rows=data[section.id]||[],context=[],empty=[];

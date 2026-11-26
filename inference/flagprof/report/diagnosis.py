@@ -4,6 +4,33 @@
 from .fields import display
 
 
+def timeline_axis(tasks, findings, session_ns):
+    """Choose one origin for the complete report, before any interactive filtering."""
+    tasks = list(tasks)
+    if not tasks or any(not task.get('task_label') for task in tasks):
+        return dict(origin='unmapped', duration_ns=None)
+    if len(tasks) > 1 and session_ns is not None:
+        return dict(origin='node', duration_ns=session_ns)
+    if len(tasks) == 1:
+        origin = 'task'
+        starts = {tasks[0]['task_label']: 0}
+    else:
+        # A detached multi-run result may retain a common host clock but no node session.
+        clocks = {t.get('start_clock') for t in tasks}
+        if len(clocks) != 1 or not all(t.get('start_clock') and t.get('started_ns') is not None for t in tasks):
+            return dict(origin='unmapped', duration_ns=None)
+        origin = 'first_task'
+        first = min(t['started_ns'] for t in tasks)
+        starts = {t['task_label']: t['started_ns'] - first for t in tasks}
+    end = max((starts[t['task_label']] for t in tasks if t.get('started_ns') is not None), default=None)
+    for records, field in ((tasks, 'receipt_relative_ns'), (findings, 'diagnostic_time_ns')):
+        for row in records:
+            when = row.get(field)
+            if when is not None and when >= 0 and row.get('task_label') in starts:
+                end = max(end or 0, starts[row['task_label']] + when)
+    return dict(origin=origin, duration_ns=end, starts=starts)
+
+
 def node_axis(document, evidence, tasks, findings):
     """Project raw timestamps onto the full session, including on a --last report."""
     reference = document.get('coverage', {}).get('reference', {})
@@ -50,6 +77,10 @@ def node_axis(document, evidence, tasks, findings):
             continue
         if when is not None:
             row['node_event_ns'] = when - start
+    for row in findings:
+        task_start = by_run.get(row.get('run_id'), {}).get('node_start_ns')
+        if row.get('diagnostic_time_ns') is None and task_start is not None and row.get('node_event_ns') is not None:
+            row['diagnostic_time_ns'] = row['node_event_ns'] - task_start
     return end - start
 
 
@@ -115,7 +146,7 @@ def by_task(observations, findings):
         disjoint = all(a['exit_ns'] <= b['started_ns'] for a, b in zip(known, known[1:]))
         timing = '按启动顺序编号，任务观测区间没有重叠。' if disjoint else '按启动顺序编号，部分任务的观测区间重叠。'
     elif len(known) > 1:
-        timing = '每个编号对应一个运行标识，各任务单独计时。'
+        timing = '任务按启动顺序编号。' if ordered else '每个编号对应一个运行标识。'
     # Sort within each task only. Keep equal or unmapped instants in source order.
     positions = {t['run_id']:i for i, t in enumerate(lanes)}
     findings.sort(key=lambda r:(positions[r.get('run_id')], r['diagnostic_time_ns'] is None,

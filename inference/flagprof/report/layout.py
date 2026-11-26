@@ -6,6 +6,7 @@ from heapq import nlargest
 from itertools import islice
 
 from .fields import display, cell
+from .curves import preferred_curve
 
 # Longer prefixes win over their parent workspace.
 GROUPS = [
@@ -66,7 +67,8 @@ CHARTS = {
     'oracle.three_way':'oracle_three_way', 'comparison.metrics':'compare_diverging',
     'performance.baseline':'latency_range', 'generation.steps':'step_latency',
     'communication.aligned':'rank_sequence', 'group.ranks':'rank_cards', 'diagnosis':'fault_timeline',
-    'monitor.series':'monitor_grid', 'memory.series':'memory_curve', 'resource.series':'resource_curve'}
+    'monitor.series':'monitor_grid', 'memory.series':'memory_curve', 'resource.series':'resource_curve',
+    'resource':'resource_statistics', 'resource.stages':'resource_statistics'}
 FILTER_KEYS = set('dev rank sample level metric category route_decision entity group comparison_status rule state introduced equal instrumentation'.split())
 SHORTCUTS = [('category','compute','仅看计算'),('category','memcpy','仅看搬运'),('category','comm','仅看通信'),
              ('route_decision','fallback','仅看回退'),('introduced','true','仅看同输入引入'),
@@ -97,6 +99,10 @@ def compact(value):
 def decorate(model):
     meta = model.meta
     ids = {s['id'] for s in model.sections}
+    if 'diagnosis.coverage' in ids:
+        from .diagnosis import timeline_axis
+        meta['diagnosis_axis'] = timeline_axis(model.rows('diagnosis.coverage'), model.rows('diagnosis'),
+                                               meta.get('diagnosis_session_ns'))
     mode = meta.get('mode') or next((m for k,m in MODE_SECTIONS if k in ids), 'profile')
     meta['mode'] = mode
     if mode=='training':
@@ -148,8 +154,19 @@ def decorate(model):
                          eyebrow=' · '.join(compact(row[k]) for k in ('shape','phase') if row.get(k) is not None)))
     meta['kpis'] = kpis
     descriptions={s['id']:s.get('description') for s in model.sections}
+    curve_order = {}
     for s in model.sections:
         ident = s['id']
+        if ident == 'diagnosis' and 'diagnosis_axis' in meta:
+            origin = meta['diagnosis_axis']['origin']
+            note = {'task': '横轴从本任务的诊断启动（0 s）算起。',
+                    'node': '各任务共用节点监控会话的时间刻度。',
+                    'first_task': '各任务共用主机时钟，横轴从最早一次诊断启动算起。表中时刻相对各自任务启动。',
+                    'unmapped': '各任务缺少共同的时钟基准。可在事件详情中核对各自的时间记录。'}[origin]
+            s['description'] = note + '选择事件可查看对应记录和证据。'
+            time_field = 'node_event_ns' if origin == 'node' else 'diagnostic_time_ns'
+            s['columns'] = list(dict.fromkeys(time_field if k in ('node_event_ns','diagnostic_time_ns') else k
+                                              for k in s['columns']))
         group,title,_ = next((g for g in GROUPS if any(ident==p or ident.startswith(p+'.') for p in g[2])),
                              (ident,s['title'],()))
         if ident.rpartition('.')[0] in descriptions and descriptions[ident.rpartition('.')[0]]==s.get('description'):
@@ -160,6 +177,12 @@ def decorate(model):
             s['filter_scope']=filters(ident,keys)
         s['quick_filters']=[dict(field=k,value=v,label=label) for k,v,label in SHORTCUTS if k in s['filter_scope']]
         if ident in CHARTS:s['chart']=dict(type=CHARTS[ident])
+        if ident in ('resource.series', 'memory.series'):
+            rank, series = preferred_curve(model.rows(ident))
+            s['chart']['default_series'] = series
+            curve_order[ident] = rank
+        if ident in ('resource', 'resource.stages'):
+            s['filter_scope'] = sorted(set(s['filter_scope']) | {'phase'})
         if ident=='diagnosis.coverage' and 'diagnosis' not in ids:s['chart']=dict(type='fault_timeline')
         s.update(group=group,group_title=title,tab_label=s['title'],default_sort=SORT.get(ident),
                  default_desc=ident not in ('diagnosis','communication.aligned'),preserve_order=ident not in SORT)
@@ -169,8 +192,11 @@ def decorate(model):
                     'compare':['compare','metrics'],'monitor':['monitor'],'training':['training']}.get(mode,[])
     priority = (['diagnosis'] if meta['banners'] else []) + first_groups
     order = list(dict.fromkeys(priority+[s['group'] for s in model.sections]))
-    model.sections.sort(key=lambda s:(order.index(s['group']),s['id'] in ('diagnosis.coverage','diagnosis.evidence')
-                                      if s['group']=='diagnosis' else False))
+    def tab_order(s):
+        if s['group'] == 'resource':
+            return curve_order.get(s['id'], float('inf'))
+        return int(s['id'] in ('diagnosis.coverage','diagnosis.evidence'))
+    model.sections.sort(key=lambda s:(order.index(s['group']),tab_order(s)))
 
 
 def excerpts(model):
@@ -199,4 +225,6 @@ def excerpts(model):
                 if total and r.get('device_work_ns') is not None:r['category_share']=r['device_work_ns']/total
         if result:
             columns = SUMMARY_COLUMNS.get(ident,'').split() or section['columns'][:7]
+            if ident == 'diagnosis':
+                columns = [k for k in columns if k not in ('diagnostic_time_ns','node_event_ns') or k in section['columns']]
             yield section, [k for k in columns if any(cell(r,k) is not None or k in r.get('_field_notes',{}) for r in result)], result
