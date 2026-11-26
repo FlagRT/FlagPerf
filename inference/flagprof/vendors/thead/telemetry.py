@@ -9,9 +9,9 @@ temperature and power are queryable with the standard nvml* symbols
 NVIDIA NVML reader with that library; per-vendor identity naming stays
 honest (PPU-ZW810E).
 
-Library discovery and UUID reads are shared with the target-side identity
-(flagprof.telemetry.nvml_compat) so a monitor target binds to the exact
-telemetry entity string.
+Library discovery, UUID reads and error aggregation are shared with the
+target-side identity (flagprof.telemetry.nvml_compat). Diagnose an
+unreachable library with ``flagprof telemetry check --vendor thead``.
 """
 
 
@@ -21,7 +21,7 @@ def Provider(devices='all', source='auto', **kwargs):
     from flagprof.telemetry.nvml_compat import candidate_libraries
     if source not in ('auto', 'nvml'):
         raise ValueError('thead telemetry source must be auto or nvml')
-    last = None
+    attempts = []
     for library in candidate_libraries():
         try:
             provider = NVML(devices=devices, source='nvml', library=library, **kwargs)
@@ -29,5 +29,6 @@ def Provider(devices='all', source='auto', **kwargs):
             provider.inventory['library'] = library
             return provider
         except (OSError, ReadError) as error:
-            last = str(error)
-    raise ReadError('PPU NVML-compatible library not found: ' + str(last))
+            attempts.append(library + ': ' + str(error))
+    raise ReadError('PPU NVML-compatible library unavailable; tried ' +
+                    str(len(attempts)) + ' path(s): ' + ' | '.join(attempts))

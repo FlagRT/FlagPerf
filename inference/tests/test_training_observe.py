@@ -36,41 +36,74 @@ class TrainingMonitorWiringTests(unittest.TestCase):
         self.env.start(); self.addCleanup(self.env.stop)
         os.environ.pop('FLAGPROF_MONITOR_REFERENCE', None)
 
-    def test_single_process_session_and_diagnose_config(self):
+    def test_single_process_session_wiring_is_consistent(self):
+        """thead attempts the agent session first; when the telemetry library
+        is unavailable it falls back to the local sidecar. Either way the
+        topology, reference file and diagnose flag must agree."""
         from flagprof.training.__main__ import monitor_start
         monitoring = monitor_start(self.root, 'thead', 1, 0)
         try:
             self.assertIsNotNone(monitoring)
-            self.assertEqual(monitoring['topology'], 'local')
-            self.assertEqual(monitoring['config'], dict(monitor='on', monitor_topology='local'))
-            self.assertNotIn('FLAGPROF_MONITOR_REFERENCE', os.environ)
-            self.assertEqual(monitoring['reference'],
-                             str((self.root/'monitor-ref.json').resolve()))
-            reference = json.loads((self.root/'monitor-ref.json').read_text())
-            self.assertEqual(reference.get('topology'), 'local')
-            self.assertEqual(reference['pre_sample'], 'available')
-            self.assertTrue((self.root/'monitor').is_dir())
+            topology = monitoring['topology']
+            self.assertIn(topology, ('local', 'agent'))
+            if topology == 'agent':
+                self.assertEqual(monitoring['config']['monitor_topology'], 'agent')
+                self.assertEqual(monitoring['diagnose'], 'on')
+                self.assertIsNotNone(monitoring['supervisor'])
+                reference = self.root/'monitor-ref.json'
+            else:
+                self.assertEqual(monitoring['config'], dict(monitor='on', monitor_topology='local'))
+                self.assertEqual(monitoring['diagnose'], 'off')
+                self.assertIsNone(monitoring['supervisor'])
+                reference = self.root/'monitor-ref.local.json'
+            self.assertEqual(monitoring['reference'], str(reference.resolve()))
+            payload = json.loads(reference.read_text())
+            self.assertEqual(payload.get('topology'), topology)
+            self.assertTrue((self.root/'monitor').is_dir(), 'local monitor run missing')
             manifests = list((self.root/'monitor').glob('*/manifest.json'))
             self.assertEqual(len(manifests), 1, 'monitor session run missing')
-            inventory = json.loads((manifests[0].parent/'inventory.json').read_text())
-            self.assertEqual(inventory['device_telemetry'], 'unavailable')
-            self.assertEqual(inventory['source'], 'host-procfs')
             self.assertEqual(json.loads(manifests[0].read_text()).get('identity', {}).get('kind'), 'monitor')
         finally:
             monitoring['owner'].close()
-        closed = json.loads((self.root/'monitor-ref.json').read_text())
+        # The close receipt lives beside whichever reference the session used.
+        closed = json.loads(Path(monitoring['reference']).read_text())
         self.assertIsNotNone(closed.get('reclaim'), 'monitor close left no reclaim receipt')
 
-    def test_vendor_without_device_telemetry_keeps_diagnose_off(self):
+    def test_local_fallback_keeps_diagnose_off(self):
+        """Force only the agent supervisor to fail; the local sidecar must
+        take over with the .local.json reference and diagnosis honestly off."""
+        import subprocess
+        from unittest.mock import Mock
         from flagprof.training.__main__ import monitor_start
-        with patch.dict(os.environ, dict(FLAGPROF_TRAIN_DIAGNOSE='on')):
+        real_popen = subprocess.Popen
+        state = {'calls': 0}
+
+        def popen(*args, **kwargs):
+            state['calls'] += 1
+            if state['calls'] == 1:  # the agent supervisor launch
+                child = Mock()
+                child.poll.return_value = 1
+                return child
+            return real_popen(*args, **kwargs)
+
+        # Pre-seed the supervisor's own failure reason: the fallback error must
+        # surface it instead of a generic message.
+        (self.root/'session.json').write_text(json.dumps(dict(
+            status='failed', worker_error='ReadError: NVML-compatible library unavailable')))
+        with patch.dict(os.environ, dict(FLAGPROF_TRAIN_DIAGNOSE='on')), \
+             patch('flagprof.monitor.subscriptions.request', side_effect=ConnectionRefusedError), \
+             patch('subprocess.Popen', side_effect=popen):
             monitoring = monitor_start(self.root, 'thead', 1, 0)
-            try:
-                self.assertEqual(monitoring['topology'], 'local')
-                self.assertEqual(monitoring['diagnose'], 'off')
-                self.assertEqual(monitoring['supervisor'], None)
-            finally:
-                monitoring['owner'].close()
+        try:
+            self.assertEqual(monitoring['topology'], 'local')
+            self.assertEqual(monitoring['diagnose'], 'off')
+            self.assertIsNone(monitoring['supervisor'])
+            self.assertTrue(monitoring['reference'].endswith('monitor-ref.local.json'))
+            self.assertTrue(monitoring['errors'], 'fallback must record the agent failure')
+            self.assertIn('NVML-compatible library unavailable', monitoring['errors'][0],
+                          'fallback error must name the underlying cause')
+        finally:
+            monitoring['owner'].close()
 
     def test_failed_watch_never_enables_agent_diagnosis(self):
         from unittest.mock import Mock

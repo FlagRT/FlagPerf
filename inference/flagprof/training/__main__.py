@@ -203,6 +203,14 @@ def monitor_start(root,vendor,world,rank, *, control=None, reference=None):
             child.kill()
             child.wait()
 
+    def supervisor_error():
+        """The worker's own failure reason, so a fallback is diagnosable."""
+        try:
+            state = json.loads((Path(monitor_root)/'session.json').read_text())
+            return state.get('worker_error') or state.get('status')
+        except (OSError, ValueError):
+            return None
+
     def start_agent():
         nonlocal supervisor, owner
         from flagprof.monitor.subscriptions import request
@@ -220,7 +228,8 @@ def monitor_start(root,vendor,world,rank, *, control=None, reference=None):
                     break
                 except (OSError, ValueError) as exc:
                     if supervisor.poll() is not None or time.monotonic() >= deadline:
-                        raise RuntimeError('watch supervisor failed to become ready') from exc
+                        raise RuntimeError('watch supervisor failed to become ready: ' +
+                                           str(supervisor_error())) from exc
                     time.sleep(.2)
         owner = Monitor(root, reference, vendor, dict(monitor='on', monitor_topology='agent',
                         monitor_root=monitor_root, monitor_interval_ms=interval))

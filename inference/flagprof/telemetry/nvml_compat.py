@@ -48,18 +48,32 @@ def candidate_libraries(extra=()):
     return tuple(candidates)
 
 
-def open_library(library=None):
-    """Load the first candidate that answers nvmlInit_v2; return (lib, path)."""
-    last = None
-    for path in ((library,) if library else candidate_libraries()):
+def load(library=None):
+    """Load the first candidate that answers nvmlInit_v2.
+
+    Returns ``(lib, path, attempts)`` where ``attempts`` records every path
+    tried with its failure reason, so callers can surface a diagnosable error.
+    Raises OSError whose message enumerates all attempts when none works.
+    """
+    paths = (library,) if library else candidate_libraries()
+    attempts = []
+    for path in paths:
         try:
             lib = C.CDLL(path)
-            if lib.nvmlInit_v2() == 0:
-                return lib, path
-            last = path + ': init returned ' + str(lib.nvmlInit_v2())
-        except OSError as error:
-            last = str(error)
-    raise OSError('NVML-compatible library unavailable: ' + str(last))
+            code = lib.nvmlInit_v2()
+            if code == 0:
+                return lib, path, attempts
+            attempts.append(path + ': nvmlInit_v2=' + str(code))
+        except (OSError, AttributeError) as error:
+            attempts.append(path + ': ' + type(error).__name__ + ': ' + str(error))
+    raise OSError('NVML-compatible library unavailable; tried ' + str(len(attempts)) +
+                  ' path(s): ' + '; '.join(attempts))
+
+
+def open_library(library=None):
+    """Load the first usable candidate; return (lib, path)."""
+    lib, path, _attempts = load(library)
+    return lib, path
 
 
 def device_count(lib):
@@ -118,7 +132,7 @@ def logical_identity(device_index, torch_uuid=None):
     ``None`` when the library is unavailable or no UUID matches.
     """
     try:
-        lib, path = open_library()
+        lib, path, _attempts = load()
     except OSError:
         return None
     uuids = device_uuids(lib)

@@ -9,9 +9,9 @@ memory, temperature and power are queryable with the standard nvml*
 symbols (verified on P800 OAM x8, driver 5.0.21.47). This provider reuses
 the NVIDIA NVML reader pointed at that library.
 
-Library discovery and UUID reads are shared with the target-side identity
-(flagprof.telemetry.nvml_compat) so a monitor target binds to the exact
-telemetry entity string.
+Library discovery, UUID reads and error aggregation are shared with the
+target-side identity (flagprof.telemetry.nvml_compat). Diagnose an
+unreachable library with ``flagprof telemetry check --vendor kunlunxin``.
 """
 
 # The XPU vendor tree's documented install paths, tried before the shared
@@ -25,7 +25,7 @@ def Provider(devices='all', source='auto', **kwargs):
     from flagprof.telemetry.nvml_compat import candidate_libraries
     if source not in ('auto', 'nvml'):
         raise ValueError('kunlunxin telemetry source must be auto or nvml')
-    last = None
+    attempts = []
     for library in candidate_libraries(extra=XPU_LIBRARY_PATHS):
         try:
             provider = NVML(devices=devices, source='nvml', library=library, **kwargs)
@@ -33,5 +33,6 @@ def Provider(devices='all', source='auto', **kwargs):
             provider.inventory['library'] = library
             return provider
         except (OSError, ReadError) as error:
-            last = str(error)
-    raise ReadError('Kunlunxin NVML-compatible library not found: ' + str(last))
+            attempts.append(library + ': ' + str(error))
+    raise ReadError('Kunlunxin NVML-compatible library unavailable; tried ' +
+                    str(len(attempts)) + ' path(s): ' + ' | '.join(attempts))
