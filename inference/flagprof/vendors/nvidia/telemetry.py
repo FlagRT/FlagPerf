@@ -8,6 +8,11 @@ class Memory(C.Structure):
     _fields_ = [('version',C.c_uint)]+[(n,C.c_ulonglong) for n in ('total','reserved','free','used')]
 
 
+# nvmlMemory_t: the pre-v2 layout some NVML-compatible stacks implement.
+class MemoryV1(C.Structure):
+    _fields_ = [(n,C.c_ulonglong) for n in ('total','free','used')]
+
+
 class Utilization(C.Structure):
     _fields_ = [('gpu',C.c_uint),('memory',C.c_uint)]
 
@@ -131,9 +136,26 @@ class NVML:
             return Observation(entity,values,start,end,miss,api or names[0],detail=detail)
         self._calls.append(Call(entity+':'+names[0]+str(args),entity,entity,tuple(n for n,_,_ in fields),read,group,api or names[0]))
 
+    def _memory(self,handle,entity):
+        # Some NVML-compatible vendor stacks implement only the pre-v2 call;
+        # probe v2 once and fall back to nvmlDeviceGetMemoryInfo when it is
+        # unsupported, so memory metrics are available on those stacks too.
+        v2=getattr(self.lib,'nvmlDeviceGetMemoryInfo_v2',None)
+        v1=getattr(self.lib,'nvmlDeviceGetMemoryInfo',None)
+        use_v2=False
+        if v2 is not None:
+            probe=Memory();probe.version=C.sizeof(Memory)|(2<<24)
+            use_v2=v2(handle,C.byref(probe))==0
+        if use_v2 or v1 is None:
+            self._add(handle,entity,['nvmlDeviceGetMemoryInfo_v2'],(),Memory,[
+                ('memory.used',lambda x:x.used,'B'),('memory.total',lambda x:x.total,'B'),('nvidia.memory.system_reserved',lambda x:x.reserved,'B')])
+        else:
+            self._add(handle,entity,['nvmlDeviceGetMemoryInfo'],(),MemoryV1,[
+                ('memory.used',lambda x:x.used,'B'),('memory.total',lambda x:x.total,'B')])
+            self.unavailable['nvidia.memory.system_reserved']='unsupported_by_driver'
+
     def _device(self,handle,entity):
-        self._add(handle,entity,['nvmlDeviceGetMemoryInfo_v2'],(),Memory,[
-            ('memory.used',lambda x:x.used,'B'),('memory.total',lambda x:x.total,'B'),('nvidia.memory.system_reserved',lambda x:x.reserved,'B')])
+        self._memory(handle,entity)
         self._add(handle,entity,['nvmlDeviceGetUtilizationRates'],(),Utilization,[
             ('nvidia.gpu.activity',lambda x:x.gpu,'%'),('nvidia.memory.activity',lambda x:x.memory,'%')],kind='window')
         for api,metric,unit,factor,group,args,typ in [
