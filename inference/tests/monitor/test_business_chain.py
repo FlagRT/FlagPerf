@@ -67,6 +67,33 @@ class ChainTests(unittest.TestCase):
                 state=json.loads((Path(directory)/'rank-0/worker.json').read_text())
                 self.assertEqual(state['status'],'complete' if code==0 else 'failed')
 
+    def test_wait_receipt_replacing_inflight_registration_end_is_delivered(self):
+        from types import SimpleNamespace
+        from flagprof.monitor.node import drain_notifications
+        from flagprof.monitor.session import configuration, edit, initialize
+        from flagprof.monitor.subscriptions import Server
+        from flagprof.store.manifest import proc_key
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            initialize(root, 'nvidia', 'all', configuration())
+            with edit(root) as state:
+                state['status'] = 'running'
+                state['config']['queue_capacity'] = 1
+            server = SimpleNamespace(root=root)
+            reference = dict(worker_proc_key=proc_key(), window=[1, None], root='.', session_path='.')
+            message = dict(reference=reference, path=str(root/'ref.json'))
+            Server.handle(server, dict(action='register', **message))
+            Server.handle(server, dict(action='finish', **message))
+            def publish_exit():
+                Server.handle(server, dict(action='exit', exit=dict(source='subprocess.wait', returncode=7), **message))
+            events = []
+            writer = SimpleNamespace(emit=events.append, writer=SimpleNamespace(flush=publish_exit))
+            drain_notifications(root, writer, 1)
+            drain_notifications(root, writer, 1)
+            self.assertEqual([row['detail']['source'] for row in events], ['registration_end', 'subprocess.wait'])
+            self.assertEqual(events[1]['detail']['returncode'], 7)
+            self.assertFalse(list((root/'notifications').glob('*.json')))
+
     def test_failed_rank_and_launcher_terminated_peer_keep_separate_receipts(self):
         from unittest.mock import patch
         import subprocess

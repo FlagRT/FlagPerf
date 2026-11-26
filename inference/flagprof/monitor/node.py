@@ -37,6 +37,18 @@ def sampling_interval(requested, inventory, previous=None, calibrated=100):
     return interval
 
 
+def drain_notifications(root, writer, capacity):
+    for path in sorted((root/'notifications').glob('*.json'))[:capacity]:
+        payload = path.read_bytes()
+        writer.emit(json.loads(payload))
+        writer.writer.flush()
+        # An authoritative wait receipt can replace a provisional end record
+        # while its Store write is in flight. Acknowledge only what we flushed.
+        with locked(root):
+            if path.read_bytes() == payload:
+                path.unlink()
+
+
 def worker(root):
     root = Path(root); state = load(root); config = state['config']
     stopping = False
@@ -77,12 +89,6 @@ def worker(root):
             publish_control(root,root/'rules.json',dict(schema='monitor-rule-config/1',rule_version=VERSION,
                 config_version=consumer.engine.config_id,config=config,source_identity=inventory['source_identity']))
         known = {};known_pids={}; next_scan = next_tick = next_consume = 0
-        def drain_notifications():
-            for path in sorted((root/'notifications').glob('*.json'))[:config['queue_capacity']]:
-                event=json.loads(path.read_text())
-                writer.emit(event)
-                writer.writer.flush()
-                path.unlink()
         def publish(points,health):
             for event in health: writer.emit(event)
             for point in points:
@@ -133,7 +139,7 @@ def worker(root):
                 if hasattr(provider,'targets'):
                     provider.target_devices=target_devices;provider.targets=device_targets
                 if load(root)['status']=='capacity': raise CapacityError('control_capacity')
-                drain_notifications()
+                drain_notifications(root, writer, config['queue_capacity'])
             publish(*sampler.tick())
             if now>=next_tick:
                 ready=diagnostic_inputs.poll() if diagnostic_inputs else True
@@ -148,7 +154,7 @@ def worker(root):
             deadline=time.monotonic()+1
             while not diagnostic_inputs.poll() and time.monotonic()<deadline:
                 consumer.poll()
-        drain_notifications()
+        drain_notifications(root, writer, config['queue_capacity'])
         return 0
     except BaseException as error:
         with edit(root) as state:
