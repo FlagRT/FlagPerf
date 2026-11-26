@@ -77,6 +77,12 @@
 **理由**：v1 的 10 个命令是按分析种类长出来的，命令数随能力线性增长（[01 §2.4](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/01-diagnosis.md)）。
 **影响**：[09](09-cli-and-campaign.md)。
 
+**2026-11-25 单卡工作流增补。** 新增顶层动词 `init` 与 `run`。`init` 从安装包生成配置，`run` 把 Schema v1 的 `single` 任务编译为既有采集、校验、runner 和报告命令，并记录各步骤实际产物。任务执行状态与报告证据状态分别保存。首批模板为 quickstart、custom-script 和 cpu-demo。[使用示例](usage.md#单卡工作流)
+
+**2026-11-25 对照与双卡增补。** 同一入口支持 `compare` 模式和 `single` 的 TP2 场景，增加 compare 和 tp2 两份模板。Oracle 接受同类 Store 或完整组，性能报告按可核对的共同计时口径比较。工作流沿用实际采集、launch、inspect 和报告命令。组报告按显式 rank 核对 runner 和 Store 的原始身份，并保留双方已知的组件源码摘要。[使用示例](usage.md#双卡与对照)
+
+**2026-11-25 计算图与批量运行增补。** 三批场景验收完成后，冻结工作流 Schema v1 的四种模式和七份模板。`export` 调用独立 CPU 导出器，使用图包 manifest 中的格式、验证和文件记录。`batch` 将内联、内置或外部名册交给原生 A/A 驱动，沿用逐模型身份、passed/failed/blocked 计数及退出码。复跑使用新的输出目录，并按原始来源定位输入。[使用示例](usage.md#计算图与批量运行)
+
 ### D10 — 先做 Spike-C，再冻结 schema
 
 **日期**：2026-10-09

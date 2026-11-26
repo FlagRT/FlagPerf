@@ -2,6 +2,104 @@
 
 在仓库根目录执行 `python -m pip install ./inference`，也可安装构建好的 wheel。随后可以在任意目录运行 `flagprof --help`。离线操作使用 Python 3.9+ 标准库，采集需要在目标程序的 Python 环境中安装 FlagPerf 和相应设备 SDK。
 
+## 单卡工作流
+
+`flagprof init --list` 列出 Schema v1 的七份模板，覆盖 single、compare、export 和 batch 四种模式。读取 YAML 和运行批量名册需要 PyYAML，可在仓库根目录运行 `python -m pip install './inference[batch]'`。工作流的 JSON 配置可用 Python 标准库读取。源码入口为仓库根目录下的 `python inference/run.py`，安装后也可用 `python -m flagprof`。
+
+| 用户场景 | 模板 | 准备与实际产物 |
+|---|---|---|
+| 采集一份单卡模型报告 | `quickstart`（默认） | 准备本地 HF 模型目录、一条文本和对应设备的 PyTorch、Transformers、profiler。默认依次执行 record、inspect 和 report |
+| 采集自己的程序 | `custom-script` | 填写直接启动 Python 的 argv 和工作目录。默认交付该进程的 Store 与报告；windowed 目标需保留 Python site 注入 |
+| 在 CPU 上体验基准 | `cpu-demo` | 准备 CPU PyTorch。自动制作 8 条固定样本，运行 DLRM，在 HTML 中按输入组查看真实计时 |
+
+在设备环境中，从填写模型目录到新任务目录复跑可依次执行下列命令。将第一行改为本机模型路径。
+
+```bash
+MODEL_DIR=/path/to/Qwen3-Embedding-0.6B
+flagprof init
+flagprof run flagprof.yaml --set target.model="$MODEL_DIR" --check
+flagprof run flagprof.yaml --set target.model="$MODEL_DIR" --dry-run --json
+flagprof run flagprof.yaml --set target.model="$MODEL_DIR" --out single-first
+bash single-first/commands.sh single-repeat
+```
+
+`--check` 核对输入、组件和采集条件。单任务及比较中的本地任务会用目标 Python 导入内置 runner、探针和显式启用组件所需的包。自定义命令使用默认 monitor 配置时无需导入 PyTorch。批量模式只检查入选的内置模型，执行解释器遵循 `BATCH_PYTHON`。图导出按所选格式检查依赖，启用 ONNX 运行校验时还检查 `onnxruntime`。动态库加载失败时，错误会列出步骤、解释器和导入原因。已有 Store 和已有报告直接进入离线检查。`--dry-run` 可单独查看实际 argv、步骤依赖与工作目录。两者在创建任务目录前返回。厂商 auto 依据本机已注册适配器的 SMI 命令选择候选，模型实际设备见 runner 身份。多厂商主机可用 `--set hardware.vendor=ascend` 等显式选择。选择具体卡遵循该厂商的设备可见性设置。
+
+只封存原始数据时，在上述运行命令添加 `--set collection.capture_only=true` 并选新目录。摘要给出实际 capture 路径、`sealed` 和待导入状态。CPU 示例可直接运行 `flagprof init --template cpu-demo` 和 `flagprof run cpu_demo.yaml --out cpu-first`。CPU 模式使用 runner 出基准报告，无需探测厂商命令。
+
+配置内路径相对于配置文件所在目录；`--set` 和 `--out` 中的路径相对于调用者当前目录。路径支持 `${VAR}`、`$$` 和 `~`。自定义脚本按 `target.cwd` 解释，默认使用配置目录。枚举使用字符串（YAML 写 `flagtree: "off"`），布尔字段使用 `true/false`，数组覆盖使用 JSON。例如 `--set 'target.texts=["一条样本"]'`。同一字段以最后一次覆盖为准。
+
+每个任务独占一个新目录或空目录。`resolved-config.json` 可交给同一入口重新运行，`commands.sh` 接受新的任务路径。运行时在 `store/`、`runner-outputs/` 和 `report/` 分别保存相应产物。查看 `summary.json` 的 `steps` 可定位实际 argv、退出码和日志，`artifacts` 列出本次生成的文件。`status=complete` 表示请求的步骤完成，报告每个面板的 `ok`、`partial` 或 `unavailable` 及原因见 `evidence`。使用 `--json` 时终端输出同一份机器摘要。
+
+## 双卡与对照
+
+有两张可用设备时，生成 `tp2_launch.yaml`，填写模型、输入、厂商与通信后端后执行下列命令。工作流调 `launch` 启动两个 rank，从本次 `store/group.json` 读取实际 Store，逐 rank 校验并生成组报告。
+
+```bash
+flagprof init --template tp2
+flagprof run tp2_launch.yaml --check
+flagprof run tp2_launch.yaml --out tp2-first
+```
+
+`tp2-first/report/report.html` 展示两个 rank 的通信计数和附加的 runner 观测。自动挂接需要两份可核对身份的 runner，缺少文件时摘要注明 rank。用 `--set output.attach_runner_results=true` 可要求完整挂接。`--set collection.capture_only=true` 在各 rank 封存后结束。内置目标选 `profile.preset=none` 会从两份 runner 生成基准，TP2 自定义命令选该预设时交付执行清单和日志。
+
+按 rank 读取通信次数。若一行记录 1 次预热、2 次正式前向和 168 次模型 AllReduce，则该次运行平均每前向 56 次。生成任务的均值按生成步计算。控制组屏障单列。在“各 rank 的逻辑通信与设备计时”中，正式阶段计数来自调用关联的根模块；“有设备计时的调用数”给出能核对设备耗时的覆盖范围。
+
+要用已有单卡参考 Store 和本机一次新采集做 Oracle，把下列内容保存为 `oracle.yaml`，填入本地路径。若三份 Store 都已采好，给 `ref`、`baseline`、`cmp` 各填一个 `existing_run` 即可省略 `target` 和 `hardware`，在无设备的机器上运行。三个输入也可以都是完整的双 rank `group.json`。
+
+```yaml
+schema_version: 1
+mode: compare
+profile: {preset: accuracy}
+target: {task: embedding, model: /path/to/Qwen3-Embedding-0.6B, texts: ["Good morning."]}
+hardware: {vendor: ascend}
+runner: {dtype: bfloat16, batch_size: 1, forwards: 1}
+collection: {tensor_boundaries: layer, tensor_blob: all}
+compare:
+  ref: {existing_run: /path/to/reference-store}
+  cmp: {}
+```
+
+```bash
+flagprof run oracle.yaml --dry-run
+flagprof run oracle.yaml --out oracle-first
+bash oracle-first/commands.sh oracle-repeat
+```
+
+单侧文件在 `runs/<侧>/`，最终报告在 `compare-report/report.html`。摘要列出实际采集的 Store、已有来源和声明的差异。复跑会生成新的本机 Store，参考侧继续使用配置中指定的路径。
+
+做组件实验可用 `flagprof init --template compare`。共享参数写在顶层，变体差异写在 `compare.ref` 或 `compare.cmp`。例如在共享 FlagGems 关闭的 TP2 无插桩配置上，加 `--set compare.cmp.components.flaggems.enabled=true --set 'compare.cmp.components.flaggems.include=["mul","rsqrt"]'`。先用 `--dry-run` 查看两侧实际命令和允许变化的字段。此时目标 runner 注册 FlagGems，launch worker 选择编译器，报告保留每个 rank 的组件身份。
+
+已有性能报告可通过 `existing_report` 传入。各组都有经身份核对的 runner 时比较其逐 rank 基准；需要对齐子报告时，结果分别在 `compare-report/rank-0/` 和 `rank-1/`。组内缺少通信记录会得到 `partial` 和具体原因。两份基准的 dtype、输入或计时条件不一致时可得到 `not_comparable`，对应差值为空。结果文件保留完整指标及单位，报告的执行退出码和指标的可比性分别见 `steps` 和 `evidence`。
+
+## 计算图与批量运行
+
+计算图导出使用独立 CPU 进程。准备本地 Qwen3 embedding 模型、PyTorch 与 Transformers。ONNX 导出还需要 onnx、onnxscript，数值校验需要 onnxruntime。下面的命令导出一个固定形状的 FP32 样本，验证 FX 回读与 ONNX Runtime 的实际输出，并保留可供后续工具加载的完整模型文件。[导出环境和格式说明](graph-export.md)
+
+```bash
+flagprof init --template export
+flagprof run graph_export.yaml --set target.model=/path/to/Qwen3-Embedding-0.6B \
+  --set 'target.texts=["Good morning."]' --set runner.batch_size=1 \
+  --set runner.dtype=float32 --set export.bundle=full --set export.verify_onnx=true --out graph-first
+bash graph-first/commands.sh graph-repeat
+```
+
+打开 `graph-first/export-bundle/index.html` 可切换 FX、ONNX，搜索节点并查看输入和使用者。`manifest.json` 记录实际形状、每种格式的状态、文件摘要以及数值校验结果。默认 `bundle=structure` 保留图结构与查看器；`full` 另存可执行图、外部权重和样例张量。选择已封存的固定输入包时，用 `target.inputs_from` 替换文本来源，通过 `export.batch_index` 选择批次。
+
+批量运行会对每个入选模型执行两次推理，比较输出摘要和工作负载身份。CPU 示例可直接使用同一份八样本 CTR 包。
+
+```bash
+flagprof init --template batch
+flagprof-make-ctr --samples 8 --seed 531 --out packages/ctr-v1
+flagprof run batch_suite.yaml --set hardware.device=cpu --out battery-first
+flagprof run batch_suite.yaml --set 'batch={"config":"builtin:cpu","filter":"dlrm"}' \
+  --set hardware.device=cpu --out battery-filtered
+```
+
+内联 `batch.models` 和内置名册里的相对资源按配置文件目录解析，通过 CLI 传入的内联列表按调用目录解析。外部 `batch.config` 里的资源按该名册的目录解析。工作流把本次实际使用的绝对路径写到 `inputs/models.yaml`。可选内置名册为 `builtin:cpu`、`builtin:models`、`builtin:hf2`；先准备所选模型和输入。`hardware.device=auto` 由原生运行器选择设备。
+
+`batch-results/battery-summary.md` 是模型状态表。`battery-summary.json` 保留每次运行的退出码、结果路径、A/A 摘要与身份。`battery-state.json` 在每个模型结束时发布已完成的行。有模型失败时，批量命令退出 1，已完成和标记为 blocked 的行仍能在摘要中核对。`--check` 和 `--dry-run` 均可在创建任务前检查配置与入选模型。
+
 ## 选择结果位置
 
 ```bash
@@ -29,6 +127,8 @@ flagprof report results/sample --out report
 ```
 
 打开 `report/report.html` 可离线查看。报告将样例中缺少的硬件身份、采集配置和时钟证据标为未知。需要在另一台机器查看时，执行 `flagprof delivery publish results/sample --out archive`，复制整个 `archive`，执行 `flagprof delivery restore archive --out restored`。本例恢复结果中的 `mapping.run` 可以直接传给 `inspect`。
+
+本例首页显示“外部导入”，事件表记录 1 次、2 µs。`--normal-close` 表示调用者声明输入文件已正常关闭。来源文件若有显式区间标记，报告保留它的时长和原始位置。设备采集设置、进程内重复次数等需要对应运行证据。
 
 在装有 PyTorch 的环境，从仓库根目录用 `python -m pip install './inference[batch]'` 安装批量工具后，也可使用自带的 CPU CTR 示例。以下命令在同一工作目录生成固定输入、运行和比较两次推理。
 
@@ -97,6 +197,8 @@ flagprof import /absolute/path/to/sealed-capture \
 ```
 
 `seal` 处理正常关闭的外部官方 trace；`analyse` 在带对应 SDK 的环境中分析已封存 raw capture。升级后的派生证据通过新导入生成，历史 Store 和报告保留原样。
+
+若 final 采集的目标进程正常结束，随后 CANN 分析失败，终端回执和 capture 内的 `record-status.json` 会列出 `failed_stage`、错误信息与 `recovery_commands`。在装有对应 SDK 的环境按顺序执行恢复命令，即可从同一份原始数据继续生成 Store。CANN 在私有、可写的分析副本上运行；原始目录可保留共享权限。
 
 ## Oracle 与算子重放
 

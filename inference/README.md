@@ -15,6 +15,21 @@ flowchart LR
 
 先阅读 [快速使用](docs/usage.md)，参与开发时从 [框架与协作导航](docs/README.md) 开始。旧版配置、命令和结果格式的迁移方式见 [版本迁移](docs/migration.md)。
 
+## 从一份配置得到报告
+
+在有 CPU PyTorch 和 PyYAML 的环境运行下面两条命令，即可得到固定输入的 CTR 基准。打开 `cpu-first/report/report.html` 查看每组实际前向次数和延迟。
+
+```bash
+flagprof init --template cpu-demo
+flagprof run cpu_demo.yaml --out cpu-first
+```
+
+单卡模型采集用 `flagprof init` 生成 `flagprof.yaml`，自定义 Python 脚本用 `custom-script`。填写本地路径后可用 `--check` 体检、`--dry-run` 查看命令，执行后用 `bash commands.sh <新目录>` 复跑。[单卡工作流用法](docs/usage.md#单卡工作流)
+
+双卡 Qwen3 采集用 `flagprof init --template tp2`。要复用参考 Store 做精度对照，或比较两侧组件开关，用 `flagprof init --template compare`。采集报告会列出每个 rank 的证据，性能对照会注明指标能否比较。[双卡与对照用法](docs/usage.md#双卡与对照)
+
+导出固定形状的 Qwen3 embedding 计算图用 `flagprof init --template export`。按名册逐模型做两次 A/A 推理用 `flagprof init --template batch`。分别从图包的 `index.html` 和批量运行的 `battery-summary.md` 阅读结果。[计算图与批量运行](docs/usage.md#计算图与批量运行)
+
 昆仑芯 P800 的当前命令见[使用指南](docs/usage.md#p800-候选运行栈)，既有实测镜像和身份清单字段见 [P800 适配资料](../docs/kunlunxin/inference-v2.md)。[验证记录](../docs/kunlunxin/inference-v2-validation.md) 包含开放缺陷：OneRec 单卡/TP2 第 14 个生成 token 不同（P800-INF-007），尚不能声明 TP2 精度通过；该次验证未授予性能资格。
 
 训练程序复用本采集与 Store 架构，使用 [Training v2](../docs/training/v2.md) 的独立训练协议和报告，不套用推理 TP2 规则。

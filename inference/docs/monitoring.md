@@ -32,12 +32,27 @@ python3 -m flagprof watch status --root ./node
 
 python3 -m flagprof record --store ./tasks --vendor ascend --preset perf-lite \
   --monitor on --monitor-topology agent --monitor-root ./node --diagnose on \
+  --target-device npu:0 \
   -- python3 target.py
 
 python3 -m flagprof report ./node --last 1h --out ./node-report
 python3 -m flagprof report ./tasks/RUN --out ./task-report
 python3 -m flagprof watch replay ./node --out ./replay
 ```
+
+自定义 Python 目标使用 `--target-device` 声明**脚本实际使用的进程内设备**。上例适用于在 `npu:0` 上推理的脚本，CUDA 示例为 `--target-device cuda:0`。请在脚本或运行环境中选卡。FlagProf 在目标进程中读取昇腾逻辑卡到物理芯片的映射或 NVIDIA GPU 的 UUID，再与节点设备清单匹配。使用 YAML 工作流时，为单卡 `target.type: command` 设置 `monitor.enabled: true` 和 `hardware.device: npu:0`。
+
+脚本运行中才决定设备时，可在选卡后登记。内置 runner 与双卡 launch 已登记各自使用的设备。
+
+```python
+from flagprof import current_attachment
+
+handle = current_attachment()
+if handle is not None:
+    handle.register_device(tensor.device)
+```
+
+任务报告里的逻辑设备和物理芯片可以与节点报告的设备清单核对。任务没有登记设备时，节点报告仍可查看整机曲线。声明与脚本登记指向不同芯片时，任务报告保存两侧映射并提示冲突，设备归属留空。板级功率覆盖整块板上的芯片。
 
 NVIDIA 使用 `--vendor nvidia --devices all`。`launch` 支持同样的监控参数，单机 TP2 共用一个节点会话；组报告从 `group.json` 进入各 rank。跨容器任务使用同一宿主监控 agent，容器需挂载节点和目标目录的共同父目录，使引用路径保持可达。
 
