@@ -135,10 +135,7 @@ def scope(db,tax,vendor):
 def assess(db,tax,identities,ledger,vendor,uid):
     contract=tax.contract;conditions=c.evaluate_conditions(contract['conditions'],c.identity_facts(identities))
     for row in conditions:
-        row['source']={'hardware':identities.get('hardware',{}).get('source'),
-          'collector':identities.get('collector',{}).get('source'),'actual':identities.get('collector',{}).get('configuration',{}),
-          'sdk':identities.get('collector',{}).get('configuration',{}).get('actual',{}).get('sources',[]),
-          'execution':identities.get('collector',{}).get('source'),'exporter':identities.get('exporter',identities.get('parser',{}).get('exporter',{}))}.get(row['path'].split('.')[0])
+        row['source']=c.condition_source(identities, row['path'])
     tracks=tax.ctx.tracks;structural=c.structure_conditions(contract,tracks);conditions.extend(structural)
     facts=scope(db,tax,vendor);sc=c.evaluate_conditions(contract['support_scope']['conditions'],dict(scope=facts))
     for row in sc:row['source']=facts['source']

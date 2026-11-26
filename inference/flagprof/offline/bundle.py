@@ -51,7 +51,7 @@ def make_bundle(raw, trace, destination, *, vendor, metadata, occurrence=None):
     return capture
 
 
-def finish_bundle(destination, trace, *, vendor, metadata, occurrence, raw_manifest):
+def finish_bundle(destination, trace, *, vendor, metadata, occurrence, raw_manifest, derive_identities=False):
     if metadata.get('normal_close') is not True or metadata.get('target_returncode')!=0:
         raise ValueError('normal producer close required')
     destination = Path(destination).resolve()
@@ -65,8 +65,18 @@ def finish_bundle(destination, trace, *, vendor, metadata, occurrence, raw_manif
     copy_checked(trace,trace_input/'trace.json',max_bytes=limit)
     from .memory import seal_artifacts
     memory_files = seal_artifacts(trace, trace_input, vendor, metadata)
+    if derive_identities:
+        from flagprof.vendors import adapter
+        stage = getattr(adapter(vendor, 'evidence'), 'stage_format_evidence', None)
+        if stage:
+            remaining = limit - sum(p.stat().st_size for p in trace_input.iterdir())
+            stage(trace, trace_input, remaining)
     sealed = seal(trace_input, destination/'sealed-trace', occurrence,max_bytes=limit)
     source = sealed['files']['data/trace.json']
+    if derive_identities:
+        from .final_evidence import identities
+        metadata = dict(metadata, identities=identities(destination, metadata, vendor,
+                        destination/'sealed-trace/data/trace.json', occurrence, raw_manifest))
     capture = dict(schema='plan-b-capture/1', occurrence=occurrence, vendor=vendor,
                    metadata=metadata, normal_close=True,
                    raw=dict(path='sealed-raw', manifest=fileinfo(destination/'sealed-raw/committed.json')),

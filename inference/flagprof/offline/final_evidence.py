@@ -62,5 +62,9 @@ def identities(directory,metadata,vendor,trace,occurrence,raw_manifest):
         capture_completeness=dict(status='unchecked',reason='SDK scoped loss counter unavailable'),
         clock=dict(clock_valid=False,status='unavailable'),
         observations=[dict(record_window_end_count=end_count,trace_metadata=trace_values)],conflicts=conflicts,negative_evidence=[])
+    collector=dict(source=source,facts=measured,configuration=configuration,evidence=evidence)
+    execution=metadata.get('execution',{})
+    if execution.get('source'):
+        collector['execution']=execution
     return dict(hardware=dict(source=source,facts=measured.get('hardware',{})),
-                collector=dict(source=source,facts=measured,configuration=configuration,evidence=evidence),exporter=exporter)
+                collector=collector,exporter=exporter)

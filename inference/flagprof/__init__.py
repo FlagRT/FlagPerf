@@ -15,6 +15,17 @@ def current_attachment():
     return implementation()
 
 
+def declare_execution_mode(mode):
+    """Record the workload's selected mode for an active final profiler session."""
+    import sys
+    from .vendors.final_session import FinalSession
+    handle = current_attachment()
+    session = getattr(handle, 'session', None)
+    if isinstance(session, FinalSession):
+        caller = sys._getframe(1)
+        session.declare_execution_mode(mode, caller.f_code, caller.f_lineno)
+
+
 def scope(name, **attrs):
     """An optional user interval; inert when no active user probe exists."""
     from contextlib import contextmanager

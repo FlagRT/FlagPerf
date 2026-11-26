@@ -124,10 +124,9 @@ def _finish_capture(directory, *, timeout=1800):
         path=directory/name
         if path.exists():shutil.rmtree(path)
     (directory/'capture.json.partial').unlink(missing_ok=True)
-    from .final_evidence import identities
     with phase('整理并封存分析结果'):
-        metadata['identities']=identities(directory,metadata,vendor,trace,occurrence,before)
-        result=finish_bundle(directory,trace,vendor=vendor,metadata=metadata,occurrence=occurrence,raw_manifest=before)
+        result=finish_bundle(directory,trace,vendor=vendor,metadata=metadata,occurrence=occurrence,
+                             raw_manifest=before,derive_identities=True)
     return result
 
 

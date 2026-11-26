@@ -56,6 +56,10 @@ flagprof page "$RUN" --limit 10
 flagprof report "$RUN" --out ./report
 ```
 
+昇腾 `final` 采集从本次封存的 `profiler_info.json` 读取 CANN 版本与精简设置，从同次官方导出的 SQLite 数据库读取格式版本。数据库缺失或超出采集预算时，格式版本显示为未知。
+
+工作负载可以在实际选择执行路径的代码分支调用 `flagprof.declare_execution_mode("eager")`。编译执行和图回放分别传 `"compiled"`、`"graph"`。声明随本次采集保存，包含调用位置和代码摘要。同一次采集声明不同模式时记为 `mixed`，没有声明时保留未知。
+
 `CAPTURE` 指已封存的采集，`RUN` 取命令输出中的 run 路径。只读查看可直接使用挂载的结果，报告写入所选输出盘。`python -m flagprof` 使用相同参数。无需设备的完整示例见[快速使用](docs/usage.md#第一次使用先读一个样例)。
 
 ## 当前能力

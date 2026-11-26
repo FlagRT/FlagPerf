@@ -51,6 +51,35 @@ class FinalSession:
             self.close(normal=False,returncode=None);return False
 
     def ready(self,profiler):self.meta['callbacks']+=1
+
+    def declare_execution_mode(self, mode, code, line):
+        """Keep the first declaration and the first conflicting call site."""
+        if self.pid != os.getpid() or self.status != 'running':
+            return
+        if mode not in ('eager', 'compiled', 'graph', 'mixed'):
+            raise ValueError('execution mode must be eager, compiled, graph or mixed')
+        previous = self.meta.get('execution')
+        if previous and previous['mode'] in (mode, 'mixed'):
+            return
+        import hashlib
+        import marshal
+        from flagprof.offline.checkpoints import fileinfo
+        filename = Path(code.co_filename)
+        source = dict(kind='workload-declaration', file=filename.name, line=line,
+                      function=code.co_name, code_sha256=hashlib.sha256(marshal.dumps(code)).hexdigest())
+        try:
+            if filename.is_file():
+                source.update(fileinfo(filename))
+        except (OSError, ValueError):
+            pass  # The digest of the executing code also covers in-memory or replaced files.
+        declaration = dict(mode=mode, source=source)
+        with ownership._LOCK:
+            previous = self.meta.get('execution')
+            if previous is None:
+                self.meta['execution'] = declaration
+            elif previous['mode'] not in (mode, 'mixed'):
+                self.meta['execution'] = dict(mode='mixed', source=[previous, declaration])
+
     def forbidden_step(self,*args,**kwargs):
         self.meta['step_calls']+=1
         raise RuntimeError('final SDK step is forbidden')
