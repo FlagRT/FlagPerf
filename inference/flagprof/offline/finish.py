@@ -11,9 +11,11 @@ import hashlib
 import json
 from .bounded_verify import Document,verify_open
 from .disk import Sink,streaming,scratch_path
+from flagprof.progress import phase
 from flagprof.store.reader import Reader
 
 class BoundedView:
+    @phase("打开并核验 Store")
     def __init__(self,run,work,*,cache_root=None):
         self.run=Path(run);self.work=Path(work);self.work.mkdir(exist_ok=True)
         self.pagers={};self.summary_value=None;self.pager=None;self.doc=None
@@ -27,9 +29,10 @@ class BoundedView:
         self.verification_reused=self.verified is not None
         try:
             if self.verification_reused:
-                self.doc=Document(self.work/'descriptor.sqlite');paths=list((self.run/'traces').glob('*.json'))
-                if len(paths)!=1:raise ValueError('bounded view requires one trace')
-                root,_,_=self.doc.parse(paths[0]);self.descriptor=self.doc.get(root)
+                with phase('复用完整性核验回执'):
+                    self.doc=Document(self.work/'descriptor.sqlite');paths=list((self.run/'traces').glob('*.json'))
+                    if len(paths)!=1:raise ValueError('bounded view requires one trace')
+                    root,_,_=self.doc.parse(paths[0]);self.descriptor=self.doc.get(root)
             else:
                 self.verified,self.doc=verify_open(self.run,self.work/'verify.sqlite')
                 self.descriptor=self.doc.get(self.doc.descriptor_root)

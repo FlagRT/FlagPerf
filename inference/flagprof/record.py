@@ -13,6 +13,7 @@ from .runtime import configuration
 from .registry import Registry
 from .store import create_run, finalize
 from .store.manifest import atomic_json, proc_key
+from .progress import child_env, finish_display, phase
 
 
 def record(command, *, store, vendor, preset='perf', config=None, descriptors=None,
@@ -67,7 +68,9 @@ def record(command, *, store, vendor, preset='perf', config=None, descriptors=No
         env['FLAGPROF_RECORD_CONFIG'] = str(run/'record-config.json')
         try:
             from .offline.process import run_owned
-            target = run_owned(command, env=env, timeout=timeout)
+            with phase('目标推理与窗口采集') as collecting:
+                target = run_owned(command, env=child_env(env), timeout=timeout)
+                collecting.finish(target.returncode)
             code = target.returncode
             target_key = target.process_key
             state['target_exit'] = dict(pid=target.pid, process=target_key, returncode=code,
@@ -85,20 +88,24 @@ def record(command, *, store, vendor, preset='perf', config=None, descriptors=No
         state['handshakes'] = handshakes
         state['attachments'] = attachments
         from .store._proxy_lifecycle import record_wait
-        proxy_deadline, proxy_timeout = record_wait(run)
+        with phase('等待采集写入') as waiting:
+            proxy_deadline, proxy_timeout = record_wait(run)
+            waiting.finish(2 if proxy_timeout else 0)
         if proxy_timeout:
             state['writer_failure'] = 'proxy_wait_timeout'
         importer_env = dict(original)
         importer_env['PYTHONPATH'] = os.pathsep.join([root] + ([original['PYTHONPATH']] if original.get('PYTHONPATH') else []))
-        with (run/'logs/importer.log').open('wb') as log:
+        with phase('导入窗口采集', detail=str(run/'logs/importer.log')) as importing, \
+                (run/'logs/importer.log').open('wb') as log:
             child = subprocess.run([sys.executable, '-B', '-m', 'flagprof._import_worker', str(run)],
-                                   env=importer_env, stdout=log, stderr=subprocess.STDOUT)
+                                   env=child_env(importer_env), stdout=log, stderr=subprocess.STDOUT)
+            importing.finish(child.returncode)
         state['importer_exit'] = child.returncode
         result = run/'import-result.json'
         if result.exists():
             state['import_completion'] = json.loads(result.read_bytes())['status']
     from .store._proxy_lifecycle import deadline_scope
-    with deadline_scope(proxy_deadline):
+    with phase('封存窗口 Store'), deadline_scope(proxy_deadline):
         final = finalize(run)
     state['finalize'] = final['status']
     key = state['target_exit'].get('process')
@@ -122,5 +129,6 @@ def record(command, *, store, vendor, preset='perf', config=None, descriptors=No
         if reason:
             state['error'] = receipt['error'] = reason
     atomic_json(run/'record-status.json', dict(state, run='.'))
+    finish_display()
     print(json.dumps(receipt))
     return state['exit_code']

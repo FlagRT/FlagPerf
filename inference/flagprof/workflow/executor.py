@@ -11,6 +11,7 @@ import time
 import uuid
 
 from flagprof.store.manifest import atomic_json
+from flagprof.progress import child_env, phase
 from .loader import snapshot
 from .planner import CONTROL, RUN
 
@@ -18,7 +19,7 @@ IMPORT_ROOT = str(Path(__file__).resolve().parents[2])
 
 
 def execution_environment():
-    env = dict(os.environ)
+    env = child_env()
     env['PYTHONPATH'] = os.pathsep.join(filter(None, (IMPORT_ROOT, env.get('PYTHONPATH'))))
     return env
 
@@ -127,7 +128,7 @@ def comparison_steps(spec, variants):
 
 
 class Execution:
-    def __init__(self,config,source,origins,job,plan,progress):
+    def __init__(self,config,source,origins,job,plan,progress=None):
         self.config,self.job,self.plan,self.progress=config,job,plan,progress
         self.sides=plan.get('variants') or {config.get('mode','single'):plan}
         self.comparing=config.get('mode')=='compare'
@@ -141,7 +142,6 @@ class Execution:
             self.summary['declaration']=plan['declaration']
             self.summary['declaration_source']=plan.get('declaration_source','auto')
         self.locations={}
-        self.env=execution_environment()
 
     def initialize(self,assets):
         atomic_json(self.job/'resolved-config.json',snapshot(self.config))
@@ -195,7 +195,7 @@ class Execution:
             evidence(self.summary,'import','deferred',['原始采集已封存'],source,variant=role)
         return found
 
-    def command(self,spec):
+    def command(self,spec,log):
         role=spec['variant']
         action=spec.get('action',spec['id'])
         argv=spec['argv'].copy()
@@ -221,18 +221,16 @@ class Execution:
                     raise ValueError('显式挂接失败 '+reason)
                 pos=argv.index('--runner-results')
                 del argv[pos:pos+1+len(self.sides[role]['runners'])]
-        index=len(self.summary['steps'])+1
-        log=self.job/'logs'/f"{index:02d}-{spec['id']}.stdout"
         errors=log.with_suffix('.stderr')
         step=dict(spec,argv=argv,log=str(log),stderr=str(errors),exit_code=None)
         self.summary['steps'].append(step)
         if self.progress:
-            self.progress(f"[运行] {index}. {spec['id']}  {log}")
+            self.progress(f"[运行] {len(self.summary['steps'])}. {spec['id']}  {log}")
         started=time.monotonic()
         try:
             with log.open('wb') as output,errors.open('wb') as err:
                 try:
-                    proc=subprocess.run(argv,cwd=spec['cwd'],env=self.env,stdout=output,stderr=err)
+                    proc=subprocess.run(argv,cwd=spec['cwd'],env=execution_environment(),stdout=output,stderr=err)
                     code=proc.returncode if proc.returncode>=0 else 128-proc.returncode
                 except KeyboardInterrupt:
                     code=130
@@ -328,18 +326,36 @@ class Execution:
         return 0
 
     def run(self,assets):
+        total = len(self.plan['steps'])
+        with phase('工作流', total=total, unit='步') as workflow:
+            summary = self._run(assets, workflow, total)
+            workflow.finish(summary['exit_code'])
+            return summary
+
+    def _run(self,assets,workflow,total):
         summary=self.summary
         code=0
+        completed = 0
         try:
             self.initialize(assets)
             for spec in self.plan['steps']:
-                if code:
-                    break
-                actual=comparison_steps(spec,self.sides) if spec.get('action')=='compare' else [spec]
+                actual = comparison_steps(spec, self.sides) if spec.get('action') == 'compare' else [spec]
+                if len(actual) != 1:
+                    total += len(actual) - 1
+                    workflow.update(completed, total=total)
                 for step in actual:
-                    code=self.command(step)
+                    log = self.job/'logs'/f"{completed + 1:02d}-{step['id']}.stdout"
+                    with phase(step['id'], variant=step['variant'], rank=step.get('rank'),
+                               detail=str(log)) as current:
+                        code = self.command(step, log)
+                        current.finish(code)
                     if code:
                         break
+                    completed += 1
+                    if completed < total:
+                        workflow.update(completed)
+                if code:
+                    break
         except KeyboardInterrupt:
             code=130
             summary['error']='用户中断了工作流'
@@ -359,6 +375,8 @@ class Execution:
             artifact(summary,kind,path)
         summary.update(status='failed' if code else 'complete',exit_code=code)
         atomic_json(self.job/'summary.json',summary)
+        if not code:
+            workflow.update(completed)
         return summary
 
 

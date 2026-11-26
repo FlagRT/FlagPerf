@@ -31,6 +31,22 @@ bash single-first/commands.sh single-repeat
 
 每个任务独占一个新目录或空目录。`resolved-config.json` 可交给同一入口重新运行，`commands.sh` 接受新的任务路径。运行时在 `store/`、`runner-outputs/` 和 `report/` 分别保存相应产物。查看 `summary.json` 的 `steps` 可定位实际 argv、退出码和日志，`artifacts` 列出本次生成的文件。`status=complete` 表示请求的步骤完成，报告每个面板的 `ok`、`partial` 或 `unavailable` 及原因见 `evidence`。使用 `--json` 时终端输出同一份机器摘要。
 
+### 运行时查看进度
+
+运行 YAML 时，终端会显示工作流已完成的步数、正在执行的步骤、当前阶段耗时和总耗时。对照任务会标明变体，双卡任务会标明 rank。步骤开始时会打印日志路径。
+
+导入封存 trace 时，扫描进度按文件字节计算，归一化按源记录数计算，写入 Store 按设备事件数计算。各阶段分别计数。等待目标推理、执行厂商分析等阶段只知道开始时间，此时显示活动指示和累计耗时。重复导入时可以直接看到实际复用的检查点。
+
+默认 `--progress auto` 在交互终端刷新一行，重定向到文件时在阶段变化或长时间等待时写一行。直接运行窗口模式的 `record` 时，目标程序也会向终端打印内容，此时进度按整行输出。以下命令把实时进度和最终 JSON 分开保存。
+
+```bash
+flagprof run flagprof.yaml --out single-next --json --progress plain > summary.json 2> progress.log
+```
+
+`run`、`record`、`launch`、`analyse`、`import`、`inspect` 和 `report` 都支持 `--progress auto|plain|off`。进度写入 stderr。`--json` 默认关闭进度，可以用 `--progress plain` 显式打开。`--dry-run` 只展示计划，`--check` 可观察依赖检查。
+
+需要用一个节点监控会话关联多次 YAML 任务，并在任务结束后核对诊断结果时，见[节点监控、YAML 采集与离线重放](monitoring.md#节点监控yaml-采集与离线重放)。
+
 ## 双卡与对照
 
 有两张可用设备时，生成 `tp2_launch.yaml`，填写模型、输入、厂商与通信后端后执行下列命令。工作流调 `launch` 启动两个 rank，从本次 `store/group.json` 读取实际 Store，逐 rank 校验并生成组报告。

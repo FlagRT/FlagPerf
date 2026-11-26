@@ -10,6 +10,7 @@ import re
 from pathlib import Path
 from urllib.parse import urlencode
 
+from flagprof.progress import phase
 from .fields import LABELS, VALUES, REASON_TEXT, PANEL_LABELS, MISSING_TEXT, RAW_CLOCK_FIELDS, cell, display, field_text
 from .fields import value_field
 from .layout import MODES, decorate, excerpts
@@ -95,6 +96,7 @@ def finding_href(finding, filename):
     return filename+query+'#'+finding['section']
 
 
+@phase('渲染 HTML 和 Markdown 报告')
 def render(model, out, *, filename='report.html'):
     out=Path(out);out.mkdir(parents=True,exist_ok=True)
     assets=Path(__file__).parent/'assets'

@@ -15,9 +15,17 @@ import traceback
 import uuid
 
 from .store.manifest import atomic_json, proc_key
+from .progress import child_env, phase, scope
 
 
 def worker(settings, rank):
+    with phase('执行设备工作进程', rank=rank) as target:
+        code = _worker(settings, rank)
+        target.finish(code)
+        return code
+
+
+def _worker(settings, rank):
     from .offline.capture import execute_target
     from .runtime import attach, startup_error
     from .store import create_run
@@ -53,7 +61,8 @@ def worker(settings, rank):
                 handle.register_device(device)
                 if handle.state['status'] != 'running':
                     raise RuntimeError('worker attachment did not start: '+startup_error(handle.state))
-            execute_target(args)
+            with phase('运行目标推理'):
+                execute_target(args)
             code = 0
     except SystemExit as error:
         code=0 if error.code is None else error.code if isinstance(error.code,int) else 1
@@ -120,7 +129,8 @@ def launch(command, *, store, nproc_per_node=2, comm_backend=None, preset='perf'
         state['stages'].append(row)
         atomic_json(root/'group-progress.json',state)
         try:
-            yield
+            with phase(name, rank=rank):
+                yield
             row['status']='complete'
         except BaseException as error:
             row.update(status='failed',error=type(error).__name__+': '+str(error))
@@ -166,22 +176,31 @@ def launch(command, *, store, nproc_per_node=2, comm_backend=None, preset='perf'
             log = (root/('rank-'+str(rank)+'.log')).open('xb')
             logs.append(log)
             monitor.environment(env)
-            children.append(subprocess.Popen([command[0], '-B', '-m', 'flagprof.launch',
-                                               str(root/'launch.json'), str(rank)], env=env,
-                                              stdout=log, stderr=subprocess.STDOUT, start_new_session=True))
+            with scope(rank=rank):
+                children.append(subprocess.Popen([command[0], '-B', '-m', 'flagprof.launch',
+                                                   str(root/'launch.json'), str(rank)], env=child_env(env),
+                                                  stdout=log, stderr=subprocess.STDOUT, start_new_session=True))
             try: child_keys.append(proc_key(children[-1].pid))
             except OSError: child_keys.append(None)
-        while any(child.poll() is None for child in children):
-            if stopped or time.monotonic() >= deadline or any(child.poll() not in (None,0) for child in children):
-                stop_reason = 'external_signal' if stopped else 'launcher_timeout' if time.monotonic() >= deadline else 'peer_failure'
-                stop(signal.SIGTERM, None)
-                break
-            time.sleep(.25)
-        for child in children:
-            try:child.wait(timeout=10)
-            except subprocess.TimeoutExpired:
-                os.killpg(child.pid, signal.SIGKILL)
-                child.wait()
+        with phase('等待设备进程', total=len(children), unit='个进程') as workers:
+            completed = 0
+            while any(child.poll() is None for child in children):
+                if stopped or time.monotonic() >= deadline or any(child.poll() not in (None,0) for child in children):
+                    stop_reason = 'external_signal' if stopped else 'launcher_timeout' if time.monotonic() >= deadline else 'peer_failure'
+                    stop(signal.SIGTERM, None)
+                    break
+                ready = sum(child.returncode == 0 for child in children)
+                if ready != completed:
+                    completed = ready
+                    workers.update(ready)
+                time.sleep(.25)
+            for child in children:
+                try:child.wait(timeout=10)
+                except subprocess.TimeoutExpired:
+                    os.killpg(child.pid, signal.SIGKILL)
+                    child.wait()
+            workers.update(sum(child.returncode == 0 for child in children))
+            workers.finish(2 if stopped or any(child.returncode for child in children) else 0)
         state['device_workers_exited_monotonic_ns'] = time.monotonic_ns()
         atomic_json(root/'group-progress.json',state)
         for rank, child in enumerate(children):

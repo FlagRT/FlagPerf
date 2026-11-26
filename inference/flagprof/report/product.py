@@ -9,6 +9,7 @@ from pathlib import Path
 import shutil
 import re
 
+from flagprof.progress import phase
 from .fields import PANELS, LABELS, VALUES, display, prepare_fields
 from .model import opened_model, read_document, digest
 
@@ -888,8 +889,9 @@ def write_report(out, document=None, *, limits=None, source=None, filename='repo
     with opened_model(limits=limits) as model:
         document = document if document is not None else read_document(out/'result.json',model)
         write_replay_workflow(document, out, replay_root)
-        build(model,document,source or out)
-        model.save(out/'report-data.jsonl')
+        with phase('构建报告视图与数据快照'):
+            build(model,document,source or out)
+            model.save(out/'report-data.jsonl')
         render(model,out,filename=filename)
         return dict(output=str(out),html=filename,summary='report.md',sections=len(model.sections))
 

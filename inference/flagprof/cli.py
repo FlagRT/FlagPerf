@@ -8,6 +8,12 @@ import shlex
 import sys
 
 
+def _print_result(*values, **options):
+    from .progress import finish_display
+    finish_display()
+    print(*values, **options)
+
+
 def main(argv=None):
     from .offline.limits import DEFAULT_RECORD_SOURCE_BYTES
     from .vendors import monitored_vendors, vendor_names
@@ -134,8 +140,42 @@ def main(argv=None):
         entry.add_argument('--monitor', choices=['on','off'], help='node resource monitor; default off')
         entry.add_argument('--monitor-topology', choices=['host','local','agent'], help='default: detected provider topology')
         entry.add_argument('--monitor-interval-ms', type=int, help='fast sampling interval, 100..5000 ms; default 1000')
+    for entry in (workflow, record_parser, launch, analyse, offline, inspect, report):
+        entry.add_argument('--progress', choices=('auto', 'plain', 'off'), default='auto',
+                           help='stderr progress: auto detects terminals, plain emits lines, off disables it')
     argv = sys.argv[1:] if argv is None else list(argv)
     args=parser.parse_args(argv)
+    if args.verb == 'record' and args.capture_mode == 'final':
+        try:
+            _check_window_options(args, argv, vendors)
+        except ValueError as error:
+            parser.error(str(error))
+    if args.verb == 'report':
+        if args.baseline and args.run!='oracle':parser.error('--baseline is only valid for report oracle')
+        if args.source and args.run!='render':parser.error('--source is only valid for report render')
+        if args.refresh_view and args.run!='render':parser.error('--refresh-view is only valid for report render')
+        if args.runner_results and args.run in ('oracle','compare'):parser.error('--runner-results belongs to a task, baseline or render report')
+    if not hasattr(args, 'progress') or getattr(args, 'dry_run', False):
+        return _dispatch(args, parser)
+    from .progress import phase, session
+    mode = args.progress
+    # A windowed target inherits stdout and stderr. Use complete lines so its
+    # own terminal output cannot begin in the middle of an animated meter.
+    if args.verb == 'record' and mode == 'auto' and (
+            args.capture_mode == 'windowed' or args.preset in ('perf-lite', 'coverage', 'accuracy', 'monitor')):
+        mode = 'plain'
+    with session(mode, json_output=getattr(args, 'json', False)) as progress:
+        if args.verb == 'run':
+            code = _dispatch(args, parser)
+        else:
+            with phase(args.verb) as operation:
+                code = _dispatch(args, parser)
+                operation.finish(code)
+        progress.finish(code)
+        return code
+
+
+def _dispatch(args, parser):
     from pathlib import Path
     if args.verb in ('init', 'run'):
         from .workflow import dispatch
@@ -182,7 +222,7 @@ def main(argv=None):
                           preset=args.preset,config=config,timeout=args.timeout,source_max_bytes=args.source_max_bytes,
                           capture_only=args.capture_only)
         except (ValueError,OSError,KeyError,RuntimeError) as error:
-            print('flagprof launch: '+str(error),file=sys.stderr);return 2
+            _print_result('flagprof launch: '+str(error),file=sys.stderr);return 2
     if args.verb=='delivery':
         try:
             from .delivery import publish_tree,verify,restore
@@ -215,10 +255,6 @@ def main(argv=None):
             print('flagprof replay: '+str(error),file=sys.stderr);return 2
     if args.verb=='report':
         from .analyzers.workspace import Limits
-        if args.baseline and args.run!='oracle':parser.error('--baseline is only valid for report oracle')
-        if args.source and args.run!='render':parser.error('--source is only valid for report render')
-        if args.refresh_view and args.run!='render':parser.error('--refresh-view is only valid for report render')
-        if args.runner_results and args.run in ('oracle','compare'):parser.error('--runner-results belongs to a task, baseline or render report')
         if args.run=='render':
             try:
                 if not args.source or not args.out:raise ValueError('render requires --source and --out')
@@ -226,9 +262,9 @@ def main(argv=None):
                 from .analyzers.workspace import Limits
                 result=redraw(args.source,args.out,runner_results=args.runner_results,refresh_view=args.refresh_view,
                     limits=Limits(**json.loads(Path(args.limits).read_text())) if args.limits else None)
-                print(json.dumps(result,ensure_ascii=False));return 0
+                _print_result(json.dumps(result,ensure_ascii=False));return 0
             except (ValueError,OSError,KeyError,TypeError) as error:
-                print('flagprof report render: '+str(error),file=sys.stderr);return 2
+                _print_result('flagprof report render: '+str(error),file=sys.stderr);return 2
         if args.run in ('compare','baseline'):
             try:
                 if args.run=='baseline':
@@ -239,9 +275,9 @@ def main(argv=None):
                     if not args.reports or len(args.reports)<2 or not args.out:raise ValueError('report compare requires --reports (at least two) and --out')
                     from .report import compare_device_reports
                     compare_device_reports(args.reports,args.out,declare=json.loads(Path(args.declare).read_text()) if args.declare else None,limits=Limits(**json.loads(Path(args.limits).read_text())) if args.limits else None)
-                print(json.dumps(dict(output=args.out,status='complete')));return 0
+                _print_result(json.dumps(dict(output=args.out,status='complete')));return 0
             except (ValueError,OSError,KeyError,TypeError) as error:
-                print('flagprof report: '+str(error),file=sys.stderr);return 2
+                _print_result('flagprof report: '+str(error),file=sys.stderr);return 2
         try:
             from .report import generate, generate_oracle
             if args.run=='oracle':
@@ -251,22 +287,22 @@ def main(argv=None):
                     replay_ref_run=args.replay_ref_run,replay_cmp_run=args.replay_cmp_run,
                     declare=json.loads(Path(args.declare).read_text()) if args.declare else None,
                     limits=json.loads(Path(args.limits).read_text()) if args.limits else None)
-                print(json.dumps(result,ensure_ascii=False));return 0
+                _print_result(json.dumps(result,ensure_ascii=False));return 0
             if (Path(args.run)/'session.json').exists() and not (Path(args.run)/'manifest.json').exists():
                 if args.runner_results:raise ValueError('runner results require a task report or report baseline')
                 from .monitor.report import generate as monitor_report
-                print(json.dumps(monitor_report(args.run,args.out,last=args.last),ensure_ascii=False));return 0
+                _print_result(json.dumps(monitor_report(args.run,args.out,last=args.last),ensure_ascii=False));return 0
             if Path(args.run).is_file():
                 from .report.group import generate_group
                 result=generate_group(args.run,args.out,runner_results=args.runner_results,
                     limits=Limits(**json.loads(Path(args.limits).read_text())) if args.limits else None)
-                print(json.dumps(result));return 0
+                _print_result(json.dumps(result));return 0
             result=generate(args.run,args.out,runner_results=args.runner_results,
                             op_kinds=json.loads(Path(args.op_kinds).read_text()) if args.op_kinds else None,
                             limits=json.loads(Path(args.limits).read_text()) if args.limits else None)
-            print(json.dumps(result,ensure_ascii=False));return 0
+            _print_result(json.dumps(result,ensure_ascii=False));return 0
         except (ValueError,OSError,KeyError,TypeError) as error:
-            print('flagprof report: '+str(error),file=sys.stderr);return 2
+            _print_result('flagprof report: '+str(error),file=sys.stderr);return 2
     if args.verb in ('import','page','seal','analyse') or (args.verb=='inspect' and (Path(args.run)/'plan-b-capture.json').exists()):
         try:
             from pathlib import Path
@@ -299,16 +335,14 @@ def main(argv=None):
                 result=finish_capture(args.capture)
             if args.verb == 'inspect':
                 return _print_inspection(result, args.json)
-            print(json.dumps(result,ensure_ascii=False));return 0
+            _print_result(json.dumps(result,ensure_ascii=False));return 0
         except (ValueError,OSError,KeyError,TypeError,RuntimeError) as error:
-            print('flagprof '+args.verb+': '+str(error),file=sys.stderr);return 2
+            _print_result('flagprof '+args.verb+': '+str(error),file=sys.stderr);return 2
     if args.verb=='record':
         from .record import record
         from pathlib import Path
         command=args.command[1:] if args.command[:1]==['--'] else args.command
         try:
-            if args.capture_mode == 'final':
-                _check_window_options(args, argv, vendors)
             if args.capture_only and (args.capture_mode!='final' or args.preset not in ('perf','modules')):
                 raise ValueError('--capture-only requires official final mode')
             config = {name:getattr(args,name) for name in ('flaggems','flaggems_include','flagtree','vendor_compiler','layers','probes','monitor','monitor_topology','monitor_root','monitor_interval_ms','diagnose','target_device') if getattr(args,name) is not None}
@@ -342,12 +376,14 @@ def main(argv=None):
                 config=config,
                 descriptors=json.loads(Path(args.plugins).read_bytes()) if args.plugins else None)
         except (ValueError,OSError) as error:
+            from .progress import finish_display
+            finish_display()
             parser.error(str(error))
     from .offline.worker import on_disk
     try:
         result = on_disk(None, _inspect_store, args.run, args.verify)
     except (ValueError,OSError,KeyError,TypeError) as error:
-        print('flagprof inspect: '+str(error),file=sys.stderr)
+        _print_result('flagprof inspect: '+str(error),file=sys.stderr)
         return 2
     return _print_inspection(result, args.json)
 
@@ -396,6 +432,8 @@ def _inspect_store(run, verify):
 
 
 def _print_inspection(result, as_json):
+    from .progress import finish_display
+    finish_display()
     run, rows = result['run'], result['traces']
     if as_json:print(json.dumps(result,ensure_ascii=False,sort_keys=True,indent=2))
     else:

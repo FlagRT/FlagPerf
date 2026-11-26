@@ -1,6 +1,7 @@
 # Copyright 2026 FlagOS Contributors
 # Licensed under the Apache License, Version 2.0.
 """Scenario templates and the workflow entry point."""
+from contextlib import nullcontext
 from datetime import datetime
 from importlib.resources import files
 import json
@@ -8,6 +9,7 @@ from pathlib import Path
 import re
 import shlex
 import uuid
+from flagprof.progress import finish_display, phase
 
 TEMPLATES = {'quickstart':'quickstart.yaml', 'cpu-demo':'cpu_demo.yaml', 'custom-script':'custom_script.yaml',
              'compare':'compare_components.yaml', 'tp2':'tp2_launch.yaml',
@@ -106,7 +108,8 @@ def dispatch(args):
         job = Path(out.get('job_dir') or Path(out['dir'])/(name+'-'+datetime.now().strftime('%Y%m%d-%H%M%S')))
         if not out.get('job_dir') and job.exists():
             job = job.with_name(job.name+'-'+uuid.uuid4().hex[:8])
-        plan,assets=prepare(config,origins,source,job)
+        with nullcontext() if args.dry_run else phase('检查工作流配置'):
+            plan,assets=prepare(config,origins,source,job)
         origins = value_sources(config, origins)
         if args.check or args.dry_run:
             result = dict(action='check' if args.check else 'dry-run',status='ready',**plan)
@@ -114,7 +117,8 @@ def dispatch(args):
                 result.update(config=config,value_sources=origins,job_dir=str(job))
             else:
                 from .dependencies import check_dependencies
-                result['dependencies'] = check_dependencies(config, plan, assets)
+                with phase('检查运行依赖'):
+                    result['dependencies'] = check_dependencies(config, plan, assets)
                 result['planned_steps'] = [s['id'] for s in result.pop('steps')]
         else:
             reserved = reserve(job, not out.get('job_dir'))
@@ -123,10 +127,10 @@ def dispatch(args):
                 config,origins=load(source,args.overrides,args.out)
                 plan,assets=prepare(config,origins,source,job)
                 origins=value_sources(config,origins)
-            progress = None if args.json else lambda message: print(message, flush=True)
-            result = execute(config,source,origins,job,plan,assets,progress=progress)
+            result = execute(config,source,origins,job,plan,assets)
     except (ValueError,OSError,KeyError,TypeError) as error:
         result = dict(status='failed',exit_code=2,error=str(error))
+    finish_display()
     if getattr(args,'json',False):
         print(json.dumps(result,ensure_ascii=False))
     else:

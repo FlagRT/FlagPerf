@@ -10,6 +10,7 @@ from pathlib import Path
 import resource
 import tempfile
 import time
+from flagprof.progress import phase
 from flagprof.store import StoreView
 from flagprof.store.analysis_read import ResourceLimit
 from flagprof.analyzers import Result
@@ -140,20 +141,23 @@ def _generate(run, out, *, limits=None, op_kinds=None, runner_results=None):
                 workspace.limit_error = str(error)
                 workspace.notes.append(str(error))
             from flagprof.analyzers.forwards import prepare, finish
-            prepare(workspace)
+            with phase("配对前向与采集区间"):
+                prepare(workspace)
             from flagprof.analyzers.resource import make_resource
             results = []
             accuracy=any((s.get('effective_config') or {}).get('tensor_blob') is not None for s in workspace.statuses)
             for analyzer in (() if accuracy else (*ANALYZERS,make_perf_device(),make_memory(),make_perf_gap(),make_resource())):
                 try:
-                    result = analyzer.run(workspace, {})
+                    with phase("分析面板 " + analyzer.id):
+                        result = analyzer.run(workspace, {})
                     workspace.check_budget()
                 except (ValueError, OSError, KeyError) as error:
                     result = Result(analyzer.id, 'unavailable', workspace.table(analyzer.id),
                                     workspace.coverage(), [str(error)])
                 results.append(result)
             from flagprof.analyzers.generation import analyze as generation, communication
-            results.extend(generation(workspace));results.extend(communication(workspace))
+            with phase("分析生成请求与通信"):
+                results.extend(generation(workspace));results.extend(communication(workspace))
             from flagprof.analyzers.training import analyze as training
             results.extend(training(workspace))
             forward_quality=finish(workspace, op_kinds)
@@ -178,10 +182,7 @@ def _generate(run, out, *, limits=None, op_kinds=None, runner_results=None):
                 data['runner_summary']=summarize(runner_results,data['report_context']['identity'],limits=limits)
             from flagprof.monitor.diagnostic_report import panel
             data['diagnosis'] = panel(run)
-            with (out/'result.json').open('w') as stream:
-                write_json(stream, data)
-                stream.write('\n')
-            for panel, filename in [('perf.op','perf-op'), ('perf.layer','perf-layer'),
+            exports = [('perf.op','perf-op'), ('perf.layer','perf-layer'),
                     ('route.coverage','route-coverage'), ('compile.health','compile-health'),
                     ('missing_ops','missing_ops'), ('compile_issues','compile_issues'), ('inventory_v1_view','inventory_v1_view'),
                     ('unscoped_by_tid','unscoped-by-tid'), ('forwards','forwards'),
@@ -192,14 +193,22 @@ def _generate(run, out, *, limits=None, op_kinds=None, runner_results=None):
                     ('resource','resource'),('resource.stages','resource-stages'),('resource.energy','resource-energy'),('resource.memory','resource-memory'),('resource.restrictions','resource-restrictions'),('resource.frequency','resource-frequency'),('memory','memory-peaks'),('memory.series','memory-series'),('memory.transfers','memory-transfers'),
                     ('memory.allocations','memory-allocations'),('generation','generation'),('generation.steps','generation-steps'),('generation.kv','generation-kv'),
                     ('communication','communication'),('communication.calls','communication-calls'),
-                    ('training','training-steps'),('training.phases','training-phases')]:
-                with (out/'exports'/(filename+'.jsonl')).open('w') as stream:
-                    for row in workspace.table(panel):
-                        stream.write(encode(row)+'\n')
-            # Full folded membership is streamed independently of finite row samples.
-            with (out/'exports'/'layer-members.jsonl').open('w') as stream:
-                for panel, key, run_id, corr in workspace.db.execute('select * from members order by panel,key,run,corr'):
-                    stream.write(encode(dict(panel=panel, key=key, run_id=run_id, corr=int(corr)))+'\n')
+                    ('training','training-steps'),('training.phases','training-phases')]
+            with phase('导出机器结果与逐项明细', total=len(exports) + 2, unit='个文件') as exporting:
+                with (out/'result.json').open('w') as stream:
+                    write_json(stream, data)
+                    stream.write('\n')
+                exporting.update(1)  # result.json
+                for completed, (panel, filename) in enumerate(exports, 2):
+                    with (out/'exports'/(filename+'.jsonl')).open('w') as stream:
+                        for row in workspace.table(panel):
+                            stream.write(encode(row)+'\n')
+                    exporting.update(completed)
+                # Full folded membership is streamed independently of finite row samples.
+                with (out/'exports'/'layer-members.jsonl').open('w') as stream:
+                    for panel, key, run_id, corr in workspace.db.execute('select * from members order by panel,key,run,corr'):
+                        stream.write(encode(dict(panel=panel, key=key, run_id=run_id, corr=int(corr)))+'\n')
+                exporting.update(len(exports) + 2)  # layer-members.jsonl
             from .product import write_report
             write_report(out,data,limits=limits)
             disk = sum(p.stat().st_size for p in Path(directory).rglob('*') if p.is_file())
@@ -245,7 +254,12 @@ def _generate_oracle(ref, cmp, out, *, declare, limits, perf_ref_run, perf_cmp_r
     with StoreView(ref) as av, StoreView(cmp) as bv, tempfile.TemporaryDirectory(prefix='oracle-') as directory:
         a=Workspace(av,Path(directory)/'ref',limits);b=Workspace(bv,Path(directory)/'cmp',limits)
         try:
-            a.ingest();b.ingest();results=analyze(a,b,declare)
+            with phase('读取参考侧'):
+                a.ingest()
+            with phase('读取候选侧'):
+                b.ingest()
+            with phase('对齐并比较精度观测'):
+                results=analyze(a,b,declare)
             identity_panel = next(r for r in results if r.id == 'oracle.identity_diff')
             blocking_fields = [row['field'] for row in identity_panel.data if row['equal'] is False
                                and (row['requirement'] == 'must_equal' or not row['declared'])]
@@ -289,10 +303,14 @@ def _generate_oracle(ref, cmp, out, *, declare, limits, perf_ref_run, perf_cmp_r
                 context['replay'] = dict(inputs=inputs, call_key=first_replay[0])
             if context:
                 data['report_context'] = context
-            with (out/'result.json').open('w') as stream:write_json(stream,data);stream.write('\n')
-            for panel in ('oracle.identity_diff','oracle.layer','oracle.first_divergence','oracle.op_sensitivity','oracle.samples','oracle.alignment','oracle.introduced','oracle.amplification','oracle.perf_links','oracle.introduced_routes','oracle.replay','oracle.generation'):
-                with (out/'exports'/(panel+'.jsonl')).open('w') as stream:
-                    for row in a.table(panel):stream.write(encode(row)+'\n')
+            exports = ('oracle.identity_diff','oracle.layer','oracle.first_divergence','oracle.op_sensitivity','oracle.samples','oracle.alignment','oracle.introduced','oracle.amplification','oracle.perf_links','oracle.introduced_routes','oracle.replay','oracle.generation')
+            with phase('导出精度对照与逐层明细', total=len(exports) + 1, unit='个文件') as exporting:
+                with (out/'result.json').open('w') as stream:write_json(stream,data);stream.write('\n')
+                exporting.update(1)  # result.json
+                for completed, panel in enumerate(exports, 2):
+                    with (out/'exports'/(panel+'.jsonl')).open('w') as stream:
+                        for row in a.table(panel):stream.write(encode(row)+'\n')
+                    exporting.update(completed)
             from .product import write_report
             write_report(out,data,limits=limits,replay_root=delivery_root)
             a.check_budget();b.check_budget()

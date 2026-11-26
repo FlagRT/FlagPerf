@@ -5,6 +5,7 @@ from flagprof.vendors import adapter, is_kineto
 from contextlib import nullcontext
 import json
 from pathlib import Path
+from flagprof.progress import phase
 from .checkpoints import fileinfo, publish
 from flagprof.store.manifest import atomic_json
 from flagprof.store._offline_writer import offline_writer
@@ -39,7 +40,7 @@ def import_memory(directory, run, capture, *, writer=None, prepared=None):
     # A writer is closed before success. Receipts bind every accepted memory
     # record to the ledger; independent verification runs once at import time.
     owns_writer = writer is None
-    with ledger.open('x') as output, (offline_writer(run) if owns_writer else nullcontext(writer)) as writer:
+    with phase('处理官方显存记录', unit='条') as records_progress, ledger.open('x') as output, (offline_writer(run) if owns_writer else nullcontext(writer)) as writer:
         if not writer.flush(120):raise ValueError('memory writer initial barrier failed')
         for source, name in zip(state['sources'], names):
             if prepared is not None and hasattr(__import__('flagprof.vendors.'+capture['vendor']+'.importer',fromlist=['memory_record']),'memory_record'):
@@ -67,7 +68,10 @@ def import_memory(directory, run, capture, *, writer=None, prepared=None):
                     entry.update(status='excluded',reason=row.get('reason','no_occupancy_fields'))
                     state['excluded'] += 1
                 output.write(json.dumps(entry, sort_keys=True)+'\n')
+                if state['records'] % 256 == 0:
+                    records_progress.update(state['records'])
         if not writer.flush(120):raise ValueError('memory writer final barrier failed')
+        records_progress.update(state['records'])
     state['ledger'] = dict(path=ledger.name, **fileinfo(ledger))
     if owns_writer:return finish_memory(run,state)
     return state

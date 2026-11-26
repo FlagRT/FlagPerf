@@ -15,6 +15,7 @@ from .checkpoints import fileinfo, seal, validate, publish, source_budget
 from .limits import DEFAULT_RECORD_SOURCE_BYTES, read_json, walk_files
 from .bundle import finish_bundle, load_bundle
 from flagprof.store.manifest import atomic_json, proc_key
+from flagprof.progress import child_env, finish_display, phase
 
 
 def execute_target(arguments):
@@ -101,24 +102,30 @@ def _finish_capture(directory, *, timeout=1800):
     if (directory/'capture.json').exists():return load_bundle(directory)
     state=read_json(directory/'capture-input.json')
     occurrence=state['occurrence'];raw=directory/'sealed-raw'
-    before=validate(raw,dict(occurrence=occurrence,normal_close=True),'sealed-source',
-                    source_max_bytes=source_budget(state['metadata'].get('source_max_bytes',1<<30)))
+    with phase('校验原始采集'):
+        before=validate(raw,dict(occurrence=occurrence,normal_close=True),'sealed-source',
+                        source_max_bytes=source_budget(state['metadata'].get('source_max_bytes',1<<30)))
     if fileinfo(raw/'committed.json')!=state['raw_manifest']:raise ValueError('raw capture changed')
     metadata=state['metadata'];vendor=state['vendor'];t=time.perf_counter()
     from flagprof.vendors import adapter
     from .worker import active_directory
     analyse = getattr(adapter(vendor, 'evidence'), 'analyse_trace', None)
-    trace = analyse(directory, raw, active_directory(), timeout) if analyse else raw/'data/trace.json'
+    trace = raw/'data/trace.json'
+    if analyse:
+        with phase('厂商分析'):
+            trace = analyse(directory, raw, active_directory(), timeout)
     metadata['official_analysis_s']=time.perf_counter()-t
-    validate(raw,before['binding'],'sealed-source')
+    with phase('复核原始采集'):
+        validate(raw,before['binding'],'sealed-source')
     # The sealed raw source remains authoritative until capture.json is committed.
     for name in ['trace-input','sealed-trace']:
         path=directory/name
         if path.exists():shutil.rmtree(path)
     (directory/'capture.json.partial').unlink(missing_ok=True)
     from .final_evidence import identities
-    metadata['identities']=identities(directory,metadata,vendor,trace,occurrence,before)
-    result=finish_bundle(directory,trace,vendor=vendor,metadata=metadata,occurrence=occurrence,raw_manifest=before)
+    with phase('整理并封存分析结果'):
+        metadata['identities']=identities(directory,metadata,vendor,trace,occurrence,before)
+        result=finish_bundle(directory,trace,vendor=vendor,metadata=metadata,occurrence=occurrence,raw_manifest=before)
     return result
 
 
@@ -130,6 +137,7 @@ def seal_capture(directory,metadata,vendor):
             _seal_capture(directory, metadata, vendor)
 
 
+@phase('封存原始采集')
 def _seal_capture(directory, metadata, vendor):
     if metadata.get('normal_close') is not True or metadata.get('target_returncode')!=0:
         raise ValueError('abnormal capture cannot be certified')
@@ -197,9 +205,11 @@ def record_final(command, *, store, vendor, preset='perf', config=None, timeout=
                capture_completeness='unknown',throughput_gate='not_evaluated',performance_blocking=False)
     code=2
     try:
-        with (destination/'target.log').open('xb') as log:
+        with phase('目标推理与设备采集', detail=str(destination/'target.log')) as collecting, \
+                (destination/'target.log').open('xb') as log:
             cp=run_owned([command[0],'-B',*flags,'-m','flagprof.offline.capture','target',str(destination),vendor,preset,*arguments],
-                         env=env,stdout=log,stderr=subprocess.STDOUT,timeout=max(.01,deadline-time.monotonic()))
+                         env=child_env(env),stdout=log,stderr=subprocess.STDOUT,timeout=max(.01,deadline-time.monotonic()))
+            collecting.finish(cp.returncode)
         if type(getattr(cp,'wait_returncode',None)) is int:
             monitor.target_exit(dict(returncode=cp.wait_returncode,source='subprocess.wait'),getattr(cp,'process',None))
         monitor.close()
@@ -210,9 +220,11 @@ def record_final(command, *, store, vendor, preset='perf', config=None, timeout=
         collections=list((destination/'collection').glob('*/manifest.json'))
         if len(collections)>1:raise ValueError('one owned collection run required')
         for manifest in collections:
-            proxy_deadline, proxy_timeout=record_wait(manifest.parent,deadline=deadline)
-            with deadline_scope(proxy_deadline):
-                collection_final=finalize(manifest.parent)
+            with phase('封存主机采集') as closing:
+                proxy_deadline, proxy_timeout=record_wait(manifest.parent,deadline=deadline)
+                with deadline_scope(proxy_deadline):
+                    collection_final=finalize(manifest.parent)
+                closing.finish(2 if proxy_timeout or collection_final['status'] != 'complete' else 0)
             state['collection_finalize']=collection_final['status']
             if proxy_timeout:
                 state['writer_failure']='proxy_wait_timeout'
@@ -245,8 +257,10 @@ def record_final(command, *, store, vendor, preset='perf', config=None, timeout=
             raise
         result=destination/'import-result.json'
         cmd=[sys.executable,'-B','-m','flagprof','import',str(destination),'--store',str(store/'runs')]
-        with result.open('xb') as output,(destination/'importer.log').open('xb') as errors:
-            child=run_owned(cmd,env=env,stdout=output,stderr=errors,timeout=max(.01,deadline-time.monotonic()))
+        with phase('导入封存采集', detail=str(destination/'importer.log')) as importing, \
+                result.open('xb') as output,(destination/'importer.log').open('xb') as errors:
+            child=run_owned(cmd,env=child_env(env),stdout=output,stderr=errors,timeout=max(.01,deadline-time.monotonic()))
+            importing.finish(child.returncode)
         state['importer_exit']=child.returncode
         if child.returncode:
             code=128-child.returncode if child.returncode<0 else child.returncode
@@ -269,6 +283,7 @@ def record_final(command, *, store, vendor, preset='perf', config=None, timeout=
             persisted['run'] = os.path.relpath(run, destination)
             atomic_json(run/'record-status.json', dict(state, run='.', capture=os.path.relpath(destination, run)))
         atomic_json(destination/'record-status.json', persisted)
+        finish_display()
         print(json.dumps(state,ensure_ascii=False))
 
 

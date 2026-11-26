@@ -32,6 +32,8 @@ flagprof run cpu_demo.yaml --out cpu-first
 
 排查某一层里的算子时，可用自定义脚本模板指定模块路径。打开两次采集的 Oracle 报告，选择可重放的算子行，复制命令即可在本机运行两侧重放并生成对照报告。[自定义脚本层内采集](docs/usage.md#用-yaml-采集自定义脚本中的一层) · [从算子行重放](docs/usage.md#从-oracle-算子行重放)
 
+排查运行时停滞时，可以让一个节点监控会话关联多次 YAML 任务，再用退出回执、任务报告和离线重放核对同一次告警。[节点监控与 YAML 采集示例](docs/monitoring.md#节点监控yaml-采集与离线重放)
+
 导出固定形状的 Qwen3 embedding 计算图用 `flagprof init --template export`。按名册逐模型做两次 A/A 推理用 `flagprof init --template batch`。分别从图包的 `index.html` 和批量运行的 `battery-summary.md` 阅读结果。[计算图与批量运行](docs/usage.md#计算图与批量运行)
 
 昆仑芯 P800 的当前命令见[使用指南](docs/usage.md#p800-候选运行栈)，既有实测镜像和身份清单字段见 [P800 适配资料](../docs/kunlunxin/inference-v2.md)。[验证记录](../docs/kunlunxin/inference-v2-validation.md) 包含开放缺陷：OneRec 单卡/TP2 第 14 个生成 token 不同（P800-INF-007），尚不能声明 TP2 精度通过；该次验证未授予性能资格。

@@ -13,6 +13,7 @@ from .bundle import load_bundle, register
 from .checkpoints import binding, validate, save_scan, save_prepared, load_prepared
 from .finish import BoundedView, finalize_bounded
 from .limits import read_json
+from flagprof.progress import phase
 from flagprof.store.manifest import create_run, atomic_json
 from flagprof.store._offline_writer import offline_writer
 from flagprof.vendors.import_common import importer_writer_config
@@ -34,32 +35,33 @@ def _import_bundle(directory, store, run_id, options, calls_from_run):
     directory, store = Path(directory), Path(store)
     temporary = active_directory()
     started = time.perf_counter(); timings = {}; options = dict(options or {})
-    capture = load_bundle(directory)
-    source = directory/'sealed-trace/data/trace.json'
-    if calls_from_run is not None:
-        from .project import calls_from
-        options.update(calls=calls_from(calls_from_run, capture['metadata'].get('source_run_id')), marker_prefix='flagprof::op#')
-    if 'calls' not in options and capture['metadata'].get('collection_run'):
-        from .checkpoints import checked_relative
-        from .project import calls_from
-        collection=directory/checked_relative(capture['metadata']['collection_run'])
-        options['calls']=calls_from(collection,capture['metadata'].get('source_run_id'))
-        options['marker_prefix']='flagprof::op#'
-    if 'identities' not in options and capture['metadata'].get('identities'):
-        options['identities'] = capture['metadata']['identities']
-    from .device_analysis import capture_context
-    options['analysis_input'] = capture_context(directory,capture)
-    options['vendor'] = capture['vendor']
-    options['profile_memory'] = capture['metadata'].get('requested_configuration',{}).get('profile_memory',False)
-    from flagprof.vendors.native_common import ScopeConfig
-    scope = options.get('scope_config')
-    if scope is not None:
-        options['scope_config'] = dict(scope)
-    bind = binding(source, capture['occurrence'], options)
-    bind['capture'] = capture
-    key = hashlib.sha256(json_bytes(bind)).hexdigest()
-    if scope is not None:
-        options = dict(options, scope_config=ScopeConfig(**{k:tuple(v) if v is not None else None for k,v in scope.items()}))
+    with phase("验证封存采集与导入身份"):
+        capture = load_bundle(directory)
+        source = directory/'sealed-trace/data/trace.json'
+        if calls_from_run is not None:
+            from .project import calls_from
+            options.update(calls=calls_from(calls_from_run, capture['metadata'].get('source_run_id')), marker_prefix='flagprof::op#')
+        if 'calls' not in options and capture['metadata'].get('collection_run'):
+            from .checkpoints import checked_relative
+            from .project import calls_from
+            collection=directory/checked_relative(capture['metadata']['collection_run'])
+            options['calls']=calls_from(collection,capture['metadata'].get('source_run_id'))
+            options['marker_prefix']='flagprof::op#'
+        if 'identities' not in options and capture['metadata'].get('identities'):
+            options['identities'] = capture['metadata']['identities']
+        from .device_analysis import capture_context
+        options['analysis_input'] = capture_context(directory,capture)
+        options['vendor'] = capture['vendor']
+        options['profile_memory'] = capture['metadata'].get('requested_configuration',{}).get('profile_memory',False)
+        from flagprof.vendors.native_common import ScopeConfig
+        scope = options.get('scope_config')
+        if scope is not None:
+            options['scope_config'] = dict(scope)
+        bind = binding(source, capture['occurrence'], options)
+        bind['capture'] = capture
+        key = hashlib.sha256(json_bytes(bind)).hexdigest()
+        if scope is not None:
+            options = dict(options, scope_config=ScopeConfig(**{k:tuple(v) if v is not None else None for k,v in scope.items()}))
     timings['validate_source_s'] = time.perf_counter()-started
     with checkpoint(store, key) as work, scratch_scope(temporary, work):
         reused = []
@@ -68,7 +70,8 @@ def _import_bundle(directory, store, run_id, options, calls_from_run):
         prepared = None
         if derived.is_dir():
             try:
-                prepared = load_prepared(derived, bind)
+                with phase("验证并读取已准备的导入检查点"):
+                    prepared = load_prepared(derived, bind)
                 reused.append('derived')
             except (ValueError, OSError, KeyError, TypeError, AttributeError, sqlite3.DatabaseError):
                 shutil.rmtree(derived)
@@ -76,7 +79,8 @@ def _import_bundle(directory, store, run_id, options, calls_from_run):
             resume = None
             if scan.is_dir():
                 try:
-                    validate(scan, bind, 'scan')
+                    with phase('验证扫描检查点'):
+                        validate(scan, bind, 'scan')
                     resume = scan / 'scan.sqlite'
                     reused.append('scan')
                 except (ValueError, OSError, KeyError, TypeError, AttributeError, sqlite3.DatabaseError):
@@ -84,7 +88,8 @@ def _import_bundle(directory, store, run_id, options, calls_from_run):
             try:
                 prepared = pipeline.prepare(source, derived, **options, resume_scan=resume,
                                             scan_checkpoint=lambda db: save_scan(db, scan, bind))
-                save_prepared(prepared, bind)
+                with phase('保存已准备的导入检查点'):
+                    save_prepared(prepared, bind)
             except BaseException:
                 for stage in (derived, scan):
                     if stage.is_dir() and not (stage/'committed.json').is_file():
@@ -114,7 +119,8 @@ def _import_bundle(directory, store, run_id, options, calls_from_run):
                      performance_disposition='not_evaluated', latency_budget='pending')
         atomic_json(run/'plan-b-status.json', state)
         try:
-            ref = register(run, directory, capture)
+            with phase('登记封存证据'):
+                ref = register(run, directory, capture)
             from flagprof.store.lineage import register_lineage
             register_lineage(run,execution_id=capture['occurrence'],source_run_id=capture['metadata'].get('source_run_id'),
                              source_attempt_id=capture['occurrence'],attempt_id=final_run.name)
@@ -133,9 +139,13 @@ def _import_bundle(directory, store, run_id, options, calls_from_run):
             view_work = temporary / 'verification'; t = time.perf_counter()
             with BoundedView(run, view_work) as view:
                 timings['independent_verify_s'] = time.perf_counter()-t
-                t = time.perf_counter(); final = finalize_bounded(run, view)
+                t = time.perf_counter()
+                with phase('封存导入结果'):
+                    final = finalize_bounded(run, view)
                 timings['finalize_s'] = time.perf_counter()-t
-                t = time.perf_counter(); first = view.page(0, 1)
+                t = time.perf_counter()
+                with phase('核验导入后第一页'):
+                    first = view.page(0, 1)
                 timings['first_page_s'] = time.perf_counter()-t
                 if final['status'] != 'complete':raise ValueError('finalize incomplete')
                 state.update(status='complete', count=view.verified['count'], source_records=view.verified['source_records'],

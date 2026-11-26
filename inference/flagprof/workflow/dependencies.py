@@ -4,6 +4,7 @@
 import os
 import subprocess
 import tempfile
+from flagprof.progress import phase
 
 from .executor import error_detail, execution_environment
 
@@ -109,7 +110,7 @@ def check_dependencies(config, plan, assets):
         from pathlib import Path
         from flagprof.replay import prepare
         replay = config['replay']
-        with tempfile.TemporaryDirectory(prefix='flagprof-check-') as scratch:
+        with phase('检查重放输入包'), tempfile.TemporaryDirectory(prefix='flagprof-check-') as scratch:
             prepare(replay['ref']['run'], replay['cmp']['run'], replay['call_key'], Path(scratch)/'package')
     for step, interpreter, cwd, modules, selection in dependencies(config, plan, assets):
         program = ''
@@ -119,7 +120,8 @@ def check_dependencies(config, plan, assets):
         key = (tuple(interpreter), cwd, program)
         if key in checked:
             continue
-        with tempfile.TemporaryDirectory(prefix='flagprof-check-') as empty, tempfile.TemporaryFile() as errors:
+        with phase('检查 '+step+' 依赖', detail=', '.join(modules)), \
+                tempfile.TemporaryDirectory(prefix='flagprof-check-') as empty, tempfile.TemporaryFile() as errors:
             try:
                 result = subprocess.run([*interpreter, '-B', '-c', program], cwd=cwd or empty,
                                         env=execution_environment(), stdin=subprocess.DEVNULL,

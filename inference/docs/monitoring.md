@@ -60,6 +60,17 @@ NVIDIA 使用 `--vendor nvidia --devices all`。`launch` 支持同样的监控�
 
 单次任务会探测本地采集能力。Ascend 在容器内优先使用可见的 `npu-smi`，宿主可使用 DCMI；NVIDIA 可使用 NVML 或 `nvidia-smi`。探测到相应接口时选择 `local`，缺少接口时选择 `host`，由宿主侧运行 `python3 -m flagprof.monitor --root ROOT --vendor ascend --devices all`。同一节点长期接多个任务时采用 `agent`，避免每个目标重复读取设备指标。
 
+## 节点监控、YAML 采集与离线重放
+
+节点可以连续监控多个任务。用 `watch start --config` 指定节点规则和采样周期，用各任务的 YAML 指定目标、采集预设和同一个监控目录。以下命令从同一工作目录运行。
+
+1. 在监控终端执行 `flagprof watch start --root ./node --vendor ascend --devices 0 --config watch.json`。在任务终端用 `flagprof watch status --root ./node` 确认会话已运行。
+2. 在任务 YAML 中设置 `monitor.enabled: true`、`monitor.topology: agent`、`monitor.root: ./node` 和 `monitor.diagnose: true`。先运行 `flagprof run task.yaml --check`，再运行 `flagprof run task.yaml --out job`。需要对照的任务使用同一个节点目录和新的任务输出目录。
+3. 从每个任务的 `summary.json` 中读取 `type=store` 的产物路径。在节点收到各任务的退出回执后，结束自己启动的 watch。共享监控的生命周期由它的管理者负责。
+4. 用 `flagprof report <任务 Store 路径> --out task-final` 和 `flagprof report ./node --out node-final` 查看同一会话的任务与节点报告。再运行 `flagprof watch replay ./node --out replay`，核对在线与离线诊断结果。
+
+配套的可运行示例位于开发仓库 `runtime-team/dev/performance/docs/inference/runtime-diagnosis/`。该目录的 README、配置和启动脚本一起覆盖上述流程，包括等待退出回执、回收监控进程和核对重放结果。
+
 ## 指标如何解释
 
 | 观测 | 计算和判读 |
