@@ -3,33 +3,48 @@
 """Kunlunxin P800 telemetry over the CUDA-compat stack's NVML-compatible
 interface.
 
-The XPU stack ships libxpunvidia-ml.so (NVML-ABI compatible, driver ABI
-515.58.kunlun) inside the triton XPU backend and torch_xmlir dependency
-directories: utilization, memory, temperature and power are queryable with
-the standard nvml* symbols (verified on P800 OAM x8, driver 5.0.21.47).
-This provider reuses the NVIDIA NVML reader pointed at that library.
+The XPU stack bundles an NVML-ABI-compatible library inside its Python
+packages (libxpunvidia-ml.so, driver ABI 515.58.kunlun): utilization,
+memory, temperature and power are queryable with the standard nvml*
+symbols (verified on P800 OAM x8, driver 5.0.21.47). This provider reuses
+the NVIDIA NVML reader pointed at that library.
 """
 
 
-def _candidate_libraries():
-    """Locate the NVML-compatible shared library inside the XPU stack.
+def _site_packages():
+    """The running interpreter's purelib, resolved without importing site.
 
-    The image ships it under the triton XPU backend
-    (site-packages/triton/backends/xpu/xpu3/so/libxpunvidia-ml.so*) and in
-    the torch_xmlir dependency tree; host installs may also provide it.
-    The monitor worker runs with -S (no site-packages), so discovery uses
-    plain filesystem globs.
+    The monitor worker runs with -S, where importlib.find_spec cannot see
+    installed packages, but sysconfig still reports the interpreter's own
+    layout.
+    """
+    import sysconfig
+    from pathlib import Path
+    try:
+        return Path(sysconfig.get_paths()['purelib'])
+    except (KeyError, TypeError):
+        return None
+
+
+def _candidate_libraries():
+    """Libraries to try, in order of preference.
+
+    1. FLAGPROF_TELEMETRY_LIBRARY, an explicit operator override;
+    2. the XPU vendor tree's standard install path;
+    3. the NVML-ABI library the vendor's stack bundles under
+       triton/backends/*/*/so, derived from the running interpreter.
     """
     import glob
+    import os
     candidates = []
-    patterns = ('/root/miniconda/envs/*/lib/python*/site-packages/triton/backends/*/*/so/libxpunvidia-ml.so*',
-                '/opt/conda/envs/*/lib/python*/site-packages/triton/backends/*/*/so/libxpunvidia-ml.so*',
-                '/usr/local/lib/python*/site-packages/triton/backends/*/*/so/libxpunvidia-ml.so*',
-                '/usr/lib/python*/site-packages/triton/backends/*/*/so/libxpunvidia-ml.so*')
-    for pattern in patterns:
-        candidates += sorted(glob.glob(pattern))
+    override = os.environ.get('FLAGPROF_TELEMETRY_LIBRARY')
+    if override:
+        candidates.append(override)
     candidates += ['/usr/local/xpu/lib/libxpunvidia-ml.so', 'libxpunvidia-ml.so']
-    return candidates
+    purelib = _site_packages()
+    if purelib is not None:
+        candidates += sorted(glob.glob(str(purelib/'triton'/'backends'/'*'/'*'/'so'/'libxpunvidia-ml.so*')))
+    return tuple(candidates)
 
 
 def Provider(devices='all', source='auto', **kwargs):
