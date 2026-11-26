@@ -15,16 +15,25 @@ def initialize(rank):
 
 
 def physical_identity(device):
-    """P800 identity via torch properties (NVML-compat UUID when exposed);
-    unknown is recorded honestly when the compat stack omits it."""
+    """P800 identity for monitor registration.
+
+    The monitor binds a target to telemetry entities by entity string, so the
+    UUID must be the exact string the telemetry provider records (the XPU
+    stack's NVML-compatible library). The framework-reported UUID only
+    selects which device to match; unknown is recorded honestly when the
+    library is unavailable.
+    """
     import torch
     try:
         props = torch.cuda.get_device_properties(device)
-        uuid = str(getattr(props, 'uuid', '') or '')
+        torch_uuid = str(getattr(props, 'uuid', '') or '')
     except Exception as error:
         return dict(status='unknown', reason=str(error)[:120])
-    if not uuid:
-        return dict(status='unknown', reason='no uuid exposed by compat stack')
-    if not uuid.startswith(('GPU-', 'P800-')):
-        uuid = 'P800-'+uuid
-    return dict(entity='chip:'+uuid, uuid=uuid, status='available')
+    from flagprof.telemetry.nvml_compat import logical_identity
+    identity = logical_identity(torch.device(device).index or 0, torch_uuid or None)
+    if identity is None:
+        return dict(status='unknown',
+                    reason='NVML-compatible library unavailable or UUID unmatched',
+                    torch_uuid=torch_uuid or None)
+    identity['logical_device'] = str(device)
+    return identity
