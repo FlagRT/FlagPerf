@@ -17,7 +17,9 @@ BUILTINS = (
            factory='Provider',requires=[]) for name,module in (
         ('host','flagprof.telemetry.host_proc'),
         ('ascend','flagprof.vendors.ascend.telemetry'),
-        ('nvidia','flagprof.vendors.nvidia.telemetry'))),
+        ('nvidia','flagprof.vendors.nvidia.telemetry'),
+        ('thead','flagprof.vendors.thead.telemetry'),
+        ('kunlunxin','flagprof.vendors.kunlunxin.telemetry'))),
     dict(id='perf.timeline',kind='analyzer',version='1',module='flagprof.analyzers.timeline',factory='make_perf_timeline',requires=[]),
     dict(id='resource',kind='analyzer',version='1',module='flagprof.analyzers.resource',factory='make_resource',requires=[]),
     dict(id='ascend', kind='vendor', version='1', module='flagprof.vendors.ascend.session',
