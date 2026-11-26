@@ -12,13 +12,21 @@ This provider reuses the NVIDIA NVML reader pointed at that library.
 
 
 def _candidate_libraries():
+    """Locate the NVML-compatible shared library inside the XPU stack.
+
+    The image ships it under the triton XPU backend
+    (site-packages/triton/backends/xpu/xpu3/so/libxpunvidia-ml.so*) and in
+    the torch_xmlir dependency tree; host installs may also provide it.
+    """
     import glob
     from pathlib import Path
+    import importlib.util
     candidates = []
-    spec = __import__('importlib.util', fromlist=['find_spec']).find_spec('triton')
+    spec = importlib.util.find_spec('triton')
     if spec and spec.origin:
-        base = Path(spec.origin).parents[2]/'so'
-        candidates += [str(p) for p in sorted(base.glob('libxpunvidia-ml.so*'))]
+        root = Path(spec.origin).parent
+        candidates += sorted(glob.glob(str(root/'backends'/'*'/'*'/'so'/'libxpunvidia-ml.so'), recursive=True))
+        candidates += sorted(glob.glob(str(root/'backends/**/so/libxpunvidia-ml.so*'), recursive=True))
     candidates += ['/usr/local/xpu/lib/libxpunvidia-ml.so', 'libxpunvidia-ml.so']
     return candidates
 
