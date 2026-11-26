@@ -73,7 +73,7 @@ flagprof report "$RUN" --out ./report
 | 单机双进程 | `launch --nproc-per-node 2`；NCCL、HCCL、FlagCX，逐 rank Store 与 group 报告 |
 | 内置运行器 | `python -m flagprof.runner`：本地 Hugging Face embedding / generation / rerank 与 CTR 模板；其他模型可通过自身 Python 程序接入 |
 | 离线消费 | `seal`、`analyse`、`import`、`inspect`、`page`、`report`；自动管理检查点和临时索引 |
-| 资源监控 | Ascend / NVIDIA 遥测、框架显存边界、阶段与资源联合时间线；`watch` 独立会话、滚动保留、归档恢复 |
+| 资源监控 | Ascend / NVIDIA / PPU / P800 遥测（后两者经 NVML-ABI 兼容库）、框架显存边界、阶段与资源联合时间线；`watch` 独立会话、滚动保留、归档恢复；换机先跑 `flagprof telemetry check` |
 | 在线诊断 | 显式 `--diagnose on`：OOM、心跳、执行停滞、单机 TP2 同步通信超时，保留证据和覆盖 |
 | 计算图导出 | `export` 独立 CPU 入口：Qwen3-Embedding 固定形状 FX / ONNX；通用 `ExportSpec` API |
 | 结果交付 | 离线 HTML / Markdown、两路或三路 Oracle、runner 性能基准、条件对照、历史报告重绘 |

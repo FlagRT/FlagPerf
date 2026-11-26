@@ -520,8 +520,12 @@ rank-1 manifest= complete comm= {'model/allreduce': 2} phases= {'data': 28, 'for
   （`report.html`/`report.md`），训练面板给出逐步相位区间，perf/通信/显存/
   时间线面板与推理同一套。
 - **怎么开**：进程环境加 `FLAGPROF_TRAIN_MONITOR=on`（其余旋钮见 v2.md
-  「节点监控与在线诊断」）。适配器（`ObservationSession`）路径同样适用：
-  环境变量在适配器发车前设置即可，会话属主与 rank 无关的全局 rank 0 绑定。
+  「节点监控与在线诊断」）。设备遥测的库前提：PPU 容器需挂载主机
+  `/usr/lib64/libnvidia-ml.so`（或设 `FLAGPROF_TELEMETRY_LIBRARY`），P800 用
+  镜像内 triton 包的兼容库、无需挂载；换机先跑
+  `python3 -B -S -m flagprof telemetry check --vendor <v>`。适配器
+  （`ObservationSession`）路径同样适用：环境变量在适配器发车前设置即可，
+  会话属主与 rank 无关的全局 rank 0 绑定。
 - **怎么读**：报告先看 `result.json` 各面板 status 与覆盖，`report.md` 供
   交接留档；设备身份由该厂商遥测库读出（PPU/P800 走 NVML 兼容库的 UUID，
   昇腾走 DCMI 物理编号），与遥测实体逐一对应；库不可得时记 `unknown`
