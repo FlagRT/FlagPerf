@@ -11,11 +11,21 @@ identity naming stays honest (PPU-ZW810E).
 
 
 def _candidate_libraries():
+    """Host PPU stacks ship /usr/lib64/libnvidia-ml.so; CUDA-compat images
+    that run the thead session on other vendors (e.g. P800 training) carry
+    the same NVML ABI as libxpunvidia-ml.so under the triton XPU backend."""
+    import glob
     from pathlib import Path
-    return ('/usr/lib64/libnvidia-ml.so', '/usr/lib/libnvidia-ml.so',
-            '/usr/lib64/libnvidia-ml.so.1', '/usr/lib/libnvidia-ml.so.1',
-            str(Path('/usr/local/bin').parent/'lib64'/'libnvidia-ml.so.1'),
-            'libnvidia-ml.so.1')
+    import importlib.util
+    candidates = ['/usr/lib64/libnvidia-ml.so', '/usr/lib/libnvidia-ml.so',
+                  '/usr/lib64/libnvidia-ml.so.1', '/usr/lib/libnvidia-ml.so.1',
+                  str(Path('/usr/local/bin').parent/'lib64'/'libnvidia-ml.so.1'),
+                  'libnvidia-ml.so.1']
+    spec = importlib.util.find_spec('triton')
+    if spec and spec.origin:
+        root = Path(spec.origin).parent
+        candidates += sorted(glob.glob(str(root/'backends'/'*'/'*'/'so'/'libxpunvidia-ml.so'), recursive=True))
+    return tuple(candidates)
 
 
 def Provider(devices='all', source='auto', **kwargs):
