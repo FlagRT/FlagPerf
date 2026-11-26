@@ -17,14 +17,26 @@ class OracleTests(unittest.TestCase):
         self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup);self.root=Path(self.temp.name)
 
     def fixture(self,label,*,delta=0,input_delta=0,config=1,omit=False,source='input',blob=True,
-                dtype='float32',layer_outputs=False):
+                dtype='float32',layer_outputs=False, replay_op=None):
         run=create_run(self.root/label)
         identity=dict(model_files={'model':'same'},oracle_id='fixture',inputs_sha256='same',samples=['s'],batches=[[1]],dtype=dtype,attention='eager',
             pooling='fixture',boundaries=['<root>.layer'],probe_alg='p4v1',device='cpu',software={},numerics={},flaggems='off',include=None)
+        if replay_op:
+            identity.update(software={'torch':'test'}, numerics={'mode':'default'})
         state=run/'attachments/f/state.json';state.parent.mkdir(parents=True)
         state.write_text(json.dumps(dict(id='f',probes={},oracle_identity=identity)))
         with Writer(run) as writer:
-            observations=[('input',[1.,2.+input_delta]),('op:aten.mul/0/0',[2.,4.+delta])]
+            boundary = 'op:'+replay_op+'/0/0' if replay_op else 'op:aten.mul/0/0'
+            if replay_op:
+                from flagprof.store.sig import compute_sid
+                tree = [dict(k='tensor', p='0', dtype='torch.'+dtype, shape=[2], layout='torch.strided', contiguous=True)]
+                sid = compute_sid(replay_op, '', 'in', tree)
+                writer.register_signature(dict(name=replay_op, overload='', role='in', tree=tree))
+                if config == 1:
+                    config = [dict(name='self', value=tree)]
+            values = [1., 2.+input_delta]
+            output = [v**-.5 for v in values] if replay_op=='aten::rsqrt' else [2., 4.+delta]
+            observations=[('input',values),(boundary,output)]
             if layer_outputs:
                 observations.extend([('intermediate',[1.,2.]),('output',[2.,4.+delta])])
             for name,values in observations:
@@ -39,6 +51,8 @@ class OracleTests(unittest.TestCase):
                     stats={},chunks=[],probe=values,probe_alg='p4v1',digest='sha256:'+hashlib.sha256(raw).hexdigest())
                 if blob:row['blob']=dict(path=str(path.relative_to(run)),offset=0,nbytes=len(raw),hash=row['digest'],fmt='raw-le:'+dtype+':[2]')
                 if name.startswith('op:'):row.update(src=['unknown' if source=='unknown' else '<root>.layer#0#'+source+'#s'],ext={'call_config':config if isinstance(config,list) else {'scale':config}})
+                if replay_op and name == boundary:
+                    row['sid'] = sid
                 writer.emit(row)
         finalize(run);return run
 
@@ -76,6 +90,84 @@ class OracleTests(unittest.TestCase):
         c=self.fixture('c',delta=.5,blob=False)
         row=self.report(a,c,'sampled')['oracle.op_sensitivity']['data'][0]
         self.assertEqual(row['level'],'sampled');self.assertFalse(row['introduced'])
+
+    def test_replay_eligibility_matches_packaging_and_redraw(self):
+        from flagprof.replay import prepare, REASONS
+        from flagprof.report.product import redraw
+        op = 'aten::rsqrt'
+        ref = self.fixture('ref ${STORE}', replay_op=op)
+        op_key = '<root>.layer#0#op:aten::rsqrt/0/0#s'
+        declare = dict(differences=[], note="keep this declaration")
+        job = self.root/'reports'
+        job.mkdir()
+        (job/'resolved-config.json').write_text('{}')
+        for label, changes, status in [
+            ('same-input', {}, 'replay_same_input'),
+            ('no-blob', dict(blob=False), 'replay_blob'),
+            ('producer', dict(source='unknown'), 'replay_sources'),
+            ('config', dict(config=2), 'replay_config'),
+            ('incomplete', dict(input_delta=1.), 'replay_partial'),
+            ('different', dict(input_delta=1.), 'replay_ready'),
+        ]:
+            with self.subTest(label=label):
+                cmp = self.fixture(label, replay_op=op, **changes)
+                if label == 'incomplete':
+                    manifest = cmp/'manifest.json'
+                    manifest.write_text(json.dumps(dict(json.loads(manifest.read_text()), status='incomplete')))
+                out = self.root / 'reports' / label
+                generate_oracle(ref, cmp, out, declare=declare)
+                result = json.loads((out/'result.json').read_text())
+                row = result['results']['oracle.op_sensitivity']['data'][0]
+                self.assertEqual(row['replay_status'], status)
+                html = (out/'report.html').read_text()
+                enabled = status == 'replay_ready'
+                self.assertEqual((out/'replay.yaml').exists(), enabled)
+                self.assertEqual('<button class="replay"' in html.split('<script')[0], enabled)
+                if not enabled:
+                    with self.assertRaises(ValueError) as exc:
+                        prepare(ref, cmp, op_key, self.root / ('pkg-' + label))
+                    self.assertIn(REASONS[status], str(exc.exception))
+                    continue
+                prepare(ref, cmp, op_key, self.root/'pkg')
+                for report in (out, self.root/'nested'/'x'/'redrawn'):
+                    if report != out:
+                        redraw(out, report)
+                    workflow = json.loads((report/'replay.yaml').read_text())
+                    self.assertFalse((report/workflow['output']['dir']).resolve().is_relative_to(job))
+                    self.assertEqual(workflow['mode'], 'replay')
+                    self.assertEqual(workflow['replay']['call_key'], op_key)
+                    self.assertEqual(workflow['replay']['declare'], declare)
+                    for side, store in [('ref', ref), ('cmp', cmp)]:
+                        path = workflow['replay'][side]['run']
+                        self.assertFalse(Path(path).is_absolute())
+                        self.assertEqual((report / path.replace('$$','$')).resolve(), store)
+                # A snapshot on its own has no Store locators to put in a workflow.
+                snapshot = self.root/'snapshot-only'
+                snapshot.mkdir()
+                (snapshot/'report-data.jsonl').write_bytes((out/'report-data.jsonl').read_bytes())
+                redraw(snapshot, self.root/'snapshot-render')
+                self.assertFalse((self.root/'snapshot-render/replay.yaml').exists())
+                rendered = (self.root/'snapshot-render/report.html').read_text().split('<script')[0]
+                self.assertIn('资格未知', rendered)
+                self.assertNotIn('<button class="replay"', rendered)
+                # A historical export has neither eligibility evidence nor input locators.
+                del result['report_context']['replay']
+                del row['replay_status']
+                legacy = self.root/'legacy'
+                legacy.mkdir()
+                (legacy/'result.json').write_text(json.dumps(result))
+                redrawn = self.root/'legacy-render'
+                redraw(legacy, redrawn)
+                self.assertFalse((redrawn/'replay.yaml').exists())
+                self.assertIn('资格未知', (redrawn/'report.html').read_text().split('<script')[0])
+
+    def test_replay_unsupported_overload_and_tensor_budget(self):
+        from flagprof.replay import blob_status, TENSOR_BYTES
+        ref = self.fixture('ref', replay_op='aten::neg')
+        result = self.report(ref, ref, 'unsupported')
+        row = result['oracle.op_sensitivity']['data'][0]
+        self.assertEqual(row['replay_status'], 'replay_operator')
+        self.assertEqual(blob_status(ref, {'blob': dict(nbytes=TENSOR_BYTES+1, offset=0)}), 'replay_size')
 
     def test_cross_precision_requires_opt_in_and_preserves_identity(self):
         def tensor_config(dtype):

@@ -110,6 +110,7 @@ def report_evidence(summary, directory, limits, **tags):
     budgets=json.loads(Path(limits).read_text()) if isinstance(limits,str) else limits or {}
     doc=report_info(result,record_bytes=Limits(**budgets).record_bytes,details=True)
     summary['evidence'].extend(dict(row,**tags) for row in report_rows(doc,result))
+    return doc
 
 
 def comparison_steps(spec, variants):
@@ -207,6 +208,10 @@ class Execution:
                 if flag in argv:
                     pos=argv.index(flag)+1
                     argv[pos]=str(self.locations.get(argv[pos],argv[pos]))
+            for flag in ('--replay-ref-run', '--replay-cmp-run'):
+                if flag in argv:
+                    pos = argv.index(flag) + 1
+                    argv[pos] = str(self.locations[argv[pos]])
         if action=='report' and self.sides[role]['attach_runner']:
             missing=[i for i,p in enumerate(self.sides[role]['runners']) if not Path(p).is_file()]
             if missing:
@@ -239,6 +244,15 @@ class Execution:
             tags['rank']=spec['rank']
         stores={}
         side=self.sides.get(role,{})
+        if action in ('replay.prepare', 'replay.run') and (not code or log.stat().st_size):
+            from .replay import consume_receipt
+            try:
+                consume_receipt(self, spec, log)
+            except (ValueError, OSError, KeyError, TypeError) as error:
+                step['receipt_error'] = str(error)
+                if not code:
+                    step['error'] = str(error)
+                    raise
         if action in ('export','batch'):
             from .suite_receipts import graph_receipt, batch_receipt
             try:
@@ -277,7 +291,7 @@ class Execution:
                 step['receipt_error']=str(error)
         if code:
             reasons = [reason for row in self.summary['evidence']
-                       if row.get('variant') == role and row['subject'] in ('record', 'launch.rank')
+                       if row.get('variant') == role and row['subject'] in ('record', 'launch.rank', 'replay.run')
                        and row['status'] not in ('ok','complete') for reason in row['reasons']]
             if not reasons:
                 with errors.open('rb') as stream:
@@ -307,7 +321,10 @@ class Execution:
                      verified=sum(t.get('integrity')=='verified' for t in inspection['traces']),**tags)
             artifact(self.summary,'inspection',log,**tags)
         elif action in ('report','compare','oracle'):
-            report_evidence(self.summary,Path(argv[argv.index('--out')+1]),self.config['output'].get('limits'),**tags)
+            directory = Path(argv[argv.index('--out')+1])
+            doc = report_evidence(self.summary, directory, self.config['output'].get('limits'), **tags)
+            if self.config.get('mode') == 'replay' and doc['results'].get('oracle.replay', {}).get('status') != 'ok':
+                raise ValueError('Oracle 报告缺少有效的同输入重放结果 ' + str(directory/'result.json'))
         return 0
 
     def run(self,assets):

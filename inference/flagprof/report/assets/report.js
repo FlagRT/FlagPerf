@@ -40,6 +40,16 @@ function fieldText(row,key,unit=key){
 }
 function val(row,k){if(row.paired_preview&&['ref','cmp'].includes(k))return row.paired_preview;return row[k]===undefined&&row.worst?row.worst[k]:row[k];}
 function scalar(v){return v&&typeof v==='object'&&!Array.isArray(v)&&'value' in v?v.value:v;}
+function replayCommand(id,row){
+ if(id!=='oracle.op_sensitivity'||row.replay_status!=='replay_ready'||!cfg.meta.replay_workflow||typeof row.call_key!=='string')return null;
+ const argument='replay.call_key='+JSON.stringify(row.call_key);
+ return "flagprof run ./replay.yaml --set '"+argument.replaceAll("'", "'\"'\"'")+"'";
+}
+async function copyText(button,value){
+ try{await navigator.clipboard.writeText(value);button.textContent='已复制';}
+ catch{const field=document.createElement('textarea');field.value=value;button.after(field);field.select();
+   if(document.execCommand('copy')){field.remove();button.textContent='已复制';}}
+}
 function detail(id,index,eventTitle){
  var row=data[id][index],body=$('detail-body');
  var section=cfg.sections.find(function(s){return s.id===id;});
@@ -51,14 +61,10 @@ function detail(id,index,eventTitle){
  (row._evidence_links||[]).forEach(function(link){var a=document.createElement('a');a.href=link.href;a.textContent=link.label;links.appendChild(a);});
  const copyBar=document.createElement('div');copyBar.className='copy-tools';
  const copies=[['复制全称',row.name],['复制 call_key',row.call_key]];
- if(id.startsWith('oracle.')&&row.call_key){
-   const quoted="'"+row.call_key.replaceAll("'", "'\"'\"'")+"'";
-   copies.push(['复制回放命令','flagprof replay prepare --ref "$REF_RUN" --cmp "$CMP_RUN" --call-key '+quoted+' --out ./replay-input']);
- }
+ copies.push(['复制回放命令',replayCommand(id,row)]);
  for(const [title,value] of copies)if(typeof value==='string'){
    const button=document.createElement('button');button.textContent=title;
-   button.onclick=async()=>{try{await navigator.clipboard.writeText(value);button.textContent='已复制';}
-     catch{const field=document.createElement('textarea');field.value=value;copyBar.append(field);field.select();if(document.execCommand('copy')){field.remove();button.textContent='已复制';}}};
+   button.onclick=()=>copyText(button,value);
    copyBar.append(button);
  }
  links.className='related-tools';
@@ -80,6 +86,10 @@ function detail(id,index,eventTitle){
  if(!$('row-detail').open)$('row-detail').show();
  $('row-detail').scrollTop=0;
 }
+document.addEventListener('click',event=>{
+ const button=event.target.closest('button.replay');
+ if(button){const value=replayCommand('oracle.op_sensitivity',data['oracle.op_sensitivity'][Number(button.dataset.index)]);if(value)copyText(button,value);}
+});
 document.addEventListener('click',function(e){var b=e.target.closest('button.detail');if(b)detail(b.dataset.section,Number(b.dataset.index));var link=e.target.closest('[data-focus-section]');if(link){e.preventDefault();focusRow(link.dataset.focusSection,Number(link.dataset.focusRow),true);}});
 document.addEventListener('keydown',event=>{if(event.key==='Escape')$('row-detail').close();});
 document.addEventListener('pointerdown',event=>{if($('row-detail').open&&!event.target.closest('#row-detail,button.detail,[data-point]'))$('row-detail').close();});
@@ -111,7 +121,8 @@ function draw(section){
    const fields=section.columns.filter(k=>state.expanded||!state.omit.has(k));
    const blocked=section.id==='oracle.identity_diff'&&rows[i].equal===false&&(rows[i].requirement==='must_equal'||!rows[i].declared);
    return '<tr data-row="'+i+'"'+(blocked?' class="condition-blocked"':'')+'>'+fields.map(k=>tableCell(section,state,rows[i],k,i)).join('')+
-     '<td><button class="detail" data-section="'+esc(section.id)+'" data-index="'+i+'">查看详情与证据</button></td></tr>';
+     '<td><button class="detail" data-section="'+esc(section.id)+'" data-index="'+i+'">查看详情与证据</button>'+
+     (replayCommand(section.id,rows[i])?'<button class="replay" data-index="'+i+'">复制回放命令</button>':'')+'</td></tr>';
  }).join('');
  panel.querySelector('.row-count').textContent=(section.evidence_index?'证据样本筛选 ':'当前筛选 ')+selected.length+' / '+(section.evidence_index?'本页样本 ':'全表 ')+rows.length+' 条；显示 '+(visible.length?start+1:0)+'–'+(start+visible.length)+'。';
  panel.querySelectorAll(':scope > .table-scroll thead th').forEach((th,i)=>{th.hidden=state.omit.has(section.columns[i])&&!state.expanded;th.setAttribute('aria-sort',section.columns[i]===state.sort?(state.desc?'descending':'ascending'):'none');});

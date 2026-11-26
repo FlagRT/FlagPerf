@@ -4,6 +4,7 @@
 import json
 from . import Result
 from .workspace import encode
+from flagprof import replay
 from flagprof.tensor_data import compare, FLOATS, ULP_BUCKETS
 
 REQUIRED=('model_files','oracle_id','inputs_sha256','samples','batches','dtype','attention','pooling','boundaries','probe_alg')
@@ -79,7 +80,7 @@ def identity(work):
     return value
 
 
-def _operator(ref,cmp,left,right,row,result,find,mismatch,ordinal,cross_precision):
+def _operator(ref,cmp,left,right,row,result,find,mismatch,ordinal,cross_precision,replay_source):
     key=row['call_key']
     sources_a=left.get('src');sources_b=right.get('src')
     unknown=sources_a is None or sources_b is None or 'unknown' in (sources_a or [])+(sources_b or [])
@@ -113,6 +114,10 @@ def _operator(ref,cmp,left,right,row,result,find,mismatch,ordinal,cross_precisio
         amplification=result['relative_l2']/error_in if config_equal and error_in and result.get('relative_l2') is not None else None,
         input_status='unknown' if unknown else 'misaligned_producer' if not paired else 'equal' if all_equal else 'different',
         layout_differs=_layout(left)!=_layout(right),call_config_status='equal' if config_equal else 'unknown' if config_a is None or config_b is None else 'different',expected_route=rule or {'status':'not_registered'})
+    status = replay_source
+    if status == replay.READY:
+        status, _ = replay.assess_call(dict(ref=ref, cmp=cmp), dict(ref=left, cmp=right), find)
+    item['replay_status'] = status
     ref.row('oracle.op_sensitivity',key,item)
     ref.db.execute("update rows set metric=? where panel='oracle.op_sensitivity' and key=?",(-ordinal,key))
     if introduced:ref.row('oracle.introduced',key,item)
@@ -257,7 +262,10 @@ def analyze(ref,cmp,declare=None):
     identity_result,blocked,panels=_identity_result(ref,cmp,declare,cross_precision)
     if blocked:return [identity_result]+[Result(panel,'unavailable',ref.table(panel),{},[blocked]) for panel in panels]
     generation_limits=None
-    if identity(ref).get('task')=='generate':
+    stores = dict(ref=ref, cmp=cmp)
+    identities = {side: identity(ws) for side, ws in stores.items()}
+    replay_source = replay.source_status(stores, identities)
+    if identities['ref'].get('task')=='generate':
         from .generation import comparison
         generation_limits=comparison(ref,cmp)
     for work in (ref,cmp):
@@ -299,7 +307,7 @@ def analyze(ref,cmp,declare=None):
         ordinal+=1
         ref.db.execute("update rows set metric=? where panel='oracle.samples' and key=?",(-ordinal,key))
         if boundary.startswith('op:'):
-            _operator(ref,cmp,left,right,row,result,find,mismatch,ordinal,cross_precision)
+            _operator(ref,cmp,left,right,row,result,find,mismatch,ordinal,cross_precision,replay_source)
         elif left['role']=='out':
             _layer_sample(summaries,row,result,ordinal)
             sample_key=(sample,iteration)

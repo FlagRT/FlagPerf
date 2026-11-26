@@ -8,6 +8,7 @@ Device acceptance is the full record -> inspect -> report chain in docs/usage.md
 import json
 import os
 from pathlib import Path
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -15,7 +16,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 HERE = Path(__file__).resolve().parent
-PLUGINS = [dict(id='fake', kind='vendor', version='1', module='smoke_backend',
+PLUGINS = [dict(id='fake', kind='vendor', version='1', module='tests.smoke_backend',
                 factory='FakeBackend', requires=[], format_vendor='nvidia')]
 TARGET = ('import flagprof; h = flagprof.current_attachment(); '
           'assert h is not None; assert h.step(); assert h.step()')
@@ -51,9 +52,19 @@ class SmokeTests(unittest.TestCase):
             temp = Path(temp)
             plugins = temp/'plugins.json'
             plugins.write_text(json.dumps(PLUGINS))
-            result = self.flagprof('record', '--capture-mode', 'windowed', '--vendor', 'fake',
-                                   '--plugins', str(plugins), '--active', '1', '--windows', '2',
-                                   '--store', str(temp/'runs'), '--', sys.executable, '-c', TARGET)
+            options = ['--vendor', 'fake', '--plugins', str(plugins), '--active', '1', '--windows', '2',
+                       '--store', str(temp/'runs'), '--', sys.executable, '-c', TARGET]
+            env = {k: v for k, v in self.env.items() if k != 'PYTHONPATH'}
+            corrections = []
+            for extra in ([], ['--capture-only']):
+                result = subprocess.run([sys.executable, '-B', '-S', str(ROOT/'run.py'), 'record', *extra, *options],
+                                        cwd=temp, env=env, capture_output=True, text=True, timeout=60)
+                self.assertEqual(result.returncode, 2, result.stderr)
+                self.assertFalse((temp/'runs').exists())
+                corrections.append(shlex.split(result.stderr.splitlines()[-1]))
+            correction, plugin_correction = corrections
+            self.assertEqual(correction, plugin_correction)
+            result = subprocess.run(correction, cwd=temp, env=env, capture_output=True, text=True, timeout=300)
             self.assertEqual(result.returncode, 0, (result.stdout, result.stderr))
             summary = json.loads(result.stdout.splitlines()[-1])
             self.assertEqual(summary['status'], 'complete', summary)

@@ -206,7 +206,7 @@ def collection(config, include, origins):
         boundary = options.get('tensor_boundaries')
         if isinstance(boundary, str) and boundary not in ('model','layer'):
             options['tensor_boundaries'] = json.loads(Path(boundary).read_text())
-        if c.get('tensor_ops_in') and config.get('runner', {}).get('batch_size') != 1:
+        if c.get('tensor_ops_in') and config['target']['type'] == 'builtin' and config['runner'].get('batch_size') != 1:
             raise ValueError('collection.tensor_ops_in 需要 runner.batch_size=1')
     monitor = config.setdefault('monitor', {})
     fill(monitor, enabled=preset=='monitor', topology='auto', diagnose=False, interval_ms=1000)

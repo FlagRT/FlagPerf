@@ -31,7 +31,7 @@ hardware:
   # comm_backend: auto     # 仅 nproc=2 时有效：auto | hccl | nccl | flagcx
 
 profile:
-  # perf（完整官方 profiler）| perf-lite（轻量）| modules | coverage | monitor
+  # perf（完整官方 profiler）| perf-lite（轻量）| modules | coverage | monitor | accuracy
   preset: perf
 
 components:
@@ -41,6 +41,19 @@ components:
   flagtree: inherit
 
 collection:
+  # 层内算子张量采集：将 profile.preset 改为 accuracy，填入模型的实际模块路径。
+  # tensor_ops_in: '<root>.encoder'
+  # 在推理脚本中注册模型，每次前向前绑定一个样本及其输入：
+  #   from flagprof import current_attachment
+  #   handle = current_attachment()
+  #   if handle:
+  #       handle.register_model(model)
+  #   for sample_id, inputs in samples:
+  #       if handle:
+  #           handle.bind_tensor_inputs([sample_id], inputs)
+  #       output = model(**inputs)
+  #       if handle:
+  #           handle.step()
   profile_memory: false    # 需分析显存分配峰值时改为 true（仅 perf / modules 可用）
   # capture_only: true     # final 只返回封存 capture，随后可导入；本次跳过 Store 校验与报告
   timeout: 1800

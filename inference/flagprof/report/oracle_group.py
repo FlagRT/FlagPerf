@@ -56,7 +56,7 @@ def inspect_group(path):
     return group,runs,states[0]['identity']
 
 
-def generate(ref,cmp,out,*,declare=None,limits=None,**options):
+def generate(ref,cmp,out,*,declare=None,limits=None,delivery_root=None,**options):
     from . import generate_oracle
     def rank_inputs(value):
         if not value:return {}
@@ -80,7 +80,7 @@ def generate(ref,cmp,out,*,declare=None,limits=None,**options):
     new_output(out)
     ranks=[]
     for rank,(left,right) in enumerate(zip(ar,br)):
-        result=generate_oracle(left,right,out/('rank-'+str(rank)),declare=declare,limits=limits,
+        result=generate_oracle(left,right,out/('rank-'+str(rank)),declare=declare,limits=limits,_delivery_root=delivery_root or out,
             **{k:v.get(rank) for k,v in mapped.items()})
         ranks.append(dict(rank=rank, report='rank-'+str(rank)+'/report.html', panels=result['panels'],
                           comparison_status=result['comparison_status'], blocking_fields=result['blocking_fields'],

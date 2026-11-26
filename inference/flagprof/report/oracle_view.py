@@ -54,8 +54,11 @@ def observed_equal(row):
     return row.get('numeric_equal', row.get('digest_equal'))
 
 
-def operator_row(original, note):
+def operator_row(original, note, replay_workflow=False):
     row = dict(original)
+    row.setdefault('replay_status', 'replay_unknown')
+    if row['replay_status'] == 'replay_ready' and not replay_workflow:
+        row['replay_status'] = 'replay_unknown'
     if row.get('introduced'):
         verdict = '输入数值一致，输出出现差异' if 'numeric_equal' in row else '同输入下出现数值差异'
         priority = 0

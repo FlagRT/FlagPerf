@@ -4,6 +4,7 @@
 from __future__ import annotations
 import argparse
 import json
+import shlex
 import sys
 
 
@@ -133,6 +134,7 @@ def main(argv=None):
         entry.add_argument('--monitor', choices=['on','off'], help='node resource monitor; default off')
         entry.add_argument('--monitor-topology', choices=['host','local','agent'], help='default: detected provider topology')
         entry.add_argument('--monitor-interval-ms', type=int, help='fast sampling interval, 100..5000 ms; default 1000')
+    argv = sys.argv[1:] if argv is None else list(argv)
     args=parser.parse_args(argv)
     from pathlib import Path
     if args.verb in ('init', 'run'):
@@ -305,6 +307,8 @@ def main(argv=None):
         from pathlib import Path
         command=args.command[1:] if args.command[:1]==['--'] else args.command
         try:
+            if args.capture_mode == 'final':
+                _check_window_options(args, argv, vendors)
             if args.capture_only and (args.capture_mode!='final' or args.preset not in ('perf','modules')):
                 raise ValueError('--capture-only requires official final mode')
             config = {name:getattr(args,name) for name in ('flaggems','flaggems_include','flagtree','vendor_compiler','layers','probes','monitor','monitor_topology','monitor_root','monitor_interval_ms','diagnose','target_device') if getattr(args,name) is not None}
@@ -323,8 +327,6 @@ def main(argv=None):
             if args.dispatch is not None:
                 config['dispatch'] = args.dispatch
             if args.capture_mode=='final':
-                if args.active is not None or args.windows is not None or args.invalid_policy is not None or args.plugins or args.log_file:
-                    raise ValueError('final mode does not accept window/plugin/log options')
                 if args.preset in ('coverage','perf-lite','accuracy','monitor'):
                     return record(command,store=args.store,vendor=args.vendor,preset=args.preset,config=config,timeout=args.timeout)
                 from .offline.capture import record_final
@@ -348,6 +350,42 @@ def main(argv=None):
         print('flagprof inspect: '+str(error),file=sys.stderr)
         return 2
     return _print_inspection(result, args.json)
+
+
+def _check_window_options(args, argv, vendors):
+    from pathlib import Path
+    window = [flag for flag in ('--active', '--windows', '--invalid-policy', '--plugins', '--log-file')
+              if getattr(args, flag[2:].replace('-', '_')) not in (None, [])]
+    if not window:
+        return
+    keep_final = args.capture_only and args.preset in ('perf', 'modules') and args.vendor in vendors
+    # argparse already resolved abbreviations and retained the target verbatim in REMAINDER.
+    # Only edit record options. Values supplied with '=' may themselves look like options.
+    remove = ['--capture-mode']
+    if keep_final:
+        remove.extend(window)
+    if args.capture_only and not keep_final:
+        remove.append('--capture-only')
+    controls = iter(argv[1:len(argv) - len(args.command)])
+    source_cli = Path(__file__).resolve().parents[1] / 'run.py'
+    entry = [str(source_cli)] if Path(sys.argv[0]).resolve() == source_cli else ['-m', 'flagprof']
+    corrected = [sys.executable, *(['-S'] if sys.flags.no_site else []), *entry, 'record']
+    for token in controls:
+        option, equal, _ = token.partition('=')
+        match = next((name for name in remove if option.startswith('--') and name.startswith(option)), None)
+        if match:
+            if not equal and match != '--capture-only':
+                next(controls)
+        else:
+            corrected.append(token)
+    corrected.extend(['--capture-mode', 'final' if keep_final else 'windowed'])
+    corrected.extend(args.command)
+    reason = 'Run with --capture-mode windowed'
+    if keep_final:
+        reason = 'Keep --capture-only in final mode and remove the window options'
+    elif args.capture_only:
+        reason = 'Run with --capture-mode windowed and remove --capture-only (requires an official perf/modules final capture)'
+    raise ValueError(f"final mode does not accept {', '.join(window)}. {reason}:\n{shlex.join(corrected)}")
 
 
 def _inspect_store(run, verify):

@@ -130,6 +130,10 @@ def compile_plan(config, job, vendor, attach, *, variant='single'):
     else:
         skipped['report'] = {'capture':'原始采集已安排封存，导入后可生成报告','capture-group':'双 rank 原始采集在导入后可生成报告',
                              'execution':'自定义命令未提供标准 runner 输入'}.get(product,'output.report=false')
-    return dict(input_type=target.get('task','command'), source='local', output_type=product,
+    plan = dict(input_type=target.get('task','command'), source='local', output_type=product,
                 component_owner=('runner / launch (compiler)' if tp and builtin and preset=='none' else producer), vendor=vendor,
-                directory=str(job),runners=runners if builtin else [],attach_runner=attach, steps=steps, skipped=skipped), assets
+                directory=str(job),runners=runners if builtin else [],attach_runner=attach, steps=steps, skipped=skipped)
+    if not builtin and c.get('tensor_ops_in'):
+        plan['runtime_requirement'] = (f"采集 {c['tensor_ops_in']} 时，脚本需调用 register_model(model) 注册模型，"
+                                       "并在每次前向前调用 bind_tensor_inputs([sample_id], inputs) 绑定一个样本。")
+    return plan, assets

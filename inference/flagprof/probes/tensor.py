@@ -50,7 +50,7 @@ class TensorProbe(Probe):
 
     def bind(self,sample_ids,inputs):
         if self.config.get('tensor_ops_in') and len(sample_ids)!=1:
-            raise ValueError('tensor-ops-in requires batch 1')
+            raise ValueError(f'tensor-ops-in requires batch 1: bind_tensor_inputs expected exactly one sample ID, got {len(sample_ids)}')
         self.samples=list(sample_ids);self.inputs=inputs
         mask=inputs.get('attention_mask') if isinstance(inputs,dict) else None
         self.mask=mask.detach().to('cpu') if mask is not None else None

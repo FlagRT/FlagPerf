@@ -73,7 +73,10 @@ def _row(stream, section, index, row):
                      '" data-field="'+escape(key,quote=True)+'" data-unit="'+('ns' if key.endswith('_ns') else '')+
                      '"'+(' title="'+escape(shown,quote=True)+'"' if brief!=shown else '')+'>'+content+'</td>')
     stream.write('<td><button class="detail" data-section="'+escape(section['id'],quote=True)+
-                 '" data-index="'+str(index)+'">查看详情与证据</button></td></tr>')
+                 '" data-index="'+str(index)+'">查看详情与证据</button>')
+    if section['id']=='oracle.op_sensitivity' and row.get('replay_status')=='replay_ready':
+        stream.write('<button class="replay" data-index="'+str(index)+'">复制回放命令</button>')
+    stream.write('</td></tr>')
 
 
 def evidence_links(model, row):

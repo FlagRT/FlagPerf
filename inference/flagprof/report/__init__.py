@@ -5,6 +5,7 @@ from dataclasses import asdict
 from html import escape
 import itertools
 import json
+import os
 from pathlib import Path
 import resource
 import tempfile
@@ -49,7 +50,7 @@ def write_json(stream, value):
 
 ORACLE_LAYER_COLUMNS=('scope','boundary','samples','digest_equal','relative_l2','cosine_similarity','max_abs',
     'differing_fraction','ulp_histogram','valid_elements','levels')
-ORACLE_OP_COLUMNS=('boundary','input_status','call_config_status','layout_differs','error_out',
+ORACLE_OP_COLUMNS=('boundary','input_status','replay_status','call_config_status','layout_differs','error_out',
     'amplification','differing_fraction','ulp_histogram','introduced','expected_route')
 
 
@@ -212,27 +213,29 @@ def _generate(run, out, *, limits=None, op_kinds=None, runner_results=None):
 
 
 def generate_oracle(ref, cmp, out=None, *, declare=None, limits=None, perf_ref_run=None, perf_cmp_run=None,
-                    replay_ref_run=None, replay_cmp_run=None, baseline=None):
+                    replay_ref_run=None, replay_cmp_run=None, baseline=None, _delivery_root=None):
     from flagprof.offline.worker import output_operation
     target = out or Path(ref).resolve().with_name(Path(ref).name + ('-three-way' if baseline else '-oracle'))
     inputs = [ref, cmp, baseline, perf_ref_run, perf_cmp_run, replay_ref_run, replay_cmp_run]
     return output_operation(target, inputs, _generate_oracle, ref, cmp, declare=declare, limits=limits,
                             perf_ref_run=perf_ref_run, perf_cmp_run=perf_cmp_run, replay_ref_run=replay_ref_run,
-                            replay_cmp_run=replay_cmp_run, baseline=baseline)
+                            replay_cmp_run=replay_cmp_run, baseline=baseline, delivery_root=_delivery_root or target)
 
 
-def _generate_oracle(ref, cmp, out, *, declare, limits, perf_ref_run, perf_cmp_run, replay_ref_run, replay_cmp_run, baseline):
+def _generate_oracle(ref, cmp, out, *, declare, limits, perf_ref_run, perf_cmp_run, replay_ref_run, replay_cmp_run, baseline, delivery_root):
     if baseline:
         from .three_way import generate as three_way
         return three_way(ref,baseline,cmp,out,declare=declare,limits=limits,
-            perf_ref_run=perf_ref_run,perf_cmp_run=perf_cmp_run,replay_ref_run=replay_ref_run,replay_cmp_run=replay_cmp_run)
+            perf_ref_run=perf_ref_run,perf_cmp_run=perf_cmp_run,replay_ref_run=replay_ref_run,replay_cmp_run=replay_cmp_run,
+            delivery_root=delivery_root)
     ref, cmp = Path(ref).resolve(), Path(cmp).resolve()
     out = Path(out).resolve() if out else ref.parent/(ref.name+'-oracle')
     if ref.is_file() or cmp.is_file():
         if not (ref.is_file() and cmp.is_file()):raise ValueError('both oracle inputs must be groups or both must be Stores')
         from .oracle_group import generate as generate_group_oracle
         return generate_group_oracle(ref,cmp,out,declare=declare,limits=limits,
-            perf_ref_run=perf_ref_run,perf_cmp_run=perf_cmp_run,replay_ref_run=replay_ref_run,replay_cmp_run=replay_cmp_run)
+            perf_ref_run=perf_ref_run,perf_cmp_run=perf_cmp_run,replay_ref_run=replay_ref_run,replay_cmp_run=replay_cmp_run,
+            delivery_root=delivery_root)
     for source in (ref,cmp):
         if out.is_relative_to(source) or source.is_relative_to(out):raise ValueError('oracle output must be outside input Stores')
     limits=limits if isinstance(limits,Limits) else Limits(**(limits or {}))
@@ -274,14 +277,24 @@ def _generate_oracle(ref, cmp, out, *, declare, limits, perf_ref_run, perf_cmp_r
                 sources = [s for s in workspace.statuses if s.get('oracle_identity')]
                 if len(sources) == 1 and sources[0].get('model_name'):
                     model_names[side] = sources[0]['model_name']
+            context = {}
             if model_names:
-                data['report_context'] = dict(model_names=model_names)
+                context['model_names'] = model_names
+            first_replay = a.db.execute("""select key from rows where panel='oracle.op_sensitivity'
+                and json_extract(payload,'$.replay_status')='replay_ready' order by metric desc,key limit 1""").fetchone()
+            if first_replay:
+                inputs = {name: os.path.relpath(Path(path).resolve(), out)
+                          for name, path in [('ref', ref), ('cmp', cmp), ('perf_ref_run', perf_ref_run),
+                                             ('perf_cmp_run', perf_cmp_run)] if path}
+                context['replay'] = dict(inputs=inputs, call_key=first_replay[0])
+            if context:
+                data['report_context'] = context
             with (out/'result.json').open('w') as stream:write_json(stream,data);stream.write('\n')
             for panel in ('oracle.identity_diff','oracle.layer','oracle.first_divergence','oracle.op_sensitivity','oracle.samples','oracle.alignment','oracle.introduced','oracle.amplification','oracle.perf_links','oracle.introduced_routes','oracle.replay','oracle.generation'):
                 with (out/'exports'/(panel+'.jsonl')).open('w') as stream:
                     for row in a.table(panel):stream.write(encode(row)+'\n')
             from .product import write_report
-            write_report(out,data,limits=limits)
+            write_report(out,data,limits=limits,replay_root=delivery_root)
             a.check_budget();b.check_budget()
             resources=dict(elapsed_s=time.perf_counter()-started,peak_rss_kib=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
                 scratch_bytes=sum(p.stat().st_size for p in Path(directory).rglob('*') if p.is_file()))

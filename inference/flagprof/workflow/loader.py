@@ -33,6 +33,9 @@ FIELDS = {
     'export': dict(formats='list|str', bundle='str', verify_onnx='bool', batch_index='int', timeout='number'),
     'batch': dict(config='str?', models='list?', filter='str?'),
 }
+REPLAY_SIDE = dict(run='str', device='str?', vendor_compiler='str?')
+FIELDS['replay'] = dict(ref=REPLAY_SIDE, cmp=REPLAY_SIDE, call_key='str', declare='dict',
+                        perf_ref_run='str?', perf_cmp_run='str?')
 ROLES = ('ref', 'baseline', 'cmp')
 LOCAL = ('target', 'hardware', 'runner', 'components', 'collection', 'monitor')
 SIDE = dict(label='str', existing_run='str?', existing_report='str?', **{k:FIELDS[k] for k in LOCAL})
@@ -43,7 +46,9 @@ TYPES = {'int': (int,), 'number': (int, float), 'bool': (bool,), 'list': (list,)
 PATHS = {'target.model', 'target.inputs', 'target.inputs_from', 'target.cwd', 'runner.package',
          'components.vendor_compiler', 'components.flaggems.include', 'collection.log_files',
          'collection.plugins', 'collection.tensor_boundaries', 'monitor.root',
-         'output.dir', 'output.job_dir', 'output.limits'}
+         'output.dir', 'output.job_dir', 'output.limits',
+         'replay.ref.run', 'replay.cmp.run', 'replay.ref.vendor_compiler', 'replay.cmp.vendor_compiler',
+         'replay.perf_ref_run', 'replay.perf_cmp_run'}
 SPECIAL = {'collection.tensor_boundaries': ('model', 'layer'), 'runner.package': ('auto',)}
 TOKEN = re.compile(r'\$\$|\$\{([A-Za-z_][A-Za-z0-9_]*)\}')
 
@@ -261,9 +266,9 @@ def load(path, overrides, out):
         data['output']['job_dir'] = out
         origins['output.job_dir'] = '--out'
     mode = data.get('mode', 'single')
-    if mode not in ('single','compare','export','batch'):
-        raise ValueError('mode 需要 single、compare、export 或 batch')
-    for block in ('compare', 'export', 'batch'):
+    if mode not in ('single','compare','export','batch','replay'):
+        raise ValueError('mode 需要 single、compare、export、batch 或 replay')
+    for block in ('compare', 'export', 'batch', 'replay'):
         if block in data and mode != block:
             raise ValueError(f'{mode} 不接受 {block} 配置')
     if data.get('mode') == 'compare':

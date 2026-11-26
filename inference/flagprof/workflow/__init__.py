@@ -11,7 +11,7 @@ import uuid
 
 TEMPLATES = {'quickstart':'quickstart.yaml', 'cpu-demo':'cpu_demo.yaml', 'custom-script':'custom_script.yaml',
              'compare':'compare_components.yaml', 'tp2':'tp2_launch.yaml',
-             'export':'graph_export.yaml', 'batch':'batch_suite.yaml'}
+             'export':'graph_export.yaml', 'batch':'batch_suite.yaml', 'replay':'replay.yaml'}
 
 
 def initialize(args):
@@ -47,6 +47,9 @@ def display(result):
                 print(f"[WARN] {item['model_id']} 缺少 {item['field']}  {item['path']}")
         for role,side in result.get('variants',{}).items():
             print(f"     {role}  {side['source']} → {side['output_type']}  {side.get('external') or side['directory']}")
+        for role, side in result.get('variants', {'single': result}).items():
+            if 'runtime_requirement' in side:
+                print(f"     {role}  运行时要求  {side['runtime_requirement']}")
         if 'declaration' in result:
             print('允许变化的条件  '+json.dumps(result['declaration'],ensure_ascii=False))
         if 'planned_steps' in result:
@@ -68,7 +71,7 @@ def display(result):
         print(f'[SKIP] {name}  {reason}')
     for row in result.get('evidence', []):
         label = '[WARN]' if row['status'] in ('partial','unavailable','not_comparable','blocked') else '[证据]'
-        if row['status'] == 'failed':
+        if row['status'] in ('failed', 'self_reproduction_failed'):
             label = '[FAIL]'
         detail = ('  '+str(row['observations'])+' 次观测') if 'observations' in row else ''
         if row['subject'] == 'batch':
@@ -94,6 +97,8 @@ def dispatch(args):
         config, origins = load(source,args.overrides,args.out)
         if config.get('mode') in ('export', 'batch'):
             from .suites import prepare
+        elif config.get('mode') == 'replay':
+            from .replay import prepare
         else:
             from .comparison import prepare
         out = config['output']

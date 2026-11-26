@@ -35,6 +35,16 @@ def dependencies(config, plan, assets):
     for step in plan['steps']:
         label, argv = step['id'], step['argv']
         action = step.get('action', label)
+        if action == 'replay.run':
+            device = config['replay'][step['variant']]['device']
+            extension = torch_runtimes().get(device.split(':')[0])
+            modules = ['torch', 'numpy']
+            if extension:
+                modules.append(extension)
+            if step['flaggems']:
+                modules.append('flag_gems')
+            yield label, [argv[0]], None, modules, step['compiler_selection']
+            continue
         if action == 'export':
             options = config['export']
             modules = runner_modules('embedding')
@@ -95,6 +105,12 @@ def dependencies(config, plan, assets):
 
 def check_dependencies(config, plan, assets):
     checked = {}
+    if config.get('mode') == 'replay':
+        from pathlib import Path
+        from flagprof.replay import prepare
+        replay = config['replay']
+        with tempfile.TemporaryDirectory(prefix='flagprof-check-') as scratch:
+            prepare(replay['ref']['run'], replay['cmp']['run'], replay['call_key'], Path(scratch)/'package')
     for step, interpreter, cwd, modules, selection in dependencies(config, plan, assets):
         program = ''
         if selection:

@@ -7,7 +7,7 @@ from .comparison import change
 from .model import opened_model,read_document
 
 
-def generate(ref,baseline,cmp,out=None,*,declare=None,limits=None,**options):
+def generate(ref,baseline,cmp,out=None,*,declare=None,limits=None,delivery_root=None,**options):
     from . import generate_oracle,write_json
     from .product import write_report
     out=Path(out).resolve() if out else Path(ref).resolve().parent/(Path(ref).name+'-three-way')
@@ -17,7 +17,7 @@ def generate(ref,baseline,cmp,out=None,*,declare=None,limits=None,**options):
     from flagprof.offline.worker import new_output
     new_output(out)
     pairs=(('reference-baseline',ref,baseline,{}),('reference-candidate',ref,cmp,options),('baseline-candidate',baseline,cmp,{}))
-    for label,a,b,linked in pairs:generate_oracle(a,b,out/label,declare=declare,limits=limits,**linked)
+    for label,a,b,linked in pairs:generate_oracle(a,b,out/label,declare=declare,limits=limits,_delivery_root=delivery_root or out,**linked)
     with opened_model(limits=limits) as model:
         db=model.db;db.execute('create table pair_samples(pair text,rank integer,key text,payload text,primary key(pair,rank,key))')
         statuses=[]

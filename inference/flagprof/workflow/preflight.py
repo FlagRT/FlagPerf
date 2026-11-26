@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+from flagprof.offline.workspace import is_artifact_directory
 from flagprof.vendors import vendor_names, launch_backend
 
 
@@ -31,9 +32,7 @@ def check_destination(job, config, source):
         raise ValueError('任务目录与输入目录重叠 ' + str(job))
     ancestors = (job, *job.parents) if explicit else job.parents
     for ancestor in ancestors:
-        if any((ancestor / marker).is_file() for marker in
-               ('resolved-config.json','plan-b-capture.json','record-status.json','group.json','result.json')) or (
-                (ancestor/'manifest.json').is_file() and (ancestor/'writers').is_dir()):
+        if is_artifact_directory(ancestor):
             raise ValueError('任务目录位于既有输入或工作流产物内 ' + str(ancestor))
     if job in source.parents or job == source:
         raise ValueError('任务目录包含配置文件 ' + str(source))

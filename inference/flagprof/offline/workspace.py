@@ -16,6 +16,13 @@ def private_name():
     return '.flagprof-' + str(os.getuid())
 
 
+def is_artifact_directory(path):
+    """Identify a Store, capture, report or workflow directory that owns its contents."""
+    markers = ('resolved-config.json', 'plan-b-capture.json', 'record-status.json', 'group.json', 'result.json')
+    return (any((path / name).is_file() for name in markers)
+            or ((path / 'manifest.json').is_file() and (path / 'writers').is_dir()))
+
+
 @contextmanager
 def directory_lock(path, *, nonblocking=False):
     fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)

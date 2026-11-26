@@ -4,6 +4,7 @@
 from collections import Counter
 import json
 import hashlib
+import os
 from pathlib import Path
 import shutil
 import re
@@ -317,6 +318,10 @@ def build(model, doc, source=None):
         doc = dict(doc, results=panels)
     if doc.get('schema') in schema_modes:model.meta['mode']=schema_modes[doc['schema']]
     model.meta['field_display_version'] = FIELD_DISPLAY_VERSION
+    if doc.get('schema') == 'oracle-result/1':
+        model.meta['replay_workflow'] = bool(doc.get('report_context', {}).get('replay'))
+        if model.meta['replay_workflow']:
+            model.meta['links'].append(dict(label='算子交叉回放工作流', href='replay.yaml'))
     identity = ((doc.get('report_context') or {}).get('identity') or
                 (doc.get('runner_summary') or {}).get('condition') or {})
     task = identity.get('task')
@@ -379,10 +384,12 @@ def build(model, doc, source=None):
             if first and status == 'partial':
                 description = oracle_view.first_message(result, len(model.rows('oracle.layer')), found=True)
         elif ident == 'oracle.op_sensitivity':
-            data = (oracle_view.operator_row(r, route_note) for r in data)
+            data = (oracle_view.operator_row(r, route_note, model.meta.get('replay_workflow')) for r in data)
             description = route_note + '先看调用前的输入，再看输出。同输入、同配置且完整输出出现数值差异的调用优先显示。'
             if cross_precision:
                 description = route_note + '优先显示输入数值一致、完整输出出现差异的调用。输入张量允许浮点类型不同，标量参数和显式类型参数须一致。'
+            if model.meta.get('replay_workflow'):
+                description += ' 在报告目录执行行内复制的命令，可用 replay.yaml 完成双侧回放并生成对照报告。打包时核验张量内容，执行时核对设备和软件环境。'
         elif ident == 'oracle.replay':
             data = (dict(r, fixed_input={'ref':'参考侧保存的输入','cmp':'候选侧保存的输入'}.get(r.get('input_side')),
                          replay_max_abs=(r.get('metrics') or {}).get('max_abs'),
@@ -845,11 +852,42 @@ def add_runner(model, summary):
                                  for note in summary.get('notes',[]))
 
 
-def write_report(out, document=None, *, limits=None,  source=None, filename='report.html'):
+def write_replay_workflow(document, out, delivery_root=None):
+    # JSON is a YAML 1.2 subset. Offline report generation only needs the standard library.
+    context = document.get('report_context', {}).get('replay')
+    if document.get('schema') != 'oracle-result/1' or not context:
+        return
+    inputs = context['inputs']
+    def workflow_path(key):
+        # Avoid interpreting a literal dollar or leading tilde as an environment/home reference.
+        return './' + inputs[key].replace('$', '$$')
+    replay = {side: dict(run=workflow_path(side)) for side in ('ref', 'cmp')}
+    replay['call_key'] = context['call_key']
+    if document.get('declaration'):
+        replay['declare'] = document['declaration']
+    for name in ('perf_ref_run', 'perf_cmp_run'):
+        if name in inputs:
+            replay[name] = workflow_path(name)
+    from flagprof.offline.workspace import is_artifact_directory
+    # A per-rank or sub-comparison report is written before its parent index.
+    root = Path(delivery_root or out).resolve()
+    for ancestor in root.parents:
+        if is_artifact_directory(ancestor):
+            root = ancestor
+    output = root.parent
+    if output.name != 'flagprof-replays':
+        output = output/'flagprof-replays'
+    output_dir = './' + os.path.relpath(output, out).replace('$', '$$')
+    workflow = dict(schema_version=1, mode='replay', replay=replay, output=dict(dir=output_dir))
+    (out/'replay.yaml').write_text(json.dumps(workflow, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+
+def write_report(out, document=None, *, limits=None, source=None, filename='report.html', replay_root=None):
     from .render import render
     out=Path(out)
     with opened_model(limits=limits) as model:
         document = document if document is not None else read_document(out/'result.json',model)
+        write_replay_workflow(document, out, replay_root)
         build(model,document,source or out)
         model.save(out/'report-data.jsonl')
         render(model,out,filename=filename)
@@ -879,6 +917,7 @@ def _redraw(source, out, *,  limits=None, runner_results=None, refresh_view=Fals
             redraw(path,out/path.name,limits=limits,refresh_view=refresh_view)
     filename='index.html' if (source/'index.html').exists() and not (source/'report.html').exists() else 'report.html'
     with opened_model(limits=limits) as model:
+        document = None
         snapshot=source/'report-data.jsonl'
         if snapshot.is_file() and not refresh_view and not runner_results and (source/'result.json').is_file():
             with snapshot.open() as stream:
@@ -886,7 +925,7 @@ def _redraw(source, out, *,  limits=None, runner_results=None, refresh_view=Fals
             if len(header.encode()) <= model.limits.record_bytes:
                 page = json.loads(header).get('value', {}) if header.strip() else {}
                 refresh_view = (page.get('field_display_version') != FIELD_DISPLAY_VERSION or
-                                page.get('mode') == 'oracle' and 'oracle_overview' not in page or
+                                page.get('mode') == 'oracle' and ('oracle_overview' not in page or 'replay_workflow' not in page) or
                                 page.get('mode') == 'monitor' and 'monitor_gaps' not in page or
                                 page.get('mode') == 'monitor' and page.get('diagnosis_layout_version') in (2, 3) or
                                 'diagnosis_layout_version' not in page and any(
@@ -901,10 +940,28 @@ def _redraw(source, out, *,  limits=None, runner_results=None, refresh_view=Fals
             build(model,document,out)
         elif snapshot.is_file() and not refresh_view:
             model.load(snapshot)
+            if model.meta.get('mode') == 'oracle' and not (source/'result.json').is_file():
+                model.meta['replay_workflow'] = False
+                model.meta['links'] = [link for link in model.meta['links'] if link['href'] != 'replay.yaml']
+                for section in model.sections:
+                    if section['id'] == 'oracle.op_sensitivity' and 'replay_status' not in section['columns']:
+                        section['columns'].insert(1, 'replay_status')
+                model.db.execute("""update report_rows set payload=json_set(payload,'$.replay_status','replay_unknown')
+                    where section='oracle.op_sensitivity' and coalesce(json_extract(payload,'$.replay_status'),'replay_ready')='replay_ready'""")
             from .layout import decorate
             decorate(model)
         else:
-            build(model,read_document(source/'result.json',model),source)
+            document = read_document(source/'result.json', model)
+            build(model, document, source)
+        if model.meta.get('replay_workflow'):
+            from . import write_json
+            document = document or read_document(source/'result.json', model)
+            context = document['report_context']['replay']
+            context['inputs'] = {k: os.path.relpath(source / path, out) for k, path in context['inputs'].items()}
+            with (out/'result.json').open('w') as stream:
+                write_json(stream, document)
+                stream.write('\n')
+            write_replay_workflow(document, out)
         model.meta['rendered_from']=dict(path=str(source),sha256=digest(snapshot if snapshot.exists() and not refresh_view and not runner_results else source/'result.json'),refresh_view=refresh_view)
         model.save(out/'report-data.jsonl')
         render(model,out,filename=filename)

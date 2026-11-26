@@ -4,7 +4,7 @@
 
 ## 单卡工作流
 
-`flagprof init --list` 列出 Schema v1 的七份模板，覆盖 single、compare、export 和 batch 四种模式。读取 YAML 和运行批量名册需要 PyYAML，可在仓库根目录运行 `python -m pip install './inference[batch]'`。工作流的 JSON 配置可用 Python 标准库读取。源码入口为仓库根目录下的 `python inference/run.py`，安装后也可用 `python -m flagprof`。
+`flagprof init --list` 列出工作流模板。Schema v1 支持单次采集（`single`）、对照（`compare`）、算子重放（`replay`）、图导出（`export`）和批量运行（`batch`）。读取 YAML 和运行批量名册需要 PyYAML，可在仓库根目录运行 `python -m pip install './inference[batch]'`。工作流的 JSON 配置可用 Python 标准库读取。源码入口为仓库根目录下的 `python inference/run.py`，安装后也可用 `python -m flagprof`。
 
 | 用户场景 | 模板 | 准备与实际产物 |
 |---|---|---|
@@ -234,6 +234,33 @@ flagprof import /absolute/path/to/sealed-capture \
 | 以上模式加 `--tensor-ops-in '<root>.layers.0'` | 增加指定模块内算子输入与输出，要求 batch 1 |
 
 名为 model/layer 的自定义文件使用 `./model` / `./layer`。采集层级与 `--tensor-blob` 的持久化策略分别设置；报告只分析已采集的数据。
+
+### 用 YAML 采集自定义脚本中的一层
+
+从 `flagprof init --template custom-script` 开始，填写 `target.command`，将模板的 `profile` 和 `collection` 改为以下配置。把 `<root>.encoder.layers.0` 换成从已注册模型根节点开始的模块路径。
+
+```yaml
+profile: {preset: accuracy}
+collection:
+  tensor_ops_in: '<root>.encoder.layers.0'
+  tensor_blob: all
+  active: 1
+  windows: 1
+```
+
+自定义脚本自行控制 batch，无需填写 `runner`。在执行推理的进程用 `flagprof.current_attachment()` 取得句柄，调用 `handle.register_model(model)`。每次前向前用 `handle.bind_tensor_inputs([sample_id], inputs, identity=identity)` 绑定一个样本及其真实输入；两侧 Oracle 需要可核对的模型、样本、分批和执行身份。推理完成后调用 `handle.step()` 推进窗口。`flagprof run custom_script.yaml --check` 可预检配置和依赖，实际绑定的样本数在采集时校验。
+
+直接使用 `flagprof record` 时，显式传入 `--active`、`--windows`、`--invalid-policy`、`--plugins` 或 `--log-file` 需要同时指定 `--capture-mode windowed`。模式冲突时，终端会列出冲突参数并给出保留目标程序参数的完整修正命令，可从原工作目录执行。
+
+### 从 Oracle 算子行重放
+
+打开双侧 Oracle 报告，在算子表中选择一次具体调用。行详情会显示该调用的重放条件。可重放行提供可复制的命令，包含当前行的完整 `call_key`。在报告所在目录执行这条命令，工作流读取同目录的 `replay.yaml`，从原始 Store 准备输入包，依次在本机两个独立进程执行参考侧和对照侧，再将两份重放 Store 挂回 Oracle。新任务的 `report/report.html` 展示重放结果，`summary.json` 记录每步的退出码、日志和实际产物路径。
+
+手工配置同一工作流时，运行 `flagprof init --template replay`，填写 `replay.ref.run`、`replay.cmp.run` 和 `replay.call_key`。若原对照声明了设备等差异，同步填写 `replay.declare`。随后用 `flagprof run replay.yaml --out replay-result` 指定新任务目录。报告自动生成的 YAML 已带入原对照的 Store 和声明。
+
+支持的重载为 `aten::mean.dim`、`aten::softmax.int`、`aten::rsqrt` 和 `aten::pow.Tensor_Scalar`。两侧调用配置需要匹配，输入、输出均需完整保存，且两侧实际输入的摘要不同。准备步骤会校验 blob 内容。`--dry-run` 可查看各步命令，`--check` 会试打包并检查执行依赖。实际重放要求两侧设备在本机可见，且各自具备采集时的执行环境。设备默认取自对应 Store，可在复制的命令末尾追加 `--set replay.ref.device=cuda:0` 等覆盖，为该侧选择同类型设备。
+
+### 用命令行在各自的设备环境重放
 
 FlagTree / FlagCX 参数、同规模 TP2 对比和性能命令见 [组件对比](components.md)。`report oracle --ref/--cmp` 也接受两侧 `group.json`：各 rank 同号配对，复制边界跨 rank 核对，逻辑样本只计一次。
 

@@ -5,6 +5,7 @@ import contextlib
 import io
 import json
 from pathlib import Path
+import shlex
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -15,6 +16,37 @@ from flagprof.probes.config import resolve
 
 
 class ComponentCLITests(unittest.TestCase):
+    def test_window_option_correction_preserves_target_arguments(self):
+        target = ['python', 'my script.py', '--windows', "a b'$", '--capture-mode=final']
+        cases = [
+            (['--preset', 'accuracy', '--capture-mod=final', '--act=1'], True),
+            (['--preset', 'accuracy', '--capture-only', '--active', '1'], True),
+            (['--capture-mode', 'windowed', '--capture-mode', 'final', '--act', '1'], True),
+            (['--capture-only', '--act', '1', '--win=2', '--invalid-pol=continue',
+              '--log-file', 'a b', '--log-file=--looks-like-a-path', '--plugins=unused'], False),
+        ]
+        for options, windowed in cases:
+            error = io.StringIO()
+            args = ['record', '--vendor', 'nvidia', '--store=--windows', *options, '--', *target]
+            with self.subTest(options=options), contextlib.redirect_stderr(error), self.assertRaises(SystemExit) as failure:
+                main(args)
+            self.assertEqual(failure.exception.code, 2)
+            self.assertIn('--active', error.getvalue())
+            corrected = shlex.split(error.getvalue().splitlines()[-1])
+            controls = corrected[corrected.index('record'):corrected.index('--')]
+            self.assertEqual(corrected[corrected.index('--')+1:], target)
+            self.assertIn('--store=--windows', controls)
+            backend = 'flagprof.record.record' if windowed else 'flagprof.offline.capture.record_final'
+            with patch(backend, return_value=0) as capture:
+                self.assertEqual(main(corrected[corrected.index('record'):]), 0)
+                self.assertEqual(capture.call_args.args, (target,))
+                if windowed:
+                    self.assertEqual(capture.call_args.kwargs['capture_mode'], 'windowed')
+                    self.assertEqual(capture.call_args.kwargs['config']['active'], 1)
+                    self.assertNotIn('final', controls)
+                else:
+                    self.assertTrue(capture.call_args.kwargs['capture_only'])
+
     def test_final_record_source_budget(self):
         for options, expected in [
             ([], 4 << 30),

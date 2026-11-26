@@ -11,6 +11,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from flagprof.cli import main
 from flagprof.workflow import TEMPLATES
@@ -44,8 +45,32 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(status, code, reply.get('error'))
         return reply
 
-    def test_seven_resources_match_checkout(self):
-        self.assertEqual(set(TEMPLATES), {'quickstart','custom-script','cpu-demo','compare','tp2','export','batch'})
+    def test_custom_command_drill_uses_runtime_sample_binding(self):
+        config = dict(schema_version=1, profile={'preset': 'accuracy'}, hardware={'vendor': 'nvidia'},
+                      collection={'tensor_ops_in': '<root>.encoder'},
+                      target={'type': 'command', 'command': [sys.executable, '-c', 'pass']})
+        plan = self.cli(config, '--dry-run')
+        argv = plan['steps'][0]['argv']
+        self.assertEqual(argv[argv.index('--tensor-ops-in') + 1], '<root>.encoder')
+        self.assertNotIn('runner', plan['config'])
+        # Check command planning independently of the optional torch dependency.
+        with patch('flagprof.workflow.dependencies.check_dependencies', return_value=[]):
+            checked = self.cli(config, '--check')
+        self.assertIn('bind_tensor_inputs([sample_id], inputs)', checked['runtime_requirement'])
+        self.assertIn('register_model', checked['runtime_requirement'])
+        self.assertIn('不接受 runner', self.cli(config, '--set', 'runner.batch_size=1', '--check', code=2)['error'])
+        config['target'] = self.config['target']
+        for batch in (None, 1, 2):
+            options = [] if batch is None else ['--set', f'runner.batch_size={batch}']
+            with self.subTest(batch=batch):
+                plan = self.cli(config, *options, '--dry-run', code=0 if batch == 1 else 2)
+                if batch == 1:
+                    self.assertNotIn('runtime_requirement', plan)
+                else:
+                    self.assertIn('runner.batch_size=1', plan['error'])
+
+    def test_templates_match_checkout(self):
+        self.assertEqual(set(TEMPLATES), {'quickstart','custom-script','cpu-demo','compare','tp2','export','batch','replay'})
         for filename in TEMPLATES.values():
             self.assertEqual((ROOT/'configs'/filename).read_bytes(),
                              (ROOT/'flagprof/workflow/templates'/filename).read_bytes())
