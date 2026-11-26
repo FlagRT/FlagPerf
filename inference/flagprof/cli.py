@@ -15,7 +15,8 @@ def main(argv=None):
     watch=verbs.add_parser('watch',help='independent node monitoring')
     actions=watch.add_subparsers(dest='watch_action',required=True)
     start=actions.add_parser('start'); start.add_argument('--root',required=True)
-    start.add_argument('--vendor',required=True,choices=('ascend','nvidia'))
+    start.add_argument('--vendor',required=True,choices=('ascend','nvidia','thead','kunlunxin'),
+                       help='telemetry provider vendor; thead/kunlunxin use the NVML-compatible libraries')
     start.add_argument('--devices',default='all'); start.add_argument('--config')
     status=actions.add_parser('status'); status.add_argument('--root',required=True)
     replay_watch=actions.add_parser('replay'); replay_watch.add_argument('session'); replay_watch.add_argument('--out',required=True)
