@@ -49,3 +49,21 @@ def derive(document, collector, trace_source, artifacts, configuration, exporter
             if orphans:evidence['negative_evidence'].append(dict(kind='exact_id_missing_launch',source=trace_source,items=orphans,
                 meaning='broken observed ID closure; does not identify the cause'))
     # No independent exporter version: do not alias the torch version.
+
+def final_configuration(directory, measured, trace, trace_values, end_count, raw_manifest):
+    from flagprof.offline.checkpoints import fileinfo
+    from flagprof.vendors.evidence import FLAGS
+    source = dict(path='sealed-trace/data/trace.json', sha256=fileinfo(trace)['sha256'])
+    version = measured.get('collector', {}).get('version')
+    exporter = dict(source=source, version=None, schema_version=trace_values.get('schemaVersion'))
+    supported = (version in ('2.8.0+cu126', '2.10.0+cu126') and end_count > 0
+                 and type(trace_values.get('schemaVersion')) is int and trace_values['schemaVersion'] == 1
+                 and isinstance(trace_values.get('deviceProperties'), list) and trace_values['deviceProperties']
+                 and all(type(trace_values.get(k)) is int for k in ('cupti_version','cuda_runtime_version','cuda_driver_version'))
+                 and isinstance(trace_values.get('traceName'), str))
+    missing = False
+    if not supported:
+        return {}, [], exporter
+    values = {k: True if type(trace_values.get(k)) is int and trace_values[k] == 1
+              else missing if k not in trace_values else None for k in FLAGS}
+    return values, [dict(source, interpretation='Kineto exporter '+version, values=values)], exporter

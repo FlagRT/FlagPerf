@@ -88,11 +88,10 @@ class FinalLifecycle(unittest.TestCase):
         root=self.root/'delivery';root.mkdir();raw=root/'raw';raw.mkdir()
         source=raw/'trace.json';source.write_bytes(FIXTURE.read_bytes())
         make_bundle(raw,source,root/'capture',vendor='nvidia',metadata=dict(normal_close=True,target_returncode=0))
-        scratch=self.root/'scratch'
-        first=import_bundle(root/'capture',store=root/'runs',work=root/'work',scratch=scratch,run_id='migration-one')
+        first=import_bundle(root/'capture',store=root/'runs',run_id='migration-one')
         old={str(f.relative_to(root/'runs/migration-one')):f.read_bytes() for f in (root/'runs/migration-one').rglob('*') if f.is_file()}
         moved=self.root/'moved';root.rename(moved)
-        second=import_bundle(moved/'capture',store=moved/'runs',work=moved/'work',scratch=scratch,run_id='migration-two')
+        second=import_bundle(moved/'capture',store=moved/'runs',run_id='migration-two')
         self.assertEqual(second['reused'],['derived'])
         self.assertEqual(old,{str(f.relative_to(moved/'runs/migration-one')):f.read_bytes() for f in (moved/'runs/migration-one').rglob('*') if f.is_file()})
         with StoreView(moved/'runs/migration-two') as view:
@@ -100,8 +99,8 @@ class FinalLifecycle(unittest.TestCase):
             self.assertEqual(view.inspect()[0]['integrity'],'verified')
             self.assertEqual(view.ledger(view.traces()[0]['trace_uid'],limit=1)['total'],second['source_records'])
         self.assertEqual(finalize(moved/'runs/migration-two')['status'],'complete')
-        self.assertEqual(list(scratch.iterdir()),[])
-        self.assertFalse(list((moved/'work').glob('view-*')))
+        from flagprof.offline.workspace import private_name
+        self.assertEqual(list((moved/'runs'/private_name()/'tmp').iterdir()), [])
         with (moved/'capture/sealed-trace/data/trace.json').open('ab') as source:source.write(b' ')
         with StoreView(moved/'runs/migration-two') as view:
             self.assertEqual(view.traces()[0]['status'],'failed')

@@ -30,7 +30,7 @@ def export(work, path, *, max_events=1_000_000):
         if monitor is not None:
             with StoreView(work.view.run) as view:
                 try:
-                    for event in view.iter_monitor_events(('counter',),work=work.directory):
+                    for event in view.iter_monitor_events(('counter',)):
                         if event.get('ts') is None or event['dev'] not in selected:continue
                         times=event['telemetry'].get('sample_times',{})
                         for metric,value in event['values'].items():

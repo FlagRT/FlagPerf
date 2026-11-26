@@ -54,9 +54,7 @@ class PackageExecutionTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
-        self.targets = patch.object(sys, 'path', [str(ROOT/'targets'), *sys.path])
-        self.targets.start(); self.addCleanup(self.targets.stop)
-        import make_ctr_package
+        from flagprof.targets import make_ctr_package
         self.package = self.root/'ctr'
         with patch.object(sys, 'argv', ['make_ctr_package', '--samples', '4', '--out', str(self.package)]), contextlib.redirect_stdout(io.StringIO()):
             make_ctr_package.main()
@@ -219,7 +217,7 @@ class PackageExecutionTests(unittest.TestCase):
         self.assertEqual(tokenizer.call_args.kwargs['padding_side'], 'right')
 
     def test_embed_target_requires_explicit_vendor_opt_in(self):
-        import target_embedder
+        from flagprof.targets import target_embedder
         root = self.root/'custom'; root.mkdir()
         (root/'config.json').write_text(json.dumps({'auto_map': {'AutoModel': 'modeling_custom.Model'}}))
         (root/'modeling_custom.py').write_text("raise RuntimeError('CUSTOM_CODE_EXECUTED')\n")

@@ -11,7 +11,7 @@ prefix; the protocol is called the acceptance suite (A/A x2 per model).
 
 Run inside the target container:
 
-    python3 -B tools/batch_driver.py --config tools/models.yaml --out /w/runs/batch-<date>
+    flagprof-batch --config models.yaml --out results
 
 Rows reference the three runner tasks (embedding / rerank / ctr) directly;
 ``task: attach`` rows are executed via their attach target script (legacy
@@ -24,6 +24,7 @@ import json
 import os
 import subprocess
 import sys
+from uuid import uuid4
 from pathlib import Path
 
 try:
@@ -35,6 +36,34 @@ except ImportError:  # pragma: no cover - pyyaml ships with transformers envs
 # on every host (containers expose python3 == sys.executable; Windows
 # local scaffolds have no python3 and the Store stub is unusable).
 _PY = os.environ.get('BATCH_PYTHON') or sys.executable
+EXAMPLES = {'cpu': 'models_local.yaml', 'models': 'models.yaml', 'hf2': 'models-hf2.yaml'}
+
+
+def model_rows(doc):
+    rows = doc.get('models') if isinstance(doc, dict) else None
+    if not isinstance(rows, list) or not rows:
+        raise ValueError('config has no models list')
+    seen = set()
+    for row in rows:
+        if not isinstance(row, dict):
+            raise ValueError('model row must be a mapping')
+        for key in ('id', 'task'):
+            if not isinstance(row.get(key), str) or not row[key]:
+                raise ValueError(f'row missing {key}: {row}')
+        if row['id'] in seen:
+            raise ValueError(f'duplicate model id: {row["id"]}')
+        seen.add(row['id'])
+        if not isinstance(row.get('args', {}), dict):
+            raise ValueError(f'{row["id"]}: args must be a mapping')
+    return rows
+
+
+def path_fields(rows):
+    for index, row in enumerate(rows):
+        for scope, fields in (('', row), ('args.', row.get('args', {}))):
+            for key in ('target', 'package', 'inputs', 'inputs_from', 'inputs-from', 'model'):
+                if isinstance(fields.get(key), str):
+                    yield f'batch.models.{index}.{scope}{key}', fields, key
 
 
 def load_config(path):
@@ -42,27 +71,21 @@ def load_config(path):
         raise SystemExit('pyyaml is required for batch_driver (pip install pyyaml)')
     with open(path, encoding='utf-8') as f:
         doc = yaml.safe_load(f)
-    rows = doc.get('models') or []
-    if not rows:
-        raise ValueError('config has no models list')
-    seen = set()
-    for r in rows:
-        for key in ('id', 'task'):
-            if not r.get(key):
-                raise ValueError(f'row missing {key}: {r}')
-        if r['id'] in seen:
-            raise ValueError(f'duplicate model id: {r["id"]}')
-        seen.add(r['id'])
+    rows = model_rows(doc)
+    for _, fields, key in path_fields(rows):
+        value = fields[key]
+        prefix = 'hf:' if key == 'model' and value.startswith('hf:') else ''
+        fields[key] = prefix + str((Path(path).absolute().parent / value[len(prefix):]).resolve())
     return rows
 
 
-def build_cmd(row, run_idx, out_dir, device='cuda:0', dtype=None, batch_size=None):
+def build_cmd(row, run_idx, out_dir, device=None, dtype=None, batch_size=None):
     """One battery run as an argv list WITHOUT the interpreter (run_battery
     prepends sys.executable). Module-level for testability."""
     out = str(Path(out_dir) / f'{row["id"]}-run{run_idx}')
     task = row['task']
     dtype = dtype or row.get('dtype', 'bfloat16')
-    common = ['--device', device, '--dtype', dtype, '--outputs', out]
+    common = (['--device', device] if device else []) + ['--dtype', dtype, '--outputs', out]
     if task == 'attach':
         script = row['target']
         cmd = ['-B', script]
@@ -73,6 +96,9 @@ def build_cmd(row, run_idx, out_dir, device='cuda:0', dtype=None, batch_size=Non
     cmd = ['-B', '-m', 'flagprof.runner', '--task', task]
     if row.get('model'):
         cmd += [row['model']]
+    reference = row.get('inputs_from') or row.get('inputs-from')
+    if reference:
+        cmd += ['--inputs-from', str(reference)]
     for k in ('package', 'score', 'arch', 'pooling', 'inputs', 'seed', 'padding_side'):
         if row.get(k) is not None:
             cmd += [f'--{k.replace("_", "-")}', str(row[k])]
@@ -112,7 +138,7 @@ def _result_sha(path):
     return _score_digest(doc), doc.get('oracle_identity')
 
 
-def run_battery(row, out_dir, device='cuda:0', runner_cwd=None):
+def run_battery(row, out_dir, device=None, runner_cwd=None):
     """Two identical runs; returns A/A verdict plus artifact evidence."""
     entry = dict(id=row['id'], task=row['task'], runs=[])
     shas, idents, outs = [], [], []
@@ -169,15 +195,36 @@ def render_markdown(summary, generated_at):
     return '\n'.join(lines) + '\n'
 
 
+def publish(path, content):
+    """Readers can still open the last complete status table if a batch is interrupted."""
+    temporary = path.with_name(f'.{path.name}.{uuid4().hex}.tmp')
+    try:
+        with temporary.open('x', encoding='utf-8') as output:
+            output.write(content)
+        if path.exists():
+            temporary.chmod(path.stat().st_mode & 0o777)
+        temporary.replace(path)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument('--config', required=True)
-    ap.add_argument('--out', required=True)
-    ap.add_argument('--device', default='cuda:0')
+    selection = ap.add_mutually_exclusive_group(required=True)
+    selection.add_argument('--config', help='model list in YAML')
+    selection.add_argument('--example', choices=('cpu','models','hf2'), help='print a packaged YAML example')
+    ap.add_argument('--out', help='batch results directory')
+    ap.add_argument('--device')
     ap.add_argument('--filter', default=None, help='substring on model id')
     ap.add_argument('--dry-run', action='store_true')
     args = ap.parse_args(argv)
 
+    if args.example:
+        from importlib.resources import files
+        print(files('flagprof.batch').joinpath(EXAMPLES[args.example]).read_text(), end='')
+        return 0
+    if not args.out:
+        ap.error('--config requires --out')
     rows = load_config(args.config)
     if args.filter:
         rows = [r for r in rows if args.filter in r['id']]
@@ -198,14 +245,12 @@ def main(argv=None):
         except Exception as exc:  # keep the batch going, mark the row failed
             entries.append(dict(id=r['id'], task=r['task'], status='failed',
                                 error=repr(exc)))
-        json.dump({'generated_at': stamp, 'models': entries},
-                  open(Path(args.out) / 'battery-state.json', 'w',
-                       encoding='utf-8'), ensure_ascii=False, indent=1)
+        publish(Path(args.out) / 'battery-state.json',
+                json.dumps({'generated_at': stamp, 'models': entries}, ensure_ascii=False, indent=1))
     summary = summarize(entries)
-    json.dump(summary, open(Path(args.out) / 'battery-summary.json', 'w',
-                            encoding='utf-8'), ensure_ascii=False, indent=1)
     md = render_markdown(summary, stamp)
-    (Path(args.out) / 'battery-summary.md').write_text(md, encoding='utf-8')
+    publish(Path(args.out) / 'battery-summary.md', md)
+    publish(Path(args.out) / 'battery-summary.json', json.dumps(summary, ensure_ascii=False, indent=1))
     print(md)
     return 0 if summary['failed'] == 0 else 1
 

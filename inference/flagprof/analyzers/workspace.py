@@ -5,6 +5,7 @@ from dataclasses import dataclass, asdict
 import json
 from pathlib import Path
 import sqlite3
+from flagprof.progress import phase
 from flagprof.store import StoreView
 from flagprof.store.analysis_read import ResourceLimit
 
@@ -112,38 +113,46 @@ class Workspace:
             state=view.probe_status(limits=asdict(self.limits))
             self.statuses.extend(state['attachments'])
             try:
-                for stored in view.iter_events(work=self.directory, limits=asdict(self.limits)):
-                    r = dict(stored.record)
-                    if r['t']=='opsum' and state['schema_version']=='1.0':
-                        self.legacy_summary_calls+=r['n']
-                    if stored.source is not None:
-                        r['_source'] = stored.source
-                    if r['t'] == 'sig':
-                        payload = encode(r)
-                        previous = self.db.execute('select payload from sigs where sid=?', (r['sid'],)).fetchone()
-                        if previous and previous[0] != payload:
-                            raise ValueError('conflicting signature across analysis sources')
-                        self.db.execute('insert or ignore into sigs values(?,?)', (r['sid'], payload))
-                    elif 'seq' in r:
-                        self.db.execute('insert into events values(?,?,?,?,?,?,?,?,?,?,?,?)',
-                            (stored.run_id, stored.writer_id, r['seq'], r['t'], str(r.get('corr', 0)), r.get('sid'),
-                             str(r.get('scope', 0)), str(r.get('parent', 0)), r.get('ts'), r.get('dur'), r.get('clk'), encode(r)))
-                    self.count += 1
-                    if self.count % 256 == 0:
-                        self.check_budget()
+                with phase('读取 Store 事件', unit='条') as reading:
+                    before = self.count
+                    for stored in view.iter_events(limits=asdict(self.limits)):
+                        r = dict(stored.record)
+                        if r['t']=='opsum' and state['schema_version']=='1.0':
+                            self.legacy_summary_calls+=r['n']
+                        if stored.source is not None:
+                            r['_source'] = stored.source
+                        if r['t'] == 'sig':
+                            payload = encode(r)
+                            previous = self.db.execute('select payload from sigs where sid=?', (r['sid'],)).fetchone()
+                            if previous and previous[0] != payload:
+                                raise ValueError('conflicting signature across analysis sources')
+                            self.db.execute('insert or ignore into sigs values(?,?)', (r['sid'], payload))
+                        elif 'seq' in r:
+                            self.db.execute('insert into events values(?,?,?,?,?,?,?,?,?,?,?,?)',
+                                (stored.run_id, stored.writer_id, r['seq'], r['t'], str(r.get('corr', 0)), r.get('sid'),
+                                 str(r.get('scope', 0)), str(r.get('parent', 0)), r.get('ts'), r.get('dur'), r.get('clk'), encode(r)))
+                        self.count += 1
+                        if self.count % 256 == 0:
+                            reading.update(self.count - before)
+                            self.check_budget()
+                    reading.update(self.count - before)
                 self.read_reports.append(view.analysis_read_report)
             except (ResourceLimit, ValueError, OSError) as error:
                 self.limit_error = str(error)
                 self.notes.append(str(error))
         try:
-            for r in self.view.iter_native_relations(work=self.directory, limits=asdict(self.limits)):
-                self.qualities[r['trace_uid']]=r.get('source_state',{})
-                self.db.execute('insert into native values(?,?,?,?)', (r['trace_uid'], str(r['loc']),
-                    encode(r.get('owner')), encode(r)))
-                self.native_available |= r.get('state') == 'owned'
-                self.count += 1
-                if self.count % 256 == 0:
-                    self.check_budget()
+            with phase('读取原生调用关联', unit='条') as reading:
+                before = self.count
+                for r in self.view.iter_native_relations(limits=asdict(self.limits)):
+                    self.qualities[r['trace_uid']]=r.get('source_state',{})
+                    self.db.execute('insert into native values(?,?,?,?)', (r['trace_uid'], str(r['loc']),
+                        encode(r.get('owner')), encode(r)))
+                    self.native_available |= r.get('state') == 'owned'
+                    self.count += 1
+                    if self.count % 256 == 0:
+                        reading.update(self.count - before)
+                        self.check_budget()
+                reading.update(self.count - before)
         except (ResourceLimit, ValueError, OSError) as error:
             self.notes.append('native unavailable: '+str(error))
             self.native_available=False

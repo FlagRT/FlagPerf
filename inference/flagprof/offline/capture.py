@@ -5,15 +5,18 @@ from pathlib import Path
 import json
 import os
 import runpy
+import shlex
 import shutil
 import subprocess
 import sys
 import time
 import uuid
 from .checkpoints import fileinfo, seal, validate, publish, source_budget
-from .limits import read_json, walk_files
+from .limits import DEFAULT_RECORD_SOURCE_BYTES, read_json, walk_files
 from .bundle import finish_bundle, load_bundle
+from flagprof._process import module_environment
 from flagprof.store.manifest import atomic_json, proc_key
+from flagprof.progress import child_env, finish_display, phase
 
 
 def execute_target(arguments):
@@ -32,19 +35,20 @@ def execute_target(arguments):
         runpy.run_path(str(script),run_name='__main__')
 
 
-def capture_target(directory, vendor, preset, arguments, config=None, capture_filesystem='ext4', rank=0):
+def capture_target(directory, vendor, preset, arguments, config=None, rank=0):
     from flagprof.components.compiler import select
-    select(config or {},cache_root=Path(directory).parent/'component-cache')
-    from flagprof.runtime import attach
+    select(config or {},cache_root=Path(directory).parent, target=vendor)
+    from flagprof.runtime import attach, startup_error
     from flagprof.store.manifest import create_run
     import signal
     import traceback
     if os.environ.get('FLAGPROF_LAUNCH_WORKER') == '1':
         import importlib
-        os.environ['FLAGPROF_DEVICE']=importlib.import_module('flagprof.vendors.'+vendor+'.execution').initialize(rank)
+        local_rank = int(os.environ.get('LOCAL_RANK', rank))
+        os.environ['FLAGPROF_DEVICE']=importlib.import_module('flagprof.vendors.'+vendor+'.execution').initialize(local_rank)
     directory=Path(directory)
     run=create_run(directory/'collection',identity=dict(route='final-capture',argv=list(arguments)))
-    handle=attach(run,vendor,preset=preset,config=config,capture_mode='final',capture_filesystem=capture_filesystem,rank=rank)
+    handle=attach(run,vendor,preset=preset,config=config,capture_mode='final',rank=rank, _compiler_store=directory.parent)
     if os.environ.get('FLAGPROF_DEVICE'):
         handle.register_device(os.environ['FLAGPROF_DEVICE'])
     target_file=Path(arguments[0]).resolve() if arguments and not arguments[0].startswith('-') else None
@@ -54,7 +58,7 @@ def capture_target(directory, vendor, preset, arguments, config=None, capture_fi
     def stop_signal(signum,frame):raise SystemExit(128+signum)
     try:
         for sig in (signal.SIGINT,signal.SIGTERM):previous[sig]=signal.signal(sig,stop_signal)
-        if handle.state['status']!='running':raise RuntimeError('official profiler failed to start: '+repr(handle.state))
+        if handle.state['status']!='running':raise RuntimeError('official profiler failed to start: '+startup_error(handle.state))
         try:execute_target(arguments)
         except SystemExit as exc:code=exc.code if isinstance(exc.code,int) else 0 if exc.code is None else 1
         if target_file and fileinfo(target_file)!=target_before:raise ValueError('target source changed')
@@ -68,7 +72,6 @@ def capture_target(directory, vendor, preset, arguments, config=None, capture_fi
         meta.update(target_s=time.perf_counter()-started,target_before=target_before,
                     raw_path=str((handle.capture/'official').relative_to(directory)),
                     collection_run=str(run.relative_to(directory)),source_run_id=run.name,attachment=handle.id,
-                    capture_filesystem=capture_filesystem,
                     closed_before_target_return=premature)
         if error:meta['target_error']=error
         if handle.state['status']!='closed' or premature:meta['normal_close']=False
@@ -76,26 +79,23 @@ def capture_target(directory, vendor, preset, arguments, config=None, capture_fi
     return code or (0 if meta['normal_close'] else 2)
 
 
-def analyse_worker(directory):
-    from torch_npu.profiler.profiler import analyse
-    analyse(str(directory),max_process_number=1)
-
-
-def check_analysis_log(path):
-    """The pinned CANN analyser can report failed tasks while exiting zero."""
-    with Path(path).open(errors='replace') as stream:
-        for line in stream:
-            if 'Failed to export CANN' in line or ('Task [' in line and '] run failed' in line):
-                raise ValueError('official offline analysis failed: '+line.strip()+'; sealed raw and analysis retained')
-
-
 def finish_capture(directory, *, timeout=1800):
-    import fcntl
     directory=Path(directory).resolve()
-    from .workspace import check_disk
-    check_disk(directory)
-    with (directory/'.analysis.lock').open('a+b') as lock:
-        fcntl.flock(lock.fileno(),fcntl.LOCK_EX|fcntl.LOCK_NB)
+    if (directory/'capture.json').exists():
+        return load_bundle(directory)
+    from .worker import on_disk
+    return on_disk(directory.parent, _analyse_locked, directory, timeout)
+
+
+def _analyse_locked(directory, timeout):
+    from .workspace import directory_lock
+    directory = Path(directory)
+    with directory_lock(directory):
+        if not (directory/'capture-input.json').is_file() and not (directory/'capture.json').is_file():
+            request = read_json(directory/'seal-request.json')
+            if request['target_exit']['returncode'] != 0 or request['target_exit']['timed_out']:
+                raise ValueError('successful producer exit required')
+            _seal_capture(directory, request['metadata'], request['vendor'])
         return _finish_capture(directory,timeout=timeout)
 
 
@@ -104,56 +104,69 @@ def _finish_capture(directory, *, timeout=1800):
     if (directory/'capture.json').exists():return load_bundle(directory)
     state=read_json(directory/'capture-input.json')
     occurrence=state['occurrence'];raw=directory/'sealed-raw'
-    before=validate(raw,dict(occurrence=occurrence,normal_close=True),'sealed-source',
-                    source_max_bytes=source_budget(state['metadata'].get('source_max_bytes',1<<30)))
+    with phase('校验原始采集'):
+        before=validate(raw,dict(occurrence=occurrence,normal_close=True),'sealed-source',
+                        source_max_bytes=source_budget(state['metadata'].get('source_max_bytes',1<<30)))
     if fileinfo(raw/'committed.json')!=state['raw_manifest']:raise ValueError('raw capture changed')
     metadata=state['metadata'];vendor=state['vendor'];t=time.perf_counter()
-    if vendor=='ascend':
-        working=directory/('analysis-'+uuid.uuid4().hex);shutil.copytree(raw/'data',working)
-        with (directory/('analyse-'+working.name+'.log')).open('xb') as log:
-            from .process import run_owned
-            cp=run_owned([sys.executable,'-B','-m','flagprof.offline.capture','analyse',str(working)],stdout=log,stderr=subprocess.STDOUT,timeout=timeout)
-        if cp.returncode:raise ValueError('official offline analysis failed; sealed raw retained')
-        check_analysis_log(directory/('analyse-'+working.name+'.log'))
-        traces=[]
-        for path in walk_files(working,max_files=4096,max_entries=8192):
-            if path.name=='trace_view.json':traces.append(path)
-            if len(traces)>1:raise ValueError('single-trace budget')
-        if len(traces)!=1:raise ValueError('one analysed trace required')
-        trace=traces[0]
-    else:trace=raw/'data/trace.json'
+    from flagprof.vendors import adapter
+    from .worker import active_directory
+    analyse = getattr(adapter(vendor, 'evidence'), 'analyse_trace', None)
+    trace = raw/'data/trace.json'
+    if analyse:
+        with phase('厂商分析'):
+            trace = analyse(directory, raw, active_directory(), timeout)
     metadata['official_analysis_s']=time.perf_counter()-t
-    validate(raw,before['binding'],'sealed-source')
-    # Failed parse/seal attempts are retained. A later explicit retry must use
-    # fresh derivative paths rather than overwriting committed artifacts.
+    with phase('复核原始采集'):
+        validate(raw,before['binding'],'sealed-source')
+    # The sealed raw source remains authoritative until capture.json is committed.
     for name in ['trace-input','sealed-trace']:
         path=directory/name
-        if path.exists():path.rename(directory/(name+'-failed-'+uuid.uuid4().hex))
-    if (directory/'capture.json').exists():raise ValueError('capture already sealed')
-    from .final_evidence import identities
-    metadata['identities']=identities(directory,metadata,vendor,trace,occurrence,before)
-    result=finish_bundle(directory,trace,vendor=vendor,metadata=metadata,occurrence=occurrence,raw_manifest=before)
-    if vendor=='ascend':shutil.rmtree(working)
+        if path.exists():shutil.rmtree(path)
+    (directory/'capture.json.partial').unlink(missing_ok=True)
+    with phase('整理并封存分析结果'):
+        result=finish_bundle(directory,trace,vendor=vendor,metadata=metadata,occurrence=occurrence,
+                             raw_manifest=before,derive_identities=True)
     return result
 
 
-def seal_capture(directory,metadata,vendor,*,capture_filesystem='ext4'):
-    directory=Path(directory).resolve()
-    from .workspace import check_capture_disk
-    check_capture_disk(directory,vendor,capture_filesystem)
+def seal_capture(directory,metadata,vendor):
+    from .workspace import directory_lock
+    directory = Path(directory).resolve()
+    with directory_lock(directory):
+        if not (directory/'capture-input.json').exists():
+            _seal_capture(directory, metadata, vendor)
+
+
+@phase('封存原始采集')
+def _seal_capture(directory, metadata, vendor):
     if metadata.get('normal_close') is not True or metadata.get('target_returncode')!=0:
         raise ValueError('abnormal capture cannot be certified')
     from .checkpoints import checked_relative
     raw=directory/checked_relative(metadata.get('raw_path','official'))
-    occurrence=uuid.uuid4().hex;t=time.perf_counter()
-    seal(raw,directory/'sealed-raw',occurrence,max_bytes=source_budget(metadata.get('source_max_bytes',1<<30)))
-    metadata['raw_seal_s']=time.perf_counter()-t
+    from .workspace import attempt
+    from .checkpoints import syncdir
+    limit = source_budget(metadata.get('source_max_bytes', 1 << 30))
+    sealed = directory/'sealed-raw'
+    started = time.perf_counter()
+    if sealed.exists():
+        receipt = read_json(sealed/'committed.json')
+        occurrence = receipt['binding']['occurrence']
+        validate(sealed, dict(occurrence=occurrence, normal_close=True), 'sealed-source', source_max_bytes=limit)
+    else:
+        occurrence = uuid.uuid4().hex
+        with attempt(directory.parent) as (temp, _lease):
+            seal(raw, temp/'raw', occurrence, max_bytes=limit)
+            (temp/'raw').rename(sealed)
+            syncdir(directory)
+    metadata = dict(metadata, raw_seal_s=time.perf_counter()-started)
+    (directory/'capture-input.json.partial').unlink(missing_ok=True)
     publish(directory/'capture-input.json',dict(occurrence=occurrence,vendor=vendor,metadata=metadata,
                                                 raw_manifest=fileinfo(directory/'sealed-raw/committed.json')))
 
 
-def record_final(command, *, store, work=None, scratch=None, vendor, preset='perf', config=None, timeout=1800,
-                 capture_only=False,capture_filesystem='ext4',source_max_bytes=1<<30,rank=0):
+def record_final(command, *, store, vendor, preset='perf', config=None, timeout=1800,
+                 capture_only=False,source_max_bytes=DEFAULT_RECORD_SOURCE_BYTES,rank=0):
     import math
     source_max_bytes=source_budget(source_max_bytes)
     if not math.isfinite(timeout) or timeout<=0:raise ValueError('positive finite timeout required')
@@ -163,42 +176,41 @@ def record_final(command, *, store, work=None, scratch=None, vendor, preset='per
     while arguments and arguments[0] in ('-B','-u'):
         flags.append(arguments[0]);arguments=arguments[1:]
     if not arguments:raise ValueError('missing Python target')
-    from .service import _check_scratch
-    from .workspace import locations,check_disk
     from .process import run_owned
     store=Path(store).resolve()
     capture_id='capture-'+uuid.uuid4().hex
-    if capture_only:
-        if vendor not in ('nvidia','ascend','thead','kunlunxin') or work is not None or scratch is not None:
-            raise ValueError('capture-only requires a supported vendor without import work/scratch')
-        from .workspace import check_capture_disk
-        check_capture_disk(store,vendor,capture_filesystem)
-    else:
-        if capture_filesystem!='ext4':raise ValueError('overlay requires explicit capture-only')
-        work,scratch=locations(store,work,scratch,key=capture_id)
-        check_disk(store)
-        _check_scratch(scratch,store/'runs',work)
-    store.mkdir(parents=True,exist_ok=True)
-    destination=store/capture_id;destination.mkdir()
+    from flagprof.vendors import vendor_names
+    if vendor not in vendor_names():
+        raise ValueError('unsupported capture vendor: ' + str(vendor))
     from flagprof.probes.config import resolve
     session_options, probe_options = resolve(preset, config)
-    atomic_json(destination/'record-config.json', dict(preset=preset,capture_filesystem=capture_filesystem,rank=rank, config=dict(session_options,
+    from flagprof.devices import validate_target_device
+    validate_target_device(probe_options.get('target_device'), vendor)
+    store.mkdir(parents=True,exist_ok=True)
+    destination=store/capture_id;destination.mkdir()
+    atomic_json(destination/'record-config.json', dict(preset=preset,rank=rank, config=dict(session_options,
         **{k:v for k,v in probe_options.items() if k != 'include_sha256'})))
     from flagprof.monitor.lifecycle import Monitor
     monitor = Monitor(store, destination/'monitor-ref.json', vendor, probe_options, preset=preset)
-    root=str(Path(__file__).resolve().parents[2]);env=dict(os.environ)
+    env = module_environment()
+    from flagprof.vendors import adapter
+    prepare = getattr(adapter(vendor, 'execution'), 'prepare_capture_environment', None)
+    if prepare:
+        local_rank = int(env.get('LOCAL_RANK', rank)) if env.get('FLAGPROF_LAUNCH_WORKER') == '1' else None
+        prepare(env, local_rank)
     monitor.environment(env)
     env.pop('FLAGPROF_RECORD_CONFIG',None)
-    env['PYTHONPATH']=os.pathsep.join([root]+([env['PYTHONPATH']] if env.get('PYTHONPATH') else []))
     started=time.perf_counter();deadline=time.monotonic()+timeout
     state=dict(schema='plan-b-record/1',status='incomplete',capture=str(destination),target_exit=None,
                importer_exit=None,import_completion='not_started',finalize='not_started',
-               capture_completeness='unknown',throughput_gate='not_passed',performance_blocking=False)
+               capture_completeness='unknown',throughput_gate='not_evaluated',performance_blocking=False)
     code=2
     try:
-        with (destination/'target.log').open('xb') as log:
+        with phase('目标推理与设备采集', detail=str(destination/'target.log')) as collecting, \
+                (destination/'target.log').open('xb') as log:
             cp=run_owned([command[0],'-B',*flags,'-m','flagprof.offline.capture','target',str(destination),vendor,preset,*arguments],
-                         env=env,stdout=log,stderr=subprocess.STDOUT,timeout=max(.01,deadline-time.monotonic()))
+                         env=child_env(env),stdout=log,stderr=subprocess.STDOUT,timeout=max(.01,deadline-time.monotonic()))
+            collecting.finish(cp.returncode)
         if type(getattr(cp,'wait_returncode',None)) is int:
             monitor.target_exit(dict(returncode=cp.wait_returncode,source='subprocess.wait'),getattr(cp,'process',None))
         monitor.close()
@@ -209,34 +221,55 @@ def record_final(command, *, store, work=None, scratch=None, vendor, preset='per
         collections=list((destination/'collection').glob('*/manifest.json'))
         if len(collections)>1:raise ValueError('one owned collection run required')
         for manifest in collections:
-            proxy_deadline, proxy_timeout=record_wait(manifest.parent,deadline=deadline)
-            with deadline_scope(proxy_deadline):
-                collection_final=finalize(manifest.parent)
+            with phase('封存主机采集') as closing:
+                proxy_deadline, proxy_timeout=record_wait(manifest.parent,deadline=deadline)
+                with deadline_scope(proxy_deadline):
+                    collection_final=finalize(manifest.parent)
+                closing.finish(2 if proxy_timeout or collection_final['status'] != 'complete' else 0)
             state['collection_finalize']=collection_final['status']
             if proxy_timeout:
                 state['writer_failure']='proxy_wait_timeout'
                 code=code or 2
-        if code:return code
+        if code:
+            state.update(failed_stage='target', error=f'target exited {code}; see {destination / "target.log"}')
+            try:
+                producer = read_json(destination/'producer.json')
+            except (OSError, ValueError):
+                producer = {}
+            if isinstance(producer, dict) and producer.get('target_error'):
+                state['error'] = f"{producer['target_error']} (log: {destination / 'target.log'})"
+            return code
         code=2
         metadata=read_json(destination/'producer.json');metadata['producer_exited_before_analysis']=True
         metadata['source_max_bytes']=source_max_bytes
         metadata['target_process_s']=time.perf_counter()-started
-        seal_capture(destination,metadata,vendor,capture_filesystem=capture_filesystem)
+        atomic_json(destination/'seal-request.json', dict(metadata=metadata, vendor=vendor, target_exit=state['target_exit']))
+        seal_capture(destination,metadata,vendor)
         if capture_only:
-            state.update(status='sealed',import_completion='deferred_to_ext4',capture_filesystem=capture_filesystem)
+            state.update(status='sealed',import_completion='deferred')
             code=0
             return code
-        finish_capture(destination,timeout=max(.01,deadline-time.monotonic()))
+        import_command = ['flagprof', 'import', str(destination), '--store', str(store/'runs')]
+        try:
+            finish_capture(destination,timeout=max(.01,deadline-time.monotonic()))
+        except (ValueError, OSError, RuntimeError):
+            state.update(failed_stage='analyse', recovery_commands=[
+                shlex.join(['flagprof', 'analyse', str(destination)]), shlex.join(import_command)])
+            raise
         result=destination/'import-result.json'
-        cmd=[sys.executable,'-B','-S','-m','flagprof','import',str(destination),'--store',str(store/'runs'),
-             '--work',str(work),'--scratch',str(scratch)]
-        with result.open('xb') as output,(destination/'importer.log').open('xb') as errors:
-            child=run_owned(cmd,env=env,stdout=output,stderr=errors,timeout=max(.01,deadline-time.monotonic()))
+        cmd=[sys.executable,'-B','-m','flagprof','import',str(destination),'--store',str(store/'runs')]
+        with phase('导入封存采集', detail=str(destination/'importer.log')) as importing, \
+                result.open('xb') as output,(destination/'importer.log').open('xb') as errors:
+            child=run_owned(cmd,env=child_env(env),stdout=output,stderr=errors,timeout=max(.01,deadline-time.monotonic()))
+            importing.finish(child.returncode)
         state['importer_exit']=child.returncode
         if child.returncode:
             code=128-child.returncode if child.returncode<0 else child.returncode
+            state.update(failed_stage='import', recovery_commands=[shlex.join(import_command)],
+                         error=f"import exited {code}; see {destination / 'importer.log'}")
             return code
         summary=read_json(result);state.update(summary)
+        atomic_json(result, dict(summary, capture='.', run=os.path.relpath(summary['run'], destination)))
         state.update(capture=str(destination),import_completion=summary['status'],status=summary['status'])
         code=0 if summary['status']=='complete' else 2
         return code
@@ -245,8 +278,13 @@ def record_final(command, *, store, work=None, scratch=None, vendor, preset='per
     finally:
         monitor.close()
         state['exit_code']=code;state['entry_total_s']=time.perf_counter()-started
-        atomic_json(destination/'record-status.json',state)
-        if state.get('run'):atomic_json(Path(state['run'])/'record-status.json',state)
+        persisted = dict(state, capture='.')
+        if state.get('run'):
+            run = Path(state['run'])
+            persisted['run'] = os.path.relpath(run, destination)
+            atomic_json(run/'record-status.json', dict(state, run='.', capture=os.path.relpath(destination, run)))
+        atomic_json(destination/'record-status.json', persisted)
+        finish_display()
         print(json.dumps(state,ensure_ascii=False))
 
 
@@ -255,6 +293,5 @@ if __name__=='__main__':
         config_path=Path(sys.argv[2])/'record-config.json'
         settings=read_json(config_path) if config_path.exists() else {}
         raise SystemExit(capture_target(sys.argv[2],sys.argv[3],sys.argv[4],sys.argv[5:],
-            config=settings.get('config'),capture_filesystem=settings.get('capture_filesystem','ext4'),rank=settings.get('rank',0)))
-    elif sys.argv[1]=='analyse':analyse_worker(sys.argv[2])
+            config=settings.get('config'),rank=settings.get('rank',0)))
     else:raise ValueError('internal capture mode')

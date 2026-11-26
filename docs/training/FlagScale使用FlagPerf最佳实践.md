@@ -93,7 +93,7 @@ git clone https://github.com/wxj630/FlagScale.git && cd FlagScale
 git switch --detach 1de74e8a3758bf7586b178f1658ef29a1a18a506
 # 我们的包（只需要 inference 子目录）
 git clone https://github.com/FlagRT/FlagPerf.git /path/to/FlagPerf
-git -C /path/to/FlagPerf checkout zhiyu/perf-train
+git -C /path/to/FlagPerf checkout "$FLAGPERF_REF"  # 指定包含观测适配器的提交或版本
 export PYTHONPATH=/path/to/FlagPerf/inference:$PYTHONPATH
 cp /path/to/FlagPerf/inference/tools/flagscale_adapter.py flagscale/train/
 ```
@@ -103,8 +103,7 @@ cp /path/to/FlagPerf/inference/tools/flagscale_adapter.py flagscale/train/
 Hydra 只有走 `flagscale.run` 的 CLI 才需要；直接调 `train_retrieval.py`
 不需要。
 
-**③ store 目录**：采集产物落盘位置，必须在本机持久文件系统（ext4/xfs）。
-网络盘、overlay、tmpfs 会被拒绝并给出明确报错。
+**③ Store 目录**用于保存采集产物和恢复检查点。这里的实机验证使用本机 ext4/XFS，其他挂载的持久性和恢复要求见[发车约定](launcher.md)。
 
 **④ 数据**：`train_retrieval.py` 的 triplet 读取器要 parquet（列：
 `anchor`、`positive`、`negative_1..K`）。没有 T2Ranking 时可以用一个小
@@ -265,9 +264,9 @@ docker run --rm --shm-size=16g \
   --device=/dev/alixpu_ppu2 --device=/dev/alixpu_ppu3 \
   -v /host/models:/models:ro \
   -v /host/flagscale:/workspace/FlagScale -w /workspace/FlagScale \
+  -v /host/FlagPerf:/workspace/FlagPerf:ro \
   -v /host/fstag:/data \
   -e PYTHONPATH=/workspace/FlagScale:/workspace/FlagPerf/inference:/workspace/FlagPerf/inference/tools \
-  -e FLAGPROF_SCRATCH=/data/scratch \
   -e FLAGPROF_TRAIN_OBSERVE=/data/fs-obs-store \
   $IMG bash -c "cd /workspace/FlagScale && \
       torchrun --standalone --nproc-per-node=2 \
@@ -646,7 +645,7 @@ torchrun --standalone --nproc-per-node=4 training/run.py --task ctr --ctr-arch d
 
 1. `--device` 带索引（`cuda:0`/`npu:0`）；910C 加 `--backend hccl`。
 2. 容器内可见设备数必须等于 `--nproc-per-node`。
-3. store 放本地 ext4/xfs；网络盘/tmpfs 会被拒绝。
+3. 为 Store 挂载持久卷，检查点和采集产物使用同一卷。
 4. 两套跑法产物格式一致：引擎 `training/run.py` 与适配器外部循环都写同一
    种 store/报表。
 5. 每次跑完最少核对三样：`manifest.status=complete`、相段计数=步数、

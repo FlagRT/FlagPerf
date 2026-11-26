@@ -1,6 +1,7 @@
 """Public session report: recent raw coverage, trends and local Findings."""
 from html import escape
 import json
+import math
 from pathlib import Path
 import re
 from flagprof.store import StoreView
@@ -30,15 +31,22 @@ def lines(points,lo,hi):
 
 
 def generate(session, out=None, *, last='1h'):
+    from flagprof.offline.worker import output_operation
+    return output_operation(out or str(Path(session).resolve())+'-report', [session], _generate, session, last=last)
+
+
+def _generate(session, out, *, last):
     root=Path(session).resolve();state=load(root)
     out=Path(out or str(root)+'-report').resolve()
     if root==out or root in out.parents:raise ValueError('report must be outside session')
-    out.mkdir(parents=True,exist_ok=False)
+    from flagprof.offline.worker import new_output
+    new_output(out)
     end=state.get('ended_raw_ns') or raw_clock()
     begin=max(state['started_raw_ns'],end-duration(last)*1_000_000_000)
     rows={};aggregates={};events=0;errors=[]
     from flagprof.report.curves import unit
     specifications={m['name']:m for m in state['inventory'].get('descriptors',[]) if isinstance(m,dict)}
+    interval_ms = state['inventory'].get('effective_interval_ms') or state.get('config', {}).get('interval_ms')
     with StoreView(root) as view:
         try:
             for event in view.iter_monitor_events(('counter',)):
@@ -51,8 +59,16 @@ def generate(session, out=None, *, last='1h'):
                     key=(event['dev'],metric)
                     if key not in rows and len(rows)>=4096:raise ValueError('report series capacity')
                     row=rows.setdefault(key,dict(entity=key[0],metric=key[1],valid=0,missing=0,minimum=None,maximum=None,points={},envelope={},unit=specifications.get(metric,{}).get('unit',unit(metric))))
+                    if interval_ms and 'sample_period_ns' not in row:
+                        group = event.get('telemetry', {}).get('group') or specifications.get(metric, {}).get('group')
+                        if group in ('fast', 'slow'):
+                            # Slow calls run on the first sampling tick at or after two seconds.
+                            ticks = math.ceil(2000 / interval_ms) if group == 'slow' else 1
+                            row['sample_period_ns'] = int(ticks * interval_ms * 1_000_000)
                     slot=min(255,int((sample_ts-begin)*256/max(1,end-begin)))
                     bucket=row['envelope'].setdefault(slot,dict(first=[sample_ts,value],last=[sample_ts,value],minimum=None,maximum=None,missing=False))
+                    if row.get('sample_period_ns') and sample_ts-bucket['last'][0] > 2.5*row['sample_period_ns']:
+                        bucket['interrupted'] = True
                     if sample_ts<bucket['first'][0]:bucket['first']=[sample_ts,value]
                     if sample_ts>=bucket['last'][0]:bucket['last']=[sample_ts,value]
                     if value is not None:
@@ -60,6 +76,8 @@ def generate(session, out=None, *, last='1h'):
                             if bucket[kind] is None or better(value,bucket[kind][1]):bucket[kind]=[sample_ts,value]
                     if value is None:
                         bucket['missing']=True
+                        bucket['first_missing'] = min(bucket.get('first_missing', sample_ts), sample_ts)
+                        bucket['last_missing'] = max(bucket.get('last_missing', sample_ts), sample_ts)
                         row['missing']+=1;row['points'][slot]=None;continue
                     row['valid']+=1
                     row['minimum']=value if row['minimum'] is None else min(value,row['minimum'])
@@ -82,16 +100,26 @@ def generate(session, out=None, *, last='1h'):
                 for name in ('total','count','missing'):bucket[name]+=value[name]
     for row in rows.values():
         points=[]
+        interrupted_slots=[]
         for slot in range(256):
             bucket=row['envelope'].get(slot)
             if not bucket:
-                points.append([begin+slot*(end-begin)//256,None]);continue
+                continue
+            if bucket.get('interrupted'):
+                interrupted_slots.append(slot)
             candidates=[bucket[k] for k in ('first','minimum','maximum','last') if bucket[k] is not None]
             if bucket['missing']:
                 # Keep extrema as isolated points inside an explicitly missing bucket.
-                for timestamp,value in sorted(candidates):points.extend([[timestamp,None],[timestamp,value],[timestamp,None]])
+                candidates.extend(([bucket['first_missing'], None], [bucket['last_missing'], None]))
+                for timestamp,value in sorted(set(map(tuple, candidates)), key=lambda p:(p[0],p[1] is not None,p[1] or 0)):
+                    if value is None:
+                        points.append([timestamp, None])
+                    else:
+                        points.extend([[timestamp,None],[timestamp,value],[timestamp,None]])
             else:points.extend(sorted({tuple(v) for v in candidates}))
         row['samples_points']=points;del row['envelope']
+        if row.get('sample_period_ns'):
+            row['interrupted_slots']=interrupted_slots
     findings=[]
     for folder in sorted((root/'findings').glob('*')):
         for path in sorted(folder.glob('*.json')):
@@ -105,7 +133,9 @@ def generate(session, out=None, *, last='1h'):
         coverage=coverage,
         gaps=state['gaps'],capability_missing=state['inventory'].get('unavailable',{}),
         interpretation='Node observations and fact rules; no inferred workload hang or recovery action.')
-    from .diagnostic_report import panel, html as diagnostic_html
+    from .diagnostic_report import panel
+    if state.get('boot_id'):
+        result['session_clock'] = 'host_mono:' + state['boot_id']
     result['diagnosis']=panel(root)
     atomic_json(out/'result.json',result)
     from flagprof.report.product import write_report

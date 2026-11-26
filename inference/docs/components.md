@@ -22,58 +22,58 @@ FlagTree 在本批中编译 FlagGems 使用的 Triton 算子，模型执行模�
 | 参数 | 行为 |
 |---|---|
 | 省略 `--flagtree` | 沿用当前环境，并记录实际导入的编译器 |
-| `--flagtree off` | 使用封存的厂商 Triton-Ascend 包 |
+| `--flagtree off` | 使用已安装的厂商 Triton，或显式选择封存的厂商包 |
 | `--flagtree on` | 使用已安装的 FlagTree 分发包所提供的 Triton |
 
-off 侧通过 `--vendor-compiler PATH` 指定带 `manifest.json` 的包，也可设置 `FLAGPROF_VENDOR_COMPILER`，命令行优先。厂商包由使用者准备：目录包含 `triton/` 与 `manifest.json`；manifest 的 `source_image` 记录来源镜像，`files` 将包内文件的相对路径映射到 SHA256（不含 manifest 和 `__pycache__`）。容器使用时只读挂载到所指定路径。on/off 在工作进程导入可选依赖前完成选择，不修改系统安装。
+需要从封存包选择编译器时，off 侧通过 `--vendor-compiler PATH` 指定带 `manifest.json` 的包，也可设置 `FLAGPROF_VENDOR_COMPILER`，命令行优先。厂商包由使用者准备：目录包含 `triton/` 与 `manifest.json`；manifest 的 `source_image` 记录来源镜像，`files` 将包内文件的相对路径映射到 SHA256（不含 manifest 和 `__pycache__`）。容器使用时只读挂载到所指定路径。on/off 在工作进程导入可选依赖前完成选择，不修改系统安装。
 
 FlagTree 对照固定 `--flaggems on` 和同一 include，才能观察到真实 JIT 执行。编译器已安装或已导入，不等于模型执行了该编译器生成的算子；公共 `StoreView.probe_status()` 保留 `compiler_identity`、`compiler_execution`。JIT 计数表示 Python JIT 入口调用，不代表设备 kernel 覆盖率。缺少编译 listener 的厂商版本仍保留 JIT 观察，但不推断缓存命中或编译耗时。
 
-下例在固定镜像内执行，模型、参考包、include、厂商编译器均为已准备的只读输入；`/evidence` 为本任务可写 ext4。
+示例从已准备输入的目录运行，模型、参考包、include 和厂商编译器路径可替换为自己的路径，结果写入 `./evidence`。以下 `--declare` 路径以仓库的 `inference/` 为基准；在其他目录运行时，传入 [FlagTree 声明](examples/flagtree.json)或 [FlagCX 声明](examples/flagcx.json)的实际文件路径。
 
 ```bash
 python -B -m flagprof record --vendor ascend --preset accuracy \
-  --flagtree off --vendor-compiler /vendor-compiler \
-  --flaggems on --flaggems-include /inputs/include.json \
-  --tensor-boundaries layer --tensor-blob all --store /evidence/tree-off -- \
-  python -B -m flagprof.runner hf:/models/qwen --inputs-from /oracle \
-  --outputs /evidence/tree-off-outputs --device npu:0 --batch-size 1 --warmup 0 --forwards 1
+  --flagtree off --vendor-compiler ./vendor-compiler \
+  --flaggems on --flaggems-include ./inputs/include.json \
+  --tensor-boundaries layer --tensor-blob all --store ./evidence/tree-off -- \
+  python -B -m flagprof.runner hf:./models/qwen --inputs-from ./oracle \
+  --outputs ./evidence/tree-off-outputs --device npu:0 --batch-size 1 --warmup 0 --forwards 1
 
 python -B -m flagprof record --vendor ascend --preset accuracy \
-  --flagtree on --flaggems on --flaggems-include /inputs/include.json \
-  --tensor-boundaries layer --tensor-blob all --store /evidence/tree-on -- \
-  python -B -m flagprof.runner hf:/models/qwen --inputs-from /oracle \
-  --outputs /evidence/tree-on-outputs --device npu:0 --batch-size 1 --warmup 0 --forwards 1
+  --flagtree on --flaggems on --flaggems-include ./inputs/include.json \
+  --tensor-boundaries layer --tensor-blob all --store ./evidence/tree-on -- \
+  python -B -m flagprof.runner hf:./models/qwen --inputs-from ./oracle \
+  --outputs ./evidence/tree-on-outputs --device npu:0 --batch-size 1 --warmup 0 --forwards 1
 
-python -B -S -m flagprof report oracle \
-  --ref /evidence/tree-off/RUN_ID --cmp /evidence/tree-on/RUN_ID \
+flagprof report oracle \
+  --ref ./evidence/tree-off/RUN_ID --cmp ./evidence/tree-on/RUN_ID \
   --declare docs/examples/flagtree.json \
-  --out /evidence/tree-report
+  --out ./evidence/tree-report
 ```
 
-缓存按编译器隔离。默认缓存位于任务 Store 旁；若多次运行需要复用，可设置 `FLAGPROF_COMPONENT_CACHE` 为本任务专属可写目录，实际编译器子目录仍独立。
+编译缓存位于输出盘的私有目录，按组件内容与运行时身份隔离。
 
 ## FlagCX：同规模 TP2 通信对照
 
-`launch --flagcx off` 使用 HCCL，`--flagcx on` 使用 FlagCX。原有 `--comm-backend hccl|flagcx|nccl` 保留；同时指定时必须一致，两者均省略时使用 HCCL。P800、平头哥和 NVIDIA 继续显式指定 `--vendor` 与 `--comm-backend`。FlagCX on/off 是 Ascend TP2 选择，单卡没有该模型通信对照。
+`launch --vendor ascend` 默认使用 HCCL，选择 FlagCX 时传 `--comm-backend flagcx`。其他厂商的通信后端由对应适配器选择，也可显式指定。
 
 ```bash
-python -B -m flagprof launch --flagcx off --preset accuracy \
-  --flagtree off --vendor-compiler /vendor-compiler --flaggems off \
-  --tensor-boundaries layer --tensor-blob all --store /evidence/hccl -- \
-  python -B -m flagprof.runner hf:/models/qwen --inputs-from /oracle \
-  --outputs /evidence/hccl-outputs --batch-size 1 --warmup 0 --forwards 1
+python -B -m flagprof launch --vendor ascend --comm-backend hccl --preset accuracy \
+  --flagtree off --vendor-compiler ./vendor-compiler --flaggems off \
+  --tensor-boundaries layer --tensor-blob all --store ./evidence/hccl -- \
+  python -B -m flagprof.runner hf:./models/qwen --inputs-from ./oracle \
+  --outputs ./evidence/hccl-outputs --batch-size 1 --warmup 0 --forwards 1
 
-python -B -m flagprof launch --flagcx on --preset accuracy \
-  --flagtree off --vendor-compiler /vendor-compiler --flaggems off \
-  --tensor-boundaries layer --tensor-blob all --store /evidence/cx -- \
-  python -B -m flagprof.runner hf:/models/qwen --inputs-from /oracle \
-  --outputs /evidence/cx-outputs --batch-size 1 --warmup 0 --forwards 1
+python -B -m flagprof launch --vendor ascend --comm-backend flagcx --preset accuracy \
+  --flagtree off --vendor-compiler ./vendor-compiler --flaggems off \
+  --tensor-boundaries layer --tensor-blob all --store ./evidence/cx -- \
+  python -B -m flagprof.runner hf:./models/qwen --inputs-from ./oracle \
+  --outputs ./evidence/cx-outputs --batch-size 1 --warmup 0 --forwards 1
 
-python -B -S -m flagprof report oracle \
-  --ref /evidence/hccl/group.json --cmp /evidence/cx/group.json \
+flagprof report oracle \
+  --ref ./evidence/hccl/group.json --cmp ./evidence/cx/group.json \
   --declare docs/examples/flagcx.json \
-  --out /evidence/cx-report
+  --out ./evidence/cx-report
 ```
 
 launcher 为两 rank 分别选择设备与输出目录。每次执行使用独立 worker，Gloo 控制组与模型通信组分开编号；FlagCX native owner 保留到 worker 退出。任一 worker 失败时，launcher 停止并等待本次启动的其他 worker，保留各自日志和结果。
@@ -101,23 +101,23 @@ launcher 为两 rank 分别选择设备与输出目录。每次执行使用独�
 
 ```bash
 python -B -m flagprof record --vendor ascend --preset perf \
-  --flagtree on --flaggems on --flaggems-include /inputs/include.json \
-  --store /evidence/tree-perf -- \
-  python -B -m flagprof.runner hf:/models/qwen --inputs-from /oracle \
-  --samples en-short --outputs /evidence/tree-perf-outputs --device npu:0 \
+  --flagtree on --flaggems on --flaggems-include ./inputs/include.json \
+  --store ./evidence/tree-perf -- \
+  python -B -m flagprof.runner hf:./models/qwen --inputs-from ./oracle \
+  --samples en-short --outputs ./evidence/tree-perf-outputs --device npu:0 \
   --batch-size 1 --warmup 1 --forwards 2
 
-python -B -m flagprof launch --vendor ascend --flagcx on --preset perf \
-  --flaggems off --store /evidence/cx-perf -- \
-  python -B -m flagprof.runner hf:/models/qwen --inputs-from /oracle \
-  --samples en-short --outputs /evidence/cx-perf-outputs \
+python -B -m flagprof launch --vendor ascend --comm-backend flagcx --preset perf \
+  --flaggems off --store ./evidence/cx-perf -- \
+  python -B -m flagprof.runner hf:./models/qwen --inputs-from ./oracle \
+  --samples en-short --outputs ./evidence/cx-perf-outputs \
   --batch-size 1 --warmup 1 --forwards 2
 
-python -B -S -m flagprof report /evidence/tree-perf/runs/RUN_ID --out /evidence/tree-perf-report
-python -B -S -m flagprof report /evidence/cx-perf/group.json --out /evidence/cx-perf-report
+flagprof report ./evidence/tree-perf/runs/RUN_ID --out ./evidence/tree-perf-report
+flagprof report ./evidence/cx-perf/group.json --out ./evidence/cx-perf-report
 ```
 
-对照侧分别改为 `--flagtree off --vendor-compiler /vendor-compiler` 或 `--flagcx off`，其余输入、组件、采集配置一致。`perf` 不启用精度张量探针；Qwen TP2 组报告从根模块 span 统计前向（含预热），登记模型每 rank 每次前向 56 次 AllReduce。OneRec 按生成步统计。缺少前向证据时计数判断为未知。同组设备占用比较允许 rank/device 编号不同，其他工作负载和窗口身份仍参与比较。
+对照侧分别改为 `--flagtree off --vendor-compiler ./vendor-compiler` 或 `--comm-backend hccl`，其余输入、组件、采集配置一致。`perf` 不启用精度张量探针；Qwen TP2 组报告从根模块 span 统计前向（含预热），登记模型每 rank 每次前向 56 次 AllReduce。OneRec 按生成步统计。缺少前向证据时计数判断为未知。同组设备占用比较允许 rank/device 编号不同，其他工作负载和窗口身份仍参与比较。
 
 路由覆盖可将上述 `--preset perf` 改为 `--preset coverage`。launch 现可传入 `--flaggems` 和 include 列表；TP2 的组件实际支持范围以当前运行环境和登记验证为准。缺少 listener、设备关联、格式证明或输入来源时，报告继续保留 unavailable/partial 及具体原因。
 
@@ -125,4 +125,4 @@ python -B -S -m flagprof report /evidence/cx-perf/group.json --out /evidence/cx-
 
 Python `attach(..., config={...})` 与 CLI 使用相同配置：`flagtree`、`vendor_compiler`、`tensor_boundaries`、`tensor_ops_in`。重复传递有效配置时会重新计算 include 摘要。显式组件选择或注册失败时，record、final capture 和 `with attach(...)` 均停止目标执行。
 
-`StoreView.probe_status()` 返回 `compiler_identity`、`compiler_execution`；`report oracle` 支持 Store 对 Store 或 group 对 group。组报告的数值结果按相同 rank 展示，逐 rank 性能关联及 replay 参数仍传给单个 Store 入口。Store schema 继续为 1.2。
+`StoreView.probe_status()` 返回 `compiler_identity`、`compiler_execution`；`report oracle` 支持 Store 对 Store 或 group 对 group。组报告的数值结果按相同 rank 展示，逐 rank 性能关联及 replay 参数仍传给单个 Store 入口。当前写出的 Store schema 为 `1.3`。

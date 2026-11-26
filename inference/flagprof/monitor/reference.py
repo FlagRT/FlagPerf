@@ -1,8 +1,9 @@
 import json
 import os
 from pathlib import Path
-from flagprof.store.manifest import atomic_json, proc_key
+from flagprof.store.manifest import atomic_json
 from flagprof.telemetry.contract import raw_clock
+from flagprof.delivery_refs import resolve
 
 
 def read(path):
@@ -16,7 +17,7 @@ def relocate(source, destination):
     data = read(source)
     for key in ('monitor_path', 'session_path', 'root'):
         if data.get(key):
-            data[key] = os.path.relpath((source.parent/data[key]).resolve(), destination.parent)
+            data[key] = os.path.relpath(resolve(source, data[key]), destination.parent)
     atomic_json(destination, data)
 
 
@@ -71,7 +72,7 @@ def resolve_reference(path):
     if ref.get('version') == 2:
         from .session import load
         try:
-            root = (path.parent/ref['session_path']).resolve()
+            root = resolve(path, ref['session_path'])
             state = load(root)
             if state['id'] != ref['session_id'] or state['boot_id'] != (ref.get('worker_proc_key') or {}).get('boot_id',state['boot_id']):
                 raise ValueError('monitor session identity conflict')
@@ -82,12 +83,12 @@ def resolve_reference(path):
             return dict(ref,status='absent',reason=str(error)),None,None
     candidates = []
     if ref.get('monitor_run_id') and ref.get('monitor_path'):
-        candidates = [(path.parent/ref['monitor_path']).resolve()]
+        candidates = [resolve(path, ref['monitor_path'])]
     elif ref.get('root'):
         devices = {d['entity'] for d in ref['devices'] if d.get('status') == 'available'}
         boot = (ref.get('worker_proc_key') or {}).get('boot_id')
         begin, end = ref['window']; end = end or raw_clock()
-        for candidate in (path.parent/ref['root']/'monitor').glob('*'):
+        for candidate in (resolve(path, ref['root'])/'monitor').glob('*'):
             try:
                 inventory = read(candidate/'inventory.json')
                 a = inventory['started_raw_ns']; b = inventory.get('ended_raw_ns') or raw_clock()

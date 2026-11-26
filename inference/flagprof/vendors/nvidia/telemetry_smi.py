@@ -47,7 +47,7 @@ class Provider:
                   ('temperature',) if n=='temperature.chip' else ()) for n,u,f in METRICS]
         self.inventory=dict(source='nvidia-smi',container_safe=True,initial_round_ns=duration,
             entities=[{k:v for k,v in r.items() if k not in ('values','miss')} for r in self.initial],
-            minimum_interval_ms=max(100,2*duration/1e6),call_timeout_s=max(3,5*duration/1e9),
+            interval_quantum_ms=1000, minimum_interval_ms=max(100,2*duration/1e6),call_timeout_s=max(3,5*duration/1e9),
             unavailable={'energy.total':'not_in_fallback_csv','nvidia.violation.thermal':'not_in_fallback_csv',
                          'process.device_memory':'not_in_fallback_csv','nvidia.ecc.uncorrected':'not_in_fallback_csv'})
 

@@ -110,7 +110,9 @@ class AccuracyEntryTests(unittest.TestCase):
             with patch('flagprof.devices.accelerator',return_value=True):
                 with attach(run,'ascend',preset='accuracy',config=dict(tensor_ops_in='<root>',tensor_boundaries=['<root>'])) as handle:
                     handle.register_model(model)
-                    with self.assertRaisesRegex(ValueError,'batch 1'):handle.bind_tensor_inputs(['s','other'],{})
+                    for sample_ids in ([], ['s', 'other']):
+                        with self.assertRaisesRegex(ValueError, f'one sample ID, got {len(sample_ids)}'):
+                            handle.bind_tensor_inputs(sample_ids, {})
                     handle.bind_tensor_inputs(['s'],{})
                     for _ in range(2):model(torch.tensor([[1.,2.]]))
                     probe=handle.probe_manager.tensor

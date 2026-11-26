@@ -14,7 +14,6 @@ try:
 except ImportError:
     torch = None
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'targets'))
 from flagprof.training.embedding import (POOLS, loss_definition,
                                          pool_description, prepare_embedding)
 from flagprof.training.engine import train
@@ -22,7 +21,7 @@ from flagprof.training.state import fingerprint
 
 
 def build_corpus(root, groups=6, negs=2, seed=531):
-    import make_embedding_corpus
+    from flagprof.targets import make_embedding_corpus
     root = Path(root)
     root.mkdir(parents=True, exist_ok=True)
     out = root / 'groups.jsonl'

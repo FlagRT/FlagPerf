@@ -29,34 +29,13 @@ class ObservationSession:
         self.handle = None
         self.run = None
 
-    def _detect_vendor(self):
-        """npu → ascend；PPU → thead；其余 NVIDIA → nvidia；显式变量优先。"""
-        override = os.environ.get('FLAGPROF_TRAIN_OBSERVE_VENDOR')
-        if override:
-            return override
-        import torch
-        try:
-            if torch.npu.is_available():
-                return 'ascend'
-        except (AttributeError, RuntimeError):
-            pass
-        try:
-            name = torch.cuda.get_device_name().upper()
-            if ('PPU' in name or 'P800' in name or 'XPU_VISIBLE_DEVICES' in os.environ):
-                return 'thead'
-            return 'nvidia'
-        except (RuntimeError, AssertionError):
-            return 'thead'
-
     def __enter__(self):
         if not self.enabled:
             return self
         from types import SimpleNamespace
         from flagprof.training.__main__ import observation_start
-        vendor = self._detect_vendor()
-        device = 'npu' if vendor == 'ascend' else 'cuda'
-        self.observation = observation_start(SimpleNamespace(task='external', device=device),
-                                             default_vendor=vendor, diagnostic='flagscale-integration/1')
+        self.observation = observation_start(SimpleNamespace(task='external', device=None),
+                                             diagnostic='flagscale-integration/1')
         self.handle = self.observation['handle']
         self.run = self.observation['run']
         return self

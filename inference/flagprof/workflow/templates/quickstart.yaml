@@ -1,0 +1,17 @@
+# 先填写模型目录，再运行 flagprof run flagprof.yaml --check
+# 执行 flagprof run flagprof.yaml 后，按终端给出的路径打开报告，查看面板状态和原因。
+schema_version: 1
+mode: single
+name: quickstart-perf
+target:
+  task: embedding
+  model: /path/to/Qwen3-Embedding-0.6B
+  texts: ["FlagPerf inference quickstart sample."]
+hardware:
+  vendor: auto
+profile:
+  preset: perf
+runner:
+  batch_size: 1  # 与上面的一条文本对应
+output:
+  dir: ./flagprof-results

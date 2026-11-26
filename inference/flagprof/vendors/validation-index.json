@@ -1,0 +1,32 @@
+{
+  "validation:P800-INF": {
+    "kind": "published fixture provenance",
+    "sha256": "170348dfc731a1bf8369facc622c11c23b387edd11a542e18e96f338dec0d7b3",
+    "source": "tests/fixtures/p800/provenance.json"
+  },
+  "validation:PPU-INF": {
+    "kind": "published fixture provenance",
+    "sha256": "f8e0421e83ec24630ed61a301f7af919f97602dc8622cac468e5e4178cdba5bc",
+    "source": "tests/fixtures/thead/provenance.json"
+  },
+  "validation:t8.2/host-identity-provenance": {
+    "kind": "validation receipt",
+    "sha256": "d56413852618af6abf08bc278c6c0c30d8ae758b05975f928f9b04d590086a0f"
+  },
+  "validation:t8.2/join-keys": {
+    "kind": "validation receipt",
+    "sha256": "ab88b1ddbfcbbcb1e5c473d0a76b498b12c129fdc810496251c14f06207735f5"
+  },
+  "validation:t8.3/capture-config-provenance": {
+    "kind": "validation receipt",
+    "sha256": "8ad92489f0a5a5d2fc579ab971f2637dec4d31f6cbf35f9aee13b085e7743751"
+  },
+  "validation:t8.3/nvidia-roles.reviewed": {
+    "kind": "validation receipt",
+    "sha256": "4802349c957eb1b25b37ab4d0c7cfbc9667717b374a390d1d295e2cdf653cb68"
+  },
+  "validation:t8.3/track-inventory": {
+    "kind": "validation receipt",
+    "sha256": "5479571430a1b00054d9d7546d413be6c906a485bf0fa325b8f3f07ecf4c6c7f"
+  }
+}

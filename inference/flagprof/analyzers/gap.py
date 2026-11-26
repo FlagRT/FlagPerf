@@ -6,6 +6,7 @@ import json
 import statistics
 from collections import Counter
 from . import Analyzer, Need, Requires, Result
+from .oracle import CTR_MODEL_FIELDS
 from .workspace import encode
 
 CATEGORIES=('compute','memcpy','comm','wait','unknown')
@@ -53,12 +54,18 @@ def comparable(left,right):
             issues.append(kind+':different')
             for field in sorted(set(a)|set(b)):
                 if a.get(field)!=b.get(field):differences.append(dict(field=kind+'.'+field,left=a.get(field),right=b.get(field)))
-    required={'window_identity':('warmup','forwards','repeats','profiler','dispatch','window_kind'),
-              'workload_identity':('model_files','inputs_sha256','samples','dtype','attention','software','numerics')}
     for side,context in (('left',left),('right',right)):
+        workload=context.get('workload_identity') or {}
+        workload_fields = ('model_files','inputs_sha256','samples','dtype','attention','software','numerics')
+        nonempty = ()
+        if workload.get('task') == 'ctr':
+            workload_fields = (*CTR_MODEL_FIELDS,'oracle_id','inputs_sha256','samples','batches','dtype','software','numerics')
+            nonempty = ('kind','arch','config_sha256','weight_sha256','init','oracle_id','inputs_sha256','samples','batches','dtype')
+        required={'window_identity':('warmup','forwards','repeats','profiler','dispatch','window_kind'),
+                  'workload_identity':workload_fields}
         for kind,fields in required.items():
             identity=context.get(kind) or {}
-            missing=[k for k in fields if identity.get(k) is None]
+            missing=[k for k in fields if identity.get(k) is None or (k in nonempty and not identity[k])]
             if missing:issues.append(side+':incomplete_'+kind+':'+','.join(missing))
         window=context.get('window_identity') or {}
         if window.get('window_kind')=='project_request':

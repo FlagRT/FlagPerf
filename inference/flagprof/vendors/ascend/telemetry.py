@@ -26,10 +26,17 @@ def checked(code, api):
 class DCMI:
     container_safe = False
 
-    def __init__(self, devices='all', source='auto', library='/usr/local/dcmi/libdcmi.so', processes=False):
+    def __init__(self, devices='all', source='auto', library=None, processes=False):
         if source not in ('auto','dcmi'):
             raise ValueError('Ascend source must be auto, dcmi or npu-smi')
-        self.lib = C.CDLL(library)
+        if library is not None:
+            self.lib = C.CDLL(library)
+        else:
+            from ctypes.util import find_library
+            try:
+                self.lib = C.CDLL(find_library('dcmi') or 'libdcmi.so')
+            except OSError:
+                self.lib = C.CDLL('/usr/local/dcmi/libdcmi.so')
         checked(self.lib.dcmi_init(), 'dcmi_init')
         self.targets = {}
         self.process_unavailable = {}
@@ -72,11 +79,10 @@ class DCMI:
                           [('power.draw', lambda x:x.value*.1, 'W')], scope='card', factor=.1, original_unit='0.1 W',kind='window')
         if not self._calls:
             raise ValueError('no selected DCMI chip discovered')
-        self.inventory = dict(entities=entities, source='dcmi', container_safe=False, call_timeout_s=3, minimum_interval_ms=150.378,
-                              sampling_calibration='T15.1 host-16x100-corrected: 2 * round p99 75.18898 ms',
-                              unit_validation='M0: HBM MiB, power 0.1 W, frequency MHz',
-                              unavailable={'power.limit':'A3 returned 950000 outside documented 150000..600000; unit unconfirmed',
-                                           'ascend.acg':'ACG not listed among supported A3 LP commands',
+        self.inventory = dict(entities=entities, source='dcmi', container_safe=False, call_timeout_s=3, minimum_interval_ms=100, calibration_rounds=3,
+                              unit_validation='DCMI HBM MiB, power 0.1 W, frequency MHz',
+                              unavailable={'power.limit':'registered provider does not measure a verified power limit',
+                                           'ascend.acg':'no registered ACG metric',
                                            'restriction.cumulative':'DCMI registered source has no validated cumulative restriction duration',
                                            'restriction.instant.named':'raw DCMI reason mask retained; named bit meanings not validated',
                                            **self.process_unavailable})
@@ -84,10 +90,6 @@ class DCMI:
             buf = C.create_string_buffer(128)
             rc = getattr(self.lib, api)(buf, len(buf))
             self.inventory[name] = buf.value.decode(errors='replace') if rc == 0 else dict(rc=rc)
-        if self.inventory.get('driver_version') == '26.1.1':
-            from dataclasses import replace
-            self.metrics = [replace(m,profiler_conflict=False) if m.name=='ascend.npu.activity' else m for m in self.metrics]
-            self.inventory['type13_calibration']='T15.1: final median 13 vs off 20; windowed 10 vs outside 17, same workload'
 
     def _add(self, card, chip, entity, api, args, typ, fields, *, scope='chip', factor=1,
              original_unit='', group='fast', kind='instant', conflict=False):
@@ -157,9 +159,23 @@ class DCMI:
 
 
 def Provider(devices='all', source='auto', **kwargs):
+    import subprocess
+    from .telemetry_dsmi import Provider as DSMI
     from .telemetry_smi import Provider as SMI
+    if source == 'dsmi':
+        return DSMI(devices=devices)
     if source == 'npu-smi':
         return SMI(devices=devices)
+    if source == 'auto' and _in_container():
+        try:
+            return SMI(devices=devices)
+        except (OSError, subprocess.SubprocessError, ReadError, ValueError) as smi_error:
+            try:
+                result = DSMI(devices=devices)
+            except (OSError, AttributeError, ReadError, ValueError) as dsmi_error:
+                raise ReadError('read_error', f'npu-smi: {smi_error}; DSMI: {dsmi_error}') from dsmi_error
+            result.inventory['initial_source_failure'] = str(smi_error)
+            return result
     try:
         return DCMI(devices=devices, source=source, **kwargs)
     except (OSError, ReadError) as error:
@@ -168,3 +184,17 @@ def Provider(devices='all', source='auto', **kwargs):
         result=SMI(devices=devices)
         result.inventory['initial_source_failure']=str(error)
         return result
+
+
+def _in_container():
+    from pathlib import Path
+    return Path('/.dockerenv').exists() or Path('/run/.containerenv').exists()
+
+
+def default_topology():
+    from .telemetry_dsmi import LIBRARY
+    try:
+        C.CDLL(LIBRARY if _in_container() else 'libdcmi.so')
+        return 'local'
+    except OSError:
+        return 'local' if __import__('shutil').which('npu-smi') else 'host'

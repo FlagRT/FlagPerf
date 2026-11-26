@@ -6,6 +6,8 @@ import importlib.metadata as metadata
 import importlib.util
 import json
 import os
+import platform
+import sysconfig
 from pathlib import Path
 import sys
 from functools import lru_cache
@@ -37,15 +39,34 @@ def validate_bundle(root):
     return file_sha(root/'manifest.json')
 
 
+def _version(name):
+    try:
+        return metadata.version(name)
+    except metadata.PackageNotFoundError:
+        return None
+
+
 def distribution_entry(name):
     try:
         dist = metadata.distribution(name)
     except metadata.PackageNotFoundError:
         return None
-    return Path(dist.locate_file('triton/__init__.py')).resolve()
+    entry = 'triton/__init__.py'
+    if not any(str(p) == entry for p in (dist.files or ())):
+        return None
+    return Path(dist.locate_file(entry)).resolve()
 
 
-def select(config, *, cache_root=None):
+def _installed_triton(expected):
+    entry = 'triton/__init__.py'
+    for dist in metadata.distributions():
+        if Path(dist.locate_file(entry)).resolve() == expected:
+            if any(str(p) == entry for p in (dist.files or ())):
+                return True
+    return False
+
+
+def select(config, *, cache_root=None, target=None):
     """Called in the executing process before optional dependencies import."""
     requested = config.get('flagtree')
     if requested is None:
@@ -53,11 +74,17 @@ def select(config, *, cache_root=None):
     if requested not in ('off', 'on'):
         raise ValueError('flagtree requires off or on')
     root = bundle_path(config)
+    bundle_digest = None
     if requested == 'off':
-        if root is None:
-            raise ValueError('FlagTree off requires --vendor-compiler or FLAGPROF_VENDOR_COMPILER')
-        validate_bundle(root)
-        expected = root/'triton/__init__.py'
+        if root is not None:
+            bundle_digest = validate_bundle(root)
+            expected = root/'triton/__init__.py'
+        else:
+            # A vendor-provided Triton can already be installed in this runtime.
+            spec = importlib.util.find_spec('triton')
+            expected = Path(spec.origin).resolve() if spec and spec.origin else None
+            if expected is None or distribution_entry('flagtree') == expected or not _installed_triton(expected):
+                raise ValueError('install vendor Triton or supply --vendor-compiler')
     else:
         expected = distribution_entry('flagtree')
         if expected is None or not expected.is_file():
@@ -68,13 +95,23 @@ def select(config, *, cache_root=None):
     if loaded is None:
         # Prepend only the chosen package root. Do not remove unrelated paths.
         location = str(expected.parent.parent)
-        sys.path.insert(0, location)
+        if not sys.path or sys.path[0] != location:
+            sys.path.insert(0, location)
         spec = importlib.util.find_spec('triton')
         if spec is None or Path(spec.origin).resolve() != expected.resolve():
             raise ValueError('compiler selection did not resolve to the requested provider')
     if cache_root is not None:
-        key = hashlib.sha256(str(expected.resolve()).encode()).hexdigest()[:16]
-        base = Path(os.environ.get('FLAGPROF_COMPONENT_CACHE') or cache_root)/('compiler-'+requested+'-'+key)
+        # Include the compiler tree and runtime ABI. Triton/Inductor further
+        # key their own artifacts by target architecture, options and driver.
+        from flagprof.offline.workspace import private_root
+        from flagprof.store.manifest import proc_key
+        visibility = {k:v for k,v in os.environ.items() if k.endswith('VISIBLE_DEVICES')}
+        boot = proc_key().get('boot_id')
+        identity = (bundle_digest or source_identity('triton'), requested, sysconfig.get_config_var('SOABI'), platform.machine(),
+                    boot or (platform.node(), os.getpid()), target, os.environ.get('LOCAL_RANK'), visibility,
+                    tuple(_version(name) for name in ('torch', 'torch-npu', 'triton', 'flagtree')))
+        key = hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()
+        base = private_root(cache_root) / 'components' / key
         for variable, name in (('TRITON_CACHE_DIR','triton'), ('FLAGGEMS_CACHE_DIR','flaggems'),
                                ('TORCHINDUCTOR_CACHE_DIR','inductor')):
             os.environ[variable] = str(base/name)
@@ -102,7 +139,7 @@ def _identity(module_path, version):
             digest.update(member.relative_to(root).as_posix().encode())
             digest.update(bytes.fromhex(file_sha(member)))
     return dict(status='available', provider=provider, version=version,
-                module_path=str(path), source_sha256=digest.hexdigest())
+                source_sha256=digest.hexdigest())
 
 
 class JITObservation:

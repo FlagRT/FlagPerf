@@ -8,23 +8,18 @@ import unittest
 from pathlib import Path
 
 import sys
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'targets'))
 
 try:
     from flagprof.runner import ctr as ctr_mod
     from flagprof.runner import rerank as rerank_mod
-    from flagprof.runner.rerank_common import load_package as canonical_load_package
 except ImportError:  # smoke CI runs this suite without torch; runner.ctr imports torch
     raise unittest.SkipTest('torch execution environment required')
-import rerank_common  # targets shim
 
 
 class RunnerCtrTests(unittest.TestCase):
     def _build_package(self, tmp):
-        targets_dir = str(Path(__file__).resolve().parent.parent / 'targets')
-        if targets_dir not in sys.path:
-            sys.path.insert(0, targets_dir)
-        import make_ctr_package
+
+        from flagprof.targets import make_ctr_package
         out = Path(tmp) / 'ctr'
         argv_backup = sys.argv
         sys.argv = ['make_ctr_package.py', '--samples', '8', '--seed', '531', '--out', str(out)]
@@ -54,10 +49,8 @@ class RunnerCtrTests(unittest.TestCase):
             self.assertIn('outputs', a['runs'][0]['run'])
 
     def test_run_ctr_rejects_arch_outside_contract(self):
-        targets_dir = str(Path(__file__).resolve().parent.parent / 'targets')
-        if targets_dir not in sys.path:
-            sys.path.insert(0, targets_dir)
-        import make_ctr_package
+
+        from flagprof.targets import make_ctr_package
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp) / 'ctr'
             argv_backup = sys.argv
@@ -80,19 +73,16 @@ class RunnerCtrTests(unittest.TestCase):
                           'sasrec', 'lightgcn'])
 
     def test_thin_targets_delegate_to_canonical(self):
-        import template_ctr  # targets shim module
-        import target_reranker  # targets shim module
-        from flagprof.runner.rerank_common import sha as canonical_sha
+        from flagprof.targets import template_ctr  # targets shim module
+        from flagprof.targets import target_reranker  # targets shim module
         self.assertIs(template_ctr.attach_main, ctr_mod.attach_main)
         self.assertIs(target_reranker.attach_main, rerank_mod.attach_main)
-        self.assertIs(rerank_common.load_package, canonical_load_package)
-        self.assertIs(rerank_common.sha, canonical_sha)
 
 
 class RunnerRerankTests(unittest.TestCase):
     def _build_package(self, tmp):
         import torch
-        from rerank_common import sha
+        from flagprof.runner.rerank_common import sha
         root = Path(tmp) / 'rk'
         (root / 'prepared').mkdir(parents=True)
         rows = [dict(sample_id='a', input_ids=torch.tensor([1, 2, 3], dtype=torch.int64)),
@@ -107,22 +97,21 @@ class RunnerRerankTests(unittest.TestCase):
         (root / 'manifest.json').write_text(json.dumps(manifest))
         return root
 
-    def test_canonical_loader_matches_targets_shim(self):
-        import torch
+    def test_installed_loader_preserves_samples_and_padding(self):
+        from flagprof.runner.rerank_common import load_package
         with tempfile.TemporaryDirectory() as tmp:
             pkg = self._build_package(tmp)
-            a, ma = canonical_load_package(str(pkg), batch_size=2)
-            b, mb = rerank_common.load_package(str(pkg), batch_size=2)
-            self.assertEqual(ma, mb)
-            for (ids_a, ta), (ids_b, tb) in zip(a, b):
-                self.assertEqual(ids_a, ids_b)
-                self.assertTrue(torch.equal(ta['input_ids'], tb['input_ids']))
-                self.assertTrue(torch.equal(ta['attention_mask'], tb['attention_mask']))
+            batches, manifest = load_package(str(pkg), batch_size=2)
+            self.assertEqual(manifest['score_semantics'], 'sequence_logit')
+            names, tensors = batches[0]
+            self.assertEqual(names, ['a','b'])
+            self.assertEqual(tensors['attention_mask'].sum(dim=1).tolist(), [3,2])
 
     def test_run_rerank_rejects_semantics_conflict(self):
         with tempfile.TemporaryDirectory() as tmp:
             pkg = self._build_package(tmp)
-            _, manifest = rerank_common.load_package(str(pkg))
+            from flagprof.runner.rerank_common import load_package
+            _, manifest = load_package(str(pkg))
             # package declares sequence_logit; causal request must be a hard error
             with self.assertRaises(ValueError):
                 rerank_mod.validate_package_semantics(manifest, 'causal_yesno')

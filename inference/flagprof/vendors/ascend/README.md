@@ -1,8 +1,8 @@
-# flagprof/vendors/ascend — 腾昇（cendAs / CANN）厂商适配器
+# flagprof/vendors/ascend — 昇腾（Ascend / CANN）厂商适配器
 
 ## 1. 定位与职责
 
-本目录是 flagprof 的**腾昇厂商适配层**，负责把 CANN / `torch_npu` 官方 profiler 产出的 Chrome trace
+本目录是 flagprof 的**昇腾厂商适配层**，负责把 CANN / `torch_npu` 官方 profiler 产出的 Chrome trace
 接入 flagprof 统一的"采集 → 导入 → 关联 → 台账"流水线。
 
 设计边界：**厂商特定决策只留在这里**，通用流程全部放在共享模块
@@ -18,10 +18,14 @@
 
 | 文件 | 角色 | 一句话职责 |
 |---|---|---|
-| `__init__.py` | 包标记 | 仅声明"标准库关联 + 录制 trace 支持"（本包不依赖 torch_npu 即可导入） |
+| `__init__.py` | 包标记 | 声明封存格式族 `TRACE_FAMILY = 'cann'`（本包不依赖 torch_npu 即可导入） |
 | `session.py` | 在线采集 | `AscendProfiler` 后端：封装 `torch_npu.profiler` 的采集/导出/校验 |
+| `capture.py` | 官方 raw 分析 | 将封存的 `sealed-raw/data` 复制到私有工作目录，调用 CANN 导出并检查日志和唯一的 `trace_view.json` |
+| `execution.py` | 运行环境 | 声明 NPU 设备、运行时扩展及支持的通信后端，为各 rank 选择设备 |
+| `telemetry*.py` | 设备监控 | 通过 DCMI 或 npu-smi 采集运行中设备的指标 |
+| `contracts/` | 版本化格式契约 | 保存不同版本的角色、类别和已核验的来源约束 |
 | `importer.py` | 离线导入 | 录制 trace 导入入口 + 适配器约定入口面（`device_fields` / `device_taxonomy` / `default_registry` / `field_context`） |
-| `format.py` | 源格式分类 | 版本化 CANN 记录分类法 `Taxonomy`（`cann-source-format-1`，v1/v2）：设备判定、类目、可归一化性、host_pid、launch 判定 |
+| `format.py` | 源格式分类 | 版本化 CANN 记录分类法 `Taxonomy`（v1 至 v4，默认 v4）：设备判定、类目、可归一化性、host_pid、launch 判定 |
 | `rules.py` | 关联（fixture 规则族） | CANN 显式键关联规则：`connection_id`、Enqueue/Dequeue 桥、flow、同线程嵌套 |
 | `native_rules.py` | 关联（原生归属） | 作用域级归属规则：cpu_op 嵌套 + 显式 Enqueue/Dequeue 桥（`cann-native-t8-v1`） |
 | `disposition.py` | 台账分类 | 源账本分类器：完全由 legacy inventory 驱动，逐字保留原始类目 |
@@ -68,7 +72,7 @@
   透传给共享导入事务；委托 `vendors.import_common.import_fixture(vendor='ascend', build_rules=…,
   device_fields=…, …)` 完成 prepare → O_EXCL 预约 → 派生文件 → writer 落盘 → barrier → completion。
 - **`device_taxonomy(version=None) -> SourceFormat`**：惰性导入并返回 `format.Taxonomy`
-  （缺省用 `format.VERSION`，当前为 `'2'`）——`prepare.py` 由此拿到分类法实例。
+  （缺省用 `format.VERSION`，当前为 `'4'`）——`prepare.py` 由此拿到分类法实例。
 - **`default_registry() -> dict`**：加载 `registry.json`——registry 缺省值的统一入口
   （`prepare.py` 与 `import_common.import_capture` 均改走此处）。
 - **`field_context(events)`**：只返回 `process_labels` 事件——告诉 `prepare.py` 提取
@@ -79,25 +83,10 @@
 实现共享的 `SourceFormat` 协议（`vendors/format.py`：注入式源格式契约，"no SDK or vendor-specific
 classification"）。分类决策从冻结的通用流水线（`inventory.enumerate_raw` / `chrome.adapt`）**注入**到本模块：
 
-- **版本**：`VERSION='2'`；`Taxonomy(version)` 仅接受 `'1'`/`'2'`——
-  - `LEGACY_COMPUTE = (AI_CORE, AI_VECTOR_CORE, MIX_AIC, MIX_AIV, AI_CPU)`；
-  - `CURRENT_COMPUTE = (KERNEL_AICORE, KERNEL_AIVEC, KERNEL_MIX_AIV, KERNEL_AICPU)`（CANN 新命名）；
-  - `compute` 属性：v1 只认 legacy 名，v2 = legacy + current 全集；
-  - `COPY = (SDMA_SQE, MEMCPY, MEMCPY_ASYNC, MEMSET)` → `memcpy` 类目。
-- **`identity()`**：把分类表（`algorithm='cann-source-format-1'`、compute 元组、COPY、设备进程名、
-  `communication_prefix='hcom_'`、`communication_exception='allreduceAicpuKernel'`、
-  `exception_normalizable=False`）做 sha256，返回 `{version, sha256}`；
-  `prepare.py` 将其记入源身份 `parser.taxonomy`——**分类依据随 trace 持久化、可追溯**。
-- **`context(events)`**：由 `process_name` 事件建立 pid → 进程名映射。
-- **`is_device(event, ctx)`**：`ph=='X'` 且进程名 ∈ `{'Ascend Hardware','Communication'}`。
-- **`task_type(event)`**：args 的 `Task Type`。
-- **`category(event, ctx)`**：
-  - `Communication` 进程：名称以 `hcom_` 开头（大小写不敏感）→ `comm`，否则 `unknown`；
-  - compute 任务 → `compute`；但名称为 `allreduceAicpuKernel` 的特例归 `comm`；
-  - `COPY` 任务 → `memcpy`；其余 `unknown`。
-- **`normalizable(event, ctx)`**：是设备事件、类目非 `unknown`，且**排除特例**
-  （`Ascend Hardware` 进程上的 `allreduceAicpuKernel` 不可归一化，对应 `exception_normalizable=False`）。
-- **`host_pid(event, ctx)`**：`CANN` 进程的 pid 按 `pid >> 10` 还原真实 host pid，其余原样返回。
+- 默认版本为 v4，也可按记录读取 v1、v2、v3。v1 使用早期 CANN 的 compute 任务名，v2 起加入 `KERNEL_AICORE` 等新名称。
+- `identity()` 对所选契约及其实现求摘要，并记录契约修订号。导入结果可据此核对当时使用的分类依据。
+- `context()` 和 `is_device()` 使用源进程名和版本化的轨道角色识别设备事件。`category()` 依据通信名、`Task Type` 和已登记特例生成类别。
+- `normalizable()` 检查设备轨道、排除的重复事件，以及契约是否接收具有来源时间的未知执行任务。v3/v4 的 `host_pid()` 使用已解码的宿主身份，早期版本沿用当时的 PID 映射规则。
 - **`is_launch(event)`**：`name=='Node@launch'`，或 `ph=='s'` 且 `cat=='HostToDevice'` 的 flow 起点
   ——与 `rules.py` 的两条 launch 来源一一对应。
 
@@ -150,13 +139,17 @@ classification"）。分类决策从冻结的通用流水线（`inventory.enumer
   - `profiler_disable`：`match: {task_type: 'PROFILING_DISABLE'}`；
   - 每条都带 `basis`（"Explicit profiler-control task, not user compute or graph replay."）
     与 `evidence`（具体 `trace_uid` + `loc` 溯源）。
-- `investigation`：调查元数据——候选 task_type、完整 trace 路径、
+- `investigation`：调查元数据——候选 task_type、源 trace UID、
   `not_whitelisted`（`SDMA_SQE / allreduceAicpuKernel / graph_replay / unknown`）、原始 fixture 数 28。
 - 用途：`correlate.linker.link(trace, rules, registry)` 的白名单/证据依据。
   注意：registry 缺省值统一由 `importer.default_registry()` 提供——ascend 返回本文件，
   nvidia 的同名入口返回 `{"entries": []}`（无证据登记）。
 
 ## 4. 端到端数据流
+
+默认 `perf/modules` 使用 final 采集。目标正常结束后封存 raw。`analyse` 在采集目录所在的盘创建私有工作副本，调用厂商 SDK，检查退出状态、分析日志和导出文件，成功后封存 trace。分析日志写入采集目录，SDK 写入工作副本，`sealed-raw/data` 保留原始字节。已生成的封存 trace 可以在标准库环境中用 `flagprof import "$CAPTURE" --store "$STORE"` 导入，校验通过的检查点保存在目标 Store 盘。详见[离线存储说明](../../offline/README.md)。
+
+下列流程对应显式窗口及录制样本的关联导入。
 
 1. **在线采集**：`ProfilerSession` + `AscendProfiler` → `window-XXXX/ASCEND_PROFILER_OUTPUT/trace_view.json`
    + `profiler_info*.json`（session.json manifest 由会话层维护）。
@@ -183,7 +176,7 @@ classification"）。分类决策从冻结的通用流水线（`inventory.enumer
 4. **分类法版本化、注入式、可追溯**：设备类目/可归一化性/launch 判定等分类决策集中在 `format.py`
    的版本化 `Taxonomy` 中，通过 `SourceFormat` 契约注入通用流水线（`enumerate_raw` / `adapt`），
    而不是散落在共享代码里；`identity()` 的 sha256 随 trace 持久化到 `parser.taxonomy`，
-   事后可精确知道每条 trace 用哪套分类依据导入；v1/v2 同时支持 CANN 新旧两代 Task Type 命名。
+   事后可精确知道每条 trace 用哪套分类依据导入；v1 使用旧任务名，v2 起同时识别新旧两代 CANN Task Type。
 5. **只走官方公共接口**：`torch_npu.profiler` 公共工厂 + `torch.npu` 公共 device API；
    不探测私有符号（`private_detection_symbols=[]`），无前置依赖（`collector_prerequisites=[]`）。
 6. **SDK 惰性导入**：torch/torch_npu 只在方法内部 import，本包本身可在未装 SDK 的环境导入
@@ -194,11 +187,11 @@ classification"）。分类决策从冻结的通用流水线（`inventory.enumer
 
 | 维度 | ascend（本目录） | nvidia |
 |---|---|---|
-| 源格式分类（`format.py`） | `cann-source-format-1`，v1/v2 双版本：按进程名 + `Task Type` 分类 | `kineto-source-format-1`，v1：按 Chrome `cat` 分类 |
+| 源格式分类（`format.py`） | CANN v1 至 v4：按进程名 + `Task Type` 分类 | Kineto 契约：按 Chrome `cat` 分类 |
 | host→device 关联键 | 显式 `correlation` 参数（key 名含 correlation）+ `connection_id` | `cuda_runtime/driver` 的 `correlation` + `External id` |
 | 桥接机制 | `Dequeue*` → `Enqueue*` 显式桥 + `HostToDevice` flow | `ac2g` flow |
 | dev/stream 来源 | `process_labels` `NPU n` + `Physic Stream Id` | 设备事件 args 自带 |
-| host_pid 还原 | `CANN` 进程 pid `>> 10` | pid 原样 |
+| host_pid 还原 | 按版本解码 CANN 来源 PID | pid 原样 |
 | `field_context` | 仅 `process_labels` 事件（避免全量扫描） | 全部事件 |
 | disposition 策略 | 纯 inventory 驱动 | 额外 gpu track 启发式 + `gpu_user_annotation` |
 | registry.json | 有（profiler 控制任务证据） | 无（`default_registry()` 返回空 entries） |

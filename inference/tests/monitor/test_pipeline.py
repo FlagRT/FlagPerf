@@ -31,7 +31,7 @@ with interval(handle,'measure','phase',{}):time.sleep(.7)
 '''
             with patch('subprocess.Popen',spawn):
                 result=record([sys.executable,'-c',body],store=root/'on',vendor='nvidia',preset='monitor',
-                              config=dict(monitor_interval_ms=100))
+                              config=dict(monitor_interval_ms=100,monitor_topology='local'))
             self.assertEqual(result,0)
             target=next(p.parent for p in (root/'on').glob('*/record-status.json'))
             ref=json.loads((target/'monitor-ref.json').read_text())
@@ -59,7 +59,7 @@ with interval(handle,'measure','phase',{}):time.sleep(.7)
             root=Path(folder)
             with patch('subprocess.Popen',spawn):
                 code=record([sys.executable,'-c','raise SystemExit(7)'],store=root,vendor='nvidia',preset='perf-lite',
-                            config=dict(probes='none',monitor='on'))
+                            config=dict(probes='none',monitor='on',monitor_topology='local'))
             self.assertEqual(code,7)
             status=next(root.glob('*/record-status.json'))
             self.assertEqual(json.loads(status.read_text())['target_exit']['returncode'],7)

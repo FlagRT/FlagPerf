@@ -11,6 +11,7 @@ import hashlib
 import json
 import os
 import sqlite3
+from flagprof.progress import phase
 from .disk import JSONStream,key,pack,unpack,streaming,scratch_path
 from flagprof.store.reader import Reader
 from flagprof.store.manifest import json_bytes
@@ -146,6 +147,7 @@ def verify_open(run,db_path):
         raise
 
 
+@phase("独立校验 Store 证据")
 def _verify(run,doc,*,expected_pid=None,expected_tid=None):
     from .limits import preflight_store
     run=Path(run);preflight_store(run);identities={};paths=list((run/'traces').glob('*.json'))

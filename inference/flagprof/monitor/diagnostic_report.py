@@ -1,7 +1,6 @@
 """Public task/rank diagnosis and resolvable evidence, independent of vendor SDKs."""
 import hashlib
 import json
-from html import escape
 from pathlib import Path
 from .reading import status
 
@@ -42,11 +41,24 @@ def coverage(run):
                 for key,health in detail['sources'].items():
                     if key in rows and health!='ready':rows[key]['source_gap']+=1
                 continue
-            if detail.get('scope')!='business_input':continue
-            source=detail['record'];data=source['detail'];identity=data['identity']
-            if not matches(identity):continue
-            row=rows.setdefault(identity['run_id'],dict(run_id=identity['run_id'],rank=identity['rank'],
+            receipt = event.get('kind') == 'process_exit' and detail.get('source') == 'subprocess.wait'
+            if receipt:
+                identity = detail.get('diagnostic_identity') or {}
+            elif detail.get('scope') == 'business_input':
+                source = detail['record']
+                data = source['detail']
+                identity = data['identity']
+            else:
+                continue
+            if not identity.get('run_id') or not matches(identity):continue
+            row=rows.setdefault(identity['run_id'],dict(run_id=identity['run_id'],rank=identity.get('rank'),
                 registered_execution=0,load_or_warmup_excluded=0,no_active_interval=0,source_gap=0,probe_gap=0))
+            row['pid'] = (identity.get('proc_key') or {}).get('pid')
+            if receipt:
+                row.update(returncode=detail['returncode'], exit_ns=event['ts'], exit_clock=event.get('clk'))
+                continue
+            if data.get('started_ns') is not None:
+                row.update(started_ns=data['started_ns'], start_clock=source.get('clk'))
             if data['action']=='gap':row['probe_gap']+=1
             if data['action']!='heartbeat':continue
             if detail.get('source_status','ready')!='ready':row['source_gap']+=1
@@ -107,29 +119,3 @@ def panel(run):
 
 def anchor(identity):
     return 'diagnostic-'+hashlib.sha256(json.dumps(list(identity)).encode()).hexdigest()[:20]
-
-
-def html(data):
-    labels={'oom.device':'设备 OOM','hang.heartbeat':'目标心跳超时','hang.no_progress':'执行进度停滞',
-            'comm.timeout':'通信调用超时','proc.exit':'任务异常退出'}
-    rows=[]
-    for f in data['findings']:
-        relative=f.get('task_relative_ns');detail=f.get('detail',{})
-        values=[f['run_id'],f['rank'],labels.get(f['rule'],f['rule']),f['state'],
-            relative/1e9 if relative is not None else '未映射',f.get('first_detected',f['observed_at']),
-            detail.get('name') or detail.get('api') or f.get('termination_reason',''),
-            detail.get('group',''),detail.get('sequence','')]
-        links=' '.join('<a href="#'+anchor(ref)+'">'+escape(':'.join(map(str,ref)))+'</a>' for ref in f['evidence'])
-        rows.append('<tr>'+''.join('<td>'+escape(str(v))+'</td>' for v in values)+'<td>'+links+'</td></tr>')
-    records=''.join('<details id="'+anchor(r['identity'])+'"><summary>'+escape(':'.join(map(str,r['identity'])))+
-        '</summary><pre>'+escape(json.dumps(r['record'],ensure_ascii=False,indent=2))+'</pre></details>' for r in data.get('evidence',[]))
-    return ('<section><h2>业务故障诊断</h2><p>任务事件 → 节点判定 → 稳定证据引用。'
-        '相对时间从目标诊断启动计起，单位为秒；首次检出时刻为来源单调时钟纳秒。'
-        '通信超时表示主机调用超过观测期限，API 返回不证明设备完成。</p>'
-        '<details><summary>执行进度覆盖（观测次数）</summary><p>registered_execution：已登记执行区间；'
-        'load_or_warmup_excluded：加载/预热排除；no_active_interval：无活动区间；source_gap/probe_gap：输入读取/探针缺口。空表表示未收到目标进度观测。'
-        '观测次数不等于墙钟覆盖率。</p><pre>'+escape(json.dumps(data.get('progress_coverage',[]),ensure_ascii=False,indent=2))+'</pre></details>'
-        '<p>读取状态：'+escape(data['status'])+'</p><table><tr>'+
-        ''.join('<th>'+x+'</th>' for x in ['任务','rank','异常','状态','异常起点（相对秒）','首次检出','最后活动/退出关联','通信域','调用序号','证据'])+
-        '</tr>'+''.join(rows)+'</table>'+records+'<details><summary>证据覆盖</summary><pre>'+
-        escape(json.dumps({k:data.get(k) for k in ('coverage','missing_evidence','reason')},ensure_ascii=False,indent=2))+'</pre></details></section>')

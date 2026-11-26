@@ -42,7 +42,7 @@ class EntryTests(unittest.TestCase):
             self.assertIn(result['status'],('ok','partial'))
             self.assertGreater(result['coverage']['counter_events'],0)
             finish_capture(capture)
-            imported=import_bundle(capture,store=root/'analysis',work=root/'import-work',scratch=root/'import-scratch',run_id='imported')
+            imported=import_bundle(capture,store=root/'analysis',run_id='imported')
             imported_run=Path(imported['run'])
             self.assertEqual(resolve_reference(imported_run/'monitor-ref.json')[1],resolve_reference(target/'monitor-ref.json')[1])
             moved=root.with_name(root.name+'-moved')
@@ -50,7 +50,7 @@ class EntryTests(unittest.TestCase):
             root=moved
             generate(root/'analysis/imported',root/'moved-report')
             self.assertNotEqual(json.loads((root/'moved-report/result.json').read_text())['results']['resource']['status'],'unavailable')
-            code=launch([sys.executable,'-c',BODY],store=root/'group',comm_backend='nccl',preset='perf-lite',config=config,timeout=30)
+            code=launch([sys.executable,'-c',BODY],store=root/'group',vendor='nvidia',comm_backend='nccl',preset='perf-lite',config=config,timeout=30)
             self.assertEqual(code,0)
             refs=[json.loads(p.read_text()) for p in (root/'group').glob('rank-*/delivery/*/monitor-ref.json')]
             self.assertEqual(len(refs),2)

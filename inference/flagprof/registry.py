@@ -7,6 +7,7 @@ import importlib
 import json
 from pathlib import Path
 import re
+from .vendors import vendor_names
 
 BUILTINS = (
     dict(id='thead', kind='vendor', version='1', module='flagprof.vendors.thead.session',
@@ -59,7 +60,7 @@ class Registry:
                 raise ValueError('duplicate descriptor id: ' + d['id'])
             if not isinstance(d.get('requires'), list) or not all(isinstance(x,str) for x in d['requires']):
                 raise ValueError('requires must be a list of names')
-            if d['kind'] == 'vendor' and d.get('format_vendor') not in ('ascend', 'nvidia', 'thead', 'kunlunxin'):
+            if d['kind'] == 'vendor' and d.get('format_vendor') not in vendor_names():
                 raise ValueError('unsupported format family')
             self._items[d['id']] = d
 
@@ -78,7 +79,7 @@ class Registry:
         if not callable(factory):
             raise ValueError('factory is not callable')
         path = Path(module.__file__)
-        identity = dict(d, implementation=dict(path=str(path), sha256=hashlib.sha256(path.read_bytes()).hexdigest()))
+        identity = dict(d, implementation=dict(module=module.__name__, sha256=hashlib.sha256(path.read_bytes()).hexdigest()))
         if d['kind']=='analyzer':
             root=Path(__file__).resolve().parent.parent
             paths=sorted(p for p in (root/'flagprof').rglob('*') if p.is_file() and p.suffix in ('.py','.json') and '__pycache__' not in p.parts)

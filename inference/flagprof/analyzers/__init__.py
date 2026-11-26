@@ -58,9 +58,7 @@ class Analyzer:
         from pathlib import Path
         import tempfile
         if not isinstance(store,StoreView):raise TypeError('Analyzer.run requires StoreView')
-        directory=params.get('work')
-        if directory:Path(directory).mkdir(parents=True,exist_ok=True)
-        temporary=tempfile.TemporaryDirectory(prefix='analyzer-',dir=directory)
+        temporary=tempfile.TemporaryDirectory(prefix='analyzer-')
         try:
             limits=Limits(**params.get('limits',{}))
             workspace=Workspace(store,temporary.name,limits)

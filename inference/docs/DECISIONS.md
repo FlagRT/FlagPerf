@@ -1,5 +1,8 @@
 > 本文从 v2 设计工作区迁入，保留设计、阶段裁决与历史状态。当前代码入口及两人协作方式见 [文档导航](README.md)，可执行命令见 [使用说明](usage.md)。未发布的本地实验与任务书出处见删除前固定 Git 提交中的 [历史引用索引](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/history-references.md)，其出处保留。
 
+本文记录当时的配置、命令和验收范围。现行命令与目录管理规则见[使用指南](usage.md)。
+
+
 # 决策记录（DECISIONS）
 
 > 所有"已定"与"待定"事项的唯一登记处。设计文档中任何标注为决策的内容都应在此有条目。
@@ -73,6 +76,12 @@
 **决策**：`record` / `report` / `campaign` / `watch` / `inspect`。新增分析能力只增加分析器名或预设，不增加顶层命令。
 **理由**：v1 的 10 个命令是按分析种类长出来的，命令数随能力线性增长（[01 §2.4](https://github.com/FlagRT/FlagPerf/blob/941e06f022521e48c89fecac2abe078960a6715a/inference/docs/history/01-diagnosis.md)）。
 **影响**：[09](09-cli-and-campaign.md)。
+
+**2026-11-25 单卡工作流增补。** 新增顶层动词 `init` 与 `run`。`init` 从安装包生成配置，`run` 把 Schema v1 的 `single` 任务编译为既有采集、校验、runner 和报告命令，并记录各步骤实际产物。任务执行状态与报告证据状态分别保存。首批模板为 quickstart、custom-script 和 cpu-demo。[使用示例](usage.md#单卡工作流)
+
+**2026-11-25 对照与双卡增补。** 同一入口支持 `compare` 模式和 `single` 的 TP2 场景，增加 compare 和 tp2 两份模板。Oracle 接受同类 Store 或完整组，性能报告按可核对的共同计时口径比较。工作流沿用实际采集、launch、inspect 和报告命令。组报告按显式 rank 核对 runner 和 Store 的原始身份，并保留双方已知的组件源码摘要。[使用示例](usage.md#双卡与对照)
+
+**2026-11-25 计算图与批量运行增补。** 三批场景验收完成后，冻结工作流 Schema v1 的四种模式和七份模板。`export` 调用独立 CPU 导出器，使用图包 manifest 中的格式、验证和文件记录。`batch` 将内联、内置或外部名册交给原生 A/A 驱动，沿用逐模型身份、passed/failed/blocked 计数及退出码。复跑使用新的输出目录，并按原始来源定位输入。[使用示例](usage.md#计算图与批量运行)
 
 ### D10 — 先做 Spike-C，再冻结 schema
 
@@ -749,7 +758,7 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 
 **决定**：以 04 轮冻结候选逐项整合当前 dev-zkm。CLI/Python record/attach 默认 final；windowed 显式保留。Plan B 的 inspect/finalize/StoreView 分页迭代默认有界，旧全量 API 维持返回语义。正常退出、封存、身份绑定、原件守恒与失败后新 run 恢复均保留。
 
-**部署条件**：capture、Store、work、scratch 和官方分析工作副本位于实际 ext4；在目标启动/导入产物创建前检查挂载类型，不自动搬运。record 的 store 是交付根，实际 Store 为 runs 子目录，允许 delivery/work。seal 临时文件放在已检查的输出目录旁，避免默认 tmpfs。
+**当次验收环境**使用 ext4 保存采集、导入结果和分析工作副本。当时的实现检查挂载类型。现行版本按使用者选择的目录安排存储，见[使用指南](usage.md)。
 
 **授权与历史**：本次用户授权生产整合及默认切换，使用新的登记与验证目录；旧 STOP、失败现场、冻结候选及原结论保留，不调用旧自动发布脚本。性能接受沿用初期短 trace 决定，不新设 30 秒 SLO，不补写历史吞吐失败为通过。
 
@@ -1547,9 +1556,9 @@ review 的 R1–R8 逐条核对后**全部采纳**；正文按下表修改。
 6. 程序计账/监控。常规工程问题自行解决；冻结契约、签名/指标/归因口径、资源/模型/算子范围或实验类型变化时仅暂停受影响工作提交决策。新事实不改写历史失败。源码/精简证据本地提交，不 push。
 7. 本批工程验收不代替 P4 退出复审，P2 全退出仍含 P2b；OneRec 真实门限沿既有安排。
 
-2026-10-30 资源补充：用户明确允许 A100 官方采集与封存原件使用独立 overlay 目录，校验传回本地 ext4 后导入、报告、重开；导入和查询的 ext4 准入不变。当前设备登记为 `GPU-1d3dcb92-51c7-82d9-d85f-c363449d4a78`，原预算不变。公共入口使用显式 `record --capture-only --capture-filesystem overlay`，仅 NVIDIA 官方 final 采集可用。
+2026-10-30 资源补充：用户明确允许 A100 官方采集与封存原件使用独立 overlay 目录，校验传回本地 ext4 后导入、报告、重开；导入和查询的 ext4 准入不变。设备身份随当次证据登记，原预算不变。当次仅对 NVIDIA 官方 final 采集开放过文件系统选项。该入口已移除，现行版本直接使用所选输出目录。
 
-2026-10-30 路径续接记录：原 `/home` ext4 剩余约 67 MiB 时，FlagGems 导入出现 ENOSPC，封存与失败现场保留。另核实 `/var/tmp` 为 `/dev/sda3` 上的 ext4（准入时约 3.2 GiB 可用），在 `/var/tmp/flagprof-batch2-remaining-20261030` 续接后续运行；复制完整预算账本，保留原首验收起点和所有失败计账，原账本记录 continued_at 指针。独立短路径 CI 目录为 `/var/tmp/flagprof-batch2-ci-20261030`。这些是既定 ext4 约束内的路径修复，没有增加设备／时间预算。已完成中间目录另有逐文件 SHA256 验证的 dtfs 归档副本；本批尚未删除原目录，归档释放不再是推进前置条件。
+2026-10-30 路径续接记录：原 `/home` ext4 剩余约 67 MiB 时，FlagGems 导入出现 ENOSPC，封存与失败现场保留。另核实 `/var/tmp` 为 `/dev/sda3` 上的 ext4（准入时约 3.2 GiB 可用），后续运行与 CI 使用独立临时目录，预算账本保留首验收起点、续接位置和所有失败计账。这些是既定 ext4 约束内的路径修复，没有增加设备／时间预算。已完成中间目录另有逐文件 SHA256 验证的 dtfs 归档副本；本批尚未删除原目录，归档释放不再是推进前置条件。
 
 ## 待定问题（需用户拍板）
 

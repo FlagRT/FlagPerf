@@ -7,21 +7,18 @@ import unittest
 from pathlib import Path
 
 import sys
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'targets'))
 try:
     from flagprof.runner.ctr import (load_ctr_package, build_model, weight_sha256,
                                      CtrCallable, ARCH_CONFIG, prepare_inputs)
 except ImportError:  # smoke CI runs this suite without torch; runner.ctr imports torch
     raise unittest.SkipTest('torch execution environment required')
-from make_ctr_package import SCHEMA
+from flagprof.targets.make_ctr_package import SCHEMA
 
 
 def build_ctr_package(root, samples=8, corrupt=None, seed=531):
     import sys
-    targets_dir = str(Path(__file__).resolve().parent.parent / 'targets')
-    if targets_dir not in sys.path:
-        sys.path.insert(0, targets_dir)
-    import make_ctr_package
+
+    from flagprof.targets import make_ctr_package
     root = Path(root)
     out = root / 'ctr-seq'
     argv_backup = sys.argv

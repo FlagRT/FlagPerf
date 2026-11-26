@@ -66,13 +66,13 @@
   "notes": {
     "assessment_limit": "P800 XPyTorch 2.9 FlagRT v2 observed Kineto structure; not capture completeness, occupancy metrics, or NVIDIA hardware semantics.",
     "evidence_sources": [
-      "docs/kunlunxin/inference-v2.md"
+      "validation:P800-INF"
     ],
     "labels": [],
     "conditional_dependencies": []
   },
   "open_unknown": true,
-  "revision": 1,
+  "revision": 2,
   "roles": {
     "allowed_non_device_categories": [
       "gpu_user_annotation"

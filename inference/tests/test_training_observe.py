@@ -8,6 +8,7 @@ uses over a synthetic training-interval store.
 """
 import json
 import os
+import sys
 from pathlib import Path
 import tempfile
 import unittest
@@ -69,6 +70,47 @@ class TrainingMonitorWiringTests(unittest.TestCase):
         closed = json.loads(Path(monitoring['reference']).read_text())
         self.assertIsNotNone(closed.get('reclaim'), 'monitor close left no reclaim receipt')
 
+    def test_inference_and_training_use_host_sidecar_outside_checkout(self):
+        """The monitor sidecar itself always runs locally. Training attempts
+        the agent session first; with the agent start forced to fail it must
+        fall back to that host sidecar and keep diagnosis off."""
+        import subprocess
+        from unittest.mock import Mock
+        from flagprof.monitor.lifecycle import Monitor
+        from flagprof.training.__main__ import monitor_start
+        cwd = Path.cwd()
+        self.addCleanup(os.chdir, cwd)
+        os.chdir(self.root)
+        with patch.dict(os.environ):
+            os.environ.pop('PYTHONPATH', None)
+            for vendor in ('thead', 'kunlunxin'):
+                root = self.root/vendor
+                root.mkdir()
+                monitor = Monitor(root, root/'default.json', vendor, dict(monitor='on'))
+                try:
+                    receipt = json.loads(monitor.path.read_text())
+                    self.assertEqual((receipt['topology'], receipt['pre_sample']), ('local', 'available'))
+                finally:
+                    monitor.close()
+                real_popen = subprocess.Popen
+                state = {'calls': 0}
+
+                def popen(*args, **kwargs):
+                    state['calls'] += 1
+                    if state['calls'] == 1:  # the agent supervisor launch
+                        child = Mock()
+                        child.poll.return_value = 1
+                        return child
+                    return real_popen(*args, **kwargs)
+
+                with patch('flagprof.monitor.subscriptions.request', side_effect=ConnectionRefusedError), \
+                     patch('subprocess.Popen', side_effect=popen):
+                    obs = monitor_start(root, vendor, 1, 0)
+                try:
+                    self.assertEqual((obs['topology'], obs['diagnose']), ('local', 'off'))
+                finally:
+                    obs['close']()
+
     def test_local_fallback_keeps_diagnose_off(self):
         """Force only the agent supervisor to fail; the local sidecar must
         take over with the .local.json reference and diagnosis honestly off."""
@@ -104,6 +146,29 @@ class TrainingMonitorWiringTests(unittest.TestCase):
                           'fallback error must name the underlying cause')
         finally:
             monitoring['owner'].close()
+
+    def test_coverage_reuses_agent_monitor_and_records_diagnosis_availability(self):
+        from unittest.mock import Mock
+        from flagprof.probes.config import resolve
+        from flagprof.training.__main__ import monitor_start, record_monitor_status
+        with patch('flagprof.monitor.subscriptions.request', return_value=dict(session_id='watch')), \
+             patch('subprocess.Popen') as start:
+            monitoring = monitor_start(self.root, 'ascend', 1, 0, preset='coverage')
+            try:
+                start.assert_not_called()
+                _, config = resolve('coverage', monitoring['config'])
+                self.assertEqual((config['monitor_topology'], config['diagnose']), ('agent', 'off'))
+                receipt = self.root/'rank-0-ref.json'
+                key = dict(pid=13)
+                data = json.loads(Path(monitoring['reference']).read_text())
+                data.update(worker_proc_key=key, subscription_status='registered', target_id='rank-0')
+                receipt.write_text(json.dumps(data))
+                handle = Mock(monitor_enabled=True, monitor_reference=receipt, state=dict(process=key))
+                record_monitor_status(handle, monitoring, 'npu:0')
+                self.assertEqual((handle.state['monitor_topology'], handle.state['monitor_diagnose']), ('agent', 'off'))
+                self.assertIn('coverage', handle.state['monitor_diagnose_reason'])
+            finally:
+                monitoring['close']()
 
     def test_failed_watch_never_enables_agent_diagnosis(self):
         from unittest.mock import Mock
@@ -192,7 +257,96 @@ class TrainingMonitorWiringTests(unittest.TestCase):
         self.assertFalse((self.root/'monitor-ref.json').exists())
 
 
+class ObservationPlatformTests(unittest.TestCase):
+    def test_shared_cuda_runtime_selects_physical_vendor_or_requires_override(self):
+        from types import SimpleNamespace
+        from unittest.mock import Mock
+        from flagprof.training.__main__ import observation_platform
+        cuda = Mock()
+        cuda.is_available.return_value = True
+        with patch.dict(sys.modules, torch=SimpleNamespace(cuda=cuda)), patch.dict(os.environ, clear=True), \
+             patch('flagprof.vendors.shutil.which', return_value=None):
+            for name, vendor in (('Kunlun P800 OAM', 'kunlunxin'), ('PPU-ZW810E', 'thead'),
+                                 ('NVIDIA H100', 'nvidia')):
+                cuda.get_device_name.return_value = name
+                self.assertEqual(observation_platform('cuda:3', None), (vendor, 'cuda:3'))
+                cuda.get_device_name.assert_called_with(3)
+            cuda.get_device_name.return_value = 'GPU'
+            with self.assertRaisesRegex(ValueError, 'FLAGPROF_TRAIN_OBSERVE_VENDOR'):
+                observation_platform('cuda:3', None)
+            os.environ['XPU_VISIBLE_DEVICES'] = '5,2,4,1'
+            self.assertEqual(observation_platform('cuda:3', None)[0], 'kunlunxin')
+            os.environ['FLAGPROF_TRAIN_OBSERVE_VENDOR'] = 'thead'
+            self.assertEqual(observation_platform('cuda:3', None)[0], 'thead')
+
+    def test_p800_prerequisites_precede_torch_and_restore_environment(self):
+        from flagprof.training import __main__ as cli
+        seen = []
+        def observe(args):
+            seen.append((os.environ['XPU_ENABLE_PROFILER_TRACING'], os.environ['XPU_CUPTI_ENABLE_DEVICE']))
+        settings = dict(FLAGPROF_TRAIN_OBSERVE='store', FLAGPROF_TRAIN_OBSERVE_VENDOR='kunlunxin',
+                        XPU_CUPTI_ENABLE_DEVICE='7', LOCAL_RANK='2')
+        with patch.dict(os.environ, settings, clear=True), patch.object(cli, 'execute', side_effect=observe):
+            opts = ['--device', 'cuda:3', '--outputs', 'unused']
+            cli.main(opts)
+            cli.main(opts + ['--ddp'])
+            self.assertEqual(seen, [('1', '3'), ('1', '2')])
+            self.assertEqual(os.environ['XPU_CUPTI_ENABLE_DEVICE'], '7')
+            self.assertNotIn('XPU_ENABLE_PROFILER_TRACING', os.environ)
+
+    def test_final_capture_preserves_global_rank_and_binds_local_rank(self):
+        from contextlib import redirect_stdout
+        from io import StringIO
+        from types import SimpleNamespace
+        from flagprof.offline.capture import capture_target, record_final
+        cp = SimpleNamespace(returncode=7, timed_out=False)
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, FLAGPROF_LAUNCH_WORKER='1', LOCAL_RANK='1'), \
+             patch('flagprof.offline.process.run_owned', return_value=cp) as launch, redirect_stdout(StringIO()):
+            code = record_final([sys.executable, '-c', 'pass'], store=tmp, vendor='kunlunxin', rank=4)
+            self.assertEqual(code, 7)
+            self.assertEqual(launch.call_args.kwargs['env']['XPU_CUPTI_ENABLE_DEVICE'], '1')
+            config, = Path(tmp).glob('capture-*/record-config.json')
+            self.assertEqual(json.loads(config.read_text())['rank'], 4)
+            with patch('flagprof.vendors.kunlunxin.execution.initialize', side_effect=RuntimeError('bind')) as bind:
+                with self.assertRaisesRegex(RuntimeError, 'bind'):
+                    capture_target(tmp, 'kunlunxin', 'perf', ['-c', 'pass'], rank=4)
+                bind.assert_called_once_with(1)
+
+    def test_distributed_perf_and_modules_use_managed_capture_signature(self):
+        from flagprof.training import distributed
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, RANK='4', LOCAL_RANK='1', WORLD_SIZE='8'), \
+             patch('flagprof.vendors.kunlunxin.execution.initialize', return_value='cuda:1'), \
+             patch('flagprof.offline.capture.record_final', autospec=True, return_value=0) as capture:
+            for preset in ('perf', 'modules'):
+                root = Path(tmp)/preset
+                rc = distributed.main(['--store', str(root), '--vendor', 'kunlunxin', '--preset', preset,
+                                       '--', '--ddp'])
+                self.assertEqual(rc, 0)
+                self.assertEqual(capture.call_args.kwargs['store'], root/'rank-4'/'store')
+                self.assertEqual(capture.call_args.kwargs['rank'], 4)
+                self.assertEqual(json.loads((root/'rank-4'/'worker.json').read_text())['status'], 'complete')
+
+
 class TrainingReportAlignmentTests(unittest.TestCase):
+    def test_rank_index_links_open_from_relative_output_directory(self):
+        from urllib.parse import unquote
+        import re
+        from flagprof.training.group import build
+        with tempfile.TemporaryDirectory(dir='.') as tmp:
+            root = Path(tmp)/'stores #1'
+            run = create_run(root/'rank-0')
+            finalize(run)
+            report = run.parent/(run.name+'-report')
+            report.mkdir()
+            (report/'report.html').write_text('ready')
+            (run/'oracle.json').write_text('{}')
+            out = Path(tmp)/'reports'
+            build(root, out)
+            links = re.findall(r'\]\(([^)]+)\)', (out/'group.md').read_text())
+            self.assertEqual({(out/unquote(link)).resolve() for link in links},
+                             {p.resolve() for p in (report/'report.html', run/'manifest.json', run/'oracle.json')})
+            self.assertFalse(any(Path(link).is_absolute() for link in links))
+
     def test_report_renders_training_panel_from_interval_store(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

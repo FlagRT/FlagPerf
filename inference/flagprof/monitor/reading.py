@@ -94,12 +94,12 @@ def events(run, types=None, *, work=None, limits=None, report=None):
             if not overlap(segment['window'],state['reference']['window']): continue
             try:
                 with read_lease(state['path'],segment['id']) as directory, StoreView(directory) as source:
-                    for stored in source.iter_events(types,work=work,limits=limits):
+                    for stored in source.iter_events(types,limits=limits):
                         yield normalize(stored)
             except (OSError,ValueError) as error:
                 report['errors'].append(dict(segment=segment['id'],reason=str(error),
                                              recorded_interruption=segment.get('reason')))
         return
     with StoreView(state['path']) as source:
-        for stored in source.iter_events(types, work=work, limits=limits):
+        for stored in source.iter_events(types, limits=limits):
             yield normalize(stored)

@@ -96,12 +96,12 @@
     "assessment_limit": "Coherent interpretation in the registered scope does not prove capture completeness, partial track loss detection, or unobserved configurations.",
     "conditional_dependencies": [],
     "evidence_sources": [
-      "docs/validation/t8.3/capture-config-provenance.json",
-      "docs/validation/t8.3/track-inventory.json",
-      "docs/validation/t8.2/host-identity-provenance.json",
-      "docs/validation/t8.3/nvidia-roles.reviewed.json"
+      "validation:t8.3/capture-config-provenance",
+      "validation:t8.3/track-inventory",
+      "validation:t8.2/host-identity-provenance",
+      "validation:t8.3/nvidia-roles.reviewed"
     ],
-    "join_risks_source": "docs/validation/t8.2/join-keys.json#risks",
+    "join_risks_source": "validation:t8.2/join-keys#risks",
     "labels": [
       {
         "basis": "structural",
@@ -181,7 +181,7 @@
     "previous_support_scope": "Recorded T8 eager single-device stack only; older/other hardware samples are compatibility regression, not verified support"
   },
   "open_unknown": true,
-  "revision": 2,
+  "revision": 3,
   "roles": {
     "allowed_non_device_categories": [
       "gpu_user_annotation"

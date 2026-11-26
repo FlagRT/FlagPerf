@@ -43,8 +43,7 @@ class VerificationCache:
     def __init__(self, run, root=None):
         self.run = Path(run).resolve()
         if root is None:
-            from .workspace import locations
-            root, _ = locations(self.run.parent, key='query-'+self.run.name)
+            raise ValueError('verification cache requires an operation directory')
         self.root = Path(root).resolve()
         if self.root.is_relative_to(self.run) or self.run.is_relative_to(self.root):
             raise ValueError('verification cache and Store run must be separate')
@@ -55,11 +54,10 @@ class VerificationCache:
         """An unavailable/oversized cache identity falls back to full validation."""
         try:
             registration = read_json(self.run/'plan-b-capture.json')
-            bundle = Path(registration['bundle_path'])
-            if registration.get('format_version') == 2:
-                if bundle.is_absolute():return None
-                bundle = self.run/bundle
-            bundle = bundle.resolve()
+            from flagprof.delivery_refs import resolve
+            if registration.get('format_version') == 2 and Path(registration['bundle_path']).is_absolute():
+                return None
+            bundle = resolve(self.run/'plan-b-capture.json', registration['bundle_path'])
             capture = {str(p.relative_to(bundle)): list(identity(p)) for p in
                        walk_files(bundle, max_files=16384, max_entries=32768)}
             result = dict(version=VERSION, run=str(self.run), validator=validator_identity(),
@@ -93,8 +91,6 @@ class VerificationCache:
             payload = dict(binding=binding, verified=verified)
             envelope = dict(payload=payload, sha256=hashlib.sha256(json_bytes(payload)).hexdigest())
             if len(json_bytes(envelope)) > METADATA_BYTES:return
-            from .workspace import check_disk
-            check_disk(self.root)
             self.root.mkdir(parents=True, exist_ok=True)
             atomic_json(self.path, envelope)
         except (OSError, ValueError):

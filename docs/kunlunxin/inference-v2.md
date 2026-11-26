@@ -12,36 +12,25 @@
 sha256:cac5ddae5f62b356622858dd4f0ea0f82d489cf0cb71e7230f0f97797c25605a
 ```
 
-容器解释器使用 `/root/miniconda/envs/python310_torch29_cuda/bin/python`，默认解释器不保证匹配。已测 Python 3.10.18、PyTorch 2.9.0+cu129、Transformers 4.57.1、FlagGems 4.2.1rc0、FlagTree 0.6.1+xpu3.6。SMI 查询字段分别记录 driver `5.0.21.47`、XPU-RT `10.2`，不与 SMI 页眉版本混用。
+历史验证镜像中的解释器为 `/root/miniconda/envs/python310_torch29_cuda/bin/python`，默认解释器不保证匹配。已测 Python 3.10.18、PyTorch 2.9.0+cu129、Transformers 4.57.1、FlagGems 4.2.1rc0、FlagTree 0.6.1+xpu3.6。SMI 查询字段分别记录 driver `5.0.21.47`、XPU-RT `10.2`，不与 SMI 页眉版本混用。
 
-采集进程必须在导入 torch 前设置：
-
-```bash
-export XPU_ENABLE_PROFILER_TRACING=1
-export XPU_CUPTI_ENABLE_DEVICE=0
-export TOKENIZERS_PARALLELISM=false
-export RAYON_NUM_THREADS=4
-export OMP_NUM_THREADS=4
-export OPENBLAS_NUM_THREADS=4
-```
-
-`XPU_CUPTI_ENABLE_DEVICE` 是容器逻辑卡号。TP2 launcher 为每个 worker 设置对应 rank；不得把宿主物理编号直接写作逻辑编号。只设置第一个变量可能退出 0 却没有设备轨；因此还需检查真实设备事件与导入账本。
+0.3.0 的 `record` 和 `launch` 会在官方采集进程加载 torch 前设置追踪变量，多卡时为每个 rank 分配逻辑设备。直接在已有程序内调用 `flagprof.attach()` 时，需在加载 torch 前设置 `XPU_ENABLE_PROFILER_TRACING=1` 和 `XPU_CUPTI_ENABLE_DEVICE`（本进程的逻辑卡号）。采集完成后检查设备事件与导入账本。
 
 ## 设备身份与隔离
 
 使用宿主 `xpu-smi -m`、`xpu-smi -i PHYSICAL_ID -q` 核对 P800 OAM、PCI BDF、UUID、minor、占用和健康状态。按查询得到的 `/dev/xpuN` 和 `/dev/xpuctrl` 映射选定卡，不能根据 SMI 编号猜 minor。运行前通过调度器或站点租约机制保留设备，运行后核对进程表与显存回收；Inference CLI 不会自动获取 Base 的 DeviceLease。其他用户的容器与进程不能作为清理对象。
 
-将宿主查询所得身份写入 JSON 并只读挂载到容器，设置 `FLAGPROF_P800_IDENTITY` 为容器内路径。接口结构如下；字段值必须来自本机查询：
+采集器默认查询 `xpu-smi`，按 UUID 关联逻辑设备。容器无法读取完整身份时，将宿主查询结果写入 JSON 并只读挂载到容器，设置 `FLAGPROF_P800_IDENTITY` 为容器内路径。接口结构如下；字段值必须来自本机查询：
 
 ```json
-{"source":"xpu-smi","devices":[{"model":"P800","uuid":"<queried UUID>","pci_bdf":"<queried BDF>","driver":"5.0.21.47","xpu_smi_runtime":"10.2","host_device_node":"/dev/xpuN"}]}
+{"source":"xpu-smi","devices":[{"model":"P800","uuid":"<queried UUID>","pci_bdf":"<queried BDF>","driver":"<queried driver>","xpu_smi_runtime":"<queried XPU-RT version>","host_device_node":"/dev/xpuN"}]}
 ```
 
 `devices` 按容器逻辑顺序排列，适配器逐卡核对 torch 返回的 UUID。JSON 是操作者提供的测量记录，不是硬件证明签名；应同时保留原始 SMI 输出、容器参数和哈希供审查。
 
 ## 最小运行
 
-从 `inference/` 执行，按 [公共使用说明](../../inference/docs/usage.md) 准备有足够空间的 ext4 输出盘、TMPDIR 和 scratch。模型权重单独准备，不随仓库分发。以下是命令接口速查，路径、环境变量和输入文件需先按 [快速开始](inference-v2-quickstart.md) 准备：
+在激活的 XPyTorch 环境安装 FlagPerf，或从仓库的 `inference/` 目录运行。按[公共使用说明](../../inference/docs/usage.md)选择有足够可用空间的输出盘。模型权重单独准备，不随仓库分发。以下是命令接口速查，路径、环境变量和输入文件需先按 [快速开始](inference-v2-quickstart.md) 准备：
 
 ```bash
 python -B -m flagprof record --vendor kunlunxin --preset perf \
@@ -50,13 +39,13 @@ python -B -m flagprof record --vendor kunlunxin --preset perf \
   --inputs /fp/texts.jsonl --batch-size 1 --max-length 32 \
   --dtype bfloat16 --attention eager --device cuda:0 --warmup 0 --forwards 2 \
   --outputs "$FP_WORKSPACE/qwen-output"
-python -B -S -m flagprof inspect /absolute/path/to/run --verify --json
-python -B -S -m flagprof report /absolute/path/to/run --out "$FP_WORKSPACE/qwen-report"
+python -B -m flagprof inspect /absolute/path/to/run --verify --json
+python -B -m flagprof report /absolute/path/to/run --out "$FP_WORKSPACE/qwen-report"
 ```
 
-`python` 在以上命令中指固定镜像解释器。默认 `perf/modules` 采用 final 完整会话；其他预设和显式 windowed 按 step 采集。`modules` 开启完整 stack trace，真实模型 trace 可超过默认 1 GiB；必须事先核算原始文件、封存副本、索引和派生数据的总空间，再显式设置 `--source-max-bytes`。不能只按原始 trace 大小估算磁盘，也不能因存储中止修改原失败。
+`python` 在以上命令中指已激活环境的解释器。默认 `perf/modules` 采用 final 完整会话；其他预设和显式 windowed 按 step 采集。`modules` 开启完整 stack trace，单进程 `record` 默认封存上限为 4 GiB，真实模型 trace 可超过此上限；必须事先核算原始文件、封存副本、索引和派生数据的总空间，再显式设置 `--source-max-bytes`。不能只按原始 trace 大小估算磁盘，也不能因存储中止修改原失败。
 
-`capture-only → analyse → import` 支持将采集和离线处理分开；每次重试使用新 run，原 capture 和失败目录保留。离线 `inspect/page/report/delivery` 不要求导入 torch 或厂商 SDK。
+`capture-only → analyse → import` 支持将采集和离线处理分开；对同一封存采集和导入配置沿用原 `--store`，程序校验并复用检查点；指定同一 `--run-id` 时还会校验已完成的结果。离线 `inspect/page/report/delivery` 不要求导入 torch 或厂商 SDK。
 
 ## 模型与诊断范围
 
@@ -69,7 +58,7 @@ python -B -S -m flagprof report /absolute/path/to/run --out "$FP_WORKSPACE/qwen-
 - TP2 使用 `launch --vendor kunlunxin --comm-backend nccl|flagcx --nproc-per-node 2`，模型组与 Gloo 控制组分别记录。容器需要可用的网络接口、足够共享内存和 memlock 配置；`--network=none` 已实测导致 BKCL 初始化失败。双卡 collective smoke 不代替 OneRec TP2 模型验收。
 
 
-**TP2 为候选诊断路径，P800-INF-007 未闭合前不声明其精度通过。** 固定镜像缺少 Transformers TP 所需的 `accelerate`。已测独立依赖目录为 `accelerate==1.11.0`，wheel SHA-256 `a628fa6beb069b8e549460fc449135d5bd8d73e7a11fd09f0bc9fc4ace7f06f1`；可用固定解释器 `pip install --no-deps --target /path/to/overlay /path/to/verified.whl` 在独立目录准备，先核对其余依赖；只读挂载为 `/overlay`，设置 `PYTHONPATH=/code/inference:/overlay`，不覆盖镜像内 torch。TP2 容器另需第二张已保留卡及身份 JSON 第二项。Transformers 4.57.1 通过模型 `tp_plan` 属性接入显式计划，词表头使用 `colwise_rep`（列分片并汇聚完整输出），每 rank 核验本地权重形状 `[88192,4096]`。这证明分片实际发生，不证明单卡与 TP2 精度等价。其他版本保留原显式计划接口。
+**TP2 为候选诊断路径，P800-INF-007 未闭合前不声明其精度通过。** 固定镜像缺少 Transformers TP 所需的 `accelerate`。已测独立依赖目录为 `accelerate==1.11.0`，wheel SHA-256 `a628fa6beb069b8e549460fc449135d5bd8d73e7a11fd09f0bc9fc4ace7f06f1`；可用固定解释器 `pip install --no-deps --target /path/to/overlay /path/to/verified.whl` 在独立目录准备，先核对其余依赖；只读挂载为 `/overlay`，设置 `PYTHONPATH=/code/inference:/overlay`，不覆盖镜像内 torch。TP2 容器还需映射第二张已分配卡；使用宿主清单时在其中包含两张卡的记录。Transformers 4.57.1 通过模型 `tp_plan` 属性接入显式计划，词表头使用 `colwise_rep`（列分片并汇聚完整输出），每 rank 核验本地权重形状 `[88192,4096]`。这证明分片实际发生，不证明单卡与 TP2 精度等价。其他版本保留原显式计划接口。
 
 P800-INF-007 的 BF16 logits 并列舍入已从历史 blob 定位；离线重投影仅作诊断。曾增加的 FP32 词表头策略已撤回，当前保持原 BF16 执行，差异如实记录，见 [缺陷记录](inference-v2-validation.md)。
 
@@ -78,9 +67,9 @@ python -B -m flagprof launch --vendor kunlunxin --comm-backend flagcx \
   --nproc-per-node 2 --preset accuracy --timeout 1500 --store "$FP_WORKSPACE/onerec-tp2" \
   -- python -B -m flagprof.runner hf:/models/OneRec-8B --task generate \
   --inputs-from /fp/onerec-package --batch-size 1 --max-length 256 \
-  --max-new-tokens 32 --dtype bfloat16 --attention eager --device cuda:0 \
+  --max-new-tokens 32 --dtype bfloat16 --attention eager --device cuda \
   --warmup 0 --forwards 1 --generation-mode accuracy --outputs "$FP_WORKSPACE/onerec-output"
-python -B -S -m flagprof report "$FP_WORKSPACE/onerec-tp2/group.json" \
+python -B -m flagprof report "$FP_WORKSPACE/onerec-tp2/group.json" \
   --out "$FP_WORKSPACE/onerec-tp2-report"
 ```
 

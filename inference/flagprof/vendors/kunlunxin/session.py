@@ -1,9 +1,7 @@
 # Copyright 2026 FlagOS Contributors
 # Licensed under the Apache License, Version 2.0.
 """Official XPyTorch profiler with sourced physical P800 identity."""
-import json
 import os
-from pathlib import Path
 from flagprof.vendors.nvidia.session import NvidiaProfiler
 from flagprof.vendors.session import validate_chrome
 from .format import Taxonomy
@@ -38,22 +36,6 @@ class KunlunxinProfiler(NvidiaProfiler):
 
 
 def hardware_identity(selected=None):
-    """Also identify host-only runs without requiring profiler environment."""
-    import torch
-    selected=torch.cuda.current_device() if selected is None else selected
-    path=os.environ.get('FLAGPROF_P800_IDENTITY')
-    if not path:raise ValueError('FLAGPROF_P800_IDENTITY must name a sourced host identity JSON')
-    with Path(path).open('rb') as stream:
-        raw=stream.read(65537)
-    if len(raw)>65536:raise ValueError('P800 identity byte budget')
-    host=json.loads(raw)
-    devices=host.get('devices',[])
-    if not isinstance(devices,list) or selected>=len(devices):raise ValueError('P800 logical device outside physical selection')
-    device=devices[selected]
-    if host.get('source')!='xpu-smi' or device.get('model')!='P800':raise ValueError('sourced P800 model required')
-    observed=str(torch.cuda.get_device_properties(selected).uuid).lower().removeprefix('gpu-')
-    if observed!=str(device.get('uuid','')).lower().removeprefix('gpu-'):raise ValueError('P800 physical/framework UUID mismatch')
-    for field in ('pci_bdf','driver','xpu_smi_runtime','host_device_node'):
-        if not device.get(field):raise ValueError('missing sourced P800 '+field)
-    return dict(device,logical_device=selected,source='xpu-smi host query joined to torch.cuda UUID',
-                            compatibility_name=torch.cuda.get_device_name(selected))
+    from flagprof.vendors.smi_identity import hardware_identity as identify
+    return identify(selected, command='xpu-smi', prefix='XPU', env_key='FLAGPROF_P800_IDENTITY',
+                    node_pattern='xpu[0-9]*', model_names={'P800 OAM': 'P800', 'P800': 'P800'}, runtime='XPU-RT Version')

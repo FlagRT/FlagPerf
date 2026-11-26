@@ -2,6 +2,29 @@
 # Licensed under the Apache License, Version 2.0.
 """Display envelopes retain extrema and gaps; statistics use original observations."""
 import json
+import math
+
+
+def preferred_curve(rows):
+    """Choose a measured occupancy series before capacity, host metrics or event fields."""
+    priority = ('memory.used', 'device_used_bytes', 'process.device_memory', 'allocated_bytes',
+                'active_bytes', 'reserved_bytes', 'process.rss', 'host.memory.available', 'power.draw')
+    best, selected = (float('inf'), True), None
+    for row in rows:
+        if row.get('source_time_ns') is None:
+            continue
+        device, component = row.get('dev'), row.get('component')
+        for field, value in (row.get('values') or {}).items():
+            if not isinstance(value, (float, int)) or not math.isfinite(value):
+                continue
+            metric = field.rsplit('/', 1)[-1]
+            rank = priority.index(metric) if metric in priority else len(priority)
+            if metric in ('allocated_bytes', 'active_bytes', 'reserved_bytes') and str(device).lower().startswith(('cpu', 'host')):
+                rank = len(priority)
+            score = (rank, component != 'PTA+GE')
+            if score < best:
+                best, selected = score, [device, component, field]
+    return best[0], selected
 
 
 def unit(metric):

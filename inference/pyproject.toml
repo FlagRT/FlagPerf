@@ -4,15 +4,24 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "flagperf-inference"
-version = "0.2.0"
+version = "0.3.0"
 description = "Process-level inference profiling, evidence stores, and offline diagnostics"
 readme = "README.md"
 requires-python = ">=3.9"
 license = {text = "Apache-2.0"}
 dependencies = []
 
+[project.optional-dependencies]
+batch = ["PyYAML>=5.4"]
+
 [project.scripts]
 flagprof = "flagprof.cli:main"
+
+flagprof-batch = "flagprof.batch:main"
+flagprof-make-ctr = "flagprof.targets.make_ctr_package:main"
+flagprof-make-rerank = "flagprof.targets.make_rerank_package:main"
+flagprof-make-corpus = "flagprof.targets.make_embedding_corpus:main"
+flagprof-op-micro = "flagprof.batch.op_micro:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -20,6 +29,10 @@ include = ["flagprof*"]
 namespaces = false
 
 [tool.setuptools.package-data]
+"flagprof.vendors" = ["validation-index.json"]
+"flagprof.targets" = ["model_registry.json"]
+"flagprof.workflow" = ["templates/*.yaml"]
+"flagprof.batch" = ["*.yaml"]
 "flagprof.report" = ["assets/*.css", "assets/*.js"]
 "flagprof.vendors.ascend" = ["registry.json", "contracts/*.json"]
 "flagprof.vendors.nvidia" = ["contracts/*.json"]

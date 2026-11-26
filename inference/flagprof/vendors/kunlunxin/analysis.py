@@ -27,10 +27,9 @@ def clock(directory,capture):
     if collector.get('facts',{}).get('collector',{}).get('version')=='2.9.0+cu129' and len(bases)==1:
         transforms.append(dict(method='raw_wall_piecewise',base_time_ns=next(iter(bases)),sources=sources,
             formula='export_ns=interpolate_RAW_to_wall(raw_ns)-baseTimeNanoseconds',
-            interpretation='docs/kunlunxin/inference-v2.md#时钟验证',collector_version='2.9.0+cu129',
-            validation='P800 pinned exporter; nine independently bracketed host markers in three captures'))
+            interpretation='P800 Kineto host timestamp contract',collector_version='2.9.0+cu129'))
     return dict(status='available',clock_valid=False,source_domain='official_export_ns',transform_status='not_required',
         transform_applied=False,export_already_transformed=True,alignment_status='official_export_internal',
         project_host_alignment='unavailable',uncertainty_ns=None,uncertainty_status='unavailable',
-        reason='P800 exported host timestamps independently checked; device synchronization error bound remains unknown',
+        reason='device synchronization error bound unavailable',
         sources=sources,project_transforms=transforms)

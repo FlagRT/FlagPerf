@@ -8,6 +8,7 @@ import shutil
 import tempfile
 import uuid
 from flagprof.delivery import publish_tree, verify, restore
+from flagprof.delivery_refs import resolve
 from flagprof.store import StoreView
 from flagprof.store.manifest import atomic_json
 from .consumer import replay
@@ -49,7 +50,7 @@ def publish(reference, destination, *, max_bytes=30 << 30):
     ref,root,inventory=resolve_reference(reference)
     if root is None:raise ValueError('monitor reference unavailable')
     if ref.get('version')!=2:
-        return publish_tree([reference.parent,root],destination,max_bytes=max_bytes)
+        return publish_tree([reference.parent,root],destination,max_bytes=max_bytes,reference=reference)
     from .reading import status
     ref=status(reference)['reference']
     if ref['window'][1] is None:raise ValueError('target must finish before delivery')
@@ -64,6 +65,7 @@ def publish(reference, destination, *, max_bytes=30 << 30):
     segments,diagnostic_sources=checkpoint_closure(root,state,segments)
     if any(s['status']!='closed' for s in segments):raise ValueError('incident post window still open')
     state=dict(state,segments=segments,pins=pins,status='archived',ended_raw_ns=max(s['window'][1] for s in segments),reserved_bytes=0)
+    state.pop('retiring_segments', None)  # Local directory ownership belongs to the live collector.
     consumer=read(root/'consumer.json') if (root/'consumer.json').exists() else None
     amount=2*(len(json.dumps(state).encode())+len(json.dumps(consumer).encode())+reference.stat().st_size)+65536
     with edit(root) as live:reserve(root,live,amount)
@@ -97,23 +99,24 @@ def publish(reference, destination, *, max_bytes=30 << 30):
                         sources.append(path)
                         if target.get('reference_base')=='session':
                             for relative in target.get('references',[]):
-                                dependency=(root/relative).resolve()
+                                dependency=resolve(path, relative, base=root)
                                 if target.get('diagnostic_identity',{}).get('run_id') in diagnostic_sources and not dependency.exists():
                                     raise ValueError('diagnostic archive lacks target reference: '+str(dependency))
                                 if dependency.exists() and dependency!=reference:
                                     sources.append(dependency.parent if (dependency.parent/'manifest.json').exists() else dependency)
-            for source in list(sources):
-                if source.is_dir() and (source/'manifest.json').exists():
-                    with StoreView(source) as view:capture=view.analysis_source()
-                    if capture['status']=='available':sources.append(Path(capture['capture_directory']))
             return publish_tree(sources,destination,max_bytes=max_bytes,
-                                file_overrides=overrides)
+                                file_overrides=overrides,reference=reference)
     finally:
         shutil.rmtree(stage)
         with edit(root) as live:live['reserved_bytes']=max(0,live['reserved_bytes']-amount)
 
 
 def release(root, reference, delivery):
+    from flagprof.offline.worker import on_disk
+    return on_disk(root, _release, root, reference, delivery)
+
+
+def _release(root, reference, delivery):
     root=Path(root).resolve()
     if str(reference).startswith('finding:'):
         import re
@@ -129,7 +132,7 @@ def release(root, reference, delivery):
     directory=parent/('flagprof-release-'+uuid.uuid4().hex)
     restored=restore(delivery,directory,max_bytes=load(root)['config']['total_bytes'])
     try:
-        mapped=directory/'payload'/str(reference).lstrip('/')
+        mapped = Path(restored['mapping']['monitor-reference']) if 'monitor-reference' in restored['mapping'] else directory/'payload'/str(reference).lstrip('/')
         if not mapped.exists():raise ValueError('delivery does not contain target reference')
         restored_ref,restored_root,_=resolve_reference(mapped)
         if restored_ref.get('session_id')!=ref.get('session_id') or restored_root is None:

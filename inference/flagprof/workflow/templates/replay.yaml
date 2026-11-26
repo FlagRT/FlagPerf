@@ -1,0 +1,17 @@
+# 在 Oracle 精度报告的算子行复制完整调用键，填写该报告使用的两侧 accuracy Store。
+# 当前 Python 环境会分别启动两侧子进程，主机需要能访问两份 Store 和对应设备。
+schema_version: 1
+mode: replay
+replay:
+  ref:
+    run: ./ref-run
+    # device: cuda:0           # 默认使用源 Store 的设备，可改为同类型的本地设备
+    # vendor_compiler: ./vendor-compiler
+  cmp:
+    run: ./cmp-run
+    # device: npu:0
+  call_key: "替换为算子行的完整调用键"
+  # 填写原 Oracle 对照使用的差异声明及同侧性能 Store。
+  # declare: {differences: [device]}
+  # perf_ref_run: ./ref-perf-run
+  # perf_cmp_run: ./cmp-perf-run

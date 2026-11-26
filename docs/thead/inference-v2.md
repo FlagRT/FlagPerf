@@ -5,7 +5,7 @@ PyTorch profiler 采集设备事件，经封存导入进入公共 Store，再由
 报告；架构见 [Inference 框架文档](../../inference/docs/README.md)，通用用法（含内置
 运行器 `flagprof.runner`、delivery publish→verify→restore、双 rank launch、检查表）见
 [使用说明](../../inference/docs/usage.md)。本页只记录 PPU 特有的身份、镜像与边界，
-不重复通用流程；所有命令均经真机实测（2026-11-03）。
+命令采用 flagprof 0.3.0 接口。验证章节保留 2026-11-03 至 11-04、0.3.0 接口变更前的 PPU 真机记录。
 
 ## 当前状态与边界
 
@@ -25,8 +25,7 @@ PyTorch profiler 采集设备事件，经封存导入进入公共 Store，再由
 - 采集完整性不做声明：`final_evidence` 只记录可证的显式导出 flag（如 `record_shapes=1`），
   其余字段保持 unknown；这由 torch 2.10.0 exporter 的 Kineto chrome trace 结构决定
   （`schemaVersion=1`、顶层 `record_shapes`/`profile_memory`/`baseTimeNanoseconds`）。
-- PPU 栈没有环境变量级的 profiler 开关，身份不走运行时探测，而走显式 sourced JSON
-  （见下），导入与运行时做 UUID 交叉核验。
+- PPU 栈没有环境变量级的 profiler 开关，采集时适配器执行 `ppu-smi -q` 并按框架报告的 UUID 关联设备。离线导入读取封存身份。
 
 ## 环境准备
 
@@ -45,16 +44,17 @@ ppu-smi 的 UUID 一致。
 
 ### sourced 身份
 
-每张物理卡一条 device 记录，数组顺序与 torch 逻辑序一致。下列脚本在宿主执行
+容器内的 SMI 或设备节点无法提供完整身份时，可提供宿主清单。每张物理卡一条 device 记录。下列脚本在宿主执行
 （保存为 `gen_identity.py`），从 `ppu-smi -i N -q` 读出全部字段并生成单卡身份：
 
 ```python
-import json, re, subprocess, sys
+import json, os, re, stat, subprocess, sys
+from pathlib import Path
 
 physical = sys.argv[1]   # 物理卡号，如 0
 out = sys.argv[2]
 q = subprocess.run(['ppu-smi', '-i', physical, '-q'],
-                   stdout=subprocess.PIPE, universal_newlines=True).stdout
+                   check=True, stdout=subprocess.PIPE, universal_newlines=True).stdout
 
 def field(name):
     m = re.search(r'^\s*' + re.escape(name) + r'\s*:\s*(.+)$', q, re.M)
@@ -65,9 +65,16 @@ uuid = field('PPU UUID')
 bdf = field('Bus Id')
 minor = field('Minor Number')
 driver = field('Driver Version')
+nodes = []
+for path in Path('/dev').glob('alixpu_ppu[0-9]*'):
+    info = path.stat()
+    if stat.S_ISCHR(info.st_mode) and os.minor(info.st_rdev) == int(minor):
+        nodes.append(str(path))
+if len(nodes) != 1:
+    raise ValueError(f'Cannot identify a unique PPU node for minor {minor}')
 doc = dict(source='ppu-smi', driver=driver, devices=[dict(
     model=model, uuid=uuid, pci_bdf=bdf, driver=driver, minor=minor,
-    physical=physical, host_device_node='/dev/alixpu_ppu' + physical)])
+    physical=physical, host_device_node=nodes[0])])
 with open(out, 'w') as f:
     f.write(json.dumps(doc))
 print(json.dumps(doc))
@@ -84,7 +91,7 @@ with open('identity-2cards.json', 'w') as f:
     json.dump(a, f)
 ```
 
-运行与导入时经 `FLAGPROF_THEAD_IDENTITY` 注入路径。校验规则：`source` 必须是
+使用宿主清单时，把文件只读挂载到采集容器，并设置 `FLAGPROF_THEAD_IDENTITY` 为容器内路径。校验规则：`source` 必须是
 `ppu-smi`，`model` 必须是 `PPU-ZW810E`，所选逻辑卡的 UUID 与 torch 观测完全一致，
 且 `pci_bdf`、`driver`、`host_device_node` 不得为空；任一不满足即拒绝采集。
 
@@ -95,24 +102,22 @@ collector = torch.profiler 2.10.0，`exporter.schema_version=1`。契约外照�
 
 ## 最小命令
 
-宿主侧备好身份文件后，在容器内运行。flagprof 以源码方式随仓库工作树挂载，镜像内未
-安装，因此必须设 `PYTHONPATH=/work/inference`（`$PWD` 为仓库工作树）：
+可在目标设备的 Python 环境中安装 wheel，也可从源码启动。以下容器示例采用源码方式，在仓库根目录运行，用一个小矩阵乘验证设备事件。把已分配的实际计算节点写入 `PPU_DEVICE`。如果使用宿主清单，给采集容器额外传入只读挂载和 `-e FLAGPROF_THEAD_IDENTITY=/identity.json`。
 
 ```bash
 IMG=flagrt/thead-ppu-runtime:1.0.0-ppu3.6-py312-torch2.10.0-flagtree0.7.0-triton3.6.0-x86_64
-DEV="--device=/dev/alixpu_ctl --device=/dev/alixpu --device=/dev/alixpu_ppu0"
+PPU_DEVICE=/dev/alixpu_ppu0  # 替换为宿主核对过的设备节点
 
 # 采集（默认 final 预设：完整会话，目标正常退出后独立导入）
-docker run --rm --shm-size=4g $DEV \
+docker run --rm --shm-size=4g --device=/dev/alixpu_ctl --device=/dev/alixpu --device="$PPU_DEVICE" \
   -v "$PWD":/work -w /work \
   -e PYTHONPATH=/work/inference \
-  -e FLAGPROF_THEAD_IDENTITY=/work/identity-card0.json \
   $IMG python3 -B -m flagprof record --vendor thead --preset perf \
   --store /work/stores/smoke \
-  -- python3 /work/target.py
+  -- python3 -c 'import torch; x = torch.ones((32, 32), device="cuda:0"); y = x @ x; torch.cuda.synchronize()'
 
-# 读取采集与导入状态（把 record 输出中的 run 路径写入 FP_RUN；
-# 该路径是宿主机路径，容器内使用要换成容器挂载路径，如 /work/stores/...）
+# 把 record 返回的容器内 run 路径填入 FP_RUN；下次读取用相同挂载点。
+FP_RUN=/work/stores/smoke/runs/RUN_ID
 docker run --rm -v "$PWD":/work -w /work -e PYTHONPATH=/work/inference $IMG \
   python3 -B -m flagprof inspect "$FP_RUN" --verify --json
 
@@ -121,19 +126,15 @@ docker run --rm -v "$PWD":/work -w /work -e PYTHONPATH=/work/inference $IMG \
   python3 -B -m flagprof report "$FP_RUN" --out /work/reports/smoke
 ```
 
-成功判定（JSON 字段，详见 usage.md 检查表）：record 输出 `"status": "complete"`、
-`"target_exit".returncode` 为 0、final 预设 `"format_applicability": "within"`；
-`inspect --verify --json` 每条 trace `import_status=complete`、`integrity=verified`；
-report 的 `results` 中 `perf.op` / `perf.layer` / `perf.device` / `perf.gap` 为 `ok`。
+核对 record 的 `status=complete` 和 `target_exit.returncode=0`，以及 inspect 返回的设备事件数、`import_status=complete` 和 `integrity=verified`。另查 `format_applicability` 确认本机栈是否在已登记范围内。报告的各面板按实际输入显示状态，小矩阵乘只承担设备采集冒烟验证。
 
 采集真实模型可用内置运行器（输入 JSONL 每行一个字符串或含 `text`/`query`/`input`
-的对象，详见 usage.md）。注意两个必守约定：模型参数须带 `hf:` 前缀，`--samples`
-必传且为正。把上面 `--` 后的目标换成：
+的对象，详见 usage.md）。模型路径带 `hf:` 前缀。`--inputs` 读取 JSONL；使用固定输入包时，`--samples` 可按样本 ID 选择子集。把上面 `--` 后的目标换成：
 
 ```bash
   -- python3 -B -m flagprof.runner hf:/work/models/Qwen3-Embedding-0.6B \
-    --inputs /work/inputs.jsonl --outputs /work/out.json \
-    --device cuda:0 --dtype bfloat16 --samples 8 --batch-size 1
+    --inputs /work/inputs.jsonl --outputs /work/runner-output \
+    --device cuda:0 --dtype bfloat16 --batch-size 1
 ```
 
 embedding 任务已实测支持 bfloat16/float16/float32、任意 batch、eager/sdpa 注意力
@@ -146,14 +147,12 @@ generate` 则是 OneRec 专用路径：只接受 sealed `--inputs-from` 包（sc
 窗口模式加 `--capture-mode windowed`（按目标的 `flagprof` step 句柄推进窗口，
 `--active`/`--windows` 控制窗数，`--timeout` 前传给受控目标进程）。多窗口时钟按窗口
 独立投影（`source_clock=per_window`），不跨窗双计。外部自行导出的 trace 用
-`flagprof seal <trace> --out <dir> --vendor thead --normal-close` 封存后经
-`flagprof import` 进入 Store（capture 与 store 必须是两棵独立目录树）。
+`flagprof seal "$TRACE" --out "$CAPTURE" --vendor thead --normal-close` 封存后，用 `flagprof import "$CAPTURE" --store "$RUNS_STORE"` 导入，结果写在封存采集目录以外。
 
 ## TP2 双卡
 
-`flagprof launch` 生成显式双 rank 工作进程并各自建 Store；`--store` 指向**尚不存在**
-的组目录（由 launch 创建，预先建好会报 `File exists`）。目标经环境变量
-`FLAGPROF_COMM_BACKEND` 与 `RANK` 获知后端与秩。PPU torch 2.10.0 注册的集合通信后端
+`flagprof launch` 生成显式双 rank 工作进程并各自建 Store；`--store` 选择新的组目录或现有空目录，供两个 rank 保存结果。目标经环境变量
+`FLAGPROF_COMM_BACKEND` 与 `RANK` 获知后端与秩。历史实测的 PPU torch 2.10.0 镜像注册的设备集合通信后端
 只有 `nccl`（`flagcx`/`hccl`/`cmcc` 未注册，`gloo` 仅 CPU）。最小双 rank 目标
 （保存为 `tp2_target.py`）：
 
@@ -176,15 +175,15 @@ dist.barrier()
 dist.destroy_process_group()
 ```
 
-双卡容器需同时暴露两卡设备节点，身份 JSON 含两条 device 记录（顺序即 torch 逻辑序）：
+双卡容器需同时暴露两张已分配的设备。示例中的节点名按实际分配替换。使用宿主清单时，在清单中包含这两张卡。
 
 ```bash
+PPU_SECOND_DEVICE=/dev/alixpu_ppu1  # 替换为第二张已分配卡的节点
 docker run --rm --shm-size=4g \
   --device=/dev/alixpu_ctl --device=/dev/alixpu \
-  --device=/dev/alixpu_ppu0 --device=/dev/alixpu_ppu1 \
+  --device="$PPU_DEVICE" --device="$PPU_SECOND_DEVICE" \
   -v "$PWD":/work -w /work \
   -e PYTHONPATH=/work/inference \
-  -e FLAGPROF_THEAD_IDENTITY=/work/identity-2cards.json \
   $IMG python3 -B -m flagprof launch --vendor thead \
   --comm-backend nccl --nproc-per-node 2 \
   --store /work/stores/tp2-group \
@@ -195,11 +194,12 @@ TP2 报告分两种情况。`launch` 组目录里的 `group.json` 组报告（�
 校验）面向**内置运行器驱动**的 TP2 run——校验读取运行器记录的 TP 身份。外部自备的
 裸 `torch.distributed` 目标不含该身份，组报告会拒绝
 （`actual TP backend or world size differs from group manifest`），此时对每个 rank
-的 run 目录单独出报告：
+的 run 目录单独出报告。从 `group.json` 中读取 rank 对应的相对路径：
 
 ```bash
+RANK_RUN=$(python3 -c 'import json; g=json.load(open("stores/tp2-group/group.json")); print("/work/stores/tp2-group/"+next(r["run"] for r in g["ranks"] if r["rank"] == 0))')
 docker run --rm -v "$PWD":/work -w /work -e PYTHONPATH=/work/inference $IMG \
-  python3 -B -m flagprof report /work/stores/tp2-group/rank-0/runs/<run-id> \
+  python3 -B -m flagprof report "$RANK_RUN" \
   --out /work/reports/tp2-rank0
 ```
 
@@ -207,6 +207,8 @@ docker run --rm -v "$PWD":/work -w /work -e PYTHONPATH=/work/inference $IMG \
 `perf.op`/`perf.device`/`perf.gap` 正常。
 
 ## 验证与测试
+
+以下数据为 2026-11-03 至 11-04 历史版本在两台 PPU 上的记录。命令示例已按 0.3.0 更新，本段的计数、时长和资格范围属于原验证。
 
 - CPU 回归：容器内 `PYTHONPATH=inference python3 -m pytest inference/tests -q`
   （2026-11-03 两台主机实测均 17 passed）。覆盖 PPU 身份 UUID 交叉核验与字段缺失
@@ -247,18 +249,12 @@ docker run --rm -v "$PWD":/work -w /work -e PYTHONPATH=/work/inference $IMG \
 
 ### 运维注意（实测踩坑）
 
-- 容器内必须设 `PYTHONPATH=/work/inference`（指向仓库 `inference/` 目录），否则
-  `No module named flagprof`。
-- `modules` 预设导入 907 s > record 默认 `--timeout 900`：显式给大 timeout；被杀的
-  import 会留下 Plan-B checkpoint，复用同一 work 目录重跑会 exit 2——每轮重试用全新
-  work/scratch。
+- 2026-11-03 的源码挂载环境通过 `PYTHONPATH=/work/inference` 加载包。当时 `modules` 导入用时 907 秒，超过该版 900 秒超时；复用当时中断的工作目录会返回 exit 2。复现该批测量应保留原始失败记录。
+- 0.3.0 下，按目标规模设置 `record --timeout`。已封存 raw 的采集可用 `flagprof analyse "$CAPTURE"` 完成分析，再用 `flagprof import "$CAPTURE" --store "$RUNS_STORE"` 重试。`RUNS_STORE` 取原导入的结果根目录（final record 为采集时 `--store` 下的 `runs/`）。程序校验并复用检查点。
+
 - `--flaggems-include` 接受 JSON 文件路径（非内联数组）；include 要求全部注册成功，
   本构建 `layer_norm` 未注册，实测可用集为
   `["mm","add","mul","softmax","rms_norm","silu"]`。
-- record 输出的 run 路径在宿主机上，传给容器内 inspect/report 时要换成容器内挂载路径。
-- `launch --store` 的目录必须不存在（launch 自建）。
-- 内置运行器的模型参数须 `hf:<directory>` 前缀且 `--samples` 为正（usage.md 有载）。
-
 ## 与 Base / Toolkit / Operation 的关系
 
 本适配只覆盖 Inference v2 观测链路。Base Benchmark 与 Toolkit 见

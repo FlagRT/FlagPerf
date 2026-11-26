@@ -81,6 +81,74 @@ class ReaderConclusions(unittest.TestCase):
         row=next(r['value'] for r in records if r.get('section')=='diagnosis')
         self.assertNotIn('occurrence_task_relative_ns',row)
 
+    def test_two_rank_zero_runs_keep_alerts_and_exit_receipts_with_their_owner(self):
+        normal = dict(run_id='first',rank=0,registered_execution=1,returncode=0,
+                      start_clock='host',exit_clock='host',started_ns=100,exit_ns=130)
+        failed = dict(normal,run_id='second',returncode=1,started_ns=150,exit_ns=200)
+        alerts = [dict(id='exit',rule='proc.exit',rank=0,run_id='second',task_relative_ns=50),
+                  dict(id='oom',rule='oom.device',rank=0,run_id='second',task_relative_ns=20)]
+        doc = dict(diagnosis=dict(status='available',progress_coverage=[failed,normal],findings=alerts))
+        _, meta, records = self.report(doc)
+        self.assertEqual(meta['banners'][0]['title'],'设备 OOM、异常退出都属于任务 2')
+        self.assertIn('没有重叠',meta['banners'][0]['detail'])
+        roster = [r['value'] for r in records if r.get('section')=='diagnosis.coverage']
+        self.assertEqual([(r['run_id'],r['alert_count']) for r in roster],[('first',0),('second',2)])
+        events = [r['value'] for r in records if r.get('section')=='diagnosis']
+        self.assertEqual([(r['task_label'],r['rule']) for r in events],[('任务 2','oom.device'),('任务 2','proc.exit')])
+        normal['exit_ns'] = 180
+        _, meta, _ = self.report(doc,'overlap')
+        self.assertIn('部分任务的观测区间重叠',meta['banners'][0]['detail'])
+        failed['start_clock'] = 'other'
+        _, meta, _ = self.report(doc,'unmapped')
+        self.assertNotIn('重叠',meta['banners'][0]['detail'])
+
+    def test_revisions_count_as_one_alert_and_use_the_update_time(self):
+        opened = dict(id='one',rule='hang.no_progress',rank=0,run_id='r',window=[110,None],
+                      revision=1,state='open',task_relative_ns=10,first_detected=120,observed_at=120)
+        resolved = dict(opened,revision=2,state='resolved',observed_at=140,window=[110,140])
+        _, meta, records = self.report(dict(diagnosis=dict(status='available',findings=[resolved,opened])))
+        self.assertIn('已解除',meta['banners'][0]['title'])
+        events = [r['value'] for r in records if r.get('section')=='diagnosis']
+        self.assertEqual([r['diagnostic_time_ns'] for r in events],[20,40])
+        roster = next(r['value'] for r in records if r.get('section')=='diagnosis.coverage')
+        self.assertEqual(roster['alert_count'],1)
+
+    def test_node_axis_uses_session_origin_and_matching_source_clocks(self):
+        # Work above JavaScript's safe integer range and request only the tail
+        # of the resource window. Diagnostic times still use the session start.
+        origin = 2**54
+        first = dict(run_id='a',rank=0,started_ns=origin+10,start_clock='host',
+                     exit_ns=origin+45,exit_clock='host',returncode=0)
+        second = dict(first,run_id='b',started_ns=origin+35,exit_ns=origin+90,returncode=1)
+        third = dict(first,run_id='c',start_clock='other',exit_clock='other')
+        ref = ['event','fault',0,1]
+        oom = dict(id='oom',rule='oom.device',rank=0,run_id='b',evidence=[ref],
+                   observed_at=origin+70,window=[origin+58,None],task_relative_ns=23)
+        source = dict(identity=ref,record=dict(ts=origin+58,clk='host'))
+        doc = dict(schema='monitor-report/1',session_clock='host',window=[origin+80,origin+100],
+                   coverage=dict(reference=dict(window=[origin,origin+100])),
+                   diagnosis=dict(status='available',progress_coverage=[first,second,third],findings=[oom],evidence=[source]))
+        _, meta, records = self.report(doc)
+        self.assertEqual(meta['diagnosis_session_ns'],100)
+        roster = {r['value']['run_id']:r['value'] for r in records if r.get('section')=='diagnosis.coverage'}
+        self.assertEqual((roster['a']['node_start_ns'],roster['a']['node_exit_ns']),(10,45))
+        self.assertEqual((roster['b']['node_start_ns'],roster['b']['node_exit_ns']),(35,90))
+        self.assertNotIn('node_start_ns',roster['c'])
+        self.assertNotIn('node_exit_ns',roster['c'])
+        event = next(r['value'] for r in records if r.get('section')=='diagnosis')
+        self.assertEqual((event['diagnostic_time_ns'],event['node_event_ns']),(23,58))
+        source['record']['clk'] = 'other'
+        _, _, records = self.report(doc,'foreign-event')
+        event = next(r['value'] for r in records if r.get('section')=='diagnosis')
+        self.assertNotIn('node_event_ns',event)
+        doc['diagnosis']['evidence'] = []
+        _, _, records = self.report(doc,'offset-only')
+        event = next(r['value'] for r in records if r.get('section')=='diagnosis')
+        self.assertEqual(event['node_event_ns'],58)
+        del doc['session_clock']
+        _, meta, _ = self.report(doc,'ambiguous-node-clock')
+        self.assertNotIn('diagnosis_session_ns',meta)
+
     def test_refresh_rebuilds_stale_snapshot_and_preserves_machine_result(self):
         source,_,_=self.report(dict(results={'perf.device':dict(data=[dict(name='maximum',category='compute',device_work_ns=5)])}))
         original=(source/'result.json').read_bytes()

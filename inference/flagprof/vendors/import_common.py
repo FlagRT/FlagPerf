@@ -260,7 +260,7 @@ def import_capture(directory: str | Path, writer: Writer, *, vendor: str,
                 analysis['capture_scope']='scheduled_window_not_complete_request'
                 calls=options.get('calls')
                 if calls is None:calls=calls_from(writer.run_dir,manifest['run_id'])
-                with TemporaryDirectory(prefix={'thead':'thead-window-import-','kunlunxin':'p800-window-import-'}[vendor]) as work:
+                with TemporaryDirectory(prefix='window-import-') as work:
                     prepared=prepare(source,Path(work)/'prepared',vendor=vendor,
                         registry=registry,identities=identities,calls=calls,
                         marker_prefix=options.get('marker_prefix','flagprof::op#'),

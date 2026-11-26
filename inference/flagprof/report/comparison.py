@@ -15,9 +15,8 @@ def conditions(left,right,declare=None):
         result=comparable(a,b)
         for side,value in (('left',a),('right',b)):
             identity=value.get('workload_identity') or {}
-            if identity.get('task')=='generate':
-                if not identity.get('generation'):result['reasons'].append(side+':output_semantics_missing')
-            elif not identity.get('pooling'):result['reasons'].append(side+':output_semantics_missing')
+            semantics = {'ctr':'score_semantics','generate':'generation'}.get(identity.get('task'),'pooling')
+            if not identity.get(semantics):result['reasons'].append(side+':output_semantics_missing')
         if result['reasons']:result['status']='not_comparable'
         return result
     original=checked(left,right)
@@ -55,7 +54,17 @@ def change(a,b,allowed):
                 reason=None if valid and a else 'zero_baseline' if valid else 'not_comparable_or_missing')
 
 
-def generate(reports,out,*,declare=None,work=None,limits=None):
+def runner_group_key(row):
+    fields = ('rank','instrumentation','scope','shape','phase','generation_step')
+    return json.dumps([row.get(k) for k in fields],sort_keys=True)
+
+
+def generate(reports, out, *, declare=None, limits=None):
+    from flagprof.offline.worker import output_operation
+    return output_operation(out, reports, _generate, reports, declare=declare, limits=limits)
+
+
+def _generate(reports,out,*,declare=None,limits=None):
     from .model import opened_model,read_document
     from . import write_json
     from .product import write_report
@@ -63,7 +72,7 @@ def generate(reports,out,*,declare=None,work=None,limits=None):
     if any(out==Path(p).resolve() or Path(p).resolve() in out.parents or out in Path(p).resolve().parents for p in reports):
         raise ValueError('comparison output must be separate from source reports')
     out.mkdir(parents=True,exist_ok=True)
-    with opened_model(work,limits) as model:
+    with opened_model(limits=limits) as model:
         sources=[]
         for report in reports:
             path=Path(report).resolve();value=read_document(path/'result.json',model)
@@ -74,7 +83,8 @@ def generate(reports,out,*,declare=None,work=None,limits=None):
             if not panel and runner:
                 identity=dict(runner.get('condition') or {})
                 identity['device']={str(s['rank']):s.get('identity',{}).get('device') for s in runner.get('sources',[])}
-                groups=runner.get('groups',[]);source_rows=runner.get('sources',[])
+                groups=sorted(runner.get('groups',[]),key=runner_group_key)
+                source_rows=sorted(runner.get('sources',[]),key=lambda row:row['rank'])
                 context=dict(workload_identity=identity,window_identity=dict(window_kind='runner_synchronized',
                     warmup=[s.get('warmup_excluded') for s in source_rows],
                     forwards=[g.get('observations') for g in groups],repeats=len(source_rows),
@@ -109,10 +119,9 @@ def generate(reports,out,*,declare=None,work=None,limits=None):
                                 **change(distribution(av)[stat],distribution(bv)[stat],check['status']=='comparable')))
                 if i==0:
                     if left.get('runner') and right.get('runner'):
-                        def key(row):return json.dumps([row.get(k) for k in ('rank','instrumentation','scope','shape','phase','generation_step')],sort_keys=True)
-                        left_groups={key(r):r for r in left['runner']['groups']}
+                        left_groups={runner_group_key(r):r for r in left['runner']['groups']}
                         for row in right['runner']['groups']:
-                            baseline=left_groups.get(key(row),{})
+                            baseline=left_groups.get(runner_group_key(row),{})
                             for metric in ('mean_ns','median_ns','p95_ns','samples_per_second','generated_tokens_per_second'):
                                 allowed=checked['status']=='comparable' and bool(baseline)
                                 metrics.append(dict(source=right['report'],rank=row.get('rank'),scope=row.get('scope'),
@@ -131,13 +140,13 @@ def generate(reports,out,*,declare=None,work=None,limits=None):
         for index,source in enumerate(sources):
             from .product import redraw
             local=out/('source-'+str(index))
-            if not local.exists():redraw(source['report'],local,work=work,limits=limits)
+            if not local.exists():redraw(source['report'],local,limits=limits)
             source['local_report']='source-'+str(index)+'/report.html'
             source['comparison_status']='not_comparable' if any(p['status']=='not_comparable' for p in pairs if source['report'] in (p['left'],p['right'])) else 'comparable'
         result=dict(schema='device-comparison/1',declaration=declare or {},sources=sources,comparisons=pairs,
                     window_comparisons=window_pairs,metric_comparisons=metrics,
                     note='第一份报告为基准。变化因素完整保留；差值描述观测变化，不自动归因于设备或组件。工作量时长和不作为加速比。')
         with (out/'result.json').open('w') as stream:write_json(stream,result);stream.write('\n')
-        write_report(out,result,work=work,limits=limits)
+        write_report(out,result,limits=limits)
         # Caller-compatible materialized summaries; large input tables remain on disk.
         return dict(result,sources=[dict(s,data=list(s['data']),windows=list(s['windows'])) for s in sources])

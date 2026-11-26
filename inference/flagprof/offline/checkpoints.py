@@ -42,10 +42,12 @@ def publish(path,value):
     os.link(temp,path);syncdir(path.parent);temp.unlink();syncdir(path.parent)
 
 def binding(source,occurrence,options=None):
-    here=Path(__file__).resolve().parent;root=here.parents[1]
-    return dict(source=fileinfo(source),occurrence=occurrence,options=options or {},
-        parser={str(p.relative_to(root)):streaming.sha_file(p) for p in sorted((root/'flagprof').rglob('*.py'))},
-        prototype={p.name:streaming.sha_file(p) for p in sorted(here.glob('*.py'))})
+    from flagprof.vendors.fingerprint import parser_identity
+    options = options or {}
+    parser = parser_identity(options.get('vendor', 'unknown'), 'import/2')
+    return dict(source=fileinfo(source), occurrence=occurrence, options=options,
+                parser_sha256=parser['sha256'])
+
 
 def manifest(directory,kind,bind,files,extra=None):
     rows={}
@@ -63,7 +65,13 @@ def validate(directory,bind,kind,*,source_max_bytes=None):
     if p.stat().st_size>4<<20:raise ValueError('checkpoint manifest budget')
     m=read_json(p)
     if m['binding']!=bind or m['kind']!=kind:raise ValueError('stage binding mismatch')
-    if len(m['files'])>4096:raise ValueError('stage file budget')
+    files = m['files']
+    if not isinstance(files, dict) or len(files)>4096:
+        raise ValueError('invalid stage file inventory')
+    if kind == 'scan' and set(files) != {'scan.sqlite'}:
+        raise ValueError('scan checkpoint lacks its database')
+    if kind == 'derived' and 'prepared-state.json' not in files:
+        raise ValueError('derived checkpoint lacks its state')
     if kind=='sealed-source':
         limit=source_budget(m.get('extra',{}).get('source_max_bytes',DEFAULT_SOURCE_BYTES))
         if source_max_bytes is not None and limit!=source_budget(source_max_bytes):
@@ -80,7 +88,12 @@ def save_scan(db,directory,bind,crash=None):
     target=directory/'scan.sqlite';dest=sqlite3.connect(target)
     dest.create_collation('BIGINT',lambda a,b:(int(a)>int(b))-(int(a)<int(b)))
     dest.create_function('integer_order_key',1,integer_order_key,deterministic=True)
-    db.c.backup(dest);assert dest.execute('PRAGMA quick_check').fetchone()==('ok',);dest.close()
+    try:
+        db.c.backup(dest)
+        if dest.execute('PRAGMA quick_check').fetchone() != ('ok',):
+            raise ValueError('invalid scan checkpoint database')
+    finally:
+        dest.close()
     if crash=='scan-before-publish':os._exit(71)
     manifest(directory,'scan',bind,['scan.sqlite'])
     if crash=='scan-after-publish':os._exit(72)
@@ -128,7 +141,9 @@ def load_prepared(directory,bind):
     # A forged path in state cannot make the importer read outside the stage.
     def check(v):
         if isinstance(v,(JSONFile,ArrayFile)):
-            if not v.path.resolve().is_relative_to(Path(directory).resolve()):raise ValueError('stage reference escape')
+            rel = v.path.resolve().relative_to(Path(directory).resolve())
+            if str(rel) not in committed['files']:
+                raise ValueError('unbound checkpoint artifact')
         elif isinstance(v,dict):
             for x in v.values():check(x)
         elif isinstance(v,list):

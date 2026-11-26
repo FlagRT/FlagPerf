@@ -8,7 +8,9 @@ import signal
 import subprocess
 import sys
 import time
+from flagprof._process import module_environment
 from flagprof.registry import Registry
+from flagprof.vendors import monitored_vendors, vendor_names
 from flagprof.store import Writer, WriterConfig, create_run, finalize
 from flagprof.store.manifest import atomic_json, proc_key
 from flagprof.telemetry.contract import raw_clock
@@ -33,29 +35,25 @@ def sample(args):
     heartbeat = run/'heartbeat'
     heartbeat.touch()
     try:
-        host_only = args.vendor in ('thead', 'kunlunxin')
+        host_only = args.vendor not in monitored_vendors()
+        registry = Registry()
         if host_only:
-            host, identity = Registry().create('telemetry.host')
-            inventory.update(device_telemetry='unavailable', source='host-procfs')
+            host, identity = registry.create('telemetry.host')
+            provider = host
             metrics, calls = host.metrics, host.calls()
+            inventory.update(device_telemetry='unavailable', source='host-procfs')
         else:
-            provider, identity = Registry().create('telemetry.'+args.vendor, devices=args.devices, source=args.source)
+            provider, identity = registry.create('telemetry.' + args.vendor, devices=args.devices, source=args.source)
             host = Host()
             inventory.update(provider.inventory)
             metrics, calls = provider.metrics + host.metrics, provider.calls() + host.calls()
-        calibration = Path(args.root)/'telemetry-calibration.json'
-        if calibration.exists():
-            data = json.loads(calibration.read_text())
-            if data.get('boot_id') == inventory['boot_id'] and data.get('driver_version') == inventory.get('driver_version'):
-                inventory['idle_baselines'] = data.get('idle_baselines', {})
-                inventory['calibration_source'] = data.get('source')
-            else:
-                inventory['calibration_status'] = 'identity_mismatch'
         inventory.update(source_identity=identity['shipped_source_closure'],
-                         descriptors=[m.snapshot() for m in metrics])
-        atomic_json(run/'inventory.json', inventory)
+                         descriptors=[metric.snapshot() for metric in metrics])
         leases.acquire(device_keys(dict(boot_id=inventory['boot_id'],vendor=args.vendor),inventory))
         leases.owner(proc_key())
+        from .calibration import calibrate
+        inventory['minimum_interval_ms'] = calibrate(args.root, args.vendor, 'local', provider, inventory)
+        atomic_json(run/'inventory.json', inventory)
         writer = Writer(run, kind='counter', config=WriterConfig(shard_period_seconds=300))
         effective_ms = max(args.interval_ms, math.ceil(inventory.get('minimum_interval_ms',100)))
         if effective_ms > 5000:
@@ -138,10 +136,10 @@ def sample(args):
 def supervise(args):
     root = Path(args.root).resolve(); root.mkdir(parents=True, exist_ok=True)
     run = Path(args.run) if args.run else create_run(root/'monitor', identity=dict(kind='monitor',vendor=args.vendor))
-    command = [sys.executable, '-B', '-S', '-m', 'flagprof.monitor', '--sample', '--root', str(root),
+    command = [sys.executable, '-B', '-m', 'flagprof.monitor', '--sample', '--root', str(root),
                '--run', str(run), '--vendor', args.vendor, '--devices', args.devices,
                '--interval-ms', str(args.interval_ms), '--source', args.source]
-    child = subprocess.Popen(command)
+    child = subprocess.Popen(command, env=module_environment())
     stopping = False
     def terminate(*_):
         nonlocal stopping
@@ -167,10 +165,10 @@ def supervise(args):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--root', required=True)
-    parser.add_argument('--vendor', choices=('ascend','nvidia','thead','kunlunxin'), required=True)
+    parser.add_argument('--vendor', choices=vendor_names(), required=True)
     parser.add_argument('--devices', default='all')
     parser.add_argument('--interval-ms', type=int, default=1000)
-    parser.add_argument('--source', choices=('auto','dcmi','npu-smi','nvml','nvidia-smi'), default='auto')
+    parser.add_argument('--source', choices=('auto','dcmi','dsmi','npu-smi','nvml','nvidia-smi'), default='auto')
     parser.add_argument('--run', help=argparse.SUPPRESS)
     parser.add_argument('--sample', action='store_true', help=argparse.SUPPRESS)
     args = parser.parse_args()

@@ -1,6 +1,6 @@
 """Linux flock leases: host boot + uid + vendor physical device/power domain.
 
-All participating services must share the host /tmp mount and user namespace.
+Participating host samplers share one user runtime namespace.
 These advisory leases do not constrain unrelated vendor tools or other users.
 """
 import fcntl
@@ -17,7 +17,13 @@ class Leases:
         self.handles = []
 
     def acquire(self, keys, directory=None):
-        directory = Path(directory or '/tmp/flagprof-monitor-'+str(os.getuid()))
+        if directory is None:
+            runtime = Path('/run/user') / str(os.getuid())
+            if not runtime.is_dir() or runtime.stat().st_uid != os.getuid():
+                # The canonical host fallback must not vary with a caller's TMPDIR.
+                runtime = Path('/tmp')
+            directory = runtime / ('flagprof-monitor-' + str(os.getuid()))
+        directory = Path(directory)
         directory.mkdir(mode=0o700, parents=True, exist_ok=True)
         info = directory.lstat()
         if not stat.S_ISDIR(info.st_mode) or info.st_uid != os.getuid() or info.st_mode & 0o077:
